@@ -1,0 +1,71 @@
+name: Build PEER Python runtime
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/build-peer-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheelhouse:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build exact wheelhouse
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip wheel setuptools
+          mkdir -p wheelhouse runtime_report
+          python -m pip download --dest wheelhouse \
+            'camb==1.6.6' \
+            'cobaya==3.6.2' \
+            'GetDist==1.7.7' \
+            'Py-BOBYQA==1.5.0' \
+            'dill==0.4.1' \
+            'mpi4py==4.1.1'
+          python -m venv verify-venv
+          verify-venv/bin/python -m pip install --no-index --find-links wheelhouse \
+            'camb==1.6.6' 'cobaya==3.6.2' 'GetDist==1.7.7' 'Py-BOBYQA==1.5.0' 'dill==0.4.1' 'mpi4py==4.1.1'
+          verify-venv/bin/python - <<'PY'
+          import json
+          import camb
+          import cobaya
+          import getdist
+          import pybobyqa
+          import dill
+          from camb import dark_energy
+          report = {
+              'python': __import__('sys').version,
+              'camb': camb.__version__,
+              'cobaya': cobaya.__version__,
+              'getdist': getdist.__version__,
+              'pybobyqa': getattr(pybobyqa, '__version__', 'unknown'),
+              'dill': dill.__version__,
+              'EarlyQuintessence': hasattr(dark_energy, 'EarlyQuintessence'),
+          }
+          assert report['camb'] == '1.6.6'
+          assert report['cobaya'] == '3.6.2'
+          assert report['EarlyQuintessence'] is True
+          open('runtime_report/import_gate.json', 'w', encoding='utf-8').write(json.dumps(report, indent=2))
+          print(json.dumps(report, indent=2))
+          PY
+          sha256sum wheelhouse/* > runtime_report/SHA256SUMS.txt
+          python -m pip freeze > runtime_report/builder-freeze.txt
+          verify-venv/bin/python -m pip freeze > runtime_report/verified-freeze.txt
+      - name: Upload exact wheelhouse
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-python312-wheelhouse
+          path: |
+            wheelhouse
+            runtime_report
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
