@@ -1,0 +1,78 @@
+name: Build portable PEER Python 3.12 runtime
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/build-portable-python312.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install exact PEER runtime
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip wheel setuptools flit-core
+          python -m pip install \
+            'camb==1.6.6' \
+            'cobaya==3.6.2' \
+            'GetDist==1.7.7' \
+            'Py-BOBYQA==1.5.0' \
+            'dill==0.4.1' \
+            'portalocker==3.2.0' \
+            'astropy==7.2.0' \
+            'pandas==3.0.3' \
+            'numpy==2.4.4' \
+            'scipy==1.17.1' \
+            'matplotlib==3.10.9' \
+            'PyYAML==6.0.3'
+          git clone --depth 1 https://github.com/benabed/clipy.git /tmp/clipy
+          python -m pip install --no-build-isolation /tmp/clipy
+          mkdir -p portable report
+          python - <<'PY'
+          import json, os, sys, camb, cobaya, getdist, pybobyqa, astropy, clipy, numpy, scipy
+          report={
+            'python':sys.version,
+            'prefix':sys.prefix,
+            'executable':sys.executable,
+            'camb':camb.__version__,
+            'cobaya':cobaya.__version__,
+            'getdist':getdist.__version__,
+            'pybobyqa':getattr(pybobyqa,'__version__','unknown'),
+            'astropy':astropy.__version__,
+            'clipy':clipy.__file__,
+            'numpy':numpy.__version__,
+            'scipy':scipy.__version__,
+            'EarlyQuintessence':hasattr(camb.dark_energy,'EarlyQuintessence'),
+          }
+          assert sys.version_info[:2] == (3,12)
+          assert report['camb']=='1.6.6'
+          assert report['cobaya']=='3.6.2'
+          assert report['EarlyQuintessence']
+          open('report/import_gate.json','w').write(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+          PREFIX="$(python -c 'import sys; print(sys.prefix)')"
+          PARENT="$(dirname "$PREFIX")"
+          NAME="$(basename "$PREFIX")"
+          tar -czf portable/peer-python312-runtime.tar.gz -C "$PARENT" "$NAME"
+          sha256sum portable/peer-python312-runtime.tar.gz > report/SHA256SUMS.txt
+          python -m pip freeze > report/pip-freeze.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-portable-python312-runtime
+          path: |
+            portable
+            report
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
