@@ -1,0 +1,49 @@
+name: Build PEER Python 3.13 support runtime
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/build-peer-runtime-py313.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheelhouse:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download runtime support wheels
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip wheel setuptools
+          mkdir -p wheelhouse runtime_report
+          python -m pip download --dest wheelhouse \
+            'astropy==7.2.0' \
+            'astropy-iers-data' \
+            'flit-core>=3.4' \
+            'h5py' \
+            'numba'
+          python -m venv verify-venv
+          verify-venv/bin/python -m pip install --no-index --find-links wheelhouse 'astropy==7.2.0' h5py numba
+          verify-venv/bin/python - <<'PY'
+          import json, sys, astropy, h5py, numba
+          report={'python':sys.version,'astropy':astropy.__version__,'h5py':h5py.__version__,'numba':numba.__version__}
+          open('runtime_report/import_gate.json','w').write(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          PY
+          sha256sum wheelhouse/* > runtime_report/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-python313-support-wheelhouse
+          path: |
+            wheelhouse
+            runtime_report
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
