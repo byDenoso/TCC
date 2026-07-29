@@ -1,0 +1,54 @@
+name: Launch direct-H0 ACT matched campaign
+
+on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-h0-launcher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_WORKFLOW: act-dr6-h0-direct-matched.yml
+    steps:
+      - name: Dispatch the exact scientific branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF="$GITHUB_REF_NAME"
+          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$REF" --jq '.sha')
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+            --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --jq '.[0].databaseId // 0')
+          gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          RUN_ID=0
+          for I in $(seq 1 36); do
+            sleep 10
+            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+              --branch "$REF" --event workflow_dispatch --limit 8 \
+              --json databaseId,headSha,status,createdAt)
+            RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
+              '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
+            if [ "$RUN_ID" != "0" ]; then break; fi
+          done
+          test "$RUN_ID" != "0"
+          printf '%s\n' "$RUN_ID" | tee h0_matched_run_id.txt
+          printf '%s\n' "$TARGET_SHA" | tee h0_matched_head_sha.txt
+          gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
+            --body "Direct-H0 ACT matched campaign launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: direct-h0-act-run-pointer
+          path: |
+            h0_matched_run_id.txt
+            h0_matched_head_sha.txt
+          retention-days: 30
