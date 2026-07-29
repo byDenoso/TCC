@@ -1,0 +1,204 @@
+name: ACT DR6 direct-H0 matched MCMC
+
+on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-h0-direct-matched.yml'
+      - 'act_dr6_mcmc_20260729/h0_campaign.py'
+      - 'act_dr6_mcmc_20260729/planck_full_lite.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: '30455821484'
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  config-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pyyaml
+      - name: Verify all eight configs are constructible
+        run: |
+          python - <<'PY'
+          import tempfile
+          from pathlib import Path
+          from act_dr6_mcmc_20260729.h0_campaign import build
+          for lane in ('A','B'):
+              for model in ('M0','M1','M2','M3'):
+                  info=build(model,lane,'/tmp/packages',f'/tmp/{lane}_{model}/chain',20)
+                  assert info['params']['H0']['prior']['min']==60.0
+                  assert info['sampler']['mcmc']['Rminus1_stop']==0.01
+                  assert 'act_dr6_cmbonly' in info['likelihood']
+          print('8/8 configurations passed')
+          PY
+
+  mcmc:
+    needs: config-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        lane: [A, B]
+        model: [M0, M1, M2, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Linux runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - name: Download byte-verified runtime and likelihood payload
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+      - name: Activate validated CAMB scalar-field runtime
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          test -n "$WHEEL"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          print(sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+      - name: Install frozen ACT DR6 likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Generate exact matched configuration
+        run: |
+          ROOT="$GITHUB_WORKSPACE/campaign_${{ matrix.lane }}_${{ matrix.model }}"
+          python act_dr6_mcmc_20260729/h0_campaign.py \
+            --lane '${{ matrix.lane }}' --model '${{ matrix.model }}' \
+            --packages-path "$COBAYA_PACKAGES_PATH" --root "$ROOT" --max-samples 4000
+      - name: Run four MPI chains, segment 1
+        shell: bash
+        run: |
+          set +e
+          ROOT="$GITHUB_WORKSPACE/campaign_${{ matrix.lane }}_${{ matrix.model }}"
+          timeout --signal=TERM 150m mpirun --oversubscribe -np 4 \
+            cobaya-run "$ROOT/configs/mcmc.yaml" \
+            >"$ROOT/logs/mcmc_segment1.stdout.log" 2>"$ROOT/logs/mcmc_segment1.stderr.log"
+          echo "$?" > "$ROOT/logs/mcmc_segment1.exit_code"
+          exit 0
+      - name: Diagnose midpoint and prepare resume
+        run: |
+          ROOT="$GITHUB_WORKSPACE/campaign_${{ matrix.lane }}_${{ matrix.model }}"
+          python act_dr6_mcmc_20260729/convergence_gate.py --root "$ROOT" --burn 0.30 \
+            --params H0 ombh2 omch2 tau logA ns peer_fede Alens rdrag omegam sigma8 S8 A_act P_act A_planck || true
+          python - "$ROOT/configs/mcmc.yaml" <<'PY'
+          import sys,yaml
+          p=sys.argv[1]; info=yaml.safe_load(open(p))
+          info['force']=False; info['resume']=True
+          yaml.safe_dump(info,open(p,'w'),sort_keys=False)
+          PY
+      - name: Run four MPI chains, segment 2 when needed
+        shell: bash
+        run: |
+          set +e
+          ROOT="$GITHUB_WORKSPACE/campaign_${{ matrix.lane }}_${{ matrix.model }}"
+          DONE=$(python - <<PY
+          import json
+          try: print(int(bool(json.load(open('$ROOT/convergence_gate.json'))['converged'])))
+          except Exception: print(0)
+          PY
+          )
+          if [ "$DONE" = 0 ]; then
+            timeout --signal=TERM 145m mpirun --oversubscribe -np 4 \
+              cobaya-run -r "$ROOT/configs/mcmc.yaml" \
+              >"$ROOT/logs/mcmc_segment2.stdout.log" 2>"$ROOT/logs/mcmc_segment2.stderr.log"
+            echo "$?" > "$ROOT/logs/mcmc_segment2.exit_code"
+          fi
+          exit 0
+      - name: Final independent convergence gate
+        if: always()
+        run: |
+          ROOT="$GITHUB_WORKSPACE/campaign_${{ matrix.lane }}_${{ matrix.model }}"
+          python act_dr6_mcmc_20260729/convergence_gate.py --root "$ROOT" --burn 0.30 \
+            --params H0 ombh2 omch2 tau logA ns peer_fede Alens rdrag omegam sigma8 S8 A_act P_act A_planck || true
+          python act_dr6_mcmc_20260729/analyze_chains.py \
+            --model '${{ matrix.model }}' --root "$ROOT" --burn 0.30 || true
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SHA256SUMS.txt"
+      - name: Upload exact chains and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-h0-${{ matrix.lane }}-${{ matrix.model }}-20260729
+          path: campaign_${{ matrix.lane }}_${{ matrix.model }}
+          if-no-files-found: error
+          retention-days: 30
+
+  collect:
+    if: always()
+    needs: mcmc
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act-dr6-h0-*-20260729
+          path: matched
+      - name: Build campaign status table
+        run: |
+          python - <<'PY'
+          import csv,json
+          from pathlib import Path
+          rows=[]
+          for p in sorted(Path('matched').rglob('convergence_gate.json')):
+              d=json.load(open(p)); root=Path(d['root'])
+              manifest=json.load(open(root/'manifest.json'))
+              rows.append({
+                  'lane':manifest['lane'],'model':manifest['model'],'converged':d['converged'],
+                  'n_chains':d['n_chains_read'],'rhat_minus1_max':d['rhat_minus1_max'],
+                  'ess_bulk_min':d['ess_bulk_min'],'ess_tail_min':d['ess_tail_min']})
+          Path('matched_status.json').write_text(json.dumps(rows,indent=2))
+          with open('matched_status.csv','w',newline='') as f:
+              w=csv.DictWriter(f,fieldnames=list(rows[0]) if rows else ['lane']); w.writeheader(); w.writerows(rows)
+          print(json.dumps(rows,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-h0-matched-status-20260729
+          path: |
+            matched_status.json
+            matched_status.csv
+          retention-days: 30
