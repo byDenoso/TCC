@@ -1,0 +1,123 @@
+name: ACT DR6 Lane B full Planck robustness
+
+on:
+  workflow_run:
+    workflows: ["ACT DR6 Lane A convergence continuation"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      lane_a_run_id:
+        description: Converged Lane A continuation run ID
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  LANEA_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.lane_a_run_id }}
+  SCIENCE_REF: act-dr6-peer-test-20260729
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
+jobs:
+  minimize:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    env:
+      MODEL: ${{ matrix.model }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh install
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh prepare-minimize
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh run-minima
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act-dr6-laneb-minima-${{ matrix.model }}-20260729
+          path: lane_b_${{ matrix.model }}
+          retention-days: 30
+
+  mcmc:
+    needs: minimize
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    env:
+      MODEL: ${{ matrix.model }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh install
+      - name: Download this run's matched minima
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "act-dr6-laneb-minima-${MODEL}-20260729" --dir lane_b_download
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh prepare-mcmc
+      - run: bash act_dr6_mcmc_20260729/ci_lane_b.sh run-mcmc
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act-dr6-laneb-final-${{ matrix.model }}-20260729
+          path: lane_b_${{ matrix.model }}
+          retention-days: 30
+      - name: Enforce Lane B hard gate
+        run: python act_dr6_mcmc_20260729/convergence_gate.py --root "lane_b_${MODEL}" --burn 0.30
+
+  compare:
+    needs: mcmc
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act-dr6-laneb-final-*-20260729
+          path: lane_b_downloads
+      - name: Download converged Lane A quartet
+        run: |
+          for MODEL in M0 M1 M2 M3; do
+            gh run download "$LANEA_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "act-dr6-lanea-final-${MODEL}-20260729" --dir "lane_a_downloads/${MODEL}"
+          done
+      - name: Assemble matched and robustness summaries
+        run: |
+          set -euxo pipefail
+          mkdir -p assembled/lane_a assembled/lane_b
+          for MODEL in M0 M1 M2 M3; do
+            A=$(find "lane_a_downloads/${MODEL}" -type d -name "campaign_${MODEL}" | head -1)
+            B=$(find lane_b_downloads -type d -name "lane_b_${MODEL}" | head -1)
+            test -n "$A"; test -n "$B"
+            cp -r "$A" "assembled/lane_a/${MODEL}"
+            cp -r "$B" "assembled/lane_b/${MODEL}"
+          done
+          python act_dr6_mcmc_20260729/matched_compare.py --base assembled/lane_b
+          python act_dr6_mcmc_20260729/lane_robustness_compare.py --lane-a assembled/lane_a --lane-b assembled/lane_b --output assembled/lane_robustness_shift.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-laneb-robustness-comparison-20260729
+          path: assembled
+          retention-days: 30
