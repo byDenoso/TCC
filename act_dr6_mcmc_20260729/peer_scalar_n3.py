@@ -4,7 +4,7 @@ import numpy as np
 from cobaya.theories.camb import camb as cobaya_camb
 from cobaya.theories.camb.camb import CambTransfers
 
-from camb import dark_energy
+from camb import bbn, constants, dark_energy
 
 
 def _scalarize(value):
@@ -60,6 +60,21 @@ class PEERScalarN3(cobaya_camb.CAMB):
 
         def patched_set_params(*args, **kwargs):
             clean = {k: _scalarize(v) for k, v in kwargs.items()}
+            if clean.get("YHe") is None:
+                ombh2 = float(clean.get("ombh2", 0.022))
+                nnu = float(clean.get("nnu", constants.default_nnu))
+                standard = float(clean.get("standard_neutrino_neff", constants.default_nnu))
+                tcmb = float(clean.get("TCMB", constants.COBE_CMBTemp))
+                predictor = clean.get("bbn_predictor")
+                if isinstance(predictor, str):
+                    predictor = bbn.get_predictor(predictor)
+                predictor = predictor or bbn.get_predictor()
+                yhe = predictor.Y_He(
+                    ombh2 * (constants.COBE_CMBTemp / tcmb) ** 3,
+                    nnu - standard,
+                )
+                clean["YHe"] = float(_scalarize(yhe))
+                clean.pop("bbn_predictor", None)
             pars = original(*args, **clean)
             if fede <= 1e-10:
                 return pars
