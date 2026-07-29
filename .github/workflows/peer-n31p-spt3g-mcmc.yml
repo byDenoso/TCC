@@ -101,7 +101,6 @@ jobs:
             --packages-path "$COBAYA_PACKAGES_PATH" \
             --no-progress-bars --no-set-global
           python - <<'PY'
-          from cobaya.install import install
           import spt3g_2022
           print('SPT module:', spt3g_2022.__file__)
           PY
@@ -162,19 +161,23 @@ jobs:
           }
           for SEGMENT in 1 2; do
             if is_done; then break; fi
+            export SEGMENT
             WORK_BASE="$ROOT/mpi_work_${SEGMENT}"
             mkdir -p "$WORK_BASE"
-            if [ "$SEGMENT" -eq 1 ]; then RESUME=""; else RESUME="-r"; fi
             set +e
             timeout --signal=TERM 150m mpirun --oversubscribe -np 4 \
               bash -lc '
                 RANK=${OMPI_COMM_WORLD_RANK:-0}
-                WORK="$ROOT/mpi_work_'"$SEGMENT"'/rank_${RANK}"
+                WORK="$ROOT/mpi_work_${SEGMENT}/rank_${RANK}"
                 mkdir -p "$WORK/temp"
                 ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
                 ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
                 cd "$WORK"
-                cobaya-run '"$RESUME"' "$ROOT/configs/mcmc.yaml"
+                if [ "$SEGMENT" -eq 1 ]; then
+                  cobaya-run "$ROOT/configs/mcmc.yaml"
+                else
+                  cobaya-run -r "$ROOT/configs/mcmc.yaml"
+                fi
               ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
                 2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
             CODE=$?
