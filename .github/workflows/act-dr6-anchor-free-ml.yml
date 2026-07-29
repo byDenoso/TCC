@@ -1,0 +1,229 @@
+name: ACT DR6 anchor-free matched ML
+
+on:
+  push:
+    branches: [act-dr6-anchor-free-20260729]
+    paths:
+      - '.github/workflows/act-dr6-anchor-free-ml.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: '30455821484'
+  SOURCE_HEAD_SHA: d012a79642d041414b984b5f8e8ca235f1afbd93
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download validated source artifacts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > source_run.json
+          test "$(jq -r '.head_sha' source_run.json)" = "$SOURCE_HEAD_SHA"
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
+          test -f payload/official-likelihood-packages-v3.tar.gz
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-anchor-free-runtime
+          path: |
+            validated
+            payload
+            source_run.json
+          retention-days: 30
+
+  minimize:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install scientific runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: act-anchor-free-runtime
+          path: runtime_bundle
+      - name: Activate byte-verified likelihood payload
+        shell: bash
+        run: |
+          set -euxo pipefail
+          tar -xzf runtime_bundle/payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+      - name: Activate validated CAMB CosmoRec runtime
+        shell: bash
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find runtime_bundle/validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find runtime_bundle/validated -type d -name Rec_database | head -1)
+          DEV=$(find runtime_bundle/validated -type d -name Development | head -1)
+          test -n "$WHEEL"
+          test -n "$DB"
+          test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          python - <<'PY'
+          import camb
+          from camb import recombination
+          print('CAMB', camb.__version__, camb.__file__, 'CosmoRec', type(recombination.CosmoRec()).__name__)
+          PY
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          print(sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+      - name: Install frozen ACT likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Generate four anchor-free matched starts
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          python act_dr6_mcmc_20260729/campaign.py write-configs \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          python - "$ROOT" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          import yaml
+
+          root = Path(sys.argv[1])
+          for path in sorted((root / 'configs').glob('*.yaml')):
+              cfg = yaml.safe_load(path.read_text(encoding='utf-8'))
+              cfg.get('likelihood', {}).pop('shoes_h0.SH0ESGaussian', None)
+              cfg.get('params', {}).pop('chi2__shoes_h0.SH0ESGaussian', None)
+              cfg['output'] = str(root / path.stem.replace('minimize_', 'minimize/start_') / 'chain') if path.stem.startswith('minimize_') else cfg['output']
+              path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding='utf-8')
+          for i in range(5, 9):
+              (root / 'configs' / f'minimize_{i}.yaml').unlink(missing_ok=True)
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          manifest['lane'] = 'A_PACT_ANCHOR_FREE'
+          manifest['stack'] = 'Planck low-l TT + Sroll2 EE + PlanckActCut + ACT DR6 TTTEEE + Planck lensing + DESI DR2 BAO; no SH0ES/TRGB'
+          manifest.pop('shoes', None)
+          (root / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
+          for path in sorted((root / 'configs').glob('*.yaml')):
+              text = path.read_text(encoding='utf-8')
+              if 'SH0ES' in text or 'shoes_h0' in text:
+                  raise SystemExit(f'anchor leakage in {path}')
+          PY
+          test "$(find "$ROOT/configs" -name 'minimize_*.yaml' | wc -l)" -eq 4
+      - name: Run four independent starts
+        shell: bash
+        run: |
+          set -uo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          run_one() {
+            I="$1"
+            mkdir -p "$ROOT/logs"
+            WORK="$ROOT/work/start_${I}"
+            mkdir -p "$WORK/temp"
+            ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+            ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+            set +e
+            (cd "$WORK" && cobaya-run "$ROOT/configs/minimize_${I}.yaml") \
+              >"$ROOT/logs/minimize_${I}.stdout.log" \
+              2>"$ROOT/logs/minimize_${I}.stderr.log"
+            printf '%s\n' "$?" > "$ROOT/logs/minimize_${I}.exit_code"
+            return 0
+          }
+          export -f run_one
+          export ROOT GITHUB_WORKSPACE
+          seq 1 4 | xargs -n1 -P2 bash -c 'run_one "$@"' _
+          python act_dr6_mcmc_20260729/campaign.py summarize --model "$MODEL" --root "$ROOT" || true
+          NMIN=$(find "$ROOT/minimize" -name 'chain.minimum.txt' | wc -l)
+          printf 'valid_minima=%s\n' "$NMIN" | tee "$ROOT/valid_minima.txt"
+          test "$NMIN" -eq 4
+      - name: Upload anchor-free minima
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: act-anchor-free-minima-${{ matrix.model }}-20260729
+          path: campaign_${{ matrix.model }}
+          retention-days: 30
+
+  aggregate:
+    needs: minimize
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act-anchor-free-minima-*-20260729
+          path: results
+      - name: Aggregate matched quartet
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+          rows = []
+          for path in sorted(Path('results').rglob('campaign_summary.json')):
+              data = json.loads(path.read_text(encoding='utf-8'))
+              best = data.get('best_minimum') or {}
+              rows.append({
+                  'model': data.get('model'),
+                  'n_minima_found': data.get('n_minima_found', 0),
+                  'minuslogpost': best.get('minuslogpost'),
+                  'chi2': best.get('chi2'),
+                  'H0': best.get('H0'),
+                  'peer_fede': best.get('peer_fede'),
+                  'Alens': best.get('Alens'),
+              })
+          if len(rows) != 4 or any(int(r['n_minima_found']) != 4 for r in rows):
+              raise SystemExit(f'quartet incomplete: {rows}')
+          with open('ACT_DR6_ANCHOR_FREE_MATCHED_ML_20260729.csv', 'w', newline='', encoding='utf-8') as f:
+              w = csv.DictWriter(f, fieldnames=rows[0].keys())
+              w.writeheader(); w.writerows(rows)
+          Path('ACT_DR6_ANCHOR_FREE_MATCHED_ML_20260729.json').write_text(json.dumps(rows, indent=2), encoding='utf-8')
+          print(json.dumps(rows, indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-anchor-free-matched-ml-summary-20260729
+          path: |
+            ACT_DR6_ANCHOR_FREE_MATCHED_ML_20260729.csv
+            ACT_DR6_ANCHOR_FREE_MATCHED_ML_20260729.json
+          retention-days: 30
