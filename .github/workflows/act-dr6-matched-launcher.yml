@@ -1,6 +1,10 @@
 name: Launch ACT DR6 matched quartet
 
 on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-matched-launcher.yml'
   pull_request:
     branches: [main]
     paths:
