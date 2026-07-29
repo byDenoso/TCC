@@ -86,7 +86,14 @@ class PEERScalarN3(cobaya_camb.CAMB):
                 clean["YHe"] = float(_scalarize(yhe))
                 clean.pop("bbn_predictor", None)
 
-            cp = self.camb.model.CAMBparams()
+            explicit_cp = clean.pop("cp", None)
+            if args:
+                cp = args[0]
+                tail = args[1:]
+            else:
+                cp = explicit_cp if explicit_cp is not None else self.camb.model.CAMBparams()
+                tail = ()
+
             if fede > 1e-10:
                 ede = dark_energy.EarlyQuintessence()
                 ede.n = 3
@@ -94,7 +101,8 @@ class PEERScalarN3(cobaya_camb.CAMB):
                 ede.zc = 10.0 ** logzc
                 ede.theta_i = thetai
                 cp.DarkEnergy = ede
-            return original(*args, cp=cp, **clean)
+
+            return original(cp, *tail, **clean)
 
         self.camb.set_params = patched_set_params
         return super().set(values, state)
