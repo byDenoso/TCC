@@ -70,6 +70,13 @@ prepare_minimize() {
   python act_dr6_mcmc_20260729/lane_b_campaign.py write-configs \
     --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT" \
     --lane-a-best "$best" "${args[@]}"
+  python - "$ROOT/configs/mcmc.yaml" <<'PY'
+import sys, yaml
+path = sys.argv[1]
+info = yaml.safe_load(open(path, encoding='utf-8'))
+info['resume'] = False
+yaml.safe_dump(info, open(path, 'w', encoding='utf-8'), sort_keys=False)
+PY
   find "$COBAYA_PACKAGES_PATH/data/planck_2018" -type f -print0 | sort -z | xargs -0 sha256sum \
     > "$ROOT/lane_b_planck_highl_sha256.txt"
 }
@@ -123,6 +130,7 @@ PY
 }
 
 run_mcmc() {
+  export ROOT GITHUB_WORKSPACE
   mkdir -p "$ROOT/logs"
   diagnose
   for segment in 1 2; do
