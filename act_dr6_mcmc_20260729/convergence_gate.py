@@ -60,16 +60,16 @@ def _checkpoint(root: Path) -> dict:
     return {"exists": True, "converged": bool(mcmc.get("converged", False)), "Rminus1_last": value}
 
 
-def _finite_max(values: Iterable[float]) -> float:
+def _finite_max(values: Iterable[float]) -> float | None:
     arr = np.asarray(list(values), dtype=float)
     arr = arr[np.isfinite(arr)]
-    return float(arr.max()) if arr.size else math.inf
+    return float(arr.max()) if arr.size else None
 
 
-def _finite_min(values: Iterable[float]) -> float:
+def _finite_min(values: Iterable[float]) -> float | None:
     arr = np.asarray(list(values), dtype=float)
     arr = arr[np.isfinite(arr)]
-    return float(arr.min()) if arr.size else 0.0
+    return float(arr.min()) if arr.size else None
 
 
 def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | None = None,
@@ -126,8 +126,9 @@ def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | 
     ess_bulk_min = _finite_min(ess_bulk.values())
     ess_tail_min = _finite_min(ess_tail.values())
     n_chains = len(frames)
-    converged = bool(n_chains >= 4 and checkpoint["converged"] and rhat_minus1
-                     and math.isfinite(rhat_minus1_max) and rhat_minus1_max < rhat_minus1_limit)
+    diagnostics_finite = rhat_minus1_max is not None and math.isfinite(rhat_minus1_max)
+    converged = bool(n_chains >= 4 and checkpoint["converged"] and diagnostics_finite
+                     and rhat_minus1_max < rhat_minus1_limit)
     return {
         "root": str(root), "burn_fraction": burn_fraction,
         "n_chain_files": len(chain_paths), "n_chains_read": n_chains,
