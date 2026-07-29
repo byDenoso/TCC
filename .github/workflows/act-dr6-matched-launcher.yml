@@ -24,43 +24,47 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Locate or dispatch matched quartet workflow
+      - name: Dispatch matched quartet for current head
         shell: bash
         run: |
           set -euo pipefail
           REF='${{ github.head_ref }}'
           if [ -z "$REF" ]; then REF='act-dr6-peer-test-20260729'; fi
-          RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
-            --branch "$REF" --event workflow_dispatch --limit 1 \
-            --json databaseId,status,createdAt)
-          RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r '.[0].databaseId // 0')
-          RUN_STATUS=$(printf '%s' "$RUN_JSON" | jq -r '.[0].status // "none"')
-          if [ "$RUN_ID" = "0" ] || { [ "$RUN_STATUS" != "queued" ] && [ "$RUN_STATUS" != "in_progress" ]; }; then
-            BEFORE="$RUN_ID"
-            gh workflow run act-dr6-matched-mcmc.yml --repo "$GITHUB_REPOSITORY" --ref "$REF"
-            for I in $(seq 1 30); do
-              sleep 10
-              RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
-                --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
-                --jq '.[0].databaseId // 0')
-              if [ "$RUN_ID" != "0" ] && [ "$RUN_ID" != "$BEFORE" ]; then break; fi
-            done
-          fi
+          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$REF" --jq '.sha')
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+            --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --jq '.[0].databaseId // 0')
+          gh workflow run act-dr6-matched-mcmc.yml --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          RUN_ID=0
+          RUN_SHA=''
+          for I in $(seq 1 36); do
+            sleep 10
+            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+              --branch "$REF" --event workflow_dispatch --limit 3 \
+              --json databaseId,headSha,status,createdAt)
+            RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
+              '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
+            RUN_SHA=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
+              '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].headSha // ""')
+            if [ "$RUN_ID" != "0" ] && [ "$RUN_SHA" = "$TARGET_SHA" ]; then break; fi
+          done
           test "$RUN_ID" != "0"
-          echo "$RUN_ID" | tee matched_run_id.txt
+          test "$RUN_SHA" = "$TARGET_SHA"
+          printf '%s\n' "$RUN_ID" | tee matched_run_id.txt
+          printf '%s\n' "$RUN_SHA" | tee matched_head_sha.txt
           PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$REF" --state open --limit 1 \
             --json number --jq '.[0].number // 0')
           if [ "$PR" != "0" ]; then
             gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" \
-              --body "ACT DR6 matched quartet launched. Workflow run ID: **$RUN_ID**."
+              --body "ACT DR6 matched quartet launched from head \`$RUN_SHA\`. Workflow run ID: **$RUN_ID**."
           fi
           gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: act-dr6-matched-run-pointer
-          path: matched_run_id.txt
+          path: |
+            matched_run_id.txt
+            matched_head_sha.txt
           if-no-files-found: warn
           retention-days: 30
-
-# Relaunch after packaged CosmoRec database and pre-theta PEER injection.
