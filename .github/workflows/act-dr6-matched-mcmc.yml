@@ -14,7 +14,7 @@ permissions:
 env:
   COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
   ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
-  DATA_CACHE_KEY: act-pact-desi-dr2-planck-20260729-v2
+  DATA_CACHE_KEY: act-pact-desi-dr2-planck-20260729-v3
   OMP_NUM_THREADS: '1'
   OPENBLAS_NUM_THREADS: '1'
   MKL_NUM_THREADS: '1'
