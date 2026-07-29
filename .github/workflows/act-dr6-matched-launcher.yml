@@ -1,0 +1,51 @@
+name: Launch ACT DR6 matched quartet
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/act-dr6-matched-launcher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  launch-and-watch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch matched quartet workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF='${{ github.head_ref }}'
+          if [ -z "$REF" ]; then REF='act-dr6-peer-test-20260729'; fi
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+            --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --jq '.[0].databaseId // 0')
+          gh workflow run act-dr6-matched-mcmc.yml --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          for I in $(seq 1 30); do
+            sleep 10
+            RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+              --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+              --jq '.[0].databaseId // 0')
+            if [ "$RUN_ID" != "0" ] && [ "$RUN_ID" != "$BEFORE" ]; then
+              echo "Matched workflow run: $RUN_ID"
+              echo "$RUN_ID" > matched_run_id.txt
+              gh run watch "$RUN_ID" --repo "$GITHUB_REPOSITORY" --exit-status
+              exit $?
+            fi
+          done
+          echo 'Dispatched run was not found within five minutes.' >&2
+          exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act-dr6-matched-run-pointer
+          path: matched_run_id.txt
+          if-no-files-found: warn
+          retention-days: 30
