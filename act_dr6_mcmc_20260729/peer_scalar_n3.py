@@ -8,12 +8,22 @@ from camb import dark_energy
 
 
 def _scalarize(value):
+    if isinstance(value, (list, tuple)):
+        if not value:
+            return value
+        return _scalarize(value[0])
     if isinstance(value, np.ndarray):
         if value.size == 0:
             return value
-        return value.reshape(-1)[0].item()
+        return _scalarize(value.reshape(-1)[0])
     if isinstance(value, np.generic):
         return value.item()
+    try:
+        arr = np.asarray(value)
+        if arr.ndim > 0 and arr.size:
+            return _scalarize(arr.reshape(-1)[0])
+    except Exception:
+        pass
     return value
 
 
