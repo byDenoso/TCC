@@ -7,6 +7,13 @@ from cobaya.theories.camb.camb import CambTransfers
 from camb import bbn, constants, dark_energy
 
 
+_SCALAR_COSMOLOGY_KEYS = {
+    "H0", "ombh2", "omch2", "omk", "cosmomc_theta", "thetastar",
+    "num_massive_neutrinos", "mnu", "nnu", "YHe", "meffsterile",
+    "standard_neutrino_neff", "TCMB", "tau", "zrei", "Alens",
+}
+
+
 def _scalarize(value):
     if isinstance(value, (list, tuple)):
         if not value:
@@ -59,12 +66,15 @@ class PEERScalarN3(cobaya_camb.CAMB):
         original = self._original_camb_set_params
 
         def patched_set_params(*args, **kwargs):
-            clean = {k: _scalarize(v) for k, v in kwargs.items()}
+            clean = dict(kwargs)
+            for key in _SCALAR_COSMOLOGY_KEYS:
+                if key in clean and clean[key] is not None:
+                    clean[key] = _scalarize(clean[key])
             if clean.get("YHe") is None:
-                ombh2 = float(clean.get("ombh2", 0.022))
-                nnu = float(clean.get("nnu", constants.default_nnu))
-                standard = float(clean.get("standard_neutrino_neff", constants.default_nnu))
-                tcmb = float(clean.get("TCMB", constants.COBE_CMBTemp))
+                ombh2 = float(_scalarize(clean.get("ombh2", 0.022)))
+                nnu = float(_scalarize(clean.get("nnu", constants.default_nnu)))
+                standard = float(_scalarize(clean.get("standard_neutrino_neff", constants.default_nnu)))
+                tcmb = float(_scalarize(clean.get("TCMB", constants.COBE_CMBTemp)))
                 predictor = clean.get("bbn_predictor")
                 if isinstance(predictor, str):
                     predictor = bbn.get_predictor(predictor)
