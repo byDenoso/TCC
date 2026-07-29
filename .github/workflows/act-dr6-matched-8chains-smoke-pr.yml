@@ -1,0 +1,181 @@
+name: ACT DR6 matched quartet 8-chain smoke
+
+on:
+  pull_request:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-matched-8chains-smoke-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: '30455821484'
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  smoke-mcmc:
+    name: smoke-mcmc (${{ matrix.model }}, 2 chains)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 140
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        model: [M0, M1, M2, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Linux and Python runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - name: Download validated runtime and likelihood payload
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+      - name: Activate validated CAMB CosmoRec runtime
+        shell: bash
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          matches = sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))
+          if not matches:
+              raise SystemExit('camblib not found')
+          print(matches[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+      - name: Install frozen ACT DR6 likelihood
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Build matched two-chain smoke configuration
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/smoke_${MODEL}"
+          python act_dr6_mcmc_20260729/campaign.py write-configs \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          python - "$ROOT/configs/mcmc.yaml" "$ROOT" <<'PY'
+          import sys
+          from pathlib import Path
+          import yaml
+          path = Path(sys.argv[1])
+          root = Path(sys.argv[2])
+          info = yaml.safe_load(path.read_text(encoding='utf-8'))
+          info['output'] = str((root / 'mcmc' / 'chain').resolve())
+          info['force'] = True
+          info['resume'] = False
+          sampler = info['sampler']['mcmc']
+          sampler['max_samples'] = 600
+          sampler['burn_in'] = 50
+          sampler['Rminus1_stop'] = 0.10
+          sampler['Rminus1_cl_stop'] = 0.20
+          sampler['output_every'] = 30
+          path.write_text(yaml.safe_dump(info, sort_keys=False), encoding='utf-8')
+          PY
+      - name: Run two independent MPI chains
+        shell: bash
+        run: |
+          set +e
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/smoke_${MODEL}"
+          mkdir -p "$ROOT/logs" "$ROOT/mpi_work"
+          export ROOT GITHUB_WORKSPACE
+          timeout --signal=TERM 105m mpirun --oversubscribe -np 2 \
+            bash -lc '
+              RANK=${OMPI_COMM_WORLD_RANK:-0}
+              WORK="$ROOT/mpi_work/rank_${RANK}"
+              mkdir -p "$WORK/temp"
+              ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+              ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+              cd "$WORK"
+              cobaya-run "$ROOT/configs/mcmc.yaml"
+            ' >"$ROOT/logs/mcmc.stdout.log" 2>"$ROOT/logs/mcmc.stderr.log"
+          CODE=$?
+          printf '%s\n' "$CODE" > "$ROOT/mcmc_exit_code.txt"
+          exit 0
+      - name: Verify smoke outputs
+        if: always()
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/smoke_${MODEL}"
+          N=$(find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c | wc -l)
+          printf 'chains_found=%s\n' "$N" | tee "$ROOT/smoke_status.txt"
+          python act_dr6_mcmc_20260729/analyze_chains.py \
+            --model "$MODEL" --root "$ROOT" --burn 0.10 || true
+          find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SHA256SUMS.txt"
+          test "$N" -eq 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act8-smoke-${{ matrix.model }}-20260729
+          path: smoke_${{ matrix.model }}
+          if-no-files-found: error
+          retention-days: 30
+
+  collect:
+    if: always()
+    needs: smoke-mcmc
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act8-smoke-*-20260729
+          path: smoke-results
+      - name: Build smoke manifest
+        shell: bash
+        run: |
+          set -euxo pipefail
+          find smoke-results -type f -name smoke_status.txt -print -exec cat {} \; | tee ACT8_SMOKE_MANIFEST.txt
+          COUNT=$(find smoke-results -type f -name 'chain.*.txt' -size +0c | wc -l)
+          printf 'total_nonempty_chains=%s\n' "$COUNT" | tee -a ACT8_SMOKE_MANIFEST.txt
+          test "$COUNT" -eq 8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act8-smoke-manifest-20260729
+          path: ACT8_SMOKE_MANIFEST.txt
+          retention-days: 30
