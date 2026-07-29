@@ -1,0 +1,375 @@
+name: ACT DR6 matched quartet 64 chains
+
+on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-matched-64chains.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: '30453797932'
+  SOURCE_HEAD_SHA: 3feb2ad59ebde50a42ec83807fa381420d56730c
+  STAGED_RUN_ID: '30455821484'
+  STAGED_HEAD_SHA: d012a79642d041414b984b5f8e8ca235f1afbd93
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  stage-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify provenance and unchanged scientific tree
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > source_run.json
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$STAGED_RUN_ID" > staged_run.json
+          test "$(jq -r '.head_sha' source_run.json)" = "$SOURCE_HEAD_SHA"
+          test "$(jq -r '.head_sha' staged_run.json)" = "$STAGED_HEAD_SHA"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID/jobs" > source_jobs.json
+          jq -e '[.jobs[] | select(.name == "reference" and .conclusion == "success")] | length == 1' source_jobs.json
+          jq -e '[.jobs[] | select(.name == "prepare" and .conclusion == "success")] | length == 1' source_jobs.json
+          git diff --exit-code "$SOURCE_HEAD_SHA" HEAD -- act_dr6_mcmc_20260729 | tee scientific_diff.txt
+      - name: Reuse validated runtime and byte-verified likelihood payload
+        shell: bash
+        run: |
+          set -euxo pipefail
+          gh run download "$STAGED_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir staged/runtime
+          gh run download "$STAGED_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir staged/payload
+          test -n "$(find staged/runtime -type f -name 'camb-*.whl' -print -quit)"
+          test -n "$(find staged/runtime -type d -name Rec_database -print -quit)"
+          test -n "$(find staged/runtime -type d -name Development -print -quit)"
+          (cd staged/payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          find staged -type f -print0 | sort -z | xargs -0 sha256sum > staged_sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act64-staged-runtime-payload
+          path: |
+            staged
+            source_run.json
+            staged_run.json
+            source_jobs.json
+            scientific_diff.txt
+            staged_sha256.txt
+          retention-days: 30
+
+  minimize-start:
+    needs: stage-runtime
+    name: minimize-start (${{ matrix.model }}, ${{ matrix.start }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 230
+    strategy:
+      fail-fast: false
+      max-parallel: 32
+      matrix:
+        model: [M0, M1, M2, M3]
+        start: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: act64-staged-runtime-payload
+          path: staged_bundle
+      - name: Activate validated payload and CAMB CosmoRec
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PAYLOAD=$(find staged_bundle -type f -name official-likelihood-packages-v3.tar.gz | head -1)
+          SHAFILE=$(find staged_bundle -type f -name official-likelihood-packages-v3.tar.gz.sha256 | head -1)
+          WHEEL=$(find staged_bundle -type f -name 'camb-*.whl' | head -1)
+          DB=$(find staged_bundle -type d -name Rec_database | head -1)
+          DEV=$(find staged_bundle -type d -name Development | head -1)
+          test -n "$PAYLOAD"; test -n "$SHAFILE"; test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          (cd "$(dirname "$PAYLOAD")" && sha256sum -c "$(basename "$SHAFILE")")
+          tar -xzf "$PAYLOAD" -C "$GITHUB_WORKSPACE"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          matches = sorted(Path(camb.__file__).resolve().parent.glob("camblib*.so"))
+          if not matches:
+              raise SystemExit("camblib not found")
+          print(matches[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+      - name: Install frozen ACT likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Generate and run one isolated minimizer
+        shell: bash
+        run: |
+          set +e
+          MODEL='${{ matrix.model }}'
+          START='${{ matrix.start }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          python act_dr6_mcmc_20260729/campaign.py write-configs \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          WORK="$ROOT/work/start_${START}"
+          mkdir -p "$WORK/temp" "$ROOT/logs"
+          ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+          ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+          (
+            cd "$WORK"
+            timeout --signal=TERM 190m cobaya-run "$ROOT/configs/minimize_${START}.yaml"
+          ) >"$ROOT/logs/minimize_${START}.stdout.log" \
+            2>"$ROOT/logs/minimize_${START}.stderr.log"
+          CODE=$?
+          printf '%s\n' "$CODE" > "$ROOT/logs/minimize_${START}.exit_code"
+          python act_dr6_mcmc_20260729/campaign.py summarize --model "$MODEL" --root "$ROOT" || true
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act64-min-${{ matrix.model }}-start-${{ matrix.start }}
+          path: campaign_${{ matrix.model }}
+          if-no-files-found: error
+          retention-days: 30
+
+  minimize-aggregate:
+    needs: minimize-start
+    name: minimize-aggregate (${{ matrix.model }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act64-min-${{ matrix.model }}-start-*
+          path: collected
+          merge-multiple: true
+      - name: Require four valid minima and promote the best
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          mkdir -p "$ROOT"
+          cp -r collected/minimize "$ROOT/"
+          if [ -d collected/logs ]; then cp -r collected/logs "$ROOT/"; fi
+          python act_dr6_mcmc_20260729/campaign.py write-configs \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          python act_dr6_mcmc_20260729/campaign.py summarize --model "$MODEL" --root "$ROOT"
+          NMIN=$(find "$ROOT/minimize" -name 'chain.minimum.txt' | wc -l)
+          printf 'valid_minima=%s\n' "$NMIN" | tee "$ROOT/valid_minima.txt"
+          test "$NMIN" -ge 4
+          python act_dr6_mcmc_20260729/campaign.py promote-best --model "$MODEL" --root "$ROOT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act64-best-${{ matrix.model }}
+          path: campaign_${{ matrix.model }}
+          retention-days: 30
+
+  mcmc:
+    needs: [stage-runtime, minimize-aggregate]
+    name: mcmc (${{ matrix.model }}, replica ${{ matrix.replica }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        model: [M0, M1, M2, M3]
+        replica: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: act64-staged-runtime-payload
+          path: staged_bundle
+      - uses: actions/download-artifact@v4
+        with:
+          name: act64-best-${{ matrix.model }}
+          path: downloaded_minima
+      - name: Activate validated payload and CAMB CosmoRec
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PAYLOAD=$(find staged_bundle -type f -name official-likelihood-packages-v3.tar.gz | head -1)
+          SHAFILE=$(find staged_bundle -type f -name official-likelihood-packages-v3.tar.gz.sha256 | head -1)
+          WHEEL=$(find staged_bundle -type f -name 'camb-*.whl' | head -1)
+          DB=$(find staged_bundle -type d -name Rec_database | head -1)
+          DEV=$(find staged_bundle -type d -name Development | head -1)
+          (cd "$(dirname "$PAYLOAD")" && sha256sum -c "$(basename "$SHAFILE")")
+          tar -xzf "$PAYLOAD" -C "$GITHUB_WORKSPACE"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+      - name: Install frozen ACT likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Build seeded four-chain replica
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          REPLICA='${{ matrix.replica }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          python act_dr6_mcmc_20260729/campaign.py write-configs \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          SRC=$(find downloaded_minima -type d -name minimize | head -1)
+          test -n "$SRC"
+          rm -rf "$ROOT/minimize"
+          cp -r "$SRC" "$ROOT/minimize"
+          python act_dr6_mcmc_20260729/campaign.py promote-best --model "$MODEL" --root "$ROOT"
+          python - "$ROOT/configs/mcmc.yaml" "$ROOT" "$REPLICA" <<'PY'
+          import sys
+          from pathlib import Path
+          import yaml
+          path = Path(sys.argv[1])
+          root = Path(sys.argv[2])
+          replica = int(sys.argv[3])
+          info = yaml.safe_load(path.read_text(encoding="utf-8"))
+          info["output"] = str((root / "mcmc" / f"replica_{replica}" / "chain").resolve())
+          info["sampler"]["mcmc"]["seed"] += replica * 10000
+          info["resume"] = False
+          info["force"] = True
+          path.write_text(yaml.safe_dump(info, sort_keys=False), encoding="utf-8")
+          PY
+      - name: Run four MPI chains
+        shell: bash
+        run: |
+          set +e
+          MODEL='${{ matrix.model }}'
+          REPLICA='${{ matrix.replica }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          mkdir -p "$ROOT/logs" "$ROOT/mpi_work/replica_${REPLICA}"
+          export ROOT REPLICA GITHUB_WORKSPACE
+          timeout --signal=TERM 325m mpirun --oversubscribe -np 4 \
+            bash -lc '
+              RANK=${OMPI_COMM_WORLD_RANK:-0}
+              WORK="$ROOT/mpi_work/replica_${REPLICA}/rank_${RANK}"
+              mkdir -p "$WORK/temp"
+              ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+              ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+              cd "$WORK"
+              cobaya-run "$ROOT/configs/mcmc.yaml"
+            ' >"$ROOT/logs/mcmc_replica_${REPLICA}.stdout.log" \
+              2>"$ROOT/logs/mcmc_replica_${REPLICA}.stderr.log"
+          CODE=$?
+          printf '%s\n' "$CODE" > "$ROOT/mcmc_replica_${REPLICA}_exit_code.txt"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: act64-mcmc-${{ matrix.model }}-replica-${{ matrix.replica }}
+          path: campaign_${{ matrix.model }}
+          retention-days: 30
+
+  aggregate-64:
+    needs: mcmc
+    name: aggregate-64 (${{ matrix.model }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install 'numpy<2.4' pandas pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act64-mcmc-${{ matrix.model }}-replica-*
+          path: collected
+          merge-multiple: true
+      - name: Assemble and analyze sixteen chains
+        shell: bash
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/ACT64_${MODEL}"
+          mkdir -p "$ROOT/mcmc" "$ROOT/replica_metadata"
+          python - "$GITHUB_WORKSPACE/collected" "$ROOT" <<'PY'
+          import json, re, shutil, sys
+          from pathlib import Path
+          import yaml
+          src, dst = Path(sys.argv[1]), Path(sys.argv[2])
+          chains = []
+          for path in sorted(src.glob("mcmc/replica_*/chain.*.txt")):
+              rep = int(re.search(r"replica_(\d+)", str(path)).group(1))
+              rank = int(re.search(r"chain\.(\d+)\.txt$", path.name).group(1))
+              target = dst / "mcmc" / f"chain.{rep:02d}.{rank:02d}.txt"
+              shutil.copy2(path, target)
+              chains.append({"replica": rep, "rank": rank, "target": str(target)})
+          checkpoints = []
+          for path in sorted(src.glob("mcmc/replica_*/chain.checkpoint")):
+              rep = int(re.search(r"replica_(\d+)", str(path)).group(1))
+              shutil.copy2(path, dst / "replica_metadata" / f"checkpoint_replica_{rep}.yaml")
+              checkpoints.append(yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {})
+          report = {"chains_expected": 16, "chains_found": len(chains), "chains": chains, "checkpoints": checkpoints}
+          (dst / "chain_assembly.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+          if len(chains) < 16:
+              raise SystemExit(f"Expected 16 chains, found {len(chains)}")
+          PY
+          python act_dr6_mcmc_20260729/analyze_chains.py \
+            --model "$MODEL" --root "$ROOT" --burn 0.30
+          tar -czf "ACT_DR6_${MODEL}_16CHAINS_20260729.tar.gz" "ACT64_${MODEL}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act64-final-${{ matrix.model }}
+          path: |
+            ACT64_${{ matrix.model }}
+            ACT_DR6_${{ matrix.model }}_16CHAINS_20260729.tar.gz
+          retention-days: 30
