@@ -10,6 +10,8 @@ on:
 permissions:
   contents: read
   actions: write
+  issues: write
+  pull-requests: write
 
 jobs:
   dispatch:
@@ -40,6 +42,8 @@ jobs:
           test "$RUN_ID" != "0"
           printf '%s\n' "$RUN_ID" | tee matched_run_id.txt
           printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
+          gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
+            --body "Corrected ACT DR6 matched campaign launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-run-pointer
