@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      CAMPAIGN_GENERATION: resume-gsl-branch-cache-v2
-      TARGET_WORKFLOW: act-dr6-matched-resume-gsl.yml
+      CAMPAIGN_GENERATION: direct-h0-matched-v1
+      TARGET_WORKFLOW: act-dr6-h0-direct-matched.yml
     steps:
       - name: Dispatch exact branch head
         shell: bash
@@ -32,10 +32,10 @@ jobs:
             --jq '.[0].databaseId // 0')
           gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$REF"
           RUN_ID=0
-          for I in $(seq 1 30); do
+          for I in $(seq 1 36); do
             sleep 10
             RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
-              --branch "$REF" --event workflow_dispatch --limit 5 \
+              --branch "$REF" --event workflow_dispatch --limit 8 \
               --json databaseId,headSha,status,createdAt)
             RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
               '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
@@ -46,7 +46,7 @@ jobs:
           printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
           printf '%s\n' "$CAMPAIGN_GENERATION" | tee campaign_generation.txt
           gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
-            --body "Corrected ACT DR6 matched campaign ($CAMPAIGN_GENERATION) launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
+            --body "Direct-H0 ACT matched campaign ($CAMPAIGN_GENERATION) launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-run-pointer
