@@ -93,6 +93,7 @@ def base_info(model: str, packages_path: str, output: str, ref_scale: float = 1.
         "theory": {
             "peer_scalar_n3.PEERScalarN3": {
                 "python_path": str(Path(__file__).resolve().parent),
+                "path": "global",
                 "stop_at_error": True,
                 "extra_args": {
                     "mnu": 0.06, "omk": 0.0, "nnu": 3.046,
@@ -172,7 +173,7 @@ def write_configs(model: str, packages: str, root: Path) -> None:
             "learn_proposal_Rminus1_max": 30.0, "max_samples": 30000,
             "proposal_scale": 1.2,
             "seed": 2026072999 + {"M0": 0, "M1": 100, "M2": 200, "M3": 300}[model],
-            "output_every": 60, "checkpoint_every": 120,
+            "output_every": 60,
         }
     }
     (cfg / "mcmc.yaml").write_text(yaml.safe_dump(mcmc, sort_keys=False), encoding="utf-8")
@@ -180,10 +181,10 @@ def write_configs(model: str, packages: str, root: Path) -> None:
         "model": model,
         "stack": "Planck low-l TT + Sroll2 EE + PlanckActCut + ACT DR6 TTTEEE + Planck lensing + DESI DR2 BAO + SH0ES",
         "lane": "A_PACT", "act_commit": "627aeafb88ae5ad1aa66b406bea2d65cfa66a27d",
-        "camb": "1.6.6+CosmoRec", "cobaya": "3.6.2",
+        "camb": "1.6.6+CosmoRec", "cobaya": "3.6.2", "python": "3.11",
         "peer_log10_zc": 3.81, "peer_theta_i": 2.89155,
         "peer_prior": [0.0, 0.18], "alens_prior": [0.5, 1.5],
-        "shoes": [73.04, 1.04],
+        "shoes": [73.04, 1.04], "camb_path": "global",
     }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
