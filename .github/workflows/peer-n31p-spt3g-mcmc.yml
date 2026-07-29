@@ -1,0 +1,198 @@
+name: PEER N3 1P SPT-3G MCMC
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/peer-n31p-spt3g-mcmc.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SCIENCE_REF: peer-n31p-spt3g-20260729
+  SOURCE_RUN_ID: "30455821484"
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  SPT_COMMIT: 633c5a3da99bb6e78c60a7514f311fc3577965bc
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
+jobs:
+  mcmc:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [N31P, N31P_ALENS]
+    env:
+      MODEL: ${{ matrix.model }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install GSL, MPI and Python runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install \
+            'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz \
+            'cobaya==3.6.2'
+          python -m pip install \
+            "git+https://github.com/xgarrido/spt_likelihoods.git@${SPT_COMMIT}"
+
+      - name: Download byte-verified PEER runtime and likelihood payload
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
+          test -f payload/official-likelihood-packages-v3.tar.gz
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+
+      - name: Activate validated CAMB CosmoRec runtime
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          print(sorted(root.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+
+      - name: Install official SPT-3G likelihood data
+        run: |
+          set -euxo pipefail
+          cat > spt_install.yaml <<'YAML'
+          likelihood:
+            spt3g_2022.TTTEEE: null
+          YAML
+          cobaya-install spt_install.yaml \
+            --packages-path "$COBAYA_PACKAGES_PATH" \
+            --no-progress-bars --no-set-global
+          python - <<'PY'
+          from cobaya.install import install
+          import spt3g_2022
+          print('SPT module:', spt3g_2022.__file__)
+          PY
+
+      - name: Generate and structurally validate campaign
+        run: |
+          set -euxo pipefail
+          python peer_n31p_spt3g_20260729/test_campaign.py
+          ROOT="$GITHUB_WORKSPACE/spt_${MODEL}"
+          python peer_n31p_spt3g_20260729/campaign.py \
+            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          python - <<'PY'
+          import os, yaml
+          root = os.path.join(os.environ['GITHUB_WORKSPACE'], 'spt_' + os.environ['MODEL'])
+          info = yaml.safe_load(open(os.path.join(root, 'configs', 'mcmc.yaml'), encoding='utf-8'))
+          likes = set(info['likelihood'])
+          assert 'spt3g_2022.TTTEEE' in likes
+          assert not any(x.startswith('act_dr6') for x in likes)
+          assert not any(x.startswith('planck_2018_highl') for x in likes)
+          assert info['params']['peer_zc']['value'] == 3.81
+          assert info['params']['peer_thetai']['value'] == 2.89155
+          print('Scientific identity gate: PASS')
+          PY
+
+      - name: Full-likelihood evaluation gate
+        run: |
+          set -euxo pipefail
+          ROOT="$GITHUB_WORKSPACE/spt_${MODEL}"
+          WORK="$GITHUB_WORKSPACE/eval_${MODEL}"
+          mkdir -p "$WORK/temp"
+          ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+          ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+          cd "$WORK"
+          cobaya-run "$ROOT/configs/evaluate.yaml" \
+            >"$ROOT/logs/evaluate.stdout.log" \
+            2>"$ROOT/logs/evaluate.stderr.log"
+          test -f "$ROOT/evaluate/chain.1.txt"
+
+      - name: Run four MPI chains in resumable segments
+        shell: bash
+        run: |
+          set -uo pipefail
+          ROOT="$GITHUB_WORKSPACE/spt_${MODEL}"
+          export ROOT GITHUB_WORKSPACE
+          diagnose() {
+            python act_dr6_mcmc_20260729/convergence_gate.py \
+              --root "$ROOT" --burn 0.30 || true
+          }
+          is_done() {
+            python - "$ROOT/convergence_gate.json" <<'PY'
+          import json, sys
+          try:
+              ok = bool(json.load(open(sys.argv[1], encoding='utf-8'))['converged'])
+          except Exception:
+              ok = False
+          raise SystemExit(0 if ok else 1)
+          PY
+          }
+          for SEGMENT in 1 2; do
+            if is_done; then break; fi
+            WORK_BASE="$ROOT/mpi_work_${SEGMENT}"
+            mkdir -p "$WORK_BASE"
+            if [ "$SEGMENT" -eq 1 ]; then RESUME=""; else RESUME="-r"; fi
+            set +e
+            timeout --signal=TERM 150m mpirun --oversubscribe -np 4 \
+              bash -lc '
+                RANK=${OMPI_COMM_WORLD_RANK:-0}
+                WORK="$ROOT/mpi_work_'"$SEGMENT"'/rank_${RANK}"
+                mkdir -p "$WORK/temp"
+                ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+                ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+                cd "$WORK"
+                cobaya-run '"$RESUME"' "$ROOT/configs/mcmc.yaml"
+              ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
+                2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
+            CODE=$?
+            set -e
+            printf '%s\n' "$CODE" >"$ROOT/logs/mcmc_segment_${SEGMENT}.exit_code"
+            diagnose
+          done
+          diagnose
+
+      - name: Upload SPT chains and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-n31p-spt3g-${{ matrix.model }}-20260729
+          path: spt_${{ matrix.model }}
+          retention-days: 30
+
+      - name: Enforce posterior promotion gate
+        run: |
+          python act_dr6_mcmc_20260729/convergence_gate.py \
+            --root "spt_${MODEL}" --burn 0.30
