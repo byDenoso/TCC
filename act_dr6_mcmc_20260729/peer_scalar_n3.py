@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import numpy as np
 from cobaya.theories.camb import camb as cobaya_camb
 from cobaya.theories.camb.camb import CambTransfers
 
-import camb
 from camb import dark_energy
+
+
+def _scalarize(value):
+    if isinstance(value, np.ndarray) and value.size == 1:
+        return value.reshape(-1)[0].item()
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
 
 
 class PEERCambTransfers(CambTransfers):
@@ -32,14 +40,15 @@ class PEERScalarN3(cobaya_camb.CAMB):
         return {"camb.transfers": self._camb_transfers}
 
     def set(self, params_values_dict, state):
-        values = dict(params_values_dict)
+        values = {k: _scalarize(v) for k, v in params_values_dict.items()}
         fede = float(values.pop("peer_fede", 0.0))
         logzc = float(values.pop("peer_zc", 3.81))
         thetai = float(values.pop("peer_thetai", 2.89155))
         original = self._original_camb_set_params
 
         def patched_set_params(*args, **kwargs):
-            pars = original(*args, **kwargs)
+            clean = {k: _scalarize(v) for k, v in kwargs.items()}
+            pars = original(*args, **clean)
             if fede <= 1e-10:
                 return pars
             ede = dark_energy.EarlyQuintessence()
