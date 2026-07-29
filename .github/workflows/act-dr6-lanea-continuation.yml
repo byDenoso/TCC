@@ -1,0 +1,225 @@
+name: ACT DR6 Lane A convergence continuation
+
+on:
+  workflow_run:
+    workflows: ["ACT DR6 matched quartet resume with GSL"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Source matched-quartet workflow run ID
+        required: true
+        default: "30455821484"
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.source_run_id }}
+  SCIENCE_REF: act-dr6-peer-test-20260729
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
+jobs:
+  controls-test:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install diagnostic test runtime
+        run: python -m pip install 'numpy<2.4' pandas pyyaml arviz
+      - name: Run campaign control tests
+        run: python -m unittest act_dr6_mcmc_20260729.tests.test_campaign_controls -v
+
+  relay-runtime:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download byte-verified source runtime
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
+          test -f payload/official-likelihood-packages-v3.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-common-runtime-20260729
+          path: |
+            validated
+            payload
+          retention-days: 30
+
+  continue-mcmc:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: [controls-test, relay-runtime]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M0, M1, M2, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install GSL, MPI and Python runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: act-dr6-common-runtime-20260729
+          path: common
+      - name: Download source chain artifact
+        run: |
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name "act-dr6-${{ matrix.model }}-mcmc-gslfix-20260729" --dir downloaded_chain
+      - name: Activate byte-verified likelihood payload
+        run: |
+          set -euxo pipefail
+          (cd common/payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf common/payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+      - name: Activate validated CAMB CosmoRec runtime
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find common/validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find common/validated -type d -name Rec_database | head -1)
+          DEV=$(find common/validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          print(sorted(root.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+      - name: Install frozen ACT likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Restore campaign and enable resume
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          SRC=$(find downloaded_chain -type d -name "campaign_${MODEL}" | head -1)
+          test -n "$SRC"
+          rm -rf "$GITHUB_WORKSPACE/campaign_${MODEL}"
+          cp -r "$SRC" "$GITHUB_WORKSPACE/campaign_${MODEL}"
+          python - "$GITHUB_WORKSPACE/campaign_${MODEL}/configs/mcmc.yaml" <<'PY'
+          import sys, yaml
+          path = sys.argv[1]
+          info = yaml.safe_load(open(path, encoding='utf-8'))
+          info['resume'] = True
+          yaml.safe_dump(info, open(path, 'w', encoding='utf-8'), sort_keys=False)
+          PY
+      - name: Diagnose and resume until the hard gate
+        shell: bash
+        run: |
+          set -uo pipefail
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
+          export ROOT GITHUB_WORKSPACE
+          diagnose() {
+            python act_dr6_mcmc_20260729/convergence_gate.py --root "$ROOT" --burn 0.30 || true
+          }
+          is_done() {
+            python - "$ROOT/convergence_gate.json" <<'PY'
+          import json, sys
+          try:
+              ok = bool(json.load(open(sys.argv[1], encoding='utf-8'))['converged'])
+          except Exception:
+              ok = False
+          raise SystemExit(0 if ok else 1)
+          PY
+          }
+          diagnose
+          for SEGMENT in 1 2; do
+            if is_done; then break; fi
+            mkdir -p "$ROOT/mpi_work_resume_${SEGMENT}"
+            timeout --signal=TERM 140m mpirun --oversubscribe -np 4 \
+              bash -lc '
+                RANK=${OMPI_COMM_WORLD_RANK:-0}
+                WORK="$ROOT/mpi_work_resume_'"$SEGMENT"'/rank_${RANK}"
+                mkdir -p "$WORK/temp"
+                ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+                ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+                cd "$WORK"
+                cobaya-run -r "$ROOT/configs/mcmc.yaml"
+              ' >"$ROOT/logs/mcmc_resume_${SEGMENT}.stdout.log" \
+                2>"$ROOT/logs/mcmc_resume_${SEGMENT}.stderr.log"
+            printf '%s\n' "$?" > "$ROOT/logs/mcmc_resume_${SEGMENT}.exit_code"
+            diagnose
+          done
+          python act_dr6_mcmc_20260729/campaign.py summarize --model "$MODEL" --root "$ROOT" || true
+          python act_dr6_mcmc_20260729/analyze_chains.py --model "$MODEL" --root "$ROOT" --burn 0.30 || true
+      - name: Upload continued chains and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-lanea-final-${{ matrix.model }}-20260729
+          path: campaign_${{ matrix.model }}
+          retention-days: 30
+      - name: Enforce convergence before promotion
+        run: python act_dr6_mcmc_20260729/convergence_gate.py --root "campaign_${{ matrix.model }}" --burn 0.30
+
+  compare:
+    needs: continue-mcmc
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: act-dr6-lanea-final-*-20260729
+          path: downloads
+      - name: Assemble convergence-gated matched comparison
+        run: |
+          set -euxo pipefail
+          mkdir -p matched
+          for MODEL in M0 M1 M2 M3; do
+            SRC=$(find downloads -type d -name "campaign_${MODEL}" | head -1)
+            test -n "$SRC"
+            cp -r "$SRC" "matched/${MODEL}"
+          done
+          python act_dr6_mcmc_20260729/matched_compare.py --base matched
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-dr6-lanea-matched-comparison-20260729
+          path: matched
+          retention-days: 30
