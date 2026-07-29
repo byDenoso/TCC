@@ -56,27 +56,20 @@ def build(model: str, lane: str, packages_path: str, output: str, max_samples: i
     here = Path(__file__).resolve().parent
 
     params: dict[str, Any] = {
-        "ombh2": sampled("ombh2", r["ombh2"]),
-        "omch2": sampled("omch2", r["omch2"]),
-        "H0": sampled("H0", r["H0"]),
-        "logA": sampled("logA", r["logA"]),
+        "ombh2": sampled("ombh2", r["ombh2"]), "omch2": sampled("omch2", r["omch2"]),
+        "H0": sampled("H0", r["H0"]), "logA": sampled("logA", r["logA"]),
         "As": {"value": "lambda logA: 1e-10*np.exp(logA)", "derived": True, "latex": "A_s"},
-        "ns": sampled("ns", r["ns"]),
-        "tau": sampled("tau", r["tau"]),
-        "A_act": sampled("A_act", r["A_act"]),
-        "P_act": sampled("P_act", r["P_act"]),
+        "ns": sampled("ns", r["ns"]), "tau": sampled("tau", r["tau"]),
+        "A_act": sampled("A_act", r["A_act"]), "P_act": sampled("P_act", r["P_act"]),
         "peer_zc": {"value": 3.81, "latex": "\\log_{10}(z_c)"},
         "peer_thetai": {"value": 2.89155, "latex": "\\theta_i"},
         "omegam": {"derived": "lambda omch2, ombh2, H0: (omch2+ombh2)/(H0/100.)**2"},
-        "sigma8": {"derived": True},
-        "S8": {"derived": "lambda sigma8, omegam: sigma8*(omegam/0.3)**0.5"},
-        "rdrag": {"derived": True},
-        "thetastar": {"derived": True},
+        "sigma8": {"derived": True}, "S8": {"derived": "lambda sigma8, omegam: sigma8*(omegam/0.3)**0.5"},
+        "rdrag": {"derived": True}, "thetastar": {"derived": True},
     }
     params["peer_fede"] = sampled("peer_fede", r["peer_fede"]) if model in ("M2", "M3") else {"value": 0.0}
     params["Alens"] = sampled("Alens", r["Alens"]) if model in ("M1", "M3") else {"value": 1.0}
     if lane == "A":
-        # Preserve the approved P-ACT design: one shared map-calibration direction.
         params["A_planck"] = {"value": "lambda A_act: A_act", "derived": False}
     else:
         params["A_planck"] = sampled("A_planck", r["A_planck"])
@@ -87,72 +80,50 @@ def build(model: str, lane: str, packages_path: str, output: str, max_samples: i
         "planck_2018_lowl.EE_sroll2": {"stop_at_error": True},
         "planck_2018_lensing.native": {"stop_at_error": True},
         "bao.desi_dr2.desi_bao_all": {"stop_at_error": True},
-        "shoes_h0.SH0ESGaussian": {
-            "python_path": str(here), "mean": 73.04, "sigma": 1.04, "stop_at_error": True,
-        },
+        "shoes_h0.SH0ESGaussian": {"python_path": str(here), "mean": 73.04, "sigma": 1.04, "stop_at_error": True},
     }
     if lane == "A":
         likelihood["act_dr6_cmbonly.PlanckActCut"] = {"stop_at_error": True}
     else:
-        likelihood["planck_2018_highl_plik.TTTEEE_lite"] = {"stop_at_error": True}
+        likelihood["planck_full_lite.PlanckFullLite"] = {"python_path": str(here), "stop_at_error": True}
 
     for like in likelihood:
         params[f"chi2__{like}"] = {"derived": True}
 
     return {
-        "packages_path": packages_path,
-        "output": output,
-        "force": True,
-        "debug": False,
-        "theory": {
-            "peer_scalar_n3.PEERScalarN3": {
-                "python_path": str(here), "path": "global", "stop_at_error": True,
-                "extra_args": {
-                    "mnu": 0.06, "omk": 0.0, "nnu": 3.046, "num_massive_neutrinos": 1,
-                    "lens_potential_accuracy": 0, "lmax": 9000,
-                    "DoLateRadTruncation": False, "halofit_version": "mead2020",
-                },
-            }
-        },
+        "packages_path": packages_path, "output": output, "force": True, "debug": False,
+        "theory": {"peer_scalar_n3.PEERScalarN3": {
+            "python_path": str(here), "path": "global", "stop_at_error": True,
+            "extra_args": {"mnu": 0.06, "omk": 0.0, "nnu": 3.046, "num_massive_neutrinos": 1,
+                           "lens_potential_accuracy": 0, "lmax": 9000,
+                           "DoLateRadTruncation": False, "halofit_version": "mead2020"}}},
         "likelihood": likelihood,
         "prior": {"act_calibration_prior": "lambda A_act: stats.norm.logpdf(A_act,loc=1.,scale=.003)"},
         "params": params,
-        "sampler": {
-            "mcmc": {
-                "Rminus1_stop": 0.01, "Rminus1_cl_stop": 0.05,
-                "burn_in": 200, "learn_proposal": True,
-                "learn_proposal_Rminus1_max": 50.0, "proposal_scale": 1.2,
-                "max_samples": int(max_samples), "seed": 2026072990 + MODELS.index(model) * 10 + LANES.index(lane),
-                "output_every": 60, "measure_speeds": False,
-                "oversample_power": 0.0, "oversample_thin": False, "drag": False,
-                "max_tries": "100d",
-            }
-        },
+        "sampler": {"mcmc": {
+            "Rminus1_stop": 0.01, "Rminus1_cl_stop": 0.05, "burn_in": 200,
+            "learn_proposal": True, "learn_proposal_Rminus1_max": 50.0, "proposal_scale": 1.2,
+            "max_samples": int(max_samples), "seed": 2026072990 + MODELS.index(model) * 10 + LANES.index(lane),
+            "output_every": 60, "measure_speeds": False, "oversample_power": 0.0,
+            "oversample_thin": False, "drag": False, "max_tries": "100d"}},
     }
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--model", choices=MODELS, required=True)
-    p.add_argument("--lane", choices=LANES, required=True)
-    p.add_argument("--packages-path", required=True)
-    p.add_argument("--root", required=True)
+    p.add_argument("--model", choices=MODELS, required=True); p.add_argument("--lane", choices=LANES, required=True)
+    p.add_argument("--packages-path", required=True); p.add_argument("--root", required=True)
     p.add_argument("--max-samples", type=int, default=4000)
-    args = p.parse_args()
-    root = Path(args.root).resolve()
-    (root / "configs").mkdir(parents=True, exist_ok=True)
-    (root / "mcmc").mkdir(parents=True, exist_ok=True)
+    args = p.parse_args(); root = Path(args.root).resolve()
+    (root / "configs").mkdir(parents=True, exist_ok=True); (root / "mcmc").mkdir(parents=True, exist_ok=True)
     (root / "logs").mkdir(parents=True, exist_ok=True)
     info = build(args.model, args.lane, args.packages_path, str(root / "mcmc" / "chain"), args.max_samples)
     (root / "configs" / "mcmc.yaml").write_text(yaml.safe_dump(info, sort_keys=False), encoding="utf-8")
-    manifest = {
+    (root / "manifest.json").write_text(json.dumps({
         "model": args.model, "lane": args.lane,
         "stack": "ACT DR6 + Planck + Sroll2 + Planck lensing + DESI DR2 + SH0ES",
         "sampling_coordinate": "H0 direct", "camb_precision": "ACT validated production precision",
-        "cosmorec_policy": "posterior landmarks re-evaluated separately",
-        "max_samples": args.max_samples,
-    }
-    (root / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        "cosmorec_policy": "posterior landmarks re-evaluated separately", "max_samples": args.max_samples}, indent=2), encoding="utf-8")
     return 0
 
 
