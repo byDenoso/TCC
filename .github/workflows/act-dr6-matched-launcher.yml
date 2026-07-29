@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
+      CAMPAIGN_GENERATION: fresh-payload-v3
     steps:
       - name: Dispatch exact branch head
         shell: bash
@@ -42,12 +43,14 @@ jobs:
           test "$RUN_ID" != "0"
           printf '%s\n' "$RUN_ID" | tee matched_run_id.txt
           printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
+          printf '%s\n' "$CAMPAIGN_GENERATION" | tee campaign_generation.txt
           gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
-            --body "Corrected ACT DR6 matched campaign launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
+            --body "Corrected ACT DR6 matched campaign ($CAMPAIGN_GENERATION) launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-run-pointer
           path: |
             matched_run_id.txt
             matched_head_sha.txt
+            campaign_generation.txt
           retention-days: 30
