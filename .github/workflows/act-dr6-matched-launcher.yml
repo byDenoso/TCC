@@ -19,23 +19,23 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       CAMPAIGN_GENERATION: direct-h0-matched-v1
-      TARGET_WORKFLOW: act-dr6-h0-direct-matched.yml
+      TARGET_WORKFLOW: temp-act-h0-direct-now.yml
+      TARGET_REF: main
     steps:
-      - name: Dispatch exact branch head
+      - name: Dispatch registered campaign workflow
         shell: bash
         run: |
           set -euo pipefail
-          REF="$GITHUB_REF_NAME"
-          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$REF" --jq '.sha')
+          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$TARGET_REF" --jq '.sha')
           BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
-            --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --branch "$TARGET_REF" --event workflow_dispatch --limit 1 --json databaseId \
             --jq '.[0].databaseId // 0')
-          gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
           RUN_ID=0
           for I in $(seq 1 36); do
             sleep 10
             RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
-              --branch "$REF" --event workflow_dispatch --limit 8 \
+              --branch "$TARGET_REF" --event workflow_dispatch --limit 8 \
               --json databaseId,headSha,status,createdAt)
             RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
               '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
@@ -46,7 +46,7 @@ jobs:
           printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
           printf '%s\n' "$CAMPAIGN_GENERATION" | tee campaign_generation.txt
           gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
-            --body "Direct-H0 ACT matched campaign ($CAMPAIGN_GENERATION) launched from head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**."
+            --body "Direct-H0 ACT matched campaign ($CAMPAIGN_GENERATION) launched from registered main head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**. Scientific checkout remains \`act-dr6-peer-test-20260729\`."
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-run-pointer
