@@ -3,6 +3,8 @@ name: PEER ACT DR6 profile
 on:
   push:
     branches: [act-dr6-peer-test-20260729]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
