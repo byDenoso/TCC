@@ -1,0 +1,52 @@
+name: Discover ACT64 production run
+
+on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-64-discover.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_WORKFLOW: act-dr6-matched-64chains.yml
+      TARGET_BRANCH: act-dr6-peer-test-20260729
+    steps:
+      - name: Locate or dispatch ACT64 workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+            --branch "$TARGET_BRANCH" --limit 5 --json databaseId,status,createdAt \
+            --jq '.[0].databaseId // 0' 2>/dev/null || echo 0)
+          if [ "$RUN_ID" = "0" ]; then
+            gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$TARGET_BRANCH"
+            for I in $(seq 1 36); do
+              sleep 10
+              RUN_ID=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+                --branch "$TARGET_BRANCH" --limit 5 --json databaseId \
+                --jq '.[0].databaseId // 0' 2>/dev/null || echo 0)
+              if [ "$RUN_ID" != "0" ]; then break; fi
+            done
+          fi
+          test "$RUN_ID" != "0"
+          STATUS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq '.status + ":" + (.conclusion // "")')
+          BODY="ACT64 matched quartet launched. Run ID: $RUN_ID. Status: $STATUS. Configuration: 64 total chains, 16 per model, four independent MPI replicas of four chains for M0-M3."
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "ACT64-RUN-$RUN_ID" --body "$BODY"
+          printf '%s\n' "$RUN_ID" > run_id.txt
+          printf '%s\n' "$STATUS" > status.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act64-run-pointer
+          path: |
+            run_id.txt
+            status.txt
+          retention-days: 30
