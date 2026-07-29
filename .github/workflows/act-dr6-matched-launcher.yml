@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      CAMPAIGN_GENERATION: fresh-payload-v3
+      CAMPAIGN_GENERATION: clean-reference-v4
     steps:
       - name: Dispatch exact branch head
         shell: bash
