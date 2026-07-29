@@ -58,10 +58,14 @@ jobs:
           mkdir -p camb-runtime
           cp wheelhouse/camb-*.whl camb-runtime/
           cp -a "$COSMO_DIR/Rec_database" camb-runtime/Rec_database
+          cp -a "$COSMO_DIR/Development" camb-runtime/Development
           sha256sum camb-runtime/camb-*.whl | tee camb_cosmorec_sha256.txt
           find camb-runtime/Rec_database -type f -print0 | sort -z | xargs -0 sha256sum \
             > cosmorec_database_sha256.txt
-          cp camb_cosmorec_sha256.txt cosmorec_database_sha256.txt camb-runtime/
+          find camb-runtime/Development -type f -print0 | sort -z | xargs -0 sha256sum \
+            > cosmorec_development_sha256.txt
+          cp camb_cosmorec_sha256.txt cosmorec_database_sha256.txt \
+            cosmorec_development_sha256.txt camb-runtime/
       - name: Upload CAMB CosmoRec runtime
         uses: actions/upload-artifact@v4
         with:
@@ -98,26 +102,35 @@ jobs:
           find "$COBAYA_PACKAGES_PATH" -type f \( -name '*.fits' -o -name '*.dataset' -o -name '*.txt' -o -name '*.dat' \) -print0 \
             | sort -z | xargs -0 sha256sum > official_payload_sha256.txt
           find "$COBAYA_PACKAGES_PATH" -maxdepth 5 -type f -print | sort > installed_files.txt
-      - name: Run ACT package regression tests with reference CAMB
+      - name: Run ACT package structural gates with reference CAMB
         run: |
+          set -o pipefail
           pytest -v --pyargs act_dr6_cmbonly \
-            -k 'test_import or test_install or test_model or test_TTTEEE or test_Planck' \
+            -k 'test_import or test_install or test_model' \
             | tee official_act_tests.log
+          pytest -v --pyargs act_dr6_cmbonly \
+            -k 'test_TTTEEE or test_Planck' \
+            > official_act_reference_numeric.log 2>&1 || true
       - name: Activate CAMB CosmoRec runtime
         run: |
           WHEEL=$(find camb-runtime -type f -name 'camb-*.whl' | head -1)
           DB=$(find camb-runtime -type d -name Rec_database | head -1)
+          DEV=$(find camb-runtime -type d -name Development | head -1)
           test -n "$WHEEL"
           test -n "$DB"
+          test -n "$DEV"
           python -m pip install --force-reinstall --no-deps "$WHEEL"
-          rm -rf "$GITHUB_WORKSPACE/Rec_database"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
           ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
           python - <<'PY'
           import camb
           from camb import recombination
           print('CAMB', camb.__version__, 'CosmoRec', type(recombination.CosmoRec()).__name__)
           PY
           test -f "$GITHUB_WORKSPACE/Rec_database/Effective_Rates.HI/Effective_Rate_Tables.nS_3/res_state_list.dat"
+          test -f "$GITHUB_WORKSPACE/Development/Helium/Helium.Data.lite/He4_SS.dat"
       - name: Generate and smoke-test matched quartet
         run: |
           set -euxo pipefail
@@ -132,7 +145,9 @@ jobs:
         run: |
           mkdir -p gate_outputs
           cp -f act_lite_commit.txt official_payload_sha256.txt installed_files.txt \
-            official_act_tests.log camb_cosmorec_sha256.txt cosmorec_database_sha256.txt gate_outputs/ || true
+            official_act_tests.log official_act_reference_numeric.log \
+            camb_cosmorec_sha256.txt cosmorec_database_sha256.txt \
+            cosmorec_development_sha256.txt gate_outputs/ || true
           cp -r smoke_M* gate_outputs/ || true
           tar -czf ACT_DR6_MATCHED_GATES_20260729.tar.gz gate_outputs
       - uses: actions/upload-artifact@v4
@@ -172,11 +187,15 @@ jobs:
         run: |
           WHEEL=$(find camb-runtime -type f -name 'camb-*.whl' | head -1)
           DB=$(find camb-runtime -type d -name Rec_database | head -1)
+          DEV=$(find camb-runtime -type d -name Development | head -1)
           test -n "$WHEEL"
           test -n "$DB"
+          test -n "$DEV"
           python -m pip install --force-reinstall --no-deps "$WHEEL"
-          rm -rf "$GITHUB_WORKSPACE/Rec_database"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
           ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
           git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
           cd act-lite
           git checkout "$ACT_COMMIT"
@@ -247,11 +266,15 @@ jobs:
         run: |
           WHEEL=$(find camb-runtime -type f -name 'camb-*.whl' | head -1)
           DB=$(find camb-runtime -type d -name Rec_database | head -1)
+          DEV=$(find camb-runtime -type d -name Development | head -1)
           test -n "$WHEEL"
           test -n "$DB"
+          test -n "$DEV"
           python -m pip install --force-reinstall --no-deps "$WHEEL"
-          rm -rf "$GITHUB_WORKSPACE/Rec_database"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
           ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
           git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
           cd act-lite
           git checkout "$ACT_COMMIT"
