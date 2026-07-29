@@ -8,7 +8,9 @@ from camb import dark_energy
 
 
 def _scalarize(value):
-    if isinstance(value, np.ndarray) and value.size == 1:
+    if isinstance(value, np.ndarray):
+        if value.size == 0:
+            return value
         return value.reshape(-1)[0].item()
     if isinstance(value, np.generic):
         return value.item()
