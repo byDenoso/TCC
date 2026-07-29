@@ -45,8 +45,11 @@ jobs:
           printf '%s\n' "$RUN_ID" | tee matched_run_id.txt
           printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
           printf '%s\n' "$CAMPAIGN_GENERATION" | tee campaign_generation.txt
-          gh issue comment 2 --repo "$GITHUB_REPOSITORY" \
-            --body "Direct-H0 ACT matched campaign ($CAMPAIGN_GENERATION) launched from registered main head \`$TARGET_SHA\`. Workflow run ID: **$RUN_ID**. Scientific checkout remains \`act-dr6-peer-test-20260729\`."
+          BODY="Direct-H0 ACT matched campaign ($CAMPAIGN_GENERATION) launched from registered main head $TARGET_SHA. Workflow run ID: $RUN_ID. Scientific checkout: act-dr6-peer-test-20260729."
+          gh issue comment 2 --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "ACT-H0-RUN-$RUN_ID" --body "$BODY" --label documentation || \
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "ACT-H0-RUN-$RUN_ID" --body "$BODY"
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-run-pointer
