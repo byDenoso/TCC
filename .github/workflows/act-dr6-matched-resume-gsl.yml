@@ -5,6 +5,10 @@ on:
     branches: [act-dr6-peer-test-20260729]
     paths:
       - '.github/workflows/act-dr6-matched-resume-gsl.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/act-dr6-matched-resume-gsl.yml'
   workflow_dispatch:
 
 permissions:
@@ -114,12 +118,19 @@ jobs:
           from camb import recombination
           print('CAMB', camb.__version__, camb.__file__, 'CosmoRec', type(recombination.CosmoRec()).__name__)
           PY
-          ldd "$(python - <<'PY'
-          import camb.baseconfig
-          print(camb.baseconfig.CAMBL)
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          matches = sorted(root.glob('camblib*.so'))
+          if not matches:
+              raise SystemExit(f'camblib shared library not found under {root}')
+          print(matches[0])
           PY
-          )" | tee camb_ldd.txt
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
           ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
       - name: Install frozen ACT likelihood
         run: |
           git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
@@ -147,7 +158,7 @@ jobs:
               "source_run_id": int("$SOURCE_RUN_ID"),
               "source_head_sha": "$SOURCE_HEAD_SHA",
               "current_head_sha": "${{ github.sha }}",
-              "runtime_fix": "installed libgsl-dev; reused validated CAMB 1.6.6+CosmoRec runtime",
+              "runtime_fix": "installed libgsl-dev; reused validated CAMB 1.6.6+CosmoRec runtime; isolated CosmoRec workdirs",
               "model": "$MODEL"
           }, indent=2), encoding="utf-8")
           PY
@@ -160,16 +171,22 @@ jobs:
           run_one() {
             I="$1"
             mkdir -p "$ROOT/logs"
+            WORK="$ROOT/work/start_${I}"
+            mkdir -p "$WORK/temp"
+            ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+            ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
             set +e
-            cobaya-run "$ROOT/configs/minimize_${I}.yaml" \
-              >"$ROOT/logs/minimize_${I}.stdout.log" \
+            (
+              cd "$WORK"
+              cobaya-run "$ROOT/configs/minimize_${I}.yaml"
+            ) >"$ROOT/logs/minimize_${I}.stdout.log" \
               2>"$ROOT/logs/minimize_${I}.stderr.log"
             CODE=$?
             printf '%s\n' "$CODE" > "$ROOT/logs/minimize_${I}.exit_code"
             return 0
           }
           export -f run_one
-          export ROOT
+          export ROOT GITHUB_WORKSPACE
           seq 1 8 | xargs -n1 -P2 bash -c 'run_one "$@"' _
           python act_dr6_mcmc_20260729/campaign.py summarize --model "$MODEL" --root "$ROOT" || true
           NMIN=$(find "$ROOT/minimize" -name 'chain.minimum.txt' | wc -l)
@@ -249,7 +266,8 @@ jobs:
           test -n "$SRC"
           rm -rf "$ROOT/minimize"
           cp -r "$SRC" "$ROOT/minimize"
-          cp -f downloaded_minima/resume_provenance.json "$ROOT/" 2>/dev/null || true
+          PROV=$(find downloaded_minima -type f -name resume_provenance.json | head -1)
+          if [ -n "$PROV" ]; then cp -f "$PROV" "$ROOT/"; fi
           python act_dr6_mcmc_20260729/campaign.py promote-best --model "$MODEL" --root "$ROOT"
       - name: Run four-chain MPI MCMC
         shell: bash
@@ -257,10 +275,18 @@ jobs:
           set +e
           MODEL='${{ matrix.model }}'
           ROOT="$GITHUB_WORKSPACE/campaign_${MODEL}"
-          mkdir -p "$ROOT/logs"
+          mkdir -p "$ROOT/logs" "$ROOT/mpi_work"
+          export ROOT GITHUB_WORKSPACE
           timeout --signal=TERM 325m mpirun --oversubscribe -np 4 \
-            cobaya-run "$ROOT/configs/mcmc.yaml" \
-            >"$ROOT/logs/mcmc.stdout.log" 2>"$ROOT/logs/mcmc.stderr.log"
+            bash -lc '
+              RANK=${OMPI_COMM_WORLD_RANK:-0}
+              WORK="$ROOT/mpi_work/rank_${RANK}"
+              mkdir -p "$WORK/temp"
+              ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+              ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+              cd "$WORK"
+              cobaya-run "$ROOT/configs/mcmc.yaml"
+            ' >"$ROOT/logs/mcmc.stdout.log" 2>"$ROOT/logs/mcmc.stderr.log"
           CODE=$?
           printf '%s\n' "$CODE" | tee "$ROOT/mcmc_exit_code.txt"
           exit 0
