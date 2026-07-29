@@ -20,7 +20,6 @@ env:
   SOURCE_HEAD_SHA: 3feb2ad59ebde50a42ec83807fa381420d56730c
   COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
   ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
-  DATA_CACHE_KEY: act-pact-desi-dr2-planck-20260729-v3
   OMP_NUM_THREADS: '1'
   OPENBLAS_NUM_THREADS: '1'
   MKL_NUM_THREADS: '1'
@@ -59,6 +58,7 @@ jobs:
           test -n "$(find source-runtime -type f -name 'camb-*.whl' -print -quit)"
           test -n "$(find source-runtime -type d -name Rec_database -print -quit)"
           test -n "$(find source-runtime -type d -name Development -print -quit)"
+          test -n "$(find source-gates -type f -name official_payload_sha256.txt -print -quit)"
           find source-runtime -type f -print0 | sort -z | xargs -0 sha256sum \
             > reused_runtime_sha256.txt
       - name: Upload validated resume payload
@@ -74,8 +74,111 @@ jobs:
             reused_runtime_sha256.txt
           retention-days: 30
 
-  minimize:
+  data-runtime:
     needs: gate-reuse
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install payload builder runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran make libgsl-dev wget
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' 'camb==1.6.6' \
+            'cobaya==3.6.2' 'sacc>=0.12.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: validated-act-cosmorec-runtime-gslfix
+          path: validated
+      - name: Install frozen ACT likelihood
+        run: |
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+      - name: Install official likelihood payload once
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p "$COBAYA_PACKAGES_PATH"
+          cobaya-install \
+            act_dr6_cmbonly \
+            act_dr6_cmbonly.PlanckActCut \
+            planck_2018_lowl.TT \
+            planck_2018_lowl.EE_sroll2 \
+            planck_2018_lensing.native \
+            bao.desi_dr2.desi_bao_all \
+            --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+          find "$COBAYA_PACKAGES_PATH" -type f \( -name '*.fits' -o -name '*.dataset' -o -name '*.txt' -o -name '*.dat' \) -print0 \
+            | sort -z | xargs -0 sha256sum > official_payload_sha256.txt
+          find "$COBAYA_PACKAGES_PATH" -maxdepth 5 -type f -print | sort > installed_files.txt
+      - name: Verify payload against validated source run
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SOURCE_SUM=$(find validated/source-gates -type f -name official_payload_sha256.txt | head -1)
+          test -n "$SOURCE_SUM"
+          python - "$SOURCE_SUM" official_payload_sha256.txt <<'PY'
+          import sys
+          from pathlib import Path
+
+          def load(path):
+              out = {}
+              for line in Path(path).read_text(encoding='utf-8', errors='replace').splitlines():
+                  if not line.strip():
+                      continue
+                  digest, filename = line.split(maxsplit=1)
+                  filename = filename.lstrip('*')
+                  marker = '/packages/'
+                  rel = filename.split(marker, 1)[1] if marker in filename else filename
+                  out[rel] = digest
+              return out
+
+          source = load(sys.argv[1])
+          current = load(sys.argv[2])
+          missing = sorted(set(source) - set(current))
+          extra = sorted(set(current) - set(source))
+          changed = sorted(k for k in set(source) & set(current) if source[k] != current[k])
+          report = [
+              f'source_files={len(source)}',
+              f'current_files={len(current)}',
+              f'missing={len(missing)}',
+              f'extra={len(extra)}',
+              f'changed={len(changed)}',
+          ]
+          Path('payload_comparison.txt').write_text('\n'.join(report) + '\n', encoding='utf-8')
+          if missing or extra or changed:
+              Path('payload_mismatch.json').write_text(
+                  __import__('json').dumps({'missing': missing, 'extra': extra, 'changed': changed}, indent=2),
+                  encoding='utf-8')
+              raise SystemExit('Official payload differs from validated source run')
+          PY
+          cat payload_comparison.txt
+      - name: Package byte-verified payload
+        run: |
+          set -euxo pipefail
+          tar -czf official-likelihood-packages-v3.tar.gz packages
+          sha256sum official-likelihood-packages-v3.tar.gz > official-likelihood-packages-v3.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-likelihood-packages-v3
+          path: |
+            official-likelihood-packages-v3.tar.gz
+            official-likelihood-packages-v3.tar.gz.sha256
+            official_payload_sha256.txt
+            installed_files.txt
+            payload_comparison.txt
+            payload_mismatch.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  minimize:
+    needs: [gate-reuse, data-runtime]
     runs-on: ubuntu-24.04
     timeout-minutes: 350
     strategy:
@@ -98,6 +201,17 @@ jobs:
         with:
           name: validated-act-cosmorec-runtime-gslfix
           path: validated
+      - uses: actions/download-artifact@v4
+        with:
+          name: official-likelihood-packages-v3
+          path: payload
+      - name: Activate byte-verified likelihood payload
+        run: |
+          set -euxo pipefail
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
       - name: Activate validated CAMB CosmoRec runtime
         shell: bash
         run: |
@@ -137,13 +251,6 @@ jobs:
           cd act-lite
           git checkout "$ACT_COMMIT"
           python -m pip install -e .
-      - uses: actions/cache/restore@v4
-        with:
-          path: packages
-          key: ${{ env.DATA_CACHE_KEY }}
-          fail-on-cache-miss: true
-      - name: Remove ambiguous cached CAMB
-        run: rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
       - name: Generate eight matched minimizations
         run: |
           MODEL='${{ matrix.model }}'
@@ -158,7 +265,7 @@ jobs:
               "source_run_id": int("$SOURCE_RUN_ID"),
               "source_head_sha": "$SOURCE_HEAD_SHA",
               "current_head_sha": "${{ github.sha }}",
-              "runtime_fix": "installed libgsl-dev; reused validated CAMB 1.6.6+CosmoRec runtime; isolated CosmoRec workdirs",
+              "runtime_fix": "installed libgsl-dev; reused validated CAMB 1.6.6+CosmoRec runtime; byte-verified common likelihood payload; isolated CosmoRec workdirs",
               "model": "$MODEL"
           }, indent=2), encoding="utf-8")
           PY
@@ -201,7 +308,7 @@ jobs:
           retention-days: 30
 
   mcmc:
-    needs: [gate-reuse, minimize]
+    needs: [gate-reuse, data-runtime, minimize]
     runs-on: ubuntu-24.04
     timeout-minutes: 350
     strategy:
@@ -224,6 +331,17 @@ jobs:
         with:
           name: validated-act-cosmorec-runtime-gslfix
           path: validated
+      - uses: actions/download-artifact@v4
+        with:
+          name: official-likelihood-packages-v3
+          path: payload
+      - name: Activate byte-verified likelihood payload
+        run: |
+          set -euxo pipefail
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
       - name: Activate validated CAMB CosmoRec runtime
         run: |
           set -euxo pipefail
@@ -245,13 +363,6 @@ jobs:
           cd act-lite
           git checkout "$ACT_COMMIT"
           python -m pip install -e .
-      - uses: actions/cache/restore@v4
-        with:
-          path: packages
-          key: ${{ env.DATA_CACHE_KEY }}
-          fail-on-cache-miss: true
-      - name: Remove ambiguous cached CAMB
-        run: rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
       - uses: actions/download-artifact@v4
         with:
           name: act-minima-${{ matrix.model }}-gslfix-20260729
