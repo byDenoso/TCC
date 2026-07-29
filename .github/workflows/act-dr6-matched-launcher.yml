@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
-      CAMPAIGN_GENERATION: clean-reference-v4
+      CAMPAIGN_GENERATION: resume-gsl-branch-cache-v2
+      TARGET_WORKFLOW: act-dr6-matched-resume-gsl.yml
     steps:
       - name: Dispatch exact branch head
         shell: bash
@@ -26,14 +27,14 @@ jobs:
           set -euo pipefail
           REF="$GITHUB_REF_NAME"
           TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$REF" --jq '.sha')
-          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
             --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
             --jq '.[0].databaseId // 0')
-          gh workflow run act-dr6-matched-mcmc.yml --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$REF"
           RUN_ID=0
           for I in $(seq 1 30); do
             sleep 10
-            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
               --branch "$REF" --event workflow_dispatch --limit 5 \
               --json databaseId,headSha,status,createdAt)
             RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
