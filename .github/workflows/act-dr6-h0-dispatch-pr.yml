@@ -1,0 +1,55 @@
+name: Dispatch direct-H0 ACT matched campaign from PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/act-dr6-h0-dispatch-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_WORKFLOW: temp-act-h0-direct-now.yml
+      TARGET_REF: main
+    steps:
+      - name: Dispatch registered production workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$TARGET_REF" --jq '.sha')
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+            --branch "$TARGET_REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --jq '.[0].databaseId // 0')
+          gh workflow run "$TARGET_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+          RUN_ID=0
+          for I in $(seq 1 36); do
+            sleep 10
+            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$TARGET_WORKFLOW" \
+              --branch "$TARGET_REF" --event workflow_dispatch --limit 8 \
+              --json databaseId,headSha,status,createdAt)
+            RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
+              '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
+            if [ "$RUN_ID" != "0" ]; then break; fi
+          done
+          test "$RUN_ID" != "0"
+          BODY="Direct-H0 ACT matched production launched. Run ID: $RUN_ID. Registered workflow head: $TARGET_SHA. Scientific checkout: act-dr6-peer-test-20260729. Models M0-M3; lanes A/B."
+          printf '%s\n' "$RUN_ID" > run_id.txt
+          printf '%s\n' "$TARGET_SHA" > target_sha.txt
+          gh issue comment 2 --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "ACT-H0-RUN-$RUN_ID" --body "$BODY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: act-h0-dispatch-pointer
+          path: |
+            run_id.txt
+            target_sha.txt
+          retention-days: 30
