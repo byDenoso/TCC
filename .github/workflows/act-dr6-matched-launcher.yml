@@ -1,0 +1,49 @@
+name: Launch corrected ACT DR6 matched quartet
+
+on:
+  push:
+    branches: [act-dr6-peer-test-20260729]
+    paths:
+      - '.github/workflows/act-dr6-matched-launcher.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch exact branch head
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF="$GITHUB_REF_NAME"
+          TARGET_SHA=$(gh api "repos/$GITHUB_REPOSITORY/commits/$REF" --jq '.sha')
+          BEFORE=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+            --branch "$REF" --event workflow_dispatch --limit 1 --json databaseId \
+            --jq '.[0].databaseId // 0')
+          gh workflow run act-dr6-matched-mcmc.yml --repo "$GITHUB_REPOSITORY" --ref "$REF"
+          RUN_ID=0
+          for I in $(seq 1 30); do
+            sleep 10
+            RUN_JSON=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow act-dr6-matched-mcmc.yml \
+              --branch "$REF" --event workflow_dispatch --limit 5 \
+              --json databaseId,headSha,status,createdAt)
+            RUN_ID=$(printf '%s' "$RUN_JSON" | jq -r --arg SHA "$TARGET_SHA" --argjson BEFORE "$BEFORE" \
+              '[.[] | select(.headSha == $SHA and .databaseId != $BEFORE)][0].databaseId // 0')
+            if [ "$RUN_ID" != "0" ]; then break; fi
+          done
+          test "$RUN_ID" != "0"
+          printf '%s\n' "$RUN_ID" | tee matched_run_id.txt
+          printf '%s\n' "$TARGET_SHA" | tee matched_head_sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: corrected-act-run-pointer
+          path: |
+            matched_run_id.txt
+            matched_head_sha.txt
+          retention-days: 30
