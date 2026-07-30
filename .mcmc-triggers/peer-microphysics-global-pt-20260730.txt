@@ -1,0 +1,8 @@
+Launch request: global PEER microphysics posterior
+Requested at: 2026-07-30T06:45:00-03:00
+Target workflow: peer-microphysics-global-pt.yml
+Architecture: 4 independent ladders x 6 temperatures = 24 chains
+Scientific stack: Planck 2018 high-l TTTEEE-lite + low-l TT/EE + lensing + DESI BAO
+Anchors: none
+Priors: f_PEER in [0,0.18], n in [1.05,8]
+Promotion gate: rank R-hat - 1 < 0.01, ESS bulk > 1000, ESS tail > 500, occupancy and transport gates
