@@ -1,0 +1,316 @@
+name: PEER microphysics global posterior tempering
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/peer-microphysics-global-pt.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: peer-microphysics-global-pt
+  cancel-in-progress: false
+
+env:
+  SCIENCE_REF: peer-microphysics-global-pt-20260729
+  SOURCE_RUN_ID: "30455821484"
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install validation runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install \
+            'numpy<2.4' 'scipy<1.18' pandas pyyaml pytest mpi4py arviz \
+            'cobaya==3.6.2'
+
+      - name: Download validated CAMB and official likelihood payload
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
+          test -f payload/official-likelihood-packages-v3.tar.gz
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+
+      - name: Activate byte-verified CAMB CosmoRec
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          print(sorted(root.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+
+      - name: Run pure and synthetic gates
+        run: |
+          set -euxo pipefail
+          cd peer_microphysics_global_pt_20260729
+          pytest -q
+          python -m py_compile *.py
+          mpirun --oversubscribe -np 6 python pt_driver.py --self-test
+
+      - name: Run direct n equals 3 identity gate
+        run: |
+          set -euxo pipefail
+          mkdir -p validation_work/temp validation
+          ln -sfn "$GITHUB_WORKSPACE/Rec_database" validation_work/Rec_database
+          ln -sfn "$GITHUB_WORKSPACE/Development" validation_work/Development
+          cd validation_work
+          python "$GITHUB_WORKSPACE/peer_microphysics_global_pt_20260729/identity_gate.py" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --output "$GITHUB_WORKSPACE/validation/identity_gate.json"
+
+      - name: Evaluate active and near-null global points
+        run: |
+          set -euxo pipefail
+          cd validation_work
+          python - <<'PY'
+          import json, math, os, sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path(os.environ['GITHUB_WORKSPACE']) / 'peer_microphysics_global_pt_20260729'))
+          from cobaya.model import get_model
+          from campaign import REFS, build_info
+
+          model = get_model(build_info(os.environ['COBAYA_PACKAGES_PATH']), stop_at_error=True)
+          names = list(model.parameterization.sampled_params())
+          base = {name: float(REFS[name]) for name in names}
+          reports = []
+          for label, fede, peer_n in [('active', 0.085, 3.0), ('near_null', 0.010, 6.0)]:
+              point = dict(base, peer_fede=fede, peer_n=peer_n)
+              result = model.logposterior(point, as_dict=True, make_finite=False)
+              assert math.isfinite(float(result['logpost']))
+              assert result['loglikes']
+              reports.append({'label': label, 'point': point, 'logpost': float(result['logpost'])})
+          output = Path(os.environ['GITHUB_WORKSPACE']) / 'validation' / 'finite_points.json'
+          output.write_text(json.dumps(reports, indent=2), encoding='utf-8')
+          print(json.dumps(reports, indent=2))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-microphysics-global-validation
+          path: |
+            validation
+            camb_ldd.txt
+          retention-days: 30
+
+  ladder:
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        ladder: [0, 1, 2, 3]
+    env:
+      LADDER: ${{ matrix.ladder }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install production runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install \
+            'numpy<2.4' 'scipy<1.18' pandas pyyaml mpi4py arviz \
+            'cobaya==3.6.2'
+
+      - name: Download validated CAMB and official likelihood payload
+        run: |
+          set -euxo pipefail
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name official-likelihood-packages-v3 --dir payload
+          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
+          test -f payload/official-likelihood-packages-v3.tar.gz
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+
+      - name: Activate byte-verified CAMB CosmoRec
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath "$DB")" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath "$DEV")" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          print(sorted(root.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+
+      - name: Run six-temperature ladder in resumable segments
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ROOT="$GITHUB_WORKSPACE/peer_microphysics_pt_ladder${LADDER}"
+          mkdir -p "$ROOT/logs"
+          export ROOT LADDER GITHUB_WORKSPACE COBAYA_PACKAGES_PATH
+          for SEGMENT in 1 2; do
+            export SEGMENT
+            if [ "$(find "$ROOT/checkpoints" -maxdepth 1 -name 'rank_*.npz' 2>/dev/null | wc -l)" -eq 6 ]; then
+              RESUME="--resume"
+            else
+              RESUME=""
+            fi
+            export RESUME
+            set +e
+            timeout --signal=TERM --kill-after=90s 140m \
+              mpirun --oversubscribe -np 6 bash -lc '
+                RANK=${OMPI_COMM_WORLD_RANK:-0}
+                WORK="$GITHUB_WORKSPACE/pt_work_l${LADDER}_s${SEGMENT}/rank_${RANK}"
+                mkdir -p "$WORK/temp"
+                ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
+                ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
+                cd "$WORK"
+                python "$GITHUB_WORKSPACE/peer_microphysics_global_pt_20260729/pt_driver.py" \
+                  --root "$ROOT" --ladder-id "$LADDER" \
+                  --steps 100000 --swap-every 10 --checkpoint-every 25 \
+                  --thin 2 --warmup 300 $RESUME
+              ' >"$ROOT/logs/segment_${SEGMENT}.stdout.log" \
+                2>"$ROOT/logs/segment_${SEGMENT}.stderr.log"
+            CODE=$?
+            set -e
+            printf '%s\n' "$CODE" >"$ROOT/logs/segment_${SEGMENT}.exit_code"
+            if [ "$CODE" -ne 0 ] && [ "$CODE" -ne 124 ] && [ "$CODE" -ne 143 ]; then
+              echo "Unexpected sampler exit code $CODE" >&2
+              exit "$CODE"
+            fi
+            test "$(find "$ROOT/checkpoints" -maxdepth 1 -name 'rank_*.npz' | wc -l)" -eq 6
+          done
+          python - "$ROOT" <<'PY'
+          import json, sys
+          from pathlib import Path
+          root = Path(sys.argv[1])
+          summaries = []
+          for path in sorted(root.glob('rank_*_summary.json')):
+              summaries.append(json.loads(path.read_text(encoding='utf-8')))
+          (root / 'ladder_status.json').write_text(json.dumps({
+              'n_rank_summaries': len(summaries),
+              'ranks': summaries,
+              'n_checkpoints': len(list((root / 'checkpoints').glob('rank_*.npz'))),
+              'n_temperature_chains': len(list((root / 'chains').glob('temp_*.csv'))),
+          }, indent=2), encoding='utf-8')
+          PY
+
+      - name: Upload complete ladder state
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-microphysics-pt-ladder${{ matrix.ladder }}
+          path: peer_microphysics_pt_ladder${{ matrix.ladder }}
+          retention-days: 30
+
+  aggregate:
+    needs: ladder
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install diagnostic runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'numpy<2.4' pandas arviz
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: peer-microphysics-pt-ladder*
+          path: downloads
+
+      - name: Evaluate global promotion gate
+        run: |
+          set +e
+          python peer_microphysics_global_pt_20260729/diagnostics.py \
+            --input downloads --output combined_microphysics_global --burn 0.30
+          STATUS=$?
+          set -e
+          printf '%s\n' "$STATUS" > combined_gate_exit_code.txt
+          exit "$STATUS"
+
+      - name: Upload combined posterior and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-microphysics-global-posterior
+          path: |
+            combined_microphysics_global
+            combined_gate_exit_code.txt
+            downloads
+          retention-days: 30
