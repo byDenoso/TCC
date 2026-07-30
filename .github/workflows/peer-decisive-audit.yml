@@ -2,6 +2,10 @@ name: PEER decisive audit lanes
 on:
   pull_request:
     branches: [main]
+    paths:
+      - '.github/workflows/peer-decisive-audit.yml'
+      - 'peer_decisive_followups/covariance_audit.py'
+      - 'peer_decisive_followups/replication_audit.py'
 permissions:
   contents: read
 jobs:
