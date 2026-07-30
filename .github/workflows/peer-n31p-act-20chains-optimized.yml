@@ -18,7 +18,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: peer-act20-optimized-${{ github.ref }}
+  group: peer-act20-optimized
   cancel-in-progress: false
 
 env:
@@ -49,11 +49,11 @@ jobs:
       - name: Build or restore the one canonical runtime cache
         uses: ./.github/actions/peer-runtime-cache
         with:
-          source-run-id: ${{ env.SOURCE_RUN_ID }}
-          act-commit: ${{ env.ACT_COMMIT }}
-          python-version: "3.11"
-          cache-version: ${{ env.RUNTIME_CACHE_VERSION }}
-          build-if-missing: true
+          source_run_id: ${{ env.SOURCE_RUN_ID }}
+          act_commit: ${{ env.ACT_COMMIT }}
+          python_version: "3.11"
+          cache_version: ${{ env.RUNTIME_CACHE_VERSION }}
+          build_if_missing: true
       - name: Run optimizer tests and frozen-science preflight
         run: |
           set -euxo pipefail
@@ -102,11 +102,11 @@ jobs:
       - name: Restore exact cached runtime
         uses: ./.github/actions/peer-runtime-cache
         with:
-          source-run-id: ${{ env.SOURCE_RUN_ID }}
-          act-commit: ${{ env.ACT_COMMIT }}
-          python-version: "3.11"
-          cache-version: ${{ env.RUNTIME_CACHE_VERSION }}
-          build-if-missing: false
+          source_run_id: ${{ env.SOURCE_RUN_ID }}
+          act_commit: ${{ env.ACT_COMMIT }}
+          python_version: "3.11"
+          cache_version: ${{ env.RUNTIME_CACHE_VERSION }}
+          build_if_missing: false
 
       - name: Restore a specifically requested prior shard
         if: github.event_name == 'workflow_dispatch' && inputs.resume_run_id != ''
@@ -116,7 +116,8 @@ jobs:
           gh run download "${{ inputs.resume_run_id }}" --repo "$GITHUB_REPOSITORY" \
             --name "$NAME" --dir prior-shard
           SRC=$(find prior-shard -type d -name "act20opt_${MODEL}_s${SHARD}" | head -1)
-          test -n "$SRC"
+          if [ -z "$SRC" ]; then SRC="$GITHUB_WORKSPACE/prior-shard"; fi
+          test -d "$SRC/mcmc"
           cp -a "$SRC" "$GITHUB_WORKSPACE/act20opt_${MODEL}_s${SHARD}"
 
       - name: Generate or validate independent shard configuration
@@ -232,7 +233,7 @@ jobs:
                 ln -sfn "$RUNTIME/Rec_database" "$WORK/Rec_database"
                 ln -sfn "$RUNTIME/Development" "$WORK/Development"
                 cd "$WORK"
-                cobaya-run "$ROOT/configs/mcmc.yaml"
+                "$RUNTIME/venv/bin/cobaya-run" "$ROOT/configs/mcmc.yaml"
               ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
                 2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
             CODE=$?
@@ -289,8 +290,11 @@ jobs:
           INDEX=1
           ALL_COBAYA=true
           for SHARD in 0 1 2 3 4; do
-            ROOT=$(find downloads -type d -name "act20opt_${MODEL}_s${SHARD}" | head -1)
-            test -n "$ROOT"
+            ART="downloads/peer-n31p-act20-opt-${MODEL}-shard${SHARD}"
+            test -d "$ART"
+            ROOT=$(find "$ART" -type d -name "act20opt_${MODEL}_s${SHARD}" | head -1)
+            if [ -z "$ROOT" ]; then ROOT="$ART"; fi
+            test -d "$ROOT/mcmc"
             python - "$ROOT/convergence_gate.json" <<'PY' || ALL_COBAYA=false
           import json, sys
           result = json.load(open(sys.argv[1], encoding='utf-8'))
