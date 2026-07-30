@@ -1,0 +1,26 @@
+name: Launch PEER microphysics global posterior
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/launch-peer-microphysics-global-pt-20260730.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch production MCMC
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          gh workflow run peer-microphysics-global-pt.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Production workflow dispatched."
