@@ -144,11 +144,75 @@ def resolve_sampled_names(model) -> list[str]:
     return expected
 
 
-def _evaluate_model(model, names: list[str], position: np.ndarray):
-    physical = _physical_from_unit(names, position)
-    result = model.logposterior(
-        physical, as_dict=True, return_derived=True, make_finite=False
+def _exception_name(exc: BaseException) -> str:
+    cls = type(exc)
+    return f"{cls.__module__}.{cls.__name__}"
+
+
+def _is_recoverable_numerical_error(exc: BaseException) -> bool:
+    """Return true only for numerical theory failures at an otherwise valid proposal."""
+    exception_name = _exception_name(exc)
+    if exception_name == "camb.baseconfig.CAMBError":
+        return True
+    if isinstance(exc, (FloatingPointError, OverflowError)):
+        return True
+    message = str(exc).lower()
+    numerical_markers = (
+        "integration timed out",
+        "integrate, integration timed out",
+        "error in dverk",
+        "non-finite",
+        "non finite",
+        "nan in",
     )
+    return exception_name == "cobaya.log.LoggedError" and any(
+        marker in message for marker in numerical_markers
+    )
+
+
+def _append_invalid_evaluation(
+    path: str | Path,
+    *,
+    physical: dict[str, float],
+    exc: BaseException,
+    context: dict[str, Any] | None = None,
+) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        **(context or {}),
+        "exception_type": _exception_name(exc),
+        "message": str(exc),
+        "parameters": physical,
+    }
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(payload, sort_keys=True, default=_json_default) + "\n")
+
+
+def _evaluate_model(
+    model,
+    names: list[str],
+    position: np.ndarray,
+    *,
+    invalid_log_path: str | Path | None = None,
+    context: dict[str, Any] | None = None,
+):
+    physical = _physical_from_unit(names, position)
+    try:
+        result = model.logposterior(
+            physical, as_dict=True, return_derived=True, make_finite=False
+        )
+    except BaseException as exc:
+        if not _is_recoverable_numerical_error(exc):
+            raise
+        if invalid_log_path is not None:
+            _append_invalid_evaluation(
+                invalid_log_path,
+                physical=physical,
+                exc=exc,
+                context=context,
+            )
+        return -math.inf, -math.inf, {}
     logprior = _sum_log_parts(result["logpriors"])
     loglike = _sum_log_parts(result["loglikes"])
     if not math.isfinite(logprior) or not math.isfinite(loglike):
@@ -354,6 +418,7 @@ def run(args: argparse.Namespace) -> int:
     swap_round = state["step"] // max(1, args.swap_every)
     chain_path = root / "chains" / f"temp_{rank}.csv"
     swap_path = root / "swap_log.csv"
+    invalid_log_path = root / "logs" / f"rank_{rank}_invalid_theory.jsonl"
 
     while state["step"] < final_step and not _STOP_REQUESTED:
         covariance = _proposal_covariance(state, base_scales, args.warmup)
@@ -363,7 +428,16 @@ def run(args: argparse.Namespace) -> int:
             + rng.multivariate_normal(np.zeros(len(names)), covariance) * step_scale
         )
         new_logprior, new_loglike, new_derived = _evaluate_model(
-            model, names, proposal
+            model,
+            names,
+            proposal,
+            invalid_log_path=invalid_log_path,
+            context={
+                "ladder_id": args.ladder_id,
+                "rank": rank,
+                "temperature": float(temperature),
+                "step": int(state["step"] + 1),
+            },
         )
         state["proposed_local"] += 1
         log_alpha = (new_logprior + beta * new_loglike) - (
@@ -438,6 +512,10 @@ def run(args: argparse.Namespace) -> int:
             save_checkpoint(checkpoint_path, _checkpoint_payload(state, rng))
 
     save_checkpoint(checkpoint_path, _checkpoint_payload(state, rng))
+    invalid_count = 0
+    if invalid_log_path.exists():
+        with invalid_log_path.open("r", encoding="utf-8") as handle:
+            invalid_count = sum(1 for line in handle if line.strip())
     summary = {
         "ladder_id": args.ladder_id,
         "rank": rank,
@@ -446,6 +524,7 @@ def run(args: argparse.Namespace) -> int:
         "accepted_local": state["accepted_local"],
         "proposed_local": state["proposed_local"],
         "local_acceptance": state["accepted_local"] / max(1, state["proposed_local"]),
+        "invalid_theory_evaluations": invalid_count,
         "walker_id": state["walker_id"],
         "stop_requested": _STOP_REQUESTED,
     }
