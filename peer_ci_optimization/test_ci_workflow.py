@@ -12,11 +12,14 @@ def test_ci_workflow_runs_only_pure_verification_on_pull_requests() -> None:
     assert "pull_request" in (workflow.get(True) or workflow.get("on"))
     jobs = workflow["jobs"]
     assert set(jobs) == {"verify"}
-    scripts = "\n".join(step.get("run", "") for step in jobs["verify"]["steps"])
+    steps = jobs["verify"]["steps"]
+    scripts = "\n".join(step.get("run", "") for step in steps)
     assert "pytest -q peer_ci_optimization" in scripts
     assert "py_compile" in scripts
     assert "mpirun" not in scripts
     assert "cobaya-run" not in scripts
+    setup = next(step for step in steps if step.get("uses", "").startswith("actions/setup-python@"))
+    assert "cache" not in setup.get("with", {})
 
 
 def test_launch_readme_requires_dedicated_marker_and_preserves_manual_resume() -> None:
