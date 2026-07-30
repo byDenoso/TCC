@@ -23,24 +23,30 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       TARGET_WORKFLOW: peer-n31p-act-20chains-optimized.yml
-      TARGET_REF: run-optimized-peer-act20-20260730
     steps:
-      - name: Cancel every unfinished ACT20 copy
+      - name: Keep newest ACT20 run and cancel older unfinished copies
         shell: bash
         run: |
           set -euo pipefail
-          ids=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?per_page=100" \
-            --jq '.workflow_runs[] | select(.status != "completed") | .id')
-          for id in $ids; do
-            echo "Cancelling ACT20 run $id"
+          mapfile -t ids < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?per_page=100" \
+              --jq '[.workflow_runs[] | select(.status != "completed")] | sort_by(.created_at) | reverse | .[].id'
+          )
+          if [[ ${#ids[@]} -eq 0 ]]; then
+            echo "No unfinished ACT20 run exists."
+            exit 1
+          fi
+          keep="${ids[0]}"
+          echo "Keeping newest ACT20 run ${keep}."
+          for id in "${ids[@]:1}"; do
+            echo "Cancelling superseded ACT20 run ${id}."
             gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/runs/${id}/cancel" || true
           done
-          sleep 15
-      - name: Dispatch exactly one optimized campaign
-        shell: bash
-        run: |
-          set -euo pipefail
-          gh api --method POST \
-            "repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/dispatches" \
-            -f ref="${TARGET_REF}"
-          echo "Dispatched one ACT20 campaign on ${TARGET_REF}."
+          printf '%s\n' "${keep}" > kept_run_id.txt
+      - name: Publish singleton audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-act20-singleton
+          path: kept_run_id.txt
+          if-no-files-found: error
+          retention-days: 30
