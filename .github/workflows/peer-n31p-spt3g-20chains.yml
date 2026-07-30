@@ -12,9 +12,11 @@ permissions:
   actions: read
 
 env:
-  SCIENCE_REF: peer-n31p-spt3g-20260729
+  ACT_BASE_REF: act-dr6-peer-test-20260729
+  SPT_SOURCE_REF: peer-n31p-spt3g-20260729
   SOURCE_RUN_ID: "30455821484"
   COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  PYTHONPATH: ${{ github.workspace }}
   SPT_COMMIT: 633c5a3da99bb6e78c60a7514f311fc3577965bc
   OMP_NUM_THREADS: "1"
   OPENBLAS_NUM_THREADS: "1"
@@ -36,9 +38,16 @@ jobs:
       SHARD: ${{ matrix.shard }}
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out shared ACT/PEER base
+        uses: actions/checkout@v4
         with:
-          ref: ${{ env.SCIENCE_REF }}
+          ref: ${{ env.ACT_BASE_REF }}
+
+      - name: Check out independent SPT wrapper
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SPT_SOURCE_REF }}
+          path: spt-source
 
       - uses: actions/setup-python@v5
         with:
@@ -51,10 +60,11 @@ jobs:
           sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install \
-            'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz \
+            'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz pytest \
             'cobaya==3.6.2'
           python -m pip install \
             "git+https://github.com/xgarrido/spt_likelihoods.git@${SPT_COMMIT}"
+          python -m pytest -q act_dr6_mcmc_20260729/test_convergence_gate.py
 
       - name: Download byte-verified PEER runtime and likelihood payload
         run: |
@@ -107,8 +117,10 @@ jobs:
       - name: Generate independent shard configuration
         run: |
           set -euxo pipefail
+          test -f act_dr6_mcmc_20260729/campaign.py
+          test -f spt-source/peer_n31p_spt3g_20260729/campaign.py
           ROOT="$GITHUB_WORKSPACE/spt20_${MODEL}_s${SHARD}"
-          python peer_n31p_spt3g_20260729/campaign.py \
+          python spt-source/peer_n31p_spt3g_20260729/campaign.py \
             --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
           python - <<'PY'
           import os, yaml
@@ -138,9 +150,11 @@ jobs:
               assert info['params']['Alens']['value'] == 1.0
 
           info['sampler']['mcmc']['seed'] = 2026073200 + (100 if model == 'N31P_ALENS' else 0) + shard
+          info['sampler']['mcmc']['burn_in'] = 50
           info['sampler']['mcmc']['max_samples'] = 50000
           info['sampler']['mcmc']['Rminus1_stop'] = 0.01
           info['sampler']['mcmc']['Rminus1_cl_stop'] = 0.05
+          info['force'] = True
           info['resume'] = False
 
           likes = set(info['likelihood'])
@@ -187,8 +201,19 @@ jobs:
           raise SystemExit(0 if ok else 1)
           PY
           }
+          prepare_resume() {
+            python - "$ROOT/configs/mcmc.yaml" <<'PY'
+          import sys, yaml
+          path = sys.argv[1]
+          info = yaml.safe_load(open(path, encoding='utf-8'))
+          info['force'] = False
+          info['resume'] = True
+          open(path, 'w', encoding='utf-8').write(yaml.safe_dump(info, sort_keys=False))
+          PY
+          }
           for SEGMENT in 1 2; do
             if is_done; then break; fi
+            if [ "$SEGMENT" -gt 1 ]; then prepare_resume; fi
             export SEGMENT
             set +e
             timeout --signal=TERM 140m mpirun --oversubscribe -np 4 \
@@ -199,11 +224,7 @@ jobs:
                 ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
                 ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
                 cd "$WORK"
-                if [ "$SEGMENT" -eq 1 ]; then
-                  cobaya-run "$ROOT/configs/mcmc.yaml"
-                else
-                  cobaya-run -r "$ROOT/configs/mcmc.yaml"
-                fi
+                cobaya-run "$ROOT/configs/mcmc.yaml"
               ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
                 2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
             CODE=$?
@@ -213,16 +234,14 @@ jobs:
           done
           diagnose
 
-      - name: Enforce four-chain shard gate
+      - name: Enforce four non-empty chains for aggregation
         run: |
+          set -euxo pipefail
           ROOT="spt20_${MODEL}_s${SHARD}"
-          python act_dr6_mcmc_20260729/convergence_gate.py --root "$ROOT" --burn 0.30
-          python - "$ROOT/convergence_gate.json" <<'PY'
-          import json, sys
-          result = json.load(open(sys.argv[1], encoding='utf-8'))
-          assert result['converged'] is True
-          assert result['n_chains_read'] == 4
-          PY
+          COUNT=$(find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c | wc -l)
+          test "$COUNT" -eq 4
+          python act_dr6_mcmc_20260729/convergence_gate.py --root "$ROOT" --burn 0.30 || true
+          test -f "$ROOT/convergence_gate.json"
 
       - name: Upload shard chains
         if: always()
@@ -239,55 +258,78 @@ jobs:
       fail-fast: false
       matrix:
         model: [N31P, N31P_ALENS]
+    env:
+      MODEL: ${{ matrix.model }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.SCIENCE_REF }}
+          ref: ${{ env.ACT_BASE_REF }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m pip install 'numpy<2.4' pandas pyyaml arviz
+      - run: python -m pip install 'numpy<2.4' pandas pyyaml arviz pytest
+      - run: python -m pytest -q act_dr6_mcmc_20260729/test_convergence_gate.py
       - uses: actions/download-artifact@v4
         with:
           pattern: peer-n31p-spt20-${{ matrix.model }}-shard*
           path: downloads
 
-      - name: Assemble and gate all twenty chains
-        env:
-          MODEL: ${{ matrix.model }}
+      - name: Assemble all twenty chains and all native checkpoints
         run: |
           set -euxo pipefail
           OUT="combined_spt20_${MODEL}"
           mkdir -p "$OUT/mcmc"
           INDEX=1
+          ALL_COBAYA=true
           for SHARD in 0 1 2 3 4; do
             ROOT=$(find downloads -type d -name "spt20_${MODEL}_s${SHARD}" | head -1)
             test -n "$ROOT"
-            python - "$ROOT/convergence_gate.json" <<'PY'
+            python - "$ROOT/convergence_gate.json" <<'PY' || ALL_COBAYA=false
           import json, sys
           result = json.load(open(sys.argv[1], encoding='utf-8'))
-          assert result['converged'] is True
           assert result['n_chains_read'] == 4
+          assert result['cobaya']['converged'] is True
           PY
             COUNT=0
             for FILE in "$ROOT"/mcmc/chain.*.txt; do
-              test -f "$FILE"
+              test -s "$FILE"
               cp "$FILE" "$OUT/mcmc/chain.${INDEX}.txt"
               INDEX=$((INDEX + 1))
               COUNT=$((COUNT + 1))
             done
             test "$COUNT" -eq 4
-            if [ "$SHARD" -eq 0 ]; then
-              cp "$ROOT/mcmc/chain.checkpoint" "$OUT/mcmc/chain.checkpoint"
-            fi
           done
           test "$INDEX" -eq 21
-          python act_dr6_mcmc_20260729/convergence_gate.py --root "$OUT" --burn 0.30
-          python - "$OUT/convergence_gate.json" <<'PY'
+          export ALL_COBAYA OUT
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          converged = os.environ['ALL_COBAYA'].lower() == 'true'
+          out = Path(os.environ['OUT']) / 'mcmc' / 'chain.checkpoint'
+          out.write_text(
+              'sampler:\n  mcmc:\n    converged: ' + ('true' if converged else 'false') + '\n',
+              encoding='utf-8',
+          )
+          PY
+          python act_dr6_mcmc_20260729/convergence_gate.py --root "$OUT" --burn 0.30 || true
+          test -f "$OUT/convergence_gate.json"
+
+      - name: Upload combined posterior before final gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-n31p-spt20-${{ matrix.model }}-combined
+          path: combined_spt20_${{ matrix.model }}
+          retention-days: 30
+
+      - name: Enforce native matched twenty-chain gate
+        run: |
+          python - "combined_spt20_${MODEL}/convergence_gate.json" <<'PY'
           import json, sys
           result = json.load(open(sys.argv[1], encoding='utf-8'))
           assert result['converged'] is True
           assert result['n_chains_read'] == 20
+          assert result['cobaya']['converged'] is True
           assert result['rhat_minus1_max'] < 0.01
           print({
               'chains': result['n_chains_read'],
@@ -296,9 +338,3 @@ jobs:
               'ess_tail_min': result['ess_tail_min'],
           })
           PY
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: peer-n31p-spt20-${{ matrix.model }}-combined
-          path: combined_spt20_${{ matrix.model }}
-          retention-days: 30
