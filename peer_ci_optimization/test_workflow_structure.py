@@ -46,12 +46,12 @@ def test_workflow_uses_segmented_resume_and_supported_cobaya_geometry() -> None:
         "resume_run_id",
         "for SEGMENT in 1 2 3 4",
         "timeout --signal=TERM 65m",
-        "info['sampler']['mcmc']['drag'] = True",
-        "info['sampler']['mcmc']['oversample_power'] = 0.4",
-        "info['sampler']['mcmc']['measure_speeds'] = True",
-        "info['sampler']['mcmc']['proposal_scale'] = 1.9",
-        "info['sampler']['mcmc']['Rminus1_stop'] = 0.01",
-        "info['sampler']['mcmc']['Rminus1_cl_stop'] = 0.05",
+        "mcmc['drag'] = True",
+        "mcmc['oversample_power'] = 0.4",
+        "mcmc['measure_speeds'] = True",
+        "mcmc['proposal_scale'] = 1.9",
+        "mcmc['Rminus1_stop'] = 0.01",
+        "mcmc['Rminus1_cl_stop'] = 0.05",
     ]:
         assert required in text
 
