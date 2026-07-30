@@ -6,6 +6,7 @@ on:
       - '.github/workflows/peer-decisive-nested-pr.yml'
       - 'peer_decisive_followups/build_nested_config.py'
       - 'peer_decisive_followups/run_nested_lane.py'
+      - 'peer_decisive_followups/test_nested_lane.py'
 permissions:
   contents: read
   actions: read
@@ -35,12 +36,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install PolyChord runtime
+      - name: Install and test PolyChord runtime
         run: |
+          set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py 'cobaya==3.6.2' 'sacc>=0.12.0'
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
+          python -m pytest -q peer_decisive_followups/test_nested_lane.py
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
       - name: Run matched data and prior-volume evidence
         run: |
