@@ -1,0 +1,348 @@
+name: PEER N3 ACT DR6 optimized 20-chain campaign
+
+on:
+  workflow_dispatch:
+    inputs:
+      resume_run_id:
+        description: Optional prior optimized run ID whose shard artifacts must be resumed.
+        required: false
+        default: ""
+        type: string
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/launch/peer-act20-optimized.txt"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: peer-act20-optimized-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  SCIENCE_REF: act-dr6-peer-test-20260729
+  SOURCE_RUN_ID: "30455821484"
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  RUNTIME_CACHE_VERSION: v1
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
+jobs:
+  preflight:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+          path: science
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build or restore the one canonical runtime cache
+        uses: ./.github/actions/peer-runtime-cache
+        with:
+          source-run-id: ${{ env.SOURCE_RUN_ID }}
+          act-commit: ${{ env.ACT_COMMIT }}
+          python-version: "3.11"
+          cache-version: ${{ env.RUNTIME_CACHE_VERSION }}
+          build-if-missing: true
+      - name: Run optimizer tests and frozen-science preflight
+        run: |
+          set -euxo pipefail
+          python -m pytest -q peer_ci_optimization
+          for MODEL in M2 M3; do
+            ROOT="$RUNNER_TEMP/preflight_${MODEL}"
+            python science/act_dr6_mcmc_20260729/campaign.py write-configs \
+              --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+            python - "$ROOT/configs/mcmc.yaml" "$MODEL" <<'PY'
+          import sys, yaml
+          path, model = sys.argv[1], sys.argv[2]
+          info = yaml.safe_load(open(path, encoding='utf-8'))
+          assert info['params']['peer_zc']['value'] == 3.81
+          assert info['params']['peer_thetai']['value'] == 2.89155
+          assert 'act_dr6_cmbonly' in info['likelihood']
+          assert 'act_dr6_cmbonly.PlanckActCut' in info['likelihood']
+          assert model in {'M2', 'M3'}
+          assert ('prior' in info['params']['peer_fede'])
+          assert ('prior' in info['params']['Alens']) == (model == 'M3')
+          PY
+          done
+
+  shard:
+    needs: preflight
+    runs-on: ubuntu-24.04
+    timeout-minutes: 310
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        model: [M2, M3]
+        shard: [0, 1, 2, 3, 4]
+    env:
+      MODEL: ${{ matrix.model }}
+      SHARD: ${{ matrix.shard }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+          path: science
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore exact cached runtime
+        uses: ./.github/actions/peer-runtime-cache
+        with:
+          source-run-id: ${{ env.SOURCE_RUN_ID }}
+          act-commit: ${{ env.ACT_COMMIT }}
+          python-version: "3.11"
+          cache-version: ${{ env.RUNTIME_CACHE_VERSION }}
+          build-if-missing: false
+
+      - name: Restore a specifically requested prior shard
+        if: github.event_name == 'workflow_dispatch' && inputs.resume_run_id != ''
+        run: |
+          set -euxo pipefail
+          NAME="peer-n31p-act20-opt-${MODEL}-shard${SHARD}"
+          gh run download "${{ inputs.resume_run_id }}" --repo "$GITHUB_REPOSITORY" \
+            --name "$NAME" --dir prior-shard
+          SRC=$(find prior-shard -type d -name "act20opt_${MODEL}_s${SHARD}" | head -1)
+          test -n "$SRC"
+          cp -a "$SRC" "$GITHUB_WORKSPACE/act20opt_${MODEL}_s${SHARD}"
+
+      - name: Generate or validate independent shard configuration
+        run: |
+          set -euxo pipefail
+          ROOT="$GITHUB_WORKSPACE/act20opt_${MODEL}_s${SHARD}"
+          if [ ! -f "$ROOT/configs/mcmc.yaml" ]; then
+            python science/act_dr6_mcmc_20260729/campaign.py write-configs \
+              --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          fi
+          python - <<'PY'
+          import os, yaml
+          from pathlib import Path
+
+          model = os.environ['MODEL']
+          shard = int(os.environ['SHARD'])
+          root = Path(os.environ['GITHUB_WORKSPACE']) / f'act20opt_{model}_s{shard}'
+          path = root / 'configs' / 'mcmc.yaml'
+          info = yaml.safe_load(path.read_text(encoding='utf-8'))
+
+          fede_refs = [0.040, 0.065, 0.085, 0.105, 0.130]
+          ns_refs = [0.978, 0.988, 0.998, 1.008, 1.020]
+          alens_refs = [0.90, 1.00, 1.08, 1.16, 1.25]
+          has_chains = any((root / 'mcmc').glob('chain.*.txt'))
+
+          info['packages_path'] = os.environ['COBAYA_PACKAGES_PATH']
+          info['params']['peer_fede']['ref'] = {
+              'dist': 'norm', 'loc': fede_refs[shard], 'scale': 0.012
+          }
+          info['params']['ns']['ref'] = {
+              'dist': 'norm', 'loc': ns_refs[shard], 'scale': 0.004
+          }
+          if model == 'M3':
+              info['params']['Alens']['ref'] = {
+                  'dist': 'norm', 'loc': alens_refs[shard], 'scale': 0.035
+              }
+          else:
+              assert info['params']['Alens']['value'] == 1.0
+
+          mcmc = info['sampler']['mcmc']
+          mcmc['seed'] = 2026073100 + (100 if model == 'M3' else 0) + shard
+          mcmc['burn_in'] = 50
+          mcmc['max_samples'] = float('inf')
+          mcmc['learn_proposal'] = True
+          mcmc['learn_proposal_Rminus1_max'] = 2.0
+          mcmc['learn_proposal_Rminus1_max_early'] = 30.0
+          mcmc['measure_speeds'] = True
+          mcmc['drag'] = True
+          mcmc['oversample_power'] = 0.4
+          mcmc['proposal_scale'] = 1.9
+          mcmc['Rminus1_stop'] = 0.01
+          mcmc['Rminus1_cl_stop'] = 0.05
+          mcmc['output_every'] = '60s'
+          info['force'] = not has_chains
+          info['resume'] = has_chains
+
+          assert info['params']['peer_zc']['value'] == 3.81
+          assert info['params']['peer_thetai']['value'] == 2.89155
+          assert 'act_dr6_cmbonly' in info['likelihood']
+          assert 'act_dr6_cmbonly.PlanckActCut' in info['likelihood']
+          path.write_text(yaml.safe_dump(info, sort_keys=False), encoding='utf-8')
+          PY
+
+      - name: Run four chains in short resumable segments
+        shell: bash
+        run: |
+          set -uo pipefail
+          ROOT="$GITHUB_WORKSPACE/act20opt_${MODEL}_s${SHARD}"
+          RUNTIME="$GITHUB_WORKSPACE/.peer-runtime"
+          export ROOT RUNTIME GITHUB_WORKSPACE SHARD
+          mkdir -p "$ROOT/logs"
+
+          diagnose() {
+            python peer_ci_optimization/convergence_gate.py \
+              --root "$ROOT" --burn 0.30 --minimum-chains 4 \
+              --rhat-minus1-limit 0.01 --ess-bulk-limit 250 \
+              --ess-tail-limit 125 --mcse-relative-limit 0.10 || true
+          }
+          is_done() {
+            python - "$ROOT/convergence_gate.json" <<'PY'
+          import json, sys
+          try:
+              ok = bool(json.load(open(sys.argv[1], encoding='utf-8'))['converged'])
+          except Exception:
+              ok = False
+          raise SystemExit(0 if ok else 1)
+          PY
+          }
+          prepare_resume() {
+            python - "$ROOT/configs/mcmc.yaml" <<'PY'
+          import sys, yaml
+          path = sys.argv[1]
+          info = yaml.safe_load(open(path, encoding='utf-8'))
+          info['force'] = False
+          info['resume'] = True
+          open(path, 'w', encoding='utf-8').write(yaml.safe_dump(info, sort_keys=False))
+          PY
+          }
+
+          diagnose
+          for SEGMENT in 1 2 3 4; do
+            if is_done; then break; fi
+            if find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c | grep -q .; then
+              prepare_resume
+            fi
+            export SEGMENT
+            set +e
+            timeout --signal=TERM 65m mpirun --oversubscribe -np 4 \
+              bash -lc '
+                RANK=${OMPI_COMM_WORLD_RANK:-0}
+                WORK="$ROOT/mpi_work_${SEGMENT}/rank_${RANK}"
+                mkdir -p "$WORK/temp"
+                ln -sfn "$RUNTIME/Rec_database" "$WORK/Rec_database"
+                ln -sfn "$RUNTIME/Development" "$WORK/Development"
+                cd "$WORK"
+                cobaya-run "$ROOT/configs/mcmc.yaml"
+              ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
+                2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
+            CODE=$?
+            set -e
+            printf '%s\n' "$CODE" >"$ROOT/logs/mcmc_segment_${SEGMENT}.exit_code"
+            diagnose
+          done
+          diagnose
+
+      - name: Require four non-empty resumable chains
+        run: |
+          set -euxo pipefail
+          ROOT="act20opt_${MODEL}_s${SHARD}"
+          COUNT=$(find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c | wc -l)
+          test "$COUNT" -eq 4
+          test -f "$ROOT/convergence_gate.json"
+
+      - name: Upload shard chains and checkpoints
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-n31p-act20-opt-${{ matrix.model }}-shard${{ matrix.shard }}
+          path: act20opt_${{ matrix.model }}_s${{ matrix.shard }}
+          retention-days: 30
+
+  aggregate:
+    needs: shard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        model: [M2, M3]
+    env:
+      MODEL: ${{ matrix.model }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install 'numpy<2.4' pandas pyyaml arviz pytest
+      - run: python -m pytest -q peer_ci_optimization
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: peer-n31p-act20-opt-${{ matrix.model }}-shard*
+          path: downloads
+
+      - name: Assemble all twenty chains and native checkpoints
+        run: |
+          set -euxo pipefail
+          OUT="combined_act20opt_${MODEL}"
+          mkdir -p "$OUT/mcmc"
+          INDEX=1
+          ALL_COBAYA=true
+          for SHARD in 0 1 2 3 4; do
+            ROOT=$(find downloads -type d -name "act20opt_${MODEL}_s${SHARD}" | head -1)
+            test -n "$ROOT"
+            python - "$ROOT/convergence_gate.json" <<'PY' || ALL_COBAYA=false
+          import json, sys
+          result = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert result['n_chains_read'] == 4
+          assert result['cobaya']['converged'] is True
+          PY
+            COUNT=0
+            for FILE in "$ROOT"/mcmc/chain.*.txt; do
+              test -s "$FILE"
+              cp "$FILE" "$OUT/mcmc/chain.${INDEX}.txt"
+              INDEX=$((INDEX + 1))
+              COUNT=$((COUNT + 1))
+            done
+            test "$COUNT" -eq 4
+          done
+          test "$INDEX" -eq 21
+          export ALL_COBAYA OUT
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          converged = os.environ['ALL_COBAYA'].lower() == 'true'
+          out = Path(os.environ['OUT']) / 'mcmc' / 'chain.checkpoint'
+          out.write_text(
+              'sampler:\n  mcmc:\n    converged: ' + ('true' if converged else 'false') + '\n',
+              encoding='utf-8',
+          )
+          PY
+          python peer_ci_optimization/convergence_gate.py \
+            --root "$OUT" --burn 0.30 --minimum-chains 20 \
+            --rhat-minus1-limit 0.01 --ess-bulk-limit 1000 \
+            --ess-tail-limit 500 --mcse-relative-limit 0.05 || true
+          test -f "$OUT/convergence_gate.json"
+
+      - name: Upload combined posterior before promotion gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-n31p-act20-opt-${{ matrix.model }}-combined
+          path: combined_act20opt_${{ matrix.model }}
+          retention-days: 30
+
+      - name: Enforce native matched twenty-chain promotion gate
+        run: |
+          python - "combined_act20opt_${MODEL}/convergence_gate.json" <<'PY'
+          import json, sys
+          result = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert result['converged'] is True
+          assert result['n_chains_read'] == 20
+          assert result['cobaya']['converged'] is True
+          assert result['rhat_minus1_max'] < 0.01
+          assert result['ess_bulk_min'] >= 1000
+          assert result['ess_tail_min'] >= 500
+          assert result['mcse_mean_relative_max'] <= 0.05
+          print(result['gate_results'])
+          PY
