@@ -24,11 +24,14 @@ jobs:
 
           ACT_BEFORE=$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/$ACT_WORKFLOW/runs?event=workflow_dispatch&branch=main&per_page=1" --jq '.workflow_runs[0].id // 0')
           SPT_BEFORE=$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/$SPT_WORKFLOW/runs?event=workflow_dispatch&branch=main&per_page=1" --jq '.workflow_runs[0].id // 0')
+          echo "ACT_BEFORE=$ACT_BEFORE" >> "$GITHUB_ENV"
+          echo "SPT_BEFORE=$SPT_BEFORE" >> "$GITHUB_ENV"
 
           gh workflow run "$ACT_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref main
           gh workflow run "$SPT_WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref main
 
           mkdir -p dispatched-runs
+          export ACT_BEFORE SPT_BEFORE
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -37,9 +40,6 @@ jobs:
               'spt_previous_run_id': int(os.environ['SPT_BEFORE']),
           }, indent=2), encoding='utf-8')
           PY
-        env:
-          ACT_BEFORE: ${{ env.ACT_BEFORE }}
-          SPT_BEFORE: ${{ env.SPT_BEFORE }}
 
       - name: Resolve exact newly dispatched run IDs
         run: |
@@ -48,14 +48,18 @@ jobs:
           SPT_WORKFLOW='peer-n31p-spt3g-20chains.yml'
           ACT_RUN=0
           SPT_RUN=0
-          for ATTEMPT in $(seq 1 12); do
+          for ATTEMPT in $(seq 1 18); do
             ACT_RUN=$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/$ACT_WORKFLOW/runs?event=workflow_dispatch&branch=main&per_page=1" --jq '.workflow_runs[0].id // 0')
             SPT_RUN=$(gh api "/repos/$GITHUB_REPOSITORY/actions/workflows/$SPT_WORKFLOW/runs?event=workflow_dispatch&branch=main&per_page=1" --jq '.workflow_runs[0].id // 0')
-            if [ "$ACT_RUN" -gt 0 ] && [ "$SPT_RUN" -gt 0 ]; then break; fi
+            if [ "$ACT_RUN" -gt 0 ] && [ "$SPT_RUN" -gt 0 ] && [ "$ACT_RUN" != "$ACT_BEFORE" ] && [ "$SPT_RUN" != "$SPT_BEFORE" ]; then
+              break
+            fi
             sleep 5
           done
           test "$ACT_RUN" -gt 0
           test "$SPT_RUN" -gt 0
+          test "$ACT_RUN" != "$ACT_BEFORE"
+          test "$SPT_RUN" != "$SPT_BEFORE"
           export ACT_RUN SPT_RUN
           python - <<'PY'
           import json, os
@@ -64,11 +68,13 @@ jobs:
               'status': 'DISPATCHED',
               'act': {
                   'workflow': 'peer-n31p-act-20chains.yml',
+                  'previous_run_id': int(os.environ['ACT_BEFORE']),
                   'run_id': int(os.environ['ACT_RUN']),
                   'gate': '20 chains, all native shard checkpoints converged, global rank Rhat-1 < 0.01',
               },
               'spt': {
                   'workflow': 'peer-n31p-spt3g-20chains.yml',
+                  'previous_run_id': int(os.environ['SPT_BEFORE']),
                   'run_id': int(os.environ['SPT_RUN']),
                   'gate': '20 chains, all native shard checkpoints converged, global rank Rhat-1 < 0.01',
               },
@@ -80,5 +86,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: corrected-act-spt-dispatched-run-ids
-          path: dispatched-runs/run_ids.json
+          path: |
+            dispatched-runs/pre_dispatch.json
+            dispatched-runs/run_ids.json
           retention-days: 30
