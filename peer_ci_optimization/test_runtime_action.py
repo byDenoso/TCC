@@ -44,7 +44,7 @@ def test_runtime_action_exposes_stable_paths_and_refuses_unexpected_miss() -> No
     assert "Runtime cache miss and build_if_missing=false" in scripts
     assert "$GITHUB_PATH" in scripts
     assert "$GITHUB_ENV" in scripts
-    assert "from importlib.metadata import version" in scripts
+    assert scripts.count("from importlib.metadata import version") >= 2
     assert "version('cobaya')" in scripts
 
 
