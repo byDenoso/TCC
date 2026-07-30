@@ -1,0 +1,20 @@
+name: PEER decisive audit lanes
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  static-audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m py_compile peer_decisive_followups/*.py
+      - run: python peer_decisive_followups/covariance_audit.py --out covariance_audit.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-decisive-static-audit
+          path: covariance_audit.json
