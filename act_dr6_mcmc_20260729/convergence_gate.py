@@ -5,7 +5,7 @@ import argparse
 import json
 import math
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Iterable
 
 import arviz as az
 import numpy as np
@@ -46,18 +46,25 @@ def _read_chain(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, sep=r"\s+", comment="#", names=header, engine="python")
 
 
+def _finite_or_none(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
 def _checkpoint(root: Path) -> dict:
     path = root / "mcmc" / "chain.checkpoint"
     if not path.exists():
         return {"exists": False, "converged": False, "Rminus1_last": None}
     raw = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
     mcmc = (raw.get("sampler") or {}).get("mcmc") or {}
-    value = mcmc.get("Rminus1_last")
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        value = None
-    return {"exists": True, "converged": bool(mcmc.get("converged", False)), "Rminus1_last": value}
+    return {
+        "exists": True,
+        "converged": bool(mcmc.get("converged", False)),
+        "Rminus1_last": _finite_or_none(mcmc.get("Rminus1_last")),
+    }
 
 
 def _finite_max(values: Iterable[float]) -> float | None:
@@ -72,8 +79,31 @@ def _finite_min(values: Iterable[float]) -> float | None:
     return float(arr.min()) if arr.size else None
 
 
-def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | None = None,
-             max_draws_per_chain: int = 200_000, rhat_minus1_limit: float = 0.01) -> dict:
+def _json_safe(value: Any) -> Any:
+    """Replace non-finite numeric diagnostics with JSON null, recursively.
+
+    This function is output-only. Convergence is decided before sanitization, so
+    an undefined or infinite diagnostic can never be promoted into a passing gate.
+    """
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, (float, np.floating)):
+        number = float(value)
+        return number if math.isfinite(number) else None
+    if isinstance(value, np.integer):
+        return int(value)
+    return value
+
+
+def diagnose(
+    root: str | Path,
+    burn_fraction: float = 0.30,
+    params: list[str] | None = None,
+    max_draws_per_chain: int = 200_000,
+    rhat_minus1_limit: float = 0.01,
+) -> dict:
     root = Path(root).resolve()
     chain_paths = sorted((root / "mcmc").glob("chain.*.txt"))
     checkpoint = _checkpoint(root)
@@ -94,20 +124,23 @@ def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | 
             errors.append({"path": str(path), "error": "Missing weight column"})
             continue
         row = {"path": str(path), "compressed_rows": int(len(frame)), "expanded_draws": {}}
-        for p in common_params:
-            trace = expand_trace(frame[p].to_numpy(float), frame["weight"].to_numpy(float),
-                                 max_draws=max_draws_per_chain)
+        for parameter in common_params:
+            trace = expand_trace(
+                frame[parameter].to_numpy(float),
+                frame["weight"].to_numpy(float),
+                max_draws=max_draws_per_chain,
+            )
             trace = trace[int(trace.size * burn_fraction):]
-            traces[p].append(trace)
-            row["expanded_draws"][p] = int(trace.size)
+            traces[parameter].append(trace)
+            row["expanded_draws"][parameter] = int(trace.size)
         per_chain.append(row)
 
     usable_params: dict[str, np.ndarray] = {}
-    for p, chains in traces.items():
+    for parameter, chains in traces.items():
         if len(chains) < 2 or any(chain.size < 20 for chain in chains):
             continue
         equal_draws = min(chain.size for chain in chains)
-        usable_params[p] = np.stack([chain[-equal_draws:] for chain in chains], axis=0)
+        usable_params[parameter] = np.stack([chain[-equal_draws:] for chain in chains], axis=0)
 
     rhat: dict[str, float] = {}
     ess_bulk: dict[str, float] = {}
@@ -116,30 +149,45 @@ def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | 
         rh = az.rhat(usable_params, method="rank")
         eb = az.ess(usable_params, method="bulk")
         et = az.ess(usable_params, method="tail")
-        for p in usable_params:
-            rhat[p] = float(np.asarray(rh[p]).squeeze())
-            ess_bulk[p] = float(np.asarray(eb[p]).squeeze())
-            ess_tail[p] = float(np.asarray(et[p]).squeeze())
+        for parameter in usable_params:
+            rhat[parameter] = float(np.asarray(rh[parameter]).squeeze())
+            ess_bulk[parameter] = float(np.asarray(eb[parameter]).squeeze())
+            ess_tail[parameter] = float(np.asarray(et[parameter]).squeeze())
 
-    rhat_minus1 = {p: value - 1.0 for p, value in rhat.items()}
+    rhat_minus1 = {parameter: value - 1.0 for parameter, value in rhat.items()}
     rhat_minus1_max = _finite_max(rhat_minus1.values())
     ess_bulk_min = _finite_min(ess_bulk.values())
     ess_tail_min = _finite_min(ess_tail.values())
     n_chains = len(frames)
     diagnostics_finite = rhat_minus1_max is not None and math.isfinite(rhat_minus1_max)
-    converged = bool(n_chains >= 4 and checkpoint["converged"] and diagnostics_finite
-                     and rhat_minus1_max < rhat_minus1_limit)
+    converged = bool(
+        n_chains >= 4
+        and checkpoint["converged"]
+        and diagnostics_finite
+        and rhat_minus1_max < rhat_minus1_limit
+    )
     return {
-        "root": str(root), "burn_fraction": burn_fraction,
-        "n_chain_files": len(chain_paths), "n_chains_read": n_chains,
-        "params_requested": requested, "params_diagnosed": list(usable_params),
-        "chains": per_chain, "errors": errors, "cobaya": checkpoint,
-        "rank_rhat": rhat, "rank_rhat_minus1": rhat_minus1,
+        "root": str(root),
+        "burn_fraction": burn_fraction,
+        "n_chain_files": len(chain_paths),
+        "n_chains_read": n_chains,
+        "params_requested": requested,
+        "params_diagnosed": list(usable_params),
+        "chains": per_chain,
+        "errors": errors,
+        "cobaya": checkpoint,
+        "rank_rhat": rhat,
+        "rank_rhat_minus1": rhat_minus1,
         "rhat_minus1_max": rhat_minus1_max,
-        "ess_bulk": ess_bulk, "ess_tail": ess_tail,
-        "ess_bulk_min": ess_bulk_min, "ess_tail_min": ess_tail_min,
-        "gate": {"minimum_chains": 4, "rhat_minus1_limit": rhat_minus1_limit,
-                 "requires_cobaya_converged": True},
+        "ess_bulk": ess_bulk,
+        "ess_tail": ess_tail,
+        "ess_bulk_min": ess_bulk_min,
+        "ess_tail_min": ess_tail_min,
+        "gate": {
+            "minimum_chains": 4,
+            "rhat_minus1_limit": rhat_minus1_limit,
+            "requires_cobaya_converged": True,
+        },
         "converged": converged,
     }
 
@@ -153,15 +201,24 @@ def main() -> int:
     parser.add_argument("--rhat-minus1-limit", type=float, default=0.01)
     parser.add_argument("--params", nargs="*", default=None)
     args = parser.parse_args()
-    result = diagnose(args.root, burn_fraction=args.burn, params=args.params,
-                      max_draws_per_chain=args.max_draws_per_chain,
-                      rhat_minus1_limit=args.rhat_minus1_limit)
+    result = diagnose(
+        args.root,
+        burn_fraction=args.burn,
+        params=args.params,
+        max_draws_per_chain=args.max_draws_per_chain,
+        rhat_minus1_limit=args.rhat_minus1_limit,
+    )
+    safe_result = _json_safe(result)
     output = Path(args.output) if args.output else Path(args.root) / "convergence_gate.json"
-    output.write_text(json.dumps(result, indent=2, allow_nan=False), encoding="utf-8")
-    print(json.dumps({"converged": result["converged"], "n_chains": result["n_chains_read"],
-                      "rhat_minus1_max": result["rhat_minus1_max"],
-                      "ess_bulk_min": result["ess_bulk_min"],
-                      "ess_tail_min": result["ess_tail_min"], "output": str(output)}, indent=2))
+    output.write_text(json.dumps(safe_result, indent=2, allow_nan=False), encoding="utf-8")
+    print(json.dumps({
+        "converged": safe_result["converged"],
+        "n_chains": safe_result["n_chains_read"],
+        "rhat_minus1_max": safe_result["rhat_minus1_max"],
+        "ess_bulk_min": safe_result["ess_bulk_min"],
+        "ess_tail_min": safe_result["ess_tail_min"],
+        "output": str(output),
+    }, indent=2, allow_nan=False))
     return 0 if result["converged"] else 2
 
 
