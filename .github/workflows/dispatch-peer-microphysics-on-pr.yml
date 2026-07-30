@@ -1,0 +1,37 @@
+name: Dispatch PEER microphysics production from execution PR
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".mcmc-triggers/peer-microphysics-global-pt-20260730.txt"
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch target workflow and register run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          TARGET="peer-microphysics-global-pt.yml"
+          gh workflow run "$TARGET" --repo "$GITHUB_REPOSITORY" --ref main
+          sleep 15
+          RUN_JSON=$(gh run list --workflow "$TARGET" --repo "$GITHUB_REPOSITORY" \
+            --limit 1 --json databaseId,status,conclusion,url,createdAt,event,headSha)
+          test "$RUN_JSON" != "[]"
+          RUN_ID=$(jq -r '.[0].databaseId' <<<"$RUN_JSON")
+          STATUS=$(jq -r '.[0].status' <<<"$RUN_JSON")
+          URL=$(jq -r '.[0].url' <<<"$RUN_JSON")
+          CREATED=$(jq -r '.[0].createdAt' <<<"$RUN_JSON")
+          SHA=$(jq -r '.[0].headSha' <<<"$RUN_JSON")
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "PEER-MICROPHYSICS-PT-RUN-$RUN_ID" \
+            --body "Global microphysics MCMC launched. Run ID: $RUN_ID. Status: $STATUS. Created: $CREATED. Head SHA: $SHA. URL: $URL. Architecture: 4 ladders x 6 temperatures = 24 chains."
+          echo "$RUN_JSON"
