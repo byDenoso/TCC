@@ -1,0 +1,66 @@
+{
+  "package_zip": {
+    "name": "PEER_Profile_Decisive_Run.zip",
+    "sha256": "6cae48bf3c0663c91c23e2c037396f25eb58d2375d8d634793b79b1efc1cfafa",
+    "size": 350104
+  },
+  "contract": {
+    "mocks": 32,
+    "f_grid": [0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.11,0.12],
+    "starts": 4,
+    "fits": 1664,
+    "A_lens": "free",
+    "T_obs": 3.9453,
+    "f_best_observed": 0.07
+  },
+  "local_replay_gate": {
+    "status": "PASS",
+    "endpoint_archive": {"rows":512,"unique_keys":512,"expected":512,"statuses":{"COMPLETE":512},"start_vector_failures":0,"block_sum_failures":0},
+    "mocks": {"count":32},
+    "observed_profile": {"jobs_planned":52,"jobs_complete":52,"failed_processes":0,"chi2_f0":1021.6373,"chi2_min":1017.692,"T_obs_recomputed":3.9452999999999747,"f_best":0.07},
+    "decisive_manifest": {"jobs":1664,"unique_jobs":1664,"expected":1664},
+    "source_hashes": {
+      "full_mock_campaign_v2.py":"7e809ac5113de360a2039e959bd8e42cf1fa4666ffa02a30ac4f5d96d0184df1",
+      "PEER_Profile_Pipeline.py":"fba6bc4d2ccfba435b02a097eb55210efcf210421b24667ea5f9243c3df57c27",
+      "PEER_Profile_Analysis.py":"0d3c11929652b11e0d38e93a3168342037beba33813440b554a3a730822cfd5a",
+      "MOCKS_32_RESULTS_UNIQUE.csv":"1bf483b554e459e7af3a843b52d260a61755051b47b0bfe1d3ad5fe6053fb102",
+      "profile_results_dense_observed.json":"a55324d20b5c22a7bb460853e30d711dc9494d3b0d0e125c35bf6ffd2268efe5"
+    }
+  },
+  "mock_sha256": {
+    "lcdm_mock_0000":"9b422ec7b12f6f37fc2a84758d68496b0a21b2bbf6d36ce24875bfdd24cd037a",
+    "lcdm_mock_0001":"9118387eaf51466bf11218a2b646408bfa4117cc75948cf616bf6f012b912d63",
+    "lcdm_mock_0002":"5b3c693e1eec33673af8a4b286cf4f58e076634a183957d3c1b1f343af11c583",
+    "lcdm_mock_0003":"96eac604142af979aed287a060667f8a13704532cb9a033e47f340fb60214b20",
+    "lcdm_mock_0004":"c9ae16a225f737213b8e82854e393d8c0f969ad66b453f3462e1be6518c431a0",
+    "lcdm_mock_0005":"8c4d5088c3329323551578990c12d7e9b1e8c7648b683d1f7561aadddafe865e",
+    "lcdm_mock_0006":"b8f7e8e9ff94d2eb82accea5ad7e3544b55af2ed09a1a4ba1ccab595f967aa24",
+    "lcdm_mock_0007":"0fc8cb9e4ef342a6209409bac36c7aec128705fbb420c5cd067af197d4ff1bac",
+    "lcdm_mock_0008":"f70e1791bf7b5691734fbf2795a58e985f5b21edda148f266ef90a3ed3bc502c",
+    "lcdm_mock_0009":"28f94fd3a75f8b48aafa4fe66a68b1895cad6c12308ca59fbfd3bdfc23985265",
+    "lcdm_mock_0010":"1e00972268120ee560674f46fe876d3288352bc765d47b10328f3d8008bd485d",
+    "lcdm_mock_0011":"f9db4b51fff2612b01141f066e6b4470d78e67b469ea070b485c4997e9489368",
+    "lcdm_mock_0012":"8556a12ac5a80d7f2cb226f2dffbc9af5842867ed05e3f39daef7c4a10f0414e",
+    "lcdm_mock_0013":"d43ae7aea5701e36f856d329101433fd28492074a088546df41fcd3dab4b0853",
+    "lcdm_mock_0014":"8a99c1650b71494cf90a5e81ca9f0059511693b758a41c6bdf44b69728dcbe9e",
+    "lcdm_mock_0015":"ef53c6ef59ee2b9e99e7aa0e5b701f16fbff5343e296798f53919e9c6564a5b1",
+    "lcdm_mock_0016":"e8990e42b730b5e88a62955c7fbc78a4105a7284dad79086833d37416616acbd",
+    "lcdm_mock_0017":"b331ba59732518529fd29e9227f15e2b26ea151634f24423b1e4169e816f787d",
+    "lcdm_mock_0018":"b5b9c8c58074a997fb71f01d2c676b964308458c4ad53e29c15c2834b58ce2dc",
+    "lcdm_mock_0019":"7c500840535427b964bfced4cddc36c01931457a52e16450f9e4d0b7c706ce7d",
+    "lcdm_mock_0020":"0cd61cc29ed99e5352135bd5c5d091771d88cbb4196ccc1c5c006b1695d7b350",
+    "lcdm_mock_0021":"41d873f2ac4613b8378c27dbb5116359fabc6e8546ffb3256b8d4bcbac70e222",
+    "lcdm_mock_0022":"d6a417ed730af367f6bf83e10335dd64612041a2c0ef82ad3037001509fa9d3a",
+    "lcdm_mock_0023":"e812d07329824cf32278d22583006f5e3cd21182c1c87e34ab259a153a124adb",
+    "lcdm_mock_0024":"b5a1bd36eed5955eb75b252148a5b03a8ab577e22816d57416b28bbfada3ae5f",
+    "lcdm_mock_0025":"6d0a58351870459d2256f569ad6900035023d03b4a43bdc0756814b6c11e1bf5",
+    "lcdm_mock_0026":"c033bc30f17c590142f9c6f8be7b1ee3153fa2e375634e0cbfa46862f1113270",
+    "lcdm_mock_0027":"20c8383787e8eea6e5615f2fbf8b6b207a6ca8a8cdc07bcbc25f35e8d6f55ad2",
+    "lcdm_mock_0028":"996524467c4909f371c0aaafe575e960778cd12e428e619ecf130a341e0145ba",
+    "lcdm_mock_0029":"ce66bb13647c4e1ad18488791b37db84a9e24ab08cf180fc3cab9eb4e2a082fe",
+    "lcdm_mock_0030":"cfb0c5a0329bc71e3b75e7e8a7d191fb020e265f8bb4a4529a03d8c28c8c9d51",
+    "lcdm_mock_0031":"053cbf651bee8ebe64063d58ca534af7d433fd4dadbed42863f3b75c1d3b597d"
+  },
+  "static_tests": {"pytest":"9 passed","python_compile":"passed"},
+  "execution_status":"READY_LOCALLY_NOT_TRANSPORTED_TO_GITHUB_RUNNER"
+}
