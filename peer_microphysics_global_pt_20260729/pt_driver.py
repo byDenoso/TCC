@@ -131,13 +131,26 @@ def _initial_physical(
     return _physical_from_unit(names, reflect_unit_box(unit + jitter))
 
 
+def _sum_log_parts(parts) -> float:
+    values = parts.values() if hasattr(parts, "values") else parts
+    return float(sum(float(value) for value in values))
+
+
+def resolve_sampled_names(model) -> list[str]:
+    expected = list(BOUNDS)
+    actual = list(model.parameterization.sampled_params())
+    if set(actual) != set(expected):
+        raise RuntimeError(f"Unexpected sampled parameters: {actual}; expected {expected}")
+    return expected
+
+
 def _evaluate_model(model, names: list[str], position: np.ndarray):
     physical = _physical_from_unit(names, position)
     result = model.logposterior(
         physical, as_dict=True, return_derived=True, make_finite=False
     )
-    logprior = float(sum(result["logpriors"].values()))
-    loglike = float(sum(result["loglikes"].values()))
+    logprior = _sum_log_parts(result["logpriors"])
+    loglike = _sum_log_parts(result["loglikes"])
     if not math.isfinite(logprior) or not math.isfinite(loglike):
         return -math.inf, -math.inf, {}
     derived = {
@@ -323,10 +336,7 @@ def run(args: argparse.Namespace) -> int:
 
     info = build_info(os.environ.get("COBAYA_PACKAGES_PATH", "packages"))
     model = get_model(info, stop_at_error=True)
-    names = list(model.parameterization.sampled_params())
-    expected = list(BOUNDS)
-    if names != expected:
-        raise RuntimeError(f"Unexpected sampled parameters: {names}; expected {expected}")
+    names = resolve_sampled_names(model)
 
     seed = 202607290000 + args.ladder_id * 1000 + rank
     rng = np.random.default_rng(seed)
