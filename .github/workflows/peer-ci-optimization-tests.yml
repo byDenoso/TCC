@@ -1,0 +1,33 @@
+name: PEER CI optimization tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/actions/peer-runtime-cache/action.yml'
+      - '.github/workflows/peer-n31p-act-20chains-optimized.yml'
+      - '.github/workflows/peer-ci-optimization-tests.yml'
+      - 'peer_ci_optimization/**'
+      - 'docs/superpowers/specs/2026-07-30-peer-mcmc-ci-optimization-design.md'
+      - 'docs/superpowers/plans/2026-07-30-peer-mcmc-ci-optimization.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install pure verification dependencies
+        run: python -m pip install 'numpy<2.4' pandas pyyaml arviz pytest
+      - name: Compile optimizer modules
+        run: python -m py_compile peer_ci_optimization/*.py
+      - name: Run pure optimization tests
+        run: pytest -q peer_ci_optimization
