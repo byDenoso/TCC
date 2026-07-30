@@ -1,0 +1,59 @@
+name: PEER decisive PolyChord lanes
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/peer-decisive-nested-pr.yml'
+      - 'peer_decisive_followups/build_nested_config.py'
+      - 'peer_decisive_followups/run_nested_lane.py'
+      - 'peer_decisive_followups/test_nested_lane.py'
+permissions:
+  contents: read
+  actions: read
+env:
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+jobs:
+  nested:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        model: [M0, M1, M2, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+          path: science-act
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and test PolyChord runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
+          python -m pytest -q peer_decisive_followups/test_nested_lane.py
+          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+      - name: Run matched data and prior-volume evidence
+        run: |
+          python peer_decisive_followups/run_nested_lane.py \
+            --model '${{ matrix.model }}' --science science-act \
+            --work "$GITHUB_WORKSPACE/evidence_${{ matrix.model }}" \
+            --packages "$COBAYA_PACKAGES_PATH"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-decisive-evidence-${{ matrix.model }}
+          path: evidence_${{ matrix.model }}
+          retention-days: 30
