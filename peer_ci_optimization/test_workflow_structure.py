@@ -36,8 +36,8 @@ def test_workflow_builds_runtime_once_and_requires_exact_cache_in_shards() -> No
         for step in shard_steps
         if step.get("uses") == "./.github/actions/peer-runtime-cache"
     )
-    assert preflight_cache["with"]["build-if-missing"] is True
-    assert shard_cache["with"]["build-if-missing"] is False
+    assert preflight_cache["with"]["build_if_missing"] is True
+    assert shard_cache["with"]["build_if_missing"] is False
 
 
 def test_workflow_uses_segmented_resume_and_supported_cobaya_geometry() -> None:
@@ -74,4 +74,21 @@ def test_workflow_preserves_science_and_enforces_global_twenty_chain_gate() -> N
 def test_workflow_prevents_duplicate_queue_hydras_without_killing_active_run() -> None:
     workflow = _workflow()
     assert workflow["concurrency"]["cancel-in-progress"] is False
-    assert "peer-act20-optimized" in workflow["concurrency"]["group"]
+    assert workflow["concurrency"]["group"] == "peer-act20-optimized"
+
+
+def test_workflow_uses_absolute_cached_cobaya_and_robust_artifact_roots() -> None:
+    text = _text()
+    assert '"$RUNTIME/venv/bin/cobaya-run"' in text
+    assert 'test -d "$SRC/mcmc"' in text
+    assert 'ART="downloads/peer-n31p-act20-opt-${MODEL}-shard${SHARD}"' in text
+    assert 'test -d "$ROOT/mcmc"' in text
+
+
+def test_setup_python_uses_the_official_hyphenated_input_name() -> None:
+    workflow = _workflow()
+    for job in workflow["jobs"].values():
+        for step in job["steps"]:
+            if step.get("uses") == "actions/setup-python@v5":
+                assert "python-version" in step["with"]
+                assert "python_version" not in step["with"]
