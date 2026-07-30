@@ -2,38 +2,38 @@ name: PEER immutable runtime cache
 description: Restore or construct the byte-verified ACT/CAMB/CosmoRec runtime once per frozen scientific hash.
 
 inputs:
-  source-run-id:
+  source_run_id:
     description: GitHub Actions run containing the validated runtime and official likelihood payload.
     required: true
-  act-commit:
+  act_commit:
     description: Frozen ACT DR6 lite commit.
     required: true
-  python-version:
+  python_version:
     description: Python major/minor used to build the virtual environment.
     required: false
     default: "3.11"
-  cache-version:
+  cache_version:
     description: Manual cache schema version.
     required: false
     default: "v1"
-  build-if-missing:
+  build_if_missing:
     description: Whether this invocation may construct a missing cache.
     required: false
     default: "false"
 
 outputs:
-  runtime-root:
+  runtime_root:
     description: Absolute runtime directory.
     value: ${{ steps.paths.outputs.runtime_root }}
   python:
     description: Absolute cached Python executable.
     value: ${{ steps.paths.outputs.python }}
-  packages-path:
+  packages_path:
     description: Absolute Cobaya packages directory.
     value: ${{ steps.paths.outputs.packages_path }}
-  cache-hit:
+  cache_hit:
     description: Exact cache hit indicator.
-    value: ${{ steps.cache.outputs.cache-hit }}
+    value: ${{ steps.cache.outputs['cache-hit'] }}
 
 runs:
   using: composite
@@ -53,17 +53,17 @@ runs:
       uses: actions/cache@v4
       with:
         path: .peer-runtime
-        key: peer-runtime-${{ runner.os }}-py${{ inputs.python-version }}-src${{ inputs.source-run-id }}-act${{ inputs.act-commit }}-${{ inputs.cache-version }}
+        key: peer-runtime-${{ runner.os }}-py${{ inputs.python_version }}-src${{ inputs.source_run_id }}-act${{ inputs.act_commit }}-${{ inputs.cache_version }}
 
     - name: Refuse an unexpected cache miss
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.build-if-missing != 'true'
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing != 'true'
       shell: bash
       run: |
-        echo "Runtime cache miss and build-if-missing=false" >&2
+        echo "Runtime cache miss and build_if_missing=false" >&2
         exit 2
 
     - name: Install build dependencies on cache miss
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.build-if-missing == 'true'
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing == 'true'
       shell: bash
       run: |
         set -euxo pipefail
@@ -71,7 +71,7 @@ runs:
         sudo apt-get install -y --no-install-recommends libgsl-dev openmpi-bin libopenmpi-dev git
 
     - name: Construct byte-verified runtime on cache miss
-      if: steps.cache.outputs.cache-hit != 'true' && inputs.build-if-missing == 'true'
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing == 'true'
       shell: bash
       run: |
         set -euxo pipefail
@@ -86,9 +86,9 @@ runs:
           'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz pytest \
           'cobaya==3.6.2' 'sacc>=0.12.0'
 
-        gh run download "${{ inputs.source-run-id }}" --repo "$GITHUB_REPOSITORY" \
+        gh run download "${{ inputs.source_run_id }}" --repo "$GITHUB_REPOSITORY" \
           --name validated-act-cosmorec-runtime-gslfix --dir "$RUNTIME/downloads/validated"
-        gh run download "${{ inputs.source-run-id }}" --repo "$GITHUB_REPOSITORY" \
+        gh run download "${{ inputs.source_run_id }}" --repo "$GITHUB_REPOSITORY" \
           --name official-likelihood-packages-v3 --dir "$RUNTIME/downloads/payload"
 
         test -f "$RUNTIME/downloads/payload/official-likelihood-packages-v3.tar.gz"
@@ -109,7 +109,7 @@ runs:
         cp -a "$DEV" "$RUNTIME/Development"
 
         git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git "$RUNTIME/act-lite"
-        git -C "$RUNTIME/act-lite" checkout "${{ inputs.act-commit }}"
+        git -C "$RUNTIME/act-lite" checkout "${{ inputs.act_commit }}"
         python -m pip wheel --no-deps "$RUNTIME/act-lite" -w "$RUNTIME/wheels"
         ACT_WHEEL=$(find "$RUNTIME/wheels" -type f -name '*.whl' | head -1)
         test -n "$ACT_WHEEL"
@@ -135,24 +135,25 @@ runs:
 
         python - <<'PY'
         import hashlib, json, os, platform
+        from importlib.metadata import version
         from pathlib import Path
-        import arviz, camb, cobaya, numpy
+        import arviz, camb, numpy
         root = Path(os.environ['GITHUB_WORKSPACE']) / '.peer-runtime'
         manifest = {
             'python': platform.python_version(),
             'numpy': numpy.__version__,
             'arviz': arviz.__version__,
-            'cobaya': cobaya.__version__,
+            'cobaya': version('cobaya'),
             'camb': camb.__version__,
-            'source_run_id': '${{ inputs.source-run-id }}',
-            'act_commit': '${{ inputs.act-commit }}',
+            'source_run_id': '${{ inputs.source_run_id }}',
+            'act_commit': '${{ inputs.act_commit }}',
             'payload_sha256': hashlib.sha256((root / 'downloads/payload/official-likelihood-packages-v3.tar.gz').read_bytes()).hexdigest(),
         }
         (root / 'runtime_manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
         PY
 
     - name: Install only host MPI runtime on cache hit
-      if: steps.cache.outputs.cache-hit == 'true'
+      if: steps.cache.outputs['cache-hit'] == 'true'
       shell: bash
       run: |
         set -euxo pipefail
@@ -173,11 +174,12 @@ runs:
         echo "LD_LIBRARY_PATH=$RUNTIME/lib:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
         echo "COBAYA_PACKAGES_PATH=$RUNTIME/packages" >> "$GITHUB_ENV"
         "$RUNTIME/venv/bin/python" - <<'PY'
-        import arviz, camb, cobaya, mpi4py, numpy, sacc
+        from importlib.metadata import version
+        import arviz, camb, mpi4py, numpy, sacc
         print({
             'numpy': numpy.__version__,
             'arviz': arviz.__version__,
             'camb': camb.__version__,
-            'cobaya': cobaya.__version__,
+            'cobaya': version('cobaya'),
         })
         PY
