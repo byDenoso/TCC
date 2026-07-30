@@ -1,4 +1,4 @@
-name: Launch PEER microphysics global posterior
+name: Report PEER microphysics MCMC run
 
 on:
   push:
@@ -10,17 +10,46 @@ on:
 permissions:
   contents: read
   actions: write
+  issues: write
 
 jobs:
-  dispatch:
+  report:
     runs-on: ubuntu-24.04
     steps:
-      - name: Dispatch production MCMC
+      - name: Resolve production run and publish tracker
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euxo pipefail
-          gh workflow run peer-microphysics-global-pt.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main
-          echo "Production workflow dispatched."
+          WORKFLOW="peer-microphysics-global-pt.yml"
+          RUN_JSON=$(gh run list --workflow "$WORKFLOW" --repo "$GITHUB_REPOSITORY" \
+            --limit 1 --json databaseId,status,conclusion,url,createdAt,event,headSha)
+          if [ "$RUN_JSON" = "[]" ]; then
+            gh workflow run "$WORKFLOW" --repo "$GITHUB_REPOSITORY" --ref main
+            sleep 15
+            RUN_JSON=$(gh run list --workflow "$WORKFLOW" --repo "$GITHUB_REPOSITORY" \
+              --limit 1 --json databaseId,status,conclusion,url,createdAt,event,headSha)
+          fi
+          test "$RUN_JSON" != "[]"
+          RUN_ID=$(jq -r '.[0].databaseId' <<<"$RUN_JSON")
+          STATUS=$(jq -r '.[0].status' <<<"$RUN_JSON")
+          URL=$(jq -r '.[0].url' <<<"$RUN_JSON")
+          CREATED=$(jq -r '.[0].createdAt' <<<"$RUN_JSON")
+          SHA=$(jq -r '.[0].headSha' <<<"$RUN_JSON")
+          BODY=$(cat <<EOF
+          Production MCMC tracker.
+
+          - Run ID: $RUN_ID
+          - Status at registration: $STATUS
+          - Created: $CREATED
+          - Head SHA: $SHA
+          - Workflow: $WORKFLOW
+          - URL: $URL
+
+          Scientific target: global PEER microphysics posterior with four independent six-temperature ladders, 24 chains total, Planck 2018 + DESI BAO, no local anchors.
+          EOF
+          )
+          gh issue create --repo "$GITHUB_REPOSITORY" \
+            --title "PEER microphysics MCMC run $RUN_ID" \
+            --body "$BODY"
+          echo "$RUN_JSON"
