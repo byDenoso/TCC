@@ -1,61 +1,287 @@
-name: PEER decisive mock profile gate
+name: PEER decisive mock profile campaign
+
 on:
   pull_request:
     branches: [main]
     paths:
       - '.github/workflows/peer-decisive-mock-gate.yml'
+      - 'campaigns/peer_profile_decisive/payload/**'
       - 'peer_decisive_followups/mock_payload_manifest.json'
       - 'peer_decisive_followups/global_trials.py'
+
 permissions:
   contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: "30455821484"
+  EXPECTED_ZIP_SHA256: 6cae48bf3c0663c91c23e2c037396f25eb58d2375d8d634793b79b1efc1cfafa
+  EXPECTED_ZIP_SIZE: "350104"
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+
 jobs:
-  mock-payload-gate:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconstruct and byte-verify the canonical package
+        run: |
+          set -euxo pipefail
+          mkdir -p campaigns/peer_profile_decisive/reconstructed
+          mapfile -t PARTS < <(find campaigns/peer_profile_decisive/payload -maxdepth 1 -type f -name 'part_*.b64' | sort)
+          test "${#PARTS[@]}" -eq 5
+          cat "${PARTS[@]}" | tr -d '\r\n ' | base64 --decode > campaigns/peer_profile_decisive/reconstructed/package.tar.xz
+          xz --test campaigns/peer_profile_decisive/reconstructed/package.tar.xz
+          xz --decompress --stdout campaigns/peer_profile_decisive/reconstructed/package.tar.xz > campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip
+          test "$(stat -c %s campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip)" -eq "$EXPECTED_ZIP_SIZE"
+          echo "$EXPECTED_ZIP_SHA256  campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip" | sha256sum -c -
+          unzip -t campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip
+          rm -rf package_check
+          unzip -q campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip -d package_check
+          ROOT=$(find package_check -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          test -n "$ROOT"
+          (cd "$ROOT" && sha256sum -c PEER_Profile_SHA256SUMS.txt)
+          python -m pip install 'numpy==2.4.4' 'scipy==1.17.1' pandas pyyaml pytest
+          python -m pytest -q "$ROOT/tests"
+          python "$ROOT/PEER_Profile_Replay_Gate.py" --root "$ROOT" --out package_check/static_replay_gate.json
+          python "$ROOT/PEER_Profile_Pipeline.py" --root "$ROOT" --out package_check/dry_run --dry-run
+      - name: Build exact 208-shard matrix
+        id: matrix
+        run: |
+          echo 'matrix={"slot":[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207]}' >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-profile-canonical-payload
+          path: |
+            campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip
+            package_check/static_replay_gate.json
+            package_check/dry_run/runtime_preflight.json
+          retention-days: 30
+
+  smoke:
+    needs: prepare
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: peer-profile-canonical-payload
+          path: verified-package
+      - name: Install byte-verified scientific runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name official-likelihood-packages-v3 --dir payload
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE/packages/code/CAMB"
+          unzip -q verified-package/PEER_Profile_Decisive_Run.zip -d peer-profile
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          test -n "$ROOT"
+          python -m venv "$ROOT/.venv"
+          source "$ROOT/.venv/bin/activate"
+          grep -v '^camb==' "$ROOT/requirements-linux-py312.txt" > "$ROOT/requirements-no-camb.txt"
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install -r "$ROOT/requirements-no-camb.txt"
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          ln -sfn "$(realpath "$DB")" "$ROOT/Rec_database"
+          ln -sfn "$(realpath "$DEV")" "$ROOT/Development"
+          mkdir -p "$ROOT/temp"
+          cat > "$ROOT/runtime_paths.env" <<EOF
+          export PEER_PACKAGES_PATH='$GITHUB_WORKSPACE/packages'
+          export PEER_RUNTIME_TOOLS='$GITHUB_WORKSPACE/$ROOT/runtime_tools'
+          export PEER_PLANCK_DATA='$GITHUB_WORKSPACE/packages/data/planck_2018/baseline/plc_3.0'
+          export PEER_DESI_DATA='$GITHUB_WORKSPACE/packages/data/bao_data'
+          EOF
+          source "$ROOT/runtime_paths.env"
+          export PYTHONPATH="$GITHUB_WORKSPACE/$ROOT:$GITHUB_WORKSPACE/$ROOT/runtime_tools:${PYTHONPATH:-}"
+          cd "$ROOT"
+          sha256sum -c PEER_Profile_SHA256SUMS.txt
+          python PEER_Profile_Runtime_Replay.py --root "$PWD" --out runtime_replay.json
+          python PEER_Profile_Pipeline.py --root "$PWD" --out smoke_output --slot 0 --slots 1664 --limit 1
+          test -s smoke_output/shard_000_of_1664/status.jsonl
+          grep -q '"status": "COMPLETE"' smoke_output/shard_000_of_1664/status.jsonl
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-profile-runtime-smoke
+          path: |
+            peer-profile/PEER_Profile_Decisive_Run_release/runtime_replay.json
+            peer-profile/PEER_Profile_Decisive_Run_release/smoke_output
+          retention-days: 30
+
+  profile-shard:
+    needs: [prepare, smoke]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 32
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+    env:
+      SLOT: ${{ matrix.slot }}
+      SLOTS: "208"
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: peer-profile-canonical-payload
+          path: verified-package
+      - name: Install pinned full-likelihood runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name validated-act-cosmorec-runtime-gslfix --dir validated
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name official-likelihood-packages-v3 --dir payload
+          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
+          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE/packages/code/CAMB"
+          unzip -q verified-package/PEER_Profile_Decisive_Run.zip -d peer-profile
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          test -n "$ROOT"
+          python -m venv "$ROOT/.venv"
+          source "$ROOT/.venv/bin/activate"
+          grep -v '^camb==' "$ROOT/requirements-linux-py312.txt" > "$ROOT/requirements-no-camb.txt"
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install -r "$ROOT/requirements-no-camb.txt"
+          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
+          DB=$(find validated -type d -name Rec_database | head -1)
+          DEV=$(find validated -type d -name Development | head -1)
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          ln -sfn "$(realpath "$DB")" "$ROOT/Rec_database"
+          ln -sfn "$(realpath "$DEV")" "$ROOT/Development"
+          mkdir -p "$ROOT/temp"
+          cat > "$ROOT/runtime_paths.env" <<EOF
+          export PEER_PACKAGES_PATH='$GITHUB_WORKSPACE/packages'
+          export PEER_RUNTIME_TOOLS='$GITHUB_WORKSPACE/$ROOT/runtime_tools'
+          export PEER_PLANCK_DATA='$GITHUB_WORKSPACE/packages/data/planck_2018/baseline/plc_3.0'
+          export PEER_DESI_DATA='$GITHUB_WORKSPACE/packages/data/bao_data'
+          EOF
+          source "$ROOT/runtime_paths.env"
+          export PYTHONPATH="$GITHUB_WORKSPACE/$ROOT:$GITHUB_WORKSPACE/$ROOT/runtime_tools:${PYTHONPATH:-}"
+          cd "$ROOT"
+          sha256sum -c PEER_Profile_SHA256SUMS.txt
+          python PEER_Profile_Pipeline.py --root "$PWD" --out profile_outputs --dry-run
+      - name: Run eight full-likelihood multistart fits in this shard
+        id: run
+        shell: bash
+        run: |
+          set +e
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          source "$ROOT/.venv/bin/activate"
+          source "$ROOT/runtime_paths.env"
+          export PYTHONPATH="$GITHUB_WORKSPACE/$ROOT:$GITHUB_WORKSPACE/$ROOT/runtime_tools:${PYTHONPATH:-}"
+          cd "$ROOT"
+          python PEER_Profile_Pipeline.py --root "$PWD" --out profile_outputs --slot "$SLOT" --slots "$SLOTS"
+          CODE=$?
+          echo "$CODE" > "profile_outputs/shard_exit_code_${SLOT}.txt"
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-profile-shard-${{ matrix.slot }}
+          path: peer-profile/PEER_Profile_Decisive_Run_release/profile_outputs
+          retention-days: 30
+          compression-level: 6
+      - name: Enforce complete shard
+        run: |
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          test "$(cat "$ROOT/profile_outputs/shard_exit_code_${SLOT}.txt")" -eq 0
+          SHARD=$(printf 'shard_%03d_of_%03d' "$SLOT" "$SLOTS")
+          test -s "$ROOT/profile_outputs/$SHARD/status.jsonl"
+          python - "$ROOT/profile_outputs/$SHARD/status.jsonl" <<'PY3'
+          import json, sys
+          rows=[json.loads(line) for line in open(sys.argv[1], encoding='utf-8') if line.strip()]
+          assert len(rows) == 8
+          assert all(row.get('status') == 'COMPLETE' for row in rows)
+          PY3
+
+  aggregate:
+    if: always()
+    needs: [prepare, profile-shard]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Validate exact campaign contract and fail closed on absent binary payload
-        run: |
-          mkdir -p mock_gate
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          m=json.load(open('peer_decisive_followups/mock_payload_manifest.json'))
-          assert m['package_zip']['sha256']=='6cae48bf3c0663c91c23e2c037396f25eb58d2375d8d634793b79b1efc1cfafa'
-          assert m['contract']=={'mocks':32,'f_grid':[i/100 for i in range(13)],'starts':4,'fits':1664,'A_lens':'free','T_obs':3.9453,'f_best_observed':0.07}
-          assert m['local_replay_gate']['status']=='PASS'
-          assert len(m['mock_sha256'])==32
-          binary=Path('campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip')
-          out={
-            'contract_validated':True,
-            'replay_gate':'PASS',
-            'binary_payload_in_runner':binary.exists(),
-            'status':'READY_TO_EXECUTE' if binary.exists() else 'BLOCKED_BINARY_PAYLOAD_NOT_IN_REPOSITORY',
-            'scientific_effect':'No empirical p-value or global-trials result is produced until the exact 32 NPZ mocks are available to the runner.'
-          }
-          Path('mock_gate/mock_profile_gate.json').write_text(json.dumps(out,indent=2))
-          print(json.dumps(out,indent=2))
-          PY
-      - name: Validate look-elsewhere implementation on a deterministic non-scientific fixture
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          rows=[]
-          seeds=[2026072301,2026072302,2026072303,2026072304]
-          for i in range(32):
-            for f in [j/100 for j in range(13)]:
-              for s in seeds:
-                t=max(0.0,5.0-abs(f-0.07)*40.0+i/1000.0)
-                rows.append({'mock_id':f'fixture_{i:04d}','f_peer':f,'seed':s,'chi2_total':1000.0-t,'status':'COMPLETE'})
-          p=Path('mock_gate/global_fixture.jsonl')
-          p.write_text('\n'.join(json.dumps(x) for x in rows)+'\n')
-          PY
-          python peer_decisive_followups/global_trials.py mock_gate/global_fixture.jsonl --out mock_gate/global_fixture_result --t-obs 3.9453
-      - uses: actions/upload-artifact@v4
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
         with:
-          name: peer-decisive-mock-profile-gate
-          path: mock_gate
+          name: peer-profile-canonical-payload
+          path: verified-package
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: peer-profile-shard-*
+          path: shard-downloads
+          merge-multiple: true
+      - name: Aggregate profiles and registered global trials
+        run: |
+          set -euxo pipefail
+          python -m pip install 'numpy==2.4.4' 'scipy==1.17.1' pandas pyyaml
+          unzip -q verified-package/PEER_Profile_Decisive_Run.zip -d peer-profile
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          mkdir -p "$ROOT/profile_outputs"
+          find shard-downloads -maxdepth 1 -type d -name 'shard_*_of_*' -exec cp -a {} "$ROOT/profile_outputs/" \;
+          find shard-downloads -maxdepth 1 -type f -name 'shard_exit_code_*.txt' -exec cp {} "$ROOT/profile_outputs/" \;
+          mapfile -t LEDGERS < <(find "$ROOT/profile_outputs" -type f -name status.jsonl | sort)
+          printf '%s\n' "${LEDGERS[@]}" > "$ROOT/analysis_ledgers.txt"
+          test "${#LEDGERS[@]}" -eq 208
+          set +e
+          python "$ROOT/PEER_Profile_Analysis.py" "${LEDGERS[@]}" --out "$ROOT/analysis" --t-obs 3.9453
+          ANALYSIS_CODE=$?
+          python peer_decisive_followups/global_trials.py "${LEDGERS[@]}" --out "$ROOT/global_trials" --observed-f 0.07 --t-obs 3.9453
+          GLOBAL_CODE=$?
+          set -e
+          echo "$ANALYSIS_CODE" > "$ROOT/analysis.exit_code"
+          echo "$GLOBAL_CODE" > "$ROOT/global_trials.exit_code"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-profile-null-calibration-final
+          path: |
+            peer-profile/PEER_Profile_Decisive_Run_release/analysis
+            peer-profile/PEER_Profile_Decisive_Run_release/global_trials
+            peer-profile/PEER_Profile_Decisive_Run_release/analysis_ledgers.txt
+            peer-profile/PEER_Profile_Decisive_Run_release/analysis.exit_code
+            peer-profile/PEER_Profile_Decisive_Run_release/global_trials.exit_code
           retention-days: 30
+      - name: Enforce complete 32-mock local and global calibration
+        run: |
+          ROOT=$(find peer-profile -maxdepth 1 -type d -name 'PEER_Profile_Decisive_Run_release' | head -1)
+          test "$(cat "$ROOT/analysis.exit_code")" -eq 0
+          test "$(cat "$ROOT/global_trials.exit_code")" -eq 0
+          python - "$ROOT/analysis/PEER_Profile_Mock_Summary.json" "$ROOT/global_trials/global_trials_summary.json" <<'PY2'
+          import json, sys
+          profile = json.load(open(sys.argv[1], encoding='utf-8'))
+          trials = json.load(open(sys.argv[2], encoding='utf-8'))
+          assert profile['status'] == 'COMPLETE'
+          assert profile['n_valid_mocks'] == 32
+          assert trials['status'] == 'COMPLETE'
+          assert trials['n_valid_mocks'] == 32
+          print({'profile': profile, 'trials': trials})
+          PY2
