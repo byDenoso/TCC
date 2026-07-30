@@ -1,0 +1,52 @@
+name: PEER decisive posterior and replication watch
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/peer-decisive-posterior-watch.yml'
+      - 'peer_decisive_followups/replication_audit.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-running-campaigns:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: science-main
+      - name: Capture exact ACT and SPT posterior runs
+        run: |
+          mkdir -p posterior_status
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow peer-n31p-act-20chains.yml --limit 10 \
+            --json databaseId,status,conclusion,headSha,createdAt,updatedAt,name,url > posterior_status/act_runs.json
+          gh run list --repo "$GITHUB_REPOSITORY" --workflow peer-n31p-spt3g-20chains.yml --limit 10 \
+            --json databaseId,status,conclusion,headSha,createdAt,updatedAt,name,url > posterior_status/spt_runs.json
+          python peer_decisive_followups/replication_audit.py \
+            --act-contract science-main/.github/workflows/peer-n31p-act-20chains.yml \
+            --spt-contract science-main/.github/workflows/peer-n31p-spt3g-20chains.yml \
+            --out posterior_status/replication_contract.json
+      - name: Record convergence contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          out={
+            'required_per_model_chains':20,
+            'shards_per_model':5,
+            'chains_per_shard':4,
+            'native_rank_rhat_gate':'rhat_minus1_max < 0.01',
+            'cobaya_checkpoint_must_converge':True,
+            'promotion_rule':'No posterior result is promoted unless the combined artifact passes the independent gate.'
+          }
+          Path('posterior_status/convergence_contract.json').write_text(json.dumps(out,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-decisive-posterior-replication-watch
+          path: posterior_status
+          retention-days: 30
