@@ -38,3 +38,53 @@ def test_checkpoint_roundtrip_preserves_sampler_state(tmp_path: Path):
     assert restored["derived"] == payload["derived"]
     assert restored["rng_state"] == payload["rng_state"]
     assert not path.with_suffix(".tmp.npz").exists()
+
+
+class _FakeParameterization:
+    def sampled_params(self):
+        return {"peer_n": None, "ombh2": None, "peer_fede": None}
+
+
+class _FakeModel:
+    parameterization = _FakeParameterization()
+
+    def __init__(self, mapping_parts: bool):
+        self.mapping_parts = mapping_parts
+
+    def logposterior(self, values, **kwargs):
+        assert set(values) == {"ombh2", "peer_fede", "peer_n"}
+        priors = {"p": -1.25} if self.mapping_parts else [-1.25]
+        likes = {"l1": -2.0, "l2": -3.0} if self.mapping_parts else [-2.0, -3.0]
+        return {"logpriors": priors, "loglikes": likes, "derived": {"H0": 70.0}}
+
+
+def test_sampled_parameter_resolution_is_deterministic_and_set_based(monkeypatch):
+    from pt_driver import resolve_sampled_names
+
+    monkeypatch.setattr("pt_driver.BOUNDS", {
+        "ombh2": (0.0, 1.0),
+        "peer_fede": (0.0, 1.0),
+        "peer_n": (0.0, 1.0),
+    })
+    assert resolve_sampled_names(_FakeModel(mapping_parts=True)) == [
+        "ombh2", "peer_fede", "peer_n"
+    ]
+
+
+def test_model_evaluation_accepts_mapping_and_sequence_log_parts(monkeypatch):
+    from pt_driver import _evaluate_model
+
+    monkeypatch.setattr("pt_driver.BOUNDS", {
+        "ombh2": (0.0, 1.0),
+        "peer_fede": (0.0, 1.0),
+        "peer_n": (0.0, 1.0),
+    })
+    names = ["ombh2", "peer_fede", "peer_n"]
+    position = np.array([0.2, 0.3, 0.4])
+    for mapping_parts in (True, False):
+        logprior, loglike, derived = _evaluate_model(
+            _FakeModel(mapping_parts), names, position
+        )
+        assert logprior == -1.25
+        assert loglike == -5.0
+        assert derived == {"H0": 70.0}
