@@ -11,8 +11,11 @@ errors still propagate and fail the job.
 import pt_driver_impl as _impl
 
 
+_ORIGINAL_IS_RECOVERABLE = _impl._is_recoverable_numerical_error
+
+
 def _is_recoverable_numerical_error(exc: BaseException) -> bool:
-    if _impl._is_recoverable_numerical_error(exc):
+    if _ORIGINAL_IS_RECOVERABLE(exc):
         return True
     exception_name = _impl._exception_name(exc)
     if exception_name != "cobaya.log.LoggedError":
