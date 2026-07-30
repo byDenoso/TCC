@@ -1,0 +1,61 @@
+name: PEER decisive mock profile gate
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/peer-decisive-mock-gate.yml'
+      - 'peer_decisive_followups/mock_payload_manifest.json'
+      - 'peer_decisive_followups/global_trials.py'
+permissions:
+  contents: read
+jobs:
+  mock-payload-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate exact campaign contract and fail closed on absent binary payload
+        run: |
+          mkdir -p mock_gate
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.load(open('peer_decisive_followups/mock_payload_manifest.json'))
+          assert m['package_zip']['sha256']=='6cae48bf3c0663c91c23e2c037396f25eb58d2375d8d634793b79b1efc1cfafa'
+          assert m['contract']=={'mocks':32,'f_grid':[i/100 for i in range(13)],'starts':4,'fits':1664,'A_lens':'free','T_obs':3.9453,'f_best_observed':0.07}
+          assert m['local_replay_gate']['status']=='PASS'
+          assert len(m['mock_sha256'])==32
+          binary=Path('campaigns/peer_profile_decisive/PEER_Profile_Decisive_Run.zip')
+          out={
+            'contract_validated':True,
+            'replay_gate':'PASS',
+            'binary_payload_in_runner':binary.exists(),
+            'status':'READY_TO_EXECUTE' if binary.exists() else 'BLOCKED_BINARY_PAYLOAD_NOT_IN_REPOSITORY',
+            'scientific_effect':'No empirical p-value or global-trials result is produced until the exact 32 NPZ mocks are available to the runner.'
+          }
+          Path('mock_gate/mock_profile_gate.json').write_text(json.dumps(out,indent=2))
+          print(json.dumps(out,indent=2))
+          PY
+      - name: Validate look-elsewhere implementation on a deterministic non-scientific fixture
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows=[]
+          seeds=[2026072301,2026072302,2026072303,2026072304]
+          for i in range(32):
+            for f in [j/100 for j in range(13)]:
+              for s in seeds:
+                t=max(0.0,5.0-abs(f-0.07)*40.0+i/1000.0)
+                rows.append({'mock_id':f'fixture_{i:04d}','f_peer':f,'seed':s,'chi2_total':1000.0-t,'status':'COMPLETE'})
+          p=Path('mock_gate/global_fixture.jsonl')
+          p.write_text('\n'.join(json.dumps(x) for x in rows)+'\n')
+          PY
+          python peer_decisive_followups/global_trials.py mock_gate/global_fixture.jsonl --out mock_gate/global_fixture_result --t-obs 3.9453
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-decisive-mock-profile-gate
+          path: mock_gate
+          retention-days: 30
