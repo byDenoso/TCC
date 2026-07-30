@@ -12,9 +12,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install audit runtime
+        run: python -m pip install 'numpy<2.4'
       - run: python -m py_compile peer_decisive_followups/*.py
       - run: python peer_decisive_followups/covariance_audit.py --out covariance_audit.json
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: peer-decisive-static-audit
           path: covariance_audit.json
