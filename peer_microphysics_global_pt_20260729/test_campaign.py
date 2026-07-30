@@ -31,3 +31,9 @@ def test_nfree_wrapper_assigns_sampled_index():
     assert '"peer_n"' in source
     assert "ede.n = peer_n" in source
     assert 'peer_n = float(values.pop("peer_n", 3.0))' in source
+
+
+def test_fixed_reference_wrapper_is_locked_to_n3():
+    source = Path(__file__).with_name("peer_scalar_n3_reference.py").read_text(encoding="utf-8")
+    assert "ede.n = 3" in source
+    assert '"peer_n"' not in source
