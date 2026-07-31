@@ -219,7 +219,7 @@ jobs:
       - name: Install MPI and Python runtime
         run: |
           sudo apt-get update
-          sudo apt-get install -y openmpi-bin libopenmpi-dev
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
             'cobaya==3.6.2' 'sacc>=0.12.0'
@@ -301,7 +301,7 @@ jobs:
       - name: Install MPI and Python runtime
         run: |
           sudo apt-get update
-          sudo apt-get install -y openmpi-bin libopenmpi-dev
+          sudo apt-get install -y libgsl-dev openmpi-bin libopenmpi-dev
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py \
             'cobaya==3.6.2' 'sacc>=0.12.0'
