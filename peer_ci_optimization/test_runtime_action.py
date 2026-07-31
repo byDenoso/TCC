@@ -52,3 +52,11 @@ def test_runtime_action_uses_bracket_access_for_hyphenated_cache_output() -> Non
     text = ACTION.read_text(encoding="utf-8")
     assert "steps.cache.outputs['cache-hit']" in text
     assert "steps.cache.outputs.cache-hit" not in text
+
+
+def test_runtime_action_materializes_cosmorec_paths_at_workspace_root() -> None:
+    action = _load()
+    scripts = "\n".join(step.get("run", "") for step in action["runs"]["steps"])
+    assert 'ln -sfn "$RUNTIME/Rec_database" "$GITHUB_WORKSPACE/Rec_database"' in scripts
+    assert 'ln -sfn "$RUNTIME/Development" "$GITHUB_WORKSPACE/Development"' in scripts
+    assert "Effective_Rates.HI/Effective_Rate_Tables.nS_3/res_state_list.dat" in scripts
