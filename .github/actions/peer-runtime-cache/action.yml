@@ -1,0 +1,192 @@
+name: PEER immutable runtime cache
+description: Restore or construct the byte-verified ACT/CAMB/CosmoRec runtime once per frozen scientific hash.
+
+inputs:
+  source_run_id:
+    description: GitHub Actions run containing the validated runtime and official likelihood payload.
+    required: true
+  act_commit:
+    description: Frozen ACT DR6 lite commit.
+    required: true
+  python_version:
+    description: Python major/minor used to build the virtual environment.
+    required: false
+    default: "3.11"
+  cache_version:
+    description: Manual cache schema version.
+    required: false
+    default: "v1"
+  build_if_missing:
+    description: Whether this invocation may construct a missing cache.
+    required: false
+    default: "false"
+
+outputs:
+  runtime_root:
+    description: Absolute runtime directory.
+    value: ${{ steps.paths.outputs.runtime_root }}
+  python:
+    description: Absolute cached Python executable.
+    value: ${{ steps.paths.outputs.python }}
+  packages_path:
+    description: Absolute Cobaya packages directory.
+    value: ${{ steps.paths.outputs.packages_path }}
+  cache_hit:
+    description: Exact cache hit indicator.
+    value: ${{ steps.cache.outputs['cache-hit'] }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve stable paths
+      id: paths
+      shell: bash
+      run: |
+        set -euo pipefail
+        RUNTIME="$GITHUB_WORKSPACE/.peer-runtime"
+        echo "runtime_root=$RUNTIME" >> "$GITHUB_OUTPUT"
+        echo "python=$RUNTIME/venv/bin/python" >> "$GITHUB_OUTPUT"
+        echo "packages_path=$RUNTIME/packages" >> "$GITHUB_OUTPUT"
+
+    - name: Restore exact scientific runtime cache
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: .peer-runtime
+        key: peer-runtime-${{ runner.os }}-py${{ inputs.python_version }}-src${{ inputs.source_run_id }}-act${{ inputs.act_commit }}-${{ inputs.cache_version }}
+
+    - name: Refuse an unexpected cache miss
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing != 'true'
+      shell: bash
+      run: |
+        echo "Runtime cache miss and build_if_missing=false" >&2
+        exit 2
+
+    - name: Install build dependencies on cache miss
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing == 'true'
+      shell: bash
+      run: |
+        set -euxo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends libgsl-dev openmpi-bin libopenmpi-dev git
+
+    - name: Construct byte-verified runtime on cache miss
+      if: steps.cache.outputs['cache-hit'] != 'true' && inputs.build_if_missing == 'true'
+      shell: bash
+      run: |
+        set -euxo pipefail
+        RUNTIME="$GITHUB_WORKSPACE/.peer-runtime"
+        rm -rf "$RUNTIME"
+        mkdir -p "$RUNTIME" "$RUNTIME/downloads" "$RUNTIME/wheels" "$RUNTIME/lib"
+
+        python -m venv "$RUNTIME/venv"
+        source "$RUNTIME/venv/bin/activate"
+        python -m pip install --upgrade pip wheel setuptools
+        python -m pip install \
+          'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz pytest \
+          'cobaya==3.6.2' 'sacc>=0.12.0'
+
+        gh run download "${{ inputs.source_run_id }}" --repo "$GITHUB_REPOSITORY" \
+          --name validated-act-cosmorec-runtime-gslfix --dir "$RUNTIME/downloads/validated"
+        gh run download "${{ inputs.source_run_id }}" --repo "$GITHUB_REPOSITORY" \
+          --name official-likelihood-packages-v3 --dir "$RUNTIME/downloads/payload"
+
+        test -f "$RUNTIME/downloads/payload/official-likelihood-packages-v3.tar.gz"
+        (
+          cd "$RUNTIME/downloads/payload"
+          sha256sum -c official-likelihood-packages-v3.tar.gz.sha256
+        )
+        tar -xzf "$RUNTIME/downloads/payload/official-likelihood-packages-v3.tar.gz" -C "$RUNTIME"
+        test -d "$RUNTIME/packages"
+        rm -rf "$RUNTIME/packages/code/CAMB"
+
+        WHEEL=$(find "$RUNTIME/downloads/validated" -type f -name 'camb-*.whl' | head -1)
+        DB=$(find "$RUNTIME/downloads/validated" -type d -name Rec_database | head -1)
+        DEV=$(find "$RUNTIME/downloads/validated" -type d -name Development | head -1)
+        test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
+        python -m pip install --force-reinstall --no-deps "$WHEEL"
+        cp -a "$DB" "$RUNTIME/Rec_database"
+        cp -a "$DEV" "$RUNTIME/Development"
+
+        git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git "$RUNTIME/act-lite"
+        git -C "$RUNTIME/act-lite" checkout "${{ inputs.act_commit }}"
+        python -m pip wheel --no-deps "$RUNTIME/act-lite" -w "$RUNTIME/wheels"
+        ACT_WHEEL=$(find "$RUNTIME/wheels" -type f -name '*.whl' | head -1)
+        test -n "$ACT_WHEEL"
+        python -m pip install --no-deps "$ACT_WHEEL"
+        rm -rf "$RUNTIME/act-lite"
+
+        CAMBLIB=$(python - <<'PY'
+        from pathlib import Path
+        import camb
+        matches = sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))
+        if not matches:
+            raise SystemExit('camblib not found')
+        print(matches[0])
+        PY
+        )
+        ldd "$CAMBLIB" | tee "$RUNTIME/camb_ldd.txt"
+        ! grep -q 'not found' "$RUNTIME/camb_ldd.txt"
+        for NAME in libgsl libgslcblas; do
+          LIB=$(awk -v name="$NAME" '$1 ~ name {print $3; exit}' "$RUNTIME/camb_ldd.txt")
+          test -n "$LIB"
+          cp -L "$LIB" "$RUNTIME/lib/"
+        done
+
+        python - <<'PY'
+        import hashlib, json, os, platform
+        from importlib.metadata import version
+        from pathlib import Path
+        import arviz, camb, numpy
+        root = Path(os.environ['GITHUB_WORKSPACE']) / '.peer-runtime'
+        manifest = {
+            'python': platform.python_version(),
+            'numpy': numpy.__version__,
+            'arviz': arviz.__version__,
+            'cobaya': version('cobaya'),
+            'camb': camb.__version__,
+            'source_run_id': '${{ inputs.source_run_id }}',
+            'act_commit': '${{ inputs.act_commit }}',
+            'payload_sha256': hashlib.sha256((root / 'downloads/payload/official-likelihood-packages-v3.tar.gz').read_bytes()).hexdigest(),
+        }
+        (root / 'runtime_manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
+        PY
+
+    - name: Install only host MPI runtime on cache hit
+      if: steps.cache.outputs['cache-hit'] == 'true'
+      shell: bash
+      run: |
+        set -euxo pipefail
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends openmpi-bin
+
+    - name: Activate and verify cached runtime
+      shell: bash
+      run: |
+        set -euxo pipefail
+        RUNTIME="$GITHUB_WORKSPACE/.peer-runtime"
+        test -x "$RUNTIME/venv/bin/python"
+        test -d "$RUNTIME/packages"
+        test -d "$RUNTIME/Rec_database"
+        test -d "$RUNTIME/Development"
+        test -f "$RUNTIME/runtime_manifest.json"
+        test -n "$(find "$RUNTIME/lib" -maxdepth 1 -type f -name 'libgsl.so*' -print -quit)"
+        test -n "$(find "$RUNTIME/lib" -maxdepth 1 -type f -name 'libgslcblas.so*' -print -quit)"
+        ln -sfn "$RUNTIME/Rec_database" "$GITHUB_WORKSPACE/Rec_database"
+        ln -sfn "$RUNTIME/Development" "$GITHUB_WORKSPACE/Development"
+        test -f "$GITHUB_WORKSPACE/Rec_database/Effective_Rates.HI/Effective_Rate_Tables.nS_3/res_state_list.dat"
+        export LD_LIBRARY_PATH="$RUNTIME/lib:${LD_LIBRARY_PATH:-}"
+        export COBAYA_PACKAGES_PATH="$RUNTIME/packages"
+        echo "$RUNTIME/venv/bin" >> "$GITHUB_PATH"
+        echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> "$GITHUB_ENV"
+        echo "COBAYA_PACKAGES_PATH=$COBAYA_PACKAGES_PATH" >> "$GITHUB_ENV"
+        "$RUNTIME/venv/bin/python" - <<'PY'
+        from importlib.metadata import version
+        import arviz, camb, mpi4py, numpy, sacc
+        print({
+            'numpy': numpy.__version__,
+            'arviz': arviz.__version__,
+            'camb': camb.__version__,
+            'cobaya': version('cobaya'),
+        })
+        PY

@@ -1,0 +1,11 @@
+Launch request: optimized native PEER N3 ACT DR6 posterior
+Requested at: 2026-07-31T08:40:00-03:00
+Fix: export bundled GSL libraries before same-step CAMB cache verification
+Source fix commit: 5cafdd0233c55cc51cedd2e6edd1249f9c883718
+Models: M2 PEER and M3 PEER plus A_lens
+Architecture: 5 shards per model x 4 MPI chains = 20 chains per model
+Maximum active shard runners: 5 total
+Segments: up to 4 x 65 minutes, resumable
+Runtime: immutable cache from source run 30455821484 and ACT commit 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+Promotion: native convergence, 20 chains, rank Rhat-1 < 0.01, ESS bulk >= 1000, ESS tail >= 500, relative MCSE <= 0.05
+Merge policy: execution only, do not merge
