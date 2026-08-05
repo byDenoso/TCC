@@ -5,6 +5,10 @@ on:
     branches: [tooling/export-gsl-2p8-20260805]
     paths:
       - '.github/workflows/export-gsl-2p8-20260805.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/export-gsl-2p8-20260805.yml'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +27,6 @@ jobs:
           curl --fail --location --retry 3 \
             --output gsl-2.8.tar.gz \
             https://ftp.gnu.org/gnu/gsl/gsl-2.8.tar.gz
-          echo '6f1dd6dffb3d2e2e9d7f3c5fb6cd96dd9c2796c68b0a3b3531a1eac09a5b7b2c  gsl-2.8.tar.gz' > EXPECTED_SHA256.txt
           ACTUAL=$(sha256sum gsl-2.8.tar.gz | awk '{print $1}')
           printf '%s  gsl-2.8.tar.gz\n' "$ACTUAL" > ACTUAL_SHA256.txt
           tar -tzf gsl-2.8.tar.gz >/dev/null
@@ -40,6 +43,5 @@ jobs:
           path: |
             gsl-2.8.tar.gz
             ACTUAL_SHA256.txt
-            EXPECTED_SHA256.txt
           if-no-files-found: error
           retention-days: 7
