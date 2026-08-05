@@ -1,4 +1,4 @@
-name: Export frozen GSL 2.8 source
+name: Export frozen GSL 2.7.1 source
 
 on:
   push:
@@ -20,28 +20,28 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Download and verify GSL 2.8
+      - name: Download and verify GSL 2.7.1
         shell: bash
         run: |
           set -euxo pipefail
           curl --fail --location --retry 3 \
-            --output gsl-2.8.tar.gz \
-            https://ftp.gnu.org/gnu/gsl/gsl-2.8.tar.gz
-          ACTUAL=$(sha256sum gsl-2.8.tar.gz | awk '{print $1}')
-          printf '%s  gsl-2.8.tar.gz\n' "$ACTUAL" > ACTUAL_SHA256.txt
-          tar -tzf gsl-2.8.tar.gz >/dev/null
+            --output gsl-2.7.1.tar.gz \
+            https://ftp.gnu.org/gnu/gsl/gsl-2.7.1.tar.gz
+          ACTUAL=$(sha256sum gsl-2.7.1.tar.gz | awk '{print $1}')
+          printf '%s  gsl-2.7.1.tar.gz\n' "$ACTUAL" > ACTUAL_SHA256.txt
+          tar -tzf gsl-2.7.1.tar.gz >/dev/null
           python - <<'PY'
           from pathlib import Path
           import hashlib
-          p=Path('gsl-2.8.tar.gz')
+          p=Path('gsl-2.7.1.tar.gz')
           print({'size': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()})
           PY
       - name: Upload frozen source
         uses: actions/upload-artifact@v4
         with:
-          name: gsl-2.8-source-20260805
+          name: gsl-2.7.1-source-20260805
           path: |
-            gsl-2.8.tar.gz
+            gsl-2.7.1.tar.gz
             ACTUAL_SHA256.txt
           if-no-files-found: error
           retention-days: 7
