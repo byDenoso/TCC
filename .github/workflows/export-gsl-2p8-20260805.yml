@@ -1,4 +1,4 @@
-name: Export frozen GSL 2.7.1 source
+name: Export frozen PEER build sources
 
 on:
   push:
@@ -20,28 +20,33 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Download and verify GSL 2.7.1
+      - name: Download and verify frozen build sources
         shell: bash
         run: |
           set -euxo pipefail
           curl --fail --location --retry 3 \
             --output gsl-2.7.1.tar.gz \
             https://ftp.gnu.org/gnu/gsl/gsl-2.7.1.tar.gz
-          ACTUAL=$(sha256sum gsl-2.7.1.tar.gz | awk '{print $1}')
-          printf '%s  gsl-2.7.1.tar.gz\n' "$ACTUAL" > ACTUAL_SHA256.txt
+          curl --fail --location --retry 3 \
+            --output camb-1.6.6.tar.gz \
+            https://files.pythonhosted.org/packages/6d/ad/f2e6446fbd94f7adc1474e1f4e40d2e7fa7e5e7143640cb8557d492f0a73/camb-1.6.6.tar.gz
+          curl --fail --location --retry 3 \
+            --output CosmoRec.v2.0.3b.tar.gz \
+            https://www.cita.utoronto.ca/~jchluba/Recombination/_Downloads_/CosmoRec.v2.0.3b.tar.gz
+          echo '9856202a5c05570256e52377b20431891c7b08b2e9c334e141fd08d2a085516f  camb-1.6.6.tar.gz' | sha256sum -c -
+          echo '2afb82b5512f7158a0291d3a73c6520455f0e55957f2965dccc5eef82af8da1b  CosmoRec.v2.0.3b.tar.gz' | sha256sum -c -
+          sha256sum gsl-2.7.1.tar.gz camb-1.6.6.tar.gz CosmoRec.v2.0.3b.tar.gz > ACTUAL_SHA256.txt
           tar -tzf gsl-2.7.1.tar.gz >/dev/null
-          python - <<'PY'
-          from pathlib import Path
-          import hashlib
-          p=Path('gsl-2.7.1.tar.gz')
-          print({'size': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()})
-          PY
-      - name: Upload frozen source
+          tar -tzf camb-1.6.6.tar.gz >/dev/null
+          tar -tzf CosmoRec.v2.0.3b.tar.gz >/dev/null
+      - name: Upload frozen sources
         uses: actions/upload-artifact@v4
         with:
-          name: gsl-2.7.1-source-20260805
+          name: peer-build-sources-20260805
           path: |
             gsl-2.7.1.tar.gz
+            camb-1.6.6.tar.gz
+            CosmoRec.v2.0.3b.tar.gz
             ACTUAL_SHA256.txt
           if-no-files-found: error
           retention-days: 7
