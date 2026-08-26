@@ -1,0 +1,65 @@
+name: nexo-desi-ezmock-falsification
+
+on:
+  push:
+    branches: [nexo-desi-ezmock-temp-20260826]
+    paths: [.github/workflows/nexo-desi-ezmock-falsification.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ezmock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: python -m pip install --upgrade pip numpy scipy pandas astropy
+      - name: Retrieve frozen finder
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tools combined
+          RAW='https://raw.githubusercontent.com/byDenoso/AuditData/nexo-desi-voidscan-temp-20260826/tools'
+          curl -fL --retry 5 "$RAW/desi_blind_scan.py" -o tools/desi_blind_scan.py
+          sha256sum tools/desi_blind_scan.py
+      - name: Replay five EZmocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          : > combined/all.jsonl
+          for M in 1 2 3 4 5; do
+            rm -rf mockdata mockout; mkdir -p mockdata mockout
+            B="https://data.desi.lbl.gov/public/dr1/survey/catalogs/dr1/mocks/EZmock/dark/v1/mock${M}"
+            curl -fL --retry 5 "$B/LRG_ffa_NGC_clustering.dat.fits" -o mockdata/LRG_NGC.fits
+            curl -fL --retry 5 "$B/LRG_ffa_SGC_clustering.dat.fits" -o mockdata/LRG_SGC.fits
+            python tools/desi_blind_scan.py --lrg-ngc mockdata/LRG_NGC.fits --lrg-sgc mockdata/LRG_SGC.fits --queries 50000 --mocks 5 --outdir mockout | tee "combined/mock${M}.log"
+            M="$M" python - <<'PY'
+          import os,json,pandas as pd
+          m=int(os.environ['M']); v=pd.read_csv('mockout/void_candidates.csv'); w=pd.read_csv('mockout/wall_candidates.csv')
+          th={'V145':15.667543,'V14':21.494811,'V11':22.019039,'V102':16.802955}
+          out={'mock':m,'void_count':int(len(v)),'wall_count':int(len(w)),'max_void_score':float(v.score.max()) if len(v) else None,'max_wall_score':float(w.score.max()) if len(w) else None}
+          for k,t in th.items(): out['n_void_score_ge_'+k]=int((v.score>=t).sum()) if len(v) else 0
+          out['n_wall_score_ge_W13']=int((w.score>=22.126411).sum()) if len(w) else 0
+          with open('combined/all.jsonl','a') as f:f.write(json.dumps(out)+'\n')
+          print(json.dumps(out,indent=2))
+          PY
+          done
+      - name: Aggregate
+        run: |
+          python - <<'PY'
+          import json,pandas as pd
+          rows=[json.loads(x) for x in open('combined/all.jsonl') if x.strip()]
+          d=pd.DataFrame(rows); d.to_csv('combined/ezmock_summary.csv',index=False); print(d.to_string(index=False)); print('\nMEANS'); print(d.mean(numeric_only=True).to_string())
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexo-desi-ezmock-falsification
+          path: combined/
+          retention-days: 1
+          if-no-files-found: error
