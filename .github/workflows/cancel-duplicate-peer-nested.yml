@@ -1,4 +1,4 @@
-name: Cancel duplicate PEER nested run
+name: Cancel stale PEER nested runs
 
 on:
   push:
@@ -11,14 +11,18 @@ permissions:
   contents: read
 
 jobs:
-  cancel-duplicate:
+  cancel-stale:
     runs-on: ubuntu-24.04
     steps:
-      - name: Cancel duplicate PR-triggered nested run
+      - name: Cancel stale nested runs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euxo pipefail
-          gh run cancel 34524569103 --repo "$GITHUB_REPOSITORY" || true
-          sleep 3
-          gh run view 34524569103 --repo "$GITHUB_REPOSITORY" --json databaseId,status,conclusion,url
+          for RUN in 34524565527 34524569103; do
+            gh run cancel "$RUN" --repo "$GITHUB_REPOSITORY" || true
+          done
+          sleep 5
+          for RUN in 34524565527 34524569103; do
+            gh run view "$RUN" --repo "$GITHUB_REPOSITORY" --json databaseId,status,conclusion,url || true
+          done
