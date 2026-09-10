@@ -1,6 +1,10 @@
 name: PEER matched nested evidence 20260910
 
 on:
+  push:
+    branches: [run-peer-nested-20260910]
+    paths:
+      - '.github/workflows/peer-nested-matched-20260910.yml'
   pull_request:
     branches: [main]
     paths:
@@ -89,7 +93,7 @@ jobs:
         if: always()
         run: |
           set -x
-          find "evidence_${{ matrix.model }}" -name 'normalized_evidence.json' -o -name 'nested_status.json' | sort | xargs -r -n1 sh -c 'echo === $0; cat "$0"'
+          find "evidence_${{ matrix.model }}" \( -name 'normalized_evidence.json' -o -name 'nested_status.json' \) -print | sort | while read f; do echo "=== $f"; cat "$f"; done
 
       - name: Upload evidence and checkpoints
         uses: actions/upload-artifact@v4
