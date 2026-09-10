@@ -1,0 +1,101 @@
+name: PEER matched nested evidence 20260910
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/peer-nested-matched-20260910.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  nested:
+    name: nested-${{ matrix.model }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        model: [M1, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout trigger branch
+        uses: actions/checkout@v4
+
+      - name: Checkout validated nested runner
+        uses: actions/checkout@v4
+        with:
+          ref: run-corrected-polychord-20260730
+          path: nested-src
+
+      - name: Checkout matched ACT/PEER science stack
+        uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+          path: science-act
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install validated PolyChord runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
+          python -m pytest -q nested-src/peer_decisive_followups/test_nested_lane.py
+          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+
+      - name: Enforce 400-live matched evidence contract
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('nested-src/peer_decisive_followups/build_nested_config.py')
+          s = p.read_text()
+          old = '"nlive": "25d",'
+          if old not in s:
+              raise SystemExit('expected nlive contract not found')
+          s = s.replace(old, '"nlive": 400,', 1)
+          p.write_text(s)
+          PY
+          grep -n 'nlive' nested-src/peer_decisive_followups/build_nested_config.py
+
+      - name: Run matched PolyChord evidence
+        working-directory: nested-src
+        run: |
+          set -euxo pipefail
+          python peer_decisive_followups/run_nested_lane.py \
+            --model '${{ matrix.model }}' \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --work "$GITHUB_WORKSPACE/evidence_${{ matrix.model }}" \
+            --packages "$COBAYA_PACKAGES_PATH"
+
+      - name: Readback evidence status
+        if: always()
+        run: |
+          set -x
+          find "evidence_${{ matrix.model }}" -name 'normalized_evidence.json' -o -name 'nested_status.json' | sort | xargs -r -n1 sh -c 'echo === $0; cat "$0"'
+
+      - name: Upload evidence and checkpoints
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-nested-20260910-${{ matrix.model }}
+          path: evidence_${{ matrix.model }}
+          retention-days: 30
+          if-no-files-found: error
