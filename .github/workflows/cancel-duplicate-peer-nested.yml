@@ -19,10 +19,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euxo pipefail
-          for RUN in 34524565527 34524569103; do
+          for RUN in 34524565527 34524569103 34524805768; do
             gh run cancel "$RUN" --repo "$GITHUB_REPOSITORY" || true
           done
           sleep 5
-          for RUN in 34524565527 34524569103; do
+          for RUN in 34524565527 34524569103 34524805768; do
             gh run view "$RUN" --repo "$GITHUB_REPOSITORY" --json databaseId,status,conclusion,url || true
           done
