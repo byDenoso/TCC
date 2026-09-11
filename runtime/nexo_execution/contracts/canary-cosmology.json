@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "EXEC-CANARY-COSMOLOGY-001",
+  "work_id": "WORK-NEXO-EXECUTION-V1",
+  "test_id": "T-INFRA-COSMOLOGY-001",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "5c6a41e2322258cfd0284fec34d13d8bf79b3a27",
+  "command": ["python3", "benchmarks/cosmology_env_benchmark.py"],
+  "parameters": {},
+  "seed": 20260911,
+  "timeout_minutes": 10,
+  "required_outputs": ["benchmark_result.json"]
+}
