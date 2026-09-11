@@ -33,7 +33,7 @@ class DispatchRunnerTests(unittest.TestCase):
         self.assertEqual(result["result"]["message"], "scheduled-dispatch-canary")
         self.assertEqual(persisted, result)
 
-    def test_request_cannot_choose_an_arbitrary_command(self):
+    def test_adapter_failure_persists_failure_receipt_and_still_raises(self):
         payload = {
             "work_id": "CANARY-003",
             "correlation_id": "CORR-CANARY-003",
@@ -49,6 +49,12 @@ class DispatchRunnerTests(unittest.TestCase):
             request.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaises(ValueError):
                 run_dispatch_request(request, output)
+            persisted = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(persisted["work_id"], "CANARY-003")
+        self.assertEqual(persisted["status"], "FAILED")
+        self.assertEqual(persisted["error"]["type"], "ValueError")
+        self.assertIn("unsupported canary args", persisted["error"]["message"])
 
 
 if __name__ == "__main__":
