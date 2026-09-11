@@ -195,13 +195,15 @@ class GitHubActionsProvider:
             raise RuntimeError(f"GitHub API {exc.code}: {detail}") from exc
 
     def submit(
-        self, contract: ExecutionContract, ref: str = "main", contract_path: str | None = None
+        self, contract: ExecutionContract, ref: str = "main", contract_name: str | None = None
     ) -> dict[str, Any]:
         if contract.repository.count("/") != 1:
             raise ValueError("repository must be owner/name")
         if contract.provider != self.name:
             raise ValueError("contract provider must be github_actions")
-        path = contract_path or f"runtime/nexo_execution/contracts/{contract.execution_id}.json"
+        name = contract_name or f"{contract.execution_id}.json"
+        if not name or "/" in name or ".." in name:
+            raise ValueError("contract_name must be a safe filename")
         url = f"https://api.github.com/repos/{contract.repository}/actions/workflows/{self.workflow}/dispatches"
         status, _ = self._request(
             url,
@@ -209,7 +211,7 @@ class GitHubActionsProvider:
             {
                 "ref": ref,
                 "inputs": {
-                    "contract_path": path,
+                    "contract_name": name,
                     "expected_contract_hash": contract.contract_hash,
                 },
             },
@@ -218,6 +220,7 @@ class GitHubActionsProvider:
             "execution_id": contract.execution_id,
             "dispatch_http_status": status,
             "contract_hash": contract.contract_hash,
+            "contract_name": name,
         }
 
 
