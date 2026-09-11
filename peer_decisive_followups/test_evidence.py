@@ -8,6 +8,7 @@ from peer_decisive_followups.evidence import (
     compare_models,
     normalize_evidence,
     parse_polychord_stats,
+    production_converged,
 )
 
 
@@ -40,9 +41,26 @@ def test_nonfinite_evidence_is_rejected():
         normalize_evidence(float("nan"), 0.1, 0.0, 0.1)
 
 
-def test_parse_polychord_stats_reads_standard_logz_line(tmp_path: Path):
+def test_parse_polychord_stats_reads_logz_and_dead_count(tmp_path: Path):
     path = tmp_path / "chain.stats"
-    path.write_text("header\nlog(Z) = 12.345 +/- 0.067\n", encoding="utf-8")
+    path.write_text(
+        "header\nlog(Z) = 12.345 +/- 0.067\n ndead:       12345\n nlive:         400\n",
+        encoding="utf-8",
+    )
     parsed = parse_polychord_stats(path)
     assert parsed["logZ"] == pytest.approx(12.345)
     assert parsed["logZstd"] == pytest.approx(0.067)
+    assert parsed["ndead"] == 12345
+    assert parsed["nlive"] == 400
+
+
+def test_production_convergence_rejects_max_ndead_cap():
+    assert production_converged({"ndead": 49999}, max_ndead=50000, precision_criterion=0.001,
+                                publication_dlogz_gate=0.1) is True
+    assert production_converged({"ndead": 50000}, max_ndead=50000, precision_criterion=0.001,
+                                publication_dlogz_gate=0.1) is False
+
+
+def test_production_convergence_fails_closed_without_ndead():
+    assert production_converged({}, max_ndead=50000, precision_criterion=0.001,
+                                publication_dlogz_gate=0.1) is False
