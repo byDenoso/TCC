@@ -1,11 +1,17 @@
-name: ACT DR6 Lane B full Planck robustness
+name: PEER prior-volume normalization
 
 on:
   workflow_dispatch:
     inputs:
-      lane_a_run_id:
-        description: Compatibility input; ignored by PEER nested execution branch
+      campaign_id:
+        description: Frozen campaign identifier
         required: true
+        type: string
+      runtime_source_run:
+        description: Validated runtime artifact source run
+        required: true
+        default: '34561868964'
+        type: string
 
 permissions:
   contents: read
@@ -19,10 +25,10 @@ env:
   NUMEXPR_NUM_THREADS: '1'
 
 jobs:
-  nested:
-    name: peer-nested-${{ matrix.model }}
+  normalize:
+    name: prior-normalization-${{ matrix.model }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 350
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -31,72 +37,71 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout execution branch
+      - name: Checkout production orchestration
         uses: actions/checkout@v4
 
-      - name: Checkout validated nested implementation
-        uses: actions/checkout@v4
-        with:
-          ref: run-corrected-polychord-20260730
-          path: nested-src
-
-      - name: Checkout matched ACT/PEER stack
+      - name: Checkout frozen science stack
         uses: actions/checkout@v4
         with:
           ref: act-dr6-peer-test-20260729
           path: science-act
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install PolyChord runtime and test harness
+      - name: Install execution dependencies
         run: |
           set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
+          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev git
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
-          python -m pytest -q nested-src/peer_decisive_followups/test_nested_lane.py
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py 'cobaya==3.6.2' 'sacc>=0.12.0'
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
 
-      - name: Enforce 400-live matched evidence contract
+      - name: Materialize and verify frozen runtime
         run: |
           set -euxo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('nested-src/peer_decisive_followups/build_nested_config.py')
-          s = p.read_text()
-          old = '"nlive": "25d",'
-          if old not in s:
-              raise SystemExit('expected nlive contract not found')
-          s = s.replace(old, '"nlive": 400,', 1)
-          p.write_text(s)
-          PY
-          grep -n 'nlive' nested-src/peer_decisive_followups/build_nested_config.py
+          python -m peer_decisive_followups.materialize_runtime \
+            --source-run '${{ inputs.runtime_source_run }}' \
+            --work "$GITHUB_WORKSPACE/runtime-work" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --manifest "$GITHUB_WORKSPACE/runtime_manifest.json"
 
-      - name: Run matched PolyChord evidence
-        working-directory: nested-src
+      - name: Run independent prior normalization
         run: |
           set -euxo pipefail
-          python peer_decisive_followups/run_nested_lane.py \
-            --model '${{ matrix.model }}' \
+          MODEL='${{ matrix.model }}'
+          SEED=2026076101
+          [ "$MODEL" = M3 ] && SEED=2026076103
+          mkdir -p "$GITHUB_WORKSPACE/prior_result"
+          python -m peer_decisive_followups.prior_normalization \
+            --model "$MODEL" \
             --science "$GITHUB_WORKSPACE/science-act" \
-            --work "$GITHUB_WORKSPACE/evidence_${{ matrix.model }}" \
-            --packages "$COBAYA_PACKAGES_PATH"
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --work "$GITHUB_WORKSPACE/prior_work_${MODEL}" \
+            --runtime-manifest "$GITHUB_WORKSPACE/runtime_manifest.json" \
+            --seed "$SEED" \
+            --output "$GITHUB_WORKSPACE/prior_result/prior_normalization_${MODEL}.json"
+          cat "$GITHUB_WORKSPACE/prior_result/prior_normalization_${MODEL}.json"
 
-      - name: Readback evidence status
+      - name: Collect compact normalization provenance
         if: always()
         run: |
-          set -x
-          find "evidence_${{ matrix.model }}" \( -name 'normalized_evidence.json' -o -name 'nested_status.json' \) -print | sort | while read f; do echo "=== $f"; cat "$f"; done
+          MODEL='${{ matrix.model }}'
+          mkdir -p "$GITHUB_WORKSPACE/prior_result/logs"
+          find "$GITHUB_WORKSPACE/prior_work_${MODEL}" -name '*.stats' -type f -exec cp {} "$GITHUB_WORKSPACE/prior_result/" \; 2>/dev/null || true
+          find "$GITHUB_WORKSPACE/prior_work_${MODEL}" -name 'stdout.log' -type f -exec cp {} "$GITHUB_WORKSPACE/prior_result/logs/stdout.log" \; 2>/dev/null || true
+          find "$GITHUB_WORKSPACE/prior_work_${MODEL}" -name 'stderr.log' -type f -exec cp {} "$GITHUB_WORKSPACE/prior_result/logs/stderr.log" \; 2>/dev/null || true
+          cp "$GITHUB_WORKSPACE/runtime_manifest.json" "$GITHUB_WORKSPACE/prior_result/runtime_manifest.json" 2>/dev/null || true
+          find "$GITHUB_WORKSPACE/prior_work_${MODEL}" -name 'science_manifest.json' -type f -exec cp {} "$GITHUB_WORKSPACE/prior_result/science_manifest.json" \; 2>/dev/null || true
 
-      - name: Upload evidence and checkpoints
+      - name: Upload normalization result
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: peer-nested-20260910-${{ matrix.model }}
-          path: evidence_${{ matrix.model }}
+          name: peer-prior-normalization-${{ inputs.campaign_id }}-${{ matrix.model }}
+          path: prior_result
           retention-days: 30
           if-no-files-found: error
