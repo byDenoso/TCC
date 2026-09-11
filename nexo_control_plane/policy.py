@@ -20,6 +20,7 @@ _ENGINEERING_SIGNALS = {
     "ARTIFACT_CORRUPTION",
     "PERFORMANCE_REGRESSION",
     "CONNECTOR_FAILURE",
+    "PROCEDURAL_HYPOTHESIS",
 }
 
 
@@ -45,8 +46,18 @@ def engineering_from_signal(signal_type: str, parent: WorkRecord) -> WorkRecord:
         parent_id=parent.work_id,
         correlation_id=parent.correlation_id or parent.work_id,
         resource_keys=parent.resource_keys,
-        priority="CRITICAL" if parent.status == WorkStatus.BLOCKED else "HIGH",
-        work_type="ENGINEERING_REPAIR",
+        priority=(
+            "CRITICAL"
+            if parent.status == WorkStatus.BLOCKED
+            else "MEDIUM"
+            if signal_type == "PROCEDURAL_HYPOTHESIS"
+            else "HIGH"
+        ),
+        work_type=(
+            "ENGINEERING_IMPROVEMENT"
+            if signal_type == "PROCEDURAL_HYPOTHESIS"
+            else "ENGINEERING_REPAIR"
+        ),
     )
 
 

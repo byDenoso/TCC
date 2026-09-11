@@ -207,6 +207,7 @@ Core may create ENGINEERING work only from typed inputs:
 - `ARTIFACT_CORRUPTION`
 - `PERFORMANCE_REGRESSION`
 - `CONNECTOR_FAILURE`
+- `PROCEDURAL_HYPOTHESIS` (bounded improvement candidate; never direct code authority)
 
 Engineering work that can alter likelihood/model/prior/scientific numerics requires a SCIENCE review gate before scientific reuse.
 

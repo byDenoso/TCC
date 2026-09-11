@@ -65,7 +65,7 @@
 **Interfaces:**
 - Produces: `may_create_work(role, domain) -> bool`, `engineering_from_signal(signal_type, parent) -> WorkRecord`, `route(work) -> Backend`.
 
-- [ ] Write tests proving Advisor may create SCIENCE but not ENGINEERING, Core may create ENGINEERING only from the typed signal allow-list, heavy SCIENCE routes to GITHUB_SCIENCE, ENGINEERING code/runtime routes to GITHUB_ENGINEERING, and OLYMPUS defaults LOCAL.
+- [ ] Write tests proving Advisor may create SCIENCE but not ENGINEERING, Core may create ENGINEERING only from the typed signal allow-list (including bounded `PROCEDURAL_HYPOTHESIS`), heavy SCIENCE routes to GITHUB_SCIENCE, ENGINEERING code/runtime routes to GITHUB_ENGINEERING, and OLYMPUS defaults LOCAL.
 - [ ] Verify RED.
 - [ ] Implement minimum policy/routing logic.
 - [ ] Verify GREEN.

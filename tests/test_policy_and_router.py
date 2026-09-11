@@ -49,6 +49,10 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(eng.domain, WorkDomain.ENGINEERING)
         self.assertEqual(eng.parent_id, parent.work_id)
         self.assertEqual(eng.execution_backend, Backend.GITHUB_ENGINEERING)
+        procedural = engineering_from_signal("PROCEDURAL_HYPOTHESIS", parent)
+        self.assertEqual(procedural.domain, WorkDomain.ENGINEERING)
+        self.assertEqual(procedural.priority, "MEDIUM")
+        self.assertEqual(procedural.work_type, "ENGINEERING_IMPROVEMENT")
         with self.assertRaises(InvalidEngineeringSignal):
             engineering_from_signal("ADVISOR_FEELS_LIKE_REFACTORING", parent)
 
