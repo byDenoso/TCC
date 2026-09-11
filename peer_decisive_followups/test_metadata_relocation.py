@@ -58,3 +58,13 @@ def test_relocation_does_not_copy_scientific_values_from_current(tmp_path: Path)
     restored = yaml.safe_load(Path(str(prefix) + ".updated.yaml").read_text(encoding="utf-8"))
     assert restored["params"]["tau"]["prior"]["min"] == 0.0
     assert restored["likelihood"]["shoes"]["mean"] == 73.04
+
+
+def test_continuation_orchestrator_relocates_metadata_after_restore_before_sampling():
+    source = Path(__file__).with_name("orchestrate_segment.py").read_text(encoding="utf-8")
+    assert "relocate_cobaya_metadata" in source
+    restore_at = source.index("parent = restore_bundle(")
+    relocate_at = source.index("relocate_cobaya_metadata(")
+    run_at = source.index("result = run_segment(")
+    assert restore_at < relocate_at < run_at
+    assert 'built["data"]' in source[relocate_at:run_at]
