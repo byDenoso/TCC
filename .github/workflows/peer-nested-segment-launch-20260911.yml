@@ -4,6 +4,7 @@ on:
   push:
     branches: [run-peer-segmented-20260911]
     paths:
+      - 'pytest.ini'
       - 'peer_decisive_followups/**'
       - '.github/workflows/peer-nested-segment-launch-20260911.yml'
       - '.github/workflows/peer-nested-continuation-20260911.yml'
