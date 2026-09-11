@@ -212,7 +212,14 @@ jobs:
           new = f'SOURCE_RUN = "{os.environ["GITHUB_RUN_ID"]}"'
           if old not in s:
               raise SystemExit('expected historical source run contract not found')
-          runner.write_text(s.replace(old, new, 1))
+          s = s.replace(old, new, 1)
+
+          old_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n'''
+          new_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    _replace_directory_link(workspace / "Rec_database", databases[0])\n    _replace_directory_link(workspace / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n    (workspace / "temp").mkdir(exist_ok=True)\n    required = workspace / "Rec_database" / "Effective_Rates.HI" / "Effective_Rate_Tables.nS_3" / "res_state_list.dat"\n    if not required.is_file():\n        raise RuntimeError(f"CosmoRec workspace binding failed: {required}")\n'''
+          if old_links not in s:
+              raise SystemExit('expected CosmoRec link block not found')
+          s = s.replace(old_links, new_links, 1)
+          runner.write_text(s)
 
           cfg = Path('nested-src/peer_decisive_followups/build_nested_config.py')
           c = cfg.read_text()
@@ -222,6 +229,7 @@ jobs:
           cfg.write_text(c.replace(old_nlive, '"nlive": 400,', 1))
           PY
           grep -n 'SOURCE_RUN' nested-src/peer_decisive_followups/run_nested_lane.py
+          grep -n -A12 '_replace_directory_link(work / "Rec_database"' nested-src/peer_decisive_followups/run_nested_lane.py
           grep -n 'nlive' nested-src/peer_decisive_followups/build_nested_config.py
 
       - name: Run matched PolyChord evidence
