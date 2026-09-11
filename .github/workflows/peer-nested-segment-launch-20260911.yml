@@ -1,66 +1,29 @@
-name: PEER nested 5h30 checkpoint launch
+name: PEER pipeline TDD gate
 
 on:
   push:
     branches: [run-peer-segmented-20260911]
     paths:
+      - 'peer_decisive_followups/**'
       - '.github/workflows/peer-nested-segment-launch-20260911.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
-  actions: read
-
-env:
-  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
-  OMP_NUM_THREADS: '1'
-  OPENBLAS_NUM_THREADS: '1'
-  MKL_NUM_THREADS: '1'
-  NUMEXPR_NUM_THREADS: '1'
 
 jobs:
-  nested:
+  unit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 355
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        model: [M1, M3]
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          ref: run-corrected-polychord-20260730
-          path: nested-src
-      - uses: actions/checkout@v4
-        with:
-          ref: act-dr6-peer-test-20260729
-          path: science-act
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+      - name: Install unit-test dependencies
+        run: python -m pip install -U pytest pyyaml
+      - name: Run PEER pipeline unit tests
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
-          python -m pip install --upgrade pip wheel setuptools
-          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
-          python -m pytest -q peer_decisive_followups/test_checkpoint_manager.py
-          python -m peer_decisive_followups.orchestrate_segment --help >/dev/null
-          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
-      - name: Run 5h30 checkpointed segment
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python -m peer_decisive_followups.orchestrate_segment --model '${{ matrix.model }}' --workspace "$GITHUB_WORKSPACE" --seconds 19800
-      - name: Readback
-        if: always()
-        run: |
-          cat "evidence_${{ matrix.model }}/nested_${{ matrix.model }}/checkpoint/segment_status.json" || true
-          find "evidence_${{ matrix.model }}" \( -name '*.resume' -o -name '*.stats' -o -name 'segment_status.json' \) -print | sort
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: peer-nested-segment-${{ matrix.model }}
-          path: evidence_${{ matrix.model }}
-          retention-days: 30
-          if-no-files-found: error
+          python -m pytest -q \
+            peer_decisive_followups/test_production_contract.py \
+            peer_decisive_followups/test_checkpoint_manager.py
