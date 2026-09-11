@@ -1,6 +1,11 @@
 import unittest
 
-from runtime.nexo_execution.core import ExecutionContract, ExecutionResult, ResultVerifier
+from runtime.nexo_execution.core import (
+    ExecutionContract,
+    ExecutionResult,
+    GitHubActionsProvider,
+    ResultVerifier,
+)
 from runtime.nexo_execution.router import RoutingInput, choose_provider
 
 
@@ -18,6 +23,16 @@ BASE = {
     "timeout_minutes": 10,
     "required_outputs": ["result.json"],
 }
+
+
+class FakeActionsProvider(GitHubActionsProvider):
+    def __init__(self):
+        super().__init__(token="test-token")
+        self.last_request = None
+
+    def _request(self, url, method="GET", payload=None):
+        self.last_request = (url, method, payload)
+        return 204, b""
 
 
 class ExecutionTests(unittest.TestCase):
@@ -61,6 +76,22 @@ class ExecutionTests(unittest.TestCase):
             contract_hash=contract.contract_hash,
         )
         self.assertEqual(ResultVerifier().verify(contract, result)["status"], "PASS")
+
+    def test_actions_provider_sends_safe_contract_name_and_hash(self):
+        contract = ExecutionContract.from_dict(dict(BASE))
+        provider = FakeActionsProvider()
+        response = provider.submit(contract, contract_name="canary-cosmology.json")
+        self.assertEqual(response["dispatch_http_status"], 204)
+        _, method, payload = provider.last_request
+        self.assertEqual(method, "POST")
+        self.assertEqual(payload["inputs"]["contract_name"], "canary-cosmology.json")
+        self.assertEqual(payload["inputs"]["expected_contract_hash"], contract.contract_hash)
+
+    def test_actions_provider_rejects_path_traversal(self):
+        contract = ExecutionContract.from_dict(dict(BASE))
+        provider = FakeActionsProvider()
+        with self.assertRaises(ValueError):
+            provider.submit(contract, contract_name="../evil.json")
 
 
 if __name__ == "__main__":
