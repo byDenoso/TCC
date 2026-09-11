@@ -48,13 +48,11 @@ jobs:
           import json
           import os
           from pathlib import Path
-          from nexo_control_plane.dispatch import run_dispatch_request
+          from nexo_control_plane.dispatch import load_dispatch_request, run_dispatch_request
 
           request = Path(os.environ['REQUEST_PATH'])
-          data = json.loads(request.read_text(encoding='utf-8'))
-          work_id = data.get('work_id', 'invalid')
-          attempt = data.get('attempt', 'invalid')
-          output = Path('nexo_dispatch/results') / f'{work_id}-attempt-{attempt}.json'
+          validated = load_dispatch_request(request)
+          output = Path('nexo_dispatch/results') / f'{validated.work_id}-attempt-{validated.attempt}.json'
           result = run_dispatch_request(request, output)
           print(json.dumps(result, sort_keys=True))
           PY
