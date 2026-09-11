@@ -117,19 +117,23 @@ def main() -> int:
             time.sleep(max(0.1, args.poll_seconds))
         exit_code = proc.wait()
 
-    ready, _ = bootstrap_checkpoint_ready(raw, previous_signature)
     state = inspect_raw_checkpoint(raw)
+    classification = "FAILED"
+    if state["resumable"]:
+        classification = "RESUMABLE" if stopped_for_checkpoint else "COMPLETE"
+    report = {
+        "classification": classification,
+        "exit_code": exit_code,
+        "stopped_for_checkpoint": stopped_for_checkpoint,
+        "checkpoint_state": state,
+        "model": args.model,
+        "segment": 0,
+    }
+    (root / "bootstrap_status.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
     if not state["resumable"]:
-        report = {
-            "classification": "FAILED",
-            "exit_code": exit_code,
-            "stopped_for_checkpoint": stopped_for_checkpoint,
-            "checkpoint_state": state,
-        }
-        (root / "bootstrap_status.json").write_text(
-            json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
-        )
-        print(json.dumps(report, indent=2, sort_keys=True))
         return 2
 
     manifest = promote_checkpoint(
@@ -140,21 +144,14 @@ def main() -> int:
         parent_digest=None,
         science_manifest=science_manifest,
         runtime_manifest=runtime_manifest,
+        output_prefix=data_dir / "chain",
+        status=report,
     )
-    report = {
-        "classification": "RESUMABLE" if stopped_for_checkpoint else "COMPLETE",
-        "exit_code": exit_code,
-        "stopped_for_checkpoint": stopped_for_checkpoint,
-        "checkpoint_digest": manifest["checkpoint_digest"],
-        "checkpoint_state": state,
-    }
-    (root / "bootstrap_status.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
+    summary = {**report, "checkpoint_digest": manifest["checkpoint_digest"]}
+    (root / "bootstrap_checkpoint_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"
     )
-    (args.output_bundle.resolve() / "segment_status.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
-    )
-    print(json.dumps(report, indent=2, sort_keys=True))
+    print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
 
 
