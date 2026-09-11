@@ -6,6 +6,9 @@ on:
     paths:
       - 'peer_decisive_followups/**'
       - '.github/workflows/peer-nested-segment-launch-20260911.yml'
+      - '.github/workflows/peer-nested-continuation-20260911.yml'
+      - '.github/workflows/peer-nested-matched-20260910.yml'
+      - '.github/workflows/act-dr6-laneb-full-planck.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,4 +33,5 @@ jobs:
             peer_decisive_followups/test_run_segment.py \
             peer_decisive_followups/test_production_config.py \
             peer_decisive_followups/test_runtime_contract.py \
-            peer_decisive_followups/test_evidence.py
+            peer_decisive_followups/test_evidence.py \
+            peer_decisive_followups/test_workflow_contract.py
