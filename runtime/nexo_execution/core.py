@@ -7,10 +7,9 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
-
 
 VALID_PROVIDERS = {"local", "github_actions"}
 TASK_REGISTRY: dict[str, list[str]] = {
@@ -38,7 +37,7 @@ class ExecutionContract:
         required = {
             "schema", "execution_id", "work_id", "test_id", "provider",
             "repository", "commit_sha", "task_id", "parameters", "seed",
-            "timeout_minutes", "required_outputs"
+            "timeout_minutes", "required_outputs",
         }
         missing = sorted(required - set(data))
         if missing:
@@ -51,7 +50,9 @@ class ExecutionContract:
             raise ValueError(f"task is not allowlisted: {data['task_id']}")
         if int(data["timeout_minutes"]) <= 0:
             raise ValueError("timeout_minutes must be positive")
-        if not isinstance(data["required_outputs"], list) or not all(isinstance(x, str) and x for x in data["required_outputs"]):
+        if not isinstance(data["required_outputs"], list) or not all(
+            isinstance(x, str) and x for x in data["required_outputs"]
+        ):
             raise ValueError("required_outputs must be a string list")
         return cls(**data)
 
@@ -90,26 +91,35 @@ class ExecutionResult:
         return self.finished_at - self.started_at
 
     def to_dict(self) -> dict[str, Any]:
-        d = asdict(self)
-        d["execution_seconds"] = self.execution_seconds
-        return d
+        data = asdict(self)
+        data["execution_seconds"] = self.execution_seconds
+        return data
 
 
 def sha256_file(path: str | Path) -> str:
     h = hashlib.sha256()
-    with Path(path).open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
 
 
 def collect_outputs(paths: Iterable[str]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
+    outputs: list[dict[str, Any]] = []
     for raw in paths:
-        p = Path(raw)
-        if p.exists() and p.is_file():
-            out.append({"path": raw, "sha256": sha256_file(p), "bytes": p.stat().st_size})
-    return out
+        path = Path(raw)
+        if path.exists() and path.is_file():
+            outputs.append({"path": raw, "sha256": sha256_file(path), "bytes": path.stat().st_size})
+    return outputs
+
+
+def current_git_sha() -> str:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+    except Exception:
+        return "UNKNOWN"
 
 
 class LocalProvider:
@@ -124,16 +134,17 @@ class LocalProvider:
         for key, value in contract.parameters.items():
             env[f"NEXO_PARAM_{str(key).upper()}"] = str(value)
 
+        executed_commit = current_git_sha()
         started = time.time()
         error = None
         try:
-            cp = subprocess.run(
+            completed = subprocess.run(
                 contract.argv,
                 env=env,
                 timeout=contract.timeout_minutes * 60,
                 check=False,
             )
-            exit_code = cp.returncode
+            exit_code = completed.returncode
         except subprocess.TimeoutExpired:
             exit_code = 124
             error = "timeout"
@@ -147,7 +158,7 @@ class LocalProvider:
             work_id=contract.work_id,
             provider=contract.provider,
             run_id=os.getenv("GITHUB_RUN_ID"),
-            commit_sha=contract.commit_sha,
+            commit_sha=executed_commit,
             exit_code=exit_code,
             started_at=started,
             finished_at=finished,
@@ -166,7 +177,9 @@ class GitHubActionsProvider:
         if not self.token:
             raise ValueError("GITHUB_TOKEN is required")
 
-    def _request(self, url: str, method: str = "GET", payload: dict[str, Any] | None = None) -> tuple[int, bytes]:
+    def _request(
+        self, url: str, method: str = "GET", payload: dict[str, Any] | None = None
+    ) -> tuple[int, bytes]:
         body = None if payload is None else json.dumps(payload).encode()
         req = urllib.request.Request(url, data=body, method=method)
         req.add_header("Authorization", f"Bearer {self.token}")
@@ -175,27 +188,37 @@ class GitHubActionsProvider:
         if body is not None:
             req.add_header("Content-Type", "application/json")
         try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                return resp.status, resp.read()
+            with urllib.request.urlopen(req, timeout=30) as response:
+                return response.status, response.read()
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace")
             raise RuntimeError(f"GitHub API {exc.code}: {detail}") from exc
 
-    def submit(self, contract: ExecutionContract, ref: str = "main", contract_path: str | None = None) -> dict[str, Any]:
+    def submit(
+        self, contract: ExecutionContract, ref: str = "main", contract_path: str | None = None
+    ) -> dict[str, Any]:
         if contract.repository.count("/") != 1:
             raise ValueError("repository must be owner/name")
         if contract.provider != self.name:
             raise ValueError("contract provider must be github_actions")
         path = contract_path or f"runtime/nexo_execution/contracts/{contract.execution_id}.json"
         url = f"https://api.github.com/repos/{contract.repository}/actions/workflows/{self.workflow}/dispatches"
-        status, _ = self._request(url, "POST", {
-            "ref": ref,
-            "inputs": {
-                "contract_path": path,
-                "expected_contract_hash": contract.contract_hash,
+        status, _ = self._request(
+            url,
+            "POST",
+            {
+                "ref": ref,
+                "inputs": {
+                    "contract_path": path,
+                    "expected_contract_hash": contract.contract_hash,
+                },
             },
-        })
-        return {"execution_id": contract.execution_id, "dispatch_http_status": status, "contract_hash": contract.contract_hash}
+        )
+        return {
+            "execution_id": contract.execution_id,
+            "dispatch_http_status": status,
+            "contract_hash": contract.contract_hash,
+        }
 
 
 class ResultVerifier:
@@ -213,7 +236,7 @@ class ResultVerifier:
             errors.append(f"nonzero_exit:{result.exit_code}")
 
         actual = {item["path"] for item in result.outputs}
-        missing = [p for p in contract.required_outputs if p not in actual]
+        missing = [path for path in contract.required_outputs if path not in actual]
         if missing:
             errors.append("missing_outputs:" + ",".join(missing))
 
