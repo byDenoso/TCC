@@ -4,11 +4,16 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import re
-from typing import Any
+from typing import Any, Callable
+
+from nexo_jobs.canary import execute as execute_canary
 
 
 _ALLOWED_ADAPTERS = {
     "canary": Path("nexo_jobs/canary.py"),
+}
+_ADAPTER_RUNNERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
+    "canary": execute_canary,
 }
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.:-]+$")
 
@@ -66,3 +71,22 @@ def load_dispatch_request(path: Path) -> DispatchRequest:
         attempt=attempt,
         args=args,
     )
+
+
+def run_dispatch_request(request_path: Path, output_path: Path) -> dict[str, Any]:
+    request = load_dispatch_request(request_path)
+    runner = _ADAPTER_RUNNERS[request.adapter]
+    adapter_result = runner(request.args)
+    result = {
+        "work_id": request.work_id,
+        "correlation_id": request.correlation_id,
+        "domain": request.domain,
+        "adapter": request.adapter,
+        "source_revision": request.source_revision,
+        "attempt": request.attempt,
+        "status": "COMPLETED",
+        "result": adapter_result,
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+    return result
