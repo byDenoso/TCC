@@ -46,11 +46,12 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
           python -m pytest -q peer_decisive_followups/test_checkpoint_manager.py
+          python -m peer_decisive_followups.orchestrate_segment --help >/dev/null
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
       - name: Run 5h30 checkpointed segment
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python peer_decisive_followups/orchestrate_segment.py --model '${{ matrix.model }}' --workspace "$GITHUB_WORKSPACE" --seconds 19800
+        run: python -m peer_decisive_followups.orchestrate_segment --model '${{ matrix.model }}' --workspace "$GITHUB_WORKSPACE" --seconds 19800
       - name: Readback
         if: always()
         run: |
