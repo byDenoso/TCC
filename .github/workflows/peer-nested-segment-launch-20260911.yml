@@ -34,4 +34,5 @@ jobs:
             peer_decisive_followups/test_production_config.py \
             peer_decisive_followups/test_runtime_contract.py \
             peer_decisive_followups/test_evidence.py \
-            peer_decisive_followups/test_workflow_contract.py
+            peer_decisive_followups/test_workflow_contract.py \
+            peer_decisive_followups/test_metadata_relocation.py
