@@ -1,0 +1,23 @@
+{
+  "bundled_libraries_sha256": {
+    "libgsl.so.27": "87a9a67154abe9d63a6cd2c1acaf9312d93c6e70c30cd16edc37c111fc209bf0",
+    "libgslcblas.so.0": "a3e0a65d0d314a79a54d267d9762785df2b7d744beb9556bf2cfed6894b1aefc"
+  },
+  "camb_version": "1.6.6",
+  "cosmorec_version": "2.0.3",
+  "patch_count": 4,
+  "relocation_aliases": [
+    "/tmp/peer-camb-runtime-xx",
+    "/home/runner/worer/work/TCC/TCC",
+    "/home/runner/work/TCC/TCC"
+  ],
+  "relocation_policy": "launcher_creates_missing_symlinks_to_bundled_cosmorec_and_fails_closed_on_conflict",
+  "schema": "peer-camb-platform-port-2",
+  "source_sha256": {
+    "cosmorec_tree": "a9bdd1b603f5d7f8c5a10dcede3e488c733c3b3b7790fa555b08c2f9eb3ac060",
+    "wheel": "4e38c3771329b2d4f5c185f8d8d7a0f183178d5b07957f18f9008f90e7d4b79d"
+  },
+  "scientific_payload_policy": "unchanged_from_PEER_CAMB_PLATFORM_PORT_20260802",
+  "original_archive_sha256": "c2b7a5dc64bf437e10e5136a72a8bab3bbe33702ef89f6a1bc4c4f96711e1121",
+  "camblib_sha256": "1945f5fc40acb8ed954b587c40691ec5f4743bf21af051ee5ec0b02413222ad9"
+}
