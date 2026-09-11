@@ -28,4 +28,5 @@ jobs:
             peer_decisive_followups/test_production_contract.py \
             peer_decisive_followups/test_checkpoint_manager.py \
             peer_decisive_followups/test_run_segment.py \
-            peer_decisive_followups/test_production_config.py
+            peer_decisive_followups/test_production_config.py \
+            peer_decisive_followups/test_runtime_contract.py
