@@ -1,0 +1,62 @@
+name: Cosmology env benchmark
+
+on:
+  push:
+    paths:
+      - 'benchmarks/cosmology_env_benchmark.py'
+      - '.github/workflows/benchmark-chatgpt-vs-actions.yml'
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Runtime inventory
+        shell: bash
+        run: |
+          set -euxo pipefail
+          uname -a
+          lscpu || true
+          free -h || true
+          df -h || true
+          python3 --version
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+      - name: Run benchmark
+        shell: bash
+        run: |
+          set -euxo pipefail
+          /usr/bin/time -v python3 benchmarks/cosmology_env_benchmark.py 2> benchmark_time.txt | tee benchmark_stdout.txt
+
+      - name: Build metadata
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path('benchmark_result.json')
+          d = json.loads(p.read_text())
+          d['github'] = {
+              'sha': os.environ.get('GITHUB_SHA'),
+              'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'runner_os': os.environ.get('RUNNER_OS'),
+              'runner_arch': os.environ.get('RUNNER_ARCH')
+          }
+          p.write_text(json.dumps(d, indent=2) + '\n')
+          PY
+
+      - name: Upload benchmark artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cosmology-env-benchmark-${{ github.run_id }}
+          path: |
+            benchmark_result.json
+            benchmark_time.txt
+            benchmark_stdout.txt
+          retention-days: 7
