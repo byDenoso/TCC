@@ -1,10 +1,38 @@
-name: PEER nested segmented checkpoint 20260911
+name: PEER nested production continuation
 
 on:
-  push:
-    branches: [run-peer-nested-20260910]
-    paths:
-      - '.github/workflows/peer-nested-continuation-20260911.yml'
+  workflow_dispatch:
+    inputs:
+      campaign_id:
+        description: Frozen campaign identifier
+        required: true
+        type: string
+      model:
+        description: Model lane
+        required: true
+        type: choice
+        options: [M1, M3]
+      segment:
+        description: Child segment ordinal (bootstrap is 0)
+        required: true
+        type: string
+      parent_run_id:
+        description: GitHub Actions run containing the canonical parent checkpoint artifact
+        required: true
+        type: string
+      parent_artifact_name:
+        description: Exact parent checkpoint artifact name
+        required: true
+        type: string
+      expected_parent_digest:
+        description: SHA256 checkpoint identity from the parent manifest
+        required: true
+        type: string
+      runtime_source_run:
+        description: Validated runtime artifact source run
+        required: true
+        default: '34561868964'
+        type: string
 
 permissions:
   contents: read
@@ -16,120 +44,132 @@ env:
   OPENBLAS_NUM_THREADS: '1'
   MKL_NUM_THREADS: '1'
   NUMEXPR_NUM_THREADS: '1'
-  SOURCE_RUN: '34561868964'
-  SEGMENT_SECONDS: '19800'
+
+concurrency:
+  group: peer-nested-${{ inputs.campaign_id }}-${{ inputs.model }}
+  cancel-in-progress: false
 
 jobs:
-  nested:
-    name: nested-${{ matrix.model }}-5h30-checkpoint
+  continuation:
+    name: ${{ inputs.campaign_id }}-${{ inputs.model }}-segment-${{ inputs.segment }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 355
-    strategy:
-      fail-fast: false
-      max-parallel: 2
-      matrix:
-        model: [M1, M3]
+    timeout-minutes: 350
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          ref: run-corrected-polychord-20260730
-          path: nested-src
-      - uses: actions/checkout@v4
+      - name: Checkout production orchestration
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen science stack
+        uses: actions/checkout@v4
         with:
           ref: act-dr6-peer-test-20260729
           path: science-act
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install runtime
+      - name: Install execution dependencies
         run: |
           set -euxo pipefail
           sudo apt-get update
-          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
+          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev git
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
-          python -m pytest -q peer_decisive_followups/test_checkpoint_manager.py
-          (cd nested-src && python -m pytest -q peer_decisive_followups/test_nested_lane.py)
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py 'cobaya==3.6.2' 'sacc>=0.12.0'
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
 
-      - name: Prepare configs
+      - name: Materialize and verify frozen runtime
+        run: |
+          set -euxo pipefail
+          python -m peer_decisive_followups.materialize_runtime \
+            --source-run '${{ inputs.runtime_source_run }}' \
+            --work "$GITHUB_WORKSPACE/runtime-work" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --manifest "$GITHUB_WORKSPACE/runtime_manifest.json"
+          cat "$GITHUB_WORKSPACE/runtime_manifest.json"
+
+      - name: Download exactly one canonical parent checkpoint
+        run: |
+          set -euxo pipefail
+          rm -rf "$GITHUB_WORKSPACE/parent_bundle"
+          mkdir -p "$GITHUB_WORKSPACE/parent_bundle"
+          gh run download '${{ inputs.parent_run_id }}' \
+            --repo byDenoso/TCC \
+            --name '${{ inputs.parent_artifact_name }}' \
+            --dir "$GITHUB_WORKSPACE/parent_bundle"
+          test -f "$GITHUB_WORKSPACE/parent_bundle/checkpoint_manifest.json"
+          find "$GITHUB_WORKSPACE/parent_bundle" -maxdepth 2 -type f -print | sort
+
+      - name: Full matched-stack preflight
+        run: |
+          set -euxo pipefail
+          MODEL='${{ inputs.model }}'
+          SEED=2026076101
+          [ "$MODEL" = M3 ] && SEED=2026076103
+          python -m peer_decisive_followups.production_config \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --model "$MODEL" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --root "$GITHUB_WORKSPACE/preflight_${MODEL}" \
+            --seed "$SEED"
+          cobaya-run "$GITHUB_WORKSPACE/preflight_${MODEL}/data.yaml" --test
+
+      - name: Restore, resume for 5h20, stop, and promote child checkpoint
+        run: |
+          set -euxo pipefail
+          MODEL='${{ inputs.model }}'
+          SEED=2026076101
+          [ "$MODEL" = M3 ] && SEED=2026076103
+          rm -rf "$GITHUB_WORKSPACE/child_bundle" "$GITHUB_WORKSPACE/evidence_${MODEL}"
+          python -m peer_decisive_followups.orchestrate_segment \
+            --model "$MODEL" \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --work "$GITHUB_WORKSPACE/evidence_${MODEL}" \
+            --runtime-manifest "$GITHUB_WORKSPACE/runtime_manifest.json" \
+            --parent-bundle "$GITHUB_WORKSPACE/parent_bundle" \
+            --expected-parent-digest '${{ inputs.expected_parent_digest }}' \
+            --output-bundle "$GITHUB_WORKSPACE/child_bundle" \
+            --segment '${{ inputs.segment }}' \
+            --seed "$SEED" \
+            --seconds 19200 \
+            --grace-seconds 45
+
+      - name: Verify promoted child checkpoint
         run: |
           set -euxo pipefail
           python - <<'PY'
-          import os
+          import json
           from pathlib import Path
-          runner = Path('nested-src/peer_decisive_followups/run_nested_lane.py')
-          s = runner.read_text().replace('SOURCE_RUN = "30455821484"', f'SOURCE_RUN = "{os.environ["SOURCE_RUN"]}"', 1)
-          old = '    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n'
-          new = '    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    _replace_directory_link(workspace / "Rec_database", databases[0])\n    _replace_directory_link(workspace / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n    (workspace / "temp").mkdir(exist_ok=True)\n'
-          if old not in s:
-              raise SystemExit('CosmoRec binding contract changed')
-          runner.write_text(s.replace(old, new, 1))
-          cfg = Path('nested-src/peer_decisive_followups/build_nested_config.py')
-          c = cfg.read_text()
-          for a, b in [('"nlive": "25d",','"nlive": 400,'), ('"nprior": "20nlive",','"nprior": "10nlive",'), ('info["resume"] = False','info["resume"] = True'), ('info["force"] = True','info["force"] = False')]:
-              if a not in c: raise SystemExit(a)
-              c = c.replace(a, b, 1)
-          cfg.write_text(c)
-          PY
-          MODEL='${{ matrix.model }}'
-          WORK="$GITHUB_WORKSPACE/evidence_${MODEL}"
-          python - <<PY
-          import sys
-          from pathlib import Path
-          sys.path.insert(0, str(Path('nested-src').resolve()))
-          from peer_decisive_followups.run_nested_lane import install_runtime
-          install_runtime(Path('$WORK'), Path('$COBAYA_PACKAGES_PATH'))
-          PY
-          IDX=1; [ "$MODEL" = M3 ] && IDX=3
-          python nested-src/peer_decisive_followups/build_nested_config.py --science "$GITHUB_WORKSPACE/science-act" --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$WORK/nested_${MODEL}" --seed "$((2026076100 + IDX))"
-          python - <<PY
-          from pathlib import Path
-          import yaml
-          root = Path('$WORK') / 'nested_${MODEL}'
-          for name in ('data.yaml','prior_volume.yaml'):
-              p = root / name
-              info = yaml.safe_load(p.read_text())
-              tau = info.get('params',{}).get('tau',{})
-              if isinstance(tau,dict) and isinstance(tau.get('prior'),dict) and tau['prior'].get('min') == 0.0:
-                  tau['prior']['min'] = 0.01
-              info['resume'] = True
-              info['force'] = False
-              p.write_text(yaml.safe_dump(info, sort_keys=False))
+          from peer_decisive_followups.checkpoint_manager import verify_bundle
+          bundle = Path('child_bundle')
+          manifest = json.loads((bundle / 'checkpoint_manifest.json').read_text())
+          verified = verify_bundle(bundle, {
+              'model': '${{ inputs.model }}',
+              'parent_digest': '${{ inputs.expected_parent_digest }}',
+              'checkpoint_digest': manifest['checkpoint_digest'],
+          })
+          print(json.dumps(verified, indent=2, sort_keys=True))
           PY
 
-      - name: Run 5h30 data segment
-        run: |
-          set -euxo pipefail
-          MODEL='${{ matrix.model }}'
-          ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
-          python peer_decisive_followups/run_segment.py --config "$ROOT/data.yaml" --cwd "$GITHUB_WORKSPACE/evidence_${MODEL}" --raw "$ROOT/data/chain_polychord_raw" --snapshot "$ROOT/checkpoint/raw" --stdout "$ROOT/data/stdout.segment.log" --stderr "$ROOT/data/stderr.segment.log" --seconds "$SEGMENT_SECONDS" --status "$ROOT/checkpoint/segment_status.json"
-
-      - name: Prior normalization
-        run: |
-          set +e
-          MODEL='${{ matrix.model }}'; ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
-          mkdir -p "$ROOT/prior_volume"
-          timeout 900s mpirun --oversubscribe -np 4 cobaya-run "$ROOT/prior_volume.yaml" >"$ROOT/prior_volume/stdout.segment.log" 2>"$ROOT/prior_volume/stderr.segment.log"
-          echo "$?" > "$ROOT/prior_volume/segment_exit_code.txt"
-          exit 0
-
-      - name: Readback
-        if: always()
-        run: |
-          MODEL='${{ matrix.model }}'; ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
-          cat "$ROOT/checkpoint/segment_status.json" || true
-          find "$ROOT" \( -name '*.resume' -o -name '*.stats' -o -name 'segment_status.json' \) -print | sort
-          tail -n 80 "$ROOT/data/stdout.segment.log" || true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
+      - name: Upload compact canonical child checkpoint
+        uses: actions/upload-artifact@v4
         with:
-          name: peer-nested-segment-${{ matrix.model }}
-          path: evidence_${{ matrix.model }}
+          name: peer-nested-${{ inputs.campaign_id }}-${{ inputs.model }}-segment-${{ inputs.segment }}
+          path: child_bundle
           retention-days: 30
           if-no-files-found: error
+
+      - name: Upload failure diagnostics only
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-nested-${{ inputs.campaign_id }}-${{ inputs.model }}-segment-${{ inputs.segment }}-FAILED-diagnostics
+          path: |
+            evidence_${{ inputs.model }}/nested_${{ inputs.model }}/segment_status.json
+            evidence_${{ inputs.model }}/nested_${{ inputs.model }}/data/stdout.segment.log
+            evidence_${{ inputs.model }}/nested_${{ inputs.model }}/data/stderr.segment.log
+          retention-days: 7
+          if-no-files-found: ignore
