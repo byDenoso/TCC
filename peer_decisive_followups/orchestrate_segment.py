@@ -12,6 +12,7 @@ from peer_decisive_followups.checkpoint_manager import (
 from peer_decisive_followups.production_config import build_production_configs
 from peer_decisive_followups.production_contract import sha256_json
 from peer_decisive_followups.run_segment import run_segment
+from peer_decisive_followups.runtime_contract import verify_runtime_manifest
 
 
 def _load_json(path: Path) -> dict:
@@ -50,11 +51,12 @@ def main() -> int:
         continuation=True,
     )
     science_manifest = built["science_manifest"]
-    runtime_manifest = _load_json(args.runtime_manifest.resolve())
+    runtime_manifest = verify_runtime_manifest(_load_json(args.runtime_manifest.resolve()))
     science_sha = sha256_json(science_manifest)
     runtime_sha = sha256_json(runtime_manifest)
 
-    raw = root / "data" / "chain_polychord_raw"
+    data_dir = root / "data"
+    raw = data_dir / "chain_polychord_raw"
     expected = {
         "model": args.model,
         "science_sha": science_sha,
@@ -63,12 +65,15 @@ def main() -> int:
     if args.expected_parent_digest:
         expected["checkpoint_digest"] = args.expected_parent_digest
 
-    # verify_bundle/restore_bundle validates content before replacing the destination.
-    parent = restore_bundle(args.parent_bundle.resolve(), raw, expected)
+    parent = restore_bundle(
+        args.parent_bundle.resolve(),
+        raw,
+        expected,
+        output_dir=data_dir,
+    )
     if args.expected_parent_digest and parent.get("checkpoint_digest") != args.expected_parent_digest:
         raise CheckpointError("parent checkpoint digest mismatch")
 
-    data_dir = root / "data"
     result = run_segment(
         [
             "mpirun", "--oversubscribe", "-np", "4", "cobaya-run",
@@ -82,9 +87,17 @@ def main() -> int:
         grace_seconds=args.grace_seconds,
     )
 
+    status = {
+        **result,
+        "parent_checkpoint_digest": parent["checkpoint_digest"],
+        "science_sha": science_sha,
+        "runtime_sha": runtime_sha,
+        "segment": args.segment,
+        "model": args.model,
+    }
     status_path = root / "segment_status.json"
-    status_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
-    print(json.dumps(result, indent=2, sort_keys=True))
+    status_path.write_text(json.dumps(status, indent=2, sort_keys=True), encoding="utf-8")
+    print(json.dumps(status, indent=2, sort_keys=True))
 
     if result["classification"] not in {"RESUMABLE", "COMPLETE"}:
         return 2
@@ -97,19 +110,17 @@ def main() -> int:
         parent_digest=parent["checkpoint_digest"],
         science_manifest=science_manifest,
         runtime_manifest=runtime_manifest,
+        output_prefix=data_dir / "chain",
+        status=status,
     )
-    lineage = {
-        "classification": result["classification"],
-        "parent_checkpoint_digest": parent["checkpoint_digest"],
+    summary = {
+        **status,
         "checkpoint_digest": child["checkpoint_digest"],
-        "science_sha": science_sha,
-        "runtime_sha": runtime_sha,
-        "segment": args.segment,
-        "model": args.model,
     }
-    (args.output_bundle.resolve() / "segment_status.json").write_text(
-        json.dumps({**result, **lineage}, indent=2, sort_keys=True), encoding="utf-8"
+    (root / "child_checkpoint_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8"
     )
+    print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
 
 
