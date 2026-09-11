@@ -1,0 +1,59 @@
+{
+  "works": [
+    {
+      "work_id": "ACTIVE-CAMB",
+      "thread_id": "THR::SCIENCE::ROOT",
+      "domain": "SCIENCE",
+      "status": "RUNNING",
+      "execution_backend": "GITHUB_SCIENCE",
+      "runtime_requirement": "HEAVY",
+      "lane_id": "DE",
+      "resource_keys": ["repo:TCC:portable_camb"]
+    },
+    {
+      "work_id": "SCI-CONFLICT",
+      "thread_id": "THR::SCIENCE::ROOT",
+      "domain": "SCIENCE",
+      "status": "READY",
+      "execution_backend": "GITHUB_SCIENCE",
+      "runtime_requirement": "HEAVY",
+      "lane_id": "DE2",
+      "resource_keys": ["repo:TCC:portable_camb"]
+    },
+    {
+      "work_id": "SCI-WAIT",
+      "thread_id": "THR::SCIENCE::ROOT",
+      "domain": "SCIENCE",
+      "status": "READY",
+      "execution_backend": "GITHUB_SCIENCE",
+      "runtime_requirement": "NESTED",
+      "lane_id": "DE3",
+      "dependency_ids": ["ENG-MISSING"]
+    },
+    {
+      "work_id": "ENG-BLOCKER",
+      "thread_id": "THR::ENGINEERING::ROOT",
+      "domain": "ENGINEERING",
+      "status": "READY",
+      "execution_backend": "GITHUB_ENGINEERING",
+      "runtime_requirement": "CODE",
+      "lane_id": "ENG",
+      "priority": "CRITICAL",
+      "resource_keys": ["repo:TCC:workflow:nested"]
+    },
+    {
+      "work_id": "SCI-SPEC",
+      "thread_id": "THR::SCIENCE::ROOT",
+      "domain": "SCIENCE",
+      "status": "READY",
+      "execution_backend": "GITHUB_SCIENCE",
+      "runtime_requirement": "HEAVY",
+      "lane_id": "EMERGENT",
+      "speculative": true
+    }
+  ],
+  "metrics": {
+    "verification_backlog": 8,
+    "engineering_backlog": 1
+  }
+}
