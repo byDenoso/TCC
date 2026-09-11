@@ -1,0 +1,1 @@
+{"work_id":"CANARY-PARALLEL-002","correlation_id":"CORR-CANARY-PARALLEL-002","domain":"ENGINEERING","adapter":"canary","source_revision":"d8f862f52d0407af21aa4eee5bad95786105dfaf","attempt":1,"args":{"message":"parallel-canary-2"}}
