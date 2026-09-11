@@ -151,7 +151,7 @@ def verify_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str, Any]:
         if path.is_symlink() or not path.is_file():
             raise CheckpointError(f"missing checkpoint file: {rel}")
         if path.stat().st_size != record.get("size"):
-            raise CheckpointError(f"size mismatch for {rel}")
+            raise CheckpointError(f"hash/size integrity mismatch for {rel}")
         if _sha256(path) != record.get("sha256"):
             raise CheckpointError(f"hash mismatch for {rel}")
 
