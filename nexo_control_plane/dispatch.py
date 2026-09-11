@@ -7,7 +7,11 @@ import re
 from typing import Any, Callable
 
 from nexo_jobs.canary import execute as execute_canary
-from nexo_control_plane.execution_bridge import ExecutionDescriptor, build_execution_contract
+from nexo_control_plane.execution_bridge import (
+    ExecutionDescriptor,
+    build_execution_contract,
+    execute_contract_here,
+)
 from nexo_control_plane.models import WorkDomain, WorkRecord, WorkStatus
 
 
@@ -135,11 +139,14 @@ def _run_execution(request: DispatchRequest) -> dict[str, Any]:
         timeout_minutes=int(args.get("timeout_minutes", 60)),
     )
     contract = build_execution_contract(work, descriptor)
-    return {
+    response = {
         "provider": contract.provider,
         "contract_hash": contract.contract_hash,
         "contract": json.loads(contract.canonical_json()),
     }
+    if bool(args.get("execute", False)):
+        response["execution"] = execute_contract_here(contract)
+    return response
 
 
 _ADAPTER_RUNNERS: dict[str, Callable[[DispatchRequest], dict[str, Any]]] = {
@@ -168,11 +175,6 @@ def run_dispatch_request(request_path: Path, output_path: Path) -> dict[str, Any
         raise
 
     result = _base_result(request)
-    result.update(
-        {
-            "status": "COMPLETED",
-            "result": adapter_result,
-        }
-    )
+    result.update({"status": "COMPLETED", "result": adapter_result})
     _persist_result(output_path, result)
     return result
