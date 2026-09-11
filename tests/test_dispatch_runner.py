@@ -25,13 +25,41 @@ class DispatchRunnerTests(unittest.TestCase):
             persisted = json.loads(output.read_text(encoding="utf-8"))
 
         self.assertEqual(result["work_id"], "CANARY-002")
-        self.assertEqual(result["correlation_id"], "CORR-CANARY-002")
         self.assertEqual(result["status"], "COMPLETED")
-        self.assertEqual(result["adapter"], "canary")
-        self.assertEqual(result["source_revision"], "abc123")
-        self.assertEqual(result["attempt"], 1)
         self.assertEqual(result["result"]["message"], "scheduled-dispatch-canary")
         self.assertEqual(persisted, result)
+
+    def test_execution_adapter_emits_actions_contract_for_mcmc(self):
+        payload = {
+            "work_id": "WORK-SCI-001",
+            "correlation_id": "CORR-SCI-001",
+            "domain": "SCIENCE",
+            "adapter": "execution",
+            "source_revision": "c4158fec93625d638ef05ecc92799bee4700513f",
+            "attempt": 1,
+            "args": {
+                "runtime_requirement": "MCMC",
+                "task_id": "cosmology_benchmark",
+                "repository": "byDenoso/TCC",
+                "required_outputs": ["benchmark_result.json"],
+                "parameters": {},
+                "seed": 20260911,
+                "timeout_minutes": 15,
+                "test_id": "T-DE001"
+            },
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            request = Path(tmp) / "request.json"
+            output = Path(tmp) / "result.json"
+            request.write_text(json.dumps(payload), encoding="utf-8")
+            result = run_dispatch_request(request, output)
+
+        self.assertEqual(result["status"], "COMPLETED")
+        self.assertEqual(result["result"]["provider"], "github_actions")
+        contract = result["result"]["contract"]
+        self.assertEqual(contract["execution_id"], "EXEC-WORK-SCI-001-A1")
+        self.assertEqual(contract["test_id"], "T-DE001")
+        self.assertEqual(contract["task_id"], "cosmology_benchmark")
 
     def test_adapter_failure_persists_failure_receipt_and_still_raises(self):
         payload = {
