@@ -3,7 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from runtime.nexo_execution.core import ExecutionContract, GitHubActionsProvider, LocalProvider
+from runtime.nexo_execution.core import (
+    ExecutionContract,
+    GitHubActionsProvider,
+    LocalProvider,
+    ResultVerifier,
+)
 
 from .models import Backend, WorkRecord
 from .router import route
@@ -48,6 +53,15 @@ def build_execution_contract(work: WorkRecord, descriptor: ExecutionDescriptor) 
     )
 
 
+def execute_contract_here(contract: ExecutionContract) -> dict[str, Any]:
+    result = LocalProvider().submit(contract)
+    verification = ResultVerifier().verify(contract, result)
+    return {
+        "result": result.to_dict(),
+        "verification": verification,
+    }
+
+
 def dispatch_contract(
     contract: ExecutionContract,
     *,
@@ -56,7 +70,7 @@ def dispatch_contract(
     contract_name: str | None = None,
 ):
     if contract.provider == "local":
-        return LocalProvider().submit(contract)
+        return execute_contract_here(contract)
     if contract.provider == "github_actions":
         return GitHubActionsProvider(token=github_token).submit(
             contract,
