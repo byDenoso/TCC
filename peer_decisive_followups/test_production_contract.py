@@ -52,6 +52,18 @@ def test_science_manifest_preserves_tau_prior_exactly():
     assert manifest["sampler"]["polychord"]["nprior"] == "20nlive"
 
 
+def test_science_identity_ignores_machine_specific_python_paths():
+    a = _config()
+    b = _config()
+    a["theory"] = {"peer_scalar_n3.PEERScalarN3": {"python_path": "/runner/a", "path": "global", "extra_args": {"mnu": 0.06}}}
+    b["theory"] = {"peer_scalar_n3.PEERScalarN3": {"python_path": "/runner/b", "path": "/different/runtime", "extra_args": {"mnu": 0.06}}}
+    a["likelihood"]["shoes_h0.SH0ESGaussian"] = {"python_path": "/runner/a", "mean": 73.04, "sigma": 1.04}
+    b["likelihood"]["shoes_h0.SH0ESGaussian"] = {"python_path": "/runner/b", "mean": 73.04, "sigma": 1.04}
+    ma = build_science_manifest("M1", a)
+    mb = build_science_manifest("M1", b)
+    assert ma["sha256"] == mb["sha256"]
+
+
 def test_lane_state_is_fail_closed():
     assert classify_lane(complete=True, resumable=True, fatal=False) == "COMPLETE"
     assert classify_lane(complete=False, resumable=True, fatal=False) == "RESUMABLE"
