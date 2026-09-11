@@ -113,3 +113,26 @@ def test_bundle_rejects_symlinks_and_unexpected_top_level_files(tmp_path: Path):
     with pytest.raises(CheckpointError, match="unexpected"):
         verify_bundle(bundle, {"model": "M1", "science_sha": sha256_json(science),
                                "runtime_sha": sha256_json(runtime)})
+
+
+def test_production_bundle_round_trips_cobaya_resume_metadata(tmp_path: Path):
+    raw = _raw(tmp_path)
+    science, runtime = _manifests()
+    prefix = tmp_path / "data" / "chain"
+    prefix.parent.mkdir()
+    Path(str(prefix) + ".input.yaml").write_text("resume: false\n", encoding="utf-8")
+    Path(str(prefix) + ".updated.yaml").write_text("resume: false\n", encoding="utf-8")
+    bundle = tmp_path / "bundle"
+    promote_checkpoint(raw, bundle, model="M1", segment=3, parent_digest="p",
+                       science_manifest=science, runtime_manifest=runtime,
+                       output_prefix=prefix, status={"classification": "RESUMABLE"})
+    assert (bundle / "cobaya" / "chain.input.yaml").is_file()
+    assert (bundle / "cobaya" / "chain.updated.yaml").is_file()
+    assert (bundle / "segment_status.json").is_file()
+    restored_raw = tmp_path / "restored-data" / "chain_polychord_raw"
+    restore_bundle(bundle, restored_raw,
+                   {"model": "M1", "science_sha": sha256_json(science),
+                    "runtime_sha": sha256_json(runtime), "parent_digest": "p"},
+                   output_dir=restored_raw.parent)
+    assert (restored_raw.parent / "chain.input.yaml").read_text(encoding="utf-8") == "resume: false\n"
+    assert (restored_raw.parent / "chain.updated.yaml").read_text(encoding="utf-8") == "resume: false\n"
