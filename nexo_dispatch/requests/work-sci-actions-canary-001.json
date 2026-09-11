@@ -1,0 +1,21 @@
+{
+  "work_id": "WORK-SCI-ACTIONS-CANARY-001",
+  "correlation_id": "CORR-SCI-ACTIONS-CANARY-001",
+  "domain": "SCIENCE",
+  "adapter": "execution",
+  "source_revision": "c4158fec93625d638ef05ecc92799bee4700513f",
+  "attempt": 1,
+  "args": {
+    "runtime_requirement": "MCMC",
+    "task_id": "cosmology_benchmark",
+    "repository": "byDenoso/TCC",
+    "required_outputs": ["benchmark_result.json"],
+    "parameters": {},
+    "seed": 20260911,
+    "timeout_minutes": 15,
+    "test_id": "T-INFRA-ACTIONS-EXECUTOR-001",
+    "lane_id": "SCIENCE-INFRA",
+    "priority": "HIGH",
+    "execute": true
+  }
+}
