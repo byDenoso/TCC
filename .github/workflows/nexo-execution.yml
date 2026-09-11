@@ -1,0 +1,79 @@
+name: NEXO Execution
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'runtime/nexo_execution/contracts/canary-cosmology.json'
+      - '.github/workflows/nexo-execution.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout control plane
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Freeze control plane and contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nexo-control/runtime
+          cp -R runtime/nexo_execution /tmp/nexo-control/runtime/
+          cp runtime/nexo_execution/contracts/canary-cosmology.json /tmp/nexo-control/contract.json
+          python3 - <<'PY' > /tmp/nexo-control/meta.env
+          import sys
+          sys.path.insert(0, '/tmp/nexo-control')
+          from runtime.nexo_execution.core import ExecutionContract
+          c = ExecutionContract.load('/tmp/nexo-control/contract.json')
+          print(f'TARGET_SHA={c.commit_sha}')
+          print(f'CONTRACT_HASH={c.contract_hash}')
+          PY
+          cat /tmp/nexo-control/meta.env >> "$GITHUB_ENV"
+
+      - name: Checkout exact workload commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --force "$TARGET_SHA"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+
+      - name: Execute frozen contract
+        shell: bash
+        env:
+          PYTHONPATH: /tmp/nexo-control
+        run: |
+          set -euo pipefail
+          python3 -m runtime.nexo_execution.runner \
+            /tmp/nexo-control/contract.json \
+            --result nexo_execution_result.json \
+            --verification nexo_verification.json \
+            --expected-contract-hash "$CONTRACT_HASH"
+
+      - name: Validate verification gate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          v = json.loads(Path('nexo_verification.json').read_text())
+          if v.get('status') != 'PASS':
+              raise SystemExit(f"verification failed: {v}")
+          print(json.dumps(v, indent=2))
+          PY
+
+      - name: Upload execution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexo-execution-canary-${{ github.run_id }}
+          path: |
+            benchmark_result.json
+            nexo_execution_result.json
+            nexo_verification.json
+          retention-days: 7
