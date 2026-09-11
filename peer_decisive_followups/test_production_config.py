@@ -94,3 +94,10 @@ def test_validate_requires_exact_likelihood_stack(tmp_path: Path):
         assert "likelihood" in str(exc).lower()
     else:
         raise AssertionError("likelihood drift was accepted")
+
+
+def test_orchestrator_contains_no_runtime_source_or_tau_patching():
+    source = (Path(__file__).parent / "orchestrate_segment.py").read_text(encoding="utf-8")
+    forbidden = ["patch_tau", "patch_historical_runner", "10nlive", "tau['prior']['min']", ".replace("]
+    for token in forbidden:
+        assert token not in source, f"forbidden production patching remains: {token}"
