@@ -36,3 +36,29 @@ jobs:
             peer_decisive_followups/test_evidence.py \
             peer_decisive_followups/test_workflow_contract.py \
             peer_decisive_followups/test_metadata_relocation.py
+
+  polychord-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages-e2e
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      NUMEXPR_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PolyChord E2E runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran openmpi-bin libopenmpi-dev
+          python -m pip install -U pip wheel setuptools
+          python -m pip install 'numpy<2.4' pyyaml pytest mpi4py 'cobaya==3.6.2'
+          mkdir -p "$COBAYA_PACKAGES_PATH"
+          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+      - name: Run real PolyChord checkpoint restore resume E2E
+        run: python -m pytest -q -m integration peer_decisive_followups/test_polychord_checkpoint_e2e.py
