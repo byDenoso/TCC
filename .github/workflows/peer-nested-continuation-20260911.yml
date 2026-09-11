@@ -1,4 +1,4 @@
-name: PEER nested continuation 20260911
+name: PEER nested segmented checkpoint 20260911
 
 on:
   push:
@@ -17,10 +17,11 @@ env:
   MKL_NUM_THREADS: '1'
   NUMEXPR_NUM_THREADS: '1'
   SOURCE_RUN: '34561868964'
+  SEGMENT_SECONDS: '19800'
 
 jobs:
   nested:
-    name: nested-${{ matrix.model }}-continuation
+    name: nested-${{ matrix.model }}-5h30-checkpoint
     runs-on: ubuntu-24.04
     timeout-minutes: 355
     strategy:
@@ -31,99 +32,104 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Checkout execution branch
-        uses: actions/checkout@v4
-
-      - name: Checkout validated nested runner
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: run-corrected-polychord-20260730
           path: nested-src
-
-      - name: Checkout matched ACT/PEER science stack
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: act-dr6-peer-test-20260729
           path: science-act
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install and validate PolyChord runtime
+      - name: Install runtime
         run: |
           set -euxo pipefail
           sudo apt-get update
           sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
+          python -m pytest -q peer_decisive_followups/test_checkpoint_manager.py
           (cd nested-src && python -m pytest -q peer_decisive_followups/test_nested_lane.py)
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
 
-      - name: Patch validated runner for current continuation
+      - name: Prepare configs
         run: |
           set -euxo pipefail
           python - <<'PY'
           import os
           from pathlib import Path
-
           runner = Path('nested-src/peer_decisive_followups/run_nested_lane.py')
-          s = runner.read_text()
-          s = s.replace('SOURCE_RUN = "30455821484"', f'SOURCE_RUN = "{os.environ["SOURCE_RUN"]}"', 1)
-
-          old_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n'''
-          new_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    _replace_directory_link(workspace / "Rec_database", databases[0])\n    _replace_directory_link(workspace / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n    (workspace / "temp").mkdir(exist_ok=True)\n    required = workspace / "Rec_database" / "Effective_Rates.HI" / "Effective_Rate_Tables.nS_3" / "res_state_list.dat"\n    if not required.is_file():\n        raise RuntimeError(f"CosmoRec workspace binding failed: {required}")\n'''
-          if old_links not in s:
-              raise SystemExit('expected CosmoRec link block not found')
-          s = s.replace(old_links, new_links, 1)
-
-          old_timeout = '_, data = timed_run(root / "data.yaml", root / "data", 15000, cwd=args.work)'
-          new_timeout = '_, data = timed_run(root / "data.yaml", root / "data", 20000, cwd=args.work)'
-          if old_timeout not in s:
-              raise SystemExit('expected data timeout contract not found')
-          s = s.replace(old_timeout, new_timeout, 1)
-          runner.write_text(s)
-
+          s = runner.read_text().replace('SOURCE_RUN = "30455821484"', f'SOURCE_RUN = "{os.environ["SOURCE_RUN"]}"', 1)
+          old = '    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n'
+          new = '    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    _replace_directory_link(workspace / "Rec_database", databases[0])\n    _replace_directory_link(workspace / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n    (workspace / "temp").mkdir(exist_ok=True)\n'
+          if old not in s:
+              raise SystemExit('CosmoRec binding contract changed')
+          runner.write_text(s.replace(old, new, 1))
           cfg = Path('nested-src/peer_decisive_followups/build_nested_config.py')
           c = cfg.read_text()
-          if '"nlive": "25d",' not in c or '"nprior": "20nlive",' not in c:
-              raise SystemExit('expected historical PolyChord settings not found')
-          c = c.replace('"nlive": "25d",', '"nlive": 400,', 1)
-          c = c.replace('"nprior": "20nlive",', '"nprior": "10nlive",', 1)
+          for a, b in [('"nlive": "25d",','"nlive": 400,'), ('"nprior": "20nlive",','"nprior": "10nlive",'), ('info["resume"] = False','info["resume"] = True'), ('info["force"] = True','info["force"] = False')]:
+              if a not in c: raise SystemExit(a)
+              c = c.replace(a, b, 1)
           cfg.write_text(c)
           PY
-          grep -n 'SOURCE_RUN' nested-src/peer_decisive_followups/run_nested_lane.py
-          grep -n -A12 '_replace_directory_link(work / "Rec_database"' nested-src/peer_decisive_followups/run_nested_lane.py
-          grep -n 'timed_run(root / "data.yaml"' nested-src/peer_decisive_followups/run_nested_lane.py
-          grep -n -E 'nlive|nprior' nested-src/peer_decisive_followups/build_nested_config.py
+          MODEL='${{ matrix.model }}'
+          WORK="$GITHUB_WORKSPACE/evidence_${MODEL}"
+          python - <<PY
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, str(Path('nested-src').resolve()))
+          from peer_decisive_followups.run_nested_lane import install_runtime
+          install_runtime(Path('$WORK'), Path('$COBAYA_PACKAGES_PATH'))
+          PY
+          IDX=1; [ "$MODEL" = M3 ] && IDX=3
+          python nested-src/peer_decisive_followups/build_nested_config.py --science "$GITHUB_WORKSPACE/science-act" --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$WORK/nested_${MODEL}" --seed "$((2026076100 + IDX))"
+          python - <<PY
+          from pathlib import Path
+          import yaml
+          root = Path('$WORK') / 'nested_${MODEL}'
+          for name in ('data.yaml','prior_volume.yaml'):
+              p = root / name
+              info = yaml.safe_load(p.read_text())
+              tau = info.get('params',{}).get('tau',{})
+              if isinstance(tau,dict) and isinstance(tau.get('prior'),dict) and tau['prior'].get('min') == 0.0:
+                  tau['prior']['min'] = 0.01
+              info['resume'] = True
+              info['force'] = False
+              p.write_text(yaml.safe_dump(info, sort_keys=False))
+          PY
 
-      - name: Run matched PolyChord evidence
-        working-directory: nested-src
+      - name: Run 5h30 data segment
         run: |
           set -euxo pipefail
-          python peer_decisive_followups/run_nested_lane.py \
-            --model '${{ matrix.model }}' \
-            --science "$GITHUB_WORKSPACE/science-act" \
-            --work "$GITHUB_WORKSPACE/evidence_${{ matrix.model }}" \
-            --packages "$COBAYA_PACKAGES_PATH"
+          MODEL='${{ matrix.model }}'
+          ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
+          python peer_decisive_followups/run_segment.py --config "$ROOT/data.yaml" --cwd "$GITHUB_WORKSPACE/evidence_${MODEL}" --raw "$ROOT/data/chain_polychord_raw" --snapshot "$ROOT/checkpoint/raw" --stdout "$ROOT/data/stdout.segment.log" --stderr "$ROOT/data/stderr.segment.log" --seconds "$SEGMENT_SECONDS" --status "$ROOT/checkpoint/segment_status.json"
 
-      - name: Readback evidence and checkpoint status
+      - name: Prior normalization
+        run: |
+          set +e
+          MODEL='${{ matrix.model }}'; ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
+          mkdir -p "$ROOT/prior_volume"
+          timeout 900s mpirun --oversubscribe -np 4 cobaya-run "$ROOT/prior_volume.yaml" >"$ROOT/prior_volume/stdout.segment.log" 2>"$ROOT/prior_volume/stderr.segment.log"
+          echo "$?" > "$ROOT/prior_volume/segment_exit_code.txt"
+          exit 0
+
+      - name: Readback
         if: always()
         run: |
-          set -x
-          if [ -d "evidence_${{ matrix.model }}" ]; then
-            find "evidence_${{ matrix.model }}" \( -name 'normalized_evidence.json' -o -name 'nested_status.json' -o -name '*.resume' -o -name '*.stats' \) -print | sort
-            find "evidence_${{ matrix.model }}" \( -name 'normalized_evidence.json' -o -name 'nested_status.json' \) -print | sort | while read f; do echo "=== $f"; cat "$f"; done
-          else
-            echo "No evidence directory produced"
-          fi
+          MODEL='${{ matrix.model }}'; ROOT="$GITHUB_WORKSPACE/evidence_${MODEL}/nested_${MODEL}"
+          cat "$ROOT/checkpoint/segment_status.json" || true
+          find "$ROOT" \( -name '*.resume' -o -name '*.stats' -o -name 'segment_status.json' \) -print | sort
+          tail -n 80 "$ROOT/data/stdout.segment.log" || true
 
-      - name: Upload evidence and checkpoints
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: peer-nested-continuation-20260911-${{ matrix.model }}
+          name: peer-nested-segment-${{ matrix.model }}
           path: evidence_${{ matrix.model }}
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
