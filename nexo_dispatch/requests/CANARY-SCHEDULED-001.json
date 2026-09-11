@@ -1,0 +1,1 @@
+{"work_id":"CANARY-SCHEDULED-001","correlation_id":"CORR-CANARY-SCHEDULED-001","domain":"ENGINEERING","adapter":"canary","source_revision":"226e2400109b9d0d726570e4d6335a6a88fb6423","attempt":1,"args":{"message":"scheduled-runtime-dispatch-canary"}}
