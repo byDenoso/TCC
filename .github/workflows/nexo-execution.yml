@@ -1,0 +1,102 @@
+name: NEXO Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      contract_name:
+        description: 'Contract filename under runtime/nexo_execution/contracts'
+        required: true
+        default: 'canary-cosmology.json'
+        type: string
+      expected_contract_hash:
+        description: 'Expected canonical contract SHA-256'
+        required: true
+        type: string
+  push:
+    paths:
+      - 'runtime/nexo_execution/contracts/canary-cosmology.json'
+      - '.github/workflows/nexo-execution.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout control plane
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve safe contract
+        shell: bash
+        env:
+          INPUT_CONTRACT_NAME: ${{ inputs.contract_name }}
+          INPUT_CONTRACT_HASH: ${{ inputs.expected_contract_hash }}
+        run: |
+          set -euo pipefail
+          CONTRACT_NAME="${INPUT_CONTRACT_NAME:-canary-cosmology.json}"
+          case "$CONTRACT_NAME" in
+            ''|*/*|*'..'*) echo 'invalid contract_name' >&2; exit 2 ;;
+          esac
+          CONTRACT_PATH="runtime/nexo_execution/contracts/$CONTRACT_NAME"
+          test -f "$CONTRACT_PATH"
+          mkdir -p /tmp/nexo-control/runtime
+          cp -R runtime/nexo_execution /tmp/nexo-control/runtime/
+          cp "$CONTRACT_PATH" /tmp/nexo-control/contract.json
+          python3 - <<'PY' > /tmp/nexo-control/meta.env
+          import os, sys
+          sys.path.insert(0, '/tmp/nexo-control')
+          from runtime.nexo_execution.core import ExecutionContract
+          c = ExecutionContract.load('/tmp/nexo-control/contract.json')
+          expected = os.environ.get('INPUT_CONTRACT_HASH', '').strip()
+          if expected and expected != c.contract_hash:
+              raise SystemExit('contract hash mismatch before execution')
+          print(f'TARGET_SHA={c.commit_sha}')
+          print(f'CONTRACT_HASH={c.contract_hash}')
+          print(f'EXECUTION_ID={c.execution_id}')
+          PY
+          cat /tmp/nexo-control/meta.env >> "$GITHUB_ENV"
+
+      - name: Checkout exact workload commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout --force "$TARGET_SHA"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+
+      - name: Execute frozen contract
+        shell: bash
+        env:
+          PYTHONPATH: /tmp/nexo-control
+        run: |
+          set -euo pipefail
+          python3 -m runtime.nexo_execution.runner \
+            /tmp/nexo-control/contract.json \
+            --result nexo_execution_result.json \
+            --verification nexo_verification.json \
+            --expected-contract-hash "$CONTRACT_HASH"
+
+      - name: Validate verification gate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          v = json.loads(Path('nexo_verification.json').read_text())
+          if v.get('status') != 'PASS':
+              raise SystemExit(f"verification failed: {v}")
+          print(json.dumps(v, indent=2))
+          PY
+
+      - name: Upload execution artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexo-execution-${{ env.EXECUTION_ID }}-${{ github.run_id }}
+          path: |
+            benchmark_result.json
+            nexo_execution_result.json
+            nexo_verification.json
+          retention-days: 7
