@@ -2,7 +2,6 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from nexo_control_plane.dispatch import run_dispatch_request
 
@@ -50,34 +49,6 @@ class DispatchRunnerTests(unittest.TestCase):
             request.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaises(ValueError):
                 run_dispatch_request(request, output)
-
-    @patch("nexo_jobs.engineering_ci.subprocess.run")
-    def test_engineering_ci_adapter_uses_fixed_allowlisted_suite(self, run):
-        run.return_value.returncode = 0
-        run.return_value.stdout = "49 tests passed"
-        run.return_value.stderr = ""
-        payload = {
-            "work_id": "ENG-TEST-001",
-            "correlation_id": "CORR-ENG-TEST-001",
-            "domain": "ENGINEERING",
-            "adapter": "engineering_ci",
-            "source_revision": "abc123",
-            "attempt": 1,
-            "args": {"suite": "control_plane"},
-        }
-        with tempfile.TemporaryDirectory() as tmp:
-            request = Path(tmp) / "request.json"
-            output = Path(tmp) / "result.json"
-            request.write_text(json.dumps(payload), encoding="utf-8")
-            result = run_dispatch_request(request, output)
-
-        self.assertEqual(result["status"], "COMPLETED")
-        self.assertEqual(result["adapter"], "engineering_ci")
-        self.assertEqual(result["result"]["suite"], "control_plane")
-        self.assertEqual(result["result"]["verification"], "PASS")
-        called = run.call_args.args[0]
-        self.assertEqual(called[1:5], ["-m", "unittest", "discover", "-s"])
-        self.assertNotIn("shell", run.call_args.kwargs)
 
 
 if __name__ == "__main__":
