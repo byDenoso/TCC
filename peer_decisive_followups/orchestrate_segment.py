@@ -7,6 +7,7 @@ from pathlib import Path
 from peer_decisive_followups.checkpoint_manager import (
     CheckpointError,
     promote_checkpoint,
+    relocate_cobaya_metadata,
     restore_bundle,
 )
 from peer_decisive_followups.production_config import build_production_configs
@@ -74,6 +75,8 @@ def main() -> int:
     if args.expected_parent_digest and parent.get("checkpoint_digest") != args.expected_parent_digest:
         raise CheckpointError("parent checkpoint digest mismatch")
 
+    relocation = relocate_cobaya_metadata(data_dir / "chain", built["data"])
+
     result = run_segment(
         [
             "mpirun", "--oversubscribe", "-np", "4", "cobaya-run",
@@ -92,6 +95,7 @@ def main() -> int:
         "parent_checkpoint_digest": parent["checkpoint_digest"],
         "science_sha": science_sha,
         "runtime_sha": runtime_sha,
+        "metadata_relocation": relocation,
         "segment": args.segment,
         "model": args.model,
     }
