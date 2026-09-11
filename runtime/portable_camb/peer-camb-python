@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+BASE=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+TARGET="$BASE/cosmorec"
+
+ensure_alias() {
+  local link="$1"
+  local parent
+  parent=$(dirname "$link")
+
+  if [[ -e "$link" || -L "$link" ]]; then
+    if [[ ! -L "$link" ]]; then
+      echo "ERROR: relocation path exists and is not a symlink: $link" >&2
+      exit 70
+    fi
+    local current expected
+    current=$(readlink -f "$link")
+    expected=$(readlink -f "$TARGET")
+    if [[ "$current" != "$expected" ]]; then
+      echo "ERROR: relocation symlink points elsewhere: $link -> $current (expected $expected)" >&2
+      exit 71
+    fi
+    return 0
+  fi
+
+  mkdir -p "$parent"
+  ln -s "$TARGET" "$link"
+}
+
+# Compiled CosmoRec/CAMB objects in this immutable payload contain these
+# absolute prefixes. The launcher resolves them locally at cold start without
+# modifying solver binaries or scientific data.
+ensure_alias /tmp/peer-camb-runtime-xx
+ensure_alias /home/runner/worer/work/TCC/TCC
+ensure_alias /home/runner/work/TCC/TCC
+
+export PYTHONPATH="$BASE/python${PYTHONPATH:+:$PYTHONPATH}"
+export LD_LIBRARY_PATH="$BASE/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
+export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
+export MKL_NUM_THREADS="${MKL_NUM_THREADS:-1}"
+export NUMEXPR_NUM_THREADS="${NUMEXPR_NUM_THREADS:-1}"
+export TERM="${TERM:-xterm}"
+exec "${PYTHON:-/opt/pyvenv/bin/python}" "$@"
