@@ -62,9 +62,20 @@ def _file_record(path: Path, relative: str) -> dict[str, Any]:
     return {"path": relative, "size": size, "sha256": _sha256(path)}
 
 
+def _all_payload_files(bundle: Path) -> list[Path]:
+    files: list[Path] = []
+    for path in sorted(bundle.rglob("*")):
+        if path.is_symlink():
+            raise CheckpointError(f"symlink not allowed in bundle: {path.relative_to(bundle)}")
+        if path.is_file() and path.name != "checkpoint_manifest.json":
+            files.append(path)
+    return files
+
+
 def promote_checkpoint(raw: Path, bundle: Path, *, model: str, segment: int,
                        parent_digest: str | None, science_manifest: dict[str, Any],
-                       runtime_manifest: dict[str, Any]) -> dict[str, Any]:
+                       runtime_manifest: dict[str, Any], output_prefix: Path | None = None,
+                       status: dict[str, Any] | None = None) -> dict[str, Any]:
     raw, bundle = Path(raw), Path(bundle)
     state = inspect_raw_checkpoint(raw)
     if not state["resumable"]:
@@ -74,19 +85,31 @@ def promote_checkpoint(raw: Path, bundle: Path, *, model: str, segment: int,
         shutil.rmtree(tmp)
     (tmp / "raw").mkdir(parents=True)
     _copy_regular_files(raw, tmp / "raw")
+
+    if output_prefix is not None:
+        prefix = Path(output_prefix)
+        cobaya = tmp / "cobaya"
+        cobaya.mkdir()
+        for suffix in (".input.yaml", ".updated.yaml"):
+            src = Path(str(prefix) + suffix)
+            if not src.is_file() or src.stat().st_size == 0:
+                raise CheckpointError(f"missing Cobaya resume metadata: {src}")
+            shutil.copy2(src, cobaya / src.name)
+
     (tmp / "science_manifest.json").write_text(
         json.dumps(science_manifest, indent=2, sort_keys=True), encoding="utf-8")
     (tmp / "runtime_manifest.json").write_text(
         json.dumps(runtime_manifest, indent=2, sort_keys=True), encoding="utf-8")
+    if status is not None:
+        (tmp / "segment_status.json").write_text(
+            json.dumps(status, indent=2, sort_keys=True), encoding="utf-8")
 
-    records: list[dict[str, Any]] = []
-    for path in sorted((tmp / "raw").iterdir()):
-        records.append(_file_record(path, f"raw/{path.name}"))
-    for name in ("science_manifest.json", "runtime_manifest.json"):
-        records.append(_file_record(tmp / name, name))
-
+    records = [
+        _file_record(path, path.relative_to(tmp).as_posix())
+        for path in _all_payload_files(tmp)
+    ]
     core = {
-        "schema": "peer-checkpoint-v1",
+        "schema": "peer-checkpoint-v2",
         "model": model,
         "segment": int(segment),
         "parent_checkpoint_digest": parent_digest,
@@ -119,8 +142,10 @@ def verify_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str, Any]:
     bundle = Path(bundle)
     if not bundle.is_dir() or bundle.is_symlink():
         raise CheckpointError("checkpoint bundle directory is invalid")
-    allowed = {"raw", "science_manifest.json", "runtime_manifest.json", "checkpoint_manifest.json",
-               "chain.input.yaml", "chain.updated.yaml", "chain.stats", "segment_status.json"}
+    allowed = {
+        "raw", "cobaya", "science_manifest.json", "runtime_manifest.json",
+        "checkpoint_manifest.json", "segment_status.json",
+    }
     names = {p.name for p in bundle.iterdir()}
     unexpected = sorted(names - allowed)
     if unexpected:
@@ -131,22 +156,33 @@ def verify_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str, Any]:
     raw = bundle / "raw"
     if raw.is_symlink() or not raw.is_dir():
         raise CheckpointError("raw checkpoint directory is invalid")
-    if any(p.is_symlink() for p in raw.iterdir()):
-        raise CheckpointError("symlink not allowed in raw checkpoint")
 
     manifest = _load_json(bundle / "checkpoint_manifest.json")
-    for key, manifest_key in (("model", "model"), ("science_sha", "science_sha"),
-                              ("runtime_sha", "runtime_sha"), ("parent_digest", "parent_checkpoint_digest")):
+    identity_fields = (
+        ("model", "model"),
+        ("science_sha", "science_sha"),
+        ("runtime_sha", "runtime_sha"),
+        ("parent_digest", "parent_checkpoint_digest"),
+        ("checkpoint_digest", "checkpoint_digest"),
+    )
+    for key, manifest_key in identity_fields:
         if key in expected and manifest.get(manifest_key) != expected[key]:
             raise CheckpointError(f"{manifest_key} mismatch")
     core = {k: v for k, v in manifest.items() if k != "checkpoint_digest"}
     if manifest.get("checkpoint_digest") != sha256_json(core):
         raise CheckpointError("checkpoint manifest digest mismatch")
 
-    for record in manifest.get("files", []):
+    records = manifest.get("files", [])
+    if not isinstance(records, list) or not records:
+        raise CheckpointError("checkpoint file manifest is empty")
+    recorded_paths: set[str] = set()
+    for record in records:
         rel = record.get("path")
         if not isinstance(rel, str) or rel.startswith("/") or ".." in Path(rel).parts:
             raise CheckpointError("unsafe checkpoint path")
+        if rel in recorded_paths:
+            raise CheckpointError(f"duplicate checkpoint path: {rel}")
+        recorded_paths.add(rel)
         path = bundle / rel
         if path.is_symlink() or not path.is_file():
             raise CheckpointError(f"missing checkpoint file: {rel}")
@@ -154,6 +190,12 @@ def verify_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str, Any]:
             raise CheckpointError(f"hash/size integrity mismatch for {rel}")
         if _sha256(path) != record.get("sha256"):
             raise CheckpointError(f"hash mismatch for {rel}")
+
+    actual_paths = {path.relative_to(bundle).as_posix() for path in _all_payload_files(bundle)}
+    if actual_paths != recorded_paths:
+        extra = sorted(actual_paths - recorded_paths)
+        missing = sorted(recorded_paths - actual_paths)
+        raise CheckpointError(f"checkpoint payload manifest mismatch: extra={extra}, missing={missing}")
 
     science = _load_json(bundle / "science_manifest.json")
     runtime = _load_json(bundle / "runtime_manifest.json")
@@ -166,7 +208,49 @@ def verify_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str, Any]:
     return manifest
 
 
-def restore_bundle(bundle: Path, destination: Path, expected: dict[str, Any]) -> dict[str, Any]:
+def _restore_cobaya_metadata(bundle: Path, output_dir: Path) -> None:
+    source = bundle / "cobaya"
+    if not source.exists():
+        return
+    if source.is_symlink() or not source.is_dir():
+        raise CheckpointError("Cobaya metadata directory is invalid")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    backups: list[tuple[Path, Path]] = []
+    staged: list[tuple[Path, Path]] = []
+    try:
+        for src in sorted(source.iterdir()):
+            if src.is_symlink() or not src.is_file():
+                raise CheckpointError(f"invalid Cobaya metadata file: {src.name}")
+            dst = output_dir / src.name
+            stage = output_dir / f".{src.name}.restore-tmp"
+            backup = output_dir / f".{src.name}.restore-backup"
+            for old in (stage, backup):
+                if old.exists():
+                    old.unlink()
+            shutil.copy2(src, stage)
+            if dst.exists():
+                os.replace(dst, backup)
+                backups.append((backup, dst))
+            staged.append((stage, dst))
+        for stage, dst in staged:
+            os.replace(stage, dst)
+        for backup, _ in backups:
+            if backup.exists():
+                backup.unlink()
+    except Exception:
+        for stage, _ in staged:
+            if stage.exists():
+                stage.unlink()
+        for backup, dst in reversed(backups):
+            if backup.exists():
+                if dst.exists():
+                    dst.unlink()
+                os.replace(backup, dst)
+        raise
+
+
+def restore_bundle(bundle: Path, destination: Path, expected: dict[str, Any],
+                   output_dir: Path | None = None) -> dict[str, Any]:
     manifest = verify_bundle(bundle, expected)
     bundle, destination = Path(bundle), Path(destination)
     tmp = destination.with_name(destination.name + ".restore-tmp")
@@ -180,8 +264,11 @@ def restore_bundle(bundle: Path, destination: Path, expected: dict[str, Any]) ->
         os.replace(destination, backup)
     try:
         os.replace(tmp, destination)
+        _restore_cobaya_metadata(bundle, Path(output_dir) if output_dir else destination.parent)
     except Exception:
-        if backup.exists() and not destination.exists():
+        if destination.exists():
+            shutil.rmtree(destination)
+        if backup.exists():
             os.replace(backup, destination)
         raise
     if backup.exists():
