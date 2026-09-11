@@ -7,6 +7,7 @@ from copy import deepcopy
 from typing import Any
 
 MODELS = {"M1", "M3"}
+_RUNTIME_LOCATION_KEYS = {"python_path", "path", "packages_path", "output"}
 
 
 def canonical_json(data: dict[str, Any]) -> bytes:
@@ -17,17 +18,31 @@ def sha256_json(data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical_json(data)).hexdigest()
 
 
+def _science_only(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _science_only(item)
+            for key, item in value.items()
+            if key not in _RUNTIME_LOCATION_KEYS
+        }
+    if isinstance(value, list):
+        return [_science_only(item) for item in value]
+    if isinstance(value, tuple):
+        return [_science_only(item) for item in value]
+    return deepcopy(value)
+
+
 def build_science_manifest(model: str, config: dict[str, Any]) -> dict[str, Any]:
     if model not in MODELS:
         raise ValueError(f"model must be one of {sorted(MODELS)}")
     manifest = {
         "schema": "peer-nested-science-v1",
         "model": model,
-        "likelihood": deepcopy(config.get("likelihood", {})),
-        "params": deepcopy(config.get("params", {})),
-        "prior": deepcopy(config.get("prior", {})),
-        "theory": deepcopy(config.get("theory", {})),
-        "sampler": deepcopy(config.get("sampler", {})),
+        "likelihood": _science_only(config.get("likelihood", {})),
+        "params": _science_only(config.get("params", {})),
+        "prior": _science_only(config.get("prior", {})),
+        "theory": _science_only(config.get("theory", {})),
+        "sampler": _science_only(config.get("sampler", {})),
     }
     manifest["sha256"] = sha256_json(manifest)
     return manifest
