@@ -47,8 +47,8 @@ class DispatchRequestTests(unittest.TestCase):
                 load_dispatch_request(path)
 
     def test_adapter_resolution_is_allowlisted(self):
-        path = resolve_adapter("canary")
-        self.assertEqual(path.as_posix(), "nexo_jobs/canary.py")
+        self.assertEqual(resolve_adapter("canary").as_posix(), "nexo_jobs/canary.py")
+        self.assertEqual(resolve_adapter("execution").as_posix(), "nexo_control_plane/execution_bridge.py")
         with self.assertRaises(ValueError):
             resolve_adapter("arbitrary")
 
