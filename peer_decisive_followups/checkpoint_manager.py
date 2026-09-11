@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from peer_decisive_followups.metadata_relocation import relocate_cobaya_metadata
 from peer_decisive_followups.production_contract import sha256_json
 
 
