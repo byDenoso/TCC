@@ -13,6 +13,9 @@ from typing import Any, Iterable
 
 
 VALID_PROVIDERS = {"local", "github_actions"}
+TASK_REGISTRY: dict[str, list[str]] = {
+    "cosmology_benchmark": ["python3", "benchmarks/cosmology_env_benchmark.py"],
+}
 
 
 @dataclass(frozen=True)
@@ -24,7 +27,7 @@ class ExecutionContract:
     provider: str
     repository: str
     commit_sha: str
-    command: list[str]
+    task_id: str
     parameters: dict[str, Any]
     seed: int | None
     timeout_minutes: int
@@ -34,7 +37,7 @@ class ExecutionContract:
     def from_dict(cls, data: dict[str, Any]) -> "ExecutionContract":
         required = {
             "schema", "execution_id", "work_id", "test_id", "provider",
-            "repository", "commit_sha", "command", "parameters", "seed",
+            "repository", "commit_sha", "task_id", "parameters", "seed",
             "timeout_minutes", "required_outputs"
         }
         missing = sorted(required - set(data))
@@ -44,8 +47,8 @@ class ExecutionContract:
             raise ValueError(f"unsupported schema: {data['schema']}")
         if data["provider"] not in VALID_PROVIDERS:
             raise ValueError(f"unsupported provider: {data['provider']}")
-        if not isinstance(data["command"], list) or not data["command"] or not all(isinstance(x, str) and x for x in data["command"]):
-            raise ValueError("command must be a non-empty argv string list")
+        if data["task_id"] not in TASK_REGISTRY:
+            raise ValueError(f"task is not allowlisted: {data['task_id']}")
         if int(data["timeout_minutes"]) <= 0:
             raise ValueError("timeout_minutes must be positive")
         if not isinstance(data["required_outputs"], list) or not all(isinstance(x, str) and x for x in data["required_outputs"]):
@@ -62,6 +65,10 @@ class ExecutionContract:
     @property
     def contract_hash(self) -> str:
         return hashlib.sha256(self.canonical_json().encode()).hexdigest()
+
+    @property
+    def argv(self) -> list[str]:
+        return list(TASK_REGISTRY[self.task_id])
 
 
 @dataclass
@@ -109,8 +116,6 @@ class LocalProvider:
     name = "local"
 
     def submit(self, contract: ExecutionContract) -> ExecutionResult:
-        if contract.provider not in {"local", "github_actions"}:
-            raise ValueError("invalid contract provider")
         env = os.environ.copy()
         env["NEXO_EXECUTION_ID"] = contract.execution_id
         env["NEXO_WORK_ID"] = contract.work_id
@@ -123,7 +128,7 @@ class LocalProvider:
         error = None
         try:
             cp = subprocess.run(
-                contract.command,
+                contract.argv,
                 env=env,
                 timeout=contract.timeout_minutes * 60,
                 check=False,
@@ -140,8 +145,8 @@ class LocalProvider:
         return ExecutionResult(
             execution_id=contract.execution_id,
             work_id=contract.work_id,
-            provider=self.name,
-            run_id=None,
+            provider=contract.provider,
+            run_id=os.getenv("GITHUB_RUN_ID"),
             commit_sha=contract.commit_sha,
             exit_code=exit_code,
             started_at=started,
@@ -153,12 +158,6 @@ class LocalProvider:
 
 
 class GitHubActionsProvider:
-    """Thin GitHub workflow_dispatch client.
-
-    Requires GITHUB_TOKEN with Actions write permission. It dispatches only; collection
-    stays outside the provider in v1 so NEXO can verify artifacts before persistence.
-    """
-
     name = "github_actions"
 
     def __init__(self, token: str | None = None, workflow: str = "nexo-execution.yml"):
