@@ -7,13 +7,13 @@ import re
 from typing import Any, Callable
 
 from nexo_jobs.canary import execute as execute_canary
+from nexo_control_plane.execution_bridge import ExecutionDescriptor, build_execution_contract
+from nexo_control_plane.models import WorkDomain, WorkRecord, WorkStatus
 
 
 _ALLOWED_ADAPTERS = {
     "canary": Path("nexo_jobs/canary.py"),
-}
-_ADAPTER_RUNNERS: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
-    "canary": execute_canary,
+    "execution": Path("nexo_control_plane/execution_bridge.py"),
 }
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_.:-]+$")
 
@@ -89,11 +89,70 @@ def _persist_result(output_path: Path, result: dict[str, Any]) -> None:
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _run_canary(request: DispatchRequest) -> dict[str, Any]:
+    return execute_canary(request.args)
+
+
+def _run_execution(request: DispatchRequest) -> dict[str, Any]:
+    args = request.args
+    required = {"runtime_requirement", "task_id", "repository", "required_outputs"}
+    missing = sorted(required - set(args))
+    if missing:
+        raise ValueError("missing execution args: " + ",".join(missing))
+
+    try:
+        domain = WorkDomain(request.domain)
+    except ValueError as exc:
+        raise ValueError(f"unsupported execution domain: {request.domain}") from exc
+
+    required_outputs = args["required_outputs"]
+    if not isinstance(required_outputs, list) or not all(isinstance(x, str) and x for x in required_outputs):
+        raise ValueError("required_outputs must be a string list")
+
+    parameters = args.get("parameters", {})
+    if not isinstance(parameters, dict):
+        raise ValueError("parameters must be an object")
+
+    work = WorkRecord(
+        work_id=request.work_id,
+        thread_id=str(args.get("thread_id", "")),
+        domain=domain,
+        status=WorkStatus.READY,
+        runtime_requirement=str(args["runtime_requirement"]),
+        correlation_id=request.correlation_id,
+        lane_id=str(args.get("lane_id", "")),
+        priority=str(args.get("priority", "MEDIUM")),
+        attempt=request.attempt - 1,
+        work_type=str(args.get("test_id", request.work_id)),
+    )
+    descriptor = ExecutionDescriptor(
+        task_id=str(args["task_id"]),
+        repository=str(args["repository"]),
+        commit_sha=request.source_revision,
+        required_outputs=tuple(required_outputs),
+        parameters=parameters,
+        seed=args.get("seed"),
+        timeout_minutes=int(args.get("timeout_minutes", 60)),
+    )
+    contract = build_execution_contract(work, descriptor)
+    return {
+        "provider": contract.provider,
+        "contract_hash": contract.contract_hash,
+        "contract": json.loads(contract.canonical_json()),
+    }
+
+
+_ADAPTER_RUNNERS: dict[str, Callable[[DispatchRequest], dict[str, Any]]] = {
+    "canary": _run_canary,
+    "execution": _run_execution,
+}
+
+
 def run_dispatch_request(request_path: Path, output_path: Path) -> dict[str, Any]:
     request = load_dispatch_request(request_path)
     runner = _ADAPTER_RUNNERS[request.adapter]
     try:
-        adapter_result = runner(request.args)
+        adapter_result = runner(request)
     except Exception as exc:
         failed = _base_result(request)
         failed.update(
