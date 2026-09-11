@@ -73,20 +73,47 @@ def load_dispatch_request(path: Path) -> DispatchRequest:
     )
 
 
-def run_dispatch_request(request_path: Path, output_path: Path) -> dict[str, Any]:
-    request = load_dispatch_request(request_path)
-    runner = _ADAPTER_RUNNERS[request.adapter]
-    adapter_result = runner(request.args)
-    result = {
+def _base_result(request: DispatchRequest) -> dict[str, Any]:
+    return {
         "work_id": request.work_id,
         "correlation_id": request.correlation_id,
         "domain": request.domain,
         "adapter": request.adapter,
         "source_revision": request.source_revision,
         "attempt": request.attempt,
-        "status": "COMPLETED",
-        "result": adapter_result,
     }
+
+
+def _persist_result(output_path: Path, result: dict[str, Any]) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def run_dispatch_request(request_path: Path, output_path: Path) -> dict[str, Any]:
+    request = load_dispatch_request(request_path)
+    runner = _ADAPTER_RUNNERS[request.adapter]
+    try:
+        adapter_result = runner(request.args)
+    except Exception as exc:
+        failed = _base_result(request)
+        failed.update(
+            {
+                "status": "FAILED",
+                "error": {
+                    "type": type(exc).__name__,
+                    "message": str(exc),
+                },
+            }
+        )
+        _persist_result(output_path, failed)
+        raise
+
+    result = _base_result(request)
+    result.update(
+        {
+            "status": "COMPLETED",
+            "result": adapter_result,
+        }
+    )
+    _persist_result(output_path, result)
     return result
