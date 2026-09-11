@@ -13,12 +13,12 @@ permissions:
 jobs:
   dispatch:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 330
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -37,10 +37,42 @@ jobs:
           fi
           printf 'path=%s\n' "${files[0]}" >> "$GITHUB_OUTPUT"
 
-      - name: Execute allow-listed adapter
+      - name: Freeze control plane and request
+        id: freeze
         shell: bash
         env:
           REQUEST_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nexo-control/runtime
+          cp -R nexo_control_plane /tmp/nexo-control/
+          cp -R nexo_jobs /tmp/nexo-control/
+          cp -R runtime/nexo_execution /tmp/nexo-control/runtime/
+          cp "$REQUEST_PATH" /tmp/nexo-control/request.json
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('/tmp/nexo-control/request.json').read_text())
+          execute_external = data.get('adapter') == 'execution' and bool(data.get('args', {}).get('execute', False))
+          target = data['source_revision'] if execute_external else os.environ['GITHUB_SHA']
+          print(f'target_sha={target}')
+          PY
+
+      - name: Checkout exact workload revision
+        if: steps.freeze.outputs.target_sha != github.sha
+        shell: bash
+        env:
+          TARGET_SHA: ${{ steps.freeze.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          git checkout --force "$TARGET_SHA"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+
+      - name: Execute allow-listed adapter
+        shell: bash
+        env:
+          REQUEST_PATH: /tmp/nexo-control/request.json
+          PYTHONPATH: /tmp/nexo-control
         run: |
           set -euo pipefail
           mkdir -p nexo_dispatch/results
@@ -54,6 +86,9 @@ jobs:
           validated = load_dispatch_request(request)
           output = Path('nexo_dispatch/results') / f'{validated.work_id}-attempt-{validated.attempt}.json'
           result = run_dispatch_request(request, output)
+          execution = result.get('result', {}).get('execution')
+          if execution and execution.get('verification', {}).get('status') != 'PASS':
+              raise SystemExit(f"execution verification failed: {execution['verification']}")
           print(json.dumps(result, sort_keys=True))
           PY
 
@@ -62,6 +97,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nexo-dispatch-${{ github.run_id }}
-          path: nexo_dispatch/results/
-          if-no-files-found: error
+          path: |
+            nexo_dispatch/results/
+            benchmark_result.json
+          if-no-files-found: warn
           retention-days: 7
