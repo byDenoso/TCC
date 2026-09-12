@@ -101,6 +101,16 @@ class AgentServiceTests(unittest.TestCase):
         entity = json.loads((self.root / "entities" / "work" / "W-HYDRATE.json").read_text())
         self.assertEqual(entity["status"], "SOURCE_BINDING_PENDING")
 
+    def test_queue_cards_drop_heavy_fields_but_keep_action_fields(self) -> None:
+        self.write_work("adv", {
+            "id": "ADV-1", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR",
+            "priority": "HIGH", "question": "Q", "next_action": "bind", "input_refs": "x" * 5000,
+        })
+        card = AgentService(self.root).queue_for("ADVISOR")[0]
+        self.assertEqual(card["id"], "ADV-1")
+        self.assertEqual(card["next_action"], "bind")
+        self.assertNotIn("input_refs", card)
+
     def test_materialized_views_write_one_bootstrap_and_queue_per_role(self) -> None:
         self.write_work("w2", {
             "id": "W2", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR",

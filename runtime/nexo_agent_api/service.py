@@ -77,25 +77,39 @@ class AgentService:
         )
         return all(required)
 
+    @staticmethod
+    def _queue_card(item: dict[str, Any], role: str) -> dict[str, Any]:
+        common = (
+            "id", "entity_version", "status", "kind", "owner_role", "priority",
+            "thread_id", "question", "next_action", "blocker", "migration_state",
+        )
+        executor = (
+            "task_id", "implementation_ref", "repository", "source_revision",
+            "required_outputs", "validation_ref", "result_ref",
+        )
+        learner = ("result_ref", "learning_state")
+        keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ())
+        return {key: item[key] for key in keys if key in item and item[key] is not None}
+
     def queue_for(self, role: str) -> list[dict[str, Any]]:
         role = role.upper()
         if role not in self.ROLES:
             raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": role})
         items = self._work_items()
         if role == "EXECUTOR":
-            return [item for item in items if self._executor_eligible(item)]
+            return [self._queue_card(item, role) for item in items if self._executor_eligible(item)]
         if role == "ADVISOR":
             terminal = {"DONE", "VERIFIED", "REJECTED", "FAILED"}
             return [
-                item for item in items
+                self._queue_card(item, role) for item in items
                 if item.get("status") not in terminal
                 and (item.get("owner_role") == "ADVISOR" or item.get("status") in {"SOURCE_BINDING_PENDING", "BINDING_INCOMPLETE"})
             ]
         if role == "LEARNER":
-            return [item for item in items if item.get("status") in {"VERIFIED", "DONE"} and item.get("learning_state") != "LEARNED"]
+            return [self._queue_card(item, role) for item in items if item.get("status") in {"VERIFIED", "DONE"} and item.get("learning_state") != "LEARNED"]
         if role == "EMERGENT":
-            return [item for item in items if item.get("owner_role") == "EMERGENT" or item.get("kind") == "EMERGENT_TEST"]
-        return [item for item in items if item.get("director_relevant") is True]
+            return [self._queue_card(item, role) for item in items if item.get("owner_role") == "EMERGENT" or item.get("kind") == "EMERGENT_TEST"]
+        return [self._queue_card(item, role) for item in items if item.get("director_relevant") is True]
 
     def capabilities_for(self, role: str) -> dict[str, Any]:
         try:
