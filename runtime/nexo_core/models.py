@@ -29,6 +29,10 @@ class CanonicalEvent:
     payload_ref: str | None = None
     run_id: str | None = None
     timestamp: str | None = None
+    expected_entity_version: int | None = None
+    result_entity_version: int | None = None
+    payload_hash: str | None = None
+    event_schema_version: str = "0.5"
 
 
 @dataclass(frozen=True)
