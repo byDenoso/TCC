@@ -76,12 +76,17 @@ class AgentService:
         raise TowerAgentIssue("ENTITY_NOT_FOUND", "Canonical entity does not exist.", {"entity_kind": "work", "entity_name": entity_name})
 
     @staticmethod
-    def _executor_eligible(item: dict[str, Any]) -> bool:
+    def _executor_eligible(item: dict[str, Any], capabilities: dict[str, Any]) -> bool:
+        task_id = item.get("task_id")
+        capability = capabilities.get(str(task_id)) if task_id else None
+        capability_status = capability.get("status", "ACTIVE") if isinstance(capability, dict) else None
+        capability_ready = isinstance(capability, dict) and capability_status in {"ACTIVE", "PROVEN"}
         required = (
             item.get("status") == "READY",
             item.get("dependencies_resolved") is True,
             item.get("binding_verified") is True,
-            bool(item.get("task_id") or item.get("implementation_ref")),
+            bool(task_id),
+            capability_ready,
             bool(item.get("repository")),
             bool(item.get("source_revision")),
             bool(item.get("required_outputs")),
@@ -124,7 +129,8 @@ class AgentService:
             raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": role})
         items = self._work_items()
         if role == "EXECUTOR":
-            return [self._queue_card(item, role) for item in items if self._executor_eligible(item)]
+            capabilities = self.capabilities_for("EXECUTOR")
+            return [self._queue_card(item, role) for item in items if self._executor_eligible(item, capabilities)]
         if role == "ADVISOR":
             return [self._queue_card(item, role) for item in items if self._advisor_routed(item)]
         if role == "LEARNER":
