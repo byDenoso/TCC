@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "config": {
+    "nexo_version": "0.6-shadow-template",
+    "mode": "V0_6_SHADOW",
+    "tower_role": "GITHUB_VERSIONED_TOWER_TEMPLATE",
+    "drive_role": "DATASETS_AND_HEAVY_ARTIFACTS",
+    "sheets_role": "PROJECTION_ONLY_DEPRECATED_WRITE_PATH",
+    "agents_write_to_sheets": false,
+    "frontend_access_rule": "FRONTEND_CONSUMES_VIEW_API_ONLY"
+  }
+}

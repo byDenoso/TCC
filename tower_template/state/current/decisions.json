@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "decisions": [
+    {"decision_id": "DECISION::NEXO::TOWER_GITHUB_MIGRATION", "status": "APPROVED", "summary": "Migrate Tower declarative layer to GitHub and keep Drive for datasets and heavy artifacts.", "effective_from": "2026-09-12T23:00:00-03:00"},
+    {"decision_id": "DECISION::NEXO::SHEETS_WRITE_PATH", "status": "APPROVED", "summary": "Remove Sheets from automation agent write path and allow projection-only usage.", "effective_from": "2026-09-12T23:00:00-03:00"}
+  ]
+}

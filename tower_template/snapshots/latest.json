@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "ops": {"status": "DEGRADED", "mode": "V0_6_SHADOW_TEMPLATE", "summary": "GitHub Tower/API scaffold created as public template. Real Tower state should move to a protected repo.", "sheets_role": "PROJECTION_ONLY_DEPRECATED_WRITE_PATH", "drive_role": "DATASETS_AND_HEAVY_ARTIFACTS"},
+  "agents": [
+    {"role": "DAILY", "provider_status": "UNKNOWN", "material_status": "SNAPSHOT_CONSUMER_PENDING"},
+    {"role": "ADVISOR", "provider_status": "UNKNOWN", "material_status": "SOURCE_BINDING_QUEUE_PENDING"},
+    {"role": "EXECUTOR", "provider_status": "UNKNOWN", "material_status": "NO_EXECUTOR_ELIGIBLE_WORK"}
+  ],
+  "work": [
+    {"work_id": "WORK::NEXO-V06-TOWER-API-MVP", "domain": "ops", "status": "READY", "executor_eligible": false, "blocking_code": "PROTECTED_TOWER_REPO_REQUIRED_FOR_REAL_STATE"},
+    {"work_id": "WORK::SCI-UNIFIED-DARK-SECTOR-SOURCE-BINDING", "domain": "cosmology", "status": "SOURCE_BINDING_PENDING", "executor_eligible": false, "blocking_code": "SOURCE_BINDING_REQUIRED"}
+  ],
+  "blockers": ["SHEETS_WRITE_DEGRADED", "PROTECTED_TOWER_REPO_REQUIRED_FOR_REAL_STATE", "SOURCE_BINDING_REQUIRED"],
+  "decisions": ["DECISION::NEXO::TOWER_GITHUB_MIGRATION", "DECISION::NEXO::SHEETS_WRITE_PATH"],
+  "graphs": ["GRAPH::OPS::AUTOMATION_PIPELINE", "GRAPH::OPS::BLOCKERS", "GRAPH::OPS::EXECUTION_FLOW", "GRAPH::COSMOLOGY::SOURCE_BINDING_FUNNEL"],
+  "artifacts": ["ARTIFACT::TOWER::GRAPH_CATALOG_TEMPLATE"]
+}

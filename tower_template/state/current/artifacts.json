@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "artifacts": [
+    {"artifact_id": "ARTIFACT::TOWER::GRAPH_CATALOG_TEMPLATE", "title": "Graph catalog template", "kind": "manifest", "storage": "github_tower", "path": "graphs/catalog.json", "sha256": null, "size_bytes": null}
+  ]
+}

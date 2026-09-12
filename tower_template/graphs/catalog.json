@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "graphs": [
+    {"graph_id": "GRAPH::OPS::AUTOMATION_PIPELINE", "title": "Pipeline das Automacoes", "domain": "ops", "type": "pipeline_graph", "status": "available", "renderer": "react_flow", "data_ref": {"kind": "github_tower", "path": "graphs/ops/automation_pipeline.json"}, "data_url": "/api/graphs/GRAPH::OPS::AUTOMATION_PIPELINE/data", "version": 1, "updated_at": "2026-09-12T23:00:00-03:00", "visibility": "internal"},
+    {"graph_id": "GRAPH::OPS::BLOCKERS", "title": "Blockers Operacionais", "domain": "ops", "type": "dependency_graph", "status": "available", "renderer": "react_flow", "data_ref": {"kind": "github_tower", "path": "graphs/ops/blockers_graph.json"}, "data_url": "/api/graphs/GRAPH::OPS::BLOCKERS/data", "version": 1, "updated_at": "2026-09-12T23:00:00-03:00", "visibility": "internal"},
+    {"graph_id": "GRAPH::OPS::EXECUTION_FLOW", "title": "Fluxo de Execucao Material", "domain": "ops", "type": "pipeline_graph", "status": "available", "renderer": "react_flow", "data_ref": {"kind": "github_tower", "path": "graphs/ops/execution_flow.json"}, "data_url": "/api/graphs/GRAPH::OPS::EXECUTION_FLOW/data", "version": 1, "updated_at": "2026-09-12T23:00:00-03:00", "visibility": "internal"},
+    {"graph_id": "GRAPH::COSMOLOGY::SOURCE_BINDING_FUNNEL", "title": "Source Binding Funnel", "domain": "cosmology", "type": "source_binding_graph", "status": "degraded", "renderer": "react_flow", "data_ref": {"kind": "github_tower", "path": "graphs/cosmology/source_binding_funnel.json"}, "data_url": "/api/graphs/GRAPH::COSMOLOGY::SOURCE_BINDING_FUNNEL/data", "version": 1, "updated_at": "2026-09-12T23:00:00-03:00", "visibility": "internal"}
+  ]
+}

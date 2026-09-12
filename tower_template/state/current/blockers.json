@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "blockers": [
+    {"blocker_id": "BLOCKER::OPS::SHEETS_WRITE_DEGRADED", "entity_ref": "OPS::WRITE_PATH", "blocking_code": "SHEETS_WRITE_DEGRADED", "severity": "P0", "owner_role": "OPS", "status": "open", "automatic_repair_allowed": true, "human_action_required": false, "summary": "Sheets must leave the automation agent write path."},
+    {"blocker_id": "BLOCKER::OPS::TOWER_REPO_REQUIRED", "entity_ref": "GITHUB::TOWER", "blocking_code": "PROTECTED_TOWER_REPO_REQUIRED_FOR_REAL_STATE", "severity": "P0", "owner_role": "DIRECTOR", "status": "open", "automatic_repair_allowed": false, "human_action_required": true, "summary": "Real Tower state must live in a protected GitHub repository, not this public template."},
+    {"blocker_id": "BLOCKER::COSMOLOGY::SOURCE_BINDING_REQUIRED", "entity_ref": "WORK::SCI-UNIFIED-DARK-SECTOR-SOURCE-BINDING", "blocking_code": "SOURCE_BINDING_REQUIRED", "severity": "P0", "owner_role": "ADVISOR", "status": "open", "automatic_repair_allowed": true, "human_action_required": false, "summary": "Unified dark sector work is not executor-eligible until source binding is validated."}
+  ]
+}

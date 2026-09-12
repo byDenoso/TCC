@@ -1,0 +1,13 @@
+{
+  "graph_id": "GRAPH::OPS::BLOCKERS",
+  "renderer": "react_flow",
+  "nodes": [
+    {"id": "sheets", "type": "blocker", "data": {"label": "SHEETS_WRITE_DEGRADED", "severity": "P0"}, "position": {"x": 0, "y": 0}},
+    {"id": "tower", "type": "blocker", "data": {"label": "TOWER_REPO_REQUIRED", "severity": "P0"}, "position": {"x": 280, "y": 0}},
+    {"id": "frontend", "type": "consumer", "data": {"label": "NEXO ONE", "status": "WAITS_FOR_VIEW_API"}, "position": {"x": 280, "y": 220}}
+  ],
+  "edges": [
+    {"id": "sheets-tower", "source": "sheets", "target": "tower", "label": "migration target"},
+    {"id": "tower-frontend", "source": "tower", "target": "frontend", "label": "snapshot/catalog"}
+  ]
+}

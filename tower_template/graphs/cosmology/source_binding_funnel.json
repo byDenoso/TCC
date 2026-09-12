@@ -1,0 +1,17 @@
+{
+  "graph_id": "GRAPH::COSMOLOGY::SOURCE_BINDING_FUNNEL",
+  "renderer": "react_flow",
+  "nodes": [
+    {"id": "candidate", "type": "source_state", "data": {"label": "Candidate source found"}, "position": {"x": 0, "y": 0}},
+    {"id": "repo_sha", "type": "source_state", "data": {"label": "repository@sha pinned"}, "position": {"x": 260, "y": 0}},
+    {"id": "datasets", "type": "source_state", "data": {"label": "datasets verified"}, "position": {"x": 520, "y": 0}},
+    {"id": "task", "type": "source_state", "data": {"label": "task_id allowlisted"}, "position": {"x": 780, "y": 0}},
+    {"id": "eligible", "type": "gate", "data": {"label": "executor_eligible=false"}, "position": {"x": 1040, "y": 0}}
+  ],
+  "edges": [
+    {"id": "candidate-repo", "source": "candidate", "target": "repo_sha"},
+    {"id": "repo-datasets", "source": "repo_sha", "target": "datasets"},
+    {"id": "datasets-task", "source": "datasets", "target": "task"},
+    {"id": "task-eligible", "source": "task", "target": "eligible"}
+  ]
+}

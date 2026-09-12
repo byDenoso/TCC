@@ -1,0 +1,16 @@
+{
+  "graph_id": "GRAPH::OPS::AUTOMATION_PIPELINE",
+  "renderer": "react_flow",
+  "nodes": [
+    {"id": "daily", "type": "agent", "data": {"label": "Daily", "status": "SNAPSHOT_CONSUMER"}, "position": {"x": 0, "y": 0}},
+    {"id": "advisor", "type": "agent", "data": {"label": "Advisor", "status": "PREPARES_BINDINGS"}, "position": {"x": 260, "y": 0}},
+    {"id": "executor", "type": "agent", "data": {"label": "Executor", "status": "CONSUMES_ELIGIBLE_WORK"}, "position": {"x": 520, "y": 0}},
+    {"id": "learner", "type": "agent", "data": {"label": "Learner", "status": "LEARNS_VERIFIED_RESULTS"}, "position": {"x": 780, "y": 0}},
+    {"id": "emergent", "type": "agent", "data": {"label": "Emergent", "status": "BOUNDED_PROBES"}, "position": {"x": 1040, "y": 0}}
+  ],
+  "edges": [
+    {"id": "advisor-executor", "source": "advisor", "target": "executor", "label": "eligible handoff"},
+    {"id": "executor-learner", "source": "executor", "target": "learner", "label": "verified events"},
+    {"id": "learner-emergent", "source": "learner", "target": "emergent", "label": "learning feedback"}
+  ]
+}

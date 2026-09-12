@@ -1,0 +1,19 @@
+{
+  "graph_id": "GRAPH::OPS::EXECUTION_FLOW",
+  "renderer": "react_flow",
+  "nodes": [
+    {"id": "provider_pulse", "type": "state", "data": {"label": "Provider pulse"}, "position": {"x": 0, "y": 0}},
+    {"id": "queue", "type": "state", "data": {"label": "Agent queue"}, "position": {"x": 260, "y": 0}},
+    {"id": "eligible", "type": "gate", "data": {"label": "executor_eligible"}, "position": {"x": 520, "y": 0}},
+    {"id": "dispatch", "type": "backend", "data": {"label": "GitHub dispatch"}, "position": {"x": 780, "y": 0}},
+    {"id": "material_event", "type": "event", "data": {"label": "EXECUTION_VERIFIED"}, "position": {"x": 1040, "y": 0}},
+    {"id": "noop", "type": "event", "data": {"label": "NO_ELIGIBLE_WORK"}, "position": {"x": 520, "y": 220}}
+  ],
+  "edges": [
+    {"id": "pulse-queue", "source": "provider_pulse", "target": "queue"},
+    {"id": "queue-eligible", "source": "queue", "target": "eligible"},
+    {"id": "eligible-dispatch", "source": "eligible", "target": "dispatch", "label": "true"},
+    {"id": "dispatch-event", "source": "dispatch", "target": "material_event"},
+    {"id": "eligible-noop", "source": "eligible", "target": "noop", "label": "false"}
+  ]
+}
