@@ -42,11 +42,7 @@ def run(cmd: list[str], *, cwd: Path | None = None, timeout: int = 300) -> dict[
         timeout=timeout,
         check=False,
     )
-    return {
-        "argv": cmd,
-        "exit_code": completed.returncode,
-        "output_tail": completed.stdout[-12000:],
-    }
+    return {"argv": cmd, "exit_code": completed.returncode, "output_tail": completed.stdout[-12000:]}
 
 
 def require_ok(stage: str, result: dict[str, Any], receipt: dict[str, Any]) -> None:
@@ -60,9 +56,10 @@ def prepare_runtime_dirs(repo: Path) -> None:
 
 
 def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
-    """Create only the parent directories requested by frozen CLASS `root` entries."""
+    """Prepare parents for explicit CLASS roots and CLASS's default output/<ini-path> root."""
     for relative in ini_paths:
         ini_path = repo / relative
+        explicit_root: Path | None = None
         for raw_line in ini_path.read_text(encoding="utf-8").splitlines():
             line = raw_line.split("#", 1)[0].strip()
             if not line or "=" not in line:
@@ -74,9 +71,19 @@ def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
             root_path = Path(root_value)
             if root_path.is_absolute() or ".." in root_path.parts:
                 raise RuntimeError(f"unsafe CLASS output root in {relative}: {root_value}")
-            parent = root_path.parent
-            if str(parent) not in {"", "."}:
-                (repo / parent).mkdir(parents=True, exist_ok=True)
+            explicit_root = root_path
+            break
+
+        if explicit_root is None:
+            # CLASS derives the default root from the ini argument, e.g.
+            # `ini/iDM.ini` -> `output/ini/iDM...`.
+            default_root = Path("output") / Path(relative).with_suffix("")
+            parent = default_root.parent
+        else:
+            parent = explicit_root.parent
+
+        if str(parent) not in {"", "."}:
+            (repo / parent).mkdir(parents=True, exist_ok=True)
 
 
 def git_blob(repo: Path, relative: str) -> str:
@@ -108,22 +115,16 @@ def main() -> int:
         "cobaya": {},
         "status": "FAIL",
     }
-
     try:
         if requested_revision != PINNED_REVISION:
             raise RuntimeError("source revision is not the frozen iDM revision")
-
         with tempfile.TemporaryDirectory(prefix="nexo-idm-") as raw:
             root = Path(raw)
             repo = root / "idm"
             repo.mkdir()
             require_ok("git_init", run(["git", "init", "-q"], cwd=repo, timeout=30), receipt)
             require_ok("git_remote", run(["git", "remote", "add", "origin", PINNED_REPOSITORY], cwd=repo, timeout=30), receipt)
-            require_ok(
-                "git_fetch",
-                run(["git", "fetch", "--depth", "1", "origin", PINNED_REVISION], cwd=repo, timeout=180),
-                receipt,
-            )
+            require_ok("git_fetch", run(["git", "fetch", "--depth", "1", "origin", PINNED_REVISION], cwd=repo, timeout=180), receipt)
             require_ok("git_checkout", run(["git", "checkout", "--detach", "FETCH_HEAD"], cwd=repo, timeout=30), receipt)
             head = run(["git", "rev-parse", "HEAD"], cwd=repo, timeout=30)
             require_ok("git_revision", head, receipt)
@@ -139,11 +140,7 @@ def main() -> int:
                 actual_blob = git_blob(repo, relative)
                 if actual_blob != expected_blob:
                     raise RuntimeError(f"blob mismatch for {relative}: {actual_blob}")
-                receipt["files"][relative] = {
-                    "git_blob": actual_blob,
-                    "sha256": sha256(path),
-                    "bytes": path.stat().st_size,
-                }
+                receipt["files"][relative] = {"git_blob": actual_blob, "sha256": sha256(path), "bytes": path.stat().st_size}
 
             prepare_runtime_dirs(repo)
             prepare_ini_output_dirs(repo, [LCDM_INI, IDM_INI])
@@ -152,29 +149,19 @@ def main() -> int:
             if not (repo / "class").is_file():
                 raise RuntimeError("CLASS binary missing after successful build")
             receipt["class_binary_sha256"] = sha256(repo / "class")
-
             require_ok("lcdm_smoke", run(["./class", LCDM_INI], cwd=repo, timeout=180), receipt)
             require_ok("idm_smoke", run(["./class", IDM_INI], cwd=repo, timeout=180), receipt)
 
-            require_ok(
-                "install_cobaya_3_6_1",
-                run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "cobaya==3.6.1"], timeout=300),
-                receipt,
-            )
+            require_ok("install_cobaya_3_6_1", run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "cobaya==3.6.1"], timeout=300), receipt)
             cobaya_version = importlib.metadata.version("cobaya")
             if cobaya_version != "3.6.1":
                 raise RuntimeError(f"Cobaya version mismatch: {cobaya_version}")
             receipt["cobaya"]["version"] = cobaya_version
-
-            check_yaml = run(
-                [
-                    sys.executable,
-                    "-c",
-                    "import json,sys; from cobaya.yaml import yaml_load_file; d=yaml_load_file(sys.argv[1]); print(json.dumps(list((d.get('likelihood') or {}).keys())))",
-                    str(repo / COBAYA_YAML),
-                ],
-                timeout=60,
-            )
+            check_yaml = run([
+                sys.executable, "-c",
+                "import json,sys; from cobaya.yaml import yaml_load_file; d=yaml_load_file(sys.argv[1]); print(json.dumps(list((d.get('likelihood') or {}).keys())))",
+                str(repo / COBAYA_YAML),
+            ], timeout=60)
             require_ok("cobaya_parse", check_yaml, receipt)
             likelihoods = json.loads(check_yaml["output_tail"].strip().splitlines()[-1])
             if likelihoods != EXPECTED_LIKELIHOODS:
@@ -182,25 +169,12 @@ def main() -> int:
             receipt["cobaya"]["likelihoods"] = likelihoods
 
             packages = root / "cobaya-packages"
-            install_check = run(
-                [
-                    sys.executable,
-                    "-m",
-                    "cobaya",
-                    "install",
-                    str(repo / COBAYA_YAML),
-                    "--packages-path",
-                    str(packages),
-                    "--skip",
-                    "classy",
-                    "--no-set-global",
-                    "--no-progress-bars",
-                ],
-                timeout=600,
-            )
+            install_check = run([
+                sys.executable, "-m", "cobaya", "install", str(repo / COBAYA_YAML),
+                "--packages-path", str(packages), "--skip", "classy", "--no-set-global", "--no-progress-bars",
+            ], timeout=600)
             require_ok("cobaya_likelihood_resolution", install_check, receipt)
             receipt["cobaya"]["packages_path"] = str(packages)
-
             receipt["status"] = "PASS"
             return_code = 0
     except subprocess.TimeoutExpired as exc:
@@ -212,7 +186,6 @@ def main() -> int:
     finally:
         OUTPUT.write_text(json.dumps(receipt, indent=2, sort_keys=True), encoding="utf-8")
         print(json.dumps(receipt, indent=2, sort_keys=True))
-
     return return_code
 
 
