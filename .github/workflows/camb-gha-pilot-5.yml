@@ -1,0 +1,116 @@
+name: CAMB GitHub Actions Pilot 5
+
+on:
+  push:
+    branches:
+      - 'nexo/camb-gha-pilot-5'
+    paths:
+      - '.github/workflows/camb-gha-pilot-5.yml'
+      - 'pilots/camb_gha_5/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  camb-pilot:
+    name: camb-${{ matrix.case }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        include:
+          - case: baseline
+            H0: 67.4
+            ombh2: 0.0224
+            omch2: 0.1200
+            ns: 0.965
+          - case: h0_high
+            H0: 72.0
+            ombh2: 0.0224
+            omch2: 0.1200
+            ns: 0.965
+          - case: baryon_high
+            H0: 67.4
+            ombh2: 0.0240
+            omch2: 0.1200
+            ns: 0.965
+          - case: cdm_low
+            H0: 67.4
+            ombh2: 0.0224
+            omch2: 0.1100
+            ns: 0.965
+          - case: ns_high
+            H0: 67.4
+            ombh2: 0.0224
+            omch2: 0.1200
+            ns: 0.990
+    steps:
+      - name: Checkout pilot revision
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install CAMB portable wheel
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'camb==1.6.6'
+
+      - name: Verify CAMB shared library
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          libs = sorted(root.glob('camblib*.so'))
+          print('CAMB', getattr(camb, '__version__', 'UNKNOWN'))
+          print('module', camb.__file__)
+          print('libs', [str(x) for x in libs])
+          if not libs:
+              raise SystemExit('camblib shared library not found')
+          PY
+
+      - name: Run cosmology case
+        run: |
+          set -euo pipefail
+          python pilots/camb_gha_5/run_case.py \
+            --case '${{ matrix.case }}' \
+            --H0 '${{ matrix.H0 }}' \
+            --ombh2 '${{ matrix.ombh2 }}' \
+            --omch2 '${{ matrix.omch2 }}' \
+            --ns '${{ matrix.ns }}' \
+            --out 'pilot_results/${{ matrix.case }}.json'
+
+      - name: Verify output contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          case='${{ matrix.case }}'
+          p=Path('pilot_results')/f'{case}.json'
+          d=json.loads(p.read_text())
+          assert d['status']=='PASS'
+          assert d['case']==case
+          for key in ('age_gyr','rdrag_mpc','zstar','sigma8','tt_ell_200_uK2','tt_ell_1000_uK2'):
+              assert key in d['outputs'] and isinstance(d['outputs'][key], (int,float))
+          sha=Path(str(p)+'.sha256')
+          assert sha.exists() and sha.read_text().strip()
+          print(json.dumps(d, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: camb-pilot-${{ matrix.case }}
+          path: pilot_results/${{ matrix.case }}.*
+          if-no-files-found: error
+          retention-days: 14
