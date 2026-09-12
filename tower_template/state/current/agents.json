@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "agents": [
+    {"role": "DAILY", "provider_status": "UNKNOWN", "material_status": "SNAPSHOT_CONSUMER_PENDING"},
+    {"role": "ADVISOR", "provider_status": "UNKNOWN", "material_status": "SOURCE_BINDING_QUEUE_PENDING"},
+    {"role": "EXECUTOR", "provider_status": "UNKNOWN", "material_status": "NO_EXECUTOR_ELIGIBLE_WORK"},
+    {"role": "LEARNER", "provider_status": "UNKNOWN", "material_status": "VERIFIED_EVENTS_REQUIRED"},
+    {"role": "EMERGENT", "provider_status": "UNKNOWN", "material_status": "BOUNDED_PROBES_ONLY"}
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "updated_at": "2026-09-12T23:00:00-03:00",
+  "work": [
+    {"work_id": "WORK::NEXO-V06-TOWER-API-MVP", "domain": "ops", "status": "READY", "executor_eligible": false, "binding_state": "TEMPLATE_ONLY", "dependency_state": "SATISFIED", "runtime_state": "AVAILABLE", "blocking_code": "PROTECTED_TOWER_REPO_REQUIRED_FOR_REAL_STATE", "owner_role": "OPS", "next_action": "COPY_TEMPLATE_TO_TOWER_REPO", "entity_version": 1},
+    {"work_id": "WORK::SCI-UNIFIED-DARK-SECTOR-SOURCE-BINDING", "domain": "cosmology", "status": "SOURCE_BINDING_PENDING", "executor_eligible": false, "binding_state": "PENDING", "dependency_state": "PARTIAL", "runtime_state": "AVAILABLE", "blocking_code": "SOURCE_BINDING_REQUIRED", "owner_role": "ADVISOR", "next_action": "CREATE_SOURCE_BINDING_DESCRIPTOR", "entity_version": 1}
+  ]
+}

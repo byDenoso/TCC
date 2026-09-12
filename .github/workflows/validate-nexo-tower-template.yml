@@ -1,0 +1,34 @@
+name: Validate NEXO Tower Template
+
+on:
+  pull_request:
+    paths:
+      - "tower_template/**"
+      - "runtime/nexo_view_api/**"
+      - "scripts/validate_tower_template.py"
+  push:
+    branches:
+      - main
+    paths:
+      - "tower_template/**"
+      - "runtime/nexo_view_api/**"
+      - "scripts/validate_tower_template.py"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate Tower template
+        run: python scripts/validate_tower_template.py tower_template
+      - name: Run View API tests
+        run: python -m unittest runtime.nexo_view_api.test_reader -v
