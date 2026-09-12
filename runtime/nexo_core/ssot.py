@@ -36,6 +36,17 @@ def _int_or_default(value: Any, default: int) -> int:
     return parsed if parsed > 0 else default
 
 
+def _int_or_none(value: Any) -> int | None:
+    text = _clean(value)
+    if not text:
+        return None
+    try:
+        parsed = int(text)
+    except ValueError:
+        return None
+    return parsed if parsed > 0 else None
+
+
 def work_row_to_entity(
     row: Mapping[str, Any],
     *,
@@ -110,4 +121,8 @@ def event_row_to_event(row: Mapping[str, Any]) -> CanonicalEvent:
         payload_ref=_clean(row.get("payload_ref")) or None,
         run_id=_clean(row.get("run_id")) or None,
         timestamp=_clean(row.get("timestamp")) or None,
+        expected_entity_version=_int_or_none(row.get("expected_entity_version")),
+        result_entity_version=_int_or_none(row.get("result_entity_version")),
+        payload_hash=_clean(row.get("payload_hash")) or None,
+        event_schema_version=_clean(row.get("event_schema_version")) or "0.5",
     )
