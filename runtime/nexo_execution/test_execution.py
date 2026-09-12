@@ -56,11 +56,12 @@ class ExecutionTests(unittest.TestCase):
         contract = ExecutionContract.from_dict(data)
         self.assertEqual(contract.argv, ["python3", "benchmarks/idm_runtime_preflight.py"])
 
-    def test_idm_preflight_prepares_class_output_directory(self):
+    def test_idm_preflight_prepares_class_output_directories_for_nested_ini(self):
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)
             prepare_runtime_dirs(repo)
             self.assertTrue((repo / "output").is_dir())
+            self.assertTrue((repo / "output" / "ini").is_dir())
 
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")
