@@ -1,0 +1,18 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "EXEC-IDM-SOURCE-BIND-20260912-004",
+  "work_id": "WORK::SCI-UNIFIED-DARK-SECTOR-SOURCE-BIND-20260911",
+  "test_id": "UDS-RUNTIME-PREFLIGHT",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "e5b69c55ef57748d654e09d5eb7e4f7d5226b80e",
+  "task_id": "idm_runtime_preflight",
+  "parameters": {
+    "source_revision": "dc55e59dec8f5c647df6e9d764f5c6960796e1df"
+  },
+  "seed": null,
+  "timeout_minutes": 12,
+  "required_outputs": [
+    "idm_preflight_result.json"
+  ]
+}
