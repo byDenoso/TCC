@@ -26,6 +26,14 @@ def _listify(value: Any) -> list[str]:
     return [str(value)]
 
 
+def _is_canonical_ref(value: str) -> bool:
+    value = value.strip()
+    if "::" not in value or any(char.isspace() for char in value):
+        return False
+    prefix, identifier = value.split("::", 1)
+    return bool(prefix and identifier and prefix.replace("_", "").isalnum() and prefix.upper() == prefix)
+
+
 def _scope_for(entity: CanonicalEntity) -> str:
     prefix = entity.entity_ref.split("::", 1)[0].upper()
     domain = str(entity.data.get("domain", "")).upper()
@@ -69,6 +77,9 @@ def build_snapshot(
         sections[_scope_for(entity)].append(entity.entity_ref)
 
     def add_edge(source: str, target: str, edge_type: str) -> None:
+        target = target.strip()
+        if not _is_canonical_ref(target):
+            return
         key = (source, target, edge_type)
         if key in edge_seen:
             return
