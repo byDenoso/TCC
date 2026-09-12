@@ -60,9 +60,10 @@ def prepare_runtime_dirs(repo: Path) -> None:
 
 
 def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
-    """Create only the parent directories requested by frozen CLASS `root` entries."""
+    """Create output parents for explicit CLASS roots and its default nested-INI root."""
     for relative in ini_paths:
         ini_path = repo / relative
+        explicit_root_found = False
         for raw_line in ini_path.read_text(encoding="utf-8").splitlines():
             line = raw_line.split("#", 1)[0].strip()
             if not line or "=" not in line:
@@ -70,6 +71,7 @@ def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
             key, value = (part.strip() for part in line.split("=", 1))
             if key != "root":
                 continue
+            explicit_root_found = True
             root_value = value.strip().strip('"').strip("'")
             root_path = Path(root_value)
             if root_path.is_absolute() or ".." in root_path.parts:
@@ -77,6 +79,9 @@ def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
             parent = root_path.parent
             if str(parent) not in {"", "."}:
                 (repo / parent).mkdir(parents=True, exist_ok=True)
+        if not explicit_root_found:
+            default_parent = Path("output") / Path(relative).parent
+            (repo / default_parent).mkdir(parents=True, exist_ok=True)
 
 
 def git_blob(repo: Path, relative: str) -> str:
