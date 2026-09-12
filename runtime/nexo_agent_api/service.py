@@ -35,20 +35,33 @@ class AgentService:
             raise TowerAgentIssue("TOWER_JSON_NOT_OBJECT", "Tower JSON root must be an object.", {"path": relative})
         return payload
 
+    @staticmethod
+    def _normalize_work(item: dict[str, Any]) -> dict[str, Any] | None:
+        work_id = item.get("id") or item.get("work_id")
+        if not work_id:
+            return None
+        normalized = dict(item)
+        normalized.setdefault("id", str(work_id))
+        return normalized
+
     def _work_items(self) -> list[dict[str, Any]]:
         indexed: dict[str, dict[str, Any]] = {}
         index_path = self.root / "indexes" / "active-work.json"
         if index_path.exists():
             payload = json.loads(index_path.read_text(encoding="utf-8"))
             for item in payload.get("work", []):
-                if isinstance(item, dict) and item.get("id"):
-                    indexed[str(item["id"])] = item
+                if isinstance(item, dict):
+                    normalized = self._normalize_work(item)
+                    if normalized is not None:
+                        indexed[str(normalized["id"])] = normalized
         folder = self.root / "entities" / "work"
         if folder.exists():
             for path in sorted(folder.glob("*.json")):
                 payload = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(payload, dict) and payload.get("id"):
-                    indexed[str(payload["id"])] = payload
+                if isinstance(payload, dict):
+                    normalized = self._normalize_work(payload)
+                    if normalized is not None:
+                        indexed[str(normalized["id"])] = normalized
         return list(indexed.values())
 
     def _hydrate_work(self, entity_name: str) -> dict[str, Any]:
