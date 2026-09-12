@@ -47,6 +47,12 @@ class ExecutionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ExecutionContract.from_dict(data)
 
+    def test_idm_runtime_preflight_is_allowlisted(self):
+        data = dict(BASE)
+        data["task_id"] = "idm_runtime_preflight"
+        contract = ExecutionContract.from_dict(data)
+        self.assertEqual(contract.argv, ["python3", "benchmarks/idm_runtime_preflight.py"])
+
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")
 
