@@ -20,6 +20,7 @@ class AgentService:
     """Small file-backed operational contract for NEXO agents."""
 
     ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
+    LEGACY_ADVISOR_KINDS = {"ACTION", "RESEARCH", "REVIEW", "PROCEDURAL_HYPOTHESIS", "ENGINEERING_FIX"}
 
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)
@@ -77,6 +78,19 @@ class AgentService:
         )
         return all(required)
 
+    @classmethod
+    def _advisor_routed(cls, item: dict[str, Any]) -> bool:
+        terminal = {"DONE", "VERIFIED", "REJECTED", "FAILED"}
+        if item.get("status") in terminal:
+            return False
+        if item.get("owner_role") == "ADVISOR":
+            return True
+        if item.get("status") in {"SOURCE_BINDING_PENDING", "BINDING_INCOMPLETE"}:
+            return True
+        if item.get("owner_role"):
+            return False
+        return item.get("kind") in cls.LEGACY_ADVISOR_KINDS
+
     @staticmethod
     def _queue_card(item: dict[str, Any], role: str) -> dict[str, Any]:
         common = (
@@ -99,12 +113,7 @@ class AgentService:
         if role == "EXECUTOR":
             return [self._queue_card(item, role) for item in items if self._executor_eligible(item)]
         if role == "ADVISOR":
-            terminal = {"DONE", "VERIFIED", "REJECTED", "FAILED"}
-            return [
-                self._queue_card(item, role) for item in items
-                if item.get("status") not in terminal
-                and (item.get("owner_role") == "ADVISOR" or item.get("status") in {"SOURCE_BINDING_PENDING", "BINDING_INCOMPLETE"})
-            ]
+            return [self._queue_card(item, role) for item in items if self._advisor_routed(item)]
         if role == "LEARNER":
             return [self._queue_card(item, role) for item in items if item.get("status") in {"VERIFIED", "DONE"} and item.get("learning_state") != "LEARNED"]
         if role == "EMERGENT":
