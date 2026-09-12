@@ -1,6 +1,7 @@
 import unittest
 
 from runtime.nexo_core.canary import run_v05_canary
+from runtime.nexo_core.projection import build_snapshot
 from runtime.nexo_core.ssot import event_row_to_event, work_row_to_entity
 
 
@@ -63,6 +64,27 @@ class NexoCoreShadowTests(unittest.TestCase):
         self.assertEqual(event.entity_ref, "WORK::W-SHADOW-2")
         self.assertEqual(event.event_id, "EVT-9")
         self.assertEqual(event.dedupe_key, "D-9")
+
+    def test_noncanonical_legacy_result_text_does_not_become_graph_node(self):
+        entity = work_row_to_entity(
+            {
+                "work_id": "W-LEGACY-RESULT",
+                "status": "DONE",
+                "domain": "SCIENCE",
+                "result_ref": "Drive result 123; receipt 456; free-form legacy provenance",
+            },
+            default_writer_role="Executor",
+        )
+
+        snapshot = build_snapshot(
+            [entity],
+            snapshot_id="SNAP-LEGACY",
+            generated_at="2026-09-11T21:00:00-03:00",
+            event_cursor="EVT-LEGACY",
+        )
+
+        self.assertEqual(snapshot["edges"], [])
+        self.assertEqual([node["id"] for node in snapshot["nodes"]], ["WORK::W-LEGACY-RESULT"])
 
     def test_v05_canary_proves_transition_readback_and_snapshot(self):
         result = run_v05_canary(generated_at="2026-09-11T21:00:00-03:00")
