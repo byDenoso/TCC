@@ -88,6 +88,21 @@ class AgentServiceTests(unittest.TestCase):
         self.write_work("W-INDEX", {"id": "W-INDEX", "entity_version": 2, "status": "DONE", "owner_role": "ADVISOR"})
         self.assertEqual(service.queue_for("ADVISOR"), [])
 
+    def test_work_id_entity_overrides_stale_index_and_reaches_executor(self) -> None:
+        (self.root / "indexes").mkdir(parents=True)
+        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{
+            "id": "W-TARGET", "entity_version": 1, "status": "BLOCKED", "owner_role": "ADVISOR"
+        }]}), encoding="utf-8")
+        self.write_work("W-TARGET", {
+            "work_id": "W-TARGET", "entity_version": 4, "status": "READY", "owner_role": "EXECUTOR",
+            "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
+            "repository": "byDenoso/TCC", "source_revision": "abc123", "required_outputs": ["out.json"],
+            "validation_ref": "VAL-READY", "runtime_available": True, "resource_lock_available": True,
+        })
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+        self.assertEqual([item["id"] for item in queue], ["W-TARGET"])
+        self.assertEqual(queue[0]["entity_version"], 4)
+
     def test_first_mutation_auto_hydrates_from_active_work_index(self) -> None:
         (self.root / "indexes").mkdir(parents=True)
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{
