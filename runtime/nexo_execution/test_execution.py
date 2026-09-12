@@ -1,5 +1,8 @@
+import tempfile
 import unittest
+from pathlib import Path
 
+from benchmarks.idm_runtime_preflight import prepare_runtime_dirs
 from runtime.nexo_execution.core import (
     ExecutionContract,
     ExecutionResult,
@@ -52,6 +55,12 @@ class ExecutionTests(unittest.TestCase):
         data["task_id"] = "idm_runtime_preflight"
         contract = ExecutionContract.from_dict(data)
         self.assertEqual(contract.argv, ["python3", "benchmarks/idm_runtime_preflight.py"])
+
+    def test_idm_preflight_prepares_class_output_directory(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            prepare_runtime_dirs(repo)
+            self.assertTrue((repo / "output").is_dir())
 
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")

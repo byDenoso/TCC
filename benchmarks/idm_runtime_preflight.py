@@ -55,6 +55,12 @@ def require_ok(stage: str, result: dict[str, Any], receipt: dict[str, Any]) -> N
         raise RuntimeError(f"{stage} failed with exit {result['exit_code']}")
 
 
+def prepare_runtime_dirs(repo: Path) -> None:
+    # CLASS parameter files in the frozen configs use a relative output/ prefix.
+    # The upstream repository does not create it for a fresh checkout.
+    (repo / "output").mkdir(parents=True, exist_ok=True)
+
+
 def git_blob(repo: Path, relative: str) -> str:
     result = run(["git", "hash-object", relative], cwd=repo, timeout=30)
     if result["exit_code"] != 0:
@@ -121,6 +127,7 @@ def main() -> int:
                     "bytes": path.stat().st_size,
                 }
 
+            prepare_runtime_dirs(repo)
             require_ok("make_clean", run(["make", "clean"], cwd=repo, timeout=120), receipt)
             require_ok("compile_class", run(["make", "class", "-j2"], cwd=repo, timeout=600), receipt)
             if not (repo / "class").is_file():
