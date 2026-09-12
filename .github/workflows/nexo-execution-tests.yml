@@ -20,4 +20,4 @@ jobs:
       - name: Run execution and core unit tests
         run: |
           python -m unittest runtime.nexo_execution.test_execution -v
-          python -m unittest runtime.nexo_core.test_core -v
+          python -m unittest discover -s runtime/nexo_core -p 'test_*.py' -v
