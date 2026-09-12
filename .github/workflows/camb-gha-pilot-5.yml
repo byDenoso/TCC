@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PILOT_REVISION: sigma8-transfer-v2
+
 jobs:
   camb-pilot:
     name: camb-${{ matrix.case }}
