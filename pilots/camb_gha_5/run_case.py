@@ -32,6 +32,7 @@ def main() -> int:
     pars.set_cosmology(H0=args.H0, ombh2=args.ombh2, omch2=args.omch2, mnu=0.06, omk=0.0, tau=0.0544)
     pars.InitPower.set_params(As=2.1e-9, ns=args.ns)
     pars.set_for_lmax(1200, lens_potential_accuracy=0)
+    pars.set_matter_power(redshifts=[0.0], kmax=2.0)
 
     results = camb.get_results(pars)
     derived = results.get_derived_params()
