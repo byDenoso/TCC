@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmarks.idm_runtime_preflight import prepare_runtime_dirs
+from benchmarks.idm_runtime_preflight import prepare_runtime_dirs, prepare_ini_output_dirs
 from runtime.nexo_execution.core import (
     ExecutionContract,
     ExecutionResult,
@@ -61,6 +61,15 @@ class ExecutionTests(unittest.TestCase):
             repo = Path(raw)
             prepare_runtime_dirs(repo)
             self.assertTrue((repo / "output").is_dir())
+
+    def test_idm_preflight_prepares_nested_ini_root_parent(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            ini = repo / "ini" / "idm.ini"
+            ini.parent.mkdir(parents=True)
+            ini.write_text("root = output/ini/iDM\n", encoding="utf-8")
+            prepare_ini_output_dirs(repo, ["ini/idm.ini"])
+            self.assertTrue((repo / "output" / "ini").is_dir())
 
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")

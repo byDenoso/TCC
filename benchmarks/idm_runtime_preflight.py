@@ -56,9 +56,27 @@ def require_ok(stage: str, result: dict[str, Any], receipt: dict[str, Any]) -> N
 
 
 def prepare_runtime_dirs(repo: Path) -> None:
-    # CLASS parameter files in the frozen configs use a relative output/ prefix.
-    # The upstream repository does not create it for a fresh checkout.
     (repo / "output").mkdir(parents=True, exist_ok=True)
+
+
+def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
+    """Create only the parent directories requested by frozen CLASS `root` entries."""
+    for relative in ini_paths:
+        ini_path = repo / relative
+        for raw_line in ini_path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.split("#", 1)[0].strip()
+            if not line or "=" not in line:
+                continue
+            key, value = (part.strip() for part in line.split("=", 1))
+            if key != "root":
+                continue
+            root_value = value.strip().strip('"').strip("'")
+            root_path = Path(root_value)
+            if root_path.is_absolute() or ".." in root_path.parts:
+                raise RuntimeError(f"unsafe CLASS output root in {relative}: {root_value}")
+            parent = root_path.parent
+            if str(parent) not in {"", "."}:
+                (repo / parent).mkdir(parents=True, exist_ok=True)
 
 
 def git_blob(repo: Path, relative: str) -> str:
@@ -128,6 +146,7 @@ def main() -> int:
                 }
 
             prepare_runtime_dirs(repo)
+            prepare_ini_output_dirs(repo, [LCDM_INI, IDM_INI])
             require_ok("make_clean", run(["make", "clean"], cwd=repo, timeout=120), receipt)
             require_ok("compile_class", run(["make", "class", "-j2"], cwd=repo, timeout=600), receipt)
             if not (repo / "class").is_file():
