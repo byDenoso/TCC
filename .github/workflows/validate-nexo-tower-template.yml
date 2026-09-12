@@ -8,6 +8,7 @@ on:
       - "runtime/nexo_agent_api/**"
       - "scripts/validate_tower_template.py"
       - "scripts/build_agent_views.py"
+      - "scripts/apply_agent_mutation.py"
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - "runtime/nexo_agent_api/**"
       - "scripts/validate_tower_template.py"
       - "scripts/build_agent_views.py"
+      - "scripts/apply_agent_mutation.py"
 
 jobs:
   validate:
@@ -37,4 +39,4 @@ jobs:
       - name: Run View API tests
         run: python -m unittest runtime.nexo_view_api.test_reader -v
       - name: Run Agent API tests
-        run: python -m unittest runtime.nexo_agent_api.test_service runtime.nexo_agent_api.test_legacy_routing -v
+        run: python -m unittest runtime.nexo_agent_api.test_service runtime.nexo_agent_api.test_legacy_routing runtime.nexo_agent_api.test_mutations -v
