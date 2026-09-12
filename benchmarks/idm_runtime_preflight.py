@@ -56,9 +56,11 @@ def require_ok(stage: str, result: dict[str, Any], receipt: dict[str, Any]) -> N
 
 
 def prepare_runtime_dirs(repo: Path) -> None:
-    # CLASS parameter files in the frozen configs use a relative output/ prefix.
-    # The upstream repository does not create it for a fresh checkout.
-    (repo / "output").mkdir(parents=True, exist_ok=True)
+    # CLASS derives its default output root from the input filename. For nested
+    # configs such as ini/iDM.ini this means output/ini/iDM..., so create the
+    # matching parent directories without changing the frozen input files.
+    for ini_file in (LCDM_INI, IDM_INI):
+        (repo / "output" / Path(ini_file).parent).mkdir(parents=True, exist_ok=True)
 
 
 def git_blob(repo: Path, relative: str) -> str:
