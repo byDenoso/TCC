@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import hashlib
-import importlib.metadata
 import json
 import os
 import subprocess
@@ -75,8 +74,6 @@ def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
             break
 
         if explicit_root is None:
-            # CLASS derives the default root from the ini argument, e.g.
-            # `ini/iDM.ini` -> `output/ini/iDM...`.
             default_root = Path("output") / Path(relative).with_suffix("")
             parent = default_root.parent
         else:
@@ -84,6 +81,22 @@ def prepare_ini_output_dirs(repo: Path, ini_paths: list[str]) -> None:
 
         if str(parent) not in {"", "."}:
             (repo / parent).mkdir(parents=True, exist_ok=True)
+
+
+def probe_distribution_version(distribution: str) -> str:
+    """Read newly installed package metadata in a fresh interpreter process."""
+    probe = run(
+        [
+            sys.executable,
+            "-c",
+            "import importlib.metadata,sys; print(importlib.metadata.version(sys.argv[1]))",
+            distribution,
+        ],
+        timeout=30,
+    )
+    if probe["exit_code"] != 0:
+        raise RuntimeError(f"package version probe failed for {distribution}: {probe['output_tail']}")
+    return probe["output_tail"].strip().splitlines()[-1]
 
 
 def git_blob(repo: Path, relative: str) -> str:
@@ -153,7 +166,7 @@ def main() -> int:
             require_ok("idm_smoke", run(["./class", IDM_INI], cwd=repo, timeout=180), receipt)
 
             require_ok("install_cobaya_3_6_1", run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "cobaya==3.6.1"], timeout=300), receipt)
-            cobaya_version = importlib.metadata.version("cobaya")
+            cobaya_version = probe_distribution_version("cobaya")
             if cobaya_version != "3.6.1":
                 raise RuntimeError(f"Cobaya version mismatch: {cobaya_version}")
             receipt["cobaya"]["version"] = cobaya_version
