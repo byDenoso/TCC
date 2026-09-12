@@ -14,7 +14,7 @@ on:
         type: string
   push:
     paths:
-      - 'runtime/nexo_execution/contracts/canary-cosmology.json'
+      - 'runtime/nexo_execution/contracts/*.json'
       - '.github/workflows/nexo-execution.yml'
 
 permissions:
@@ -37,12 +37,28 @@ jobs:
           INPUT_CONTRACT_HASH: ${{ inputs.expected_contract_hash }}
         run: |
           set -euo pipefail
-          CONTRACT_NAME="${INPUT_CONTRACT_NAME:-canary-cosmology.json}"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            CONTRACT_NAME="${INPUT_CONTRACT_NAME:-canary-cosmology.json}"
+          else
+            mapfile -t CHANGED_CONTRACTS < <(
+              git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- runtime/nexo_execution/contracts/ \
+                | grep -E '^runtime/nexo_execution/contracts/[^/]+\.json$' || true
+            )
+            if [[ "${#CHANGED_CONTRACTS[@]}" -eq 1 ]]; then
+              CONTRACT_NAME="$(basename "${CHANGED_CONTRACTS[0]}")"
+            elif [[ "${#CHANGED_CONTRACTS[@]}" -eq 0 ]]; then
+              CONTRACT_NAME="canary-cosmology.json"
+            else
+              echo 'push must change at most one execution contract' >&2
+              exit 2
+            fi
+          fi
           case "$CONTRACT_NAME" in
             ''|*/*|*'..'*) echo 'invalid contract_name' >&2; exit 2 ;;
           esac
           CONTRACT_PATH="runtime/nexo_execution/contracts/$CONTRACT_NAME"
           test -f "$CONTRACT_PATH"
+          echo "CONTRACT_NAME=$CONTRACT_NAME" >> "$GITHUB_ENV"
           mkdir -p /tmp/nexo-control/runtime
           cp -R runtime/nexo_execution /tmp/nexo-control/runtime/
           cp "$CONTRACT_PATH" /tmp/nexo-control/contract.json
@@ -92,11 +108,14 @@ jobs:
           PY
 
       - name: Upload execution artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nexo-execution-${{ env.EXECUTION_ID }}-${{ github.run_id }}
+          name: nexo-execution-${{ env.EXECUTION_ID || 'unresolved' }}-${{ github.run_id }}
           path: |
             benchmark_result.json
+            idm_preflight_result.json
             nexo_execution_result.json
             nexo_verification.json
+          if-no-files-found: warn
           retention-days: 7
