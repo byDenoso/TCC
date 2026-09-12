@@ -5,14 +5,18 @@ on:
     paths:
       - "tower_template/**"
       - "runtime/nexo_view_api/**"
+      - "runtime/nexo_agent_api/**"
       - "scripts/validate_tower_template.py"
+      - "scripts/build_agent_views.py"
   push:
     branches:
       - main
     paths:
       - "tower_template/**"
       - "runtime/nexo_view_api/**"
+      - "runtime/nexo_agent_api/**"
       - "scripts/validate_tower_template.py"
+      - "scripts/build_agent_views.py"
 
 jobs:
   validate:
@@ -32,3 +36,5 @@ jobs:
         run: python scripts/validate_tower_template.py tower_template
       - name: Run View API tests
         run: python -m unittest runtime.nexo_view_api.test_reader -v
+      - name: Run Agent API tests
+        run: python -m unittest runtime.nexo_agent_api.test_service -v
