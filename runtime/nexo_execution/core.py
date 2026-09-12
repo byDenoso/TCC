@@ -14,6 +14,7 @@ from typing import Any, Iterable
 VALID_PROVIDERS = {"local", "github_actions"}
 TASK_REGISTRY: dict[str, list[str]] = {
     "cosmology_benchmark": ["python3", "benchmarks/cosmology_env_benchmark.py"],
+    "idm_runtime_preflight": ["python3", "benchmarks/idm_runtime_preflight.py"],
 }
 
 
