@@ -1,9 +1,10 @@
-name: NEXO Execution Tests
+name: NEXO Runtime Tests
 
 on:
   push:
     paths:
       - 'runtime/nexo_execution/**'
+      - 'runtime/nexo_core/**'
       - '.github/workflows/nexo-execution-tests.yml'
   workflow_dispatch:
 
@@ -16,5 +17,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Run unit tests
-        run: python -m unittest runtime.nexo_execution.test_execution -v
+      - name: Run execution and core unit tests
+        run: |
+          python -m unittest runtime.nexo_execution.test_execution -v
+          python -m unittest discover -s runtime/nexo_core -p 'test_*.py' -v
