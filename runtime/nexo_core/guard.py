@@ -8,6 +8,11 @@ from typing import Any, Collection
 from runtime.nexo_core.models import CanonicalEntity, CanonicalEvent, TransitionResult
 
 
+def make_payload_hash(payload: Any) -> str:
+    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+
+
 def make_dedupe_key(
     role: str,
     run_id: str,
@@ -15,8 +20,7 @@ def make_dedupe_key(
     event_type: str,
     payload: Any,
 ) -> str:
-    canonical_payload = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    payload_hash = hashlib.sha256(canonical_payload.encode("utf-8")).hexdigest()
+    payload_hash = make_payload_hash(payload)
     return "|".join((role, run_id, entity_ref, event_type, payload_hash))
 
 
@@ -39,15 +43,26 @@ def apply_transition(
     if event.state_from != entity.state:
         return TransitionResult(status="STATE_CONFLICT_RETRY_REQUIRED", entity=entity, event=None)
 
+    result_version = entity.entity_version + 1
+    if event.expected_entity_version is not None and event.expected_entity_version != entity.entity_version:
+        return TransitionResult(status="EVENT_VERSION_CONTRACT_CONFLICT", entity=entity, event=None)
+    if event.result_entity_version is not None and event.result_entity_version != result_version:
+        return TransitionResult(status="EVENT_VERSION_CONTRACT_CONFLICT", entity=entity, event=None)
+
+    bound_event = replace(
+        event,
+        expected_entity_version=entity.entity_version,
+        result_entity_version=result_version,
+    )
     updated = replace(
         entity,
-        state=event.state_to,
-        entity_version=entity.entity_version + 1,
-        last_event_id=event.event_id,
-        last_correlation_id=event.correlation_id,
+        state=bound_event.state_to,
+        entity_version=result_version,
+        last_event_id=bound_event.event_id,
+        last_correlation_id=bound_event.correlation_id,
         writer_role=owner_role,
     )
-    return TransitionResult(status="APPLIED", entity=updated, event=event)
+    return TransitionResult(status="APPLIED", entity=updated, event=bound_event)
 
 
 def verify_readback(expected: CanonicalEntity, actual: CanonicalEntity) -> str:
