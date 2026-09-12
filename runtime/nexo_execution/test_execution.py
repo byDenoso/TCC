@@ -2,7 +2,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmarks.idm_runtime_preflight import prepare_runtime_dirs, prepare_ini_output_dirs
+from benchmarks.idm_runtime_preflight import (
+    prepare_runtime_dirs,
+    prepare_ini_output_dirs,
+    probe_distribution_version,
+)
 from runtime.nexo_execution.core import (
     ExecutionContract,
     ExecutionResult,
@@ -79,6 +83,10 @@ class ExecutionTests(unittest.TestCase):
             ini.write_text("#root = output/test\noutput = tCl\n", encoding="utf-8")
             prepare_ini_output_dirs(repo, ["ini/iDM.ini"])
             self.assertTrue((repo / "output" / "ini").is_dir())
+
+    def test_distribution_version_probe_uses_fresh_python_process(self):
+        version = probe_distribution_version("pip")
+        self.assertRegex(version, r"^\d+(?:\.\d+)+")
 
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")
