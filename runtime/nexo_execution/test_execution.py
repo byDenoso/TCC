@@ -71,6 +71,15 @@ class ExecutionTests(unittest.TestCase):
             prepare_ini_output_dirs(repo, ["ini/idm.ini"])
             self.assertTrue((repo / "output" / "ini").is_dir())
 
+    def test_idm_preflight_prepares_class_default_root_parent(self):
+        with tempfile.TemporaryDirectory() as raw:
+            repo = Path(raw)
+            ini = repo / "ini" / "iDM.ini"
+            ini.parent.mkdir(parents=True)
+            ini.write_text("#root = output/test\noutput = tCl\n", encoding="utf-8")
+            prepare_ini_output_dirs(repo, ["ini/iDM.ini"])
+            self.assertTrue((repo / "output" / "ini").is_dir())
+
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")
 
