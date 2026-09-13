@@ -3,7 +3,7 @@ import json
 import tempfile
 import yaml
 
-from peer_n31p_spt3g_20260729.campaign import write_configs
+from peer_n31p_spt3g_20260729.campaign import prepare_resume_config, write_configs
 
 
 SPT_TEMPLATE = """
@@ -38,7 +38,8 @@ def test_model(model: str) -> None:
             spt_template=template,
             spt_data_ref="test-spt-d1-ref",
         )
-        info = yaml.safe_load((root / "configs" / "mcmc.yaml").read_text())
+        config_path = root / "configs" / "mcmc.yaml"
+        info = yaml.safe_load(config_path.read_text())
 
         assert "candl_like" in info["likelihood"]
         assert info["likelihood"]["candl_like"]["class"] == "candl.interface.CandlCobayaLikelihood"
@@ -62,6 +63,20 @@ def test_model(model: str) -> None:
         assert "A_act" not in info["params"]
         assert "P_act" not in info["params"]
         assert "A_planck" not in info["params"]
+
+        # A 300-sample warmup consumed the entire first 150-minute segment on
+        # the real SPT D1 stack without writing a single chain sample. Keep the
+        # initial warmup short; the independent promotion gate still discards
+        # 30% of stored samples and requires rank-Rhat < 0.01.
+        assert info["sampler"]["mcmc"]["burn_in"] == 50
+        assert info["force"] is True
+        assert info["resume"] is False
+
+        prepare_resume_config(config_path)
+        resumed = yaml.safe_load(config_path.read_text())
+        assert resumed["force"] is False
+        assert resumed["resume"] is True
+        assert resumed["sampler"]["mcmc"]["burn_in"] == 50
 
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         assert manifest["spt_dataset"] == "SPT3G_D1_TnE"
