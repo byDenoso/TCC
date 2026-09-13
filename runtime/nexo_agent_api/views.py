@@ -26,24 +26,6 @@ def _active_ids(root: Path) -> set[str] | None:
     }
 
 
-def _write_legacy_stubs(root: Path, role: str) -> None:
-    ref = f"role_views/{role.lower()}.json"
-    _write_json(root / "bootstrap" / f"{role.lower()}.json", {
-        "role": role,
-        "queue": [],
-        "queue_count": 0,
-        "compatibility": "SUPERSEDED_BY_ROLE_VIEW",
-        "role_view_ref": ref,
-    })
-    _write_json(root / "queues" / f"{role.lower()}.json", {
-        "role": role,
-        "items": [],
-        "count": 0,
-        "compatibility": "SUPERSEDED_BY_ROLE_VIEW",
-        "role_view_ref": ref,
-    })
-
-
 def materialize_role_views(root: str | Path) -> dict[str, Any]:
     root = Path(root)
     service = AgentService(root)
@@ -55,7 +37,14 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
             queue = [item for item in view["queue"] if str(item.get("id")) in active_ids]
             view["queue"] = queue
             view["queue_count"] = len(queue)
-        _write_json(root / "role_views" / f"{role.lower()}.json", view)
-        _write_legacy_stubs(root, role)
+        view["view_model"] = "SINGLE_ROLE_VIEW"
+        _write_json(root / "bootstrap" / f"{role.lower()}.json", view)
+        _write_json(root / "queues" / f"{role.lower()}.json", {
+            "role": role,
+            "items": [],
+            "count": 0,
+            "compatibility": "SUPERSEDED_BY_BOOTSTRAP_ROLE_VIEW",
+            "role_view_ref": f"bootstrap/{role.lower()}.json",
+        })
         counts[role] = view["queue_count"]
-    return {"roles": len(ROLES), "queue_counts": counts, "legacy_mode": "STUBS_ONLY"}
+    return {"roles": len(ROLES), "queue_counts": counts, "view_model": "SINGLE_ROLE_VIEW"}
