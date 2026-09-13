@@ -6,6 +6,7 @@ from pathlib import Path
 MARKER = "POLYCHORD_BOOTSTRAP_V1"
 RNG_MARKER = "POLYCHORD_BOOTSTRAP_RNG_V1"
 ENV_NAME = "POLYCHORD_BOOTSTRAP_SEGMENT_VALID"
+STATE_DIR_ENV = "POLYCHORD_BOOTSTRAP_STATE_DIR"
 GENERATE_PATH = Path("src/polychord/generate.F90")
 
 
@@ -21,8 +22,7 @@ def _replace_once(source: str, old: str, new: str, label: str) -> str:
 
 
 def _replace_first(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count < 1:
+    if old not in source:
         raise ValueError(f"upstream anchor {label!r} not found")
     return source.replace(old, new, 1)
 
@@ -47,7 +47,15 @@ _HELPERS = r'''
         implicit none
         type(program_settings), intent(in) :: settings
         character(len=*), intent(out) :: filename
-        filename = trim(settings%base_dir)//'/'//trim(settings%file_root)//'.bootstrap'
+        character(len=1024) :: state_dir
+        integer :: length,status
+        state_dir=''
+        call get_environment_variable('POLYCHORD_BOOTSTRAP_STATE_DIR', state_dir, length=length, status=status)
+        if(status == 0 .and. length > 0) then
+            filename = trim(state_dir(:length))//'/'//trim(settings%file_root)//'.bootstrap'
+        else
+            filename = trim(settings%base_dir)//'/'//trim(settings%file_root)//'.bootstrap'
+        end if
     end subroutine bootstrap_filename
 
     subroutine bootstrap_rng_filename(settings, rank, filename)
@@ -56,9 +64,11 @@ _HELPERS = r'''
         type(program_settings), intent(in) :: settings
         integer, intent(in) :: rank
         character(len=*), intent(out) :: filename
+        character(len=1024) :: base
         character(len=32) :: rank_string
+        call bootstrap_filename(settings,base)
         write(rank_string,'(I0)') rank
-        filename = trim(settings%base_dir)//'/'//trim(settings%file_root)//'.bootstrap.rng.'//trim(rank_string)
+        filename = trim(base)//'.rng.'//trim(rank_string)
     end subroutine bootstrap_rng_filename
 
     subroutine write_bootstrap_rng(settings, rank)
