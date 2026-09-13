@@ -9,13 +9,14 @@ import time
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from peer_decisive_followups.bootstrap_state import (
     inspect_bootstrap_state,
     promote_bootstrap_bundle,
     restore_bootstrap_bundle,
 )
 from peer_decisive_followups.checkpoint_manager import inspect_raw_checkpoint, promote_checkpoint
-from peer_decisive_followups.metadata_relocation import relocate_cobaya_metadata
 from peer_decisive_followups.production_config import build_production_configs
 from peer_decisive_followups.production_contract import sha256_json
 from peer_decisive_followups.runtime_contract import verify_runtime_manifest
@@ -35,6 +36,21 @@ def segment_environment(segment_valid: int, *, base: dict[str, str] | None = Non
     env = dict(os.environ if base is None else base)
     env["POLYCHORD_BOOTSTRAP_SEGMENT_VALID"] = str(int(segment_valid))
     return env
+
+
+def _configure_pre_resume_continuation(data_path: Path, data: dict[str, Any]) -> dict[str, Any]:
+    """Keep custom bootstrap continuation outside Cobaya's native resume machinery.
+
+    Cobaya 3.6.2 recognizes only a native PolyChord ``.resume`` as a resumable
+    PolyChord sample. Asking Cobaya to resume while only ``chain.bootstrap`` exists
+    makes it delete the entire raw directory. Until native ``.resume`` exists, the
+    patched PolyChord layer owns continuation and Cobaya must neither resume nor force-clean.
+    """
+    data = dict(data)
+    data["resume"] = False
+    data["force"] = False
+    Path(data_path).write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
+    return data
 
 
 def _resume_signature(raw: Path) -> tuple[tuple[str, int, int], ...] | None:
@@ -78,9 +94,12 @@ def run_hosted_segment(*, model: str, science: Path, packages: str, work: Path,
     )
     work = Path(work).resolve()
     root = work / f"nested_{model}"
+    # A custom bootstrap parent is not a native Cobaya/PolyChord resume. Build the
+    # scientific config identically to a fresh run and let only the patched PolyChord
+    # bootstrap state advance it. Native continuation starts in the separate .resume lane.
     built = build_production_configs(
         Path(science).resolve(), model, packages, root, int(seed),
-        continuation=parent_bundle is not None,
+        continuation=False,
     )
     science_manifest = built["science_manifest"]
     data_dir = root / "data"
@@ -99,10 +118,10 @@ def run_hosted_segment(*, model: str, science: Path, packages: str, work: Path,
         if parent_digest is not None:
             expected["checkpoint_digest"] = parent_digest
         parent_manifest = restore_bootstrap_bundle(
-            Path(parent_bundle), state_file, expected, output_dir=data_dir,
+            Path(parent_bundle), state_file, expected,
         )
         resolved_parent_digest = parent_manifest["checkpoint_digest"]
-        relocate_cobaya_metadata(output_prefix, built["data"])
+        built["data"] = _configure_pre_resume_continuation(root / "data.yaml", built["data"])
 
     if not skip_cobaya_preflight:
         subprocess.run(
