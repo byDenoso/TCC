@@ -76,6 +76,29 @@ def _payload_files(bundle: Path) -> list[Path]:
     return files
 
 
+def _rng_files(state_file: Path) -> list[tuple[int, Path]]:
+    state_file = Path(state_file)
+    prefix = state_file.name + ".rng."
+    found: list[tuple[int, Path]] = []
+    for path in sorted(state_file.parent.glob(state_file.name + ".rng.*")):
+        if path.is_symlink() or not path.is_file() or path.stat().st_size == 0:
+            raise BootstrapStateError(f"invalid RNG state: {path.name}")
+        suffix = path.name[len(prefix):]
+        try:
+            rank = int(suffix)
+        except ValueError as exc:
+            raise BootstrapStateError(f"invalid RNG rank: {path.name}") from exc
+        if rank < 0:
+            raise BootstrapStateError(f"invalid RNG rank: {path.name}")
+        found.append((rank, path))
+    if not found:
+        raise BootstrapStateError("missing per-rank RNG state")
+    ranks = [rank for rank, _ in found]
+    if ranks != list(range(len(ranks))):
+        raise BootstrapStateError(f"RNG ranks must be contiguous from zero: {ranks}")
+    return found
+
+
 def promote_bootstrap_bundle(state_file: Path, bundle: Path, *, model: str, segment: int,
                              parent_digest: str | None, science_manifest: dict[str, Any],
                              runtime_manifest: dict[str, Any], output_prefix: Path | None = None,
@@ -84,11 +107,16 @@ def promote_bootstrap_bundle(state_file: Path, bundle: Path, *, model: str, segm
     state = inspect_bootstrap_state(state_file)
     if not state["valid"]:
         raise BootstrapStateError(f"invalid bootstrap state: {state.get('reason')}")
+    rng_files = _rng_files(state_file)
+    rng_ranks = [rank for rank, _ in rng_files]
+
     tmp = bundle.with_name(bundle.name + ".tmp")
     if tmp.exists():
         shutil.rmtree(tmp)
     (tmp / "raw").mkdir(parents=True)
     shutil.copy2(state_file, tmp / "raw" / state_file.name)
+    for _, rng in rng_files:
+        shutil.copy2(rng, tmp / "raw" / rng.name)
 
     if output_prefix is not None:
         prefix = Path(output_prefix)
@@ -121,6 +149,7 @@ def promote_bootstrap_bundle(state_file: Path, bundle: Path, *, model: str, segm
         "runtime_sha": sha256_json(runtime_manifest),
         "phase": "generating_live_points",
         "resumable_native": False,
+        "rng_ranks": rng_ranks,
         "files": records,
     }
     manifest = {**core, "checkpoint_digest": sha256_json(core)}
@@ -192,9 +221,20 @@ def verify_bootstrap_bundle(bundle: Path, expected: dict[str, Any]) -> dict[str,
         raise BootstrapStateError("science manifest hash mismatch")
     if sha256_json(runtime) != manifest.get("runtime_sha"):
         raise BootstrapStateError("runtime manifest hash mismatch")
-    raw_files = list((bundle / "raw").glob("*.bootstrap"))
-    if len(raw_files) != 1 or not inspect_bootstrap_state(raw_files[0])["valid"]:
+
+    raw_dir = bundle / "raw"
+    raw_states = [p for p in raw_dir.glob("*.bootstrap") if ".bootstrap.rng." not in p.name]
+    if len(raw_states) != 1 or not inspect_bootstrap_state(raw_states[0])["valid"]:
         raise BootstrapStateError("bundle contains no valid pre-resume state")
+    ranks = manifest.get("rng_ranks")
+    if not isinstance(ranks, list) or not ranks or any(not isinstance(rank, int) or rank < 0 for rank in ranks):
+        raise BootstrapStateError("RNG rank manifest is invalid")
+    if ranks != list(range(len(ranks))):
+        raise BootstrapStateError("RNG ranks must be contiguous from zero")
+    expected_rng = {f"raw/{raw_states[0].name}.rng.{rank}" for rank in ranks}
+    recorded_rng = {rel for rel in recorded if rel.startswith(f"raw/{raw_states[0].name}.rng.")}
+    if recorded_rng != expected_rng:
+        raise BootstrapStateError("RNG state mismatch")
     return manifest
 
 
@@ -216,15 +256,33 @@ def _restore_metadata(bundle: Path, output_dir: Path) -> None:
 def restore_bootstrap_bundle(bundle: Path, destination_state: Path, expected: dict[str, Any],
                              output_dir: Path | None = None) -> dict[str, Any]:
     manifest = verify_bootstrap_bundle(bundle, expected)
+    bundle = Path(bundle)
     destination_state = Path(destination_state)
-    raw_files = list((Path(bundle) / "raw").glob("*.bootstrap"))
-    src = raw_files[0]
+    raw_states = [p for p in (bundle / "raw").glob("*.bootstrap") if ".bootstrap.rng." not in p.name]
+    src = raw_states[0]
+    ranks = manifest["rng_ranks"]
     destination_state.parent.mkdir(parents=True, exist_ok=True)
-    stage = destination_state.with_name("." + destination_state.name + ".restore-tmp")
-    if stage.exists():
-        stage.unlink()
-    shutil.copy2(src, stage)
-    os.replace(stage, destination_state)
+
+    staged: list[tuple[Path, Path]] = []
+    targets = [(src, destination_state)]
+    for rank in ranks:
+        rng_src = bundle / "raw" / f"{src.name}.rng.{rank}"
+        rng_dst = destination_state.parent / f"{destination_state.name}.rng.{rank}"
+        targets.append((rng_src, rng_dst))
+    try:
+        for source, target in targets:
+            stage = target.with_name("." + target.name + ".restore-tmp")
+            if stage.exists():
+                stage.unlink()
+            shutil.copy2(source, stage)
+            staged.append((stage, target))
+        for stage, target in staged:
+            os.replace(stage, target)
+    finally:
+        for stage, _ in staged:
+            if stage.exists():
+                stage.unlink()
+
     if output_dir is not None:
-        _restore_metadata(Path(bundle), Path(output_dir))
+        _restore_metadata(bundle, Path(output_dir))
     return manifest
