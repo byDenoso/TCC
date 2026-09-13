@@ -30,11 +30,16 @@ def classify_segment(*, exit_code: int, bootstrap_valid: bool, native_resumable:
     return "FAILED"
 
 
-def segment_environment(segment_valid: int, *, base: dict[str, str] | None = None) -> dict[str, str]:
+def segment_environment(segment_valid: int, *, state_dir: Path | None = None,
+                        base: dict[str, str] | None = None) -> dict[str, str]:
     if int(segment_valid) <= 0:
         raise ValueError("segment_valid must be positive")
     env = dict(os.environ if base is None else base)
     env["POLYCHORD_BOOTSTRAP_SEGMENT_VALID"] = str(int(segment_valid))
+    if state_dir is not None:
+        sidecar = Path(state_dir).resolve()
+        sidecar.mkdir(parents=True, exist_ok=True)
+        env["POLYCHORD_BOOTSTRAP_STATE_DIR"] = str(sidecar)
     return env
 
 
@@ -94,9 +99,6 @@ def run_hosted_segment(*, model: str, science: Path, packages: str, work: Path,
     )
     work = Path(work).resolve()
     root = work / f"nested_{model}"
-    # A custom bootstrap parent is not a native Cobaya/PolyChord resume. Build the
-    # scientific config identically to a fresh run and let only the patched PolyChord
-    # bootstrap state advance it. Native continuation starts in the separate .resume lane.
     built = build_production_configs(
         Path(science).resolve(), model, packages, root, int(seed),
         continuation=False,
@@ -104,9 +106,11 @@ def run_hosted_segment(*, model: str, science: Path, packages: str, work: Path,
     science_manifest = built["science_manifest"]
     data_dir = root / "data"
     raw = data_dir / "chain_polychord_raw"
-    state_file = raw / "chain.bootstrap"
+    sidecar = root / "bootstrap-sidecar"
+    state_file = sidecar / "chain.bootstrap"
     output_prefix = data_dir / "chain"
     raw.mkdir(parents=True, exist_ok=True)
+    sidecar.mkdir(parents=True, exist_ok=True)
 
     resolved_parent_digest = parent_digest
     if parent_bundle is not None:
@@ -133,7 +137,7 @@ def run_hosted_segment(*, model: str, science: Path, packages: str, work: Path,
     stderr_path = data_dir / "stderr.hosted-bootstrap.log"
     previous_resume = None
     stopped_for_native = False
-    env = segment_environment(segment_valid)
+    env = segment_environment(segment_valid, state_dir=sidecar)
     with stdout_path.open("w", encoding="utf-8") as out, stderr_path.open("w", encoding="utf-8") as err:
         proc = subprocess.Popen(
             ["mpirun", "--oversubscribe", "-np", "4", "cobaya-run", str((root / "data.yaml").resolve())],
