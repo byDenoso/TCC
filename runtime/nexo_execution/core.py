@@ -11,6 +11,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "idm_runtime_preflight": ["python3", "benchmarks/idm_runtime_preflight.py"],
     "gz01_desi_edr_nz_pilot": ["python3", "-m", "benchmarks.gz01_desi_edr_nz_pilot"],
     "gz01_multprobe_consistency": ["python3", "-m", "benchmarks.gz01_multprobe_consistency"],
+    "gz01_covariance_redshift_envelope": ["python3", "-m", "benchmarks.gz01_covariance_redshift_envelope"],
 }
 
 @dataclass(frozen=True)
