@@ -36,6 +36,7 @@ def _fixture_source() -> str:
             call initialise_run_time_info(settings,RTI)
         end if
         ndiscarded=0
+
         total_time=0
         if(linear_mode(mpi_information)) then
             do while(RTI%nlive(1)<nprior)
