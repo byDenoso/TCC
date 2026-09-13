@@ -58,6 +58,8 @@ def build_dispatches(
     return {
         "schema_version": 1,
         "campaign_id": campaign["campaign_id"],
+        "campaign_commit": sha,
+        "attempt": int(attempt),
         "dry_run": bool(dry_run),
         "execution_plan": plan,
         "predicted_dispatches": predicted,
