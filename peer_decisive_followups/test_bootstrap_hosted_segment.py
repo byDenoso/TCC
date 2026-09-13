@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+from pathlib import Path
 
 
 def _load():
@@ -32,10 +33,13 @@ def test_zero_exit_without_native_resume_is_failed():
     assert module.classify_segment(exit_code=0, bootstrap_valid=False, native_resumable=False) == "FAILED"
 
 
-def test_segment_budget_is_execution_only_environment():
+def test_segment_budget_and_sidecar_are_execution_only_environment(tmp_path: Path):
     module = _load()
-    env = module.segment_environment(1000, base={"KEEP": "x"})
+    sidecar = tmp_path / "bootstrap-sidecar"
+    env = module.segment_environment(1000, state_dir=sidecar, base={"KEEP": "x"})
     assert env["POLYCHORD_BOOTSTRAP_SEGMENT_VALID"] == "1000"
+    assert env["POLYCHORD_BOOTSTRAP_STATE_DIR"] == str(sidecar.resolve())
+    assert sidecar.is_dir()
     assert env["KEEP"] == "x"
     for forbidden in ("tau", "peer_fede", "Alens", "nlive", "nprior", "precision_criterion"):
         assert forbidden not in env
