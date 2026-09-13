@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "GZ01-B02-20260913",
+  "work_id": "WORK::GZ01-B02-MULTIPROBE",
+  "test_id": "GZ01-B02-MULTIPROBE",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "f88da9a0c6b5f373570dd2dfa1990b9d1fb647ef",
+  "task_id": "gz01_multprobe_consistency",
+  "parameters": {},
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": ["benchmark_result.json"]
+}
