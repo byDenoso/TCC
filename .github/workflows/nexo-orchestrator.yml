@@ -51,6 +51,9 @@ jobs:
         run: python -m nexo_control.cli
       - name: Execute plan or persist dry-run receipt
         run: python -m nexo_control.campaign_runner
+      - name: Verify ready_for_learning receipt field
+        if: always()
+        run: python -c "import json; data=json.load(open('nexo-runtime/campaign-summary.json', encoding='utf-8')); assert 'ready_for_learning' in data"
       - name: Upload NEXO campaign receipt
         if: always()
         uses: actions/upload-artifact@v4
