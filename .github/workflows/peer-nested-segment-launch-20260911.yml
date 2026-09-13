@@ -64,5 +64,8 @@ jobs:
           python -m pip install 'numpy<2.4' pyyaml pytest mpi4py 'cobaya==3.6.2'
           mkdir -p "$COBAYA_PACKAGES_PATH"
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
-      - name: Run real PolyChord checkpoint restore resume E2E
-        run: python -m pytest -q -m integration peer_decisive_followups/test_polychord_checkpoint_e2e.py
+      - name: Run real PolyChord checkpoint E2E tests
+        run: |
+          python -m pytest -q -m integration \
+            peer_decisive_followups/test_polychord_checkpoint_e2e.py \
+            peer_decisive_followups/test_polychord_pre_resume_e2e.py
