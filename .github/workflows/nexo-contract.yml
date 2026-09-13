@@ -5,13 +5,13 @@ on:
     branches: [nexo-gh-orchestrator-20260913]
     paths:
       - '.nexo/**'
-      - 'scripts/nexo/**'
+      - 'nexo_control/**'
       - 'tests/nexo/**'
       - '.github/workflows/nexo-*.yml'
   pull_request:
     paths:
       - '.nexo/**'
-      - 'scripts/nexo/**'
+      - 'nexo_control/**'
       - 'tests/nexo/**'
       - '.github/workflows/nexo-*.yml'
   workflow_dispatch:
