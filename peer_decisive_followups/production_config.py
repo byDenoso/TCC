@@ -41,6 +41,9 @@ PRIOR_POLYCHORD_OVERRIDES = {
     "precision_criterion": 0.0005,
 }
 
+FROZEN_TAU_MIN = 0.01
+FROZEN_TAU_MAX = 0.10
+
 
 def _load_base_info(science_dir: Path) -> Callable[..., dict[str, Any]]:
     campaign = Path(science_dir) / "act_dr6_mcmc_20260729" / "campaign.py"
@@ -67,6 +70,16 @@ def _assert_prior(info: dict[str, Any], name: str, lo: float, hi: float) -> None
         raise ValueError(f"{name} prior drift: expected [{lo}, {hi}], got {prior}")
 
 
+def _apply_frozen_tau_floor(info: dict[str, Any]) -> None:
+    tau = info.get("params", {}).get("tau")
+    if not isinstance(tau, dict) or not isinstance(tau.get("prior"), dict):
+        raise ValueError("tau must be sampled with a bounded prior")
+    prior = tau["prior"]
+    if float(prior.get("max")) != FROZEN_TAU_MAX:
+        raise ValueError(f"tau upper prior drift: expected {FROZEN_TAU_MAX}, got {prior.get('max')}")
+    prior["min"] = FROZEN_TAU_MIN
+
+
 def validate_frozen_config(path: Path, model: str) -> dict[str, Any]:
     if model not in {"M1", "M3"}:
         raise ValueError("production model must be M1 or M3")
@@ -78,7 +91,7 @@ def validate_frozen_config(path: Path, model: str) -> dict[str, Any]:
         raise ValueError(f"likelihood stack drift: expected {sorted(EXPECTED_LIKELIHOODS)}, got {sorted(likes)}")
 
     params = info.get("params", {})
-    _assert_prior(info, "tau", 0.0, 0.10)
+    _assert_prior(info, "tau", FROZEN_TAU_MIN, FROZEN_TAU_MAX)
     _assert_prior(info, "Alens", 0.5, 1.5)
     if model == "M3":
         _assert_prior(info, "peer_fede", 0.0, 0.18)
@@ -109,6 +122,9 @@ def build_production_configs(science_dir: Path, model: str, packages: str,
     base_info = _load_base_info(Path(science_dir))
 
     data = base_info(model, packages, str((root / "data" / "chain").resolve()))
+    # Frozen campaign correction: exclude the unphysical/invalid tau=0 edge in both
+    # data and prior-volume runs. Evidence normalization requires the same prior volume.
+    _apply_frozen_tau_floor(data)
     data["resume"] = bool(continuation)
     data["force"] = not continuation
     data["sampler"] = {"polychord": {**PRODUCTION_POLYCHORD, "seed": int(seed)}}
@@ -147,6 +163,7 @@ def build_production_configs(science_dir: Path, model: str, packages: str,
         "data_config": "data.yaml",
         "prior_config": "prior_volume.yaml",
         "normalized_evidence": "logZ_data - logZ_prior_volume",
+        "tau_prior": {"min": FROZEN_TAU_MIN, "max": FROZEN_TAU_MAX},
         "production_polychord": PRODUCTION_POLYCHORD,
         "prior_overrides": PRIOR_POLYCHORD_OVERRIDES,
     }
