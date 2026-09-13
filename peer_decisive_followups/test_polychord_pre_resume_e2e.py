@@ -12,7 +12,6 @@ from peer_decisive_followups.bootstrap_state import (
     promote_bootstrap_bundle,
     restore_bootstrap_bundle,
 )
-from peer_decisive_followups.metadata_relocation import relocate_cobaya_metadata
 from peer_decisive_followups.production_contract import sha256_json
 
 
@@ -80,6 +79,17 @@ def _diagnostic(result: subprocess.CompletedProcess[str], state: Path) -> str:
     return "\n--- stdout ---\n" + result.stdout + "\n--- stderr ---\n" + result.stderr + "\n--- state ---\n" + state_text
 
 
+def _bootstrap_continuation(info: dict, output_prefix: Path) -> dict:
+    continued = copy.deepcopy(info)
+    continued["output"] = str(output_prefix)
+    # Pre-native-resume continuation is deliberately invisible to Cobaya's resume layer.
+    # Cobaya 3.6.2 only treats a native PolyChord .resume as resumable and otherwise
+    # deletes the raw directory. The patched PolyChord bootstrap restores its own state.
+    continued["resume"] = False
+    continued["force"] = False
+    return continued
+
+
 def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_path: Path):
     packages = Path(os.environ["COBAYA_PACKAGES_PATH"]).resolve()
     science = {"schema": "toy-pre-resume-v1", "seed": 13579, "nprior": 12}
@@ -103,18 +113,13 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
 
     second = tmp_path / "seg1"
     second_prefix = second / "data" / "chain"
-    info1 = copy.deepcopy(info0)
-    info1["output"] = str(second_prefix)
-    info1["resume"] = True
-    info1["force"] = False
+    info1 = _bootstrap_continuation(info0, second_prefix)
     state1 = second / "data" / "chain_polychord_raw" / "chain.bootstrap"
     restore_bootstrap_bundle(
         bundle0, state1,
         {"model": "M1", "science_sha": sha256_json(science), "runtime_sha": sha256_json(runtime),
          "checkpoint_digest": m0["checkpoint_digest"]},
-        output_dir=second / "data",
     )
-    relocate_cobaya_metadata(second_prefix, info1)
     run1 = _write_run(second, info1, "run.yaml")
     r1 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run1)], second, env=_partial_env())
     assert r1.returncode == 86, _diagnostic(r1, state1)
@@ -128,16 +133,13 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
 
     third = tmp_path / "seg2"
     third_prefix = third / "data" / "chain"
-    info2 = copy.deepcopy(info1)
-    info2["output"] = str(third_prefix)
+    info2 = _bootstrap_continuation(info0, third_prefix)
     state2 = third / "data" / "chain_polychord_raw" / "chain.bootstrap"
     restore_bootstrap_bundle(
         bundle1, state2,
         {"model": "M1", "science_sha": sha256_json(science), "runtime_sha": sha256_json(runtime),
          "checkpoint_digest": m1["checkpoint_digest"]},
-        output_dir=third / "data",
     )
-    relocate_cobaya_metadata(third_prefix, info2)
     run2 = _write_run(third, info2, "run.yaml")
     r2 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run2)], third, env=_partial_env())
     assert r2.returncode == 0, (r2.stdout + "\n" + r2.stderr)[-5000:]
