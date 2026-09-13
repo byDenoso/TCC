@@ -65,6 +65,42 @@ class HandoffProtocolTests(unittest.TestCase):
         self.assertEqual(persisted["inbox_count"], 5)
         self.assertEqual(persisted["inbox_limit"], 5)
 
+    def test_handoff_embeds_canonical_work_envelope_and_preserves_it_on_ack(self):
+        work = {
+            "id": "WORK::GZ01-B03",
+            "entity_version": 7,
+            "kind": "ACTION",
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "thread_id": "THR::SCIENCE::GZ-01",
+            "question": "Run the next bounded discriminant",
+            "next_action": "execute",
+            "task_id": "gz01_multprobe_consistency",
+            "repository": "byDenoso/TCC",
+            "source_revision": "abc123",
+            "required_outputs": ["benchmark_result.json"],
+        }
+        (self.root / "entities/work/WORK::GZ01-B03.json").write_text(json.dumps(work))
+        service = AgentService(self.root)
+
+        created = service.emit_handoff(
+            from_role="ADVISOR",
+            to_role="EXECUTOR",
+            handoff_type="WORK_READY",
+            entity_ref=work["id"],
+            thread_id=work["thread_id"],
+            next_action=work["next_action"],
+        )
+
+        self.assertEqual(created["entity_version"], 7)
+        self.assertEqual(created["entity_path"], "entities/work/WORK::GZ01-B03.json")
+        self.assertEqual(created["work_envelope"]["task_id"], "gz01_multprobe_consistency")
+        self.assertFalse(created["hydration_required"])
+
+        ack = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(ack["entity_version"], 7)
+        self.assertEqual(ack["work_envelope"]["source_revision"], "abc123")
+
 
 if __name__ == "__main__":
     unittest.main()

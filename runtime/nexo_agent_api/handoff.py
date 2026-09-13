@@ -52,6 +52,15 @@ def _latest_by_handoff(root: Path) -> dict[str, dict]:
     return latest
 
 
+def _work_envelope(self, entity_ref: str) -> dict | None:
+    for item in self._work_items():
+        if str(item.get("id")) == entity_ref:
+            envelope = dict(item)
+            envelope.setdefault("entity_version", 1)
+            return envelope
+    return None
+
+
 def emit_handoff(self, *, from_role: str, to_role: str, handoff_type: str, entity_ref: str, thread_id: str, next_action: str, correlation_id: str | None = None) -> dict:
     sender = from_role.upper()
     recipient = to_role.upper()
@@ -60,6 +69,8 @@ def emit_handoff(self, *, from_role: str, to_role: str, handoff_type: str, entit
     if recipient not in RUNTIME_ROLES:
         raise TowerAgentIssue("HANDOFF_RECIPIENT_NOT_SUPPORTED", "Unknown handoff recipient.", {"to_role": recipient})
     handoff_id = f"HO-{uuid4().hex}"
+    envelope = _work_envelope(self, entity_ref)
+    entity_path = f"entities/work/{entity_ref}.json"
     return _write_event(self.root, {
         "handoff_id": handoff_id,
         "correlation_id": correlation_id or handoff_id,
@@ -68,6 +79,10 @@ def emit_handoff(self, *, from_role: str, to_role: str, handoff_type: str, entit
         "to_role": recipient,
         "handoff_type": handoff_type,
         "entity_ref": entity_ref,
+        "entity_path": entity_path,
+        "entity_version": envelope.get("entity_version") if envelope else None,
+        "work_envelope": envelope,
+        "hydration_required": envelope is None,
         "state": "PENDING",
         "next_action": next_action,
         "event_type": "HANDOFF_CREATED",
@@ -102,7 +117,11 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     allowed = {"PENDING": {"ACK", "DONE", "FAILED"}, "ACK": {"DONE", "FAILED"}}
     if target not in allowed.get(current_state, set()):
         raise TowerAgentIssue("HANDOFF_ILLEGAL_TRANSITION", "Illegal handoff state transition.", {"from": current_state, "to": target})
-    payload = {key: current.get(key) for key in ("handoff_id", "correlation_id", "thread_id", "from_role", "to_role", "handoff_type", "entity_ref", "next_action", "opened_at")}
+    payload = {key: current.get(key) for key in (
+        "handoff_id", "correlation_id", "thread_id", "from_role", "to_role", "handoff_type",
+        "entity_ref", "entity_path", "entity_version", "work_envelope", "hydration_required",
+        "next_action", "opened_at",
+    )}
     payload.update({"state": target, "event_type": f"HANDOFF_{target}", "writer_role": writer, "material": True})
     return _write_event(self.root, payload)
 
