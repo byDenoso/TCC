@@ -1,4 +1,4 @@
-name: PEER N3 1P SPT-3G MCMC
+name: PEER N3 1P SPT-3G D1 MCMC
 
 on:
   push:
@@ -12,10 +12,10 @@ permissions:
   actions: read
 
 env:
-  SCIENCE_REF: peer-n31p-spt3g-20260729
+  SCIENCE_REF: peer-n31p-spt3g-d1-20260912
   SOURCE_RUN_ID: "30455821484"
   COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
-  SPT_COMMIT: 633c5a3da99bb6e78c60a7514f311fc3577965bc
+  SPT_D1_REF: efe35b7bfd815a115d5123e210a6849a4175bc81
   OMP_NUM_THREADS: "1"
   OPENBLAS_NUM_THREADS: "1"
   MKL_NUM_THREADS: "1"
@@ -49,9 +49,23 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install \
             'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py arviz \
-            'cobaya==3.6.2'
-          python -m pip install \
-            "git+https://github.com/xgarrido/spt_likelihoods.git@${SPT_COMMIT}"
+            'cobaya==3.6.2' 'candl-like==2.0.3'
+
+      - name: Pin official SPT-3G D1 data package
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/SouthPoleTelescope/spt_candl_data.git spt-candl-data
+          git -C spt-candl-data checkout "$SPT_D1_REF"
+          test "$(git -C spt-candl-data rev-parse HEAD)" = "$SPT_D1_REF"
+          python -m pip install --no-deps ./spt-candl-data
+          python - <<'PY'
+          import importlib.metadata
+          import spt_candl_data
+          assert importlib.metadata.version('candl-like') == '2.0.3'
+          assert spt_candl_data.__version__ == '3.0.0'
+          assert spt_candl_data.SPT3G_D1_TnE.endswith('SPT3G_D1_TnE_index.yaml')
+          print('SPT-3G D1 package identity gate: PASS')
+          PY
 
       - name: Download byte-verified PEER runtime and likelihood payload
         run: |
@@ -90,38 +104,34 @@ jobs:
           ! grep -q 'not found' camb_ldd.txt
           grep -E 'libgsl|libgslcblas' camb_ldd.txt
 
-      - name: Install official SPT-3G likelihood data
+      - name: Generate and structurally validate SPT-3G D1 campaign
         run: |
           set -euxo pipefail
-          cat > spt_install.yaml <<'YAML'
-          likelihood:
-            spt3g_2022.TTTEEE: null
-          YAML
-          cobaya-install spt_install.yaml \
-            --packages-path "$COBAYA_PACKAGES_PATH" \
-            --no-progress-bars --no-set-global
-          python - <<'PY'
-          import spt3g_2022
-          print('SPT module:', spt3g_2022.__file__)
-          PY
-
-      - name: Generate and structurally validate campaign
-        run: |
-          set -euxo pipefail
-          python peer_n31p_spt3g_20260729/test_campaign.py
+          python -m peer_n31p_spt3g_20260729.test_campaign
           ROOT="$GITHUB_WORKSPACE/spt_${MODEL}"
-          python peer_n31p_spt3g_20260729/campaign.py \
-            --model "$MODEL" --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          TEMPLATE="$GITHUB_WORKSPACE/spt-candl-data/cobaya/SPT3G_D1_TnE/cobaya_ttteee.yaml"
+          python -m peer_n31p_spt3g_20260729.campaign \
+            --model "$MODEL" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --root "$ROOT" \
+            --spt-template "$TEMPLATE" \
+            --spt-data-ref "$SPT_D1_REF"
           python - <<'PY'
-          import os, yaml
+          import json, os, yaml
           root = os.path.join(os.environ['GITHUB_WORKSPACE'], 'spt_' + os.environ['MODEL'])
           info = yaml.safe_load(open(os.path.join(root, 'configs', 'mcmc.yaml'), encoding='utf-8'))
+          manifest = json.load(open(os.path.join(root, 'manifest.json'), encoding='utf-8'))
           likes = set(info['likelihood'])
-          assert 'spt3g_2022.TTTEEE' in likes
+          assert 'candl_like' in likes
+          assert info['likelihood']['candl_like']['class'] == 'candl.interface.CandlCobayaLikelihood'
+          assert info['likelihood']['candl_like']['data_set_file'] == 'spt_candl_data.SPT3G_D1_TnE'
+          assert 'spt3g_2022.TTTEEE' not in likes
           assert not any(x.startswith('act_dr6') for x in likes)
           assert not any(x.startswith('planck_2018_highl') for x in likes)
           assert info['params']['peer_zc']['value'] == 3.81
           assert info['params']['peer_thetai']['value'] == 2.89155
+          assert 'Tcal_ext150' in info['params']
+          assert manifest['spt_data_ref'] == os.environ['SPT_D1_REF']
           print('Scientific identity gate: PASS')
           PY
 
@@ -187,11 +197,11 @@ jobs:
           done
           diagnose
 
-      - name: Upload SPT chains and diagnostics
+      - name: Upload SPT D1 chains and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: peer-n31p-spt3g-${{ matrix.model }}-20260729
+          name: peer-n31p-spt3g-d1-${{ matrix.model }}-20260912
           path: spt_${{ matrix.model }}
           retention-days: 30
 
