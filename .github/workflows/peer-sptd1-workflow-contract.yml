@@ -1,0 +1,45 @@
+name: PEER SPT D1 workflow contract
+
+on:
+  push:
+    branches: [run-peer-segmented-20260911]
+    paths:
+      - ".github/workflows/peer-n31p-spt3g-mcmc.yml"
+      - ".github/workflows/peer-n31p-spt3g-20chains.yml"
+      - ".github/workflows/peer-sptd1-workflow-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pyyaml
+      - name: Validate SPT D1 production workflow contracts
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          paths = [
+              Path('.github/workflows/peer-n31p-spt3g-mcmc.yml'),
+              Path('.github/workflows/peer-n31p-spt3g-20chains.yml'),
+          ]
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              yaml.safe_load(text)
+              assert 'peer-n31p-spt3g-d1-20260912' in text, path
+              assert 'efe35b7bfd815a115d5123e210a6849a4175bc81' in text, path
+              assert 'candl-like==2.0.3' in text, path
+              assert 'spt_candl_data.SPT3G_D1_TnE' in text, path
+              assert 'spt3g_2022.TTTEEE' not in text, path
+              assert 'xgarrido/spt_likelihoods' not in text, path
+          print('SPT D1 production workflow contract: PASS')
+          PY
