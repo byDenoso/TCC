@@ -2,7 +2,7 @@ name: PEER N3 1P SPT-3G D1 MCMC
 
 on:
   push:
-    branches: [main]
+    branches: [main, run-peer-segmented-20260911]
     paths:
       - ".github/workflows/peer-n31p-spt3g-mcmc.yml"
   workflow_dispatch:
