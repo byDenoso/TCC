@@ -13,7 +13,7 @@ from runtime.nexo_agent_api import materialize_role_views
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Materialize NEXO per-role bootstraps and queues.")
+    parser = argparse.ArgumentParser(description="Materialize one NEXO bootstrap role view plus inert legacy queue stubs.")
     parser.add_argument("--root", required=True, help="Path to TOWER_V06 root")
     args = parser.parse_args()
     result = materialize_role_views(Path(args.root))
