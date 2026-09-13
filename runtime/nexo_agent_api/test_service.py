@@ -43,4 +43,16 @@ class AgentServiceTests(unittest.TestCase):
         executor=json.loads((self.root/"bootstrap/executor.json").read_text()); advisor=json.loads((self.root/"bootstrap/advisor.json").read_text()); stub=json.loads((self.root/"queues/executor.json").read_text())
         self.assertEqual(executor["queue_count"],1); self.assertEqual(advisor["queue_count"],0); self.assertEqual(executor["view_model"],"SINGLE_ROLE_VIEW"); self.assertEqual(stub["count"],0); self.assertEqual(stub["role_view_ref"],"bootstrap/executor.json")
 
+    def test_role_view_caps_advisor_at_five_prioritized_cards(self):
+        (self.root/"indexes").mkdir()
+        items=[]
+        for i in range(7):
+            wid=f"A{i}"; priority="CRITICAL" if i==6 else "HIGH"
+            item={"id":wid,"entity_version":1,"status":"READY","owner_role":"ADVISOR","kind":"RESEARCH","priority":priority}
+            items.append(item); self.write_work(wid,item)
+        (self.root/"indexes/active-work.json").write_text(json.dumps({"work":items}))
+        materialize_role_views(self.root)
+        advisor=json.loads((self.root/"bootstrap/advisor.json").read_text())
+        self.assertEqual(advisor["queue_count"],5); self.assertEqual(advisor["queue_limit"],5); self.assertEqual(advisor["queue"][0]["id"],"A6")
+
 if __name__=="__main__": unittest.main()
