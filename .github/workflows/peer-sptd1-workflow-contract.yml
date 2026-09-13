@@ -39,7 +39,10 @@ jobs:
               assert 'efe35b7bfd815a115d5123e210a6849a4175bc81' in text, path
               assert 'candl-like==2.0.3' in text, path
               assert 'spt_candl_data.SPT3G_D1_TnE' in text, path
-              assert 'spt3g_2022.TTTEEE' not in text, path
+              # The legacy token may appear only inside a fail-closed negative assertion.
+              assert 'spt3g_2022.TTTEEE: null' not in text, path
+              assert 'cobaya-install spt_install.yaml' not in text, path
               assert 'xgarrido/spt_likelihoods' not in text, path
+              assert "assert 'spt3g_2022.TTTEEE' not in" in text, path
           print('SPT D1 production workflow contract: PASS')
           PY
