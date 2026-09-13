@@ -1,11 +1,11 @@
 {
   "schema": "nexo.execution.v1",
-  "execution_id": "EXEC-GZ01-EDR-NZ-20260913-001",
+  "execution_id": "EXEC-GZ01-EDR-NZ-20260913-002",
   "work_id": "GZ-01-B01",
   "test_id": "GZ01-T01-DESI-NZ-PILOT",
   "provider": "github_actions",
   "repository": "byDenoso/TCC",
-  "commit_sha": "980352bd0657f9112ab2e10061108202ccecf4bc",
+  "commit_sha": "b9032a1d024e0487581972493e6090e700e4eb56",
   "task_id": "cosmology_benchmark",
   "parameters": {
     "mode": "gz01_desi_edr_nz_pilot"
