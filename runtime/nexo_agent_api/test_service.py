@@ -38,7 +38,7 @@ class AgentServiceTests(unittest.TestCase):
 
     def test_bootstrap_is_single_hot_role_view_and_queue_is_stub(self):
         (self.root/"indexes").mkdir(); (self.root/"indexes/active-work.json").write_text(json.dumps({"work":[{"id":"W2"}]}))
-        self.write_work("w2",self.eligible()); self.write_work("cold",{"id":"W-COLD","entity_version":1,"status":"READY","owner_role":"ADVISOR"})
+        self.write_work("W2",self.eligible()); self.write_work("cold",{"id":"W-COLD","entity_version":1,"status":"READY","owner_role":"ADVISOR"})
         r=materialize_role_views(self.root); self.assertEqual(r["view_model"],"SINGLE_ROLE_VIEW")
         executor=json.loads((self.root/"bootstrap/executor.json").read_text()); advisor=json.loads((self.root/"bootstrap/advisor.json").read_text()); stub=json.loads((self.root/"queues/executor.json").read_text())
         self.assertEqual(executor["queue_count"],1); self.assertEqual(advisor["queue_count"],0); self.assertEqual(executor["view_model"],"SINGLE_ROLE_VIEW"); self.assertEqual(stub["count"],0); self.assertEqual(stub["role_view_ref"],"bootstrap/executor.json")
