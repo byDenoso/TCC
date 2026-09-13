@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+# Kept as a dedicated module so CI must execute the governance boundary explicitly.
 import json
 import tempfile
 import unittest
