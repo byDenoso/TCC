@@ -20,12 +20,18 @@ BASE = {
 
 
 class IDMBatteryContractTests(unittest.TestCase):
-    def test_scientific_battery_task_uses_package_module_entrypoint(self):
+    def test_scientific_battery_task_uses_abi_bootstrap_entrypoint(self):
         contract = ExecutionContract.from_dict(dict(BASE))
         self.assertEqual(
             contract.argv,
-            ["python3", "-m", "benchmarks.idm_scientific_battery"],
+            ["python3", "-m", "benchmarks.idm_scientific_battery_bootstrap"],
         )
+
+    def test_battery_runtime_pins_numpy_and_cython(self):
+        from benchmarks.idm_scientific_battery_bootstrap import CYTHON_VERSION, NUMPY_VERSION
+
+        self.assertEqual(NUMPY_VERSION, "1.26.4")
+        self.assertEqual(CYTHON_VERSION, "3.0.12")
 
     def test_battery_defines_exactly_15_unique_cases(self):
         from benchmarks.idm_scientific_battery import build_cases
