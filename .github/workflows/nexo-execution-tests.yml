@@ -7,6 +7,7 @@ on:
       - 'runtime/nexo_core/**'
       - 'runtime/nexo_agent_api/**'
       - 'benchmarks/idm_runtime_preflight.py'
+      - 'benchmarks/idm_scientific_battery.py'
       - '.github/workflows/nexo-execution-tests.yml'
   workflow_dispatch:
 
@@ -22,6 +23,7 @@ jobs:
       - name: Run NEXO runtime unit tests
         run: |
           python -m unittest runtime.nexo_execution.test_execution -v
+          python -m unittest runtime.nexo_execution.test_idm_scientific_battery -v
           python -m unittest runtime.nexo_agent_api.test_service -v
           python -m unittest runtime.nexo_agent_api.test_executor_capability_gate -v
           python -m unittest runtime.nexo_agent_api.test_mutations -v
