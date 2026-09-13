@@ -44,6 +44,36 @@ jobs:
           pattern: peer-n31p-spt3g-d1-*-20260912
           path: downloads
 
+      - name: Inspect sampler outputs and redirected logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          for MODEL in N31P N31P_ALENS; do
+            ART="downloads/peer-n31p-spt3g-d1-${MODEL}-20260912"
+            test -d "$ART"
+            ROOT=$(find "$ART" -type d -name mcmc -printf '%h\n' | head -1)
+            test -n "$ROOT"
+            echo "===== ${MODEL}: root=${ROOT} ====="
+            echo "===== ${MODEL}: all possible sample/checkpoint files ====="
+            find "$ROOT" -type f \( -name 'chain*.txt' -o -name '*.checkpoint' -o -name '*.progress' -o -name '*.covmat' -o -name '*.updated.yaml' -o -name '*.input.yaml' \) -printf '%P %s bytes\n' | sort | head -300 || true
+            echo "===== ${MODEL}: mcmc config output/sampler ====="
+            python - "$ROOT/configs/mcmc.yaml" <<'PY'
+          import sys, yaml
+          info = yaml.safe_load(open(sys.argv[1], encoding='utf-8'))
+          print({'output': info.get('output'), 'force': info.get('force'), 'resume': info.get('resume'), 'sampler': info.get('sampler')})
+          PY
+            echo "===== ${MODEL}: mcmc directory tree ====="
+            find "$ROOT/mcmc" -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | head -300 || true
+            for SEGMENT in 1 2; do
+              echo "===== ${MODEL}: segment ${SEGMENT} exit ====="
+              cat "$ROOT/logs/mcmc_segment_${SEGMENT}.exit_code" 2>/dev/null || echo MISSING
+              echo "===== ${MODEL}: segment ${SEGMENT} stderr tail ====="
+              tail -n 180 "$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log" 2>/dev/null || echo MISSING
+              echo "===== ${MODEL}: segment ${SEGMENT} stdout tail ====="
+              tail -n 180 "$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" 2>/dev/null || echo MISSING
+            done
+          done
+
       - name: Re-run the fixed convergence gate without re-sampling
         shell: bash
         run: |
@@ -51,15 +81,7 @@ jobs:
           mkdir -p recheck
           for MODEL in N31P N31P_ALENS; do
             ART="downloads/peer-n31p-spt3g-d1-${MODEL}-20260912"
-            test -d "$ART"
             ROOT=$(find "$ART" -type d -name mcmc -printf '%h\n' | head -1)
-            test -n "$ROOT"
-
-            echo "===== ${MODEL}: chain inventory ====="
-            find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c -printf '%f %s bytes\n' | sort
-            echo "===== ${MODEL}: Cobaya checkpoint ====="
-            cat "$ROOT/mcmc/chain.checkpoint" || true
-
             set +e
             python act_dr6_mcmc_20260729/convergence_gate.py \
               --root "$ROOT" --burn 0.30 \
@@ -67,8 +89,6 @@ jobs:
             CODE=$?
             set -e
             printf '%s\n' "$CODE" > "recheck/${MODEL}.exit_code"
-            echo "===== ${MODEL}: fixed gate exit ${CODE} ====="
-            cat "recheck/${MODEL}.json"
           done
 
       - name: Print compact posterior diagnostic summary
@@ -96,6 +116,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: peer-sptd1-posterior-recheck-34735574976
+          name: peer-sptd1-posterior-recheck-34735574976-${{ github.run_number }}
           path: recheck
           retention-days: 30
