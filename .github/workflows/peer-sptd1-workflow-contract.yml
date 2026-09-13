@@ -58,5 +58,15 @@ jobs:
               assert 'cobaya-install spt_install.yaml' not in text, path
               assert 'xgarrido/spt_likelihoods' not in text, path
               assert "assert 'spt3g_2022.TTTEEE' not in" in text, path
-          print('SPT D1 self-rebuilding production workflow contract: PASS')
+
+          main = paths[0].read_text(encoding='utf-8')
+          # The first real D1 run timed out during warmup, then segment 2 died
+          # because `cobaya-run -r` was combined with `force: true` in YAML.
+          # Production must explicitly flip the generated config to resume mode
+          # before every continuation segment and then invoke Cobaya normally.
+          assert 'prepare_resume_config' in main
+          assert 'cobaya-run -r' not in main
+          assert 'if [ "$SEGMENT" -gt 1 ]; then' in main
+
+          print('SPT D1 self-rebuilding resumable production workflow contract: PASS')
           PY
