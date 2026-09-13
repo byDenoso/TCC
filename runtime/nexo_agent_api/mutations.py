@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .governance import evaluate_governance
 from .service import AgentService, TowerAgentIssue
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_.:-]+$")
@@ -56,6 +57,23 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
     except ValueError:
         return _invalid(request_id, "expected_version must be an integer")
 
+    governance = evaluate_governance(request)
+    governance_meta = {
+        "autonomy_level": governance.autonomy_level,
+        "governance_gate": governance.gate,
+    }
+    if not governance.allowed:
+        return {
+            "request_id": request_id,
+            "accepted": False,
+            **governance_meta,
+            "issue": {
+                "code": governance.issue_code,
+                "message": governance.message,
+                "details": {},
+            },
+        }
+
     service = AgentService(root)
     path = root / "entities" / entity_kind / f"{entity_name}.json"
     if entity_kind == "work" and not path.exists():
@@ -65,6 +83,7 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
             return {
                 "request_id": request_id,
                 "accepted": False,
+                **governance_meta,
                 "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
             }
         try:
@@ -87,7 +106,8 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
         return {
             "request_id": request_id,
             "accepted": False,
+            **governance_meta,
             "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
         }
 
-    return {"request_id": request_id, **result}
+    return {"request_id": request_id, **governance_meta, **result}
