@@ -249,6 +249,8 @@ jobs:
           assert not any(x.startswith('planck_2018_highl') for x in likes)
           assert info['params']['peer_zc']['value'] == 3.81
           assert info['params']['peer_thetai']['value'] == 2.89155
+          assert info['sampler']['mcmc']['burn_in'] == 50
+          assert info['force'] is True and info['resume'] is False
           assert 'Tcal_ext150' in info['params']
           assert manifest['spt_data_ref'] == os.environ['SPT_D1_REF']
           print('Scientific identity gate: PASS')
@@ -288,8 +290,24 @@ jobs:
           raise SystemExit(0 if ok else 1)
           PY
           }
+          prepare_resume() {
+            python - "$ROOT/configs/mcmc.yaml" <<'PY'
+          import sys, yaml
+          from pathlib import Path
+          from peer_n31p_spt3g_20260729.campaign import prepare_resume_config
+          path = Path(sys.argv[1])
+          prepare_resume_config(path)
+          info = yaml.safe_load(path.read_text(encoding='utf-8'))
+          assert info['force'] is False
+          assert info['resume'] is True
+          print('Cobaya resume config gate: PASS')
+          PY
+          }
           for SEGMENT in 1 2; do
             if is_done; then break; fi
+            if [ "$SEGMENT" -gt 1 ]; then
+              prepare_resume
+            fi
             export SEGMENT
             WORK_BASE="$ROOT/mpi_work_${SEGMENT}"
             mkdir -p "$WORK_BASE"
@@ -302,19 +320,24 @@ jobs:
                 ln -sfn "$GITHUB_WORKSPACE/Rec_database" "$WORK/Rec_database"
                 ln -sfn "$GITHUB_WORKSPACE/Development" "$WORK/Development"
                 cd "$WORK"
-                if [ "$SEGMENT" -eq 1 ]; then
-                  cobaya-run "$ROOT/configs/mcmc.yaml"
-                else
-                  cobaya-run -r "$ROOT/configs/mcmc.yaml"
-                fi
+                cobaya-run "$ROOT/configs/mcmc.yaml"
               ' >"$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" \
                 2>"$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log"
             CODE=$?
             set -e
             printf '%s\n' "$CODE" >"$ROOT/logs/mcmc_segment_${SEGMENT}.exit_code"
+            if [ "$CODE" -ne 0 ] && [ "$CODE" -ne 124 ]; then
+              echo "Unexpected Cobaya exit code ${CODE} in segment ${SEGMENT}" >&2
+              tail -n 120 "$ROOT/logs/mcmc_segment_${SEGMENT}.stdout.log" || true
+              tail -n 120 "$ROOT/logs/mcmc_segment_${SEGMENT}.stderr.log" || true
+              exit "$CODE"
+            fi
             diagnose
           done
           diagnose
+          COUNT=$(find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c | wc -l)
+          echo "Persisted non-empty MPI chains: $COUNT"
+          test "$COUNT" -eq 4
 
       - name: Upload SPT D1 chains and diagnostics
         if: always()
