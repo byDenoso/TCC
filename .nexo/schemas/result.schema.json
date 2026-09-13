@@ -1,0 +1,44 @@
+{
+  "title": "NEXO Result Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "campaign_id", "test_id", "execution", "validation", "provenance"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "campaign_id": {"type": "string"},
+    "test_id": {"type": "string"},
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "conclusion", "workflow", "run_id", "head_sha", "artifact_names"],
+      "properties": {
+        "status": {"type": "string"},
+        "conclusion": {"type": ["string", "null"]},
+        "workflow": {"type": "string"},
+        "run_id": {"type": ["integer", "null"]},
+        "head_sha": {"type": ["string", "null"]},
+        "artifact_names": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "validator", "metrics", "reasons"],
+      "properties": {
+        "status": {"enum": ["PASSED", "NOT_PROMOTED", "FAILED", "BLOCKED"]},
+        "validator": {"type": "string"},
+        "metrics": {"type": "object"},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["campaign_commit", "validator_commit"],
+      "properties": {
+        "campaign_commit": {"type": "string"},
+        "validator_commit": {"type": "string"}
+      }
+    }
+  }
+}
