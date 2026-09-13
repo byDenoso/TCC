@@ -1,4 +1,7 @@
+import subprocess
+import sys
 import unittest
+from pathlib import Path
 
 from runtime.nexo_execution.core import ExecutionContract
 
@@ -26,6 +29,22 @@ class IDMBatteryContractTests(unittest.TestCase):
             contract.argv,
             ["python3", "benchmarks/idm_scientific_battery.py"],
         )
+
+    def test_battery_script_imports_when_executed_from_benchmarks_directory(self):
+        benchmarks = Path(__file__).resolve().parents[2] / "benchmarks"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import runpy; runpy.run_path('idm_scientific_battery.py', run_name='battery_import_test')",
+            ],
+            cwd=benchmarks,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout)
 
     def test_battery_defines_exactly_15_unique_cases(self):
         from benchmarks.idm_scientific_battery import build_cases
