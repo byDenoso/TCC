@@ -13,7 +13,7 @@ from pathlib import Path
 
 SOURCE_URL = "https://data.desi.lbl.gov/public/edr/vac/edr/epoviz/v1.0/EDR-Viz-Outreach-VAC.csv.gz"
 EXPECTED_SHA256 = "83a4c4c4c4e8eb309e6a71459b3e6087113b82ef03edeeb09752ce368443b6d6"
-OUTPUT = Path("gz01_edr_nz_result.json")
+OUTPUT = Path("benchmark_result.json")
 BIN_WIDTH = 0.1
 Z_MIN = 0.0
 Z_MAX = 4.0
@@ -40,7 +40,6 @@ def summarize_catalog(path: Path) -> dict:
     sums = defaultdict(float)
     totals = defaultdict(int)
     skipped = 0
-
     with gzip.open(path, "rt", encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         required = {"REDSHIFT", "TRACER"}
@@ -61,7 +60,6 @@ def summarize_catalog(path: Path) -> dict:
             counts[name][idx] += 1
             totals[name] += 1
             sums[name] += z
-
     edges = [round(Z_MIN + i * BIN_WIDTH, 3) for i in range(bins + 1)]
     tracers = {}
     for name in TRACERS.values():
@@ -74,12 +72,7 @@ def summarize_catalog(path: Path) -> dict:
             "peak_count": hist[peak_idx] if hist else 0,
             "counts": hist,
         }
-    return {
-        "bin_edges": edges,
-        "tracers": tracers,
-        "total_used": sum(totals.values()),
-        "skipped": skipped,
-    }
+    return {"bin_edges": edges, "tracers": tracers, "total_used": sum(totals.values()), "skipped": skipped}
 
 
 def main() -> None:
@@ -102,28 +95,13 @@ def main() -> None:
             "batch_id": "GZ-01-B01",
             "test_id": "GZ01-T01-DESI-NZ-PILOT",
             "status": "PASS",
-            "dataset": {
-                "name": "DESI EDR Visualization and Outreach VAC",
-                "release": "EDR",
-                "version": "v1.0",
-                "source_url": SOURCE_URL,
-                "sha256": source_sha256,
-                "expected_sha256": EXPECTED_SHA256
-            },
+            "dataset": {"name": "DESI EDR Visualization and Outreach VAC", "release": "EDR", "version": "v1.0", "source_url": SOURCE_URL, "sha256": source_sha256},
             "analysis": summary,
-            "claim_boundary": (
-                "Observed tracer-resolved N(z) pilot only. This EDR outreach catalog is not DESI DR1, "
-                "is not selection/completeness corrected, and must not be interpreted as comoving galaxy density."
-            ),
-            "canonicalization": "PENDING_CANONICALIZATION",
+            "claim_boundary": "Observed tracer-resolved N(z) pilot only. This EDR outreach catalog is not DESI DR1, is not selection/completeness corrected, and must not be interpreted as comoving galaxy density.",
+            "tower_persistence": "PERSIST_AFTER_VERIFICATION"
         }
         OUTPUT.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
-        print(json.dumps({
-            "status": result["status"],
-            "source_sha256": source_sha256,
-            "total_used": summary["total_used"],
-            "output": str(OUTPUT),
-        }, sort_keys=True))
+        print(json.dumps({"status": result["status"], "source_sha256": source_sha256, "total_used": summary["total_used"], "output": str(OUTPUT)}, sort_keys=True))
 
 
 if __name__ == "__main__":
