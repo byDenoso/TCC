@@ -46,28 +46,32 @@ def _read_chain(path: Path) -> pd.DataFrame:
     return pd.read_csv(path, sep=r"\s+", comment="#", names=header, engine="python")
 
 
+def _finite_or_none(value: object) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
 def _checkpoint(root: Path) -> dict:
     path = root / "mcmc" / "chain.checkpoint"
     if not path.exists():
         return {"exists": False, "converged": False, "Rminus1_last": None}
     raw = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
     mcmc = (raw.get("sampler") or {}).get("mcmc") or {}
-    value = mcmc.get("Rminus1_last")
-    try:
-        value = float(value)
-    except (TypeError, ValueError):
-        value = None
+    value = _finite_or_none(mcmc.get("Rminus1_last"))
     return {"exists": True, "converged": bool(mcmc.get("converged", False)), "Rminus1_last": value}
 
 
-def _finite_max(values: Iterable[float]) -> float | None:
-    arr = np.asarray(list(values), dtype=float)
+def _finite_max(values: Iterable[float | None]) -> float | None:
+    arr = np.asarray([value for value in values if value is not None], dtype=float)
     arr = arr[np.isfinite(arr)]
     return float(arr.max()) if arr.size else None
 
 
-def _finite_min(values: Iterable[float]) -> float | None:
-    arr = np.asarray(list(values), dtype=float)
+def _finite_min(values: Iterable[float | None]) -> float | None:
+    arr = np.asarray([value for value in values if value is not None], dtype=float)
     arr = arr[np.isfinite(arr)]
     return float(arr.min()) if arr.size else None
 
@@ -109,19 +113,19 @@ def diagnose(root: str | Path, burn_fraction: float = 0.30, params: list[str] | 
         equal_draws = min(chain.size for chain in chains)
         usable_params[p] = np.stack([chain[-equal_draws:] for chain in chains], axis=0)
 
-    rhat: dict[str, float] = {}
-    ess_bulk: dict[str, float] = {}
-    ess_tail: dict[str, float] = {}
+    rhat: dict[str, float | None] = {}
+    ess_bulk: dict[str, float | None] = {}
+    ess_tail: dict[str, float | None] = {}
     if usable_params:
         rh = az.rhat(usable_params, method="rank")
         eb = az.ess(usable_params, method="bulk")
         et = az.ess(usable_params, method="tail")
         for p in usable_params:
-            rhat[p] = float(np.asarray(rh[p]).squeeze())
-            ess_bulk[p] = float(np.asarray(eb[p]).squeeze())
-            ess_tail[p] = float(np.asarray(et[p]).squeeze())
+            rhat[p] = _finite_or_none(np.asarray(rh[p]).squeeze())
+            ess_bulk[p] = _finite_or_none(np.asarray(eb[p]).squeeze())
+            ess_tail[p] = _finite_or_none(np.asarray(et[p]).squeeze())
 
-    rhat_minus1 = {p: value - 1.0 for p, value in rhat.items()}
+    rhat_minus1 = {p: (value - 1.0 if value is not None else None) for p, value in rhat.items()}
     rhat_minus1_max = _finite_max(rhat_minus1.values())
     ess_bulk_min = _finite_min(ess_bulk.values())
     ess_tail_min = _finite_min(ess_tail.values())
