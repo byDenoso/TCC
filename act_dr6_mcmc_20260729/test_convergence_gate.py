@@ -13,8 +13,8 @@ def _write_constant_chain(path: Path, value: float) -> None:
 def test_nonfinite_rhat_is_json_safe_and_fails_closed(tmp_path: Path) -> None:
     mcmc = tmp_path / "mcmc"
     mcmc.mkdir()
-    for index, value in enumerate((60.0, 65.0, 70.0, 75.0), start=1):
-        _write_constant_chain(mcmc / f"chain.{index}.txt", value)
+    for index in range(1, 5):
+        _write_constant_chain(mcmc / f"chain.{index}.txt", 70.0)
 
     (mcmc / "chain.checkpoint").write_text(
         "sampler:\n  mcmc:\n    converged: true\n    Rminus1_last: 0.001\n",
