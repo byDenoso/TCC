@@ -69,6 +69,7 @@ def _write_run(folder: Path, info: dict, name: str) -> Path:
 
 
 def _partial_env(sidecar: Path) -> dict[str, str]:
+    sidecar.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ)
     env["POLYCHORD_BOOTSTRAP_SEGMENT_VALID"] = "4"
     env["POLYCHORD_BOOTSTRAP_STATE_DIR"] = str(sidecar.resolve())
