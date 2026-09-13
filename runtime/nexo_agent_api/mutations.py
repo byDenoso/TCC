@@ -62,6 +62,8 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
         "autonomy_level": governance.autonomy_level,
         "governance_gate": governance.gate,
     }
+    if governance.proposal_hash:
+        governance_meta["proposal_hash"] = governance.proposal_hash
     if not governance.allowed:
         return {
             "request_id": request_id,
@@ -110,4 +112,16 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
             "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
         }
 
-    return {"request_id": request_id, **governance_meta, **result}
+    receipt = {"request_id": request_id, **governance_meta, **result}
+    if governance.autonomy_level == "L3":
+        receipt["l3_report"] = {
+            "status": "EXECUTED",
+            "intent": request.get("l3_intent"),
+            "requested_changes": changes,
+            "entity_kind": entity_kind,
+            "entity_name": entity_name,
+            "entity_version": result.get("entity_version"),
+            "readback": result.get("readback"),
+            "event_id": result.get("event_id"),
+        }
+    return receipt
