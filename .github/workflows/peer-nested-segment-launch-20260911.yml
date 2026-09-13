@@ -38,7 +38,8 @@ jobs:
             peer_decisive_followups/test_workflow_contract.py \
             peer_decisive_followups/test_metadata_relocation.py \
             peer_decisive_followups/test_polychord_bootstrap_patch.py \
-            peer_decisive_followups/test_bootstrap_state.py
+            peer_decisive_followups/test_bootstrap_state.py \
+            peer_decisive_followups/test_bootstrap_hosted_segment.py
 
   polychord-e2e:
     runs-on: ubuntu-24.04
