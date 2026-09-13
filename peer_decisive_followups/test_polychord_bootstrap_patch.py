@@ -28,7 +28,7 @@ def _fixture_source() -> str:
         implicit none
         integer :: nlike
         integer :: nprior, ndiscarded
-        integer :: ngenerated
+        integer :: ngenerated ! use to track order points are generated in
         real(dp) :: time0,time1,total_time
         nlike = 0
         ngenerated = 1
