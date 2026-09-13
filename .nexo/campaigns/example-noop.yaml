@@ -4,8 +4,8 @@ domain: engineering
 question: Can the GitHub-native control plane execute a deterministic no-op campaign?
 status: PLANNED
 budget:
-  max_tests: 3
-  max_parallel: 2
+  max_tests: 2
+  max_parallel: 1
   max_retries_per_test: 1
   max_runtime_minutes: 30
 tests:
@@ -20,14 +20,3 @@ tests:
       require_workflow_success: true
       require_artifact: true
       validator: contract_test_pass
-  - test_id: T-ENG002
-    executor: github_workflow
-    workflow: nexo_noop
-    ref: nexo-gh-orchestrator-20260913
-    inputs:
-      should_pass: true
-    depends_on: [T-ENG001]
-    promotion:
-      require_workflow_success: true
-      require_artifact: true
-      validator: artifact_presence_only
