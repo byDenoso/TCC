@@ -79,7 +79,7 @@ class GovernanceGateTests(unittest.TestCase):
             "entity_kind": "governance",
             "entity_name": "NEXO_RSI_POLICY",
             "expected_version": 1,
-            "changes": {"writer_authority": "EMERGENT"},
+            "changes": {"unrecognized_policy_option": True},
             "writer_role": "EMERGENT",
             "event_type": "POLICY_PROMOTION",
             "autonomy_level": "L4",
