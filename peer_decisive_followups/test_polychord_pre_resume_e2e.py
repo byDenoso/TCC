@@ -68,9 +68,10 @@ def _write_run(folder: Path, info: dict, name: str) -> Path:
     return path
 
 
-def _partial_env() -> dict[str, str]:
+def _partial_env(sidecar: Path) -> dict[str, str]:
     env = dict(os.environ)
     env["POLYCHORD_BOOTSTRAP_SEGMENT_VALID"] = "4"
+    env["POLYCHORD_BOOTSTRAP_STATE_DIR"] = str(sidecar.resolve())
     return env
 
 
@@ -82,9 +83,6 @@ def _diagnostic(result: subprocess.CompletedProcess[str], state: Path) -> str:
 def _bootstrap_continuation(info: dict, output_prefix: Path) -> dict:
     continued = copy.deepcopy(info)
     continued["output"] = str(output_prefix)
-    # Pre-native-resume continuation is deliberately invisible to Cobaya's resume layer.
-    # Cobaya 3.6.2 only treats a native PolyChord .resume as resumable and otherwise
-    # deletes the raw directory. The patched PolyChord bootstrap restores its own state.
     continued["resume"] = False
     continued["force"] = False
     return continued
@@ -97,13 +95,16 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
 
     first = tmp_path / "seg0"
     first_prefix = first / "data" / "chain"
+    sidecar0 = first / "bootstrap-sidecar"
+    state0 = sidecar0 / "chain.bootstrap"
     info0 = _base(packages, first_prefix)
     run0 = _write_run(first, info0, "run.yaml")
-    r0 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run0)], first, env=_partial_env())
-    state0 = first / "data" / "chain_polychord_raw" / "chain.bootstrap"
+    r0 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run0)], first, env=_partial_env(sidecar0))
     assert r0.returncode == 86, (r0.stdout + "\n" + r0.stderr)[-5000:]
     assert state0.is_file() and _accepted(state0) == 4
-    assert not list((first / "data" / "chain_polychord_raw").glob("*.resume"))
+    first_raw = first / "data" / "chain_polychord_raw"
+    assert not list(first_raw.glob("*.bootstrap*")), "pre-resume state must live outside Cobaya-managed raw output"
+    assert not list(first_raw.glob("*.resume"))
 
     bundle0 = tmp_path / "bundle0"
     m0 = promote_bootstrap_bundle(
@@ -113,15 +114,16 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
 
     second = tmp_path / "seg1"
     second_prefix = second / "data" / "chain"
+    sidecar1 = second / "bootstrap-sidecar"
+    state1 = sidecar1 / "chain.bootstrap"
     info1 = _bootstrap_continuation(info0, second_prefix)
-    state1 = second / "data" / "chain_polychord_raw" / "chain.bootstrap"
     restore_bootstrap_bundle(
         bundle0, state1,
         {"model": "M1", "science_sha": sha256_json(science), "runtime_sha": sha256_json(runtime),
          "checkpoint_digest": m0["checkpoint_digest"]},
     )
     run1 = _write_run(second, info1, "run.yaml")
-    r1 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run1)], second, env=_partial_env())
+    r1 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run1)], second, env=_partial_env(sidecar1))
     assert r1.returncode == 86, _diagnostic(r1, state1)
     assert state1.is_file() and _accepted(state1) == 8, _diagnostic(r1, state1)
 
@@ -133,15 +135,16 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
 
     third = tmp_path / "seg2"
     third_prefix = third / "data" / "chain"
+    sidecar2 = third / "bootstrap-sidecar"
+    state2 = sidecar2 / "chain.bootstrap"
     info2 = _bootstrap_continuation(info0, third_prefix)
-    state2 = third / "data" / "chain_polychord_raw" / "chain.bootstrap"
     restore_bootstrap_bundle(
         bundle1, state2,
         {"model": "M1", "science_sha": sha256_json(science), "runtime_sha": sha256_json(runtime),
          "checkpoint_digest": m1["checkpoint_digest"]},
     )
     run2 = _write_run(third, info2, "run.yaml")
-    r2 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run2)], third, env=_partial_env())
+    r2 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run2)], third, env=_partial_env(sidecar2))
     assert r2.returncode == 0, (r2.stdout + "\n" + r2.stderr)[-5000:]
     third_raw = third / "data" / "chain_polychord_raw"
     assert not state2.exists()
@@ -154,6 +157,7 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
     ref_run = _write_run(reference, ref_info, "run.yaml")
     reference_env = dict(os.environ)
     reference_env.pop("POLYCHORD_BOOTSTRAP_SEGMENT_VALID", None)
+    reference_env.pop("POLYCHORD_BOOTSTRAP_STATE_DIR", None)
     rr = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(ref_run)], reference, env=reference_env)
     assert rr.returncode == 0, (rr.stdout + "\n" + rr.stderr)[-5000:]
     stats_reference = next((reference / "data" / "chain_polychord_raw").glob("*.stats"))
