@@ -115,6 +115,7 @@ jobs:
           path: |
             benchmark_result.json
             idm_preflight_result.json
+            idm_scientific_battery_result.json
             nexo_execution_result.json
             nexo_verification.json
           if-no-files-found: warn
