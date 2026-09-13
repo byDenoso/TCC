@@ -8,6 +8,7 @@ on:
       - 'runtime/nexo_agent_api/**'
       - 'benchmarks/idm_runtime_preflight.py'
       - 'benchmarks/idm_scientific_battery.py'
+      - 'benchmarks/idm_scientific_battery_bootstrap.py'
       - '.github/workflows/nexo-execution-tests.yml'
   workflow_dispatch:
 
