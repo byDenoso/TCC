@@ -28,4 +28,4 @@ jobs:
           python -m pip install -U pip pyyaml
       - name: Run campaign contract test
         run: |
-          python peer_n31p_spt3g_20260729/test_campaign.py
+          python -m peer_n31p_spt3g_20260729.test_campaign
