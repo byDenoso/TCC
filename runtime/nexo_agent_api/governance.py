@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from dataclasses import dataclass
 from typing import Any
 
@@ -11,6 +13,7 @@ class GovernanceDecision:
     gate: str
     issue_code: str | None = None
     message: str | None = None
+    proposal_hash: str | None = None
 
 
 L4_POLICY_TARGET = ("governance", "NEXO_RSI_POLICY")
@@ -49,6 +52,23 @@ def _nonempty_string(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
+def proposal_hash(request: dict[str, Any]) -> str:
+    payload = {
+        "entity_kind": request.get("entity_kind"),
+        "entity_name": request.get("entity_name"),
+        "expected_version": request.get("expected_version"),
+        "changes": request.get("changes"),
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _valid_l3_intent(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return all(_nonempty_string(value.get(key)) for key in ("summary", "reason", "metric"))
+
+
 def _valid_promotion_evidence(value: Any) -> bool:
     if not isinstance(value, dict):
         return False
@@ -62,6 +82,17 @@ def _valid_promotion_evidence(value: Any) -> bool:
     if isinstance(gain, bool) or not isinstance(gain, (int, float)) or gain <= 0:
         return False
     return value.get("regression_passed") is True
+
+
+def _valid_human_approval(value: Any, expected_proposal_hash: str) -> bool:
+    if not isinstance(value, dict):
+        return False
+    return (
+        value.get("approved") is True
+        and str(value.get("approved_by") or "").upper() == "HUMAN"
+        and _nonempty_string(value.get("approval_ref"))
+        and value.get("proposal_hash") == expected_proposal_hash
+    )
 
 
 def _declared_level(request: dict[str, Any]) -> str:
@@ -81,7 +112,7 @@ def evaluate_governance(request: dict[str, Any]) -> GovernanceDecision:
             autonomy_level="L5",
             gate="L5_HUMAN_ONLY",
             issue_code="L5_BOUNDARY_HUMAN_AUTHORITY_REQUIRED",
-            message="L5 authority changes require human authority.",
+            message="L5 authority changes require explicit human action.",
         )
 
     declared = _declared_level(request)
@@ -93,8 +124,19 @@ def evaluate_governance(request: dict[str, Any]) -> GovernanceDecision:
             autonomy_level="L5",
             gate="L5_HUMAN_ONLY",
             issue_code="L5_BOUNDARY_HUMAN_AUTHORITY_REQUIRED",
-            message="L5 authority changes require human authority.",
+            message="L5 authority changes require explicit human action.",
         )
+
+    if effective == "L3":
+        if not _valid_l3_intent(request.get("l3_intent")):
+            return GovernanceDecision(
+                allowed=False,
+                autonomy_level="L3",
+                gate="L3_INTENT_REQUIRED",
+                issue_code="L3_INTENT_REQUIRED",
+                message="L3 autonomous action requires a declared intent, reason, and metric before execution.",
+            )
+        return GovernanceDecision(allowed=True, autonomy_level="L3", gate="PASS_WITH_REPORT")
 
     if effective != "L4":
         return GovernanceDecision(allowed=True, autonomy_level=effective, gate="PASS")
@@ -127,4 +169,20 @@ def evaluate_governance(request: dict[str, Any]) -> GovernanceDecision:
             message="L4 policy promotion requires positive evidence, regression pass, and rollback reference.",
         )
 
-    return GovernanceDecision(allowed=True, autonomy_level="L4", gate="PASS")
+    current_proposal_hash = proposal_hash(request)
+    if not _valid_human_approval(request.get("human_approval"), current_proposal_hash):
+        return GovernanceDecision(
+            allowed=False,
+            autonomy_level="L4",
+            gate="L4_APPROVAL_REQUIRED",
+            issue_code="L4_HUMAN_APPROVAL_REQUIRED",
+            message="L4 policy promotion is ready but requires explicit human approval for this exact proposal.",
+            proposal_hash=current_proposal_hash,
+        )
+
+    return GovernanceDecision(
+        allowed=True,
+        autonomy_level="L4",
+        gate="L4_HUMAN_APPROVED",
+        proposal_hash=current_proposal_hash,
+    )
