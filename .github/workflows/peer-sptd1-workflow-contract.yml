@@ -32,17 +32,31 @@ jobs:
               Path('.github/workflows/peer-n31p-spt3g-mcmc.yml'),
               Path('.github/workflows/peer-n31p-spt3g-20chains.yml'),
           ]
+          required = [
+              'peer-n31p-spt3g-d1-20260912',
+              'efe35b7bfd815a115d5123e210a6849a4175bc81',
+              'candl-like==2.0.3',
+              'spt_candl_data.SPT3G_D1_TnE',
+              'CosmoRec.v2.0.3b.tar.gz',
+              '2afb82b5512f7158a0291d3a73c6520455f0e55957f2965dccc5eef82af8da1b',
+              '3ef0272d6f7ba1231128872e56e6d4c12af8267b',
+              'planck_2018_lowl.TT',
+              'planck_2018_lowl.EE_sroll2',
+              'planck_2018_lensing.native',
+              'bao.desi_dr2.desi_bao_all',
+          ]
           for path in paths:
               text = path.read_text(encoding='utf-8')
               yaml.safe_load(text)
-              assert 'peer-n31p-spt3g-d1-20260912' in text, path
-              assert 'efe35b7bfd815a115d5123e210a6849a4175bc81' in text, path
-              assert 'candl-like==2.0.3' in text, path
-              assert 'spt_candl_data.SPT3G_D1_TnE' in text, path
-              # The legacy token may appear only inside a fail-closed negative assertion.
+              for token in required:
+                  assert token in text, (path, token)
+              assert 'SOURCE_RUN_ID' not in text, path
+              assert 'gh run download' not in text, path
+              assert 'validated-act-cosmorec-runtime-gslfix' not in text, path
+              assert 'official-likelihood-packages-v3' not in text, path
               assert 'spt3g_2022.TTTEEE: null' not in text, path
               assert 'cobaya-install spt_install.yaml' not in text, path
               assert 'xgarrido/spt_likelihoods' not in text, path
               assert "assert 'spt3g_2022.TTTEEE' not in" in text, path
-          print('SPT D1 production workflow contract: PASS')
+          print('SPT D1 self-rebuilding production workflow contract: PASS')
           PY
