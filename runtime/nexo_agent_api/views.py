@@ -7,7 +7,6 @@ from typing import Any
 from .service import AgentService
 
 ROLES = ("DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT")
-LEGACY_VIEW_DIRS = ("bootstrap", "queues")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -27,18 +26,22 @@ def _active_ids(root: Path) -> set[str] | None:
     }
 
 
-def _prune_legacy_views(root: Path) -> int:
-    removed = 0
-    for directory in LEGACY_VIEW_DIRS:
-        folder = root / directory
-        if not folder.exists():
-            continue
-        for role in ROLES:
-            path = folder / f"{role.lower()}.json"
-            if path.exists():
-                path.unlink()
-                removed += 1
-    return removed
+def _write_legacy_stubs(root: Path, role: str) -> None:
+    ref = f"role_views/{role.lower()}.json"
+    _write_json(root / "bootstrap" / f"{role.lower()}.json", {
+        "role": role,
+        "queue": [],
+        "queue_count": 0,
+        "compatibility": "SUPERSEDED_BY_ROLE_VIEW",
+        "role_view_ref": ref,
+    })
+    _write_json(root / "queues" / f"{role.lower()}.json", {
+        "role": role,
+        "items": [],
+        "count": 0,
+        "compatibility": "SUPERSEDED_BY_ROLE_VIEW",
+        "role_view_ref": ref,
+    })
 
 
 def materialize_role_views(root: str | Path) -> dict[str, Any]:
@@ -53,6 +56,6 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
             view["queue"] = queue
             view["queue_count"] = len(queue)
         _write_json(root / "role_views" / f"{role.lower()}.json", view)
+        _write_legacy_stubs(root, role)
         counts[role] = view["queue_count"]
-    pruned = _prune_legacy_views(root)
-    return {"roles": len(ROLES), "queue_counts": counts, "legacy_views_pruned": pruned}
+    return {"roles": len(ROLES), "queue_counts": counts, "legacy_mode": "STUBS_ONLY"}
