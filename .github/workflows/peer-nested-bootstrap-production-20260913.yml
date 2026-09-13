@@ -1,0 +1,191 @@
+name: PEER matched nested 5h bootstrap production
+
+on:
+  push:
+    branches: [run-peer-segmented-20260911]
+    paths:
+      - '.github/workflows/peer-nested-bootstrap-production-20260913.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+concurrency:
+  group: peer-nested-bootstrap-production-20260913
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    name: ${{ matrix.model }}-bootstrap-segment-0
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        model: [M1, M3]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout production orchestration
+        uses: actions/checkout@v4
+
+      - name: Checkout frozen science stack
+        uses: actions/checkout@v4
+        with:
+          repository: byDenoso/LH-Data
+          ref: act-dr6-peer-test-20260729
+          path: science-act
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install execution dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran make libgsl-dev openmpi-bin libopenmpi-dev git
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py 'cobaya==3.6.2' 'sacc>=0.12.0'
+
+      - name: Materialize and verify frozen runtime
+        run: |
+          set -euxo pipefail
+          python -m peer_decisive_followups.materialize_runtime \
+            --source-run '34561868964' \
+            --work "$GITHUB_WORKSPACE/runtime-work" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --manifest "$GITHUB_WORKSPACE/runtime_manifest.json"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('runtime_manifest.json')
+          m = json.loads(p.read_text())
+          print(json.dumps(m, indent=2, sort_keys=True))
+          PY
+
+      - name: Install and patch PolyChordLite 1.20.1
+        run: |
+          set -euxo pipefail
+          rm -rf "$COBAYA_PACKAGES_PATH/code/PolyChordLite"
+          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+          PC="$COBAYA_PACKAGES_PATH/code/PolyChordLite"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from peer_decisive_followups.polychord_bootstrap_patch import apply_bootstrap_patch
+          root = Path(os.environ['COBAYA_PACKAGES_PATH']) / 'code' / 'PolyChordLite'
+          print(json.dumps(apply_bootstrap_patch(root), indent=2, sort_keys=True))
+          PY
+          grep -q 'POLYCHORD_BOOTSTRAP_V1' "$PC/src/polychord/generate.F90"
+          grep -q 'POLYCHORD_BOOTSTRAP_STATE_DIR' "$PC/src/polychord/generate.F90"
+          make -C "$PC" PWD="$PC" veryclean
+          (
+            cd "$PC"
+            PWD="$PC" CC=mpicc CXX=mpicxx python setup.py build
+          )
+
+      - name: Freeze and verify production science contract
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          SEED=2026076101
+          [ "$MODEL" = M3 ] && SEED=2026076103
+          python -m peer_decisive_followups.production_config \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --model "$MODEL" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --root "$GITHUB_WORKSPACE/preflight_${MODEL}" \
+            --seed "$SEED"
+          python - <<'PY'
+          import os, yaml
+          from pathlib import Path
+          model = os.environ['MODEL_FOR_ASSERT']
+          p = Path(f'preflight_{model}/data.yaml')
+          info = yaml.safe_load(p.read_text())
+          assert info['params']['tau']['prior'] == {'min': 0.01, 'max': 0.1}
+          pc = info['sampler']['polychord']
+          assert pc['nlive'] == 400
+          assert pc['nprior'] == '20nlive'
+          assert pc['precision_criterion'] == 0.001
+          print('science-contract-ok', model, info['params']['tau']['prior'], pc['nlive'], pc['nprior'])
+          PY
+        env:
+          MODEL_FOR_ASSERT: ${{ matrix.model }}
+
+      - name: Run approximately 5h pre-resume bootstrap segment
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          SEED=2026076101
+          [ "$MODEL" = M3 ] && SEED=2026076103
+          rm -rf "$GITHUB_WORKSPACE/checkpoint_${MODEL}" "$GITHUB_WORKSPACE/evidence_${MODEL}"
+          python -m peer_decisive_followups.bootstrap_hosted_segment \
+            --model "$MODEL" \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --packages "$COBAYA_PACKAGES_PATH" \
+            --work "$GITHUB_WORKSPACE/evidence_${MODEL}" \
+            --runtime-manifest "$GITHUB_WORKSPACE/runtime_manifest.json" \
+            --output-bundle "$GITHUB_WORKSPACE/checkpoint_${MODEL}" \
+            --seed "$SEED" \
+            --segment 0 \
+            --segment-valid 2000 \
+            --poll-seconds 20 \
+            --grace-seconds 45
+
+      - name: Verify promoted bootstrap checkpoint
+        run: |
+          set -euxo pipefail
+          MODEL='${{ matrix.model }}'
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from peer_decisive_followups.bootstrap_state import verify_bootstrap_bundle
+          from peer_decisive_followups.production_contract import sha256_json
+          model = os.environ['MODEL_FOR_ASSERT']
+          bundle = Path(f'checkpoint_{model}')
+          manifest = json.loads((bundle / 'bootstrap_manifest.json').read_text())
+          verified = verify_bootstrap_bundle(bundle, {
+              'model': model,
+              'checkpoint_digest': manifest['checkpoint_digest'],
+          })
+          state = next((bundle / 'raw').glob('*.bootstrap'))
+          accepted = int(state.read_text().splitlines()[2].split()[0])
+          assert accepted == 2000, accepted
+          assert verified['resumable_native'] is False
+          print(json.dumps({'model': model, 'accepted': accepted, 'checkpoint_digest': verified['checkpoint_digest']}, indent=2))
+          PY
+        env:
+          MODEL_FOR_ASSERT: ${{ matrix.model }}
+
+      - name: Upload canonical bootstrap checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-nested-20260913-${{ matrix.model }}-bootstrap-segment-0
+          path: checkpoint_${{ matrix.model }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-nested-20260913-${{ matrix.model }}-bootstrap-segment-0-FAILED-diagnostics
+          path: |
+            evidence_${{ matrix.model }}/nested_${{ matrix.model }}/hosted_segment_status.json
+            evidence_${{ matrix.model }}/nested_${{ matrix.model }}/data/stdout.hosted-bootstrap.log
+            evidence_${{ matrix.model }}/nested_${{ matrix.model }}/data/stderr.hosted-bootstrap.log
+            evidence_${{ matrix.model }}/nested_${{ matrix.model }}/bootstrap-sidecar
+            runtime_manifest.json
+          retention-days: 7
+          if-no-files-found: ignore
