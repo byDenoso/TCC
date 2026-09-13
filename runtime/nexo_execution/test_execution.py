@@ -60,6 +60,15 @@ class ExecutionTests(unittest.TestCase):
         contract = ExecutionContract.from_dict(data)
         self.assertEqual(contract.argv, ["python3", "benchmarks/idm_runtime_preflight.py"])
 
+    def test_gz01_desi_edr_nz_pilot_is_allowlisted(self):
+        data = dict(BASE)
+        data["task_id"] = "gz01_desi_edr_nz_pilot"
+        contract = ExecutionContract.from_dict(data)
+        self.assertEqual(
+            contract.argv,
+            ["python3", "-m", "benchmarks.gz01_desi_edr_nz_pilot"],
+        )
+
     def test_idm_preflight_prepares_class_output_directory(self):
         with tempfile.TemporaryDirectory() as raw:
             repo = Path(raw)
