@@ -15,7 +15,7 @@ VALID_PROVIDERS = {"local", "github_actions"}
 TASK_REGISTRY: dict[str, list[str]] = {
     "cosmology_benchmark": ["python3", "benchmarks/cosmology_env_benchmark.py"],
     "idm_runtime_preflight": ["python3", "benchmarks/idm_runtime_preflight.py"],
-    "idm_scientific_battery": ["python3", "-m", "benchmarks.idm_scientific_battery"],
+    "idm_scientific_battery": ["python3", "-m", "benchmarks.idm_scientific_battery_bootstrap"],
 }
 
 
