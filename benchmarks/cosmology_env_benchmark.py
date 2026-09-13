@@ -88,7 +88,7 @@ def run():
 def dispatch():
     mode = os.getenv("NEXO_PARAM_MODE", "").strip()
     if mode == "gz01_desi_edr_nz_pilot":
-        from benchmarks.gz01_desi_edr_nz_pilot import main as run_gz01
+        from gz01_desi_edr_nz_pilot import main as run_gz01
         run_gz01()
         return
     run()
