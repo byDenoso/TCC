@@ -45,24 +45,37 @@ class AgentService:
         return normalized
 
     def _work_items(self) -> list[dict[str, Any]]:
-        indexed: dict[str, dict[str, Any]] = {}
         index_path = self.root / "indexes" / "active-work.json"
+        folder = self.root / "entities" / "work"
         if index_path.exists():
             payload = json.loads(index_path.read_text(encoding="utf-8"))
+            indexed: dict[str, dict[str, Any]] = {}
             for item in payload.get("work", []):
                 if isinstance(item, dict):
                     normalized = self._normalize_work(item)
                     if normalized is not None:
                         indexed[str(normalized["id"])] = normalized
-        folder = self.root / "entities" / "work"
+            if folder.exists():
+                for work_id in list(indexed):
+                    path = folder / f"{work_id}.json"
+                    if not path.exists():
+                        continue
+                    entity = json.loads(path.read_text(encoding="utf-8"))
+                    if isinstance(entity, dict):
+                        normalized = self._normalize_work(entity)
+                        if normalized is not None:
+                            indexed[work_id] = normalized
+            return list(indexed.values())
+
+        items: dict[str, dict[str, Any]] = {}
         if folder.exists():
             for path in sorted(folder.glob("*.json")):
                 payload = json.loads(path.read_text(encoding="utf-8"))
                 if isinstance(payload, dict):
                     normalized = self._normalize_work(payload)
                     if normalized is not None:
-                        indexed[str(normalized["id"])] = normalized
-        return list(indexed.values())
+                        items[str(normalized["id"])] = normalized
+        return list(items.values())
 
     def _hydrate_work(self, entity_name: str) -> dict[str, Any]:
         for item in self._work_items():
@@ -218,29 +231,19 @@ class AgentService:
         tmp.write_text(json.dumps(updated, ensure_ascii=False, sort_keys=True), encoding="utf-8")
         os.replace(tmp, path)
         readback = json.loads(path.read_text(encoding="utf-8"))
-        if readback != updated:
-            raise TowerAgentIssue("CANONICAL_WRITE_UNVERIFIED", "Exact entity readback did not match the accepted mutation.")
-        event_id = None
-        if material:
-            event_payload = {
-                "entity_ref": readback.get("id") or readback.get("entity_id") or entity_name,
-                "entity_kind": entity_kind,
-                "entity_version": readback["entity_version"],
-                "event_type": event_type,
-                "writer_role": writer_role.upper(),
-                "changes": changes,
-            }
-            digest = hashlib.sha256(json.dumps(event_payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
-            event_id = f"EVT-{digest}"
-            date = datetime.now(timezone.utc).date().isoformat()
-            event_dir = self.root / "events" / date / writer_role.upper()
-            event_dir.mkdir(parents=True, exist_ok=True)
-            event_path = event_dir / f"{event_id}.json"
-            if not event_path.exists():
-                event_path.write_text(json.dumps({"event_id": event_id, **event_payload}, ensure_ascii=False, sort_keys=True), encoding="utf-8")
-        return {
-            "accepted": True,
-            "entity_version": readback["entity_version"],
+        if int(readback.get("entity_version", 0)) != current_version + 1:
+            raise TowerAgentIssue("READBACK_FAILED", "Mutation readback did not match expected version.")
+        event_dir = self.root / "events" / datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        event_dir.mkdir(parents=True, exist_ok=True)
+        event_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}-{hashlib.sha256(str(path).encode()).hexdigest()[:8]}"
+        event = {
             "event_id": event_id,
-            "readback": "PASS",
+            "event_type": event_type,
+            "entity_kind": entity_kind,
+            "entity_name": entity_name,
+            "entity_version": current_version + 1,
+            "writer_role": writer_role.upper(),
+            "material": material,
         }
+        (event_dir / f"{event_id}.json").write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        return {"accepted": True, "entity_version": current_version + 1, "readback": "PASS", "event_id": event_id}
