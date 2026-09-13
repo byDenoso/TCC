@@ -8,12 +8,14 @@ on:
       - 'nexo_control/**'
       - 'tests/nexo/**'
       - '.github/workflows/nexo-*.yml'
+      - 'docs/nexo/**'
   pull_request:
     paths:
       - '.nexo/**'
       - 'nexo_control/**'
       - 'tests/nexo/**'
       - '.github/workflows/nexo-*.yml'
+      - 'docs/nexo/**'
   workflow_dispatch:
 
 permissions:
@@ -32,3 +34,39 @@ jobs:
         run: python -m pip install -U pytest pyyaml jsonschema
       - name: Run NEXO contract suite
         run: python -m pytest -q tests/nexo
+      - name: Exercise deterministic dry-run end to end
+        env:
+          NEXO_CAMPAIGN_PATH: .nexo/campaigns/example-noop.yaml
+          NEXO_DRY_RUN: 'true'
+          NEXO_ATTEMPT: '1'
+          NEXO_PLAN_OUTPUT: nexo-runtime/dispatch-plan.json
+          NEXO_PLAN_PATH: nexo-runtime/dispatch-plan.json
+          NEXO_OUTPUT_DIR: nexo-runtime
+        run: |
+          python -m nexo_control.cli
+          python -m nexo_control.campaign_runner
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          plan = json.loads(Path('nexo-runtime/dispatch-plan.json').read_text(encoding='utf-8'))
+          summary = json.loads(Path('nexo-runtime/campaign-summary.json').read_text(encoding='utf-8'))
+          assert plan['dry_run'] is True
+          assert plan['dispatches'] == []
+          assert len(plan['predicted_dispatches']) == 1
+          assert summary['dry_run'] is True
+          assert summary['executed_dispatch_count'] == 0
+          assert 'ready_for_learning' in summary
+          print('NEXO dry-run E2E contract: PASS')
+          PY
+      - name: Parse declarative NEXO data
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import yaml
+          for path in Path('.nexo').rglob('*.json'):
+              json.loads(path.read_text(encoding='utf-8'))
+          for path in list(Path('.nexo').rglob('*.yaml')) + list(Path('.nexo').rglob('*.yml')):
+              yaml.safe_load(path.read_text(encoding='utf-8'))
+          print('NEXO declarative data parse: PASS')
+          PY
