@@ -19,6 +19,7 @@ def _fixture_source() -> str:
     implicit none
     contains
 
+    !> Generate an initial set of live points distributed uniformly in the unit hypercube in parallel
     subroutine GenerateLivePoints(loglikelihood,prior,settings,RTI,mpi_information)
         use settings_module,  only: program_settings
         use random_module,   only: random_reals
