@@ -14,17 +14,135 @@ permissions:
 env:
   ACT_BASE_REF: act-dr6-peer-test-20260729
   SPT_SOURCE_REF: peer-n31p-spt3g-d1-20260912
-  SOURCE_RUN_ID: "30455821484"
   COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
   PYTHONPATH: ${{ github.workspace }}
   SPT_D1_REF: efe35b7bfd815a115d5123e210a6849a4175bc81
+  CAMB_REF: 3ef0272d6f7ba1231128872e56e6d4c12af8267b
+  FORUTILS_REF: 841f06d5356877e90437f94b2d976dd98f7f923c
+  COSMOREC_SHA256: 2afb82b5512f7158a0291d3a73c6520455f0e55957f2965dccc5eef82af8da1b
   OMP_NUM_THREADS: "1"
   OPENBLAS_NUM_THREADS: "1"
   MKL_NUM_THREADS: "1"
   NUMEXPR_NUM_THREADS: "1"
 
 jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SPT_SOURCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install reproducible build runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran make libgsl-dev wget
+          python -m pip install --upgrade pip
+          python -m pip install 'setuptools==83.0.0' 'wheel==0.47.0' \
+            'numpy<2.4' 'scipy<1.18' pyyaml 'cobaya==3.6.2'
+
+      - name: Build pinned CAMB 1.6.6 with pinned CosmoRec
+        run: |
+          set -euxo pipefail
+          wget -q -O CosmoRec.v2.0.3b.tar.gz \
+            https://www.cita.utoronto.ca/~jchluba/Recombination/_Downloads_/CosmoRec.v2.0.3b.tar.gz
+          echo "$COSMOREC_SHA256  CosmoRec.v2.0.3b.tar.gz" | sha256sum -c -
+          tar -xzf CosmoRec.v2.0.3b.tar.gz
+          COSMO_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -name 'CosmoRec*' | head -1)
+          test -n "$COSMO_DIR"
+          sed -i -E '/^CXXFLAGS[[:space:]]*=/ s/$/ -fPIC/' "$COSMO_DIR/Makefile.in"
+          make -C "$COSMO_DIR" all -j2
+
+          git clone --filter=blob:none --no-checkout https://github.com/cmbant/CAMB.git camb-src
+          git -C camb-src fetch --depth 1 origin "$CAMB_REF"
+          git -C camb-src checkout --detach "$CAMB_REF"
+          git -C camb-src submodule update --init --recursive
+          test "$(git -C camb-src rev-parse HEAD)" = "$CAMB_REF"
+          test "$(git -C camb-src/forutils rev-parse HEAD)" = "$FORUTILS_REF"
+          sed -i 's/^RECOMBINATION_FILES ?= recfast$/RECOMBINATION_FILES ?= recfast cosmorec/' \
+            camb-src/fortran/Makefile_main
+          sed -i "s|^COSMOREC_PATH ?=.*|COSMOREC_PATH ?=$COSMO_DIR|" \
+            camb-src/fortran/Makefile_main
+          (cd camb-src && python setup.py make)
+          mkdir -p wheelhouse camb-runtime
+          (cd camb-src && python -m pip wheel . --no-deps -w ../wheelhouse)
+          cp wheelhouse/camb-*.whl camb-runtime/
+          cp -a "$COSMO_DIR/Rec_database" camb-runtime/Rec_database
+          cp -a "$COSMO_DIR/Development" camb-runtime/Development
+          sha256sum CosmoRec.v2.0.3b.tar.gz > camb-runtime/cosmorec_source_sha256.txt
+          sha256sum camb-runtime/camb-*.whl > camb-runtime/camb_cosmorec_sha256.txt
+          find camb-runtime/Rec_database camb-runtime/Development -type f -print0 \
+            | sort -z | xargs -0 sha256sum > camb-runtime/cosmorec_data_sha256.txt
+
+      - name: Install fresh official Planck and DESI DR2 payload
+        run: |
+          set -euxo pipefail
+          mkdir -p "$COBAYA_PACKAGES_PATH"
+          cobaya-install \
+            planck_2018_lowl.TT \
+            planck_2018_lowl.EE_sroll2 \
+            planck_2018_lensing.native \
+            bao.desi_dr2.desi_bao_all \
+            --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+          find "$COBAYA_PACKAGES_PATH" -type f \
+            \( -name '*.fits' -o -name '*.dataset' -o -name '*.txt' -o -name '*.dat' \) \
+            -print0 | sort -z | xargs -0 sha256sum > official_payload_sha256.txt
+          find "$COBAYA_PACKAGES_PATH" -maxdepth 6 -type f -print | sort > installed_files.txt
+
+      - name: Validate rebuilt CAMB CosmoRec runtime
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find camb-runtime -type f -name 'camb-*.whl' | head -1)
+          test -n "$WHEEL"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath camb-runtime/Rec_database)" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath camb-runtime/Development)" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          python - <<'PY'
+          import camb
+          from camb import recombination
+          assert camb.__version__ == '1.6.6'
+          assert type(recombination.CosmoRec()).__name__ == 'CosmoRec'
+          print('CAMB/CosmoRec source rebuild identity gate: PASS')
+          PY
+          test -f "$GITHUB_WORKSPACE/Rec_database/Effective_Rates.HI/Effective_Rate_Tables.nS_3/res_state_list.dat"
+          test -f "$GITHUB_WORKSPACE/Development/Helium/Helium.Data.lite/He4_SS.dat"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          print(sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+
+      - name: Package same-run runtime and likelihood payload
+        run: |
+          set -euxo pipefail
+          rm -f peer-sptd1-runtime-payload.tar.gz
+          tar -czf peer-sptd1-runtime-payload.tar.gz \
+            camb-runtime packages official_payload_sha256.txt installed_files.txt camb_ldd.txt
+          sha256sum peer-sptd1-runtime-payload.tar.gz > peer-sptd1-runtime-payload.tar.gz.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peer-sptd1-runtime-payload-${{ github.run_id }}
+          path: |
+            peer-sptd1-runtime-payload.tar.gz
+            peer-sptd1-runtime-payload.tar.gz.sha256
+          retention-days: 2
+
   shard:
+    needs: prepare
     runs-on: ubuntu-24.04
     timeout-minutes: 350
     strategy:
@@ -36,7 +154,6 @@ jobs:
     env:
       MODEL: ${{ matrix.model }}
       SHARD: ${{ matrix.shard }}
-      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Check out shared ACT/PEER base
         uses: actions/checkout@v4
@@ -64,6 +181,20 @@ jobs:
             'cobaya==3.6.2' 'candl-like==2.0.3'
           python -m pytest -q act_dr6_mcmc_20260729/test_convergence_gate.py
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: peer-sptd1-runtime-payload-${{ github.run_id }}
+          path: runtime-payload
+
+      - name: Activate rebuilt likelihood payload
+        run: |
+          set -euxo pipefail
+          (cd runtime-payload && sha256sum -c peer-sptd1-runtime-payload.tar.gz.sha256)
+          tar -xzf runtime-payload/peer-sptd1-runtime-payload.tar.gz -C "$GITHUB_WORKSPACE"
+          test -d "$COBAYA_PACKAGES_PATH"
+          test -n "$(find camb-runtime -type f -name 'camb-*.whl' -print -quit)"
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+
       - name: Pin official SPT-3G D1 data package
         run: |
           set -euxo pipefail
@@ -80,26 +211,12 @@ jobs:
           print('SPT-3G D1 package identity gate: PASS')
           PY
 
-      - name: Download byte-verified PEER runtime and likelihood payload
+      - name: Activate rebuilt CAMB CosmoRec
         run: |
           set -euxo pipefail
-          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
-            --name validated-act-cosmorec-runtime-gslfix --dir validated
-          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" \
-            --name official-likelihood-packages-v3 --dir payload
-          test -n "$(find validated -type f -name 'camb-*.whl' -print -quit)"
-          test -f payload/official-likelihood-packages-v3.tar.gz
-          (cd payload && sha256sum -c official-likelihood-packages-v3.tar.gz.sha256)
-          tar -xzf payload/official-likelihood-packages-v3.tar.gz -C "$GITHUB_WORKSPACE"
-          test -d "$COBAYA_PACKAGES_PATH"
-          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
-
-      - name: Activate byte-verified CAMB CosmoRec
-        run: |
-          set -euxo pipefail
-          WHEEL=$(find validated -type f -name 'camb-*.whl' | head -1)
-          DB=$(find validated -type d -name Rec_database | head -1)
-          DEV=$(find validated -type d -name Development | head -1)
+          WHEEL=$(find camb-runtime -type f -name 'camb-*.whl' | head -1)
+          DB=$(find camb-runtime -type d -name Rec_database | head -1)
+          DEV=$(find camb-runtime -type d -name Development | head -1)
           test -n "$WHEEL"; test -n "$DB"; test -n "$DEV"
           python -m pip install --force-reinstall --no-deps "$WHEEL"
           rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
@@ -109,8 +226,10 @@ jobs:
           CAMBLIB=$(python - <<'PY'
           from pathlib import Path
           import camb
-          root = Path(camb.__file__).resolve().parent
-          print(sorted(root.glob('camblib*.so'))[0])
+          from camb import recombination
+          assert camb.__version__ == '1.6.6'
+          assert type(recombination.CosmoRec()).__name__ == 'CosmoRec'
+          print(sorted(Path(camb.__file__).resolve().parent.glob('camblib*.so'))[0])
           PY
           )
           ldd "$CAMBLIB" | tee camb_ldd.txt
