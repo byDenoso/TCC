@@ -84,5 +84,15 @@ def run():
     Path("benchmark_result.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(out, indent=2))
 
-if __name__ == "__main__":
+
+def dispatch():
+    mode = os.getenv("NEXO_PARAM_MODE", "").strip()
+    if mode == "gz01_desi_edr_nz_pilot":
+        from benchmarks.gz01_desi_edr_nz_pilot import main as run_gz01
+        run_gz01()
+        return
     run()
+
+
+if __name__ == "__main__":
+    dispatch()
