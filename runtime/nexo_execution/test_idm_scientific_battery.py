@@ -27,11 +27,16 @@ class IDMBatteryContractTests(unittest.TestCase):
             ["python3", "-m", "benchmarks.idm_scientific_battery_bootstrap"],
         )
 
-    def test_battery_runtime_pins_numpy_and_cython(self):
-        from benchmarks.idm_scientific_battery_bootstrap import CYTHON_VERSION, NUMPY_VERSION
+    def test_battery_runtime_pins_numpy_cython_and_scipy(self):
+        from benchmarks.idm_scientific_battery_bootstrap import (
+            CYTHON_VERSION,
+            NUMPY_VERSION,
+            SCIPY_VERSION,
+        )
 
         self.assertEqual(NUMPY_VERSION, "1.26.4")
         self.assertEqual(CYTHON_VERSION, "3.0.12")
+        self.assertEqual(SCIPY_VERSION, "1.13.1")
 
     def test_battery_defines_exactly_15_unique_cases(self):
         from benchmarks.idm_scientific_battery import build_cases
