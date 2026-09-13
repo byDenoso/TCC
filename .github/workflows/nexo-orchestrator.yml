@@ -1,0 +1,60 @@
+name: NEXO GitHub orchestrator
+run-name: NEXO orchestrator ${{ inputs.campaign_path }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      campaign_path:
+        description: Campaign manifest under .nexo/campaigns
+        required: true
+        default: .nexo/campaigns/example-noop.yaml
+        type: string
+      dry_run:
+        description: Validate and plan without dispatching executors
+        required: true
+        default: true
+        type: boolean
+      attempt:
+        description: Bounded campaign attempt number
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: nexo-orchestrator-${{ github.ref }}-${{ inputs.campaign_path }}
+  cancel-in-progress: false
+
+jobs:
+  orchestrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXO_CAMPAIGN_PATH: ${{ inputs.campaign_path }}
+      NEXO_DRY_RUN: ${{ inputs.dry_run }}
+      NEXO_ATTEMPT: ${{ inputs.attempt }}
+      NEXO_PLAN_OUTPUT: nexo-runtime/dispatch-plan.json
+      NEXO_PLAN_PATH: nexo-runtime/dispatch-plan.json
+      NEXO_OUTPUT_DIR: nexo-runtime
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install NEXO contract dependencies
+        run: python -m pip install pyyaml jsonschema
+      - name: Validate campaign and build deterministic execution plan
+        run: python -m nexo_control.cli
+      - name: Execute plan or persist dry-run receipt
+        run: python -m nexo_control.campaign_runner
+      - name: Upload NEXO campaign receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexo-campaign-receipt-${{ github.run_id }}
+          path: nexo-runtime
+          retention-days: 30
