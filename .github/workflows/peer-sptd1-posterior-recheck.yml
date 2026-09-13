@@ -1,0 +1,101 @@
+name: PEER SPT D1 posterior recheck
+
+on:
+  push:
+    branches: [run-peer-segmented-20260911]
+    paths:
+      - ".github/workflows/peer-sptd1-posterior-recheck.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  SOURCE_RUN_ID: "34735574976"
+  SCIENCE_REF: d2fa24af459bd28e715b6dfe8feef9662b2d73e7
+
+jobs:
+  recheck:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SCIENCE_REF }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the diagnostic environment used by the original run
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            'numpy==2.3.5' 'scipy==1.17.1' 'pandas==3.0.5' \
+            'pyyaml==6.0.3' 'arviz==0.23.4'
+
+      - name: Download the preserved SPT D1 chains from the original run
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          pattern: peer-n31p-spt3g-d1-*-20260912
+          path: downloads
+
+      - name: Re-run the fixed convergence gate without re-sampling
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p recheck
+          for MODEL in N31P N31P_ALENS; do
+            ART="downloads/peer-n31p-spt3g-d1-${MODEL}-20260912"
+            test -d "$ART"
+            ROOT=$(find "$ART" -type d -name mcmc -printf '%h\n' | head -1)
+            test -n "$ROOT"
+
+            echo "===== ${MODEL}: chain inventory ====="
+            find "$ROOT/mcmc" -maxdepth 1 -type f -name 'chain.*.txt' -size +0c -printf '%f %s bytes\n' | sort
+            echo "===== ${MODEL}: Cobaya checkpoint ====="
+            cat "$ROOT/mcmc/chain.checkpoint" || true
+
+            set +e
+            python act_dr6_mcmc_20260729/convergence_gate.py \
+              --root "$ROOT" --burn 0.30 \
+              --output "recheck/${MODEL}.json"
+            CODE=$?
+            set -e
+            printf '%s\n' "$CODE" > "recheck/${MODEL}.exit_code"
+            echo "===== ${MODEL}: fixed gate exit ${CODE} ====="
+            cat "recheck/${MODEL}.json"
+          done
+
+      - name: Print compact posterior diagnostic summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          for model in ('N31P', 'N31P_ALENS'):
+              result = json.loads((Path('recheck') / f'{model}.json').read_text(encoding='utf-8'))
+              code = (Path('recheck') / f'{model}.exit_code').read_text(encoding='utf-8').strip()
+              print({
+                  'model': model,
+                  'gate_exit': int(code),
+                  'converged': result['converged'],
+                  'n_chains': result['n_chains_read'],
+                  'cobaya_converged': result['cobaya']['converged'],
+                  'cobaya_Rminus1_last': result['cobaya']['Rminus1_last'],
+                  'rhat_minus1_max': result['rhat_minus1_max'],
+                  'ess_bulk_min': result['ess_bulk_min'],
+                  'ess_tail_min': result['ess_tail_min'],
+              })
+          PY
+
+      - name: Upload repaired convergence diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-sptd1-posterior-recheck-34735574976
+          path: recheck
+          retention-days: 30
