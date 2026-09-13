@@ -74,7 +74,7 @@ jobs:
           print(json.dumps(apply_bootstrap_patch(root), indent=2, sort_keys=True))
           PY
           grep -q 'POLYCHORD_BOOTSTRAP_V1' "$PC/src/polychord/generate.F90"
-          rm -rf "$PC/build"
+          make -C "$PC" PWD="$PC" veryclean
           (
             cd "$PC"
             PWD="$PC" CC=mpicc CXX=mpicxx python setup.py build
