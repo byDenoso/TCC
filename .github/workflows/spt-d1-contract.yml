@@ -29,3 +29,44 @@ jobs:
       - name: Run campaign contract test
         run: |
           python -m peer_n31p_spt3g_20260729.test_campaign
+      - name: Pin and install official SPT-3G D1 release surface
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/SouthPoleTelescope/spt_candl_data.git spt-candl-data
+          git -C spt-candl-data checkout "$SPT_D1_REF"
+          test "$(git -C spt-candl-data rev-parse HEAD)" = "$SPT_D1_REF"
+          python -m pip install 'candl-like==2.0.3'
+          python -m pip install --no-deps ./spt-candl-data
+          python - <<'PY'
+          import importlib.metadata
+          import spt_candl_data
+          assert importlib.metadata.version('candl-like') == '2.0.3'
+          assert spt_candl_data.__version__ == '3.0.0'
+          assert spt_candl_data.SPT3G_D1_TnE.endswith('SPT3G_D1_TnE_index.yaml')
+          print('Official SPT D1 package gate: PASS')
+          PY
+      - name: Generate config from the pinned upstream D1 template
+        run: |
+          set -euxo pipefail
+          ROOT="$RUNNER_TEMP/spt-d1-config"
+          TEMPLATE="$GITHUB_WORKSPACE/spt-candl-data/cobaya/SPT3G_D1_TnE/cobaya_ttteee.yaml"
+          python -m peer_n31p_spt3g_20260729.campaign \
+            --model N31P \
+            --packages /tmp/packages \
+            --root "$ROOT" \
+            --spt-template "$TEMPLATE" \
+            --spt-data-ref "$SPT_D1_REF"
+          ROOT="$ROOT" python - <<'PY'
+          import json, os, yaml
+          from pathlib import Path
+          root = Path(os.environ['ROOT'])
+          info = yaml.safe_load((root / 'configs' / 'mcmc.yaml').read_text(encoding='utf-8'))
+          manifest = json.loads((root / 'manifest.json').read_text(encoding='utf-8'))
+          assert info['likelihood']['candl_like']['class'] == 'candl.interface.CandlCobayaLikelihood'
+          assert info['likelihood']['candl_like']['data_set_file'] == 'spt_candl_data.SPT3G_D1_TnE'
+          assert 'Tcal_ext150' in info['params']
+          assert info['params']['ombh2']['prior'] == {'min': 0.017, 'max': 0.027}
+          assert manifest['spt_data_ref'] == os.environ['SPT_D1_REF']
+          assert manifest['spt_dataset'] == 'SPT3G_D1_TnE'
+          print('Pinned upstream template gate: PASS')
+          PY
