@@ -1,0 +1,21 @@
+name: NEXO no-op executor
+
+on:
+  workflow_dispatch:
+    inputs:
+      correlation_id:
+        required: true
+        type: string
+      campaign_id:
+        required: true
+        type: string
+      test_id:
+        required: true
+        type: string
+      should_pass:
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
