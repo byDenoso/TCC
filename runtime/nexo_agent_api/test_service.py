@@ -126,19 +126,29 @@ class AgentServiceTests(unittest.TestCase):
         self.assertEqual(card["next_action"], "bind")
         self.assertNotIn("input_refs", card)
 
-    def test_materialized_views_write_one_bootstrap_and_queue_per_role(self) -> None:
+    def test_materialized_views_write_one_role_view_per_role_and_prune_legacy(self) -> None:
+        (self.root / "indexes").mkdir(parents=True)
+        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{"id": "W2"}]}), encoding="utf-8")
+        (self.root / "bootstrap").mkdir()
+        (self.root / "queues").mkdir()
+        (self.root / "bootstrap" / "executor.json").write_text("{}", encoding="utf-8")
+        (self.root / "queues" / "executor.json").write_text("{}", encoding="utf-8")
         self.write_work("w2", {
             "id": "W2", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR",
             "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
             "repository": "byDenoso/TCC", "source_revision": "abc", "required_outputs": ["o"],
             "validation_ref": "VAL", "runtime_available": True, "resource_lock_available": True,
         })
+        self.write_work("not-hot", {"id": "W-COLD", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR"})
         result = materialize_role_views(self.root)
         self.assertEqual(result["roles"], 5)
-        self.assertTrue((self.root / "bootstrap" / "executor.json").exists())
-        self.assertTrue((self.root / "queues" / "executor.json").exists())
-        executor = json.loads((self.root / "bootstrap" / "executor.json").read_text())
+        self.assertTrue((self.root / "role_views" / "executor.json").exists())
+        self.assertFalse((self.root / "bootstrap" / "executor.json").exists())
+        self.assertFalse((self.root / "queues" / "executor.json").exists())
+        executor = json.loads((self.root / "role_views" / "executor.json").read_text())
+        advisor = json.loads((self.root / "role_views" / "advisor.json").read_text())
         self.assertEqual(executor["queue_count"], 1)
+        self.assertEqual(advisor["queue_count"], 0)
 
 
 if __name__ == "__main__":
