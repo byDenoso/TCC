@@ -7,6 +7,7 @@ import sys
 
 NUMPY_VERSION = "1.26.4"
 CYTHON_VERSION = "3.0.12"
+SCIPY_VERSION = "1.13.1"
 
 
 def bootstrap_runtime() -> None:
@@ -23,6 +24,7 @@ def bootstrap_runtime() -> None:
             "--force-reinstall",
             f"numpy=={NUMPY_VERSION}",
             f"cython=={CYTHON_VERSION}",
+            f"scipy=={SCIPY_VERSION}",
         ],
         check=True,
     )
