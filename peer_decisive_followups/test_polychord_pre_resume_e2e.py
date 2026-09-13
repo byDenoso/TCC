@@ -75,6 +75,11 @@ def _partial_env() -> dict[str, str]:
     return env
 
 
+def _diagnostic(result: subprocess.CompletedProcess[str], state: Path) -> str:
+    state_text = state.read_text(encoding="utf-8") if state.is_file() else "<missing state>"
+    return "\n--- stdout ---\n" + result.stdout + "\n--- stderr ---\n" + result.stderr + "\n--- state ---\n" + state_text
+
+
 def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_path: Path):
     packages = Path(os.environ["COBAYA_PACKAGES_PATH"]).resolve()
     science = {"schema": "toy-pre-resume-v1", "seed": 13579, "nprior": 12}
@@ -112,8 +117,8 @@ def test_real_polychord_pre_resume_segments_match_uninterrupted_reference(tmp_pa
     relocate_cobaya_metadata(second_prefix, info1)
     run1 = _write_run(second, info1, "run.yaml")
     r1 = _run(["mpirun", "--oversubscribe", "-np", "2", "cobaya-run", str(run1)], second, env=_partial_env())
-    assert r1.returncode == 86, (r1.stdout + "\n" + r1.stderr)[-5000:]
-    assert state1.is_file() and _accepted(state1) == 8
+    assert r1.returncode == 86, _diagnostic(r1, state1)
+    assert state1.is_file() and _accepted(state1) == 8, _diagnostic(r1, state1)
 
     bundle1 = tmp_path / "bundle1"
     m1 = promote_bootstrap_bundle(
