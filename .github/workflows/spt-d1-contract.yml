@@ -1,0 +1,31 @@
+name: SPT D1 contract
+
+on:
+  push:
+    branches: [peer-n31p-spt3g-d1-20260912]
+    paths:
+      - "peer_n31p_spt3g_20260729/**"
+      - ".github/workflows/spt-d1-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SPT_D1_REF: efe35b7bfd815a115d5123e210a6849a4175bc81
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install structural-test dependencies
+        run: |
+          python -m pip install -U pip pyyaml
+      - name: Run campaign contract test
+        run: |
+          python peer_n31p_spt3g_20260729/test_campaign.py
