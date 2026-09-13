@@ -20,6 +20,13 @@ def _replace_once(source: str, old: str, new: str, label: str) -> str:
     return source.replace(old, new, 1)
 
 
+def _replace_first(source: str, old: str, new: str, label: str) -> str:
+    count = source.count(old)
+    if count < 1:
+        raise ValueError(f"upstream anchor {label!r} not found")
+    return source.replace(old, new, 1)
+
+
 _HELPERS = r'''
     subroutine get_bootstrap_segment_valid(segment_valid)
         implicit none
@@ -224,7 +231,7 @@ def patch_generate_source(source: str) -> str:
         "more_points_needed,sum_integers,sum_doubles,request_point,no_more_points,"
         "broadcast_integers,broadcast_doubles,mpi_synchronise\n"
     )
-    source = _replace_once(source, mpi_old, mpi_new, "MPI imports")
+    source = _replace_first(source, mpi_old, mpi_new, "GenerateLivePoints MPI imports")
 
     decl_old = "        integer :: nprior, ndiscarded\n"
     decl_new = decl_old + (
