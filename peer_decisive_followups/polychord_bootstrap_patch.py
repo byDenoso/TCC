@@ -290,17 +290,17 @@ def patch_generate_source(source: str) -> str:
 """
     source = _replace_once(source, init_old, init_new, "bootstrap initialization")
 
-    source = _replace_once(
+    source = _replace_first(
         source,
         "            do while(RTI%nlive(1)<nprior)\n",
         "            do while(RTI%nlive(1)<bootstrap_target)\n",
-        "linear generation target",
+        "GenerateLivePoints linear generation target",
     )
-    source = _replace_once(
+    source = _replace_first(
         source,
         "                    if(RTI%nlive(1)<nprior) then\n",
         "                    if(RTI%nlive(1)<bootstrap_target) then\n",
-        "MPI generation target",
+        "GenerateLivePoints MPI generation target",
     )
 
     reduction_anchor = """#ifdef MPI
