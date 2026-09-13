@@ -1,0 +1,18 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "EXEC-IDM-SCI-BATTERY-20260912-001",
+  "work_id": "WORK::SCI-UNIFIED-DARK-SECTOR-COUPLING-DISCRIMINANT-20260911",
+  "test_id": "T-UDS-COUPLING-BATTERY-15",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "83cf2bc33e15b990cc9dc5722b5860aa686d6c5c",
+  "task_id": "idm_scientific_battery",
+  "parameters": {
+    "source_revision": "dc55e59dec8f5c647df6e9d764f5c6960796e1df"
+  },
+  "seed": 20260912,
+  "timeout_minutes": 14,
+  "required_outputs": [
+    "idm_scientific_battery_result.json"
+  ]
+}
