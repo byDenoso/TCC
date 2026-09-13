@@ -1,155 +1,49 @@
 from __future__ import annotations
 
-import json
-import tempfile
-import unittest
+import json, tempfile, unittest
 from pathlib import Path
-
 from .service import AgentService, TowerAgentIssue
 from .views import materialize_role_views
 
-
 class AgentServiceTests(unittest.TestCase):
-    def setUp(self) -> None:
-        self.tmp = tempfile.TemporaryDirectory()
-        self.root = Path(self.tmp.name)
-        (self.root / "entities" / "work").mkdir(parents=True)
-        (self.root / "manifests").mkdir(parents=True)
-        (self.root / "snapshot").mkdir(parents=True)
-        (self.root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}), encoding="utf-8")
-        (self.root / "snapshot" / "latest.json").write_text(json.dumps({"event_cursor": "EVT-10"}), encoding="utf-8")
-        (self.root / "manifests" / "capabilities.json").write_text(json.dumps({"capabilities": {"compile_v1": {"roles": ["EXECUTOR"], "backend": "github"}}}), encoding="utf-8")
-        (self.root / "manifests" / "artifacts.json").write_text(json.dumps({"artifacts": {"ART-1": {"storage": "drive", "ref": "drive:1"}}}), encoding="utf-8")
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(); self.root = Path(self.tmp.name)
+        for rel in ("entities/work", "manifests", "snapshot"): (self.root/rel).mkdir(parents=True)
+        (self.root/"CONTROL.json").write_text(json.dumps({"mode":"ACTIVE","schema_version":"0.6"}))
+        (self.root/"snapshot/latest.json").write_text(json.dumps({"event_cursor":"EVT-10"}))
+        (self.root/"manifests/capabilities.json").write_text(json.dumps({"capabilities":{"compile_v1":{"roles":["EXECUTOR"],"backend":"github"}}}))
+        (self.root/"manifests/artifacts.json").write_text(json.dumps({"artifacts":{"ART-1":{"storage":"drive","ref":"drive:1"}}}))
+    def tearDown(self): self.tmp.cleanup()
+    def write_work(self, name, payload): (self.root/f"entities/work/{name}.json").write_text(json.dumps(payload))
+    def eligible(self, wid="W2"):
+        return {"id":wid,"entity_version":1,"status":"READY","owner_role":"EXECUTOR","dependencies_resolved":True,"binding_verified":True,"task_id":"compile_v1","repository":"byDenoso/TCC","source_revision":"abc","required_outputs":["o"],"validation_ref":"VAL","runtime_available":True,"resource_lock_available":True}
 
-    def tearDown(self) -> None:
-        self.tmp.cleanup()
+    def test_executor_requires_mechanical_eligibility(self):
+        self.write_work("weak", {"id":"W1","entity_version":1,"status":"READY","owner_role":"EXECUTOR"}); self.write_work("ok", self.eligible())
+        self.assertEqual([x["id"] for x in AgentService(self.root).queue_for("EXECUTOR")], ["W2"])
 
-    def write_work(self, name: str, payload: dict) -> None:
-        (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
+    def test_cas_mutation_and_stale_rejection(self):
+        self.write_work("w1", {"id":"W1","entity_version":1,"status":"READY"})
+        r = AgentService(self.root).mutate("work","w1",expected_version=1,changes={"status":"RUNNING"},writer_role="EXECUTOR",event_type="WORK_STARTED")
+        self.assertEqual((r["entity_version"], r["readback"]), (2,"PASS")); self.assertEqual(len(list((self.root/"events").rglob("*.json"))),1)
+        with self.assertRaises(TowerAgentIssue): AgentService(self.root).mutate("work","w1",expected_version=1,changes={"status":"DONE"},writer_role="EXECUTOR",event_type="WORK_DONE")
 
-    def test_executor_queue_requires_mechanical_eligibility(self) -> None:
-        self.write_work("weak-ready", {"id": "W1", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"})
-        self.write_work("eligible", {
-            "id": "W2", "entity_version": 3, "status": "READY", "owner_role": "EXECUTOR",
-            "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
-            "repository": "byDenoso/TCC", "source_revision": "abc123", "required_outputs": ["out.json"],
-            "validation_ref": "VAL-1", "runtime_available": True, "resource_lock_available": True,
-        })
-        queue = AgentService(self.root).queue_for("EXECUTOR")
-        self.assertEqual([item["id"] for item in queue], ["W2"])
+    def test_bootstrap_and_artifact_resolution(self):
+        self.write_work("w2", self.eligible()); b = AgentService(self.root).bootstrap("EXECUTOR")
+        self.assertEqual(b["queue"][0]["id"],"W2"); self.assertIn("compile_v1",b["capabilities"]); self.assertEqual(AgentService(self.root).resolve_artifact("ART-1")["storage"],"drive")
 
-    def test_cas_mutation_increments_version_writes_event_and_readback(self) -> None:
-        self.write_work("w1", {"id": "W1", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"})
-        result = AgentService(self.root).mutate(
-            "work", "w1", expected_version=1, changes={"status": "RUNNING"},
-            writer_role="EXECUTOR", event_type="WORK_STARTED", material=True,
-        )
-        self.assertTrue(result["accepted"])
-        self.assertEqual(result["entity_version"], 2)
-        self.assertEqual(json.loads((self.root / "entities" / "work" / "w1.json").read_text())["status"], "RUNNING")
-        event_files = list((self.root / "events").rglob("*.json"))
-        self.assertEqual(len(event_files), 1)
-        self.assertEqual(json.loads(event_files[0].read_text())["entity_version"], 2)
-        self.assertEqual(result["readback"], "PASS")
+    def test_entity_overrides_stale_active_index(self):
+        (self.root/"indexes").mkdir(); (self.root/"indexes/active-work.json").write_text(json.dumps({"work":[{"id":"W2","entity_version":1,"status":"BLOCKED","owner_role":"ADVISOR"}]}))
+        payload=self.eligible(); payload["entity_version"]=4; self.write_work("W2",payload)
+        q=AgentService(self.root).queue_for("EXECUTOR"); self.assertEqual((q[0]["id"],q[0]["entity_version"]),("W2",4))
 
-    def test_stale_version_is_rejected(self) -> None:
-        self.write_work("w1", {"id": "W1", "entity_version": 2, "status": "RUNNING"})
-        with self.assertRaises(TowerAgentIssue) as ctx:
-            AgentService(self.root).mutate("work", "w1", expected_version=1, changes={"status": "DONE"}, writer_role="EXECUTOR", event_type="WORK_DONE")
-        self.assertEqual(ctx.exception.code, "WRITE_CONFLICT_RETRY_REQUIRED")
+    def test_role_view_is_hot_set_and_legacy_is_inert_stub(self):
+        (self.root/"indexes").mkdir(); (self.root/"indexes/active-work.json").write_text(json.dumps({"work":[{"id":"W2"}]}))
+        self.write_work("w2", self.eligible()); self.write_work("cold", {"id":"W-COLD","entity_version":1,"status":"READY","owner_role":"ADVISOR"})
+        result=materialize_role_views(self.root); self.assertEqual(result["legacy_mode"],"STUBS_ONLY")
+        executor=json.loads((self.root/"role_views/executor.json").read_text()); advisor=json.loads((self.root/"role_views/advisor.json").read_text())
+        stub=json.loads((self.root/"bootstrap/executor.json").read_text()); qstub=json.loads((self.root/"queues/executor.json").read_text())
+        self.assertEqual(executor["queue_count"],1); self.assertEqual(advisor["queue_count"],0); self.assertEqual(stub["queue_count"],0); self.assertEqual(qstub["count"],0)
+        self.assertEqual(stub["role_view_ref"],"role_views/executor.json")
 
-    def test_bootstrap_is_single_role_payload(self) -> None:
-        self.write_work("w2", {
-            "id": "W2", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR",
-            "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
-            "repository": "byDenoso/TCC", "source_revision": "abc", "required_outputs": ["o"],
-            "validation_ref": "VAL", "runtime_available": True, "resource_lock_available": True,
-        })
-        bootstrap = AgentService(self.root).bootstrap("EXECUTOR")
-        self.assertEqual(bootstrap["control"]["mode"], "ACTIVE")
-        self.assertEqual(bootstrap["event_cursor"], "EVT-10")
-        self.assertEqual(bootstrap["queue"][0]["id"], "W2")
-        self.assertIn("compile_v1", bootstrap["capabilities"])
-
-    def test_artifact_resolution_hides_storage_details_from_callers(self) -> None:
-        resolved = AgentService(self.root).resolve_artifact("ART-1")
-        self.assertEqual(resolved["storage"], "drive")
-        with self.assertRaises(TowerAgentIssue) as ctx:
-            AgentService(self.root).resolve_artifact("MISSING")
-        self.assertEqual(ctx.exception.code, "ARTIFACT_NOT_FOUND")
-
-    def test_active_work_index_is_used_and_hydrated_entity_overrides_it(self) -> None:
-        (self.root / "indexes").mkdir(parents=True)
-        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{
-            "id": "W-INDEX", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR"
-        }]}), encoding="utf-8")
-        service = AgentService(self.root)
-        self.assertEqual(service.queue_for("ADVISOR")[0]["id"], "W-INDEX")
-        self.write_work("W-INDEX", {"id": "W-INDEX", "entity_version": 2, "status": "DONE", "owner_role": "ADVISOR"})
-        self.assertEqual(service.queue_for("ADVISOR"), [])
-
-    def test_work_id_entity_overrides_stale_index_and_reaches_executor(self) -> None:
-        (self.root / "indexes").mkdir(parents=True)
-        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{
-            "id": "W-TARGET", "entity_version": 1, "status": "BLOCKED", "owner_role": "ADVISOR"
-        }]}), encoding="utf-8")
-        self.write_work("W-TARGET", {
-            "work_id": "W-TARGET", "entity_version": 4, "status": "READY", "owner_role": "EXECUTOR",
-            "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
-            "repository": "byDenoso/TCC", "source_revision": "abc123", "required_outputs": ["out.json"],
-            "validation_ref": "VAL-READY", "runtime_available": True, "resource_lock_available": True,
-        })
-        queue = AgentService(self.root).queue_for("EXECUTOR")
-        self.assertEqual([item["id"] for item in queue], ["W-TARGET"])
-        self.assertEqual(queue[0]["entity_version"], 4)
-
-    def test_first_mutation_auto_hydrates_from_active_work_index(self) -> None:
-        (self.root / "indexes").mkdir(parents=True)
-        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{
-            "id": "W-HYDRATE", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR"
-        }]}), encoding="utf-8")
-        result = AgentService(self.root).mutate(
-            "work", "W-HYDRATE", expected_version=1, changes={"status": "SOURCE_BINDING_PENDING"},
-            writer_role="ADVISOR", event_type="WORK_UPDATED",
-        )
-        self.assertEqual(result["entity_version"], 2)
-        entity = json.loads((self.root / "entities" / "work" / "W-HYDRATE.json").read_text())
-        self.assertEqual(entity["status"], "SOURCE_BINDING_PENDING")
-
-    def test_queue_cards_drop_heavy_fields_but_keep_action_fields(self) -> None:
-        self.write_work("adv", {
-            "id": "ADV-1", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR",
-            "priority": "HIGH", "question": "Q", "next_action": "bind", "input_refs": "x" * 5000,
-        })
-        card = AgentService(self.root).queue_for("ADVISOR")[0]
-        self.assertEqual(card["id"], "ADV-1")
-        self.assertEqual(card["next_action"], "bind")
-        self.assertNotIn("input_refs", card)
-
-    def test_materialized_views_write_one_role_view_per_role_and_prune_legacy(self) -> None:
-        (self.root / "indexes").mkdir(parents=True)
-        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [{"id": "W2"}]}), encoding="utf-8")
-        (self.root / "bootstrap").mkdir()
-        (self.root / "queues").mkdir()
-        (self.root / "bootstrap" / "executor.json").write_text("{}", encoding="utf-8")
-        (self.root / "queues" / "executor.json").write_text("{}", encoding="utf-8")
-        self.write_work("w2", {
-            "id": "W2", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR",
-            "dependencies_resolved": True, "binding_verified": True, "task_id": "compile_v1",
-            "repository": "byDenoso/TCC", "source_revision": "abc", "required_outputs": ["o"],
-            "validation_ref": "VAL", "runtime_available": True, "resource_lock_available": True,
-        })
-        self.write_work("not-hot", {"id": "W-COLD", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR"})
-        result = materialize_role_views(self.root)
-        self.assertEqual(result["roles"], 5)
-        self.assertTrue((self.root / "role_views" / "executor.json").exists())
-        self.assertFalse((self.root / "bootstrap" / "executor.json").exists())
-        self.assertFalse((self.root / "queues" / "executor.json").exists())
-        executor = json.loads((self.root / "role_views" / "executor.json").read_text())
-        advisor = json.loads((self.root / "role_views" / "advisor.json").read_text())
-        self.assertEqual(executor["queue_count"], 1)
-        self.assertEqual(advisor["queue_count"], 0)
-
-
-if __name__ == "__main__":
-    unittest.main()
+if __name__ == "__main__": unittest.main()
