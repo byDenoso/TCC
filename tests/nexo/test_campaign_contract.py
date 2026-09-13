@@ -4,7 +4,7 @@ import copy
 
 import pytest
 
-from scripts.nexo.contracts import validate_campaign
+from nexo_control.contracts import validate_campaign
 
 
 def valid_campaign() -> dict:
@@ -110,6 +110,6 @@ def test_max_parallel_cannot_exceed_max_tests():
 @pytest.mark.parametrize("bad_key", ["run", "command", "shell", "script"])
 def test_command_injection_fields_are_rejected(bad_key):
     campaign = valid_campaign()
-    campaign["tests"][0]["inputs"][bad_key] = "rm -rf /"
+    campaign["tests"][0]["inputs"][bad_key] = "forbidden"
     with pytest.raises(ValueError, match="forbidden key"):
         validate_campaign(campaign)
