@@ -124,6 +124,17 @@ def build_spt_info(
     return info
 
 
+def prepare_resume_config(path: Path) -> None:
+    """Switch an existing Cobaya MCMC config from fresh-run to resume mode."""
+    path = Path(path)
+    info = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if not isinstance(info, dict):
+        raise ValueError(f"Invalid Cobaya config: {path}")
+    info["force"] = False
+    info["resume"] = True
+    path.write_text(yaml.safe_dump(info, sort_keys=False), encoding="utf-8")
+
+
 def write_configs(
     model: str,
     packages_path: str,
@@ -163,7 +174,11 @@ def write_configs(
         "mcmc": {
             "Rminus1_stop": 0.01,
             "Rminus1_cl_stop": 0.05,
-            "burn_in": 300,
+            # The real SPT D1 likelihood is slow enough that 300 warmup samples
+            # consumed an entire 150-minute segment before any chain rows were
+            # persisted. Fifty keeps adaptation while allowing the resumable
+            # campaign to emit samples well before the segment boundary.
+            "burn_in": 50,
             "learn_proposal": True,
             "learn_proposal_Rminus1_max": 30.0,
             "max_samples": 50000,
