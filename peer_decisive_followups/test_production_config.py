@@ -38,13 +38,15 @@ def _science_tree(tmp_path: Path) -> Path:
     return root
 
 
-def test_build_preserves_scientific_priors_and_production_sampler(tmp_path: Path):
+def test_build_applies_frozen_tau_floor_and_production_sampler(tmp_path: Path):
     science = _science_tree(tmp_path)
     root = tmp_path / "out"
     result = build_production_configs(science, "M3", "/packages", root, 1234, continuation=False)
     data = yaml.safe_load((root / "data.yaml").read_text(encoding="utf-8"))
+    prior = yaml.safe_load((root / "prior_volume.yaml").read_text(encoding="utf-8"))
     pc = data["sampler"]["polychord"]
-    assert data["params"]["tau"]["prior"] == {"min": 0.0, "max": 0.10}
+    assert data["params"]["tau"]["prior"] == {"min": 0.01, "max": 0.10}
+    assert prior["params"]["tau"]["prior"] == {"min": 0.01, "max": 0.10}
     assert data["params"]["peer_fede"]["prior"] == {"min": 0.0, "max": 0.18}
     assert data["params"]["Alens"]["prior"] == {"min": 0.5, "max": 1.5}
     assert pc["nlive"] == 400
@@ -60,24 +62,24 @@ def test_continuation_changes_only_execution_resume_semantics(tmp_path: Path):
     build_production_configs(science, "M1", "/packages", root, 4321, continuation=True)
     data = yaml.safe_load((root / "data.yaml").read_text(encoding="utf-8"))
     assert data["resume"] is True and data["force"] is False
-    assert data["params"]["tau"]["prior"]["min"] == 0.0
+    assert data["params"]["tau"]["prior"]["min"] == 0.01
     assert data["params"]["peer_fede"] == {"value": 0.0}
 
 
-def test_validate_frozen_config_rejects_science_drift(tmp_path: Path):
+def test_validate_frozen_config_rejects_tau_floor_regression(tmp_path: Path):
     science = _science_tree(tmp_path)
     root = tmp_path / "out"
     build_production_configs(science, "M1", "/packages", root, 77)
     path = root / "data.yaml"
     info = yaml.safe_load(path.read_text(encoding="utf-8"))
-    info["params"]["tau"]["prior"]["min"] = 0.01
+    info["params"]["tau"]["prior"]["min"] = 0.0
     path.write_text(yaml.safe_dump(info, sort_keys=False), encoding="utf-8")
     try:
         validate_frozen_config(path, "M1")
     except ValueError as exc:
         assert "tau" in str(exc)
     else:
-        raise AssertionError("tau prior drift was accepted")
+        raise AssertionError("tau prior regression was accepted")
 
 
 def test_validate_requires_exact_likelihood_stack(tmp_path: Path):
