@@ -55,7 +55,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install PolyChord E2E runtime
+      - name: Install and patch PolyChord E2E runtime
         run: |
           set -euxo pipefail
           sudo apt-get update
@@ -64,6 +64,21 @@ jobs:
           python -m pip install 'numpy<2.4' pyyaml pytest mpi4py 'cobaya==3.6.2'
           mkdir -p "$COBAYA_PACKAGES_PATH"
           cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+          PC="$COBAYA_PACKAGES_PATH/code/PolyChordLite"
+          test -f "$PC/src/polychord/generate.F90"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from peer_decisive_followups.polychord_bootstrap_patch import apply_bootstrap_patch
+          root = Path(os.environ['COBAYA_PACKAGES_PATH']) / 'code' / 'PolyChordLite'
+          print(json.dumps(apply_bootstrap_patch(root), indent=2, sort_keys=True))
+          PY
+          grep -q 'POLYCHORD_BOOTSTRAP_V1' "$PC/src/polychord/generate.F90"
+          make -C "$PC" clean
+          (
+            cd "$PC"
+            PWD="$PC" CC=mpicc CXX=mpicxx python setup.py build
+          )
       - name: Run real PolyChord checkpoint E2E tests
         run: |
           python -m pytest -q -m integration \
