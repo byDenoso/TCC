@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "GZ01-B03-20260913",
+  "work_id": "WORK::GZ01-B03-COVARIANCE-REDSHIFT",
+  "test_id": "GZ01-B03-COVARIANCE-REDSHIFT",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "400751e0f2a1acdc86df45894648c0ed325b1b2a",
+  "task_id": "gz01_covariance_redshift_envelope",
+  "parameters": {},
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": ["benchmark_result.json"]
+}
