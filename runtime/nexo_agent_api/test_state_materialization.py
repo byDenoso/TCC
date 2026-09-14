@@ -9,13 +9,13 @@ from .views import materialize_role_views
 
 
 class StateMaterializationTests(unittest.TestCase):
-    def test_reconciles_admitted_hot_index_and_snapshot_from_entities(self):
+    def test_reconciles_admitted_hot_index_snapshot_and_runtime_cursor(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            for rel in ("indexes", "entities/work", "snapshot", "manifests"):
+            for rel in ("indexes", "entities/work", "snapshot", "manifests", "events/2026-09-14", "events/migration"):
                 (root / rel).mkdir(parents=True)
             (root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}))
-            (root / "snapshot/latest.json").write_text(json.dumps({"schema_version": "0.6", "counts": {"active_work": 999}}))
+            (root / "snapshot/latest.json").write_text(json.dumps({"schema_version": "0.6", "event_cursor": "EVT-TOWER-V06-CUTOVER", "counts": {"active_work": 999}}))
             (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}))
             (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}))
             (root / "indexes/active-work.json").write_text(json.dumps({
@@ -38,6 +38,9 @@ class StateMaterializationTests(unittest.TestCase):
             (root / "entities/work/W3.json").write_text(json.dumps({
                 "id": "W3", "entity_version": 3, "status": "DONE", "owner_role": "ADVISOR", "kind": "RESEARCH"
             }))
+            (root / "events/migration/ZZZ.json").write_text(json.dumps({"event_id": "EVT-TOWER-V06-CUTOVER"}))
+            runtime_event = "20260914T042812842429Z-e6dbcab6"
+            (root / f"events/2026-09-14/{runtime_event}.json").write_text(json.dumps({"event_id": runtime_event}))
 
             materialize_role_views(root)
 
@@ -51,6 +54,7 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertNotIn("W3", by_id)
             self.assertEqual((by_id["W1"]["entity_version"], by_id["W1"]["status"]), (2, "RUNNING"))
             self.assertEqual(snapshot["counts"]["active_work"], 2)
+            self.assertEqual(snapshot["event_cursor"], runtime_event)
 
 
 if __name__ == "__main__":
