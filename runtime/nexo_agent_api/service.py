@@ -90,24 +90,38 @@ class AgentService:
 
     @staticmethod
     def _executor_eligible(item: dict[str, Any], capabilities: dict[str, Any]) -> bool:
+        if item.get("owner_role") != "EXECUTOR" or item.get("status") not in {"READY", "RUNNING", "CHECKPOINTED"}:
+            return False
+
         task_id = item.get("task_id")
-        capability = capabilities.get(str(task_id)) if task_id else None
-        capability_status = capability.get("status", "ACTIVE") if isinstance(capability, dict) else None
-        capability_ready = isinstance(capability, dict) and capability_status in {"ACTIVE", "PROVEN"}
-        required = (
-            item.get("status") == "READY",
-            item.get("dependencies_resolved") is True,
-            item.get("binding_verified") is True,
-            bool(task_id),
-            capability_ready,
-            bool(item.get("repository")),
-            bool(item.get("source_revision")),
-            bool(item.get("required_outputs")),
-            bool(item.get("validation_ref")),
-            item.get("runtime_available") is True,
-            item.get("resource_lock_available") is True,
+        if task_id:
+            capability = capabilities.get(str(task_id))
+            capability_status = capability.get("status", "ACTIVE") if isinstance(capability, dict) else None
+            capability_ready = isinstance(capability, dict) and capability_status in {"ACTIVE", "PROVEN"}
+            required = (
+                item.get("dependencies_resolved") is True,
+                item.get("binding_verified") is True,
+                capability_ready,
+                bool(item.get("repository")),
+                bool(item.get("source_revision")),
+                bool(item.get("required_outputs")),
+                bool(item.get("validation_ref")),
+                item.get("runtime_available") is True,
+                item.get("resource_lock_available") is True,
+            )
+            return all(required)
+
+        frozen_test = item.get("frozen_test")
+        if not isinstance(frozen_test, dict):
+            return False
+        required_frozen = (
+            bool(frozen_test.get("id")),
+            bool(frozen_test.get("method")),
+            bool(frozen_test.get("decision_rule")),
+            bool(frozen_test.get("outputs")),
+            bool(frozen_test.get("claim_boundary")),
         )
-        return all(required)
+        return all(required_frozen)
 
     @classmethod
     def _advisor_routed(cls, item: dict[str, Any]) -> bool:
