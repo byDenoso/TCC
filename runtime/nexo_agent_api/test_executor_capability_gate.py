@@ -57,6 +57,27 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         queue = AgentService(self.root).queue_for("EXECUTOR")
         self.assertEqual([item["id"] for item in queue], ["W-KNOWN"])
 
+    def test_executor_accepts_frozen_test_contract_without_registered_task_id(self) -> None:
+        payload = {
+            "id": "W-FROZEN",
+            "entity_version": 1,
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "question": "Is the frozen binding contract executable?",
+            "frozen_test": {
+                "id": "T01-BIND",
+                "method": "Resolve and validate the bound inputs.",
+                "decision_rule": "PASS only when all required bindings validate.",
+                "outputs": ["binding manifest", "validation receipt"],
+                "claim_boundary": "Binding readiness only.",
+            },
+        }
+        (self.root / "entities" / "work" / "W-FROZEN.json").write_text(json.dumps(payload), encoding="utf-8")
+
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+
+        self.assertEqual([item["id"] for item in queue], ["W-FROZEN"])
+
 
 if __name__ == "__main__":
     unittest.main()
