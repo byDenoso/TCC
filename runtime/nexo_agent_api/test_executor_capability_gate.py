@@ -77,6 +77,8 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         queue = AgentService(self.root).queue_for("EXECUTOR")
 
         self.assertEqual([item["id"] for item in queue], ["W-FROZEN"])
+        self.assertIn("frozen_test", queue[0])
+        self.assertEqual(queue[0]["frozen_test"]["id"], "T01-BIND")
 
 
 if __name__ == "__main__":
