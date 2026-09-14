@@ -1,0 +1,1 @@
+{"projects":[{"id":"PROJ::SCIENCE","status":"ACTIVE","source":"GITHUB"}],"work":[{"id":"WORK::A","status":"RUNNING","source":"GITHUB","entity_version":2}],"tests":[{"id":"TEST::A","status":"VERIFIED","source":"GITHUB","verification":"PASS"}],"relations":[{"id":"REL::A","status":"SUPPORTED","source":"GITHUB","entity_version":2}]}
