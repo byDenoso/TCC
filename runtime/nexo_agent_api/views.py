@@ -23,6 +23,8 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _is_hot(item: dict[str, Any]) -> bool:
+    if item.get("cold_backlog") is True:
+        return False
     status = str(item.get("status", ""))
     return status in HOT_STATUSES or (status == "VERIFIED" and item.get("learning_state") != "LEARNED")
 
