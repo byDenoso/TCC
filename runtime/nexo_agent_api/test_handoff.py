@@ -101,6 +101,40 @@ class HandoffProtocolTests(unittest.TestCase):
         self.assertEqual(ack["entity_version"], 7)
         self.assertEqual(ack["work_envelope"]["source_revision"], "abc123")
 
+    def test_inbox_suppresses_stale_handoff_after_work_moved_to_next_owner(self):
+        work_v1 = {
+            "id": "WORK::GZ01-B03",
+            "entity_version": 1,
+            "kind": "ACTION",
+            "status": "READY",
+            "owner_role": "ADVISOR",
+            "thread_id": "THR::SCIENCE::GZ-01",
+            "next_action": "freeze contract",
+        }
+        path = self.root / "entities/work/WORK::GZ01-B03.json"
+        path.write_text(json.dumps(work_v1))
+        service = AgentService(self.root)
+        created = service.emit_handoff(
+            from_role="DIRECTOR",
+            to_role="ADVISOR",
+            handoff_type="CAMPAIGN_READY_FOR_BINDING",
+            entity_ref=work_v1["id"],
+            thread_id=work_v1["thread_id"],
+            next_action=work_v1["next_action"],
+        )
+        self.assertEqual(service.inbox_for("ADVISOR")[0]["handoff_id"], created["handoff_id"])
+
+        work_v4 = dict(work_v1)
+        work_v4.update({
+            "entity_version": 4,
+            "owner_role": "EXECUTOR",
+            "advisor_state": "HANDED_OFF",
+            "next_action": "execute frozen test",
+        })
+        path.write_text(json.dumps(work_v4))
+
+        self.assertEqual(service.inbox_for("ADVISOR"), [])
+
 
 if __name__ == "__main__":
     unittest.main()

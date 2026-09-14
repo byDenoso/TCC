@@ -11,6 +11,7 @@ RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
 SEND_ROLES = RUNTIME_ROLES | {"DIRECTOR"}
 ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
+TERMINAL_WORK_STATES = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED"}
 INBOX_LIMIT = 5
 
 
@@ -61,6 +62,27 @@ def _work_envelope(self, entity_ref: str) -> dict | None:
     return None
 
 
+def _handoff_is_stale(self, event: dict) -> bool:
+    entity_ref = event.get("entity_ref")
+    if not entity_ref:
+        return False
+    current = _work_envelope(self, str(entity_ref))
+    if current is None:
+        return False
+    try:
+        event_version = int(event.get("entity_version") or 0)
+        current_version = int(current.get("entity_version") or 0)
+    except (TypeError, ValueError):
+        return False
+    if current_version <= event_version:
+        return False
+    if str(current.get("status", "")).upper() in TERMINAL_WORK_STATES:
+        return True
+    current_owner = str(current.get("owner_role") or "").upper()
+    recipient = str(event.get("to_role") or "").upper()
+    return bool(current_owner and recipient and current_owner != recipient)
+
+
 def emit_handoff(self, *, from_role: str, to_role: str, handoff_type: str, entity_ref: str, thread_id: str, next_action: str, correlation_id: str | None = None) -> dict:
     sender = from_role.upper()
     recipient = to_role.upper()
@@ -96,7 +118,13 @@ def inbox_for(self, role: str) -> list[dict]:
     recipient = role.upper()
     if recipient not in RUNTIME_ROLES:
         raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": recipient})
-    items = [event for event in _latest_by_handoff(self.root).values() if event.get("to_role") == recipient and event.get("state") in ACTIONABLE_STATES]
+    items = [
+        event
+        for event in _latest_by_handoff(self.root).values()
+        if event.get("to_role") == recipient
+        and event.get("state") in ACTIONABLE_STATES
+        and not _handoff_is_stale(self, event)
+    ]
     items.sort(key=lambda item: (str(item.get("opened_at", "")), str(item.get("handoff_id", ""))))
     return items[:INBOX_LIMIT]
 
