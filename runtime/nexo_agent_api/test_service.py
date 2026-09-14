@@ -4,6 +4,7 @@ import json, tempfile, unittest
 from pathlib import Path
 from .service import AgentService, TowerAgentIssue
 from .views import materialize_role_views
+from .test_state_materialization import StateMaterializationTests
 
 class AgentServiceTests(unittest.TestCase):
     def setUp(self):
