@@ -9,7 +9,7 @@ from .views import materialize_role_views
 
 
 class StateMaterializationTests(unittest.TestCase):
-    def test_reconciles_hot_index_and_snapshot_from_entities(self):
+    def test_reconciles_admitted_hot_index_and_snapshot_from_entities(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             for rel in ("indexes", "entities/work", "snapshot", "manifests"):
@@ -45,10 +45,12 @@ class StateMaterializationTests(unittest.TestCase):
             snapshot = json.loads((root / "snapshot/latest.json").read_text())
             by_id = {item["id"]: item for item in active["work"]}
 
-            self.assertEqual(active["count"], 3)
-            self.assertEqual(set(by_id), {"W1", "W2", "LEGACY"})
+            self.assertEqual(active["count"], 2)
+            self.assertEqual(set(by_id), {"W1", "LEGACY"})
+            self.assertNotIn("W2", by_id)
+            self.assertNotIn("W3", by_id)
             self.assertEqual((by_id["W1"]["entity_version"], by_id["W1"]["status"]), (2, "RUNNING"))
-            self.assertEqual(snapshot["counts"]["active_work"], 3)
+            self.assertEqual(snapshot["counts"]["active_work"], 2)
 
 
 if __name__ == "__main__":
