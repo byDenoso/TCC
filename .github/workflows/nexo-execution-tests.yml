@@ -29,4 +29,5 @@ jobs:
           python -m unittest runtime.nexo_agent_api.test_mutations -v
           python -m unittest runtime.nexo_agent_api.test_governance -v
           python -m unittest runtime.nexo_agent_api.test_legacy_routing -v
+          python -m unittest runtime.nexo_agent_api.test_state_materialization -v
           python -m unittest discover -s runtime/nexo_core -p 'test_*.py' -v
