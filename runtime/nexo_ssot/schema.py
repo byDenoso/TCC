@@ -20,7 +20,22 @@ _REQUIRED_SCALAR_FIELDS = {
     "generated_at": str,
 }
 
-_ID_KEYS = ("id", "record_id", "work_id", "test_id", "project_id", "relation_id", "decision_id", "event_id")
+_ID_KEYS = (
+    "id",
+    "record_id",
+    "work_id",
+    "test_id",
+    "meta_test_id",
+    "project_id",
+    "relation_id",
+    "cross_id",
+    "knowledge_id",
+    "learning_id",
+    "decision_id",
+    "event_id",
+    "integrity_id",
+    "thread_id",
+)
 
 
 def normalize_record(record: dict[str, Any]) -> dict[str, Any]:
