@@ -140,7 +140,7 @@ class AgentService:
     def _queue_card(item: dict[str, Any], role: str) -> dict[str, Any]:
         common = (
             "id", "entity_version", "status", "kind", "owner_role", "priority",
-            "thread_id", "question", "next_action", "blocker", "migration_state",
+            "thread_id", "question", "next_action", "blocker", "migration_state", "interdomain_ref",
         )
         executor = (
             "task_id", "implementation_ref", "repository", "source_revision",
