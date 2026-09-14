@@ -49,6 +49,23 @@ class MutationInboxTests(unittest.TestCase):
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "WRITE_CONFLICT_RETRY_REQUIRED")
 
+    def test_zero_version_creates_new_work(self) -> None:
+        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": []}), encoding="utf-8")
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-1", "entity_kind": "work", "entity_name": "WORK::NEW",
+            "expected_version": 0,
+            "changes": {"status": "READY", "owner_role": "EXECUTOR", "kind": "ACTION"},
+            "writer_role": "ADVISOR", "event_type": "WORK_READY"
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["entity_version"], 1)
+        self.assertEqual(receipt["readback"], "PASS")
+        entity = json.loads((self.root / "entities" / "work" / "WORK::NEW.json").read_text())
+        self.assertEqual(entity["id"], "WORK::NEW")
+        self.assertEqual(entity["entity_version"], 1)
+        self.assertEqual(entity["status"], "READY")
+        self.assertEqual(entity["owner_role"], "EXECUTOR")
+
     def test_path_traversal_entity_name_is_rejected(self) -> None:
         receipt = apply_mutation_request(self.root, {
             "request_id": "REQ-3", "entity_kind": "work", "entity_name": "../bad",
