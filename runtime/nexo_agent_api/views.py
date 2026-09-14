@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ PRIORITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2, "MEDIUM": 3, "LOW":
 STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT_DEPENDENCY": 4}
 PARKED_STATUSES = {"WAIT_DEPENDENCY"}
 HOT_STATUSES = {"READY", "RUNNING", "CHECKPOINTED", "WAIT_DEPENDENCY"}
+_RUNTIME_EVENT_NAME = re.compile(r"^\d{8}T\d{12}Z-[A-Za-z0-9]+\.json$")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -22,6 +24,20 @@ def _write_json(path: Path, payload: dict[str, Any]) -> None:
 def _is_hot(item: dict[str, Any]) -> bool:
     status = str(item.get("status", ""))
     return status in HOT_STATUSES or (status == "VERIFIED" and item.get("learning_state") != "LEARNED")
+
+
+def _latest_runtime_event_id(root: Path) -> str | None:
+    events_root = root / "events"
+    if not events_root.exists():
+        return None
+    candidates = [path for path in events_root.rglob("*.json") if _RUNTIME_EVENT_NAME.fullmatch(path.name)]
+    if not candidates:
+        return None
+    latest_path = max(candidates, key=lambda path: path.name)
+    payload = json.loads(latest_path.read_text(encoding="utf-8"))
+    if isinstance(payload, dict) and payload.get("event_id"):
+        return str(payload["event_id"])
+    return latest_path.stem
 
 
 def _refresh_hot_state(root: Path) -> dict[str, int]:
@@ -69,10 +85,9 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
     counts["active_work"] = len(refreshed)
     snapshot["counts"] = counts
 
-    event_files = sorted((root / "events").rglob("*.json")) if (root / "events").exists() else []
-    if event_files:
-        latest = json.loads(event_files[-1].read_text(encoding="utf-8"))
-        snapshot["event_cursor"] = latest.get("event_id", event_files[-1].stem) if isinstance(latest, dict) else event_files[-1].stem
+    event_cursor = _latest_runtime_event_id(root)
+    if event_cursor:
+        snapshot["event_cursor"] = event_cursor
     _write_json(snapshot_path, snapshot)
     return {"active_work": len(refreshed)}
 
