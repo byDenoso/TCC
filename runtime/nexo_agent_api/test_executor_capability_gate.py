@@ -44,6 +44,24 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         payload.update(extra)
         (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
 
+    def frozen_work(self, name: str = "W-FROZEN", **extra) -> dict:
+        payload = {
+            "id": name,
+            "entity_version": 1,
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "question": "Is the frozen binding contract executable?",
+            "frozen_test": {
+                "id": "T01-BIND",
+                "method": "Resolve and validate the bound inputs.",
+                "decision_rule": "PASS only when all required bindings validate.",
+                "outputs": ["binding manifest", "validation receipt"],
+                "claim_boundary": "Binding readiness only.",
+            },
+        }
+        payload.update(extra)
+        return payload
+
     def test_executor_rejects_unregistered_task_id(self) -> None:
         self.write_work("W-UNKNOWN", task_id="unknown_task")
         self.assertEqual(AgentService(self.root).queue_for("EXECUTOR"), [])
@@ -56,6 +74,24 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         self.write_work("W-KNOWN", task_id="known_task")
         queue = AgentService(self.root).queue_for("EXECUTOR")
         self.assertEqual([item["id"] for item in queue], ["W-KNOWN"])
+
+    def test_executor_accepts_frozen_test_contract_without_registered_task_id(self) -> None:
+        payload = self.frozen_work()
+        (self.root / "entities" / "work" / "W-FROZEN.json").write_text(json.dumps(payload), encoding="utf-8")
+
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+
+        self.assertEqual([item["id"] for item in queue], ["W-FROZEN"])
+        self.assertIn("frozen_test", queue[0])
+        self.assertEqual(queue[0]["frozen_test"]["id"], "T01-BIND")
+
+    def test_executor_queue_preserves_interdomain_ref(self) -> None:
+        payload = self.frozen_work(interdomain_ref="META::INTERDOMAIN::TEST-001")
+        (self.root / "entities" / "work" / "W-FROZEN.json").write_text(json.dumps(payload), encoding="utf-8")
+
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+
+        self.assertEqual(queue[0].get("interdomain_ref"), "META::INTERDOMAIN::TEST-001")
 
 
 if __name__ == "__main__":
