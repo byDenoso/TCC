@@ -1,0 +1,95 @@
+name: Materialize SSOT Pages
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ssot-pages
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    env:
+      SSOT_EXPORT_URL: ${{ secrets.SSOT_EXPORT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Require configured read endpoint
+        run: |
+          test -n "$SSOT_EXPORT_URL" || { echo 'CONFIG_MISSING: SSOT_EXPORT_URL'; exit 2; }
+
+      - name: Fetch public SSOT export
+        run: |
+          curl --fail --silent --show-error --location \
+            "${SSOT_EXPORT_URL}?op=export_public" \
+            --output /tmp/ssot-public.json
+
+      - name: Validate export and resolve state hash
+        id: state
+        run: |
+          python - <<'PY'
+          import json, os
+          from runtime.nexo_ssot.schema import validate_snapshot
+          p=json.load(open('/tmp/ssot-public.json',encoding='utf-8'))
+          if p.get('ok') is False:
+              raise SystemExit(f"export failed: {p.get('error')}: {p.get('message','')}")
+          errors=validate_snapshot(p)
+          if errors:
+              raise SystemExit('; '.join(errors))
+          h=p['state_hash'].removeprefix('sha256:')
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as f:
+              f.write(f"hash={h}\n")
+          PY
+
+      - name: Check whether this state was already published
+        id: seen
+        uses: actions/cache/restore@v4
+        with:
+          path: .ssot-published
+          key: ssot-state-${{ steps.state.outputs.hash }}
+
+      - name: Materialize static View API
+        if: steps.seen.outputs.cache-hit != 'true'
+        run: |
+          rm -rf /tmp/ssot-site
+          python scripts/materialize_ssot_view.py --input /tmp/ssot-public.json --output /tmp/ssot-site
+
+      - name: Upload Pages artifact
+        if: steps.seen.outputs.cache-hit != 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/ssot-site
+
+      - name: Deploy Pages
+        if: steps.seen.outputs.cache-hit != 'true'
+        uses: actions/deploy-pages@v4
+
+      - name: Record published state
+        if: steps.seen.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .ssot-published
+          printf '%s\n' '${{ steps.state.outputs.hash }}' > .ssot-published/state-hash
+
+      - name: Save published state marker
+        if: steps.seen.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .ssot-published
+          key: ssot-state-${{ steps.state.outputs.hash }}
+
+      - name: No change
+        if: steps.seen.outputs.cache-hit == 'true'
+        run: echo 'NO_CHANGE: state_hash already published'
