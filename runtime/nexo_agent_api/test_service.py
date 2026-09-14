@@ -55,4 +55,22 @@ class AgentServiceTests(unittest.TestCase):
         advisor=json.loads((self.root/"bootstrap/advisor.json").read_text())
         self.assertEqual(advisor["queue_count"],5); self.assertEqual(advisor["queue_limit"],5); self.assertEqual(advisor["queue"][0]["id"],"A6")
 
+    def test_role_view_parks_wait_dependency_behind_actionable_advisor_work(self):
+        (self.root/"indexes").mkdir()
+        items=[]
+        parked={"id":"WAIT-CRITICAL","entity_version":1,"status":"WAIT_DEPENDENCY","kind":"REVIEW","priority":"CRITICAL"}
+        items.append(parked); self.write_work("WAIT-CRITICAL",parked)
+        for i in range(5):
+            wid=f"READY-{i}"
+            item={"id":wid,"entity_version":1,"status":"READY","kind":"RESEARCH","priority":"HIGH"}
+            items.append(item); self.write_work(wid,item)
+        (self.root/"indexes/active-work.json").write_text(json.dumps({"work":items}))
+
+        materialize_role_views(self.root)
+        advisor=json.loads((self.root/"bootstrap/advisor.json").read_text())
+
+        self.assertEqual(advisor["queue_count"],5)
+        self.assertNotIn("WAIT-CRITICAL", [item["id"] for item in advisor["queue"]])
+        self.assertTrue(all(item["status"] == "READY" for item in advisor["queue"]))
+
 if __name__=="__main__": unittest.main()
