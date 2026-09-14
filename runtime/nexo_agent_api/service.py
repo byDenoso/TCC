@@ -144,7 +144,7 @@ class AgentService:
         )
         executor = (
             "task_id", "implementation_ref", "repository", "source_revision",
-            "required_outputs", "validation_ref", "result_ref",
+            "required_outputs", "validation_ref", "result_ref", "frozen_test",
         )
         learner = ("result_ref", "learning_state")
         keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ())
