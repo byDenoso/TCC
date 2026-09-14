@@ -54,6 +54,16 @@ def _latest_by_handoff(root: Path) -> dict[str, dict]:
 
 
 def _work_envelope(self, entity_ref: str) -> dict | None:
+    canonical_path = self.root / "entities" / "work" / f"{entity_ref}.json"
+    if canonical_path.exists():
+        try:
+            payload = json.loads(canonical_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            payload = None
+        if isinstance(payload, dict):
+            envelope = dict(payload)
+            envelope.setdefault("entity_version", 1)
+            return envelope
     for item in self._work_items():
         if str(item.get("id")) == entity_ref:
             envelope = dict(item)

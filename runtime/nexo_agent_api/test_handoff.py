@@ -135,6 +135,42 @@ class HandoffProtocolTests(unittest.TestCase):
 
         self.assertEqual(service.inbox_for("ADVISOR"), [])
 
+    def test_inbox_suppresses_terminal_cold_work_handoff_not_in_active_index(self):
+        work_v1 = {
+            "id": "WORK::GZ01-B02",
+            "entity_version": 1,
+            "kind": "ACTION",
+            "status": "VERIFIED",
+            "owner_role": "LEARNER",
+            "thread_id": "THR::SCIENCE::GZ-01",
+            "next_action": "learn",
+        }
+        path = self.root / "entities/work/WORK::GZ01-B02.json"
+        path.write_text(json.dumps(work_v1))
+        service = AgentService(self.root)
+        created = service.emit_handoff(
+            from_role="DIRECTOR",
+            to_role="LEARNER",
+            handoff_type="WORK_VERIFIED",
+            entity_ref=work_v1["id"],
+            thread_id=work_v1["thread_id"],
+            next_action=work_v1["next_action"],
+        )
+        self.assertEqual(service.inbox_for("LEARNER")[0]["handoff_id"], created["handoff_id"])
+
+        (self.root / "indexes").mkdir(parents=True)
+        (self.root / "indexes/active-work.json").write_text(json.dumps({"work": []}))
+        work_v5 = dict(work_v1)
+        work_v5.update({
+            "entity_version": 5,
+            "status": "DONE",
+            "owner_role": "ADVISOR",
+            "learning_state": "DONE",
+        })
+        path.write_text(json.dumps(work_v5))
+
+        self.assertEqual(service.inbox_for("LEARNER"), [])
+
 
 if __name__ == "__main__":
     unittest.main()
