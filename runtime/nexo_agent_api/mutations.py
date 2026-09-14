@@ -78,21 +78,30 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
 
     service = AgentService(root)
     path = root / "entities" / entity_kind / f"{entity_name}.json"
+    seeded_new_work = False
     if entity_kind == "work" and not path.exists():
-        try:
-            hydrated = service._hydrate_work(entity_name)
-        except TowerAgentIssue as exc:
-            return {
-                "request_id": request_id,
-                "accepted": False,
-                **governance_meta,
-                "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
-            }
-        try:
-            hydrated["entity_version"] = _integer_version(hydrated.get("entity_version", 1))
-        except ValueError:
-            return _invalid(request_id, "hydrated entity_version is invalid")
-        path.write_text(json.dumps(hydrated, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        if expected_version == 0:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps({"id": entity_name, "entity_version": 0}, ensure_ascii=False, sort_keys=True),
+                encoding="utf-8",
+            )
+            seeded_new_work = True
+        else:
+            try:
+                hydrated = service._hydrate_work(entity_name)
+            except TowerAgentIssue as exc:
+                return {
+                    "request_id": request_id,
+                    "accepted": False,
+                    **governance_meta,
+                    "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
+                }
+            try:
+                hydrated["entity_version"] = _integer_version(hydrated.get("entity_version", 1))
+            except ValueError:
+                return _invalid(request_id, "hydrated entity_version is invalid")
+            path.write_text(json.dumps(hydrated, ensure_ascii=False, sort_keys=True), encoding="utf-8")
 
     try:
         result = service.mutate(
@@ -105,6 +114,13 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
             material=bool(request.get("material", True)),
         )
     except TowerAgentIssue as exc:
+        if seeded_new_work and path.exists():
+            try:
+                seeded = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                seeded = None
+            if isinstance(seeded, dict) and int(seeded.get("entity_version", -1)) == 0:
+                path.unlink(missing_ok=True)
         return {
             "request_id": request_id,
             "accepted": False,
