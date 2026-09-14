@@ -57,7 +57,15 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
     except ValueError:
         return _invalid(request_id, "expected_version must be an integer")
 
-    governance = evaluate_governance(request)
+    changes = dict(changes)
+    if entity_kind == "work" and expected_version == 0 and "id" in changes:
+        if str(changes["id"]) != entity_name:
+            return _invalid(request_id, "create identity must match entity_name")
+        changes.pop("id")
+
+    governance_request = dict(request)
+    governance_request["changes"] = changes
+    governance = evaluate_governance(governance_request)
     governance_meta = {
         "autonomy_level": governance.autonomy_level,
         "governance_gate": governance.gate,
