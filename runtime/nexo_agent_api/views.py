@@ -10,6 +10,7 @@ ROLES = ("DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT")
 ROLE_QUEUE_LIMIT = 5
 PRIORITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2, "MEDIUM": 3, "LOW": 4}
 STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT_DEPENDENCY": 4}
+PARKED_STATUSES = {"WAIT_DEPENDENCY"}
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -29,6 +30,7 @@ def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
     return sorted(
         queue,
         key=lambda item: (
+            1 if str(item.get("status", "")) in PARKED_STATUSES else 0,
             0 if item.get("owner_role") == role else 1,
             PRIORITY_RANK.get(str(item.get("priority", "MEDIUM")), 9),
             STATUS_RANK.get(str(item.get("status", "")), 9),
