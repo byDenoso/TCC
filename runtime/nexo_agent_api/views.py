@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -26,18 +27,109 @@ def _is_hot(item: dict[str, Any]) -> bool:
     return status in HOT_STATUSES or (status == "VERIFIED" and item.get("learning_state") != "LEARNED")
 
 
-def _latest_runtime_event_id(root: Path) -> str | None:
+def _runtime_event_paths(root: Path) -> list[Path]:
     events_root = root / "events"
     if not events_root.exists():
-        return None
-    candidates = [path for path in events_root.rglob("*.json") if _RUNTIME_EVENT_NAME.fullmatch(path.name)]
+        return []
+    return sorted(
+        (path for path in events_root.rglob("*.json") if _RUNTIME_EVENT_NAME.fullmatch(path.name)),
+        key=lambda path: path.name,
+    )
+
+
+def _latest_runtime_event_id(root: Path) -> str | None:
+    candidates = _runtime_event_paths(root)
     if not candidates:
         return None
-    latest_path = max(candidates, key=lambda path: path.name)
+    latest_path = candidates[-1]
     payload = json.loads(latest_path.read_text(encoding="utf-8"))
     if isinstance(payload, dict) and payload.get("event_id"):
         return str(payload["event_id"])
     return latest_path.stem
+
+
+def _counter_dict(values: list[str]) -> dict[str, int]:
+    return dict(sorted(Counter(values).items()))
+
+
+def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event_cursor: str | None) -> dict[str, int]:
+    events: list[dict[str, Any]] = []
+    for path in _runtime_event_paths(root):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            events.append(payload)
+
+    receipts: list[dict[str, Any]] = []
+    receipts_root = root / "mutations" / "receipts"
+    if receipts_root.exists():
+        for path in sorted(receipts_root.glob("*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                receipts.append(payload)
+
+    statuses = [str(item.get("status", "UNKNOWN")) for item in active_items]
+    owners = [str(item.get("owner_role", "UNASSIGNED")) for item in active_items]
+    event_types = [str(item.get("event_type", "UNKNOWN")) for item in events]
+    writer_roles = [str(item.get("writer_role", "UNKNOWN")) for item in events]
+
+    accepted = sum(1 for item in receipts if item.get("accepted") is True)
+    rejected = sum(1 for item in receipts if item.get("accepted") is False)
+    readback_pass = sum(1 for item in receipts if item.get("readback") == "PASS")
+    readback_fail = sum(1 for item in receipts if item.get("readback") not in (None, "PASS"))
+    material_events = sum(1 for item in events if item.get("material") is True)
+    verified_events = sum(1 for event_type in event_types if "VERIFIED" in event_type)
+    decision_events = sum(1 for event_type in event_types if "DECISION" in event_type)
+
+    flow = {
+        "executor_ready": sum(1 for item in active_items if item.get("status") == "READY" and item.get("owner_role") == "EXECUTOR"),
+        "advisor_ready": sum(1 for item in active_items if item.get("status") == "READY" and item.get("owner_role") == "ADVISOR"),
+        "handoff_pending": sum(1 for item in active_items if item.get("status") == "READY" and item.get("owner_role") == "ADVISOR"),
+        "wait_dependency": sum(1 for item in active_items if item.get("status") == "WAIT_DEPENDENCY"),
+    }
+
+    payload = {
+        "schema_version": "0.6",
+        "classification": "DERIVED_NOT_AUTHORITY",
+        "truth_owner": "byDenoso/NEXO-Obsidian-Vault@main:TOWER_V06",
+        "source_event_cursor": event_cursor,
+        "active_work": {
+            "count": len(active_items),
+            "by_status": _counter_dict(statuses),
+            "by_owner": _counter_dict(owners),
+        },
+        "flow": flow,
+        "events": {
+            "runtime_total": len(events),
+            "material": material_events,
+            "verified": verified_events,
+            "decision": decision_events,
+            "by_type": _counter_dict(event_types),
+            "by_writer_role": _counter_dict(writer_roles),
+        },
+        "mutations": {
+            "receipts_total": len(receipts),
+            "accepted": accepted,
+            "rejected": rejected,
+            "readback_pass": readback_pass,
+            "readback_fail": readback_fail,
+        },
+        "roi": {
+            "mode": "PROXY_ONLY_NO_COST_DATA",
+            "cost_data": "UNAVAILABLE",
+            "useful_output_proxies": {
+                "verified_events": verified_events,
+                "decision_events": decision_events,
+                "material_events": material_events,
+            },
+            "note": "No monetary ROI is calculated without measured cost data. This snapshot exposes reconstructible operational proxies only.",
+        },
+    }
+    _write_json(root / "snapshot" / "ai-roi.json", payload)
+    return {
+        "runtime_events": len(events),
+        "mutation_receipts": len(receipts),
+        "executor_ready": flow["executor_ready"],
+    }
 
 
 def _refresh_hot_state(root: Path) -> dict[str, int]:
@@ -89,7 +181,8 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
     if event_cursor:
         snapshot["event_cursor"] = event_cursor
     _write_json(snapshot_path, snapshot)
-    return {"active_work": len(refreshed)}
+    telemetry = _write_ai_roi_snapshot(root, refreshed, event_cursor)
+    return {"active_work": len(refreshed), **telemetry}
 
 
 def _active_ids(root: Path) -> set[str] | None:
