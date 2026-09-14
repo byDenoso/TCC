@@ -13,7 +13,7 @@ class ReconcileTests(unittest.TestCase):
 
     def test_drive_wins_olympus(self):
         r = reconcile_exports({"olympus_summary":[{"id":"O1","program":"V3"}]},{"olympus_summary":[{"id":"O1","program":"V2"}]})
-        self.assertEqual(self.item(r,"olymus_summary","O1")["resolved"]["program"],"V3")
+        self.assertEqual(self.item(r,"olympus_summary","O1")["resolved"]["program"],"V3")
 
     def test_verified_result_wins(self):
         r = reconcile_exports({"tests":[{"id":"T1","status":"RUNNING"}]},{"tests":[{"id":"T1","status":"VERIFIED","verification":"PASS"}]})
