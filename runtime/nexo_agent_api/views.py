@@ -41,7 +41,6 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
                 entities[str(work_id)] = payload
 
     refreshed: list[dict[str, Any]] = []
-    seen: set[str] = set()
     for raw in existing_items:
         if not isinstance(raw, dict):
             continue
@@ -50,12 +49,6 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
             continue
         key = str(work_id)
         item = entities.get(key, raw)
-        seen.add(key)
-        if _is_hot(item):
-            refreshed.append(item)
-
-    for key in sorted(set(entities) - seen):
-        item = entities[key]
         if _is_hot(item):
             refreshed.append(item)
 
