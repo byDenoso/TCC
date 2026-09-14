@@ -2,80 +2,61 @@
 
 ## Objective
 
-Unify the operational state currently split between Google Drive and GitHub into the existing Google Spreadsheet `NEXO · SSOT CANONICAL` (file id `1e6s2dKOYVLNsPUguHI85RLVLwJKtlCsQZBJ1BE-UhaY`), rename it to `DENER · SSOT CANONICAL` without changing its file id, and make it the single state Truth Owner.
+Unify operational state currently split between Google Drive and GitHub into the existing Google Spreadsheet `NEXO · SSOT CANONICAL`, renamed at cutover to `DENER · SSOT CANONICAL`, while preserving its existing private Drive identity.
+
+The concrete spreadsheet identifier, sheet identifiers, deployment URL and credentials are private configuration. They MUST NOT appear in this public repository. The Apps Script adapter reads them from private Script Properties; GitHub consumes only the configured `SSOT_EXPORT_URL` secret.
 
 GitHub remains code, schemas, execution contracts, scientific compute and deployment. GitHub Pages remains a read-only visualization surface. No new database, agent or always-on backend is introduced.
-
-## Current-state findings
-
-- Drive contains richer historical science/program/campaign state and the substantive Olympus client registry.
-- GitHub `NEXO-Obsidian-Vault/TOWER_V06` contains newer operational work, interdomain and v0.6 control state.
-- TCC main already contains `runtime/nexo_view_api`, `runtime/nexo_agent_api`, typed mutation/readback semantics, `runtime/nexo_execution`, graph/template assets and scientific Actions.
-- Drive already contains `NEXO_ONE_v39_NexoOneCore.gs`, which provides a reusable Apps Script snapshot/projection pattern.
 
 ## Authority model after cutover
 
 - `DENER · SSOT CANONICAL` in Google Drive: canonical state Truth Owner.
-- `byDenoso/TCC`: code, schemas, compute, validation and Pages build logic.
+- `byDenoso/TCC`: public generic code, schemas, compute, validation and Pages build logic.
+- Private Apps Script/Drive configuration: concrete SSOT adapter and identifiers.
 - `byDenoso/NEXO-Obsidian-Vault/TOWER_V06`: frozen migration provenance / compatibility projection only.
 - GitHub Pages: sanitized read model only.
-- Heavy datasets and durable artifacts: Google Drive files referenced by stable IDs/URLs from SSOT records.
+- Heavy datasets and durable artifacts: Google Drive files referenced from canonical records.
 
 There is no bidirectional state synchronization. Pages is rebuilt from SSOT. Scientific Actions return result envelopes; they do not become state authority.
 
 ## Canonical logical tables
 
-The target logical model is:
+`SYSTEM`, `PROJECTS`, `WORK`, `TESTS`, `EVENTS`, `KNOWLEDGE`, `RELATIONS`, `DECISIONS`, `OLYMPUS`.
 
-1. `SYSTEM` — SSOT version, revision, authority, schema, last successful materialization and health.
-2. `PROJECTS` — active projects/programs/campaigns across science, Olympus and engineering.
-3. `WORK` — actionable units and ownership.
-4. `TESTS` — frozen tests, runs, terminal outcomes and evidence refs.
-5. `EVENTS` — append-only material event trail.
-6. `KNOWLEDGE` — verified object/procedural learning.
-7. `RELATIONS` — intra-domain and interdomain relations.
-8. `DECISIONS` — material decisions and supersession.
-9. `OLYMPUS` — private Olympus/client state.
-
-Existing legacy tabs may remain during migration but are labeled `LEGACY` or `PROJECTION` and excluded from the canonical API contract.
+Physical sheet names may differ during SHADOW migration. The adapter maps private storage to these logical names so frontend consumers never depend on row/column coordinates or concrete sheet names.
 
 ## Reconciliation precedence
-
-One-time reconciliation is explicit rather than last-write-wins:
 
 1. Newer v0.6 operational NEXO/Science work and interdomain state: GitHub TOWER_V06 wins.
 2. Olympus client/state records: Drive wins unless a newer verified record is explicitly identified.
 3. Historical science programs/campaigns/test registry: Drive is preserved.
 4. Verified execution artifact/result envelope: verified artifact wins for result fields.
-5. Unresolved semantic conflicts: write a `CONFLICT` reconciliation record; never silently overwrite.
+5. Unresolved semantic conflicts: emit `CONFLICT`; never silently overwrite.
 
-The migration produces an entity-level report with `DRIVE_ONLY`, `GIT_ONLY`, `EQUAL`, `MERGED` and `CONFLICT` classes before cutover.
+The migration produces `DRIVE_ONLY`, `GIT_ONLY`, `EQUAL`, `MERGED` and `CONFLICT` classifications before cutover. No timestamp-only last-write-wins rule is allowed across domains.
 
 ## Canonical API
 
-Reuse the existing Apps Script/NEXO ONE pattern and bind it to the unified SSOT spreadsheet.
+Reuse the existing Apps Script/NEXO ONE pattern and bind it privately to the unified SSOT spreadsheet.
 
 V1 read surface:
-
-- `GET/POST health`
-- `POST export_public` — sanitized deterministic projection for Pages.
-- `POST export_internal` — authenticated full export for migration/operations.
+- `health`
+- `export_public`
+- `export_internal`
 
 V1.1 write surface, enabled only after read path and reconciliation pass:
+- `ingest_result`
+- `mutate`
 
-- `POST ingest_result`
-- `POST mutate`
-
-Writes are typed, version-aware and idempotent. A mutation is successful only after exact readback. `accepted=true` without `readback=PASS` is not terminal success.
+Writes are typed, version-aware and idempotent. `accepted=true` is not terminal success without `readback=PASS`.
 
 ## View API for the app
 
-GitHub Pages never reads Sheets directly. Every three hours a GitHub Action calls `export_public`, validates the payload, computes/compares `state_hash`, and, only on change, materializes static JSON endpoints into the Pages artifact.
+GitHub Pages never reads Sheets directly. Every three hours a GitHub Action calls the configured private `export_public` endpoint, validates the payload, compares `state_hash`, and materializes static JSON only when state changed.
 
-Default cadence: `0 */3 * * *` plus `workflow_dispatch` for manual rebuild.
+Default cadence: `0 */3 * * *` plus `workflow_dispatch`.
 
-Target read paths:
-
+Public contract:
 - `/api/v1/health.json`
 - `/api/v1/snapshot.json`
 - `/api/v1/projects.json`
@@ -87,66 +68,46 @@ Target read paths:
 - `/api/v1/olympus-summary.json`
 - `/api/v1/graphs/catalog.json`
 - `/api/v1/graphs/science.json`
-- `/api/v1/graphs/olympus.json`
-- `/api/v1/graphs/interdomain.json`
-
-The frontend depends on this contract, never on Sheet row/column coordinates.
+- `/api/v1/graphs/clients.json`
+- `/api/v1/graphs/relations.json`
 
 ## Privacy boundary
 
-Pages receives no raw labs, medication/protocol detail, photos, private notes, full client measurements or other sensitive Olympus content. `olympus-summary.json` contains only fields approved for dashboard display, such as internal id/label, status, program, freshness and next action.
-
-The full Olympus state stays inside Drive/SSOT.
+Pages receives only an explicit allowlist summary for the private client domain. Full private client state remains inside Drive/SSOT. Public source code contains no concrete Drive identifiers.
 
 ## Scientific execution
 
-Existing `runtime/nexo_execution` and TCC GitHub Actions remain the compute path:
+Existing `runtime/nexo_execution` and TCC Actions remain compute:
 
 `SSOT frozen work -> Executor -> execution contract -> GitHub Action -> artifact + verification -> Executor acceptance -> SSOT ingest + readback`.
 
-GitHub Actions do not independently adjudicate science and do not write arbitrary Sheet cells.
-
-## Reuse policy
-
-MERGE / EXTEND / SUPERSEDE / CREATE:
-
-- MERGE: Drive content + TOWER_V06 current state during one-time reconciliation.
-- EXTEND: `NEXO_ONE_v39_NexoOneCore.gs`, `runtime/nexo_view_api`, `runtime/nexo_agent_api`, existing graph/template code and `nexo_execution`.
-- SUPERSEDE: TOWER_V06 as Truth Owner; old two-spreadsheet NEXO ONE source model.
-- CREATE only: SSOT schemas/reconciler, Apps Script adapter changes, Pages materializer workflow and minimal app adapter.
+Actions do not independently adjudicate science and do not write arbitrary spreadsheet cells.
 
 ## Reliability invariants
 
 1. One state Truth Owner after cutover.
 2. Typed mutation only.
-3. Version/CAS-style conflict detection on canonical entities.
+3. Version/CAS-style conflict detection.
 4. Exact readback required after writes.
 5. Idempotency key required for result ingestion.
-6. Deterministic `state_hash` on exports.
-7. Public projection sanitized before leaving Drive.
-8. Invalid export does not replace the last good Pages snapshot.
-9. Every Pages payload exposes `ssot_revision`, `generated_at`, `state_hash` and schema version.
-10. No migration cutover until reconciliation contains zero unresolved material conflicts.
+6. Deterministic `state_hash` excluding volatile timestamps.
+7. Public projection is allowlist-based.
+8. Invalid export never replaces last known-good Pages snapshot.
+9. Every public snapshot exposes `schema_version`, `ssot_revision`, `generated_at` and `state_hash`.
+10. No cutover with unresolved material conflicts.
+11. Concrete SSOT identifiers live only in private configuration.
 
 ## Non-goals for V1
 
-- No new database.
-- No event-driven Drive->GitHub webhook.
-- No live per-request Sheets backend for Pages.
-- No new NEXO agent.
-- No direct GitHub Action scientific write into arbitrary SSOT cells.
-- No private full Olympus UI on GitHub Pages.
-- No deletion of historical TOWER_V06 or legacy Drive tabs during initial cutover.
+No new database, no event bus, no live per-request Sheets backend for Pages, no new NEXO agent, no direct Action write into arbitrary SSOT cells, no full private client UI on public Pages, and no deletion of historical TOWER/legacy tabs during initial cutover.
 
 ## Success criteria
 
-The migration is complete when:
-
-1. Drive/Git reconciliation report has no unresolved material conflict.
-2. Existing spreadsheet retains its file id and is declared sole state authority.
-3. `export_public` returns a validated deterministic sanitized snapshot.
-4. Scheduled materialization every 3 hours publishes the View API and skips unchanged state.
-5. The app renders only from `/api/v1/*` and no longer reconstructs state from raw stores.
-6. One real scientific result completes Action -> verification -> SSOT ingest -> readback -> Pages projection.
-7. One Olympus update appears in the private SSOT and only its allowed summary fields reach Pages.
-8. TOWER_V06 is frozen/archived as provenance and no longer receives canonical mutations.
+1. Reconciliation has zero unresolved material conflicts.
+2. Existing spreadsheet is declared sole state authority only after explicit cutover.
+3. `export_public` returns deterministic validated projection.
+4. Three-hour materialization publishes View API and skips unchanged state.
+5. App renders exclusively from `/api/v1/*`.
+6. One scientific result completes Action -> verification -> SSOT ingest -> readback -> projection.
+7. One private-domain update reaches Pages only through allowed summary fields.
+8. TOWER_V06 is frozen as provenance.
