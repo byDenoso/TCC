@@ -83,6 +83,35 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertEqual(roi["mutations"]["readback_pass"], 1)
             self.assertEqual(roi["roi"]["mode"], "PROXY_ONLY_NO_COST_DATA")
 
+    def test_cold_backlog_is_excluded_from_hot_state_and_role_views(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for rel in ("indexes", "entities/work", "snapshot", "manifests"):
+                (root / rel).mkdir(parents=True)
+            (root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}))
+            (root / "snapshot/latest.json").write_text(json.dumps({"schema_version": "0.6", "counts": {"active_work": 1}}))
+            (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}))
+            (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}))
+            cold = {
+                "id": "COLD-EMERGENT",
+                "entity_version": 9,
+                "status": "CHECKPOINTED",
+                "kind": "EMERGENT_TEST",
+                "owner_role": "EMERGENT",
+                "cold_backlog": True,
+            }
+            (root / "indexes/active-work.json").write_text(json.dumps({"count": 1, "work": [cold]}))
+            (root / "entities/work/COLD-EMERGENT.json").write_text(json.dumps(cold))
+
+            materialize_role_views(root)
+
+            active = json.loads((root / "indexes/active-work.json").read_text())
+            emergent = json.loads((root / "bootstrap/emergent.json").read_text())
+            self.assertEqual(active["count"], 0)
+            self.assertEqual(active["work"], [])
+            self.assertEqual(emergent["queue_count"], 0)
+            self.assertEqual(emergent["queue"], [])
+
 
 if __name__ == "__main__":
     unittest.main()
