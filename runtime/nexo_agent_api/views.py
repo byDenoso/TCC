@@ -148,7 +148,7 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
             if work_id:
                 entities[str(work_id)] = payload
 
-    refreshed: list[dict[str, Any]] = []
+    refreshed_by_id: dict[str, dict[str, Any]] = {}
     for raw in existing_items:
         if not isinstance(raw, dict):
             continue
@@ -158,8 +158,13 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
         key = str(work_id)
         item = entities.get(key, raw)
         if _is_hot(item):
-            refreshed.append(item)
+            refreshed_by_id[key] = item
 
+    for key, item in entities.items():
+        if key not in refreshed_by_id and _is_hot(item):
+            refreshed_by_id[key] = item
+
+    refreshed = list(refreshed_by_id.values())
     payload = dict(existing) if isinstance(existing, dict) else {}
     payload.setdefault("schema_version", "0.6")
     payload.setdefault("source", "GITHUB_TOWER_HOT_SET")
