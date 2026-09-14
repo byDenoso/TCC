@@ -23,13 +23,14 @@ def _stage_derived_state(root: Path) -> str:
     paths = [
         str(relative_root / "indexes" / "active-work.json"),
         str(relative_root / "snapshot" / "latest.json"),
+        str(relative_root / "snapshot" / "ai-roi.json"),
     ]
     subprocess.run(["git", "add", "--", *paths], cwd=repo_root, check=True)
     return "STAGED"
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Materialize NEXO canonical hot state plus role views.")
+    parser = argparse.ArgumentParser(description="Materialize NEXO canonical hot state plus role views and telemetry.")
     parser.add_argument("--root", required=True, help="Path to TOWER_V06 root")
     args = parser.parse_args()
     root = Path(args.root)
