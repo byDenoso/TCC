@@ -11,11 +11,77 @@ ROLE_QUEUE_LIMIT = 5
 PRIORITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2, "MEDIUM": 3, "LOW": 4}
 STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT_DEPENDENCY": 4}
 PARKED_STATUSES = {"WAIT_DEPENDENCY"}
+HOT_STATUSES = {"READY", "RUNNING", "CHECKPOINTED", "WAIT_DEPENDENCY"}
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+
+
+def _is_hot(item: dict[str, Any]) -> bool:
+    status = str(item.get("status", ""))
+    return status in HOT_STATUSES or (status == "VERIFIED" and item.get("learning_state") != "LEARNED")
+
+
+def _refresh_hot_state(root: Path) -> dict[str, int]:
+    index_path = root / "indexes" / "active-work.json"
+    existing = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else {}
+    existing_items = existing.get("work", []) if isinstance(existing, dict) else []
+
+    entities: dict[str, dict[str, Any]] = {}
+    folder = root / "entities" / "work"
+    if folder.exists():
+        for path in sorted(folder.glob("*.json")):
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(payload, dict):
+                continue
+            work_id = payload.get("id") or payload.get("work_id")
+            if work_id:
+                entities[str(work_id)] = payload
+
+    refreshed: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw in existing_items:
+        if not isinstance(raw, dict):
+            continue
+        work_id = raw.get("id") or raw.get("work_id")
+        if not work_id:
+            continue
+        key = str(work_id)
+        item = entities.get(key, raw)
+        seen.add(key)
+        if _is_hot(item):
+            refreshed.append(item)
+
+    for key in sorted(set(entities) - seen):
+        item = entities[key]
+        if _is_hot(item):
+            refreshed.append(item)
+
+    payload = dict(existing) if isinstance(existing, dict) else {}
+    payload.setdefault("schema_version", "0.6")
+    payload.setdefault("source", "GITHUB_TOWER_HOT_SET")
+    payload.setdefault(
+        "policy",
+        "Actionable only: READY|RUNNING|CHECKPOINTED|WAIT_DEPENDENCY plus VERIFIED awaiting learning; blocked/terminal learned/procedural stay cold",
+    )
+    payload["work"] = refreshed
+    payload["count"] = len(refreshed)
+    _write_json(index_path, payload)
+
+    snapshot_path = root / "snapshot" / "latest.json"
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8")) if snapshot_path.exists() else {}
+    counts = dict(snapshot.get("counts", {})) if isinstance(snapshot, dict) else {}
+    counts["active_work"] = len(refreshed)
+    snapshot["counts"] = counts
+
+    event_files = sorted((root / "events").rglob("*.json")) if (root / "events").exists() else []
+    if event_files:
+        latest = json.loads(event_files[-1].read_text(encoding="utf-8"))
+        snapshot["event_cursor"] = latest.get("event_id", event_files[-1].stem) if isinstance(latest, dict) else event_files[-1].stem
+    _write_json(snapshot_path, snapshot)
+    return {"active_work": len(refreshed)}
 
 
 def _active_ids(root: Path) -> set[str] | None:
@@ -41,6 +107,7 @@ def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
 
 def materialize_role_views(root: str | Path) -> dict[str, Any]:
     root = Path(root)
+    state_counts = _refresh_hot_state(root)
     service = AgentService(root)
     active_ids = _active_ids(root)
     counts: dict[str, int] = {}
@@ -63,4 +130,10 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
             "role_view_ref": f"bootstrap/{role.lower()}.json",
         })
         counts[role] = view["queue_count"]
-    return {"roles": len(ROLES), "queue_counts": counts, "queue_limit": ROLE_QUEUE_LIMIT, "view_model": "SINGLE_ROLE_VIEW"}
+    return {
+        "roles": len(ROLES),
+        "queue_counts": counts,
+        "queue_limit": ROLE_QUEUE_LIMIT,
+        "view_model": "SINGLE_ROLE_VIEW",
+        "state_counts": state_counts,
+    }
