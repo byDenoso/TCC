@@ -34,6 +34,19 @@ class SnapshotSchemaTests(unittest.TestCase):
     def test_normalize_record_promotes_known_identifier(self) -> None:
         self.assertEqual(normalize_record({"work_id": "W1"})["id"], "W1")
 
+    def test_normalize_record_promotes_real_drive_identifier_aliases(self) -> None:
+        cases = {
+            "meta_test_id": "MT-1",
+            "knowledge_id": "KNOW-1",
+            "cross_id": "CROSS-1",
+            "learning_id": "LEARN-1",
+            "integrity_id": "INT-1",
+            "thread_id": "THR-1",
+        }
+        for key, value in cases.items():
+            with self.subTest(key=key):
+                self.assertEqual(normalize_record({key: value})["id"], value)
+
     def test_duplicate_ids_are_rejected(self) -> None:
         payload = {
             "schema_version": "1.0",
