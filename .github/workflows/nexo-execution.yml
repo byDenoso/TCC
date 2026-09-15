@@ -37,6 +37,7 @@ jobs:
           INPUT_CONTRACT_HASH: ${{ inputs.expected_contract_hash }}
         run: |
           set -euo pipefail
+          echo "BATCH_VALIDATE_ONLY=false" >> "$GITHUB_ENV"
           if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
             CONTRACT_NAME="${INPUT_CONTRACT_NAME:-canary-cosmology.json}"
           else
@@ -44,13 +45,26 @@ jobs:
               git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- runtime/nexo_execution/contracts/ \
                 | grep -E '^runtime/nexo_execution/contracts/[^/]+\.json$' || true
             )
-            if [[ "${#CHANGED_CONTRACTS[@]}" -eq 1 ]]; then
+            if [[ "${#CHANGED_CONTRACTS[@]}" -gt 1 ]]; then
+              mkdir -p /tmp/nexo-control/runtime
+              cp -R runtime/nexo_execution /tmp/nexo-control/runtime/
+              for changed in "${CHANGED_CONTRACTS[@]}"; do
+                python3 - "$changed" <<'PY'
+          import sys
+          sys.path.insert(0, '/tmp/nexo-control')
+          from runtime.nexo_execution.core import ExecutionContract
+          path = sys.argv[1]
+          contract = ExecutionContract.load(path)
+          print(path, contract.contract_hash, contract.task_id)
+          PY
+              done
+              echo "BATCH_VALIDATE_ONLY=true" >> "$GITHUB_ENV"
+              echo "Validated ${#CHANGED_CONTRACTS[@]} frozen contracts; batch pushes are not auto-executed."
+              exit 0
+            elif [[ "${#CHANGED_CONTRACTS[@]}" -eq 1 ]]; then
               CONTRACT_NAME="$(basename "${CHANGED_CONTRACTS[0]}")"
-            elif [[ "${#CHANGED_CONTRACTS[@]}" -eq 0 ]]; then
-              CONTRACT_NAME="canary-cosmology.json"
             else
-              echo 'push must change at most one execution contract' >&2
-              exit 2
+              CONTRACT_NAME="canary-cosmology.json"
             fi
           fi
           case "$CONTRACT_NAME" in
@@ -77,6 +91,7 @@ jobs:
           cat /tmp/nexo-control/meta.env >> "$GITHUB_ENV"
 
       - name: Checkout exact workload commit
+        if: env.BATCH_VALIDATE_ONLY != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -84,6 +99,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$TARGET_SHA"
 
       - name: Execute frozen contract
+        if: env.BATCH_VALIDATE_ONLY != 'true'
         shell: bash
         env:
           PYTHONPATH: /tmp/nexo-control
@@ -96,6 +112,7 @@ jobs:
             --expected-contract-hash "$CONTRACT_HASH"
 
       - name: Validate verification gate
+        if: env.BATCH_VALIDATE_ONLY != 'true'
         shell: bash
         run: |
           python3 - <<'PY'
@@ -108,13 +125,15 @@ jobs:
           PY
 
       - name: Upload execution artifact
-        if: always()
+        if: always() && env.BATCH_VALIDATE_ONLY != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: nexo-execution-${{ env.EXECUTION_ID || 'unresolved' }}-${{ github.run_id }}
           path: |
             benchmark_result.json
             idm_preflight_result.json
+            peer_detection_gate_result.json
+            peer_detection_battery_result.json
             nexo_execution_result.json
             nexo_verification.json
           if-no-files-found: warn
