@@ -1,15 +1,47 @@
-# NEXO Control Plane v0.3 (shadow-first)
+# NEXO Control Plane v0.3
 
 This package is deterministic infrastructure for NEXO. It is intentionally **not** another conversational agent.
 
+## Canonical state
+
+Operational truth is `byDenoso/NEXO-Obsidian-Vault@main:TOWER_V06`.
+
+The write invariant is `READ_SHA_WRITE_READBACK`. GitHub code owns implementation; GitHub Actions executes frozen contracts; projections such as Atlas or Drive do not write back to canonical truth unless a current Tower contract explicitly authorizes it.
+
 ## Responsibility split
 
-- **Advisor:** scientific strategy and test prioritization only.
-- **Emergent:** scientific/procedural hypotheses; procedural ideas do not become engineering work directly.
-- **Core:** deterministic queue/dependency/lock/backpressure/reconciliation policy and typed ENGINEERING generation from failures or capability gaps.
-- **Executor:** dispatch/router/run tracking. One logical authority, many workers.
-- **Learner:** consumes verified evidence only. OBJECT = science; PROCEDURAL = engineering/runtime.
-- **Daily:** aggregates material deltas for the user.
+- **Autoconsistente / Executor:** scientific intake, test planning, dispatch, validation and scientific loop closure.
+- **Meta-Improvement:** runtime/system health and repair, never scientific reinterpretation.
+- **Core:** deterministic queue/dependency/lock/backpressure/reconciliation policy.
+- **Learner:** consumes verified evidence only.
+- **Atlas:** read-only projection of Tower state.
+
+## Scientific intake v1
+
+The canonical structured interface is `nexo_submit_scientific_tests_v1`.
+
+Explicit user commands such as `Teste X`, `Rode Y`, `Execute Z` and `Faça o teste W` are eligible for scientific execution intake. Advisory language such as `vale a pena testar X?` or `explique o teste X` is not an execution command.
+
+The ordering invariant is **TOWER_FIRST_DISPATCH**:
+
+```text
+explicit user execution intent
+  -> normalize + scientific fingerprint
+  -> dedupe against canonical TEST state
+  -> persist TEST / TEST_GROUP in Tower
+  -> exact canonical readback
+  -> resolve proven execution capability
+  -> one dispatch request per TEST
+  -> GitHub Actions
+  -> artifact verification
+  -> RESULT / EVIDENCE canonicalization
+  -> exact readback
+  -> next scientific decision
+```
+
+Unknown execution capability becomes `CAPABILITY_GAP`; it never authorizes arbitrary shell execution or a silent change to the scientific contract.
+
+The MCP/API boundary is an interface only. It does not become a truth owner and it never receives credentials as tool arguments. Host-managed credentials are required by the eventual hosted runtime.
 
 ## Fail-closed rules
 
@@ -19,6 +51,8 @@ This package is deterministic infrastructure for NEXO. It is intentionally **not
 - Shared resource lock: block only the conflicting work, not the whole system.
 - Duplicate external identity: block and reconcile before proceeding.
 - Raw GitHub result: never teach and never close canonical work.
+- Tower persist/readback failure: never dispatch.
+- Artifact verification failure: never canonicalize a scientific result.
 
 ## Default capacity
 
@@ -44,21 +78,16 @@ The shadow planner accepts a JSON snapshot and returns what it *would* dispatch/
 python -m nexo_control_plane.cli shadow tests/fixtures/shadow_snapshot.json
 ```
 
-This is the mandatory first deployment mode.
-
-## Canonical state
-
-Canonical state remains in `NEXO · SSOT CANONICAL` on Google Sheets/Drive. This public repository must contain only generic code, tests, and non-sensitive contracts. Do not commit SSOT dumps, personal data, model transcripts, secrets, API keys, or private prompts.
-
 ## External result acceptance
 
 ```text
 GitHub runner
   -> result/artifact/checkpoint
   -> identity + hash verification
-  -> Drive persistence/readback
+  -> Tower RESULT/EVIDENCE mutation
+  -> canonical readback
   -> VERIFIED
-  -> Learner / DONE
+  -> scientific loop / DONE
 ```
 
 GitHub executes contracts. It does not own scientific interpretation or canonical truth.
@@ -66,7 +95,3 @@ GitHub executes contracts. It does not own scientific interpretation or canonica
 ## Locks
 
 Locks are resource-scoped, e.g. `repo:TCC:portable_camb` or `science:T-DE042`. A structural global lock is reserved for schema/governance migrations only.
-
-## Rollback
-
-The first live cutover changes only role prompts and SSOT-compatible columns. Rollback is restoring the previous prompt contracts; existing WORK/EVENTS columns remain intact and the added columns are backward-compatible.
