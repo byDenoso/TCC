@@ -47,27 +47,16 @@ class AgentService:
     def _work_items(self) -> list[dict[str, Any]]:
         index_path = self.root / "indexes" / "active-work.json"
         folder = self.root / "entities" / "work"
+        items: dict[str, dict[str, Any]] = {}
+
         if index_path.exists():
             payload = json.loads(index_path.read_text(encoding="utf-8"))
-            indexed: dict[str, dict[str, Any]] = {}
             for item in payload.get("work", []):
                 if isinstance(item, dict):
                     normalized = self._normalize_work(item)
                     if normalized is not None:
-                        indexed[str(normalized["id"])] = normalized
-            if folder.exists():
-                for work_id in list(indexed):
-                    path = folder / f"{work_id}.json"
-                    if not path.exists():
-                        continue
-                    entity = json.loads(path.read_text(encoding="utf-8"))
-                    if isinstance(entity, dict):
-                        normalized = self._normalize_work(entity)
-                        if normalized is not None:
-                            indexed[work_id] = normalized
-            return list(indexed.values())
+                        items[str(normalized["id"])] = normalized
 
-        items: dict[str, dict[str, Any]] = {}
         if folder.exists():
             for path in sorted(folder.glob("*.json")):
                 payload = json.loads(path.read_text(encoding="utf-8"))
@@ -75,6 +64,7 @@ class AgentService:
                     normalized = self._normalize_work(payload)
                     if normalized is not None:
                         items[str(normalized["id"])] = normalized
+
         return list(items.values())
 
     def _hydrate_work(self, entity_name: str) -> dict[str, Any]:
