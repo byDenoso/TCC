@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "GZSB05A-20260915-0423",
+  "work_id": "WORK::GZ01-EROSITA-SUPERBATTERY-V1",
+  "test_id": "GZSB-05A-EROSITA-S8-MORPHOLOGY-STANDALONE",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "535afc175966b6b4284a85d2be20caa200780f44",
+  "task_id": "gzsb05_s8_morphology",
+  "parameters": {},
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": ["benchmark_result.json"]
+}
