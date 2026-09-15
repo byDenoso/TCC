@@ -116,6 +116,36 @@ class MutationInboxTests(unittest.TestCase):
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["group_kind"], "BATTERY")
 
+    def test_zero_version_creates_new_hypothesis_with_exact_readback(self) -> None:
+        hypothesis_id = "HYP-CAMB-OPTIMIZATION-V1"
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-HYPOTHESIS-1",
+            "entity_kind": "hypothesis",
+            "entity_name": hypothesis_id,
+            "expected_version": 0,
+            "changes": {
+                "id": hypothesis_id,
+                "status": "OPEN",
+                "proposition": "A targeted CAMB optimization can reduce runtime without violating the frozen numerical tolerance.",
+                "claim_boundary": "Runtime improvement only; no scientific claim is implied.",
+                "success_criteria": ["runtime improves", "accuracy remains within tolerance"],
+                "kill_criteria": ["accuracy exceeds tolerance"],
+                "critical_tests": ["baseline benchmark", "numerical equivalence regression"],
+                "max_adaptive_followups": 2,
+                "reopen_policy": "external_material_information_only",
+            },
+            "writer_role": "ADVISOR",
+            "event_type": "HYPOTHESIS_CREATED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["entity_version"], 1)
+        self.assertEqual(receipt["readback"], "PASS")
+        entity = json.loads((self.root / "entities" / "hypothesis" / f"{hypothesis_id}.json").read_text())
+        self.assertEqual(entity["id"], hypothesis_id)
+        self.assertEqual(entity["entity_version"], 1)
+        self.assertEqual(entity["status"], "OPEN")
+        self.assertEqual(entity["writer_role"], "ADVISOR")
+
     def test_zero_version_rejects_mismatched_identity(self) -> None:
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": []}), encoding="utf-8")
         receipt = apply_mutation_request(self.root, {
