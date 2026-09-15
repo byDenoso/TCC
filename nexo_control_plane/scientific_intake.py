@@ -17,6 +17,10 @@ _EXECUTION_PREFIXES = (
     "executar ",
     "faca o teste ",
 )
+_EXECUTION_SUBJECT_RE = re.compile(
+    r"^\s*(?:teste|testar|rode|rodar|execute|executar|fa[cç]a\s+o\s+teste)\s+(.+?)\s*$",
+    flags=re.IGNORECASE,
+)
 _TERMINAL_STATUSES = {"VERIFIED", "DONE", "FAILED", "INCONCLUSIVE", "SUPERSEDED"}
 _ACTIVE_STATUSES = {"READY", "QUEUED", "DISPATCHED", "RUNNING", "CHECKPOINTED", "RESULT_AVAILABLE", "VERIFYING"}
 
@@ -35,6 +39,16 @@ def is_execution_utterance(text: str) -> bool:
 def parse_execution_clauses(text: str) -> list[str]:
     clauses = [part.strip() for part in re.split(r"[;\n]+", text) if part.strip()]
     return [clause for clause in clauses if is_execution_utterance(clause)]
+
+
+def execution_subject(clause: str) -> str:
+    match = _EXECUTION_SUBJECT_RE.match(clause)
+    if not match:
+        raise ValueError("clause is not an explicit execution command")
+    subject = " ".join(match.group(1).split())
+    if not subject:
+        raise ValueError("execution command has no scientific subject")
+    return subject
 
 
 def _canon_scalar(value: str | None) -> str | None:
