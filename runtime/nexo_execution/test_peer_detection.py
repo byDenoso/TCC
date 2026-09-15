@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import unittest
-from pathlib import Path
 
 from runtime.nexo_execution.core import TASK_REGISTRY
 from runtime.nexo_execution.peer_detection import (
@@ -16,9 +15,9 @@ from runtime.nexo_execution.peer_detection import (
 
 EXPECTED_IDS = [f"D{i:02d}" for i in range(26)]
 EXPECTED_ORDER = [
-    "D00", "D01", "D04", "D09", "D11", "D13", "D02", "D03", "D07", "D08",
-    "D05", "D06", "D18", "D19", "D20", "D21", "D15", "D16", "D17", "D22",
-    "D23", "D24", "D25",
+    "D00", "D01", "D04", "D09", "D10", "D11", "D12", "D13", "D14", "D02",
+    "D03", "D07", "D08", "D05", "D06", "D18", "D19", "D20", "D21", "D15",
+    "D16", "D17", "D22", "D23", "D24", "D25",
 ]
 
 
