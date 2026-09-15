@@ -1,0 +1,67 @@
+name: NEXO dispatch
+
+on:
+  push:
+    branches:
+      - 'nexo/dispatch-runtime'
+    paths:
+      - 'nexo_dispatch/requests/**.json'
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      - name: Select exactly one request
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^nexo_dispatch/requests/.*\.json$' || true)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "Expected exactly one dispatch request in the commit; found ${#files[@]}" >&2
+            exit 64
+          fi
+          printf 'path=%s\n' "${files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Execute allow-listed adapter
+        shell: bash
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          set -euo pipefail
+          mkdir -p nexo_dispatch/results
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from nexo_control_plane.dispatch import load_dispatch_request, run_dispatch_request
+
+          request = Path(os.environ['REQUEST_PATH'])
+          validated = load_dispatch_request(request)
+          output = Path('nexo_dispatch/results') / f'{validated.work_id}-attempt-{validated.attempt}.json'
+          result = run_dispatch_request(request, output)
+          print(json.dumps(result, sort_keys=True))
+          PY
+
+      - name: Upload dispatch result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexo-dispatch-${{ github.run_id }}
+          path: nexo_dispatch/results/
+          if-no-files-found: error
+          retention-days: 7
