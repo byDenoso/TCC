@@ -14,6 +14,8 @@ PRIORITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2, "MEDIUM": 3, "LOW":
 STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT_DEPENDENCY": 4}
 PARKED_STATUSES = {"WAIT_DEPENDENCY"}
 HOT_STATUSES = {"READY", "RUNNING", "CHECKPOINTED", "WAIT_DEPENDENCY"}
+TERMINAL_WORK_STATUSES = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED"}
+HUMAN_WRITER_ROLES = {"DIRECTOR", "HUMAN"}
 _RUNTIME_EVENT_NAME = re.compile(r"^\d{8}T\d{12}Z-[A-Za-z0-9]+\.json$")
 SEMANTIC_ENTITY_COUNT_KEYS = {
     "hypothesis": "hypotheses",
@@ -74,6 +76,24 @@ def _semantic_entity_counts(root: Path) -> tuple[dict[str, int], dict[str, str]]
     return counts, sources
 
 
+def _all_work_entities(root: Path) -> list[dict[str, Any]]:
+    folder = root / "entities" / "work"
+    if not folder.exists():
+        return []
+    items: list[dict[str, Any]] = []
+    for path in sorted(folder.glob("*.json")):
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict):
+            items.append(payload)
+    return items
+
+
+def _event_is_human_intervention(item: dict[str, Any]) -> bool:
+    writer_role = str(item.get("writer_role", "")).upper()
+    actor_type = str(item.get("actor_type", "")).upper()
+    return item.get("human_intervention") is True or writer_role in HUMAN_WRITER_ROLES or actor_type == "HUMAN"
+
+
 def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event_cursor: str | None) -> dict[str, int]:
     events: list[dict[str, Any]] = []
     for path in _runtime_event_paths(root):
@@ -89,6 +109,7 @@ def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event
             if isinstance(payload, dict):
                 receipts.append(payload)
 
+    all_work = _all_work_entities(root)
     statuses = [str(item.get("status", "UNKNOWN")) for item in active_items]
     owners = [str(item.get("owner_role", "UNASSIGNED")) for item in active_items]
     event_types = [str(item.get("event_type", "UNKNOWN")) for item in events]
@@ -101,6 +122,13 @@ def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event
     material_events = sum(1 for item in events if item.get("material") is True)
     verified_events = sum(1 for event_type in event_types if "VERIFIED" in event_type)
     decision_events = sum(1 for event_type in event_types if "DECISION" in event_type)
+    human_intervention_events = sum(1 for item in events if _event_is_human_intervention(item))
+    human_material_events = sum(1 for item in events if item.get("material") is True and _event_is_human_intervention(item))
+    autonomous_material_events = material_events - human_material_events
+    autonomous_material_rate = round(autonomous_material_events / material_events, 4) if material_events else None
+    terminal_work = sum(1 for item in all_work if str(item.get("status", "")).upper() in TERMINAL_WORK_STATUSES)
+    verified_work = sum(1 for item in all_work if str(item.get("status", "")).upper() == "VERIFIED")
+    duplicate_execution_prevented = sum(1 for event_type in event_types if event_type == "DUPLICATE_EXECUTION_PREVENTED")
 
     flow = {
         "executor_ready": sum(1 for item in active_items if item.get("status") == "READY" and item.get("owner_role") == "EXECUTOR"),
@@ -120,6 +148,21 @@ def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event
             "by_owner": _counter_dict(owners),
         },
         "flow": flow,
+        "delivery": {
+            "terminal_work": terminal_work,
+            "verified_work": verified_work,
+            "source": "entities/work/*.json",
+        },
+        "autonomy": {
+            "human_intervention_events": human_intervention_events,
+            "autonomous_material_events": autonomous_material_events,
+            "autonomous_material_rate": autonomous_material_rate,
+            "classification_rule": "explicit human_intervention=true OR writer_role in DIRECTOR|HUMAN OR actor_type=HUMAN",
+        },
+        "quality": {
+            "duplicate_execution_prevented_events": duplicate_execution_prevented,
+            "active_unassigned_work": sum(1 for item in active_items if not item.get("owner_role")),
+        },
         "events": {
             "runtime_total": len(events),
             "material": material_events,
@@ -142,6 +185,8 @@ def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event
                 "verified_events": verified_events,
                 "decision_events": decision_events,
                 "material_events": material_events,
+                "terminal_work": terminal_work,
+                "human_intervention_events": human_intervention_events,
             },
             "note": "No monetary ROI is calculated without measured cost data. This snapshot exposes reconstructible operational proxies only.",
         },
