@@ -83,6 +83,42 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertEqual(roi["mutations"]["readback_pass"], 1)
             self.assertEqual(roi["roi"]["mode"], "PROXY_ONLY_NO_COST_DATA")
 
+    def test_derives_human_intervention_completion_and_duplicate_execution_metrics(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for rel in (
+                "indexes",
+                "entities/work",
+                "snapshot",
+                "manifests",
+                "events/2026-09-15",
+            ):
+                (root / rel).mkdir(parents=True)
+            (root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}))
+            (root / "snapshot/latest.json").write_text(json.dumps({"schema_version": "0.6", "counts": {"active_work": 0}}))
+            (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}))
+            (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}))
+            (root / "indexes/active-work.json").write_text(json.dumps({"count": 0, "work": []}))
+            (root / "entities/work/W-DONE.json").write_text(json.dumps({"id": "W-DONE", "entity_version": 2, "status": "DONE", "owner_role": "EXECUTOR"}))
+            (root / "entities/work/W-VERIFIED.json").write_text(json.dumps({"id": "W-VERIFIED", "entity_version": 3, "status": "VERIFIED", "owner_role": "LEARNER", "learning_state": "LEARNED"}))
+            events = (
+                ("20260915T120000000000Z-human000", {"event_type": "WORK_REFINED", "writer_role": "DIRECTOR", "material": True}),
+                ("20260915T120100000000Z-auto0001", {"event_type": "WORK_DONE", "writer_role": "EXECUTOR", "material": True}),
+                ("20260915T120200000000Z-dupe0001", {"event_type": "DUPLICATE_EXECUTION_PREVENTED", "writer_role": "EXECUTOR", "material": False}),
+            )
+            for event_id, payload in events:
+                (root / f"events/2026-09-15/{event_id}.json").write_text(json.dumps({"event_id": event_id, **payload}))
+
+            materialize_role_views(root)
+
+            roi = json.loads((root / "snapshot/ai-roi.json").read_text())
+            self.assertEqual(roi["delivery"]["terminal_work"], 2)
+            self.assertEqual(roi["delivery"]["verified_work"], 1)
+            self.assertEqual(roi["autonomy"]["human_intervention_events"], 1)
+            self.assertEqual(roi["autonomy"]["autonomous_material_events"], 1)
+            self.assertEqual(roi["autonomy"]["autonomous_material_rate"], 0.5)
+            self.assertEqual(roi["quality"]["duplicate_execution_prevented_events"], 1)
+
     def test_recomputes_semantic_entity_counts_in_latest_snapshot(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
