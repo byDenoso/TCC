@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -73,6 +74,33 @@ def _is_human_intervention(event: dict[str, Any]) -> bool:
     return event.get("human_intervention") is True or writer_role in HUMAN_WRITER_ROLES or actor_type == "HUMAN"
 
 
+def _dependency_wait_metrics(work: list[dict[str, Any]]) -> dict[str, Any]:
+    waiting = [item for item in work if str(item.get("status", "")).upper() == "WAIT_DEPENDENCY"]
+    by_class: Counter[str] = Counter()
+    human_attention = 0
+    retryable = 0
+    unclassified = 0
+
+    for item in waiting:
+        dependency_class = str(item.get("dependency_class") or "").strip().upper() or "UNCLASSIFIED"
+        by_class[dependency_class] += 1
+        if item.get("human_action_required") is True:
+            human_attention += 1
+        if item.get("auto_retry_eligible") is True:
+            retryable += 1
+        if dependency_class == "UNCLASSIFIED":
+            unclassified += 1
+
+    return {
+        "total": len(waiting),
+        "human_attention": human_attention,
+        "retryable": retryable,
+        "unclassified": unclassified,
+        "by_class": dict(sorted(by_class.items())),
+        "source": "entities/work/*.json explicit dependency classification fields only",
+    }
+
+
 def enrich_materialized_state(root: str | Path) -> dict[str, Any]:
     root = Path(root)
 
@@ -101,6 +129,7 @@ def enrich_materialized_state(root: str | Path) -> dict[str, Any]:
     duplicate_execution_prevented = sum(
         1 for event in events if str(event.get("event_type", "")) == "DUPLICATE_EXECUTION_PREVENTED"
     )
+    dependency_wait = _dependency_wait_metrics(work)
 
     roi["delivery"] = {
         "terminal_work": terminal_work,
@@ -112,6 +141,7 @@ def enrich_materialized_state(root: str | Path) -> dict[str, Any]:
         "autonomous_material_events": autonomous_material_events,
         "autonomous_material_rate": autonomous_material_rate,
         "classification_rule": "explicit human_intervention=true OR writer_role in DIRECTOR|HUMAN OR actor_type=HUMAN",
+        "dependency_wait": dependency_wait,
     }
     roi["quality"] = {
         "duplicate_execution_prevented_events": duplicate_execution_prevented,
@@ -130,4 +160,5 @@ def enrich_materialized_state(root: str | Path) -> dict[str, Any]:
         "autonomous_material_events": autonomous_material_events,
         "autonomous_material_rate": autonomous_material_rate,
         "duplicate_execution_prevented_events": duplicate_execution_prevented,
+        "dependency_wait": dependency_wait,
     }
