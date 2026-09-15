@@ -32,7 +32,7 @@ The numerical thresholds below are campaign governance choices, not universal la
 
 Cheap/diagnostic gates run before expensive calibration:
 
-`D00 -> D01 -> D04 -> D09 -> D11 -> D13 -> D02 -> D03 -> D07 -> D08 -> D05 -> D06 -> D18 -> D19 -> D20 -> D21 -> D15 -> D16 -> D17 -> D22 -> D23 -> D24 -> D25`
+`D00 -> D01 -> D04 -> D09 -> D10 -> D11 -> D12 -> D13 -> D14 -> D02 -> D03 -> D07 -> D08 -> D05 -> D06 -> D18 -> D19 -> D20 -> D21 -> D15 -> D16 -> D17 -> D22 -> D23 -> D24 -> D25`
 
 If D09 establishes `ANCHOR_CONDITIONED_SIGNAL`, the expensive global-null and evidence-calibration phase may be skipped for an anchor-independent detection claim. The skipped gates are recorded as `SKIPPED_BY_POLICY`, never silently treated as passes.
 
