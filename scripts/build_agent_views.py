@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from runtime.nexo_agent_api import materialize_role_views
+from runtime.nexo_agent_api.telemetry import enrich_materialized_state
 
 
 def _stage_derived_state(root: Path) -> str:
@@ -35,6 +36,7 @@ def main() -> int:
     args = parser.parse_args()
     root = Path(args.root)
     result = materialize_role_views(root)
+    result["telemetry_enrichment"] = enrich_materialized_state(root)
     result["derived_state_git_stage"] = _stage_derived_state(root)
     print(json.dumps(result, sort_keys=True))
     return 0
