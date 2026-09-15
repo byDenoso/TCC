@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "PEER-DETECTION-D20-V1",
+  "work_id": "PEER-DETECTION-D20",
+  "test_id": "D20",
+  "provider": "local",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "d189c5a7dc01081a74e0587d9550279eaf820653",
+  "task_id": "peer_detection_d20",
+  "parameters": {},
+  "seed": null,
+  "timeout_minutes": 15,
+  "required_outputs": ["peer_detection_gate_result.json"]
+}
