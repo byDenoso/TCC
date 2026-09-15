@@ -1,14 +1,16 @@
 {
-  "schema": "nexo.execution.v1",
-  "execution_id": "PEER-DETECTION-BATTERY-V1",
-  "work_id": "PEER-DETECTION-BATTERY",
-  "test_id": "D00-D25",
-  "provider": "local",
-  "repository": "byDenoso/TCC",
-  "commit_sha": "d189c5a7dc01081a74e0587d9550279eaf820653",
-  "task_id": "peer_detection_battery",
-  "parameters": {},
-  "seed": null,
-  "timeout_minutes": 15,
-  "required_outputs": ["peer_detection_battery_result.json"]
+    "schema": "nexo.execution.v1",
+    "execution_id": "PEER-DETECTION-BATTERY-V1",
+    "work_id": "PEER-DETECTION-BATTERY",
+    "test_id": "D00-D25",
+    "provider": "local",
+    "repository": "byDenoso/TCC",
+    "commit_sha": "d189c5a7dc01081a74e0587d9550279eaf820653",
+    "task_id": "peer_detection_battery",
+    "parameters": {},
+    "seed": null,
+    "timeout_minutes": 15,
+    "required_outputs": [
+        "peer_detection_battery_result.json"
+    ]
 }
