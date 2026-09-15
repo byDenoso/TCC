@@ -1,0 +1,262 @@
+name: PEER matched nested evidence 20260910
+
+on:
+  push:
+    branches: [run-peer-nested-20260910]
+    paths:
+      - '.github/workflows/peer-nested-matched-20260910.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  COBAYA_PACKAGES_PATH: ${{ github.workspace }}/packages
+  ACT_COMMIT: 627aeafb88ae5ad1aa66b406bea2d65cfa66a27d
+  OMP_NUM_THREADS: '1'
+  OPENBLAS_NUM_THREADS: '1'
+  MKL_NUM_THREADS: '1'
+  NUMEXPR_NUM_THREADS: '1'
+
+jobs:
+  prepare-runtime:
+    name: prepare-fresh-validated-runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout matched ACT/PEER science stack
+        uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build/runtime dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran make libgsl-dev openmpi-bin libopenmpi-dev wget
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'camb==1.6.6' 'cobaya==3.6.2' 'sacc>=0.12.0'
+
+      - name: Build CAMB 1.6.6 with CosmoRec 2.0.3b
+        run: |
+          set -euxo pipefail
+          wget -q https://www.cita.utoronto.ca/~jchluba/Recombination/_Downloads_/CosmoRec.v2.0.3b.tar.gz
+          sha256sum CosmoRec.v2.0.3b.tar.gz | tee cosmorec_source_sha256.txt
+          tar -xzf CosmoRec.v2.0.3b.tar.gz
+          COSMO_DIR=$(find "$GITHUB_WORKSPACE" -maxdepth 1 -type d -name 'CosmoRec*' | head -1)
+          test -n "$COSMO_DIR"
+          sed -i -E '/^CXXFLAGS[[:space:]]*=/ s/$/ -fPIC/' "$COSMO_DIR/Makefile.in"
+          make -C "$COSMO_DIR" all -j2
+          git clone --recursive --depth 1 --branch 1.6.6 https://github.com/cmbant/CAMB.git camb-src
+          sed -i 's/^RECOMBINATION_FILES ?= recfast$/RECOMBINATION_FILES ?= recfast cosmorec/' camb-src/fortran/Makefile_main
+          sed -i "s|^COSMOREC_PATH ?=.*|COSMOREC_PATH ?=$COSMO_DIR|" camb-src/fortran/Makefile_main
+          cd camb-src
+          python setup.py make
+          mkdir -p ../wheelhouse
+          python -m pip wheel . --no-deps -w ../wheelhouse
+          cd ..
+          mkdir -p validated/source-runtime
+          cp wheelhouse/camb-*.whl validated/source-runtime/
+          cp -a "$COSMO_DIR/Rec_database" validated/source-runtime/Rec_database
+          cp -a "$COSMO_DIR/Development" validated/source-runtime/Development
+          sha256sum validated/source-runtime/camb-*.whl | tee camb_cosmorec_sha256.txt
+          find validated/source-runtime/Rec_database validated/source-runtime/Development -type f -print0 | sort -z | xargs -0 sha256sum > cosmorec_data_sha256.txt
+          cp camb_cosmorec_sha256.txt cosmorec_source_sha256.txt cosmorec_data_sha256.txt validated/source-runtime/
+
+      - name: Validate fresh CAMB CosmoRec runtime
+        run: |
+          set -euxo pipefail
+          WHEEL=$(find validated/source-runtime -type f -name 'camb-*.whl' | head -1)
+          test -n "$WHEEL"
+          python -m pip install --force-reinstall --no-deps "$WHEEL"
+          rm -rf "$GITHUB_WORKSPACE/Rec_database" "$GITHUB_WORKSPACE/Development"
+          ln -s "$(realpath validated/source-runtime/Rec_database)" "$GITHUB_WORKSPACE/Rec_database"
+          ln -s "$(realpath validated/source-runtime/Development)" "$GITHUB_WORKSPACE/Development"
+          mkdir -p "$GITHUB_WORKSPACE/temp"
+          python - <<'PY'
+          import camb
+          from camb import recombination
+          print('CAMB', camb.__version__, camb.__file__, 'CosmoRec', type(recombination.CosmoRec()).__name__)
+          assert camb.__version__ == '1.6.6'
+          PY
+          test -f "$GITHUB_WORKSPACE/Rec_database/Effective_Rates.HI/Effective_Rate_Tables.nS_3/res_state_list.dat"
+          test -f "$GITHUB_WORKSPACE/Development/Helium/Helium.Data.lite/He4_SS.dat"
+          CAMBLIB=$(python - <<'PY'
+          from pathlib import Path
+          import camb
+          root = Path(camb.__file__).resolve().parent
+          matches = sorted(root.glob('camblib*.so'))
+          if not matches:
+              raise SystemExit(f'camblib shared library not found under {root}')
+          print(matches[0])
+          PY
+          )
+          ldd "$CAMBLIB" | tee camb_ldd.txt
+          ! grep -q 'not found' camb_ldd.txt
+          grep -E 'libgsl|libgslcblas' camb_ldd.txt
+
+      - name: Install frozen ACT likelihood and official likelihood payload
+        run: |
+          set -euxo pipefail
+          git clone https://github.com/ACTCollaboration/DR6-ACT-lite.git act-lite
+          cd act-lite
+          git checkout "$ACT_COMMIT"
+          python -m pip install -e .
+          test "$(git rev-parse HEAD)" = "$ACT_COMMIT"
+          cd ..
+          mkdir -p "$COBAYA_PACKAGES_PATH"
+          cobaya-install \
+            act_dr6_cmbonly \
+            act_dr6_cmbonly.PlanckActCut \
+            planck_2018_lowl.TT \
+            planck_2018_lowl.EE_sroll2 \
+            planck_2018_lensing.native \
+            bao.desi_dr2.desi_bao_all \
+            --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars
+          rm -rf "$COBAYA_PACKAGES_PATH/code/CAMB"
+          find "$COBAYA_PACKAGES_PATH" -type f \( -name '*.fits' -o -name '*.dataset' -o -name '*.txt' -o -name '*.dat' \) -print0 | sort -z | xargs -0 sha256sum > official_payload_sha256.txt
+          find "$COBAYA_PACKAGES_PATH" -maxdepth 5 -type f -print | sort > installed_files.txt
+
+      - name: Smoke-test matched science stack
+        run: |
+          set -euxo pipefail
+          ROOT="$GITHUB_WORKSPACE/smoke_M1"
+          python act_dr6_mcmc_20260729/campaign.py write-configs --model M1 --packages "$COBAYA_PACKAGES_PATH" --root "$ROOT"
+          cobaya-run "$ROOT/configs/mcmc.yaml" --test 2>&1 | tee "$ROOT/smoke.log"
+
+      - name: Package current-run reusable payloads
+        run: |
+          set -euxo pipefail
+          tar -czf official-likelihood-packages-v3.tar.gz packages
+          sha256sum official-likelihood-packages-v3.tar.gz > official-likelihood-packages-v3.tar.gz.sha256
+
+      - name: Upload current validated CAMB CosmoRec runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: validated-act-cosmorec-runtime-gslfix
+          path: |
+            validated/source-runtime
+            camb_ldd.txt
+            smoke_M1/smoke.log
+          retention-days: 30
+
+      - name: Upload current official likelihood payload
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-likelihood-packages-v3
+          path: |
+            official-likelihood-packages-v3.tar.gz
+            official-likelihood-packages-v3.tar.gz.sha256
+            official_payload_sha256.txt
+            installed_files.txt
+          retention-days: 30
+
+  nested:
+    needs: prepare-runtime
+    name: nested-${{ matrix.model }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        model: [M1, M3]
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout execution branch
+        uses: actions/checkout@v4
+
+      - name: Checkout validated nested runner
+        uses: actions/checkout@v4
+        with:
+          ref: run-corrected-polychord-20260730
+          path: nested-src
+
+      - name: Checkout matched ACT/PEER science stack
+        uses: actions/checkout@v4
+        with:
+          ref: act-dr6-peer-test-20260729
+          path: science-act
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install and validate PolyChord runtime
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y gfortran libgsl-dev openmpi-bin libopenmpi-dev
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install 'numpy<2.4' 'scipy<1.18' pandas pyyaml getdist mpi4py pytest 'cobaya==3.6.2' 'sacc>=0.12.0'
+          (cd nested-src && python -m pytest -q peer_decisive_followups/test_nested_lane.py)
+          cobaya-install polychord --packages-path "$COBAYA_PACKAGES_PATH" --no-progress-bars --no-set-global
+
+      - name: Bind historical runner to current validated artifacts and enforce 400 live points
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          runner = Path('nested-src/peer_decisive_followups/run_nested_lane.py')
+          s = runner.read_text()
+          old = 'SOURCE_RUN = "30455821484"'
+          new = f'SOURCE_RUN = "{os.environ["GITHUB_RUN_ID"]}"'
+          if old not in s:
+              raise SystemExit('expected historical source run contract not found')
+          s = s.replace(old, new, 1)
+
+          old_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n'''
+          new_links = '''    _replace_directory_link(work / "Rec_database", databases[0])\n    _replace_directory_link(work / "Development", developments[0])\n    _replace_directory_link(workspace / "Rec_database", databases[0])\n    _replace_directory_link(workspace / "Development", developments[0])\n    (work / "temp").mkdir(exist_ok=True)\n    (workspace / "temp").mkdir(exist_ok=True)\n    required = workspace / "Rec_database" / "Effective_Rates.HI" / "Effective_Rate_Tables.nS_3" / "res_state_list.dat"\n    if not required.is_file():\n        raise RuntimeError(f"CosmoRec workspace binding failed: {required}")\n'''
+          if old_links not in s:
+              raise SystemExit('expected CosmoRec link block not found')
+          s = s.replace(old_links, new_links, 1)
+          runner.write_text(s)
+
+          cfg = Path('nested-src/peer_decisive_followups/build_nested_config.py')
+          c = cfg.read_text()
+          old_nlive = '"nlive": "25d",'
+          if old_nlive not in c:
+              raise SystemExit('expected nlive contract not found')
+          cfg.write_text(c.replace(old_nlive, '"nlive": 400,', 1))
+          PY
+          grep -n 'SOURCE_RUN' nested-src/peer_decisive_followups/run_nested_lane.py
+          grep -n -A12 '_replace_directory_link(work / "Rec_database"' nested-src/peer_decisive_followups/run_nested_lane.py
+          grep -n 'nlive' nested-src/peer_decisive_followups/build_nested_config.py
+
+      - name: Run matched PolyChord evidence
+        working-directory: nested-src
+        run: |
+          set -euxo pipefail
+          python peer_decisive_followups/run_nested_lane.py \
+            --model '${{ matrix.model }}' \
+            --science "$GITHUB_WORKSPACE/science-act" \
+            --work "$GITHUB_WORKSPACE/evidence_${{ matrix.model }}" \
+            --packages "$COBAYA_PACKAGES_PATH"
+
+      - name: Readback evidence status
+        if: always()
+        run: |
+          set -x
+          if [ -d "evidence_${{ matrix.model }}" ]; then
+            find "evidence_${{ matrix.model }}" \( -name 'normalized_evidence.json' -o -name 'nested_status.json' \) -print | sort | while read f; do echo "=== $f"; cat "$f"; done
+          else
+            echo "No evidence directory produced"
+          fi
+
+      - name: Upload evidence and checkpoints
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: peer-nested-20260910-${{ matrix.model }}
+          path: evidence_${{ matrix.model }}
+          retention-days: 30
+          if-no-files-found: warn
