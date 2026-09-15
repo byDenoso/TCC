@@ -45,6 +45,19 @@ class ScientificIntakeParsingTests(unittest.TestCase):
             ],
         )
 
+    def test_comma_separates_only_when_next_clause_is_an_execution_command(self):
+        clauses = parse_execution_clauses(
+            "Teste PEER com Planck, ACT e SPT, Teste PEER contra pNGB, Execute D17"
+        )
+        self.assertEqual(
+            clauses,
+            [
+                "Teste PEER com Planck, ACT e SPT",
+                "Teste PEER contra pNGB",
+                "Execute D17",
+            ],
+        )
+
     def test_fingerprint_is_stable_under_formatting_and_case(self):
         a = ScientificTestSpec(
             question="PEER   sem SH0ES",
