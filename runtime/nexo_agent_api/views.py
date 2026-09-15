@@ -15,6 +15,13 @@ STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT
 PARKED_STATUSES = {"WAIT_DEPENDENCY"}
 HOT_STATUSES = {"READY", "RUNNING", "CHECKPOINTED", "WAIT_DEPENDENCY"}
 _RUNTIME_EVENT_NAME = re.compile(r"^\d{8}T\d{12}Z-[A-Za-z0-9]+\.json$")
+SEMANTIC_ENTITY_COUNT_KEYS = {
+    "hypothesis": "hypotheses",
+    "test": "tests",
+    "campaign": "campaigns",
+    "decision": "decisions",
+    "program": "programs",
+}
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -52,6 +59,19 @@ def _latest_runtime_event_id(root: Path) -> str | None:
 
 def _counter_dict(values: list[str]) -> dict[str, int]:
     return dict(sorted(Counter(values).items()))
+
+
+def _semantic_entity_counts(root: Path) -> tuple[dict[str, int], dict[str, str]]:
+    counts: dict[str, int] = {}
+    sources: dict[str, str] = {}
+    entities_root = root / "entities"
+    for folder_name, count_key in SEMANTIC_ENTITY_COUNT_KEYS.items():
+        folder = entities_root / folder_name
+        if not folder.exists():
+            continue
+        counts[count_key] = sum(1 for path in folder.glob("*.json") if path.is_file())
+        sources[count_key] = f"entities/{folder_name}/*.json"
+    return counts, sources
 
 
 def _write_ai_roi_snapshot(root: Path, active_items: list[dict[str, Any]], event_cursor: str | None) -> dict[str, int]:
@@ -182,7 +202,11 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8")) if snapshot_path.exists() else {}
     counts = dict(snapshot.get("counts", {})) if isinstance(snapshot, dict) else {}
     counts["active_work"] = len(refreshed)
+    semantic_counts, semantic_sources = _semantic_entity_counts(root)
+    counts.update(semantic_counts)
     snapshot["counts"] = counts
+    snapshot["semantic_freshness"] = "CURRENT_CANONICAL_ENTITY_SCAN"
+    snapshot["semantic_count_sources"] = semantic_sources
 
     event_cursor = _latest_runtime_event_id(root)
     if event_cursor:
