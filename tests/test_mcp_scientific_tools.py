@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 
 from nexo_control_plane.mcp_scientific_tools import (
     submit_scientific_tests_tool,
@@ -64,6 +65,14 @@ class MCPScientificToolTests(unittest.TestCase):
                 lambda: app,
             )
         self.assertEqual(app.calls, [])
+
+    def test_runtime_docs_freeze_mcp_tool_and_tower_first_invariant(self):
+        control_docs = Path("nexo_control_plane/README.md").read_text(encoding="utf-8")
+        dispatch_docs = Path("nexo_dispatch/README.md").read_text(encoding="utf-8")
+        combined = control_docs + "\n" + dispatch_docs
+        self.assertIn("nexo_submit_scientific_tests_v1", combined)
+        self.assertIn("TOWER_FIRST_DISPATCH", combined)
+        self.assertIn("byDenoso/NEXO-Obsidian-Vault@main:TOWER_V06", combined)
 
 
 if __name__ == "__main__":
