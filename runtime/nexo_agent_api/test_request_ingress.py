@@ -123,6 +123,23 @@ class RequestIngressTests(unittest.TestCase):
         self.assertEqual(work["source_threads"][0], "CHAT-05")
         self.assertEqual(work["source_threads"][-1], "CHAT-24")
 
+    def test_canonical_work_is_not_hidden_by_stale_active_index(self):
+        (self.root / "indexes").mkdir(parents=True)
+        stale = {"id": "OLD-WORK", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR", "kind": "RESEARCH"}
+        (self.root / "entities" / "work" / "OLD-WORK.json").write_text(json.dumps(stale))
+        (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [stale]}))
+
+        created = self.service.ingest_request(
+            thread_id="CHAT-NEW",
+            action="audit",
+            subject="request ingress health",
+            domain="ENGINEERING",
+            owner_role="ADVISOR",
+        )
+
+        advisor_ids = [item["id"] for item in self.service.queue_for("ADVISOR")]
+        self.assertIn(created["work_id"], advisor_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
