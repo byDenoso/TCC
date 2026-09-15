@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from .views import _prioritize, materialize_role_views
+from .views import _deferred_by_active_p0, _prioritize, materialize_role_views
 
 
 class StateMaterializationTests(unittest.TestCase):
@@ -123,6 +123,23 @@ class StateMaterializationTests(unittest.TestCase):
         ranked = _prioritize(queue, "EXECUTOR")
 
         self.assertEqual([item["id"] for item in ranked], ["P0", "CRITICAL", "NORMAL", "LOW"])
+
+    def test_create_candidate_is_hidden_while_referenced_p0_is_globally_active(self):
+        create_candidate = {
+            "id": "CREATE-LAYER",
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "priority": "NORMAL",
+            "operator_contract": {
+                "closure": {
+                    "scheduling_class": "AFTER_P0_CLOSURE",
+                    "p0_refs": ["P0-OTHER-ROLE"],
+                }
+            },
+        }
+
+        self.assertTrue(_deferred_by_active_p0(create_candidate, {"CREATE-LAYER", "P0-OTHER-ROLE"}))
+        self.assertFalse(_deferred_by_active_p0(create_candidate, {"CREATE-LAYER"}))
 
 
 if __name__ == "__main__":
