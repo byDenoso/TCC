@@ -13,6 +13,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "gz01_multprobe_consistency": ["python3", "-m", "benchmarks.gz01_multprobe_consistency"],
     "gz01_covariance_redshift_envelope": ["python3", "-m", "benchmarks.gz01_covariance_redshift_envelope"],
     "gzsb05_s8_morphology": ["python3", "-m", "benchmarks.gzsb05_s8_morphology"],
+    "gzsb06_s8_influence": ["python3", "-m", "benchmarks.gzsb06_s8_influence"],
 }
 
 @dataclass(frozen=True)
