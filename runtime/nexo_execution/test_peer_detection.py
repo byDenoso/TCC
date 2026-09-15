@@ -4,7 +4,8 @@ import json
 import unittest
 
 from runtime.nexo_execution.core import TASK_REGISTRY
-from runtime.nexo_execution.peer_detection import EXECUTION_ORDER, evaluate_battery, evaluate_gate, load_gate_registry, policy_digest, synthesise_detection
+from runtime.nexo_execution.peer_detection import EXECUTION_ORDER, evaluate_gate, load_gate_registry, policy_digest, synthesise_detection
+from runtime.nexo_execution.peer_detection_battery import evaluate_battery
 
 EXPECTED_IDS = [f"D{i:02d}" for i in range(26)]
 EXPECTED_ORDER = [
