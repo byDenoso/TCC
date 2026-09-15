@@ -39,4 +39,11 @@ jobs:
       - name: Run View API tests
         run: python -m unittest runtime.nexo_view_api.test_reader -v
       - name: Run Agent API tests
-        run: python -m unittest runtime.nexo_agent_api.test_service runtime.nexo_agent_api.test_legacy_routing runtime.nexo_agent_api.test_mutations -v
+        run: >-
+          python -m unittest
+          runtime.nexo_agent_api.test_service
+          runtime.nexo_agent_api.test_legacy_routing
+          runtime.nexo_agent_api.test_mutations
+          runtime.nexo_agent_api.test_state_materialization
+          runtime.nexo_agent_api.test_telemetry
+          -v
