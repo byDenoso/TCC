@@ -83,6 +83,37 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertEqual(roi["mutations"]["readback_pass"], 1)
             self.assertEqual(roi["roi"]["mode"], "PROXY_ONLY_NO_COST_DATA")
 
+    def test_recomputes_semantic_entity_counts_in_latest_snapshot(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for rel in (
+                "indexes",
+                "entities/work",
+                "entities/hypothesis",
+                "entities/test",
+                "snapshot",
+                "manifests",
+            ):
+                (root / rel).mkdir(parents=True)
+            (root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}))
+            (root / "snapshot/latest.json").write_text(json.dumps({
+                "schema_version": "0.6",
+                "counts": {"active_work": 0, "hypotheses": 1200, "tests": 2199},
+            }))
+            (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}))
+            (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}))
+            (root / "indexes/active-work.json").write_text(json.dumps({"count": 0, "work": []}))
+            for name in ("H1", "H2"):
+                (root / f"entities/hypothesis/{name}.json").write_text(json.dumps({"hypothesis_id": name}))
+            (root / "entities/test/T1.json").write_text(json.dumps({"id": "T1", "kind": "TEST"}))
+
+            materialize_role_views(root)
+
+            snapshot = json.loads((root / "snapshot/latest.json").read_text())
+            self.assertEqual(snapshot["counts"]["hypotheses"], 2)
+            self.assertEqual(snapshot["counts"]["tests"], 1)
+            self.assertEqual(snapshot["semantic_freshness"], "CURRENT_CANONICAL_ENTITY_SCAN")
+
     def test_cold_backlog_is_excluded_from_hot_state_and_role_views(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
