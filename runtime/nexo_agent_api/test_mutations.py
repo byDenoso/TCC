@@ -66,6 +66,56 @@ class MutationInboxTests(unittest.TestCase):
         self.assertEqual(entity["status"], "READY")
         self.assertEqual(entity["owner_role"], "EXECUTOR")
 
+    def test_zero_version_creates_new_test_with_exact_readback(self) -> None:
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-TEST-1",
+            "entity_kind": "test",
+            "entity_name": "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+            "expected_version": 0,
+            "changes": {
+                "id": "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+                "test_group_id": "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY",
+                "campaign_id": "CAMP-GROWTH-LSS",
+                "status": "VERIFIED",
+                "evidence_class": "FROZEN_BATTERY_CHILD",
+            },
+            "writer_role": "EXECUTOR",
+            "event_type": "TEST_VERIFIED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["entity_version"], 1)
+        self.assertEqual(receipt["readback"], "PASS")
+        entity = json.loads((self.root / "entities" / "test" / "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY.json").read_text())
+        self.assertEqual(entity["id"], "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY")
+        self.assertEqual(entity["entity_version"], 1)
+        self.assertEqual(entity["campaign_id"], "CAMP-GROWTH-LSS")
+        self.assertEqual(entity["test_group_id"], "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY")
+
+    def test_zero_version_creates_new_test_group_with_exact_readback(self) -> None:
+        group_id = "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY"
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-TEST-GROUP-1",
+            "entity_kind": "test_group",
+            "entity_name": group_id,
+            "expected_version": 0,
+            "changes": {
+                "id": group_id,
+                "campaign_id": "CAMP-GROWTH-LSS",
+                "group_kind": "BATTERY",
+                "label": "GZ01 eROSITA Superbattery",
+                "status": "ACTIVE",
+            },
+            "writer_role": "ADVISOR",
+            "event_type": "TEST_GROUP_CREATED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["entity_version"], 1)
+        self.assertEqual(receipt["readback"], "PASS")
+        entity = json.loads((self.root / "entities" / "test_group" / f"{group_id}.json").read_text())
+        self.assertEqual(entity["id"], group_id)
+        self.assertEqual(entity["entity_version"], 1)
+        self.assertEqual(entity["group_kind"], "BATTERY")
+
     def test_zero_version_rejects_mismatched_identity(self) -> None:
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": []}), encoding="utf-8")
         receipt = apply_mutation_request(self.root, {
@@ -77,6 +127,20 @@ class MutationInboxTests(unittest.TestCase):
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
         self.assertFalse((self.root / "entities" / "work" / "WORK::NEW.json").exists())
+
+    def test_zero_version_rejects_mismatched_identity_for_test_group(self) -> None:
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-TEST-GROUP-2",
+            "entity_kind": "test_group",
+            "entity_name": "TEST_GROUP::CAMP-GROWTH-LSS::A",
+            "expected_version": 0,
+            "changes": {"id": "TEST_GROUP::CAMP-GROWTH-LSS::B", "campaign_id": "CAMP-GROWTH-LSS"},
+            "writer_role": "ADVISOR",
+            "event_type": "TEST_GROUP_CREATED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
+        self.assertFalse((self.root / "entities" / "test_group" / "TEST_GROUP::CAMP-GROWTH-LSS::A.json").exists())
 
     def test_path_traversal_entity_name_is_rejected(self) -> None:
         receipt = apply_mutation_request(self.root, {
