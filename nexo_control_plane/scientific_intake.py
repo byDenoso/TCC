@@ -21,6 +21,10 @@ _EXECUTION_SUBJECT_RE = re.compile(
     r"^\s*(?:teste|testar|rode|rodar|execute|executar|fa[cç]a\s+o\s+teste)\s+(.+?)\s*$",
     flags=re.IGNORECASE,
 )
+_CLAUSE_SPLIT_RE = re.compile(
+    r"(?:[;\n]+|,\s*(?=(?:teste|testar|rode|rodar|execute|executar|fa[cç]a\s+o\s+teste)\b))",
+    flags=re.IGNORECASE,
+)
 _TERMINAL_STATUSES = {"VERIFIED", "DONE", "FAILED", "INCONCLUSIVE", "SUPERSEDED"}
 _ACTIVE_STATUSES = {"READY", "QUEUED", "DISPATCHED", "RUNNING", "CHECKPOINTED", "RESULT_AVAILABLE", "VERIFYING"}
 
@@ -37,7 +41,7 @@ def is_execution_utterance(text: str) -> bool:
 
 
 def parse_execution_clauses(text: str) -> list[str]:
-    clauses = [part.strip() for part in re.split(r"[;\n]+", text) if part.strip()]
+    clauses = [part.strip() for part in _CLAUSE_SPLIT_RE.split(text) if part.strip()]
     return [clause for clause in clauses if is_execution_utterance(clause)]
 
 
