@@ -1,0 +1,14 @@
+{
+  "schema": "nexo.execution.v1",
+  "execution_id": "GZSB06A-20260915-0503",
+  "work_id": "WORK::GZ01-EROSITA-SUPERBATTERY-V1",
+  "test_id": "GZSB-06A-EROSITA-S8-LOO-INFLUENCE-STANDALONE",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "47bb04a41bee35342a01e88b88df7fe0f8d42d9b",
+  "task_id": "gzsb06_s8_influence",
+  "parameters": {},
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": ["benchmark_result.json"]
+}
