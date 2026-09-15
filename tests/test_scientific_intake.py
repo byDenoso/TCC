@@ -49,7 +49,7 @@ class ScientificIntakeParsingTests(unittest.TestCase):
             decision_rule="p_global < 0.0027",
         )
         b = ScientificTestSpec(
-            question="peer sem shoes",
+            question="peer sem sh0es",
             datasets=("planck", "desi dr2"),
             rival="lcdm",
             decision_rule="P_GLOBAL < 0.0027",
