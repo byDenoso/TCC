@@ -4,7 +4,7 @@ import json
 import unittest
 
 from runtime.nexo_execution.core import TASK_REGISTRY
-from runtime.nexo_execution.peer_detection import EXECUTION_ORDER, evaluate_gate, load_gate_registry, policy_digest, synthesise_detection
+from runtime.nexo_execution.peer_detection import EXECUTION_ORDER, evaluate_battery, evaluate_gate, load_gate_registry, policy_digest, synthesise_detection
 
 EXPECTED_IDS = [f"D{i:02d}" for i in range(26)]
 EXPECTED_ORDER = [
@@ -113,6 +113,20 @@ class PeerDetectionGateTests(unittest.TestCase):
         d25 = evaluate_gate("D25", {"results": results})
         self.assertNotEqual(d25["gate_status"], "INCONCLUSIVE")
         self.assertEqual(d25["classification_hint"], "PEER_SPECIFIC_DETECTION")
+
+    def test_full_battery_applies_d09_stop_rule_and_records_skips(self):
+        bundle = passing_evidence()
+        bundle["D09"] = {"without_anchor": {"f0_excluded": False, "preferred_f": 0.0}, "with_anchor": {"f0_excluded": True, "preferred_f": 0.08}}
+        result = evaluate_battery({"gates": bundle})
+        self.assertEqual(result["classification"], "ANCHOR_CONDITIONED_SIGNAL")
+        self.assertEqual(result["results"]["D02"]["gate_status"], "SKIPPED_BY_POLICY")
+        self.assertEqual(result["results"]["D25"]["classification_hint"], "ANCHOR_CONDITIONED_SIGNAL")
+
+    def test_full_battery_can_reach_peer_specific_only_with_all_gates(self):
+        result = evaluate_battery({"gates": passing_evidence()})
+        self.assertEqual(result["classification"], "PEER_SPECIFIC_DETECTION")
+        self.assertEqual(len(result["results"]), 26)
+        self.assertEqual(result["nexo_verification"]["decision"], "VERIFIED")
 
     def test_d25_synthesis_anchor_conditioned_has_priority_over_peer_specific(self):
         prior = {gate_id: {"gate_id": gate_id, "gate_status": "PASS", "classification_hint": None} for gate_id in EXPECTED_IDS if gate_id != "D25"}
