@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from .views import materialize_role_views
+from .views import _prioritize, materialize_role_views
 
 
 class StateMaterializationTests(unittest.TestCase):
@@ -111,6 +111,18 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertEqual(active["work"], [])
             self.assertEqual(emergent["queue_count"], 0)
             self.assertEqual(emergent["queue"], [])
+
+    def test_p0_outranks_critical_and_normal_is_not_treated_as_unknown(self):
+        queue = [
+            {"id": "LOW", "status": "READY", "owner_role": "EXECUTOR", "priority": "LOW"},
+            {"id": "NORMAL", "status": "READY", "owner_role": "EXECUTOR", "priority": "NORMAL"},
+            {"id": "CRITICAL", "status": "READY", "owner_role": "EXECUTOR", "priority": "CRITICAL"},
+            {"id": "P0", "status": "READY", "owner_role": "EXECUTOR", "priority": "P0"},
+        ]
+
+        ranked = _prioritize(queue, "EXECUTOR")
+
+        self.assertEqual([item["id"] for item in ranked], ["P0", "CRITICAL", "NORMAL", "LOW"])
 
 
 if __name__ == "__main__":
