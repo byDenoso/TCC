@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "battery_id": "PEER_DETECTION_V1",
+  "status": "FROZEN",
+  "policy": {
+    "global_evidence_p": 0.0027,
+    "five_sigma_p": 2.87e-7,
+    "strong_delta_lnz": 5.0,
+    "ppc_min": 0.01,
+    "ppc_max": 0.99,
+    "split_max_pairwise_z": 2.5,
+    "max_release_shift_sigma": 1.0,
+    "max_growth_new_tension_sigma": 3.0,
+    "max_block_fraction": 0.8,
+    "holdout_min_z": 1.0,
+    "injection_max_bias_sigma": 0.25,
+    "injection_max_fpr": 0.05,
+    "injection_max_fnr": 0.2,
+    "coverage68_min": 0.63,
+    "coverage68_max": 0.73,
+    "coverage95_min": 0.92,
+    "coverage95_max": 0.98,
+    "sbc_rank_p_min": 0.01,
+    "rival_delta_ic_peer_better": -2.0,
+    "codepath_max_delta_chi2": 0.1,
+    "codepath_max_shift_sigma": 0.2,
+    "seed_min_runs": 5,
+    "seed_max_basin_dispersion_sigma": 0.5
+  },
+  "execution_order": [
+    "D00", "D01", "D04", "D09", "D10", "D11", "D12", "D13", "D14", "D02",
+    "D03", "D07", "D08", "D05", "D06", "D18", "D19", "D20", "D21", "D15",
+    "D16", "D17", "D22", "D23", "D24", "D25"
+  ],
+  "stop_rules": [
+    {
+      "after_gate": "D09",
+      "when_classification_hint": "ANCHOR_CONDITIONED_SIGNAL",
+      "classification": "ANCHOR_CONDITIONED_SIGNAL",
+      "skip": ["D02", "D03", "D07", "D08", "D05", "D06", "D18", "D19", "D20", "D21", "D15", "D16", "D17", "D22", "D23", "D24"],
+      "still_run": ["D25"]
+    }
+  ],
+  "gates": {
+    "D00": {"gate_id":"D00","title":"Freeze and preregister","group":"GOVERNANCE","evaluator":"freeze","capability_id":"peer.detection.d00.freeze_v1","task_id":"peer_detection_d00","dependencies":[]},
+    "D01": {"gate_id":"D01","title":"Same-stack baseline","group":"BASELINE","evaluator":"delta_chi2","capability_id":"peer.detection.d01.baseline_v1","task_id":"peer_detection_d01","dependencies":["D00"]},
+    "D02": {"gate_id":"D02","title":"Boundary-aware global null","group":"GLOBAL_NULL","evaluator":"empirical_tail","capability_id":"peer.detection.d02.global_null_v1","task_id":"peer_detection_d02","dependencies":["D01","D04","D09"]},
+    "D03": {"gate_id":"D03","title":"Look-elsewhere correction","group":"GLOBAL_NULL","evaluator":"look_elsewhere","capability_id":"peer.detection.d03.look_elsewhere_v1","task_id":"peer_detection_d03","dependencies":["D02"]},
+    "D04": {"gate_id":"D04","title":"Profile likelihood","group":"PROFILE","evaluator":"profile","capability_id":"peer.detection.d04.profile_v1","task_id":"peer_detection_d04","dependencies":["D00"]},
+    "D05": {"gate_id":"D05","title":"Bayesian evidence","group":"BAYES","evaluator":"bayes_evidence","capability_id":"peer.detection.d05.bayes_evidence_v1","task_id":"peer_detection_d05","dependencies":["D02","D03"]},
+    "D06": {"gate_id":"D06","title":"Prior sensitivity","group":"BAYES","evaluator":"prior_sensitivity","capability_id":"peer.detection.d06.prior_sensitivity_v1","task_id":"peer_detection_d06","dependencies":["D05"]},
+    "D07": {"gate_id":"D07","title":"Injection recovery","group":"CALIBRATION","evaluator":"injection_recovery","capability_id":"peer.detection.d07.injection_recovery_v1","task_id":"peer_detection_d07","dependencies":["D02"]},
+    "D08": {"gate_id":"D08","title":"Simulation-based calibration","group":"CALIBRATION","evaluator":"sbc","capability_id":"peer.detection.d08.sbc_v1","task_id":"peer_detection_d08","dependencies":["D07"]},
+    "D09": {"gate_id":"D09","title":"SH0ES ablation","group":"ANCHOR","evaluator":"anchor_ablation","capability_id":"peer.detection.d09.sh0es_ablation_v1","task_id":"peer_detection_d09","dependencies":["D01","D04"]},
+    "D10": {"gate_id":"D10","title":"Anchor swap","group":"ANCHOR","evaluator":"anchor_swap","capability_id":"peer.detection.d10.anchor_swap_v1","task_id":"peer_detection_d10","dependencies":["D09"]},
+    "D11": {"gate_id":"D11","title":"CMB experiment split","group":"DATA_SPLITS","evaluator":"split_consistency","capability_id":"peer.detection.d11.cmb_split_v1","task_id":"peer_detection_d11","dependencies":["D01"]},
+    "D12": {"gate_id":"D12","title":"CMB sub-block attribution","group":"DATA_SPLITS","evaluator":"block_dominance","capability_id":"peer.detection.d12.cmb_subblock_v1","task_id":"peer_detection_d12","dependencies":["D11"]},
+    "D13": {"gate_id":"D13","title":"DESI tracer ablation","group":"DATA_SPLITS","evaluator":"leave_one_out","capability_id":"peer.detection.d13.desi_ablation_v1","task_id":"peer_detection_d13","dependencies":["D01"]},
+    "D14": {"gate_id":"D14","title":"SN substitution","group":"DATA_SPLITS","evaluator":"dataset_substitution","capability_id":"peer.detection.d14.sn_substitution_v1","task_id":"peer_detection_d14","dependencies":["D01"]},
+    "D15": {"gate_id":"D15","title":"Growth prediction","group":"PREDICTION","evaluator":"growth_tension","capability_id":"peer.detection.d15.growth_v1","task_id":"peer_detection_d15","dependencies":["D02","D09"]},
+    "D16": {"gate_id":"D16","title":"Posterior predictive checks","group":"PREDICTION","evaluator":"ppc","capability_id":"peer.detection.d16.ppc_v1","task_id":"peer_detection_d16","dependencies":["D15"]},
+    "D17": {"gate_id":"D17","title":"Holdout prediction","group":"PREDICTION","evaluator":"holdout","capability_id":"peer.detection.d17.holdout_v1","task_id":"peer_detection_d17","dependencies":["D16"]},
+    "D18": {"gate_id":"D18","title":"A_lens rival","group":"RIVALS","evaluator":"rival_ic","capability_id":"peer.detection.d18.alens_rival_v1","task_id":"peer_detection_d18","dependencies":["D02"]},
+    "D19": {"gate_id":"D19","title":"EDE and pNGB rivals","group":"RIVALS","evaluator":"model_class_rival","capability_id":"peer.detection.d19.ede_pngb_rival_v1","task_id":"peer_detection_d19","dependencies":["D18"]},
+    "D20": {"gate_id":"D20","title":"Neff and recombination rivals","group":"RIVALS","evaluator":"model_class_rival","capability_id":"peer.detection.d20.neff_recombination_rival_v1","task_id":"peer_detection_d20","dependencies":["D19"]},
+    "D21": {"gate_id":"D21","title":"Lambda-free comparator","group":"RIVALS","evaluator":"structural_rival","capability_id":"peer.detection.d21.lambda_free_v1","task_id":"peer_detection_d21","dependencies":["D20"]},
+    "D22": {"gate_id":"D22","title":"Data-release robustness","group":"ROBUSTNESS","evaluator":"release_robustness","capability_id":"peer.detection.d22.release_robustness_v1","task_id":"peer_detection_d22","dependencies":["D02"]},
+    "D23": {"gate_id":"D23","title":"Code-path replication","group":"ROBUSTNESS","evaluator":"codepath_replication","capability_id":"peer.detection.d23.codepath_replication_v1","task_id":"peer_detection_d23","dependencies":["D22"]},
+    "D24": {"gate_id":"D24","title":"Independent seeds and minimizers","group":"ROBUSTNESS","evaluator":"seed_optimizer","capability_id":"peer.detection.d24.seeds_minimizers_v1","task_id":"peer_detection_d24","dependencies":["D23"]},
+    "D25": {"gate_id":"D25","title":"Global synthesis","group":"SYNTHESIS","evaluator":"synthesis","capability_id":"peer.detection.d25.synthesis_v1","task_id":"peer_detection_d25","dependencies":["D00","D01","D02","D03","D04","D05","D06","D07","D08","D09","D10","D11","D12","D13","D14","D15","D16","D17","D18","D19","D20","D21","D22","D23","D24"]}
+  }
+}
