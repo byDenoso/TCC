@@ -200,6 +200,21 @@ def _active_ids(root: Path) -> set[str] | None:
     return {str(item.get("id") or item.get("work_id")) for item in payload.get("work", []) if isinstance(item, dict) and (item.get("id") or item.get("work_id"))}
 
 
+def _deferred_by_active_p0(item: dict[str, Any], active_ids: set[str] | None) -> bool:
+    if not active_ids:
+        return False
+    contract = item.get("operator_contract")
+    if not isinstance(contract, dict):
+        return False
+    closure = contract.get("closure")
+    if not isinstance(closure, dict) or closure.get("scheduling_class") != "AFTER_P0_CLOSURE":
+        return False
+    refs = closure.get("p0_refs")
+    if not isinstance(refs, list):
+        return False
+    return any(str(ref) in active_ids for ref in refs)
+
+
 def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
     return sorted(
         queue,
@@ -224,6 +239,7 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
         queue = view["queue"]
         if active_ids is not None:
             queue = [item for item in queue if str(item.get("id")) in active_ids]
+            queue = [item for item in queue if not _deferred_by_active_p0(item, active_ids)]
         queue = _prioritize(queue, role)
         view["queue"] = queue
         view["queue_count"] = len(queue)
