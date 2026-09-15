@@ -1,0 +1,22 @@
+{
+  "H0": 70.795,
+  "chi2_null": 1029.622,
+  "chi2_peer": 1024.589,
+  "claim_boundary": "Matched best-fit basin only; not a calibrated detection, posterior preference, or global significance claim.",
+  "evidence_class": "MAX_LIKELIHOOD_MATCHED",
+  "gate_id": "D01",
+  "preferred_f_peer": 0.088,
+  "provenance": {
+    "canonical_test_registry_status": "PASS",
+    "source_documents": [
+      "Calibration_Sensitive_Hubble_PEER_Revised.pdf",
+      "peer_status.yaml",
+      "selfcontained.html"
+    ],
+    "verified_fits": "100/100"
+  },
+  "rdrag_mpc": 142.868,
+  "schema": "peer.detection.evidence.v1",
+  "source_test_id": "T-AF-001",
+  "stack": "Planck 2018 TTTEEE-lite + low-l TT/EE + lensing + DESI DR2 BAO; no SH0ES/TRGB"
+}
