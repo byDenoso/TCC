@@ -14,6 +14,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "gz01_covariance_redshift_envelope": ["python3", "-m", "benchmarks.gz01_covariance_redshift_envelope"],
     "gzsb05_s8_morphology": ["python3", "-m", "benchmarks.gzsb05_s8_morphology"],
     "gzsb06_s8_influence": ["python3", "-m", "benchmarks.gzsb06_s8_influence"],
+    "peer_detection_battery": ["python3", "-m", "benchmarks.peer_detection_battery"],
 }
 for _gate_index in range(26):
     _gate_id = f"D{_gate_index:02d}"
