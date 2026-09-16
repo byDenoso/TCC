@@ -170,6 +170,16 @@ class AgentService:
                 result[capability_id] = capability
         return result
 
+    def campaign_frontier(self, campaign_id: str) -> dict[str, Any]:
+        from .campaign_continuation import CampaignFrontierResolver
+
+        return CampaignFrontierResolver(self.root).resolve(campaign_id)
+
+    def resolve_test_execution(self, test: dict[str, Any]) -> dict[str, Any]:
+        from .capability_resolution import CapabilityExecutionResolver
+
+        return CapabilityExecutionResolver(self.capabilities_for("EXECUTOR")).resolve(test)
+
     def bootstrap(self, role: str) -> dict[str, Any]:
         role = role.upper()
         control = self._read_json("CONTROL.json")
