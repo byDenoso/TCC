@@ -13,7 +13,12 @@ from runtime.nexo_execution.core import (
     GitHubActionsProvider,
     ResultVerifier,
 )
-from runtime.nexo_execution.router import RoutingInput, choose_provider
+from runtime.nexo_execution.router import (
+    RoutingInput,
+    choose_provider,
+    choose_execution_path,
+    should_run_preflight,
+)
 
 
 BASE = {
@@ -157,6 +162,46 @@ class ExecutionTests(unittest.TestCase):
             choose_provider(RoutingInput(expected_runtime_minutes=60, parallelizable=True, external_enabled=False)),
             "local",
         )
+
+    def test_lean_fast_path_for_proven_reversible_known_work(self):
+        inp = RoutingInput(
+            expected_runtime_minutes=2,
+            reversible=True,
+            contract_known=True,
+            capability_proven=True,
+        )
+        self.assertEqual(choose_execution_path(inp), "FAST_PATH")
+
+    def test_lean_standard_path_for_material_but_reversible_work(self):
+        inp = RoutingInput(
+            reversible=True,
+            contract_known=True,
+            capability_proven=True,
+            material_risk=True,
+        )
+        self.assertEqual(choose_execution_path(inp), "STANDARD_PATH")
+
+    def test_lean_slow_path_protects_scientific_semantics_and_irreversibility(self):
+        self.assertEqual(
+            choose_execution_path(RoutingInput(capability_proven=True, scientific_semantic_change=True)),
+            "SLOW_PATH",
+        )
+        self.assertEqual(
+            choose_execution_path(RoutingInput(capability_proven=True, reversible=False)),
+            "SLOW_PATH",
+        )
+
+    def test_proven_capability_skips_equivalent_preflight(self):
+        inp = RoutingInput(capability_proven=True, contract_known=True)
+        self.assertFalse(should_run_preflight(inp))
+
+    def test_preflight_runs_when_relevant_proof_inputs_changed(self):
+        inp = RoutingInput(capability_proven=True, contract_known=True)
+        self.assertTrue(should_run_preflight(inp, version_changed=True))
+        self.assertTrue(should_run_preflight(inp, contract_changed=True))
+        self.assertTrue(should_run_preflight(inp, dependencies_changed=True))
+        self.assertTrue(should_run_preflight(inp, health_changed=True))
+        self.assertTrue(should_run_preflight(RoutingInput(capability_proven=False)))
 
     def test_verifier_passes_matching_result(self):
         contract = ExecutionContract.from_dict(dict(BASE))
