@@ -56,6 +56,36 @@ class ExecutionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ExecutionContract.from_dict(data)
 
+    def test_contract_from_registration_binds_canonical_identity(self):
+        registration = {
+            "dispatch_ready": True,
+            "readback": "PASS",
+            "test_id": "TEST::SOFTWARE::BUTTONS-01",
+            "run_id": "RUN::TEST::SOFTWARE::BUTTONS-01::0001",
+        }
+        execution = dict(BASE)
+        execution.pop("schema")
+        execution.pop("test_id")
+        execution.pop("run_id")
+        contract = ExecutionContract.from_registration(registration, **execution)
+        self.assertEqual(contract.schema, "nexo.execution.v2")
+        self.assertEqual(contract.test_id, registration["test_id"])
+        self.assertEqual(contract.run_id, registration["run_id"])
+
+    def test_contract_from_registration_rejects_failed_readback(self):
+        registration = {
+            "dispatch_ready": True,
+            "readback": "FAIL",
+            "test_id": "TEST::SOFTWARE::BUTTONS-01",
+            "run_id": "RUN::TEST::SOFTWARE::BUTTONS-01::0001",
+        }
+        execution = dict(BASE)
+        execution.pop("schema")
+        execution.pop("test_id")
+        execution.pop("run_id")
+        with self.assertRaisesRegex(ValueError, "registration.*readback"):
+            ExecutionContract.from_registration(registration, **execution)
+
     def test_v1_remains_readable_but_cannot_be_dispatched(self):
         legacy = dict(BASE)
         legacy["schema"] = "nexo.execution.v1"
