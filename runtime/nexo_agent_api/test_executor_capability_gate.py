@@ -12,14 +12,22 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        (self.root / "entities" / "work").mkdir(parents=True)
+        for kind in ("work", "campaign", "test", "run", "result"):
+            (self.root / "entities" / kind).mkdir(parents=True)
         (self.root / "manifests").mkdir(parents=True)
         (self.root / "snapshot").mkdir(parents=True)
         (self.root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}), encoding="utf-8")
         (self.root / "snapshot" / "latest.json").write_text(json.dumps({"event_cursor": "EVT-1"}), encoding="utf-8")
         (self.root / "manifests" / "capabilities.json").write_text(json.dumps({
             "capabilities": {
-                "known_task": {"roles": ["EXECUTOR"], "backend": "github_dispatch", "task_id": "known_task", "status": "PROVEN"}
+                "known_task": {"roles": ["EXECUTOR"], "backend": "github_dispatch", "task_id": "known_task", "status": "PROVEN"},
+                "mock_observer_v1": {
+                    "roles": ["EXECUTOR"],
+                    "backend": "github_dispatch",
+                    "task_id": "mock_observer_runtime",
+                    "status": "ACTIVE",
+                    "semantic_capabilities": ["science.mock_observer"]
+                }
             }
         }), encoding="utf-8")
 
@@ -92,6 +100,28 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         queue = AgentService(self.root).queue_for("EXECUTOR")
 
         self.assertEqual(queue[0].get("interdomain_ref"), "META::INTERDOMAIN::TEST-001")
+
+    def test_service_exposes_campaign_frontier(self) -> None:
+        (self.root / "entities" / "campaign" / "CAMP-1.json").write_text(
+            json.dumps({"id": "CAMP-1", "status": "ACTIVE", "execution_order": ["TEST::A"]}),
+            encoding="utf-8",
+        )
+        (self.root / "entities" / "test" / "TEST::A.json").write_text(
+            json.dumps({"id": "TEST::A", "campaign_id": "CAMP-1", "status": "READY"}),
+            encoding="utf-8",
+        )
+
+        frontier = AgentService(self.root).campaign_frontier("CAMP-1")
+
+        self.assertEqual(frontier["ready"], ["TEST::A"])
+
+    def test_service_resolves_semantic_test_execution(self) -> None:
+        decision = AgentService(self.root).resolve_test_execution(
+            {"required_capabilities": ["science.mock_observer"]}
+        )
+
+        self.assertEqual(decision["status"], "RESOLVED")
+        self.assertEqual(decision["task_id"], "mock_observer_runtime")
 
 
 if __name__ == "__main__":
