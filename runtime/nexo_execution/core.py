@@ -15,6 +15,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "gzsb05_s8_morphology": ["python3", "-m", "benchmarks.gzsb05_s8_morphology"],
     "gzsb06_s8_influence": ["python3", "-m", "benchmarks.gzsb06_s8_influence"],
     "peer_detection_battery": ["python3", "-m", "benchmarks.peer_detection_battery"],
+    "dependency_producer": ["python3", "-m", "runtime.nexo_execution.dependency_producer"],
 }
 for _gate_index in range(26):
     _gate_id = f"D{_gate_index:02d}"
