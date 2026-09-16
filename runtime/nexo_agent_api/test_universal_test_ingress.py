@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import importlib.util
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from .mutations import apply_mutation_request
+from .test_registry import register_test
 
 
 class UniversalTestIngressContractTests(unittest.TestCase):
@@ -34,6 +34,9 @@ class UniversalTestIngressContractTests(unittest.TestCase):
             "event_type": f"{kind.upper()}_CREATED",
         })
 
+    def _read(self, kind: str, entity_id: str) -> dict:
+        return json.loads((self.root / "entities" / kind / f"{entity_id}.json").read_text(encoding="utf-8"))
+
     def test_campaign_is_first_class_creatable_entity(self) -> None:
         campaign_id = "CAMPAIGN::COSMOLOGY::PEER-2026"
         receipt = self._create("campaign", campaign_id, {
@@ -44,7 +47,7 @@ class UniversalTestIngressContractTests(unittest.TestCase):
         })
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "campaign" / f"{campaign_id}.json").read_text())
+        entity = self._read("campaign", campaign_id)
         self.assertEqual(entity["domain"], "COSMOLOGY")
         self.assertEqual(entity["project_id"], "PROJECT::PEER")
 
@@ -59,13 +62,72 @@ class UniversalTestIngressContractTests(unittest.TestCase):
         })
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "run" / f"{run_id}.json").read_text())
+        entity = self._read("run", run_id)
         self.assertEqual(entity["parent_id"], "TEST::D04")
         self.assertEqual(entity["analytical_status"], "UNASSESSED")
 
-    def test_universal_test_registry_module_exists(self) -> None:
-        spec = importlib.util.find_spec("runtime.nexo_agent_api.test_registry")
-        self.assertIsNotNone(spec, "universal test registry module must exist before dispatch can be canonical")
+    def test_register_test_canonicalizes_hierarchy_before_dispatch(self) -> None:
+        registration = register_test(
+            self.root,
+            test_id="TEST::PEER::D04",
+            domain="cosmology",
+            title="D04 anchor-free profile",
+            objective="Test anchor-free profile evidence.",
+            campaign_id="CAMPAIGN::COSMOLOGY::PEER-2026",
+            campaign_title="PEER 2026",
+            test_group_id="TEST_GROUP::PEER_DETECTION_BATTERY",
+            test_group_title="PEER Detection Battery",
+            project_id="PROJECT::PEER",
+            capability_id="CAPABILITY::PEER_PROFILE",
+            correlation_id="CORR-PEER-D04-001",
+        )
+
+        self.assertTrue(registration["dispatch_ready"])
+        self.assertEqual(registration["readback"], "PASS")
+        self.assertEqual(registration["domain"], "COSMOLOGY")
+        self.assertEqual(registration["run_id"], "RUN::TEST::PEER::D04::0001")
+
+        campaign = self._read("campaign", registration["campaign_id"])
+        group = self._read("test_group", registration["test_group_id"])
+        test = self._read("test", registration["test_id"])
+        run = self._read("run", registration["run_id"])
+
+        self.assertEqual(campaign["parent_id"], "PROJECT::PEER")
+        self.assertEqual(group["parent_id"], registration["campaign_id"])
+        self.assertEqual(test["parent_id"], registration["test_group_id"])
+        self.assertEqual(test["campaign_id"], registration["campaign_id"])
+        self.assertEqual(test["operational_status"], "QUEUED")
+        self.assertEqual(test["analytical_status"], "UNASSESSED")
+        self.assertEqual(test["current_run_id"], registration["run_id"])
+        self.assertEqual(test["run_ids"], [registration["run_id"]])
+        self.assertEqual(run["test_id"], registration["test_id"])
+        self.assertEqual(run["parent_id"], registration["test_id"])
+        self.assertEqual(run["correlation_id"], "CORR-PEER-D04-001")
+
+        second = register_test(
+            self.root,
+            test_id="TEST::PEER::D04",
+            domain="COSMOLOGY",
+            title="D04 anchor-free profile",
+            objective="Test anchor-free profile evidence.",
+            campaign_id="CAMPAIGN::COSMOLOGY::PEER-2026",
+            campaign_title="PEER 2026",
+            test_group_id="TEST_GROUP::PEER_DETECTION_BATTERY",
+            test_group_title="PEER Detection Battery",
+            project_id="PROJECT::PEER",
+            capability_id="CAPABILITY::PEER_PROFILE",
+            correlation_id="CORR-PEER-D04-002",
+        )
+        self.assertEqual(second["run_id"], "RUN::TEST::PEER::D04::0002")
+        updated_test = self._read("test", second["test_id"])
+        self.assertEqual(updated_test["current_run_id"], second["run_id"])
+        self.assertEqual(updated_test["run_ids"], [registration["run_id"], second["run_id"]])
+        self.assertEqual(updated_test["analytical_status"], "UNASSESSED")
+
+    def test_check_is_not_promoted_by_canonical_mutation_writer(self) -> None:
+        receipt = self._create("check", "CHECK::LINT::001", {"status": "PASS"})
+        self.assertFalse(receipt["accepted"])
+        self.assertFalse((self.root / "entities" / "check" / "CHECK::LINT::001.json").exists())
 
 
 if __name__ == "__main__":
