@@ -24,28 +24,64 @@ for _gate_index in range(26):
     ]
 del _gate_index, _gate_id
 
+
+def _canonical_ref(value: Any, prefix: str) -> bool:
+    text = str(value or "").strip()
+    return text.startswith(f"{prefix}::") and len(text) > len(prefix) + 2 and not any(char.isspace() for char in text)
+
+
+def _assert_dispatchable(contract: "ExecutionContract") -> None:
+    if contract.schema == "nexo.execution.v1":
+        raise ValueError("legacy nexo.execution.v1 contracts are readable historical records but cannot be used for new dispatch")
+    if contract.schema != "nexo.execution.v2":
+        raise ValueError(f"unsupported dispatch schema: {contract.schema}")
+    if not _canonical_ref(contract.test_id, "TEST"):
+        raise ValueError("dispatch requires canonical TEST:: identity")
+    if not _canonical_ref(contract.run_id, "RUN"):
+        raise ValueError("dispatch requires canonical RUN:: identity")
+
+
 @dataclass(frozen=True)
 class ExecutionContract:
     schema: str; execution_id: str; work_id: str; test_id: str; provider: str
     repository: str; commit_sha: str; task_id: str; parameters: dict[str, Any]
     seed: int | None; timeout_minutes: int; required_outputs: list[str]
+    run_id: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ExecutionContract":
         required = {"schema","execution_id","work_id","test_id","provider","repository","commit_sha","task_id","parameters","seed","timeout_minutes","required_outputs"}
         missing = sorted(required - set(data))
         if missing: raise ValueError("missing contract fields: " + ", ".join(missing))
-        if data["schema"] != "nexo.execution.v1": raise ValueError(f"unsupported schema: {data['schema']}")
+        if data["schema"] not in {"nexo.execution.v1", "nexo.execution.v2"}: raise ValueError(f"unsupported schema: {data['schema']}")
+        if data["schema"] == "nexo.execution.v2":
+            if not data.get("run_id"): raise ValueError("nexo.execution.v2 requires run_id")
+            if not _canonical_ref(data.get("test_id"), "TEST"): raise ValueError("nexo.execution.v2 requires canonical TEST:: identity")
+            if not _canonical_ref(data.get("run_id"), "RUN"): raise ValueError("nexo.execution.v2 requires canonical RUN:: identity")
         if data["provider"] not in VALID_PROVIDERS: raise ValueError(f"unsupported provider: {data['provider']}")
         if data["task_id"] not in TASK_REGISTRY: raise ValueError(f"task is not allowlisted: {data['task_id']}")
         if int(data["timeout_minutes"]) <= 0: raise ValueError("timeout_minutes must be positive")
         if not isinstance(data["required_outputs"], list) or not all(isinstance(x, str) and x for x in data["required_outputs"]):
             raise ValueError("required_outputs must be a string list")
-        return cls(**data)
+        payload = dict(data)
+        payload.setdefault("run_id", None)
+        return cls(**payload)
 
     @classmethod
     def load(cls, path: str | Path) -> "ExecutionContract":
         return cls.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+    @classmethod
+    def from_registration(cls, registration: dict[str, Any], **execution: Any) -> "ExecutionContract":
+        if not registration.get("dispatch_ready") or registration.get("readback") != "PASS":
+            raise ValueError("canonical registration must pass readback before contract creation")
+        payload = {
+            "schema": "nexo.execution.v2",
+            "test_id": registration.get("test_id"),
+            "run_id": registration.get("run_id"),
+            **execution,
+        }
+        return cls.from_dict(payload)
 
     def canonical_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
@@ -87,7 +123,8 @@ def current_git_sha() -> str:
 class LocalProvider:
     name = "local"
     def submit(self, contract: ExecutionContract) -> ExecutionResult:
-        env = os.environ.copy(); env.update({"NEXO_EXECUTION_ID":contract.execution_id,"NEXO_WORK_ID":contract.work_id,"NEXO_TEST_ID":contract.test_id,"NEXO_SEED":"" if contract.seed is None else str(contract.seed)})
+        _assert_dispatchable(contract)
+        env = os.environ.copy(); env.update({"NEXO_EXECUTION_ID":contract.execution_id,"NEXO_WORK_ID":contract.work_id,"NEXO_TEST_ID":contract.test_id,"NEXO_RUN_ID":str(contract.run_id),"NEXO_SEED":"" if contract.seed is None else str(contract.seed)})
         for key, value in contract.parameters.items(): env[f"NEXO_PARAM_{str(key).upper()}"] = str(value)
         started = time.time(); error = None
         try: exit_code = subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
@@ -111,12 +148,13 @@ class GitHubActionsProvider:
             raise RuntimeError(f"GitHub API {exc.code}: {exc.read().decode(errors='replace')}") from exc
 
     def submit(self, contract: ExecutionContract, ref: str = "main", contract_name: str | None = None) -> dict[str, Any]:
+        _assert_dispatchable(contract)
         if contract.repository.count("/") != 1: raise ValueError("repository must be owner/name")
         if contract.provider != self.name: raise ValueError("contract provider must be github_actions")
         name = contract_name or f"{contract.execution_id}.json"
         if not name or "/" in name or ".." in name: raise ValueError("contract_name must be a safe filename")
         status, _ = self._request(f"https://api.github.com/repos/{contract.repository}/actions/workflows/{self.workflow}/dispatches", "POST", {"ref":ref,"inputs":{"contract_name":name,"expected_contract_hash":contract.contract_hash}})
-        return {"execution_id":contract.execution_id,"dispatch_http_status":status,"contract_hash":contract.contract_hash,"contract_name":name}
+        return {"execution_id":contract.execution_id,"test_id":contract.test_id,"run_id":contract.run_id,"dispatch_http_status":status,"contract_hash":contract.contract_hash,"contract_name":name}
 
 class ResultVerifier:
     def verify(self, contract: ExecutionContract, result: ExecutionResult) -> dict[str, Any]:
