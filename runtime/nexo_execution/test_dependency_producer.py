@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from runtime.nexo_execution.core import ExecutionContract
 from runtime.nexo_execution.dependency_producer import (
     build_producer_envelope,
     checkpoint_compatible,
@@ -62,6 +63,15 @@ class DependencyProducerTests(unittest.TestCase):
             self.assertEqual(envelope["producer_fingerprint"], producer_fingerprint(recipe))
             self.assertTrue(envelope["outputs"][0]["sha256"])
             self.assertEqual(envelope["status"], "COMPLETE")
+
+    def test_generic_dependency_producer_is_allowlisted_runtime_task(self):
+        contract = ExecutionContract.from_dict({
+            "schema":"nexo.execution.v1", "execution_id":"DEP-1", "work_id":"TEST-D09", "test_id":"D09",
+            "provider":"local", "repository":"byDenoso/TCC", "commit_sha":"abc",
+            "task_id":"dependency_producer", "parameters":{"recipe_path":"recipe.json"}, "seed":None,
+            "timeout_minutes":5, "required_outputs":["dependency_producer_result.json"],
+        })
+        self.assertEqual(contract.task_id, "dependency_producer")
 
 
 if __name__ == "__main__":
