@@ -65,9 +65,8 @@ def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     binding = recipe.get("binding") or {}
     if not binding.get("output_schema") or binding.get("target_test_id") != recipe.get("parent_test_id"):
         raise ValueError("binding must target parent_test_id with an output_schema")
-    implementation_id = str(recipe.get("implementation_id") or "")
-    if implementation_id not in PRODUCER_IMPLEMENTATIONS:
-        raise ValueError(f"producer implementation is not allowlisted: {implementation_id}")
+    if not str(recipe.get("implementation_id") or "").strip():
+        raise ValueError("implementation_id is required")
     return {"status": "PASS", "recipe_id": recipe["recipe_id"], "producer_fingerprint": producer_fingerprint(recipe)}
 
 
@@ -123,7 +122,10 @@ def build_producer_envelope(
 
 def run_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     validation = validate_recipe(recipe)
-    implementation = PRODUCER_IMPLEMENTATIONS[str(recipe["implementation_id"])]
+    implementation_id = str(recipe["implementation_id"])
+    implementation = PRODUCER_IMPLEMENTATIONS.get(implementation_id)
+    if implementation is None:
+        raise ValueError(f"producer implementation is not allowlisted: {implementation_id}")
     output_paths = implementation(recipe)
     envelope = build_producer_envelope(recipe, output_paths, status="COMPLETE")
     if envelope["missing_required_outputs"]:
