@@ -203,7 +203,8 @@ class AgentService:
         state or dispatch by itself. Existing mutation/dispatch gates remain the
         authority for writes and execution.
         """
-        mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "SHADOW")).upper()
+        requested_mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "SHADOW")).upper()
+        mode = requested_mode if requested_mode in {"OFF", "SHADOW", "ACTIVE"} else "SHADOW"
         frontier = self.campaign_frontier(campaign_id)
 
         if mode == "OFF":
@@ -213,53 +214,49 @@ class AgentService:
 
         recoverable = list(frontier.get("recoverable") or [])
         if recoverable:
-            return {
+            proposed = {
                 "campaign_id": campaign_id,
                 "mode": mode,
                 "action": "RECOVER",
                 "test_id": recoverable[0],
                 "frontier": frontier,
             }
+        else:
+            active = list(frontier.get("active") or [])
+            if active:
+                proposed = {
+                    "campaign_id": campaign_id,
+                    "mode": mode,
+                    "action": "RESUME",
+                    "test_id": active[0],
+                    "frontier": frontier,
+                }
+            else:
+                ready = list(frontier.get("ready") or [])
+                if not ready:
+                    return {"campaign_id": campaign_id, "mode": mode, "action": "NO_OP", "frontier": frontier}
 
-        active = list(frontier.get("active") or [])
-        if active:
-            return {
-                "campaign_id": campaign_id,
-                "mode": mode,
-                "action": "RESUME",
-                "test_id": active[0],
-                "frontier": frontier,
-            }
-
-        ready = list(frontier.get("ready") or [])
-        if not ready:
-            return {"campaign_id": campaign_id, "mode": mode, "action": "NO_OP", "frontier": frontier}
-
-        test_id = ready[0]
-        source = (frontier.get("sources") or {}).get(test_id)
-        test = self._campaign_item(campaign_id, test_id, source)
-        execution = self.resolve_test_execution(test)
-        action = "DISPATCH" if execution.get("status") == "RESOLVED" else "RESOLVE_CAPABILITY"
+                test_id = ready[0]
+                source = (frontier.get("sources") or {}).get(test_id)
+                test = self._campaign_item(campaign_id, test_id, source)
+                execution = self.resolve_test_execution(test)
+                action = "DISPATCH" if execution.get("status") == "RESOLVED" else "RESOLVE_CAPABILITY"
+                proposed = {
+                    "campaign_id": campaign_id,
+                    "mode": mode,
+                    "action": action,
+                    "test_id": test_id,
+                    "execution": execution,
+                    "frontier": frontier,
+                }
 
         if mode == "SHADOW":
-            return {
-                "campaign_id": campaign_id,
-                "mode": mode,
-                "action": "SHADOW",
-                "proposed_action": action,
-                "test_id": test_id,
-                "execution": execution,
-                "frontier": frontier,
-            }
+            shadow = dict(proposed)
+            shadow["proposed_action"] = str(proposed["action"])
+            shadow["action"] = "SHADOW"
+            return shadow
 
-        return {
-            "campaign_id": campaign_id,
-            "mode": mode,
-            "action": action,
-            "test_id": test_id,
-            "execution": execution,
-            "frontier": frontier,
-        }
+        return proposed
 
     def bootstrap(self, role: str) -> dict[str, Any]:
         role = role.upper()
