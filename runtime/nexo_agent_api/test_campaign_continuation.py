@@ -12,7 +12,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        for kind in ("campaign", "test", "run", "result"):
+        for kind in ("campaign", "test", "work", "run", "result"):
             (self.root / "entities" / kind).mkdir(parents=True, exist_ok=True)
 
     def tearDown(self) -> None:
@@ -118,6 +118,28 @@ class CampaignFrontierResolverTests(unittest.TestCase):
         self.assertTrue(frontier["terminal"])
         self.assertEqual(frontier["status"], "TERMINAL")
         self.assertEqual(frontier["next_test_ids"], [])
+
+    def test_legacy_work_with_campaign_id_is_visible_until_migrated_to_test(self) -> None:
+        self.write(
+            "campaign",
+            "CAMP-LEGACY",
+            status="ACTIVE",
+            execution_order=["T-LEGACY-001"],
+        )
+        self.write(
+            "work",
+            "T-LEGACY-001",
+            campaign_id="CAMP-LEGACY",
+            kind="RESEARCH",
+            owner_role="EXECUTOR",
+            status="READY",
+            required_capabilities=["science.mock_observer"],
+        )
+
+        frontier = CampaignFrontierResolver(self.root).resolve("CAMP-LEGACY")
+
+        self.assertEqual(frontier["ready"], ["T-LEGACY-001"])
+        self.assertEqual(frontier["sources"]["T-LEGACY-001"], "work")
 
 
 if __name__ == "__main__":
