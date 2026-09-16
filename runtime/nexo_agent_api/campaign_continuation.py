@@ -29,7 +29,9 @@ class CampaignFrontierResolver:
     """Derive campaign continuation state from canonical entities only.
 
     This resolver is intentionally read-only. It reconstructs the frontier on
-    demand instead of introducing a second persisted campaign cursor.
+    demand instead of introducing a second persisted campaign cursor. Canonical
+    TEST entities win; legacy WORK entities with campaign_id are read only as a
+    compatibility bridge until they are migrated through register_test().
     """
 
     def __init__(self, root: str | Path) -> None:
@@ -38,18 +40,33 @@ class CampaignFrontierResolver:
     def _entity(self, kind: str, entity_id: str) -> dict[str, Any] | None:
         return _read_json(self.root / "entities" / kind / f"{entity_id}.json")
 
-    def _tests(self, campaign_id: str) -> dict[str, dict[str, Any]]:
-        folder = self.root / "entities" / "test"
+    def _campaign_items(self, campaign_id: str) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
         items: dict[str, dict[str, Any]] = {}
-        if not folder.exists():
-            return items
-        for path in folder.glob("*.json"):
-            payload = _read_json(path)
-            if not payload or str(payload.get("campaign_id")) != campaign_id:
-                continue
-            test_id = str(payload.get("id") or path.stem)
-            items[test_id] = payload
-        return items
+        sources: dict[str, str] = {}
+
+        test_folder = self.root / "entities" / "test"
+        if test_folder.exists():
+            for path in test_folder.glob("*.json"):
+                payload = _read_json(path)
+                if not payload or str(payload.get("campaign_id")) != campaign_id:
+                    continue
+                test_id = str(payload.get("id") or path.stem)
+                items[test_id] = payload
+                sources[test_id] = "test"
+
+        work_folder = self.root / "entities" / "work"
+        if work_folder.exists():
+            for path in work_folder.glob("*.json"):
+                payload = _read_json(path)
+                if not payload or str(payload.get("campaign_id")) != campaign_id:
+                    continue
+                item_id = str(payload.get("id") or payload.get("work_id") or path.stem)
+                if item_id in items:
+                    continue
+                items[item_id] = payload
+                sources[item_id] = "work"
+
+        return items, sources
 
     def _runs(self, campaign_id: str) -> dict[str, list[dict[str, Any]]]:
         folder = self.root / "entities" / "run"
@@ -60,7 +77,7 @@ class CampaignFrontierResolver:
             payload = _read_json(path)
             if not payload or str(payload.get("campaign_id")) != campaign_id:
                 continue
-            test_id = str(payload.get("test_id") or "")
+            test_id = str(payload.get("test_id") or payload.get("work_id") or "")
             if test_id:
                 items.setdefault(test_id, []).append(payload)
         return items
@@ -88,7 +105,7 @@ class CampaignFrontierResolver:
         if campaign is None:
             raise ValueError(f"campaign not found: {campaign_id}")
 
-        tests = self._tests(campaign_id)
+        tests, sources = self._campaign_items(campaign_id)
         runs_by_test = self._runs(campaign_id)
         ordered_ids = self._ordered_ids(campaign, tests)
 
@@ -148,4 +165,5 @@ class CampaignFrontierResolver:
             "completed": completed,
             "terminal": terminal,
             "next_test_ids": list(next_test_ids),
+            "sources": sources,
         }
