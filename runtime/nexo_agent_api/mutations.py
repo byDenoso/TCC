@@ -9,7 +9,17 @@ from .governance import evaluate_governance
 from .service import AgentService, TowerAgentIssue
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_.:-]+$")
-_CREATABLE_ENTITY_KINDS = {"work", "test", "test_group", "hypothesis"}
+_CREATABLE_ENTITY_KINDS = {
+    "work",
+    "project",
+    "hypothesis",
+    "campaign",
+    "test_group",
+    "test",
+    "run",
+    "result",
+    "artifact",
+}
 
 
 def _integer_version(value: Any) -> int:
