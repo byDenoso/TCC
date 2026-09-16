@@ -86,6 +86,23 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def write_active_campaign(self) -> None:
+        self.write_ready_campaign()
+        (self.root / "entities" / "test" / "TEST::A.json").write_text(
+            json.dumps({
+                "id": "TEST::A",
+                "campaign_id": "CAMP-1",
+                "status": "READY",
+                "current_run_id": "RUN::A",
+                "required_capabilities": ["science.mock_observer"],
+            }),
+            encoding="utf-8",
+        )
+        (self.root / "entities" / "run" / "RUN::A.json").write_text(
+            json.dumps({"id": "RUN::A", "campaign_id": "CAMP-1", "test_id": "TEST::A", "status": "RUNNING"}),
+            encoding="utf-8",
+        )
+
     def test_executor_rejects_unregistered_task_id(self) -> None:
         self.write_work("W-UNKNOWN", task_id="unknown_task")
         self.assertEqual(AgentService(self.root).queue_for("EXECUTOR"), [])
@@ -133,6 +150,39 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         self.assertEqual(decision["action"], "DISPATCH")
         self.assertEqual(decision["test_id"], "TEST::A")
         self.assertEqual(decision["execution"]["task_id"], "mock_observer_runtime")
+
+    def test_continue_campaign_defaults_to_shadow_for_ready_work(self) -> None:
+        self.write_ready_campaign()
+        with patch.dict("os.environ", {}, clear=False):
+            import os
+            old = os.environ.pop("NEXO_CAMPAIGN_CONTINUATION_MODE", None)
+            try:
+                decision = AgentService(self.root).continue_campaign("CAMP-1")
+            finally:
+                if old is not None:
+                    os.environ["NEXO_CAMPAIGN_CONTINUATION_MODE"] = old
+
+        self.assertEqual(decision["mode"], "SHADOW")
+        self.assertEqual(decision["action"], "SHADOW")
+        self.assertEqual(decision["proposed_action"], "DISPATCH")
+
+    def test_continue_campaign_shadow_wraps_resume_decision(self) -> None:
+        self.write_active_campaign()
+        with patch.dict("os.environ", {"NEXO_CAMPAIGN_CONTINUATION_MODE": "SHADOW"}, clear=False):
+            decision = AgentService(self.root).continue_campaign("CAMP-1")
+
+        self.assertEqual(decision["action"], "SHADOW")
+        self.assertEqual(decision["proposed_action"], "RESUME")
+        self.assertEqual(decision["test_id"], "TEST::A")
+
+    def test_continue_campaign_invalid_mode_fails_closed_to_shadow(self) -> None:
+        self.write_ready_campaign()
+        with patch.dict("os.environ", {"NEXO_CAMPAIGN_CONTINUATION_MODE": "YOLO"}, clear=False):
+            decision = AgentService(self.root).continue_campaign("CAMP-1")
+
+        self.assertEqual(decision["mode"], "SHADOW")
+        self.assertEqual(decision["action"], "SHADOW")
+        self.assertEqual(decision["proposed_action"], "DISPATCH")
 
     def test_continue_campaign_off_disables_automatic_selection_only(self) -> None:
         self.write_ready_campaign()
