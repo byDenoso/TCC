@@ -180,6 +180,87 @@ class AgentService:
 
         return CapabilityExecutionResolver(self.capabilities_for("EXECUTOR")).resolve(test)
 
+    def _campaign_item(self, campaign_id: str, test_id: str, source: str | None = None) -> dict[str, Any]:
+        kinds = [source] if source in {"test", "work"} else ["test", "work"]
+        for kind in kinds:
+            path = self.root / "entities" / kind / f"{test_id}.json"
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except (FileNotFoundError, json.JSONDecodeError, OSError):
+                continue
+            if isinstance(payload, dict) and str(payload.get("campaign_id")) == campaign_id:
+                return payload
+        raise TowerAgentIssue(
+            "CAMPAIGN_TEST_NOT_FOUND",
+            "Campaign frontier referenced a test that cannot be read.",
+            {"campaign_id": campaign_id, "test_id": test_id},
+        )
+
+    def continue_campaign(self, campaign_id: str) -> dict[str, Any]:
+        """Return one recovery-first continuation decision for a campaign.
+
+        This method is intentionally decision-only: it does not mutate canonical
+        state or dispatch by itself. Existing mutation/dispatch gates remain the
+        authority for writes and execution.
+        """
+        mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "SHADOW")).upper()
+        frontier = self.campaign_frontier(campaign_id)
+
+        if mode == "OFF":
+            return {"campaign_id": campaign_id, "mode": mode, "action": "DISABLED", "frontier": frontier}
+        if frontier.get("terminal"):
+            return {"campaign_id": campaign_id, "mode": mode, "action": "TERMINAL", "frontier": frontier}
+
+        recoverable = list(frontier.get("recoverable") or [])
+        if recoverable:
+            return {
+                "campaign_id": campaign_id,
+                "mode": mode,
+                "action": "RECOVER",
+                "test_id": recoverable[0],
+                "frontier": frontier,
+            }
+
+        active = list(frontier.get("active") or [])
+        if active:
+            return {
+                "campaign_id": campaign_id,
+                "mode": mode,
+                "action": "RESUME",
+                "test_id": active[0],
+                "frontier": frontier,
+            }
+
+        ready = list(frontier.get("ready") or [])
+        if not ready:
+            return {"campaign_id": campaign_id, "mode": mode, "action": "NO_OP", "frontier": frontier}
+
+        test_id = ready[0]
+        source = (frontier.get("sources") or {}).get(test_id)
+        test = self._campaign_item(campaign_id, test_id, source)
+        execution = self.resolve_test_execution(test)
+        action = "DISPATCH" if execution.get("status") == "RESOLVED" else "RESOLVE_CAPABILITY"
+
+        if mode == "SHADOW":
+            return {
+                "campaign_id": campaign_id,
+                "mode": mode,
+                "action": "SHADOW",
+                "proposed_action": action,
+                "test_id": test_id,
+                "execution": execution,
+                "frontier": frontier,
+            }
+
+        return {
+            "campaign_id": campaign_id,
+            "mode": mode,
+            "action": action,
+            "test_id": test_id,
+            "execution": execution,
+            "frontier": frontier,
+        }
+
     def bootstrap(self, role: str) -> dict[str, Any]:
         role = role.upper()
         control = self._read_json("CONTROL.json")
