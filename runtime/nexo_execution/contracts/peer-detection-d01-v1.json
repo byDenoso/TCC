@@ -7,7 +7,10 @@
   "repository": "byDenoso/TCC",
   "commit_sha": "d189c5a7dc01081a74e0587d9550279eaf820653",
   "task_id": "peer_detection_d01",
-  "parameters": {},
+  "parameters": {
+    "input_url": "https://raw.githubusercontent.com/byDenoso/TCC/f7fc9474ab5a6fb0466da73c43b48fbc127266b0/runtime/nexo_execution/evidence/peer_detection/d01_t_af_001_v1.json",
+    "input_sha256": "ee6fbf40274b4892b97c76b1f82e93b4840ee4af46111b24e3fb70d3d250503e"
+  },
   "seed": null,
   "timeout_minutes": 15,
   "required_outputs": ["peer_detection_gate_result.json"]
