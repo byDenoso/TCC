@@ -1,0 +1,30 @@
+{
+  "schema": "peer.detection.d04.profile-evidence.v1",
+  "source_test_id": "T-AF-001",
+  "evidence_class": "PROFILE_GEOMETRY",
+  "stack": {
+    "cmb": "Planck 2018 plik-lite TTTEEE + low-l TT + low-l EE + Planck lensing",
+    "bao": "DESI DR2 BAO-all, 13 observables with internal covariance",
+    "local_anchors": "none",
+    "alens": 1.0
+  },
+  "source": {
+    "drive_file_id": "1sGTN5gGeFm6rxna7i_9PlrYCKFzS4JO2",
+    "drive_title": "PEER1P_ANCHOR_FREE_TESTES_1_A_5_20260723.pdf",
+    "pdf_sha256": "aa73a19318c35ee1a4574f2c5282bc34a9d947f938b777047d9c13f9abdc7ca4",
+    "file_size_bytes": 313464,
+    "report_date": "2026-07-23"
+  },
+  "profile": [
+    {"f_peer": 0.0, "chi2": 1026.5262},
+    {"f_peer": 0.04, "chi2": 1022.8053},
+    {"f_peer": 0.06, "chi2": 1021.4112},
+    {"f_peer": 0.07, "chi2": 1021.4373},
+    {"f_peer": 0.08, "chi2": 1021.5738},
+    {"f_peer": 0.09, "chi2": 1023.2672},
+    {"f_peer": 0.10, "chi2": 1024.6381},
+    {"f_peer": 0.12, "chi2": 1026.3809}
+  ],
+  "source_claim_boundary": "Anchor-free Alens=1 1D profile with historical gaps between branches; demonstrates an interior local minimum but not calibrated significance, posterior mass, closed 2D basin, or global model preference.",
+  "recovery_note": "Recovered from the original audited anchor-free report. The separate two-point SH0ES-inclusive T-PROFILE-001 result was rejected as non-equivalent for D04."
+}
