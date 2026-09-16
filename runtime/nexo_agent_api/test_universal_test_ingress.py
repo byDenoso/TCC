@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import tempfile
 import unittest
@@ -61,6 +62,10 @@ class UniversalTestIngressContractTests(unittest.TestCase):
         entity = json.loads((self.root / "entities" / "run" / f"{run_id}.json").read_text())
         self.assertEqual(entity["parent_id"], "TEST::D04")
         self.assertEqual(entity["analytical_status"], "UNASSESSED")
+
+    def test_universal_test_registry_module_exists(self) -> None:
+        spec = importlib.util.find_spec("runtime.nexo_agent_api.test_registry")
+        self.assertIsNotNone(spec, "universal test registry module must exist before dispatch can be canonical")
 
 
 if __name__ == "__main__":
