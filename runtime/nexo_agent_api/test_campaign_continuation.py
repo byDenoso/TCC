@@ -18,9 +18,9 @@ class CampaignFrontierResolverTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def write(self, kind: str, entity_id: str, **payload) -> None:
+    def write(self, entity_kind: str, entity_id: str, **payload) -> None:
         data = {"id": entity_id, "entity_version": 1, **payload}
-        (self.root / "entities" / kind / f"{entity_id}.json").write_text(
+        (self.root / "entities" / entity_kind / f"{entity_id}.json").write_text(
             json.dumps(data), encoding="utf-8"
         )
 
