@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from typing import Any, Iterable
+from urllib.parse import quote
 
 from runtime.nexo_core.models import CanonicalEntity
 
@@ -13,6 +14,15 @@ EDGE_TYPES = {
     "BLOCKED_BY",
     "EVIDENCED_BY",
     "EXECUTED_BY",
+}
+
+_ROUTE_PREFIX = {
+    "CAMPAIGN": "campaigns",
+    "TEST": "tests",
+    "TEST_GROUP": "test-groups",
+    "PROJECT": "projects",
+    "HYPOTHESIS": "hypotheses",
+    "WORK": "work",
 }
 
 
@@ -34,6 +44,13 @@ def _is_canonical_ref(value: str) -> bool:
     return bool(prefix and identifier and prefix.replace("_", "").isalnum() and prefix.upper() == prefix)
 
 
+def _route_for(entity_ref: str, prefix: str) -> str | None:
+    resource = _ROUTE_PREFIX.get(prefix.upper())
+    if not resource:
+        return None
+    return f"/{resource}/{quote(entity_ref, safe='')}"
+
+
 def _scope_for(entity: CanonicalEntity) -> str:
     prefix = entity.entity_ref.split("::", 1)[0].upper()
     domain = str(entity.data.get("domain", "")).upper()
@@ -47,6 +64,37 @@ def _scope_for(entity: CanonicalEntity) -> str:
     if prefix in {"SYSTEM", "DEPLOYMENT", "REPOSITORY", "SNAPSHOT"}:
         return "system"
     return "research"
+
+
+def _projected_node(entity_ref: str, prefix: str, data: dict[str, Any], *, status: str, version: int) -> dict[str, Any]:
+    node: dict[str, Any] = {
+        "id": entity_ref,
+        "type": prefix,
+        "label": data.get("label", entity_ref),
+        "domain": data.get("domain"),
+        "status": status,
+        "version": version,
+        "operational_status": data.get("operational_status", status),
+        "analytical_status": data.get("analytical_status"),
+    }
+    route = _route_for(entity_ref, prefix)
+    if route:
+        node["route"] = route
+    for field in (
+        "parent_id",
+        "project_id",
+        "hypothesis_id",
+        "work_id",
+        "campaign_id",
+        "test_group_id",
+        "current_run_id",
+        "capability_id",
+        "objective",
+    ):
+        value = data.get(field)
+        if value not in (None, ""):
+            node[field] = value
+    return node
 
 
 def build_snapshot(
@@ -63,18 +111,21 @@ def build_snapshot(
     edges: list[dict[str, str]] = []
     edge_seen: set[tuple[str, str, str]] = set()
     sections: dict[str, list[str]] = {"research": [], "olympus": [], "nexo": [], "system": []}
+    domains: dict[str, list[str]] = {}
 
     for entity in materialized:
         prefix = entity.entity_ref.split("::", 1)[0]
-        nodes[entity.entity_ref] = {
-            "id": entity.entity_ref,
-            "type": prefix,
-            "label": entity.data.get("label", entity.entity_ref),
-            "domain": entity.data.get("domain"),
-            "status": entity.state,
-            "version": entity.entity_version,
-        }
+        nodes[entity.entity_ref] = _projected_node(
+            entity.entity_ref,
+            prefix,
+            entity.data,
+            status=entity.state,
+            version=entity.entity_version,
+        )
         sections[_scope_for(entity)].append(entity.entity_ref)
+        domain = str(entity.data.get("domain") or "").strip().upper()
+        if domain:
+            domains.setdefault(domain, []).append(entity.entity_ref)
 
     def add_edge(source: str, target: str, edge_type: str) -> None:
         target = target.strip()
@@ -87,22 +138,24 @@ def build_snapshot(
         edges.append({"source": source, "target": target, "type": edge_type})
         if target not in nodes:
             prefix = target.split("::", 1)[0]
-            nodes[target] = {
-                "id": target,
-                "type": prefix,
-                "label": target,
-                "domain": None,
-                "status": "UNKNOWN",
-                "version": 0,
-            }
+            nodes[target] = _projected_node(target, prefix, {}, status="UNKNOWN", version=0)
 
     for entity in materialized:
         data = entity.data
         for target in _listify(data.get("dependency_ids")):
             add_edge(entity.entity_ref, target, "DEPENDS_ON")
-        parent = data.get("parent_id")
-        if parent:
-            add_edge(entity.entity_ref, str(parent), "BELONGS_TO")
+
+        # Project the complete canonical hierarchy generically. A TEST may have a
+        # TEST_GROUP parent while still explicitly belonging to its CAMPAIGN/PROJECT;
+        # frontends can choose how much of that hierarchy to render without scraping logs.
+        hierarchy_refs: list[str] = []
+        for key in ("parent_id", "test_group_id", "campaign_id", "project_id", "hypothesis_id", "work_id"):
+            for target in _listify(data.get(key)):
+                if target not in hierarchy_refs:
+                    hierarchy_refs.append(target)
+        for target in hierarchy_refs:
+            add_edge(entity.entity_ref, target, "BELONGS_TO")
+
         for target in _listify(data.get("evidence_refs") or data.get("evidence_ref")):
             add_edge(entity.entity_ref, target, "EVIDENCED_BY")
         result_ref = data.get("result_ref")
@@ -128,6 +181,7 @@ def build_snapshot(
         "olympus": {"entity_refs": sections["olympus"]},
         "nexo": {"entity_refs": sections["nexo"]},
         "system": {"entity_refs": sections["system"]},
+        "domains": {domain: {"entity_refs": refs} for domain, refs in sorted(domains.items())},
         "nodes": list(nodes.values()),
         "edges": edges,
     }
