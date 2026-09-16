@@ -21,6 +21,7 @@ def _recipe():
         "requirements": ["WITHOUT_ANCHOR"],
         "capability_id": "peer.producer.anchor_ablation_native_v1",
         "repository": "byDenoso/TCC",
+        "implementation_id": "peer_anchor_ablation_native_v1",
         "scientific_contract": {
             "dataset": "DATASET-A@v1", "selection": {"sample":"matched"}, "likelihood":"LIKE-A@v1",
             "covariance":"COV-A@v1", "model":"PEER-v1", "null_or_rival":"LCDM-v1",
