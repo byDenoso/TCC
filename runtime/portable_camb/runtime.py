@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import urllib.request
@@ -44,9 +45,24 @@ def _safe_extract_zip(archive: Path, destination: Path) -> None:
         handle.extractall(destination)
 
 
-def _find_payload(root: Path) -> Path | None:
+def _safe_extract_zstd_tar(archive: Path, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    try:
+        subprocess.run(
+            ["tar", "--zstd", "-xf", str(archive), "-C", str(destination)],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise PortableCambError(f"zstd tar extraction failed: {exc}") from exc
+
+
+def _find_payload(root: Path, *, recursive: bool) -> Path | None:
     candidates = [root / "payload", root]
-    candidates.extend(path.parent for path in root.rglob("peer-camb-python"))
+    if recursive:
+        candidates.extend(path.parent for path in root.rglob("peer-camb-python"))
     seen: set[Path] = set()
     for candidate in candidates:
         candidate = candidate.resolve()
@@ -92,9 +108,11 @@ def _materialize_archive(archive: Path, manifest: dict[str, object], destination
         _safe_extract_tar(archive, destination)
     elif zipfile.is_zipfile(archive):
         _safe_extract_zip(archive, destination)
+    elif archive.name.endswith((".tar.zst", ".tzst", ".zst")):
+        _safe_extract_zstd_tar(archive, destination)
     else:
         raise PortableCambError("unsupported portable CAMB archive format")
-    payload = _find_payload(destination)
+    payload = _find_payload(destination, recursive=True)
     if payload is None:
         raise PortableCambError("portable CAMB payload layout not found after extraction")
     return payload
@@ -124,7 +142,7 @@ def prepare_portable_camb(
     if manifest.get("schema") != "peer-camb-platform-port-2":
         raise PortableCambError("unexpected portable CAMB manifest schema")
 
-    expanded = _find_payload(root)
+    expanded = _find_payload(root, recursive=False)
     if expanded is not None:
         return _verify_payload(expanded, manifest)
 
@@ -134,7 +152,7 @@ def prepare_portable_camb(
         raise PortableCambError("no portable CAMB source configured")
 
     temp_root = Path(tempfile.mkdtemp(prefix="nexo-peer-camb-"))
-    archive = Path(archive_value).expanduser() if archive_value else temp_root / "portable-camb.archive"
+    archive = Path(archive_value).expanduser() if archive_value else temp_root / "portable-camb.tar.zst"
     if url_value:
         archive = _download(url_value, archive)
     if not archive.is_file():
