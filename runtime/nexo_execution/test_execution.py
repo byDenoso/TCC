@@ -95,6 +95,15 @@ class ExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "legacy.*dispatch"):
             provider.submit(contract, contract_name="legacy.json")
 
+    def test_contract_accepts_required_capabilities_and_defaults_empty(self):
+        without = ExecutionContract.from_dict(dict(BASE))
+        self.assertEqual(without.required_capabilities, [])
+
+        data = dict(BASE)
+        data["required_capabilities"] = ["peer.camb.exact_v2"]
+        with_camb = ExecutionContract.from_dict(data)
+        self.assertEqual(with_camb.required_capabilities, ["peer.camb.exact_v2"])
+
     def test_unknown_task_is_rejected(self):
         data = dict(BASE)
         data["task_id"] = "not_allowed"
