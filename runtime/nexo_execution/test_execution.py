@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from benchmarks.idm_runtime_preflight import (
     prepare_runtime_dirs,
@@ -11,6 +12,7 @@ from runtime.nexo_execution.core import (
     ExecutionContract,
     ExecutionResult,
     GitHubActionsProvider,
+    LocalProvider,
     ResultVerifier,
 )
 from runtime.nexo_execution.router import RoutingInput, choose_provider
@@ -94,6 +96,36 @@ class ExecutionTests(unittest.TestCase):
         provider = FakeActionsProvider()
         with self.assertRaisesRegex(ValueError, "legacy.*dispatch"):
             provider.submit(contract, contract_name="legacy.json")
+
+    def test_contract_accepts_required_capabilities_and_defaults_empty(self):
+        without = ExecutionContract.from_dict(dict(BASE))
+        self.assertEqual(without.required_capabilities, [])
+
+        data = dict(BASE)
+        data["required_capabilities"] = ["peer.camb.exact_v2"]
+        with_camb = ExecutionContract.from_dict(data)
+        self.assertEqual(with_camb.required_capabilities, ["peer.camb.exact_v2"])
+
+    def test_local_provider_prepares_required_capability_before_task(self):
+        data = dict(BASE)
+        data.update({"provider": "local", "required_outputs": [], "required_capabilities": ["peer.camb.exact_v2"]})
+        contract = ExecutionContract.from_dict(data)
+        with patch("runtime.nexo_execution.core.prepare_required_capabilities", return_value={"NEXO_CAPABILITY_PEER_CAMB_EXACT_V2": "READY"}) as prepare, patch("runtime.nexo_execution.core.subprocess.run") as run, patch("runtime.nexo_execution.core.current_git_sha", return_value=contract.commit_sha):
+            run.return_value.returncode = 0
+            LocalProvider().submit(contract)
+        prepare.assert_called_once()
+        run.assert_called_once()
+        self.assertEqual(run.call_args.kwargs["env"]["NEXO_CAPABILITY_PEER_CAMB_EXACT_V2"], "READY")
+
+    def test_capability_failure_prevents_task_launch(self):
+        data = dict(BASE)
+        data.update({"provider": "local", "required_outputs": [], "required_capabilities": ["peer.camb.exact_v2"]})
+        contract = ExecutionContract.from_dict(data)
+        with patch("runtime.nexo_execution.core.prepare_required_capabilities", side_effect=RuntimeError("capability unavailable")), patch("runtime.nexo_execution.core.subprocess.run") as run, patch("runtime.nexo_execution.core.current_git_sha", return_value=contract.commit_sha):
+            result = LocalProvider().submit(contract)
+        run.assert_not_called()
+        self.assertEqual(result.exit_code, 125)
+        self.assertIn("capability unavailable", result.error or "")
 
     def test_unknown_task_is_rejected(self):
         data = dict(BASE)

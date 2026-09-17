@@ -47,6 +47,7 @@ class ExecutionContract:
     repository: str; commit_sha: str; task_id: str; parameters: dict[str, Any]
     seed: int | None; timeout_minutes: int; required_outputs: list[str]
     run_id: str | None = None
+    required_capabilities: list[str] | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ExecutionContract":
@@ -63,8 +64,12 @@ class ExecutionContract:
         if int(data["timeout_minutes"]) <= 0: raise ValueError("timeout_minutes must be positive")
         if not isinstance(data["required_outputs"], list) or not all(isinstance(x, str) and x for x in data["required_outputs"]):
             raise ValueError("required_outputs must be a string list")
+        capabilities = data.get("required_capabilities", [])
+        if not isinstance(capabilities, list) or not all(isinstance(x, str) and x for x in capabilities):
+            raise ValueError("required_capabilities must be a string list")
         payload = dict(data)
         payload.setdefault("run_id", None)
+        payload["required_capabilities"] = list(capabilities)
         return cls(**payload)
 
     @classmethod
@@ -93,6 +98,20 @@ class ExecutionContract:
     @property
     def argv(self) -> list[str]:
         return list(TASK_REGISTRY[self.task_id])
+
+
+def prepare_required_capabilities(contract: ExecutionContract, env: dict[str, str]) -> dict[str, str]:
+    prepared: dict[str, str] = {}
+    for capability_id in contract.required_capabilities or []:
+        capability_env = dict(env)
+        capability_env.update(prepared)
+        if capability_id == "peer.camb.exact_v2":
+            from runtime.portable_camb.runtime import prepare_portable_camb
+            prepared.update(prepare_portable_camb(env=capability_env))
+        else:
+            raise ValueError(f"unsupported execution capability: {capability_id}")
+    return prepared
+
 
 @dataclass
 class ExecutionResult:
@@ -127,7 +146,9 @@ class LocalProvider:
         env = os.environ.copy(); env.update({"NEXO_EXECUTION_ID":contract.execution_id,"NEXO_WORK_ID":contract.work_id,"NEXO_TEST_ID":contract.test_id,"NEXO_RUN_ID":str(contract.run_id),"NEXO_SEED":"" if contract.seed is None else str(contract.seed)})
         for key, value in contract.parameters.items(): env[f"NEXO_PARAM_{str(key).upper()}"] = str(value)
         started = time.time(); error = None
-        try: exit_code = subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
+        try:
+            env.update(prepare_required_capabilities(contract, env))
+            exit_code = subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
         except subprocess.TimeoutExpired: exit_code, error = 124, "timeout"
         except Exception as exc: exit_code, error = 125, f"provider_error:{type(exc).__name__}:{exc}"
         return ExecutionResult(contract.execution_id, contract.work_id, contract.provider, os.getenv("GITHUB_RUN_ID"), current_git_sha(), exit_code, started, time.time(), collect_outputs(contract.required_outputs), contract.contract_hash, error)

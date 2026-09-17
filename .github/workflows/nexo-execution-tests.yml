@@ -6,6 +6,7 @@ on:
       - 'runtime/nexo_execution/**'
       - 'runtime/nexo_core/**'
       - 'runtime/nexo_agent_api/**'
+      - 'runtime/portable_camb/**'
       - 'benchmarks/**'
       - '.github/workflows/nexo-execution-tests.yml'
   workflow_dispatch:
@@ -21,6 +22,7 @@ jobs:
           python-version: '3.12'
       - name: Run NEXO runtime unit tests
         run: |
+          python -m unittest runtime.portable_camb.test_runtime -v
           python -m unittest runtime.nexo_execution.test_execution -v
           python -m unittest runtime.nexo_execution.test_gz01_multprobe -v
           python -m unittest runtime.nexo_execution.test_peer_detection -v
