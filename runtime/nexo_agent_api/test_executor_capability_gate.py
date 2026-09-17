@@ -13,7 +13,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        for kind in ("work", "campaign", "test", "run", "result"):
+        for kind in ("work", "campaign", "test_group", "test", "run", "result"):
             (self.root / "entities" / kind).mkdir(parents=True)
         (self.root / "manifests").mkdir(parents=True)
         (self.root / "snapshot").mkdir(parents=True)
@@ -49,6 +49,17 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             "validation_ref": "VAL",
             "runtime_available": True,
             "resource_lock_available": True,
+        }
+        payload.update(extra)
+        (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    def write_minimal_work(self, name: str, task_id: str, **extra) -> None:
+        payload = {
+            "id": name,
+            "entity_version": 1,
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "task_id": task_id,
         }
         payload.update(extra)
         (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
@@ -103,18 +114,41 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def test_executor_rejects_unregistered_task_id(self) -> None:
-        self.write_work("W-UNKNOWN", task_id="unknown_task")
+    def test_executor_rejects_unknown_runtime_task(self) -> None:
+        self.write_minimal_work("W-UNKNOWN", "unknown_task")
         self.assertEqual(AgentService(self.root).queue_for("EXECUTOR"), [])
 
-    def test_executor_rejects_implementation_ref_without_task_id(self) -> None:
+    def test_executor_rejects_implementation_ref_without_task_or_frozen_contract(self) -> None:
         self.write_work("W-IMPL-ONLY", implementation_ref="vendor/model@deadbeef")
         self.assertEqual(AgentService(self.root).queue_for("EXECUTOR"), [])
 
-    def test_executor_accepts_registered_task_id(self) -> None:
-        self.write_work("W-KNOWN", task_id="known_task")
+    def test_executor_accepts_manifest_registered_task_without_admin_gate_fields(self) -> None:
+        self.write_minimal_work("W-KNOWN", "known_task")
         queue = AgentService(self.root).queue_for("EXECUTOR")
         self.assertEqual([item["id"] for item in queue], ["W-KNOWN"])
+
+    def test_executor_accepts_allowlisted_runtime_task_without_manifest_duplicate(self) -> None:
+        self.write_minimal_work("W-H0", "h0_lcdm_origin")
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+        self.assertEqual([item["id"] for item in queue], ["W-H0"])
+
+    def test_executor_keeps_legitimate_blocker_closed(self) -> None:
+        self.write_minimal_work(
+            "W-BLOCKED",
+            "h0_lcdm_origin",
+            blocker_class="SCIENTIFIC_DEFINITION_MISSING",
+            blocker="frozen likelihood choice missing",
+        )
+        self.assertEqual(AgentService(self.root).queue_for("EXECUTOR"), [])
+
+    def test_executor_ignores_legacy_administrative_blocker_text(self) -> None:
+        self.write_minimal_work(
+            "W-ADMIN",
+            "h0_lcdm_origin",
+            blocker="recipe_id missing",
+        )
+        queue = AgentService(self.root).queue_for("EXECUTOR")
+        self.assertEqual([item["id"] for item in queue], ["W-ADMIN"])
 
     def test_executor_accepts_frozen_test_contract_without_registered_task_id(self) -> None:
         payload = self.frozen_work()
@@ -151,7 +185,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         self.assertEqual(decision["test_id"], "TEST::A")
         self.assertEqual(decision["execution"]["task_id"], "mock_observer_runtime")
 
-    def test_continue_campaign_defaults_to_shadow_for_ready_work(self) -> None:
+    def test_continue_campaign_defaults_to_active_for_ready_work(self) -> None:
         self.write_ready_campaign()
         with patch.dict("os.environ", {}, clear=False):
             import os
@@ -162,11 +196,10 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
                 if old is not None:
                     os.environ["NEXO_CAMPAIGN_CONTINUATION_MODE"] = old
 
-        self.assertEqual(decision["mode"], "SHADOW")
-        self.assertEqual(decision["action"], "SHADOW")
-        self.assertEqual(decision["proposed_action"], "DISPATCH")
+        self.assertEqual(decision["mode"], "ACTIVE")
+        self.assertEqual(decision["action"], "DISPATCH")
 
-    def test_continue_campaign_shadow_wraps_resume_decision(self) -> None:
+    def test_continue_campaign_shadow_remains_available_when_explicit(self) -> None:
         self.write_active_campaign()
         with patch.dict("os.environ", {"NEXO_CAMPAIGN_CONTINUATION_MODE": "SHADOW"}, clear=False):
             decision = AgentService(self.root).continue_campaign("CAMP-1")
@@ -175,14 +208,13 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         self.assertEqual(decision["proposed_action"], "RESUME")
         self.assertEqual(decision["test_id"], "TEST::A")
 
-    def test_continue_campaign_invalid_mode_fails_closed_to_shadow(self) -> None:
+    def test_continue_campaign_invalid_mode_falls_back_to_active(self) -> None:
         self.write_ready_campaign()
         with patch.dict("os.environ", {"NEXO_CAMPAIGN_CONTINUATION_MODE": "YOLO"}, clear=False):
             decision = AgentService(self.root).continue_campaign("CAMP-1")
 
-        self.assertEqual(decision["mode"], "SHADOW")
-        self.assertEqual(decision["action"], "SHADOW")
-        self.assertEqual(decision["proposed_action"], "DISPATCH")
+        self.assertEqual(decision["mode"], "ACTIVE")
+        self.assertEqual(decision["action"], "DISPATCH")
 
     def test_continue_campaign_off_disables_automatic_selection_only(self) -> None:
         self.write_ready_campaign()
