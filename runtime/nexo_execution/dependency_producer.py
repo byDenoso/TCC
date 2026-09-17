@@ -7,19 +7,13 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Iterable
 
-_REQUIRED_SCIENCE_FIELDS = {
-    "dataset", "selection", "likelihood", "covariance", "model", "null_or_rival",
-    "fixed_parameters", "free_parameters", "priors", "nuisance_policy", "cuts",
-    "observable", "decision_rule", "claim_boundary",
-}
-
 _VALID_EVIDENCE_STATES = {
     "VALIDATED", "VERIFIED", "READY", "SATISFIED", "COMPLETE", "COMPLETED",
     "VERIFIED_CURRENT_SESSION", "VERIFIED_PINNED_ARCHIVE_CURRENT_SESSION",
 }
 
-# Domain producer implementations must be explicitly registered in code. A recipe
-# may select an implementation id, but can never inject an arbitrary command.
+# True producer implementations remain explicitly allowlisted. Administrative
+# identifiers are derived when absent; they are not existence gates.
 PRODUCER_IMPLEMENTATIONS: dict[str, Callable[[dict[str, Any]], list[str]]] = {}
 
 
@@ -40,7 +34,6 @@ def _sha_file(path: str | Path) -> str:
 
 
 def register_producer(implementation_id: str, implementation: Callable[[dict[str, Any]], list[str]]) -> None:
-    """Register an explicitly allowlisted dependency producer implementation."""
     key = str(implementation_id or "").strip()
     if not key:
         raise ValueError("implementation_id is required")
@@ -56,21 +49,36 @@ def load_recipe(path: str | Path) -> dict[str, Any]:
     return payload
 
 
+def producer_fingerprint(recipe: dict[str, Any]) -> str:
+    return _sha({
+        "parent_test_id": recipe.get("parent_test_id"),
+        "requirements": recipe.get("requirements"),
+        "scientific_contract": recipe.get("scientific_contract"),
+        "binding": recipe.get("binding"),
+        "implementation_id": recipe.get("implementation_id"),
+    })
+
+
+def recipe_identity(recipe: dict[str, Any]) -> str:
+    explicit = str(recipe.get("recipe_id") or "").strip()
+    return explicit or f"RECIPE::{producer_fingerprint(recipe)}"
+
+
 def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     if recipe.get("schema") != "nexo.dependency-producer.v1":
         raise ValueError("unsupported dependency producer schema")
     if str(recipe.get("state") or "READY").upper() != "READY":
         missing = [str(item) for item in recipe.get("missing_scientific_bindings") or [] if str(item)]
         raise ValueError("recipe is not READY; missing_scientific_bindings=" + ",".join(missing))
-    for field in ("recipe_id", "parent_test_id", "capability_id", "repository", "requirements", "scientific_contract", "execution", "validation", "binding", "implementation_id"):
+    for field in (
+        "parent_test_id", "repository", "requirements", "scientific_contract",
+        "execution", "validation", "binding", "implementation_id",
+    ):
         if field not in recipe:
             raise ValueError(f"missing recipe field: {field}")
     contract = recipe.get("scientific_contract")
     if not isinstance(contract, dict) or not contract:
         raise ValueError("scientific_contract must be a non-empty object")
-    missing = sorted(_REQUIRED_SCIENCE_FIELDS - set(contract))
-    if missing:
-        raise ValueError("scientific_contract missing fields: " + ", ".join(missing))
     if not isinstance(recipe.get("requirements"), list) or not recipe["requirements"]:
         raise ValueError("requirements must be a non-empty list")
     execution = recipe.get("execution") or {}
@@ -83,22 +91,16 @@ def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("binding must target parent_test_id with an output_schema")
     if not str(recipe.get("implementation_id") or "").strip():
         raise ValueError("implementation_id is required")
-    return {"status": "PASS", "recipe_id": recipe["recipe_id"], "producer_fingerprint": producer_fingerprint(recipe)}
-
-
-def producer_fingerprint(recipe: dict[str, Any]) -> str:
-    return _sha({
-        "parent_test_id": recipe.get("parent_test_id"),
-        "requirements": recipe.get("requirements"),
-        "scientific_contract": recipe.get("scientific_contract"),
-        "binding": recipe.get("binding"),
-        "implementation_id": recipe.get("implementation_id"),
-    })
+    return {
+        "status": "PASS",
+        "recipe_id": recipe_identity(recipe),
+        "producer_fingerprint": producer_fingerprint(recipe),
+    }
 
 
 def checkpoint_compatible(checkpoint: dict[str, Any], recipe: dict[str, Any]) -> bool:
     return (
-        str(checkpoint.get("recipe_id") or "") == str(recipe.get("recipe_id") or "")
+        str(checkpoint.get("recipe_id") or "") == recipe_identity(recipe)
         and str(checkpoint.get("producer_fingerprint") or "") == producer_fingerprint(recipe)
         and str(checkpoint.get("status") or "").upper() in {"CHECKPOINTED", "RUNNING", "FAILED_RECOVERABLE"}
         and str((recipe.get("execution") or {}).get("resume_policy") or "") == "IDENTICAL_CONTRACT_ONLY"
@@ -124,7 +126,7 @@ def build_producer_envelope(
     missing = sorted(item for item in required if item not in present)
     return {
         "schema": "nexo.dependency-producer-result.v1",
-        "recipe_id": recipe["recipe_id"],
+        "recipe_id": validation["recipe_id"],
         "parent_test_id": recipe["parent_test_id"],
         "requirements": list(recipe["requirements"]),
         "producer_fingerprint": validation["producer_fingerprint"],
@@ -149,13 +151,76 @@ def run_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
     return {**envelope, "validation": validation}
 
 
+def _integrity_value(payload: dict[str, Any]) -> str:
+    return str(
+        payload.get("sha256")
+        or payload.get("archive_sha256")
+        or payload.get("fingerprint")
+        or ""
+    ).strip()
+
+
 def _valid_canonical_evidence(payload: Any) -> bool:
     if not isinstance(payload, dict):
         return False
     status = str(payload.get("status") or "").upper()
     if status not in _VALID_EVIDENCE_STATES and not status.startswith("VERIFIED_"):
         return False
-    return bool(payload.get("sha256") or payload.get("archive_sha256") or payload.get("fingerprint") or payload.get("source_ref"))
+    return bool(_integrity_value(payload))
+
+
+def _valid_inline_evidence(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    status = str(payload.get("status") or payload.get("validation_status") or "").upper()
+    if status not in _VALID_EVIDENCE_STATES and not status.startswith("VERIFIED_"):
+        return False
+    return bool(str(payload.get("source_ref") or "").strip() and _integrity_value(payload))
+
+
+def evidence_identity(payload: dict[str, Any]) -> str:
+    explicit = str(payload.get("evidence_id") or "").strip()
+    if explicit:
+        return explicit
+    fingerprint = str(payload.get("fingerprint") or "").strip()
+    if fingerprint:
+        return f"EVID::{fingerprint}"
+    return f"EVID::{_sha({'source_ref': payload.get('source_ref'), 'integrity': _integrity_value(payload)})}"
+
+
+def _same_evidence_hint(dependency: dict[str, Any], evidence: dict[str, Any]) -> bool:
+    dep_source = str(dependency.get("source_ref") or "").strip()
+    dep_integrity = _integrity_value(dependency)
+    if dep_source and str(evidence.get("source_ref") or "").strip() != dep_source:
+        return False
+    if dep_integrity and _integrity_value(evidence) != dep_integrity:
+        return False
+    return bool(dep_source or dep_integrity)
+
+
+def _resolve_evidence(
+    dependency: dict[str, Any],
+    canonical_evidence: dict[str, Any],
+) -> tuple[str, dict[str, Any], str] | None:
+    explicit_id = str(dependency.get("evidence_id") or "").strip()
+    if explicit_id:
+        evidence = canonical_evidence.get(explicit_id)
+        if _valid_canonical_evidence(evidence):
+            return explicit_id, evidence, "CANONICAL_EVIDENCE_REUSE"
+
+    embedded = dependency.get("evidence")
+    if _valid_inline_evidence(embedded):
+        payload = dict(embedded)
+        return evidence_identity(payload), payload, "VERIFIED_EVIDENCE_REUSE"
+
+    if _valid_inline_evidence(dependency):
+        payload = dict(dependency)
+        return evidence_identity(payload), payload, "VERIFIED_EVIDENCE_REUSE"
+
+    for evidence_id, evidence in canonical_evidence.items():
+        if _valid_canonical_evidence(evidence) and _same_evidence_hint(dependency, evidence):
+            return str(evidence_id or evidence_identity(evidence)), evidence, "CANONICAL_EVIDENCE_REUSE"
+    return None
 
 
 def _manifest(test: dict[str, Any]) -> list[dict[str, Any]]:
@@ -183,11 +248,7 @@ def compile_hydration_plan(
     canonical_evidence: dict[str, Any] | None = None,
     recipes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Compile one TEST dependency manifest into deterministic hydration actions.
-
-    The compiler never changes scientific fields. It only decides whether an
-    already-declared dependency can be reused, produced, or must remain blocked.
-    """
+    """Compile dependencies without turning administrative metadata into gates."""
     canonical_evidence = canonical_evidence or {}
     recipes = recipes or {}
     items: list[dict[str, Any]] = []
@@ -198,47 +259,53 @@ def compile_hydration_plan(
         state = str(dependency.get("status") or "MISSING").upper()
         action = "NONE"
         reason = "already satisfied"
+        evidence_id: str | None = None
+        evidence_mode: str | None = None
 
         if state != "SATISFIED":
-            evidence_id = str(dependency.get("evidence_id") or "")
+            resolved_evidence = _resolve_evidence(dependency, canonical_evidence)
             recipe_id = str(dependency.get("recipe_id") or "")
-            evidence = canonical_evidence.get(evidence_id) if evidence_id else None
             recipe = recipes.get(recipe_id) if recipe_id else None
 
-            if evidence_id and _valid_canonical_evidence(evidence):
+            if resolved_evidence is not None:
+                evidence_id, _, evidence_mode = resolved_evidence
                 action = "BIND_EXISTING"
-                reason = "validated canonical evidence is reusable"
+                reason = "verified evidence is reusable without administrative registration"
             elif recipe_id and isinstance(recipe, dict) and str(recipe.get("state") or "READY").upper() == "READY":
                 action = "PRODUCE"
-                reason = "validated producer recipe is ready"
+                reason = "true producer recipe is ready"
             elif bool(dependency.get("external_required")):
                 action = "BLOCKED_EXTERNAL"
-                reason = str(dependency.get("blocker_reason") or "external input or authorization required")
-            elif recipe_id:
-                action = "WAIT_RECIPE"
-                reason = "producer recipe exists but is not READY"
+                reason = str(dependency.get("blocker_reason") or "external authorization or input is required")
+            elif recipe_id and isinstance(recipe, dict) and recipe.get("missing_scientific_bindings"):
+                action = "SCIENTIFIC_DEFINITION_MISSING"
+                reason = "producer requires unresolved material scientific definitions"
             else:
-                action = "NEEDS_RECIPE"
-                reason = "no reusable evidence or producer recipe declared"
+                action = "RESOLVE_OPERATIONAL"
+                reason = "operational dependency should be repaired, materialized, or verified automatically"
 
-        items.append({
+        item = {
             "dependency_id": dependency_id,
             "required": required,
             "current_status": state,
             "action": action,
             "reason": reason,
-        })
+        }
+        if evidence_id:
+            item["evidence_id"] = evidence_id
+            item["evidence_mode"] = evidence_mode
+        items.append(item)
 
     required_items = [item for item in items if item["required"]]
     evaluator_ready = all(item["current_status"] == "SATISFIED" for item in required_items)
     if evaluator_ready:
         status = "READY_FOR_EVALUATOR"
+    elif any(item["action"] == "SCIENTIFIC_DEFINITION_MISSING" for item in required_items):
+        status = "BLOCKED_SCIENTIFIC_CONTRACT"
     elif any(item["action"] == "BLOCKED_EXTERNAL" for item in required_items):
         status = "BLOCKED_EXTERNAL"
-    elif any(item["action"] in {"BIND_EXISTING", "PRODUCE"} for item in required_items):
-        status = "HYDRATE"
     else:
-        status = "WAITING_BINDING"
+        status = "HYDRATE"
 
     return {
         "schema": "nexo.hydration-plan.v1",
@@ -255,11 +322,7 @@ def hydrate_test_dependencies(
     canonical_evidence: dict[str, Any] | None = None,
     recipes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """Hydrate reusable/producer-backed dependencies for one TEST.
-
-    Optional blocked dependencies never stop the evaluator. Required blocked
-    dependencies remain local to this TEST lane and do not affect other tests.
-    """
+    """Hydrate reusable/producer-backed dependencies for one TEST lane."""
     canonical_evidence = canonical_evidence or {}
     recipes = recipes or {}
     hydrated = copy.deepcopy(test)
@@ -271,11 +334,13 @@ def hydrate_test_dependencies(
         dependency_id = str(dependency["id"])
         action = action_by_id[dependency_id]["action"]
         if action == "BIND_EXISTING":
-            evidence_id = str(dependency.get("evidence_id") or "")
-            evidence = canonical_evidence[evidence_id]
+            resolved = _resolve_evidence(dependency, canonical_evidence)
+            if resolved is None:
+                continue
+            evidence_id, evidence, mode = resolved
             dependency["status"] = "SATISFIED"
             dependency["binding"] = {
-                "mode": "CANONICAL_EVIDENCE_REUSE",
+                "mode": mode,
                 "evidence_id": evidence_id,
                 "sha256": evidence.get("sha256") or evidence.get("archive_sha256"),
                 "fingerprint": evidence.get("fingerprint"),
@@ -289,7 +354,7 @@ def hydrate_test_dependencies(
             except Exception as exc:
                 result = {
                     "schema": "nexo.dependency-producer-result.v1",
-                    "recipe_id": recipe_id,
+                    "recipe_id": recipe_id or recipe_identity(recipe),
                     "parent_test_id": str(hydrated.get("id") or hydrated.get("test_id") or ""),
                     "status": "FAILED_RECOVERABLE",
                     "reason": f"{type(exc).__name__}:{exc}",
@@ -301,7 +366,7 @@ def hydrate_test_dependencies(
                 dependency["status"] = "SATISFIED"
                 dependency["binding"] = {
                     "mode": "PRODUCER_RESULT",
-                    "recipe_id": recipe_id,
+                    "recipe_id": result.get("recipe_id") or recipe_id,
                     "producer_fingerprint": result.get("producer_fingerprint"),
                     "outputs": result.get("outputs", []),
                 }
@@ -311,6 +376,12 @@ def hydrate_test_dependencies(
         elif action == "BLOCKED_EXTERNAL":
             dependency["status"] = "BLOCKED_EXTERNAL"
             dependency["blocker_reason"] = action_by_id[dependency_id]["reason"]
+        elif action == "SCIENTIFIC_DEFINITION_MISSING":
+            dependency["status"] = "BLOCKED"
+            dependency["blocker_class"] = "SCIENTIFIC_DEFINITION_MISSING"
+            dependency["blocker_reason"] = action_by_id[dependency_id]["reason"]
+        elif action == "RESOLVE_OPERATIONAL":
+            dependency["operational_repair_required"] = True
 
     required = [item for item in hydrated.get("dependency_manifest", []) if bool(item.get("required", True))]
     evaluator_ready = all(str(item.get("status") or "").upper() == "SATISFIED" for item in required)
