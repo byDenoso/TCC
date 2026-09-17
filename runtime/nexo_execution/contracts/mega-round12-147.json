@@ -1,0 +1,20 @@
+{
+  "schema": "nexo.execution.v2",
+  "execution_id": "EXEC-MEGA26-147-20260917-001",
+  "work_id": "WORK::MEGASTRUCTURE-LCDM-ROUND12-V1",
+  "test_id": "TEST::MEGASTRUCTURE::LCDM-DATA-FREEZE-147",
+  "run_id": "RUN::TEST::MEGASTRUCTURE::LCDM-DATA-FREEZE-147::0001",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "e48276c2f88f02f189388bf91e7bc92f37854aba",
+  "task_id": "megastructure_round12_gate",
+  "parameters": {
+    "gate": "147"
+  },
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": [
+    "megastructure_round12_result.json"
+  ],
+  "required_capabilities": []
+}
