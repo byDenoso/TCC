@@ -1,0 +1,20 @@
+{
+  "schema": "nexo.execution.v2",
+  "execution_id": "EXEC-MEGA26-148-20260917-001",
+  "work_id": "WORK::MEGASTRUCTURE-LCDM-ROUND12-V1",
+  "test_id": "TEST::MEGASTRUCTURE::LCDM-DETECTOR-CONTRACT-148",
+  "run_id": "RUN::TEST::MEGASTRUCTURE::LCDM-DETECTOR-CONTRACT-148::0001",
+  "provider": "github_actions",
+  "repository": "byDenoso/TCC",
+  "commit_sha": "07ca514d030de448c08fb50b5f4a85be723adba7",
+  "task_id": "megastructure_round12_gate",
+  "parameters": {
+    "gate": "148"
+  },
+  "seed": null,
+  "timeout_minutes": 5,
+  "required_outputs": [
+    "megastructure_round12_result.json"
+  ],
+  "required_capabilities": []
+}
