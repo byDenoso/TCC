@@ -134,6 +134,7 @@ jobs:
             idm_preflight_result.json
             peer_detection_gate_result.json
             peer_detection_battery_result.json
+            megastructure_round12_result.json
             nexo_execution_result.json
             nexo_verification.json
           if-no-files-found: warn
