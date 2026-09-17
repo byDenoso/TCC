@@ -6,7 +6,9 @@ import unittest
 from pathlib import Path
 
 from .mutations import apply_mutation_request
+from .service import AgentService
 from .test_registry import register_test
+from .views import materialize_role_views
 
 
 class UniversalTestIngressContractTests(unittest.TestCase):
@@ -36,6 +38,16 @@ class UniversalTestIngressContractTests(unittest.TestCase):
 
     def _read(self, kind: str, entity_id: str) -> dict:
         return json.loads((self.root / "entities" / kind / f"{entity_id}.json").read_text(encoding="utf-8"))
+
+    @staticmethod
+    def _frozen_test(test_id: str) -> dict:
+        return {
+            "id": test_id,
+            "method": "Run the frozen estimator against the frozen null.",
+            "decision_rule": {"PASS": "global_p>=0.05", "STRESS": "global_p<0.05"},
+            "outputs": ["scientific_result"],
+            "claim_boundary": "No claim beyond the frozen test decision rule.",
+        }
 
     def test_campaign_is_first_class_creatable_entity(self) -> None:
         campaign_id = "CAMPAIGN::COSMOLOGY::PEER-2026"
@@ -123,6 +135,60 @@ class UniversalTestIngressContractTests(unittest.TestCase):
         self.assertEqual(updated_test["current_run_id"], second["run_id"])
         self.assertEqual(updated_test["run_ids"], [registration["run_id"], second["run_id"]])
         self.assertEqual(updated_test["analytical_status"], "UNASSESSED")
+
+    def test_register_test_with_frozen_contract_creates_scheduler_visible_work(self) -> None:
+        test_id = "TEST::VISIBLE::001"
+        registration = register_test(
+            self.root,
+            test_id=test_id,
+            domain="COSMOLOGY",
+            title="Visibility invariant",
+            objective="Prove a dispatch-ready TEST is visible to the executor.",
+            campaign_id="CAMP-VISIBLE-001",
+            campaign_title="Visibility invariant campaign",
+            frozen_test=self._frozen_test(test_id),
+            correlation_id="CORR-VISIBLE-001",
+        )
+
+        self.assertTrue(registration["scheduler_visible"])
+        self.assertEqual(registration["work_id"], f"WORK::{test_id}")
+        work = self._read("work", registration["work_id"])
+        self.assertEqual(work["test_id"], test_id)
+        self.assertEqual(work["owner_role"], "EXECUTOR")
+        self.assertEqual(work["status"], "READY")
+        self.assertEqual(work["frozen_test"], self._frozen_test(test_id))
+
+        materialize_role_views(self.root)
+        queue_ids = {item["id"] for item in AgentService(self.root).queue_for("EXECUTOR")}
+        self.assertIn(registration["work_id"], queue_ids)
+
+    def test_ready_canonical_test_can_never_be_invisible_to_executor(self) -> None:
+        test_id = "T-ORPHAN-READY-001"
+        self._create("test", test_id, {
+            "domain": "COSMOLOGY",
+            "campaign_id": "CAMP-ORPHAN-001",
+            "state": "READY",
+            "mechanism": "FROZEN_ORPHAN_VISIBILITY_PROBE",
+            "input_contract": {"dataset": "frozen"},
+            "estimator_contract": {"primary": "frozen estimator"},
+            "null_contract": {"primary": "frozen null"},
+            "decision_contract": {"PASS": "global_p>=0.05", "STRESS": "global_p<0.05"},
+            "claim_boundary": "Visibility repair cannot alter the frozen scientific contract.",
+            "scientific_result": None,
+        })
+
+        self.assertFalse((self.root / "entities" / "work" / f"WORK::{test_id}.json").exists())
+        materialize_role_views(self.root)
+
+        repaired = self._read("work", f"WORK::{test_id}")
+        self.assertEqual(repaired["test_id"], test_id)
+        self.assertEqual(repaired["owner_role"], "EXECUTOR")
+        self.assertEqual(repaired["status"], "READY")
+        self.assertTrue(repaired["scheduler_visibility_repair"])
+        self.assertEqual(repaired["frozen_test"]["claim_boundary"], "Visibility repair cannot alter the frozen scientific contract.")
+
+        queue_ids = {item["id"] for item in AgentService(self.root).queue_for("EXECUTOR")}
+        self.assertIn(f"WORK::{test_id}", queue_ids)
 
     def test_check_is_not_promoted_by_canonical_mutation_writer(self) -> None:
         receipt = self._create("check", "CHECK::LINT::001", {"status": "PASS"})
