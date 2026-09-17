@@ -9,6 +9,15 @@ _SUCCESS_STATES = {"VERIFIED", "DONE", "COMPLETE", "COMPLETED", "TERMINALIZED", 
 _ACTIVE_RUN_STATES = {"QUEUED", "DISPATCHED", "RUNNING"}
 _RECOVERABLE_RUN_STATES = {"CHECKPOINTED", "FAILED", "STALE", "INTERRUPTED", "TIMED_OUT"}
 _CAMPAIGN_TERMINAL_STATES = {"DONE", "COMPLETE", "COMPLETED", "TERMINALIZED", "CLOSED"}
+_LEGITIMATE_BLOCKERS = {
+    "SCIENTIFIC_DEFINITION_MISSING",
+    "AUTHORIZATION_MISSING",
+    "IRREVERSIBLE_CONFLICT",
+}
+_LEGACY_BLOCKER_STATES = {
+    "BLOCKED_SCIENTIFIC_CONTRACT": "SCIENTIFIC_DEFINITION_MISSING",
+    "BLOCKED_SCIENTIFIC_DEFINITION": "SCIENTIFIC_DEFINITION_MISSING",
+}
 
 
 def _read_json(path: Path) -> dict[str, Any] | None:
@@ -22,7 +31,22 @@ def _read_json(path: Path) -> dict[str, Any] | None:
 def _status(entity: dict[str, Any] | None) -> str:
     if not entity:
         return ""
-    return str(entity.get("operational_status") or entity.get("status") or "").upper()
+    return str(entity.get("operational_status") or entity.get("status") or entity.get("state") or "").upper()
+
+
+def _blocker_class(entity: dict[str, Any]) -> str:
+    explicit = str(
+        entity.get("blocker_class")
+        or entity.get("blocker_type")
+        or entity.get("blocker_reason_code")
+        or ""
+    ).upper()
+    if explicit in _LEGITIMATE_BLOCKERS:
+        return explicit
+    state = _status(entity)
+    if state in _LEGITIMATE_BLOCKERS:
+        return state
+    return _LEGACY_BLOCKER_STATES.get(state, "")
 
 
 class CampaignFrontierResolver:
@@ -31,6 +55,7 @@ class CampaignFrontierResolver:
     The resolver is read-only. TEST_GROUP is accepted as the canonical campaign
     representation during migration so no duplicate campaign entity is needed.
     Legacy WORK entities with campaign_id remain a compatibility read bridge.
+    Free-text administrative blockers are intentionally not execution gates.
     """
 
     def __init__(self, root: str | Path) -> None:
@@ -122,6 +147,7 @@ class CampaignFrontierResolver:
         recoverable: list[str] = []
         ready: list[str] = []
         blocked: list[str] = []
+        blocker_classes: dict[str, str] = {}
 
         for test_id in ordered_ids:
             test = tests[test_id]
@@ -145,8 +171,16 @@ class CampaignFrontierResolver:
             dependencies = [str(value) for value in test.get("depends_on", []) if str(value)]
             dependencies_closed = all(dep in completed for dep in dependencies)
             manual = str(test.get("execution_policy") or "AUTO").upper() == "MANUAL"
-            explicit_blocker = bool(test.get("blocker"))
-            if dependencies_closed and not manual and not explicit_blocker and test_state in {"READY", "QUEUED", "CHECKPOINTED", ""}:
+            blocker_class = _blocker_class(test)
+            if blocker_class:
+                blocked.append(test_id)
+                blocker_classes[test_id] = blocker_class
+                continue
+            if manual:
+                blocked.append(test_id)
+                blocker_classes[test_id] = "AUTHORIZATION_MISSING"
+                continue
+            if dependencies_closed and test_state in {"READY", "QUEUED", "CHECKPOINTED", ""}:
                 ready.append(test_id)
             else:
                 blocked.append(test_id)
@@ -174,6 +208,7 @@ class CampaignFrontierResolver:
             "recoverable": recoverable,
             "ready": ready,
             "blocked": blocked,
+            "blocker_classes": blocker_classes,
             "completed": completed,
             "terminal": terminal,
             "next_test_ids": list(next_test_ids),

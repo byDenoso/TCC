@@ -158,6 +158,47 @@ class CampaignFrontierResolverTests(unittest.TestCase):
         self.assertEqual(frontier["campaign_source"], "test_group")
         self.assertFalse((self.root / "entities" / "campaign" / "CAMP-H0.json").exists())
 
+    def test_legacy_scientific_state_remains_a_legitimate_blocker(self) -> None:
+        self.write(
+            "test_group",
+            "CAMP-H0",
+            status="BLOCKED_SCIENTIFIC_CONTRACT",
+            execution_order=["T-H0-007"],
+        )
+        self.write(
+            "test",
+            "T-H0-007",
+            campaign_id="CAMP-H0",
+            state="BLOCKED_SCIENTIFIC_CONTRACT",
+            blocker="FROZEN_SCIENTIFIC_BINDING_INCOMPLETE",
+        )
+
+        frontier = CampaignFrontierResolver(self.root).resolve("CAMP-H0")
+
+        self.assertEqual(frontier["ready"], [])
+        self.assertEqual(frontier["blocked"], ["T-H0-007"])
+        self.assertEqual(frontier["blocker_classes"]["T-H0-007"], "SCIENTIFIC_DEFINITION_MISSING")
+
+    def test_free_text_administrative_blocker_does_not_hide_ready_work(self) -> None:
+        self.write(
+            "campaign",
+            "CAMP-ADMIN",
+            status="ACTIVE",
+            execution_order=["TEST::A"],
+        )
+        self.write(
+            "test",
+            "TEST::A",
+            campaign_id="CAMP-ADMIN",
+            status="READY",
+            blocker="recipe_id missing",
+        )
+
+        frontier = CampaignFrontierResolver(self.root).resolve("CAMP-ADMIN")
+
+        self.assertEqual(frontier["ready"], ["TEST::A"])
+        self.assertEqual(frontier["blocked"], [])
+
     def test_legacy_work_with_campaign_id_is_visible_until_migrated_to_test(self) -> None:
         self.write(
             "campaign",
