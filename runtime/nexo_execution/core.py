@@ -99,6 +99,20 @@ class ExecutionContract:
     def argv(self) -> list[str]:
         return list(TASK_REGISTRY[self.task_id])
 
+
+def prepare_required_capabilities(contract: ExecutionContract, env: dict[str, str]) -> dict[str, str]:
+    prepared: dict[str, str] = {}
+    for capability_id in contract.required_capabilities or []:
+        capability_env = dict(env)
+        capability_env.update(prepared)
+        if capability_id == "peer.camb.exact_v2":
+            from runtime.portable_camb.runtime import prepare_portable_camb
+            prepared.update(prepare_portable_camb(env=capability_env))
+        else:
+            raise ValueError(f"unsupported execution capability: {capability_id}")
+    return prepared
+
+
 @dataclass
 class ExecutionResult:
     execution_id: str; work_id: str; provider: str; run_id: str | None; commit_sha: str
@@ -132,7 +146,9 @@ class LocalProvider:
         env = os.environ.copy(); env.update({"NEXO_EXECUTION_ID":contract.execution_id,"NEXO_WORK_ID":contract.work_id,"NEXO_TEST_ID":contract.test_id,"NEXO_RUN_ID":str(contract.run_id),"NEXO_SEED":"" if contract.seed is None else str(contract.seed)})
         for key, value in contract.parameters.items(): env[f"NEXO_PARAM_{str(key).upper()}"] = str(value)
         started = time.time(); error = None
-        try: exit_code = subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
+        try:
+            env.update(prepare_required_capabilities(contract, env))
+            exit_code = subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
         except subprocess.TimeoutExpired: exit_code, error = 124, "timeout"
         except Exception as exc: exit_code, error = 125, f"provider_error:{type(exc).__name__}:{exc}"
         return ExecutionResult(contract.execution_id, contract.work_id, contract.provider, os.getenv("GITHUB_RUN_ID"), current_git_sha(), exit_code, started, time.time(), collect_outputs(contract.required_outputs), contract.contract_hash, error)
