@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from runtime.nexo_execution.core import TASK_REGISTRY
+
 
 class TowerAgentIssue(RuntimeError):
     def __init__(self, code: str, message: str, details: dict[str, Any] | None = None) -> None:
@@ -21,6 +23,11 @@ class AgentService:
 
     ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
     LEGACY_ADVISOR_KINDS = {"ACTION", "RESEARCH", "REVIEW", "PROCEDURAL_HYPOTHESIS", "ENGINEERING_FIX"}
+    LEGITIMATE_BLOCKERS = {
+        "SCIENTIFIC_DEFINITION_MISSING",
+        "AUTHORIZATION_MISSING",
+        "IRREVERSIBLE_CONFLICT",
+    }
 
     def __init__(self, root: str | Path) -> None:
         self.root = Path(root)
@@ -78,28 +85,40 @@ class AgentService:
                 return hydrated
         raise TowerAgentIssue("ENTITY_NOT_FOUND", "Canonical entity does not exist.", {"entity_kind": "work", "entity_name": entity_name})
 
+    @classmethod
+    def _has_legitimate_blocker(cls, item: dict[str, Any]) -> bool:
+        blocker_class = str(
+            item.get("blocker_class")
+            or item.get("blocker_type")
+            or item.get("blocker_reason_code")
+            or ""
+        ).upper()
+        return blocker_class in cls.LEGITIMATE_BLOCKERS
+
     @staticmethod
-    def _executor_eligible(item: dict[str, Any], capabilities: dict[str, Any]) -> bool:
+    def _manifest_has_task(task_id: str, capabilities: dict[str, Any]) -> bool:
+        for capability_id, capability in capabilities.items():
+            if not isinstance(capability, dict):
+                continue
+            status = str(capability.get("status") or "ACTIVE").upper()
+            if status not in {"ACTIVE", "PROVEN", "VALIDATED_CURRENT"}:
+                continue
+            if str(capability_id) == task_id or str(capability.get("task_id") or "") == task_id:
+                return bool(capability.get("backend") or capability.get("executable") or capability.get("task_id"))
+        return False
+
+    @classmethod
+    def _executor_eligible(cls, item: dict[str, Any], capabilities: dict[str, Any]) -> bool:
         if item.get("owner_role") != "EXECUTOR" or item.get("status") not in {"READY", "RUNNING", "CHECKPOINTED"}:
             return False
+        if cls._has_legitimate_blocker(item):
+            return False
+        if str(item.get("execution_policy") or "AUTO").upper() == "MANUAL":
+            return False
 
-        task_id = item.get("task_id")
+        task_id = str(item.get("task_id") or "")
         if task_id:
-            capability = capabilities.get(str(task_id))
-            capability_status = capability.get("status", "ACTIVE") if isinstance(capability, dict) else None
-            capability_ready = isinstance(capability, dict) and capability_status in {"ACTIVE", "PROVEN"}
-            required = (
-                item.get("dependencies_resolved") is True,
-                item.get("binding_verified") is True,
-                capability_ready,
-                bool(item.get("repository")),
-                bool(item.get("source_revision")),
-                bool(item.get("required_outputs")),
-                bool(item.get("validation_ref")),
-                item.get("runtime_available") is True,
-                item.get("resource_lock_available") is True,
-            )
-            return all(required)
+            return task_id in TASK_REGISTRY or cls._manifest_has_task(task_id, capabilities)
 
         frozen_test = item.get("frozen_test")
         if not isinstance(frozen_test, dict):
@@ -130,7 +149,8 @@ class AgentService:
     def _queue_card(item: dict[str, Any], role: str) -> dict[str, Any]:
         common = (
             "id", "entity_version", "status", "kind", "owner_role", "priority",
-            "thread_id", "question", "next_action", "blocker", "migration_state", "interdomain_ref",
+            "thread_id", "question", "next_action", "blocker", "blocker_class",
+            "migration_state", "interdomain_ref",
         )
         executor = (
             "task_id", "implementation_ref", "repository", "source_revision",
@@ -199,12 +219,11 @@ class AgentService:
     def continue_campaign(self, campaign_id: str) -> dict[str, Any]:
         """Return one recovery-first continuation decision for a campaign.
 
-        This method is intentionally decision-only: it does not mutate canonical
-        state or dispatch by itself. Existing mutation/dispatch gates remain the
-        authority for writes and execution.
+        ACTIVE is the normal operational mode. SHADOW remains available only
+        when explicitly requested for diagnostics or staged rollout.
         """
-        requested_mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "SHADOW")).upper()
-        mode = requested_mode if requested_mode in {"OFF", "SHADOW", "ACTIVE"} else "SHADOW"
+        requested_mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "ACTIVE")).upper()
+        mode = requested_mode if requested_mode in {"OFF", "SHADOW", "ACTIVE"} else "ACTIVE"
         frontier = self.campaign_frontier(campaign_id)
 
         if mode == "OFF":

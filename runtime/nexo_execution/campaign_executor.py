@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 _TERMINAL = {"DONE", "PASS", "FAIL", "INCONCLUSIVE", "TERMINAL"}
-_ACTIVE = {"RUNNING", "CHECKPOINTED", "QUEUED", "DISPATCHED"}
+_ACTIVE_COMPUTE = {"RUNNING", "QUEUED", "DISPATCHED"}
+_RESUMABLE = {"CHECKPOINTED"}
 
 _SCIENTIFIC_CONTRACT = {
     "hubble_flow_selection", "h0_estimator", "local_group_like_observer_criteria",
@@ -49,13 +50,21 @@ class CampaignGraph:
         return cls(tests=tests, predecessors=predecessors, max_parallel=max_parallel)
 
     def ready_tests(self, states: dict[str, str]) -> list[str]:
+        """Return work that can consume a compute slot now.
+
+        CHECKPOINTED is recovery metadata, not active compute. A checkpointed
+        test is therefore resumable and competes for a free slot like READY
+        work; it must never consume a slot while idle.
+        """
         normalized = {key: str(value or "").upper() for key, value in states.items()}
-        active = sum(1 for value in normalized.values() if value in _ACTIVE)
+        active = sum(1 for value in normalized.values() if value in _ACTIVE_COMPUTE)
         budget = max(0, self.max_parallel - active)
         ready: list[str] = []
         for test_id in self.tests:
             state = normalized.get(test_id, "")
-            if state in _TERMINAL or state in _ACTIVE:
+            if state in _TERMINAL or state in _ACTIVE_COMPUTE:
+                continue
+            if state and state not in _RESUMABLE and state not in {"READY"}:
                 continue
             if all(normalized.get(parent, "") in _TERMINAL for parent in self.predecessors.get(test_id, ())):
                 ready.append(test_id)

@@ -9,6 +9,14 @@ on:
       - 'runtime/portable_camb/**'
       - 'benchmarks/**'
       - '.github/workflows/nexo-execution-tests.yml'
+  pull_request:
+    paths:
+      - 'runtime/nexo_execution/**'
+      - 'runtime/nexo_core/**'
+      - 'runtime/nexo_agent_api/**'
+      - 'runtime/portable_camb/**'
+      - 'benchmarks/**'
+      - '.github/workflows/nexo-execution-tests.yml'
   workflow_dispatch:
 
 jobs:
@@ -24,9 +32,11 @@ jobs:
         run: |
           python -m unittest runtime.portable_camb.test_runtime -v
           python -m unittest runtime.nexo_execution.test_execution -v
+          python -m unittest runtime.nexo_execution.test_campaign_executor -v
           python -m unittest runtime.nexo_execution.test_gz01_multprobe -v
           python -m unittest runtime.nexo_execution.test_peer_detection -v
           python -m unittest runtime.nexo_execution.test_dependency_producer -v
+          python -m unittest runtime.nexo_execution.test_lean_hydration -v
           python -m unittest runtime.nexo_agent_api.test_service -v
           python -m unittest runtime.nexo_agent_api.test_handoff -v
           python -m unittest runtime.nexo_agent_api.test_executor_capability_gate -v
