@@ -12,7 +12,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
-        for kind in ("campaign", "test", "work", "run", "result"):
+        for kind in ("campaign", "test_group", "test", "work", "run", "result"):
             (self.root / "entities" / kind).mkdir(parents=True, exist_ok=True)
 
     def tearDown(self) -> None:
@@ -55,7 +55,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
         self.assertEqual(frontier["next_test_ids"], ["TEST::B"])
         self.assertFalse(frontier["terminal"])
 
-    def test_active_run_wins_over_creating_duplicate_work(self) -> None:
+    def test_checkpointed_run_is_recovery_frontier_not_active_compute(self) -> None:
         self.write("campaign", "CAMP-2", status="ACTIVE", execution_order=["TEST::A"])
         self.write(
             "test",
@@ -74,9 +74,33 @@ class CampaignFrontierResolverTests(unittest.TestCase):
 
         frontier = CampaignFrontierResolver(self.root).resolve("CAMP-2")
 
-        self.assertEqual(frontier["active"], ["TEST::A"])
+        self.assertEqual(frontier["active"], [])
+        self.assertEqual(frontier["recoverable"], ["TEST::A"])
         self.assertEqual(frontier["ready"], [])
         self.assertEqual(frontier["next_test_ids"], ["TEST::A"])
+
+    def test_running_run_wins_over_creating_duplicate_work(self) -> None:
+        self.write("campaign", "CAMP-RUN", status="ACTIVE", execution_order=["TEST::A"])
+        self.write(
+            "test",
+            "TEST::A",
+            campaign_id="CAMP-RUN",
+            status="READY",
+            current_run_id="RUN::TEST::A::0001",
+        )
+        self.write(
+            "run",
+            "RUN::TEST::A::0001",
+            campaign_id="CAMP-RUN",
+            test_id="TEST::A",
+            status="RUNNING",
+        )
+
+        frontier = CampaignFrontierResolver(self.root).resolve("CAMP-RUN")
+
+        self.assertEqual(frontier["active"], ["TEST::A"])
+        self.assertEqual(frontier["recoverable"], [])
+        self.assertEqual(frontier["ready"], [])
 
     def test_failed_recoverable_run_is_recovery_frontier(self) -> None:
         self.write("campaign", "CAMP-3", status="ACTIVE", execution_order=["TEST::A"])
@@ -118,6 +142,21 @@ class CampaignFrontierResolverTests(unittest.TestCase):
         self.assertTrue(frontier["terminal"])
         self.assertEqual(frontier["status"], "TERMINAL")
         self.assertEqual(frontier["next_test_ids"], [])
+
+    def test_test_group_is_read_as_campaign_without_duplicate_campaign_entity(self) -> None:
+        self.write(
+            "test_group",
+            "CAMP-H0",
+            status="ACTIVE",
+            execution_order=["T-H0-001"],
+        )
+        self.write("test", "T-H0-001", campaign_id="CAMP-H0", status="READY")
+
+        frontier = CampaignFrontierResolver(self.root).resolve("CAMP-H0")
+
+        self.assertEqual(frontier["ready"], ["T-H0-001"])
+        self.assertEqual(frontier["campaign_source"], "test_group")
+        self.assertFalse((self.root / "entities" / "campaign" / "CAMP-H0.json").exists())
 
     def test_legacy_work_with_campaign_id_is_visible_until_migrated_to_test(self) -> None:
         self.write(
