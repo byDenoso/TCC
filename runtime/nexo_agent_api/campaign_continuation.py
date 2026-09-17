@@ -6,8 +6,8 @@ from typing import Any
 
 
 _SUCCESS_STATES = {"VERIFIED", "DONE", "COMPLETE", "COMPLETED", "TERMINALIZED", "PASS"}
-_ACTIVE_RUN_STATES = {"QUEUED", "DISPATCHED", "RUNNING", "CHECKPOINTED"}
-_RECOVERABLE_RUN_STATES = {"FAILED", "STALE", "INTERRUPTED", "TIMED_OUT"}
+_ACTIVE_RUN_STATES = {"QUEUED", "DISPATCHED", "RUNNING"}
+_RECOVERABLE_RUN_STATES = {"CHECKPOINTED", "FAILED", "STALE", "INTERRUPTED", "TIMED_OUT"}
 _CAMPAIGN_TERMINAL_STATES = {"DONE", "COMPLETE", "COMPLETED", "TERMINALIZED", "CLOSED"}
 
 
@@ -28,10 +28,9 @@ def _status(entity: dict[str, Any] | None) -> str:
 class CampaignFrontierResolver:
     """Derive campaign continuation state from canonical entities only.
 
-    This resolver is intentionally read-only. It reconstructs the frontier on
-    demand instead of introducing a second persisted campaign cursor. Canonical
-    TEST entities win; legacy WORK entities with campaign_id are read only as a
-    compatibility bridge until they are migrated through register_test().
+    The resolver is read-only. TEST_GROUP is accepted as the canonical campaign
+    representation during migration so no duplicate campaign entity is needed.
+    Legacy WORK entities with campaign_id remain a compatibility read bridge.
     """
 
     def __init__(self, root: str | Path) -> None:
@@ -39,6 +38,15 @@ class CampaignFrontierResolver:
 
     def _entity(self, kind: str, entity_id: str) -> dict[str, Any] | None:
         return _read_json(self.root / "entities" / kind / f"{entity_id}.json")
+
+    def _campaign(self, campaign_id: str) -> tuple[dict[str, Any] | None, str | None]:
+        campaign = self._entity("campaign", campaign_id)
+        if campaign is not None:
+            return campaign, "campaign"
+        test_group = self._entity("test_group", campaign_id)
+        if test_group is not None:
+            return test_group, "test_group"
+        return None, None
 
     def _campaign_items(self, campaign_id: str) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
         items: dict[str, dict[str, Any]] = {}
@@ -101,7 +109,7 @@ class CampaignFrontierResolver:
         return sorted(runs, key=lambda item: str(item.get("created_at") or item.get("id") or ""))[-1]
 
     def resolve(self, campaign_id: str) -> dict[str, Any]:
-        campaign = self._entity("campaign", campaign_id)
+        campaign, campaign_source = self._campaign(campaign_id)
         if campaign is None:
             raise ValueError(f"campaign not found: {campaign_id}")
 
@@ -126,6 +134,9 @@ class CampaignFrontierResolver:
             run_state = _status(run)
             if run_state in _ACTIVE_RUN_STATES:
                 active.append(test_id)
+                continue
+            if run_state == "CHECKPOINTED":
+                recoverable.append(test_id)
                 continue
             if run_state in _RECOVERABLE_RUN_STATES and bool((run or {}).get("recoverable")):
                 recoverable.append(test_id)
@@ -157,6 +168,7 @@ class CampaignFrontierResolver:
 
         return {
             "campaign_id": campaign_id,
+            "campaign_source": campaign_source,
             "status": frontier_status,
             "active": active,
             "recoverable": recoverable,
