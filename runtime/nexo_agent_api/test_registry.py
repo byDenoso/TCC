@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .mutations import apply_mutation_request
+from .scheduler_visibility import ensure_scheduler_visibility, scheduler_work_id
 from .service import TowerAgentIssue
 
 
@@ -86,12 +87,16 @@ def register_test(
     hypothesis_id: str | None = None,
     work_id: str | None = None,
     capability_id: str | None = None,
+    frozen_test: dict | None = None,
     writer_role: str = "ADVISOR",
     correlation_id: str | None = None,
     provenance: dict | None = None,
 ) -> dict:
     """Canonicalize a graph-visible TEST and its RUN before dispatch.
 
+    A complete frozen_test contract also creates the scheduler-visible WORK projection.
+    Legacy callers without a frozen contract remain registrable, but cannot acquire the
+    scheduler-visibility invariant until their scientific execution contract is complete.
     CHECKs must not call this function unless they are explicitly promoted to TEST.
     """
     root = Path(root)
@@ -185,6 +190,9 @@ def register_test(
         "created_at": str((test_existing or {}).get("created_at") or observed_at),
         "provenance": base_provenance,
     }
+    if frozen_test is not None:
+        test_changes["frozen_test"] = frozen_test
+
     if test_existing is None:
         receipts.append(_create_or_reuse(
             root,
@@ -234,6 +242,21 @@ def register_test(
         event_type="RUN_REGISTERED",
     ))
 
+    scheduler_visibility = None
+    scheduler_id = None
+    if frozen_test is not None:
+        test_after_registration = _read_entity(root, "test", test_id)
+        if test_after_registration is None:
+            raise TowerAgentIssue("READBACK_FAILED", "TEST vanished before scheduler visibility admission.")
+        scheduler_visibility = ensure_scheduler_visibility(root, test_after_registration, writer_role=writer_role)
+        scheduler_id = scheduler_visibility.get("work_id") or scheduler_work_id(test_id)
+        if not scheduler_visibility.get("visible"):
+            raise TowerAgentIssue(
+                str(scheduler_visibility.get("blocker_class") or "SCHEDULER_VISIBILITY_FAILED"),
+                "Dispatch-ready TEST could not be made scheduler-visible.",
+                {"test_id": test_id, "visibility": scheduler_visibility},
+            )
+
     required = [
         ("campaign", campaign_id),
         ("test", test_id),
@@ -241,12 +264,16 @@ def register_test(
     ]
     if test_group_id:
         required.append(("test_group", test_group_id))
+    if scheduler_id:
+        required.append(("work", scheduler_id))
     if any(_read_entity(root, kind, entity_id) is None for kind, entity_id in required):
         raise TowerAgentIssue("READBACK_FAILED", "Universal TEST registration did not survive canonical readback.")
 
     return {
         "registered": True,
         "dispatch_ready": True,
+        "scheduler_visible": bool(scheduler_visibility and scheduler_visibility.get("visible")) if frozen_test is not None else False,
+        "work_id": scheduler_id,
         "domain": clean_domain,
         "project_id": project_id,
         "campaign_id": campaign_id,
@@ -257,5 +284,6 @@ def register_test(
         "operational_status": "QUEUED",
         "analytical_status": "UNASSESSED",
         "receipts": receipts,
+        "scheduler_visibility": scheduler_visibility,
         "readback": "PASS",
     }
