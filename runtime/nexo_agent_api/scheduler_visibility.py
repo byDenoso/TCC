@@ -94,7 +94,7 @@ def scheduler_work_projection(test: dict[str, Any], *, repair: bool) -> dict[str
     }
 
 
-def ensure_scheduler_visibility(root: str | Path, test: dict[str, Any], *, writer_role: str = "SYSTEM") -> dict[str, Any]:
+def ensure_scheduler_visibility(root: str | Path, test: dict[str, Any], *, writer_role: str = "EXECUTOR") -> dict[str, Any]:
     root = Path(root)
     test_id = str(test.get("id") or test.get("test_id") or "")
     work_id = scheduler_work_id(test_id) if test_id else ""
