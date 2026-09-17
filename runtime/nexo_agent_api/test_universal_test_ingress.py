@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from . import materialize_role_views
 from .mutations import apply_mutation_request
 from .service import AgentService
 from .test_registry import register_test
-from .views import materialize_role_views
 
 
 class UniversalTestIngressContractTests(unittest.TestCase):
