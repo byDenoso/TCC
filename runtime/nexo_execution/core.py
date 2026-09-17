@@ -47,6 +47,7 @@ class ExecutionContract:
     repository: str; commit_sha: str; task_id: str; parameters: dict[str, Any]
     seed: int | None; timeout_minutes: int; required_outputs: list[str]
     run_id: str | None = None
+    required_capabilities: list[str] | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "ExecutionContract":
@@ -63,8 +64,12 @@ class ExecutionContract:
         if int(data["timeout_minutes"]) <= 0: raise ValueError("timeout_minutes must be positive")
         if not isinstance(data["required_outputs"], list) or not all(isinstance(x, str) and x for x in data["required_outputs"]):
             raise ValueError("required_outputs must be a string list")
+        capabilities = data.get("required_capabilities", [])
+        if not isinstance(capabilities, list) or not all(isinstance(x, str) and x for x in capabilities):
+            raise ValueError("required_capabilities must be a string list")
         payload = dict(data)
         payload.setdefault("run_id", None)
+        payload["required_capabilities"] = list(capabilities)
         return cls(**payload)
 
     @classmethod
