@@ -179,6 +179,18 @@ class ExecutionTests(unittest.TestCase):
     def test_router_local_for_short_serial_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=2)), "local")
 
+    def test_portable_camb_is_local_even_when_work_is_heavy(self):
+        self.assertEqual(
+            choose_provider(
+                RoutingInput(
+                    expected_runtime_minutes=60,
+                    parallelizable=True,
+                    required_capabilities=("peer.camb.exact_v2",),
+                )
+            ),
+            "local",
+        )
+
     def test_router_actions_for_heavy_work(self):
         self.assertEqual(choose_provider(RoutingInput(expected_runtime_minutes=20)), "github_actions")
         self.assertEqual(choose_provider(RoutingInput(parallelizable=True)), "github_actions")
