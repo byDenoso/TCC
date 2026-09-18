@@ -139,6 +139,12 @@ class ExecutionTests(unittest.TestCase):
         contract = ExecutionContract.from_dict(data)
         self.assertEqual(contract.argv, ["python3", "benchmarks/idm_runtime_preflight.py"])
 
+    def test_dark_energy_linear_response_is_allowlisted(self):
+        data = dict(BASE)
+        data["task_id"] = "dark_energy_linear_response"
+        contract = ExecutionContract.from_dict(data)
+        self.assertEqual(contract.argv, ["python3", "-m", "benchmarks.dark_energy_response"])
+
     def test_gz01_desi_edr_nz_pilot_is_allowlisted(self):
         data = dict(BASE)
         data["task_id"] = "gz01_desi_edr_nz_pilot"
