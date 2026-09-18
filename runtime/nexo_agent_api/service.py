@@ -153,8 +153,9 @@ class AgentService:
             "migration_state", "interdomain_ref",
         )
         executor = (
-            "task_id", "implementation_ref", "repository", "source_revision",
+            "task_id", "capability_id", "implementation_ref", "repository", "source_revision",
             "required_outputs", "validation_ref", "result_ref", "frozen_test",
+            "execution_class", "dispatch_requested", "dispatch_state",
         )
         learner = ("result_ref", "learning_state")
         keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ())
@@ -259,7 +260,15 @@ class AgentService:
                 source = (frontier.get("sources") or {}).get(test_id)
                 test = self._campaign_item(campaign_id, test_id, source)
                 execution = self.resolve_test_execution(test)
-                action = "DISPATCH" if execution.get("status") == "RESOLVED" else "RESOLVE_CAPABILITY"
+                execution_status = str(execution.get("status") or "")
+                if execution_status == "RESOLVED":
+                    action = "DISPATCH"
+                elif execution_status == "REPAIR_REQUIRED":
+                    action = "REPAIR_CAPABILITY"
+                elif execution_status == "BLOCKED":
+                    action = "BLOCKED"
+                else:
+                    action = "RESOLVE_CAPABILITY"
                 proposed = {
                     "campaign_id": campaign_id,
                     "mode": mode,
