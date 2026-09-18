@@ -72,6 +72,25 @@ class PortableCambRuntimeTests(unittest.TestCase):
             self.assertEqual(result["NEXO_PEER_CAMB_CAMBLIB_SHA256"], camblib_sha)
             self.assertEqual(Path(result["NEXO_CAPABILITY_PEER_CAMB_EXACT_V2_LAUNCHER"]), payload / "peer-camb-python")
 
+    def test_verified_expanded_archive_layout_exports_python_camb_library(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+
+            root = Path(raw)
+            payload = root / "payload"
+            (payload / "python" / "camb").mkdir(parents=True)
+            (payload / "cosmorec").mkdir()
+            launcher = payload / "peer-camb-python"
+            launcher.write_text("#!/usr/bin/env bash\nexec python3 \"$@\"\n", encoding="utf-8")
+            launcher.chmod(0o755)
+            camblib = payload / "python" / "camb" / "camblib.so"
+            camblib.write_bytes(b"archive-layout-camblib")
+            camblib_sha = hashlib.sha256(camblib.read_bytes()).hexdigest()
+            self._write_manifest(root, archive_sha="a" * 64, camblib_sha=camblib_sha)
+            result = prepare_portable_camb(env={}, runtime_root=root)
+            self.assertEqual(result["NEXO_CAPABILITY_PEER_CAMB_EXACT_V2"], "READY")
+            self.assertEqual(result["NEXO_PEER_CAMB_CAMBLIB_SHA256"], camblib_sha)
+            self.assertEqual(Path(result["NEXO_CAPABILITY_PEER_CAMB_EXACT_V2_LAUNCHER"]), launcher)
+
 
 if __name__ == "__main__":
     unittest.main()
