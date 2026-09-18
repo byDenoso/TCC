@@ -59,6 +59,14 @@ def _safe_extract_zstd_tar(archive: Path, destination: Path) -> None:
         raise PortableCambError(f"zstd tar extraction failed: {exc}") from exc
 
 
+def _camblib_path(payload: Path) -> Path | None:
+    """Return the canonical library path for either supported payload layout."""
+    for candidate in (payload / "lib" / "camblib.so", payload / "python" / "camb" / "camblib.so"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def _find_payload(root: Path, *, recursive: bool) -> Path | None:
     candidates = [root / "payload", root]
     if recursive:
@@ -69,14 +77,16 @@ def _find_payload(root: Path, *, recursive: bool) -> Path | None:
         if candidate in seen:
             continue
         seen.add(candidate)
-        if (candidate / "peer-camb-python").is_file() and (candidate / "lib" / "camblib.so").is_file():
+        if (candidate / "peer-camb-python").is_file() and _camblib_path(candidate) is not None:
             return candidate
     return None
 
 
 def _verify_payload(payload: Path, manifest: dict[str, object]) -> dict[str, str]:
     launcher = payload / "peer-camb-python"
-    camblib = payload / "lib" / "camblib.so"
+    camblib = _camblib_path(payload)
+    if camblib is None:
+        raise PortableCambError("portable CAMB camblib.so missing")
     expected_camblib = str(manifest.get("camblib_sha256") or "")
     if not expected_camblib:
         raise PortableCambError("manifest missing camblib_sha256")
@@ -160,3 +170,4 @@ def prepare_portable_camb(
 
     payload = _materialize_archive(archive, manifest, temp_root / "expanded")
     return _verify_payload(payload, manifest)
+
