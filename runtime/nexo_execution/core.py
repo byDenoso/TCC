@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import hashlib, json, os, subprocess, time, urllib.error, urllib.request
+import hashlib, json, os, subprocess, sys, time, urllib.error, urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -114,7 +114,10 @@ class LocalProvider:
         for key,value in contract.parameters.items(): env[f"NEXO_PARAM_{str(key).upper()}"]=str(value)
         started=time.time(); error=None
         try:
-            env.update(prepare_required_capabilities(contract, env)); exit_code=subprocess.run(contract.argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
+            argv = list(contract.argv)
+            if argv and argv[0] in {"python", "python3"}:
+                argv[0] = sys.executable
+            env.update(prepare_required_capabilities(contract, env)); exit_code=subprocess.run(argv, env=env, timeout=contract.timeout_minutes*60, check=False).returncode
         except subprocess.TimeoutExpired: exit_code,error=124,"timeout"
         except Exception as exc: exit_code,error=125,f"provider_error:{type(exc).__name__}:{exc}"
         return ExecutionResult(contract.execution_id,contract.work_id,contract.provider,os.getenv("GITHUB_RUN_ID"),current_git_sha(),exit_code,started,time.time(),collect_outputs(contract.required_outputs),contract.contract_hash,error)
