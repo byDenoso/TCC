@@ -56,6 +56,12 @@ def _gls(observed: list[float], design: list[list[float]], precision: list[list[
 
 def _statistics(binding: dict[str, Any]) -> dict[str, Any]:
     operation = binding["operation"]
+    if operation == "published_summary":
+        if str(binding.get("evidence_level") or "") not in {"SUMMARY_LEVEL", "SURROGATE"}:
+            raise ValueError("published summary must be labeled SUMMARY_LEVEL or SURROGATE")
+        if not isinstance(binding.get("statistics"), dict):
+            raise ValueError("published summary requires explicit statistics")
+        return dict(binding["statistics"])
     if operation == "quadratic_form":
         return {"chi2": _quadratic(binding["residual"], binding["precision"]), "dof": len(binding["residual"])}
     if operation == "fixed_trajectory_chi_square":

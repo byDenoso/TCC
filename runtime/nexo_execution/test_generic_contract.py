@@ -84,6 +84,18 @@ class GenericContractExecutorTests(unittest.TestCase):
         self.assertAlmostEqual(jack["statistics"]["estimate"], 2.0)
         self.assertEqual(boot_a["statistics"], boot_b["statistics"])
 
+    def test_published_summary_is_explicitly_labeled(self):
+        result = evaluate_contract(FROZEN, {
+            "operation": "published_summary",
+            "statistics": {"global_p": None, "finding": "reconstruction-sensitive"},
+            "decision": "CONSISTENT",
+            "evidence_level": "SUMMARY_LEVEL",
+            "input_refs": [{"ref": "arxiv:2601.00001v2", "sha256": "abc"}],
+        })
+        self.assertEqual(result["status"], "DONE")
+        self.assertEqual(result["evidence_level"], "SUMMARY_LEVEL")
+        self.assertIsNone(result["statistics"]["global_p"])
+
 
 if __name__ == "__main__":
     unittest.main()
