@@ -141,6 +141,17 @@ class CapabilityExecutionResolver:
             "resolution_source": "runtime_registry",
         }
 
+    def _generic_frozen_adapter(self, test: dict[str, Any]) -> dict[str, Any] | None:
+        if str(test.get("domain") or "").upper() != "SCIENCE":
+            return None
+        if _frozen_scientific_contract(test) is None:
+            return None
+        generic_id = "scientific.generic_contract_executor_v1"
+        generic = self.capabilities.get(generic_id)
+        if isinstance(generic, dict) and _is_executable(generic):
+            return self._resolved(generic_id, generic, "universal frozen-contract adapter")
+        return None
+
     def resolve(self, test: dict[str, Any]) -> dict[str, Any]:
         blocker = _blocker_class(test)
         if blocker in _LEGITIMATE_BLOCKERS:
@@ -159,6 +170,9 @@ class CapabilityExecutionResolver:
                 return self._resolved(explicit_capability, capability, "explicit capability reuse")
             if task_id in TASK_REGISTRY:
                 return self._runtime_task(task_id)
+            generic = self._generic_frozen_adapter(test)
+            if generic is not None:
+                return generic
             repair = _repair_required(
                 test,
                 reason=f"capability not executable: {explicit_capability}",
@@ -178,6 +192,9 @@ class CapabilityExecutionResolver:
                     return self._resolved(str(capability_id), capability, "existing task_id reuse")
             if task_id in TASK_REGISTRY:
                 return self._runtime_task(task_id)
+            generic = self._generic_frozen_adapter(test)
+            if generic is not None:
+                return generic
             repair = _repair_required(
                 test,
                 reason=f"task_id not allowlisted: {task_id}",
@@ -187,13 +204,20 @@ class CapabilityExecutionResolver:
 
         required = {str(value) for value in test.get("required_capabilities", []) if str(value)}
 
-        # Universal adapter: operationally generic, scientifically contract-bound.
-        # It may dispatch a frozen SCIENCE contract, but never invents a task or input.
-        if str(test.get("domain") or "").upper() == "SCIENCE" and _frozen_scientific_contract(test) is not None:
-            generic_id = "scientific.generic_contract_executor_v1"
-            generic = self.capabilities.get(generic_id)
-            if isinstance(generic, dict) and _is_executable(generic):
-                return self._resolved(generic_id, generic, "universal frozen-contract adapter")
+        # Specific semantic matches beat the universal adapter. The generic
+        # executor exists to remove plumbing gaps, not to hide a better binding.
+        if required:
+            for capability_id, capability in self.capabilities.items():
+                if not isinstance(capability, dict) or not _is_executable(capability):
+                    continue
+                semantic = {str(value) for value in capability.get("semantic_capabilities", []) if str(value)}
+                adapters = {str(value) for value in capability.get("adapter_for", []) if str(value)}
+                if required.issubset(semantic | adapters):
+                    return self._resolved(str(capability_id), capability, "semantic capability match")
+
+        generic = self._generic_frozen_adapter(test)
+        if generic is not None:
+            return generic
 
         if not required:
             repair = _repair_required(
@@ -201,14 +225,6 @@ class CapabilityExecutionResolver:
                 reason="complete frozen scientific contract has no executable capability binding",
             )
             return repair or {"status": "NEEDS_ADAPTER", "reason": "no executable capability declared"}
-
-        for capability_id, capability in self.capabilities.items():
-            if not isinstance(capability, dict) or not _is_executable(capability):
-                continue
-            semantic = {str(value) for value in capability.get("semantic_capabilities", []) if str(value)}
-            adapters = {str(value) for value in capability.get("adapter_for", []) if str(value)}
-            if required.issubset(semantic | adapters):
-                return self._resolved(str(capability_id), capability, "semantic capability match")
 
         missing = sorted(required)
         repair = _repair_required(
