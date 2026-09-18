@@ -134,6 +134,34 @@ class ExecutionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ExecutionContract.from_dict(data)
 
+    def test_generic_scientific_contract_task_is_allowlisted(self):
+        data = dict(BASE)
+        data["task_id"] = "scientific_generic_contract"
+        contract = ExecutionContract.from_dict(data)
+        self.assertEqual(
+            contract.argv,
+            ["python3", "-m", "runtime.nexo_execution.generic_contract"],
+        )
+
+    def test_local_provider_serializes_structured_parameters_as_json(self):
+        data = dict(BASE)
+        data.update({
+            "provider": "local",
+            "task_id": "scientific_generic_contract",
+            "parameters": {"frozen_contract": {"id": "T-1"}},
+            "required_outputs": [],
+        })
+        contract = ExecutionContract.from_dict(data)
+        with patch("runtime.nexo_execution.core.subprocess.run") as run, patch(
+            "runtime.nexo_execution.core.current_git_sha", return_value=contract.commit_sha
+        ):
+            run.return_value.returncode = 0
+            LocalProvider().submit(contract)
+        self.assertEqual(
+            run.call_args.kwargs["env"]["NEXO_PARAM_FROZEN_CONTRACT"],
+            '{"id":"T-1"}',
+        )
+
     def test_idm_runtime_preflight_is_allowlisted(self):
         data = dict(BASE)
         data["task_id"] = "idm_runtime_preflight"

@@ -18,6 +18,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "dependency_producer": ["python3", "-m", "runtime.nexo_execution.dependency_producer"],
     "h0_lcdm_origin": ["python3", "-m", "benchmarks.h0_lcdm_origin"],
     "dark_energy_linear_response": ["python3", "-m", "benchmarks.dark_energy_response"],
+    "scientific_generic_contract": ["python3", "-m", "runtime.nexo_execution.generic_contract"],
 }
 for _gate_index in range(26):
     _gate_id = f"D{_gate_index:02d}"
@@ -113,7 +114,11 @@ class LocalProvider:
     def submit(self, contract: ExecutionContract) -> ExecutionResult:
         _assert_dispatchable(contract)
         env=os.environ.copy(); env.update({"NEXO_EXECUTION_ID":contract.execution_id,"NEXO_WORK_ID":contract.work_id,"NEXO_TEST_ID":contract.test_id,"NEXO_RUN_ID":str(contract.run_id),"NEXO_SEED":"" if contract.seed is None else str(contract.seed)})
-        for key,value in contract.parameters.items(): env[f"NEXO_PARAM_{str(key).upper()}"]=str(value)
+        for key,value in contract.parameters.items():
+            env[f"NEXO_PARAM_{str(key).upper()}"] = (
+                json.dumps(value, sort_keys=True, separators=(",", ":"))
+                if isinstance(value, (dict, list)) else str(value)
+            )
         started=time.time(); error=None
         try:
             argv = list(contract.argv)
