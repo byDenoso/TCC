@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from benchmarks.dark_energy_response import DarkEnergyResponseError, _request_from_env
 from benchmarks.idm_runtime_preflight import (
     prepare_runtime_dirs,
     prepare_ini_output_dirs,
@@ -144,6 +145,29 @@ class ExecutionTests(unittest.TestCase):
         data["task_id"] = "dark_energy_linear_response"
         contract = ExecutionContract.from_dict(data)
         self.assertEqual(contract.argv, ["python3", "-m", "benchmarks.dark_energy_response"])
+
+    def test_dark_energy_response_accepts_bound_request(self):
+        with tempfile.TemporaryDirectory() as raw:
+            request_path = Path(raw) / "request.json"
+            request_path.write_text(
+                '{"schema":"nexo.dark-energy-linear-response.request.v1","dark_energy_model":"fluid","w0":-0.85,"wa":0,"cs2":1e-5,"redshifts":[0,0.1],"k_mpc":[0.001,0.01]}',
+                encoding="utf-8",
+            )
+            with patch.dict("os.environ", {"NEXO_BINDING_INPUT_PATH": str(request_path)}, clear=True):
+                request = _request_from_env()
+        self.assertEqual(request["dark_energy_model"], "fluid")
+        self.assertEqual(request["w0"], -0.85)
+        self.assertEqual(request["cs2"], 1e-5)
+        self.assertEqual(request["redshifts"], [0.1, 0.0])
+
+    def test_dark_energy_response_rejects_ppf_sound_speed_scan(self):
+        with patch.dict(
+            "os.environ",
+            {"NEXO_PARAM_DARK_ENERGY_MODEL": "ppf", "NEXO_PARAM_CS2": "0.01"},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(DarkEnergyResponseError, "does not support varying sound speed"):
+                _request_from_env()
 
     def test_gz01_desi_edr_nz_pilot_is_allowlisted(self):
         data = dict(BASE)
