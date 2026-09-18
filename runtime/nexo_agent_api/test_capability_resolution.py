@@ -14,6 +14,12 @@ class CapabilityExecutionResolverTests(unittest.TestCase):
                 "task_id": "known_task",
                 "status": "PROVEN",
             },
+            "scientific.generic_contract_executor_v1": {
+                "roles": ["EXECUTOR"],
+                "backend": "nexo_runtime",
+                "status": "ACTIVE",
+                "executable": "runtime.nexo_execution.runner",
+            },
             "mock_observer_v1": {
                 "roles": ["EXECUTOR"],
                 "backend": "github_dispatch",
@@ -59,6 +65,17 @@ class CapabilityExecutionResolverTests(unittest.TestCase):
         self.assertEqual(result["status"], "RESOLVED")
         self.assertEqual(result["capability_id"], "mock_observer_v1")
         self.assertEqual(result["task_id"], "mock_observer_runtime")
+
+
+    def test_complete_frozen_science_without_required_capabilities_uses_universal_adapter(self) -> None:
+        payload = self.frozen_test()
+        payload["domain"] = "SCIENCE"
+        result = CapabilityExecutionResolver(self.capabilities).resolve(payload)
+
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["capability_id"], "scientific.generic_contract_executor_v1")
+        self.assertEqual(result["backend"], "nexo_runtime")
+        self.assertEqual(result["reason"], "universal frozen-contract adapter")
 
     def test_complete_frozen_contract_without_capability_is_repair_required(self) -> None:
         result = CapabilityExecutionResolver(self.capabilities).resolve(self.frozen_test())
