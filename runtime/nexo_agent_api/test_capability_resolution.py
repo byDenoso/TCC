@@ -67,6 +67,36 @@ class CapabilityExecutionResolverTests(unittest.TestCase):
         self.assertEqual(result["task_id"], "mock_observer_runtime")
 
 
+    def test_invalid_explicit_capability_uses_universal_adapter_before_repair(self) -> None:
+        payload = self.frozen_test()
+        payload["domain"] = "SCIENCE"
+        payload["capability_id"] = "science.missing_v1"
+        result = CapabilityExecutionResolver(self.capabilities).resolve(payload)
+
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["capability_id"], "scientific.generic_contract_executor_v1")
+        self.assertEqual(result["reason"], "universal frozen-contract adapter")
+
+    def test_invalid_task_id_uses_universal_adapter_before_repair(self) -> None:
+        payload = self.frozen_test()
+        payload["domain"] = "SCIENCE"
+        payload["task_id"] = "missing_task"
+        result = CapabilityExecutionResolver(self.capabilities).resolve(payload)
+
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["capability_id"], "scientific.generic_contract_executor_v1")
+
+    def test_semantic_specific_match_beats_universal_adapter(self) -> None:
+        payload = self.frozen_test()
+        payload["domain"] = "SCIENCE"
+        payload["required_capabilities"] = ["science.mock_observer"]
+        result = CapabilityExecutionResolver(self.capabilities).resolve(payload)
+
+        self.assertEqual(result["status"], "RESOLVED")
+        self.assertEqual(result["capability_id"], "mock_observer_v1")
+        self.assertEqual(result["reason"], "semantic capability match")
+
+
     def test_complete_frozen_science_without_required_capabilities_uses_universal_adapter(self) -> None:
         payload = self.frozen_test()
         payload["domain"] = "SCIENCE"
