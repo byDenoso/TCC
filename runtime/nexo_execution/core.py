@@ -32,6 +32,7 @@ def _canonical_ref(value: Any, prefix: str) -> bool:
 
 def _assert_dispatchable(contract: "ExecutionContract") -> None:
     if contract.schema == "nexo.execution.v1": raise ValueError("legacy nexo.execution.v1 contracts are readable historical records but cannot be used for new dispatch")
+    if contract.provider == "github_actions": raise ValueError("github_actions provider is disabled; execute with the caller ChatGPT runtime/local provider")
     if contract.schema != "nexo.execution.v2": raise ValueError(f"unsupported dispatch schema: {contract.schema}")
     if not _canonical_ref(contract.test_id, "TEST"): raise ValueError("dispatch requires canonical TEST:: identity")
     if not _canonical_ref(contract.run_id, "RUN"): raise ValueError("dispatch requires canonical RUN:: identity")
