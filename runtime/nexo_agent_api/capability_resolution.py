@@ -201,6 +201,14 @@ class CapabilityExecutionResolver:
             if required.issubset(semantic | adapters):
                 return self._resolved(str(capability_id), capability, "semantic capability match")
 
+        # Universal adapter: operationally generic, scientifically contract-bound.
+        # It may dispatch a frozen SCIENCE contract, but never invents a task or input.
+        if str(test.get("domain") or "").upper() == "SCIENCE" and _frozen_scientific_contract(test) is not None:
+            generic_id = "scientific.generic_contract_executor_v1"
+            generic = self.capabilities.get(generic_id)
+            if isinstance(generic, dict) and _is_executable(generic):
+                return self._resolved(generic_id, generic, "universal frozen-contract adapter")
+
         missing = sorted(required)
         repair = _repair_required(
             test,
