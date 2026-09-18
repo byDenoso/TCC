@@ -17,6 +17,7 @@ TASK_REGISTRY: dict[str, list[str]] = {
     "peer_detection_battery": ["python3", "-m", "benchmarks.peer_detection_battery"],
     "dependency_producer": ["python3", "-m", "runtime.nexo_execution.dependency_producer"],
     "h0_lcdm_origin": ["python3", "-m", "benchmarks.h0_lcdm_origin"],
+    "dark_energy_linear_response": ["python3", "-m", "benchmarks.dark_energy_response"],
 }
 for _gate_index in range(26):
     _gate_id = f"D{_gate_index:02d}"
