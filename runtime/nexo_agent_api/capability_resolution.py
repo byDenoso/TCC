@@ -115,6 +115,21 @@ class CapabilityExecutionResolver:
 
     def __init__(self, capabilities: dict[str, Any]) -> None:
         self.capabilities = capabilities
+        self.aliases = {
+            str(capability_id): str(definition.get("alias_of"))
+            for capability_id, definition in capabilities.items()
+            if isinstance(definition, dict) and definition.get("alias_of")
+        }
+
+    def _canonical_capability_id(self, capability_id: str) -> str:
+        seen: set[str] = set()
+        current = str(capability_id)
+        while current in self.aliases:
+            if current in seen:
+                return capability_id
+            seen.add(current)
+            current = self.aliases[current]
+        return current
 
     def _resolved(self, capability_id: str, capability: dict[str, Any], reason: str) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -165,9 +180,16 @@ class CapabilityExecutionResolver:
         task_id = str(test.get("task_id") or "")
 
         if explicit_capability:
-            capability = self.capabilities.get(explicit_capability)
+            canonical_capability = self._canonical_capability_id(explicit_capability)
+            capability = self.capabilities.get(canonical_capability)
             if isinstance(capability, dict) and _is_executable(capability):
-                return self._resolved(explicit_capability, capability, "explicit capability reuse")
+                reason = "explicit capability reuse"
+                if canonical_capability != explicit_capability:
+                    reason = f"compatibility alias {explicit_capability} -> {canonical_capability}"
+                result = self._resolved(canonical_capability, capability, reason)
+                if canonical_capability != explicit_capability:
+                    result["requested_capability_id"] = explicit_capability
+                return result
             if task_id in TASK_REGISTRY:
                 return self._runtime_task(task_id)
             generic = self._generic_frozen_adapter(test)
