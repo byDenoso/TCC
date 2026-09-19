@@ -172,6 +172,46 @@ class MutationInboxTests(unittest.TestCase):
         self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
         self.assertFalse((self.root / "entities" / "test_group" / "TEST_GROUP::CAMP-GROWTH-LSS::A.json").exists())
 
+    def test_work_terminal_mutation_refreshes_active_projection(self) -> None:
+        (self.root / "indexes" / "active-work.json").write_text(json.dumps({
+            "schema_version": "0.6",
+            "work": [{
+                "id": "W-CLOSE",
+                "entity_version": 1,
+                "status": "READY",
+                "owner_role": "EXECUTOR",
+                "kind": "ACTION",
+            }],
+        }), encoding="utf-8")
+        (self.root / "entities" / "work" / "W-CLOSE.json").write_text(json.dumps({
+            "id": "W-CLOSE",
+            "entity_version": 1,
+            "status": "READY",
+            "owner_role": "EXECUTOR",
+            "kind": "ACTION",
+        }), encoding="utf-8")
+
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CLOSE-1",
+            "entity_kind": "work",
+            "entity_name": "W-CLOSE",
+            "expected_version": 1,
+            "changes": {"status": "DONE"},
+            "writer_role": "EXECUTOR",
+            "event_type": "WORK_DONE",
+        })
+
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["readback"], "PASS")
+        self.assertEqual(receipt["projection_refresh"]["status"], "PASS")
+
+        active = json.loads((self.root / "indexes" / "active-work.json").read_text())
+        self.assertEqual(active["work"], [])
+        self.assertEqual(active["count"], 0)
+
+        roi = json.loads((self.root / "snapshot" / "ai-roi.json").read_text())
+        self.assertEqual(roi["active_work"]["count"], 0)
+
     def test_path_traversal_entity_name_is_rejected(self) -> None:
         receipt = apply_mutation_request(self.root, {
             "request_id": "REQ-3", "entity_kind": "work", "entity_name": "../bad",
