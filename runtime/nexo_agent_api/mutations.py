@@ -147,6 +147,26 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
         }
 
     receipt = {"request_id": request_id, **governance_meta, **result}
+
+    # Work entities drive active-work, role views, and AI-ROI projections. Refresh
+    # them immediately after the canonical CAS write/readback so a terminal work
+    # mutation cannot remain visible as READY/CHECKPOINTED/WAIT_DEPENDENCY.
+    # Projection refresh is intentionally non-authoritative: if it fails, the
+    # canonical mutation remains accepted and callers receive an explicit receipt
+    # instead of retrying an already-committed write.
+    if entity_kind == "work":
+        try:
+            from .views import materialize_role_views
+
+            projection = materialize_role_views(root)
+            receipt["projection_refresh"] = {"status": "PASS", **projection}
+        except Exception as exc:  # projection failure must not invalidate committed CAS
+            receipt["projection_refresh"] = {
+                "status": "FAILED",
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+            }
+
     if governance.autonomy_level == "L3":
         receipt["l3_report"] = {
             "status": "EXECUTED",
