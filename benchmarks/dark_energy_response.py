@@ -203,6 +203,19 @@ def main() -> int:
 
     request = _request_from_env()
     output = Path(str(os.getenv("NEXO_PARAM_RESULT_PATH") or "dark_energy_response_result.json"))
+    cache_provenance = {
+        "evaluator": "dark_energy_response_v1",
+        "camb_asset_sha256": str(
+            os.getenv("NEXO_PEER_CAMB_ARCHIVE_SHA256")
+            or "b56341c3b7b0183a24a6172c5b82c6f90a07941231692c6a287129815973ccc8"
+        ),
+    }
+    cached = load_cosmology_cache("dark_energy_linear_response", request, cache_provenance)
+    if cached is not None:
+        output.write_text(json.dumps(cached, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+        print(json.dumps(cached, indent=2, sort_keys=True))
+        return 0
+
     launcher = str(os.getenv("NEXO_CAPABILITY_PEER_CAMB_EXACT_V2_LAUNCHER") or "").strip()
     if not launcher:
         raise DarkEnergyResponseError("peer.camb.exact_v2 launcher is not prepared")
@@ -227,6 +240,7 @@ def main() -> int:
         payload = json.loads(output.read_text(encoding="utf-8"))
         if payload.get("status") != "PASS":
             raise DarkEnergyResponseError("portable CAMB response did not report PASS")
+        store_cosmology_cache("dark_energy_linear_response", request, payload, cache_provenance)
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
     finally:
