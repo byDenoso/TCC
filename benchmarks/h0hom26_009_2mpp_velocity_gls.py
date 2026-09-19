@@ -3,6 +3,7 @@ import argparse, hashlib, json, os, subprocess, tempfile
 from pathlib import Path
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
+from runtime.cosmology_cache import load_json as load_cosmology_cache, store_json as store_cosmology_cache
 C=299792.458
 def sha256(p):
  h=hashlib.sha256()
