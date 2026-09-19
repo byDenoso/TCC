@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from runtime.cosmology_cache import load_json as load_cosmology_cache, store_json as store_cosmology_cache
+
 
 class DarkEnergyResponseError(RuntimeError):
     pass
