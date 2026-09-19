@@ -22,12 +22,19 @@ def worker(req,out):
  res=camb.get_transfer_functions(p,only_time_sources=True);ev=res.get_redshift_evolution(ks,z,vars=['delta_tot','v_newtonian_cdm'])[:,0,:]
  Path(out).write_text(json.dumps({'delta_tot':ev[:,0].tolist(),'v_newtonian_cdm':ev[:,1].tolist()}));return 0
 def camb_ratio(launcher,script,ks,w0,cs2,cosmo):
+ provenance={'evaluator':'h0hom26_009_velocity_ratio_v1','camb_asset_sha256':os.getenv('NEXO_PEER_CAMB_ARCHIVE_SHA256','b56341c3b7b0183a24a6172c5b82c6f90a07941231692c6a287129815973ccc8')}
  def one(cs):
+  request={'k_mpc':ks.tolist(),'w0':float(w0),'cs2':float(cs),'cosmology':cosmo}
+  cached=load_cosmology_cache('h0hom26_009_camb_velocity_ratio',request,provenance)
+  if cached is not None:return np.asarray(cached['ratio'],dtype=float)
   with tempfile.TemporaryDirectory() as d:
-   q=Path(d)/'q.json';o=Path(d)/'o.json';q.write_text(json.dumps({'k_mpc':ks.tolist(),'w0':w0,'cs2':cs,'cosmology':cosmo}))
+   q=Path(d)/'q.json';o=Path(d)/'o.json';q.write_text(json.dumps(request))
    p=subprocess.run([launcher,script,'--worker',str(q),str(o)],capture_output=True,text=True,timeout=180)
    if p.returncode:raise RuntimeError(p.stderr[-1000:])
-   x=json.loads(o.read_text());return np.asarray(x['v_newtonian_cdm'])/np.asarray(x['delta_tot'])
+   x=json.loads(o.read_text());ratio=np.asarray(x['v_newtonian_cdm'],dtype=float)/np.asarray(x['delta_tot'],dtype=float)
+   store_cosmology_cache('h0hom26_009_camb_velocity_ratio',request,{'ratio':ratio.tolist()},provenance)
+   return ratio
+ if np.isclose(cs2,1.0,rtol=0.0,atol=1e-15):return np.zeros_like(ks,dtype=float)
  return one(cs2)-one(1.0)
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--worker',action='store_true');ap.add_argument('worker_args',nargs='*');ap.add_argument('--density');ap.add_argument('--table');ap.add_argument('--cov');ap.add_argument('--launcher');ap.add_argument('--out',default='result.json');ap.add_argument('--seed',type=int,default=26009009);ap.add_argument('--nreal',type=int,default=2000);a=ap.parse_args()
@@ -45,18 +52,17 @@ def main():
  if not need<=names:raise ValueError('Pantheon table missing required footprint columns')
  sel=(tab['IS_CALIBRATOR']==0)&(tab['zHD']>=.023)&(tab['zHD']<=.15);idx=np.flatnonzero(sel);z=np.asarray(tab['zHD'][sel],float);ra=np.deg2rad(np.asarray(tab['RA'][sel],float));dec=np.deg2rad(np.asarray(tab['DEC'][sel],float));n=np.c_[np.cos(dec)*np.cos(ra),np.cos(dec)*np.sin(ra),np.sin(dec)]
  cov=load_cov(a.cov,len(tab))[np.ix_(idx,idx)];L=np.linalg.cholesky(cov);ci=np.linalg.inv(cov);xq=-(5/(2*np.log(10)))*z;A=np.c_[np.ones_like(z),xq];G=np.linalg.inv(A.T@ci@A)@A.T@ci
- wgrid=np.linspace(-1.2,-.8,5);csgrid=10.**np.arange(-6,1);radii=[50,100,150,250];N=257;k1=2*np.pi*np.fft.fftfreq(N,d=spacing);kx,ky,kz=np.meshgrid(k1,k1,k1,indexing='ij',sparse=True);kmag=np.sqrt(kx*kx+ky*ky+kz*kz);fk=np.fft.fftn(dm)
+ wgrid=np.linspace(-1.2,-.8,5);csgrid=10.**np.arange(-6,1);radii=[50,100,150,250];N=257;k1=2*np.pi*np.fft.fftfreq(N,d=spacing);kx,ky,kz=np.meshgrid(k1,k1,k1,indexing='ij',sparse=True);kmag=np.sqrt(kx*kx+ky*ky+kz*kz);fk=np.fft.fftn(dm);den=np.where(kmag==0,np.inf,kmag*kmag)
+ unique_k=np.unique(np.clip(kmag.ravel(),1e-4,.3));kval=np.quantile(unique_k,np.linspace(0,1,256))
  cosmo={'H0':67.4,'ombh2':.0224,'omch2':.12,'mnu':.06,'tau':.054,'As':2.1e-9,'ns':.965};rows=[];rng=np.random.default_rng(a.seed);script=str(Path(__file__).resolve())
  for w0 in wgrid:
   for cs2 in csgrid:
-   kval=np.unique(np.clip(kmag.ravel(),1e-4,.3));kval=np.quantile(kval,np.linspace(0,1,256));dr=camb_ratio(a.launcher,script,kval,w0,float(cs2),cosmo);ker=np.interp(kmag,kval,dr,left=dr[0],right=dr[-1]);ker[0,0,0]=0;phi=fk*ker;den=np.where(kmag==0,np.inf,kmag*kmag)
+   dr=camb_ratio(a.launcher,script,kval,w0,float(cs2),cosmo);ker=np.interp(kmag,kval,dr,left=dr[0],right=dr[-1]);ker[0,0,0]=0;phi=fk*ker
    vx=np.fft.ifftn(1j*kx/den*phi).real;vy=np.fft.ifftn(1j*ky/den*phi).real;vz=np.fft.ifftn(1j*kz/den*phi).real;interps=[RegularGridInterpolator((coords,coords,coords),v,bounds_error=False,fill_value=0) for v in (vx,vy,vz)]
    rcom=C*z/cosmo['H0'];pos=n*rcom[:,None];vs=np.column_stack([f(pos) for f in interps]);vo=np.array([f([[0,0,0]])[0] for f in interps]);dL=(C/cosmo['H0'])*z*(1+z);fac=(1+z)**2/(cosmo['H0']*dL);dd=(vs*n).sum(1)-fac*((vs-vo)*n).sum(1);dmu=(5/np.log(10))*dd/C;beta=G@dmu;dq=float(beta[1]);dh=float(-(np.log(10)/5)*beta[0]*cosmo['H0'])
    for R in radii:
     axis=geom[str(R)]['axis'];amp=float(np.mean(dmu*(n@np.asarray(axis)))) if axis else float('nan');rows.append({'w0':float(w0),'cs2':float(cs2),'R':R,'Delta_q0_DE':dq,'Delta_H0_DE':dh,'D_mu_DE':amp})
- maxstats=[]
- for _ in range(a.nreal):
-  noise=L@rng.standard_normal(len(z));maxstats.append(float(np.max(np.abs(G@noise))))
- obs=max(max(abs(r['Delta_q0_DE']),abs(r['Delta_H0_DE'])/cosmo['H0']) for r in rows);gp=(1+sum(x>=obs for x in maxstats))/(a.nreal+1)
+ eps=rng.standard_normal((a.nreal,len(z))).T;noise=L@eps;maxstats=np.max(np.abs(G@noise),axis=0)
+ obs=max(max(abs(r['Delta_q0_DE']),abs(r['Delta_H0_DE'])/cosmo['H0']) for r in rows);gp=(1+int(np.count_nonzero(maxstats>=obs)))/(a.nreal+1)
  out={'schema':'nexo.h0hom26-009.v1','status':'COMPLETE','n_selected':len(z),'n_realisations':a.nreal,'geometry':geom,'grid_results':rows,'global_p':gp,'input_sha256':{'density':sha256(a.density),**expected},'claim_boundary':'Velocity-mediated incremental DE-clustering mechanism test only; no real-Universe anisotropic-DE claim.'};Path(a.out).write_text(json.dumps(out,indent=2,sort_keys=True));return 0
 if __name__=='__main__':raise SystemExit(main())
