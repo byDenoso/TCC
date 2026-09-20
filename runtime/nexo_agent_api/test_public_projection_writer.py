@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
-from copy import deepcopy
+import subprocess
+
+import pytest
 
 from runtime.nexo_agent_api.public_projection import (
     build_public_projection,
     verify_projection,
 )
-from scripts.build_public_projection import write_projection_if_changed
+from scripts.build_public_projection import verify_root_provenance, write_projection_if_changed
 from runtime.nexo_agent_api.test_public_projection import _tower
 
 
@@ -70,3 +72,37 @@ def test_changed_canonical_content_replaces_projection_and_manifest_together(tmp
     assert manifest["tower_commit"] == "c" * 40
     ok, detail = verify_projection(persisted)
     assert ok, detail
+
+
+def test_root_provenance_requires_exact_clean_git_checkout(tmp_path):
+    repo = tmp_path / "repo"
+    root = repo / "TOWER_V06"
+    root.mkdir(parents=True)
+    (root / "CONTROL.json").write_text("{}\n", encoding="utf-8")
+
+    subprocess.run(["git", "init", str(repo)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.email", "test@example.invalid"], check=True)
+    subprocess.run(["git", "-C", str(repo), "config", "user.name", "Projection Test"], check=True)
+    subprocess.run(["git", "-C", str(repo), "add", "TOWER_V06/CONTROL.json"], check=True)
+    subprocess.run(["git", "-C", str(repo), "commit", "-m", "fixture"], check=True, capture_output=True)
+    head = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "HEAD"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+    assert verify_root_provenance(root, head) == head
+
+    with pytest.raises(ValueError, match="differs from declared"):
+        verify_root_provenance(root, "a" * 40)
+
+    (root / "CONTROL.json").write_text('{"changed":true}\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="not clean"):
+        verify_root_provenance(root, head)
+
+
+def test_root_provenance_rejects_non_git_materialization(tmp_path):
+    root = _tower(tmp_path)
+    with pytest.raises(ValueError, match="not inside a readable Git checkout"):
+        verify_root_provenance(root, "a" * 40)
