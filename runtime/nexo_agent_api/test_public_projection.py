@@ -69,6 +69,11 @@ def _tower(tmp_path: Path, *, index_only: bool = False) -> Path:
                     "domain": "SCIENCE",
                     "owner_role": "EXECUTOR",
                     "title": f"title of {work_id}",
+                    "human_action_required": work_id == "WORK-A",
+                    "dependency_class": "HUMAN_DECISION_REQUIRED" if work_id == "WORK-A" else None,
+                    "next_action": "WAIT_FOR_EXPLICIT_OPERATOR_DECISION" if work_id == "WORK-A" else None,
+                    "question": "Choose whether to reopen the upstream gate." if work_id == "WORK-A" else None,
+                    "updated_at": "2026-09-19",
                     "internal_notes": "canonical only",
                 }
             ),
@@ -158,6 +163,16 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"secret_operational_note" not in raw
     assert b"private_runner_token_hint" not in raw
     assert b"never publish this" not in raw
+
+def test_explicit_human_gate_fields_survive_public_projection(tmp_path):
+    projection = _build(_tower(tmp_path))
+    work = {item["id"]: item for item in projection["work"]}
+    assert work["WORK-A"]["human_action_required"] is True
+    assert work["WORK-A"]["dependency_class"] == "HUMAN_DECISION_REQUIRED"
+    assert work["WORK-A"]["next_action"] == "WAIT_FOR_EXPLICIT_OPERATOR_DECISION"
+    assert work["WORK-A"]["question"] == "Choose whether to reopen the upstream gate."
+    assert "human_action_required" not in work["WORK-B"]
+
 
 
 def test_authority_declaration_is_reproduced_from_control(tmp_path):
