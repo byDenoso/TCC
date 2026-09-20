@@ -8,6 +8,13 @@ Read-only with respect to canonical state: it writes only the projection artifac
         --out TOWER_V06/snapshot/pages \
         --tower-commit "$GITHUB_SHA"
 
+The writer is content-addressed:
+* identical canonical content is a true NO_OP, so metadata-only refreshes cannot
+  claim a newer Tower revision over stale projection bytes;
+* changed content is written with atomic file replacement, with projection first
+  and manifest last, so a consumer that sees an intermediate state fails closed
+  on fingerprint mismatch instead of accepting mixed generations.
+
 Exits non-zero when the produced projection fails its own verification, so a
 broken projection can never be published.
 """
@@ -15,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,6 +34,72 @@ from runtime.nexo_agent_api.public_projection import (  # noqa: E402
     projection_bytes,
     verify_projection,
 )
+
+
+def _manifest_bytes(projection: dict) -> bytes:
+    return (
+        json.dumps(
+            projection["manifest"],
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        + "\n"
+    ).encode("utf-8")
+
+
+def _existing_fingerprint(path: Path) -> str | None:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    manifest = payload.get("manifest") if isinstance(payload, dict) else None
+    if not isinstance(manifest, dict):
+        return None
+    value = manifest.get("projection_fingerprint")
+    return str(value) if value else None
+
+
+def _atomic_replace(path: Path, data: bytes) -> None:
+    """Replace one artifact atomically within its destination directory."""
+    tmp = path.with_name(f".{path.name}.tmp")
+    try:
+        with tmp.open("wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    finally:
+        try:
+            tmp.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def write_projection_if_changed(out: str | Path, projection: dict) -> bool:
+    """Persist a verified projection only when canonical content changed.
+
+    Returns True when new bytes were written, False for a content-identical NO_OP.
+    The manifest is replaced last. Consumers therefore either observe the old
+    matching pair, the new matching pair, or a transient mismatch that their
+    verifier must reject.
+    """
+    ok, detail = verify_projection(projection)
+    if not ok:
+        raise ValueError(f"public projection failed verification: {detail}")
+
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    projection_path = out / "projection.json"
+    manifest_path = out / "manifest.json"
+
+    new_fingerprint = str(projection["manifest"]["projection_fingerprint"])
+    if _existing_fingerprint(projection_path) == new_fingerprint:
+        return False
+
+    _atomic_replace(projection_path, projection_bytes(projection))
+    _atomic_replace(manifest_path, _manifest_bytes(projection))
+    return True
 
 
 def main() -> int:
@@ -59,12 +133,7 @@ def main() -> int:
         print(f"::error::public projection failed verification: {detail}", file=sys.stderr)
         return 1
 
-    out = Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "projection.json").write_bytes(projection_bytes(projection))
-    (out / "manifest.json").write_bytes(
-        (json.dumps(projection["manifest"], ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
-    )
+    changed = write_projection_if_changed(args.out, projection)
 
     manifest = projection["manifest"]
     print(f"projection_fingerprint = {manifest['projection_fingerprint']}")
@@ -72,6 +141,7 @@ def main() -> int:
     print(f"tower_commit           = {manifest['tower_commit']}")
     print(f"active_work            = {projection['counts']['active_work']}")
     print(f"index_only_dropped     = {projection['counts']['index_only_dropped']}")
+    print(f"write_status           = {'UPDATED' if changed else 'NO_OP'}")
     return 0
 
 
