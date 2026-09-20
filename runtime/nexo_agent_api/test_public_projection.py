@@ -164,14 +164,13 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"private_runner_token_hint" not in raw
     assert b"never publish this" not in raw
 
-def test_explicit_human_gate_fields_survive_public_projection(tmp_path):
+def test_explicit_human_gate_index_survives_public_projection(tmp_path):
     projection = _build(_tower(tmp_path))
+    assert projection["human_gates"] == {"work_ids": ["WORK-A"], "count": 1}
+    assert projection["counts"]["needs_dener"] == 1
     work = {item["id"]: item for item in projection["work"]}
-    assert work["WORK-A"]["human_action_required"] is True
-    assert work["WORK-A"]["dependency_class"] == "HUMAN_DECISION_REQUIRED"
-    assert work["WORK-A"]["next_action"] == "WAIT_FOR_EXPLICIT_OPERATOR_DECISION"
-    assert work["WORK-A"]["question"] == "Choose whether to reopen the upstream gate."
-    assert "human_action_required" not in work["WORK-B"]
+    assert "human_action_required" not in work["WORK-A"]
+    assert "internal_notes" not in work["WORK-A"]
 
 
 
