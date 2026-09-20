@@ -1,0 +1,1 @@
+{"required":["work_id","correlation_id","domain","adapter","source_revision","attempt","args"],"note":"Executable adapter schema is enforced by nexo_control_plane.dispatch; this file is informational."}
