@@ -43,13 +43,6 @@ WORK_FIELDS = (
     "test_group_id",
     "blocker_class",
     "dependency_class",
-    "dependency_classes",
-    "dependency_state",
-    "human_action_required",
-    "auto_retry_eligible",
-    "next_action",
-    "question",
-    "updated_at",
 )
 TEST_FIELDS = (
     "id",
@@ -130,6 +123,7 @@ def build_public_projection(
     active_index = _read_json(root / "indexes" / "active-work.json", {}) or {}
 
     work_entities = _load_entities(root, "work", WORK_FIELDS)
+    human_flags = _load_entities(root, "work", ("human_action_required",))
     test_entities = _load_entities(root, "test", TEST_FIELDS)
 
     # Index order is priority. Existence is the entity. An index entry without an
@@ -150,6 +144,10 @@ def build_public_projection(
             dropped.append(work_id)
 
     work = [dict(work_entities[work_id], id=work_id) for work_id in ordered_ids]
+    human_work_ids = [
+        work_id for work_id in ordered_ids
+        if human_flags.get(work_id, {}).get("human_action_required") is True
+    ]
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {
@@ -169,7 +167,9 @@ def build_public_projection(
             "tests": len(test_entities),
             "capabilities": len(capabilities),
             "index_only_dropped": len(dropped),
+            "needs_dener": len(human_work_ids),
         },
+        "human_gates": {"work_ids": human_work_ids, "count": len(human_work_ids)},
         "work": work,
         "tests": [dict(test_entities[key], id=key) for key in sorted(test_entities)],
         "capabilities": capabilities,
