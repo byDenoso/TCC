@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,6 +35,37 @@ from runtime.nexo_agent_api.public_projection import (  # noqa: E402
     projection_bytes,
     verify_projection,
 )
+
+
+def verify_root_provenance(root: str | Path, tower_commit: str) -> str:
+    """Prove that root is a clean checkout of the declared canonical commit."""
+    root = Path(root).resolve()
+    declared = str(tower_commit or "").strip().lower()
+    if len(declared) != 40 or any(ch not in "0123456789abcdef" for ch in declared):
+        raise ValueError("tower_commit must be a full 40-hex commit SHA")
+    try:
+        head = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip().lower()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("Tower root is not inside a readable Git checkout") from exc
+    if head != declared:
+        raise ValueError(f"Tower root HEAD {head} differs from declared tower_commit {declared}")
+    try:
+        dirty = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain=v1", "--untracked-files=all", "--", "."],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as exc:
+        raise ValueError("Unable to verify Tower root worktree cleanliness") from exc
+    if dirty:
+        raise ValueError("Tower root worktree is not clean; refusing mixed-revision projection")
+    return head
 
 
 def _manifest_bytes(projection: dict) -> bytes:
@@ -114,6 +146,15 @@ def main() -> int:
         help="omit generated_at so two builds are byte-identical",
     )
     args = parser.parse_args()
+
+    if not args.tower_commit:
+        print("::error::--tower-commit is required for a publishable projection", file=sys.stderr)
+        return 1
+    try:
+        verify_root_provenance(args.root, args.tower_commit)
+    except ValueError as exc:
+        print(f"::error::public projection provenance check failed: {exc}", file=sys.stderr)
+        return 1
 
     generated_at = (
         None
