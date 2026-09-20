@@ -43,6 +43,13 @@ WORK_FIELDS = (
     "test_group_id",
     "blocker_class",
     "dependency_class",
+    "dependency_classes",
+    "dependency_state",
+    "human_action_required",
+    "auto_retry_eligible",
+    "next_action",
+    "question",
+    "updated_at",
 )
 TEST_FIELDS = (
     "id",
