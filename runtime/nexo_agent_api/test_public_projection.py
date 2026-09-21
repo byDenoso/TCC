@@ -234,3 +234,65 @@ def test_missing_canonical_files_degrade_to_empty_not_to_invention(tmp_path):
     # sem event_cursor a verificação reprova, então nada incompleto é publicado
     ok, _ = verify_projection(projection)
     assert not ok
+
+
+# --- domain ownership and Learning filaments ---------------------------------
+
+def test_target_domain_owns_public_projection_without_erasing_method_provenance(tmp_path):
+    root = _tower(tmp_path)
+    (root / "entities" / "test" / "T-OLY-DEMO.json").write_text(
+        json.dumps(
+            {
+                "id": "T-OLY-DEMO",
+                "status": "RESULT",
+                "domain": "SCIENCE",
+                "target_domain": "OLYMPUS",
+                "title": "Olympus target-domain method test",
+            }
+        ),
+        encoding="utf-8",
+    )
+    payload = json.loads((root / "entities" / "work" / "WORK-A.json").read_text(encoding="utf-8"))
+    payload["target_domain"] = "OLYMPUS"
+    (root / "entities" / "work" / "WORK-A.json").write_text(json.dumps(payload), encoding="utf-8")
+
+    projection = _build(root)
+    test = next(item for item in projection["tests"] if item["id"] == "T-OLY-DEMO")
+    work = next(item for item in projection["work"] if item["id"] == "WORK-A")
+
+    for item in (test, work):
+        assert item["domain"] == "OLYMPUS"
+        assert item["target_domain"] == "OLYMPUS"
+        assert item["method_domain"] == "SCIENCE"
+        assert item["domain_projection"] == "TARGET_DOMAIN"
+
+
+def test_interdomain_relations_are_projected_as_learning_filaments(tmp_path):
+    root = _tower(tmp_path)
+    (root / "entities" / "interdomain").mkdir(parents=True)
+    relation_id = "META::INTERDOMAIN::SCIENCE-OLYMPUS-DEMO"
+    relation = {
+        "id": relation_id,
+        "status": "SUPPORTED",
+        "relation_type": "METHOD_TRANSFER",
+        "source_domains": ["SCIENCE"],
+        "target_domains": ["OLYMPUS"],
+        "test_refs": ["T-OLY-DEMO"],
+        "lesson_refs": ["ML-OLY-DEMO-001"],
+    }
+    (root / "entities" / "interdomain" / f"{relation_id}.json").write_text(
+        json.dumps(relation), encoding="utf-8"
+    )
+    (root / "indexes" / "interdomain-active.json").write_text(
+        json.dumps({"items": [{"id": relation_id}]}), encoding="utf-8"
+    )
+
+    projection = _build(root)
+    assert projection["counts"]["cross_domain"] == 1
+    assert projection["crossDomain"] == [
+        {
+            **relation,
+            "projection_label": "DERIVED_NOT_EVIDENCE",
+            "via": "LEARNING_INTERDOMAIN",
+        }
+    ]
