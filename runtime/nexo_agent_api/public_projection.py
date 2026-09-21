@@ -132,7 +132,9 @@ def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
         filament = _pick(source, INTERDOMAIN_FIELDS)
         filament["id"] = str(relation_id)
         filament["projection_label"] = "DERIVED_NOT_EVIDENCE"
-        filament["via"] = "LEARNING_INTERDOMAIN"
+        filament["via"] = (
+            "LEARNING_INTERDOMAIN" if filament.get("lesson_refs") else "INTERDOMAIN"
+        )
         projected.append(filament)
     return projected
 
