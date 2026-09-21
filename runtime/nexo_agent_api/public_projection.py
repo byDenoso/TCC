@@ -37,6 +37,7 @@ WORK_FIELDS = (
     "operational_status",
     "priority",
     "domain",
+    "target_domain",
     "owner_role",
     "title",
     "campaign_id",
@@ -48,12 +49,26 @@ TEST_FIELDS = (
     "id",
     "status",
     "domain",
+    "target_domain",
     "title",
     "campaign_id",
     "test_group_id",
     "scientific_fingerprint",
 )
 CAPABILITY_FIELDS = ("status", "backend", "contract_name")
+INTERDOMAIN_FIELDS = (
+    "id",
+    "status",
+    "relation_type",
+    "source_domains",
+    "target_domains",
+    "advisor_disposition",
+    "test_ref",
+    "test_refs",
+    "evidence_refs",
+    "lesson_refs",
+    "updated_at",
+)
 
 # Reproduced from CONTROL.json so the projection can state, in its own manifest,
 # under which authority rules it was produced.
@@ -87,6 +102,39 @@ def _canonical_blob(payload: Any) -> str:
 
 def _fingerprint(payload: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical_blob(payload).encode("utf-8")).hexdigest()
+
+
+def _apply_target_domain_projection(payload: dict[str, Any]) -> dict[str, Any]:
+    """Render target-owned work/tests under the target domain without erasing provenance."""
+    projected = dict(payload)
+    source_domain = projected.get("domain")
+    target_domain = projected.get("target_domain")
+    if target_domain and source_domain and target_domain != source_domain:
+        projected["method_domain"] = source_domain
+        projected["domain"] = target_domain
+        projected["domain_projection"] = "TARGET_DOMAIN"
+    return projected
+
+
+def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
+    """Project canonical Interdomain relations as derived Learning filaments."""
+    index = _read_json(root / "indexes" / "interdomain-active.json", {}) or {}
+    entity_root = root / "entities" / "interdomain"
+    projected: list[dict[str, Any]] = []
+    for item in index.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        relation_id = item.get("id")
+        if not relation_id:
+            continue
+        entity = _read_json(entity_root / f"{relation_id}.json", {}) or {}
+        source = entity if isinstance(entity, dict) and entity else item
+        filament = _pick(source, INTERDOMAIN_FIELDS)
+        filament["id"] = str(relation_id)
+        filament["projection_label"] = "DERIVED_NOT_EVIDENCE"
+        filament["via"] = "LEARNING_INTERDOMAIN"
+        projected.append(filament)
+    return projected
 
 
 def _load_entities(root: Path, kind: str, fields: Iterable[str]) -> dict[str, dict[str, Any]]:
@@ -143,11 +191,16 @@ def build_public_projection(
         else:
             dropped.append(work_id)
 
-    work = [dict(work_entities[work_id], id=work_id) for work_id in ordered_ids]
+    work = [
+        _apply_target_domain_projection(dict(work_entities[work_id], id=work_id))
+        for work_id in ordered_ids
+    ]
     human_work_ids = [
         work_id for work_id in ordered_ids
         if human_flags.get(work_id, {}).get("human_action_required") is True
     ]
+
+    cross_domain = _load_cross_domain(root)
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {
@@ -165,13 +218,18 @@ def build_public_projection(
             "active_work": len(work),
             "work_entities": len(work_entities),
             "tests": len(test_entities),
+            "cross_domain": len(cross_domain),
             "capabilities": len(capabilities),
             "index_only_dropped": len(dropped),
             "needs_dener": len(human_work_ids),
         },
         "human_gates": {"work_ids": human_work_ids, "count": len(human_work_ids)},
         "work": work,
-        "tests": [dict(test_entities[key], id=key) for key in sorted(test_entities)],
+        "tests": [
+            _apply_target_domain_projection(dict(test_entities[key], id=key))
+            for key in sorted(test_entities)
+        ],
+        "crossDomain": cross_domain,
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
