@@ -17,7 +17,9 @@ class SchedulerTopologyTests(unittest.TestCase):
         result = reconcile_scheduler_policy(control)
         self.assertTrue(result["changed"])
         policy = result["domain_workflow_policy"]
+        self.assertEqual(policy["scheduler"], "TWO_EXECUTORS_DOMAIN_SPLIT_V1")
         self.assertFalse(policy["one_scheduler_for_all_domains"])
+        self.assertFalse(policy["per_domain_schedulers_forbidden"])
         self.assertEqual(policy["execution_scheduler_topology"], "TWO_EXECUTORS_DOMAIN_SPLIT_V1")
         self.assertEqual(policy["execution_schedulers"]["GENERAL"], "NEXO_GENERAL_EXECUTION_LOOP")
         self.assertEqual(policy["execution_schedulers"]["SCIENCE"], "NEXO_CORE_LOOP_LEAN_MIN_V2")
