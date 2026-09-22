@@ -21,10 +21,12 @@ broken projection can never be published.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import os
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -66,6 +68,67 @@ def verify_root_provenance(root: str | Path, tower_commit: str) -> str:
     if dirty:
         raise ValueError("Tower root worktree is not clean; refusing mixed-revision projection")
     return head
+
+
+def materialize_drive_bundle_root(
+    bundle_path: str | Path,
+    current_path: str | Path,
+    destination: str | Path,
+) -> tuple[Path, dict[str, object]]:
+    """Verify a Drive CURRENT+bundle pair and materialize a read-only Tower root."""
+    bundle_path = Path(bundle_path)
+    current_path = Path(current_path)
+    with gzip.open(bundle_path, "rt", encoding="utf-8") as handle:
+        bundle = json.load(handle)
+    current = json.loads(current_path.read_text(encoding="utf-8"))
+
+    if bundle.get("contract") not in {"NEXO_DRIVE_BUNDLE_V3", "NEXO_TOWER_BUNDLE_V1"}:
+        raise ValueError(f"unsupported Drive bundle contract: {bundle.get('contract')!r}")
+    if bundle.get("authority") != "TOWER_V06" or bundle.get("storage") != "GOOGLE_DRIVE_PRIVATE":
+        raise ValueError("Drive bundle is not canonical TOWER_V06 storage")
+    files = bundle.get("files")
+    if not isinstance(files, dict) or bundle.get("file_count") != len(files):
+        raise ValueError("Drive bundle file_count does not match files payload")
+    if current.get("contract") != "NEXO_DRIVE_CURRENT_V3":
+        raise ValueError("Drive CURRENT contract is not NEXO_DRIVE_CURRENT_V3")
+    if current.get("snapshot_id") != bundle.get("canonical_revision"):
+        raise ValueError("Drive CURRENT snapshot_id differs from bundle canonical_revision")
+    if current.get("state_fingerprint") != bundle.get("state_fingerprint"):
+        raise ValueError("Drive CURRENT state_fingerprint differs from bundle")
+    if current.get("truth_owner") != "TOWER_V06@GOOGLE_DRIVE_PRIVATE" or current.get("cutover_active") is not True:
+        raise ValueError("Drive CURRENT is not an active canonical cutover pointer")
+
+    root = Path(destination).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    for relative, entry in files.items():
+        if not isinstance(relative, str) or not isinstance(entry, dict):
+            continue
+        target = (root / relative).resolve()
+        if target != root and root not in target.parents:
+            raise ValueError(f"unsafe bundle path: {relative!r}")
+        encoding = entry.get("encoding")
+        if encoding == "json":
+            data = json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+        elif encoding == "text":
+            data = str(entry.get("data") or "")
+        else:
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(data, encoding="utf-8")
+
+    control = json.loads((root / "CONTROL.json").read_text(encoding="utf-8"))
+    if control.get("truth_owner") != current.get("truth_owner"):
+        raise ValueError("materialized CONTROL truth_owner differs from Drive CURRENT")
+
+    metadata = {
+        "export_role": "PUBLIC_READ_ONLY_DERIVED_COPY",
+        "source_snapshot_id": current.get("snapshot_id"),
+        "source_state_fingerprint": current.get("state_fingerprint"),
+        "source_storage": current.get("storage"),
+        "source_promoted_at": current.get("promoted_at"),
+        "truth_owner": current.get("truth_owner"),
+    }
+    return root, {key: value for key, value in metadata.items() if value is not None}
 
 
 def _manifest_bytes(projection: dict) -> bytes:
@@ -140,6 +203,8 @@ def main() -> int:
     parser.add_argument("--out", default="TOWER_V06/snapshot/pages", help="output directory")
     parser.add_argument("--tower-repository", default="byDenoso/NEXO-Obsidian-Vault")
     parser.add_argument("--tower-commit", default=None)
+    parser.add_argument("--drive-bundle", default=None, help="canonical TOWER.bundle.json.gz from Drive CURRENT")
+    parser.add_argument("--drive-current", default=None, help="CURRENT.json paired with --drive-bundle")
     parser.add_argument(
         "--no-timestamp",
         action="store_true",
@@ -148,11 +213,27 @@ def main() -> int:
     args = parser.parse_args()
 
     if not args.tower_commit:
-        print("::error::--tower-commit is required for a publishable projection", file=sys.stderr)
+        print("::error::--tower-commit is required as code/provenance identity", file=sys.stderr)
         return 1
+
+    temporary_root = None
+    source_metadata: dict[str, object] = {}
+    projection_root: str | Path = args.root
     try:
-        verify_root_provenance(args.root, args.tower_commit)
-    except ValueError as exc:
+        if args.drive_bundle:
+            if not args.drive_current:
+                raise ValueError("--drive-current is required with --drive-bundle")
+            temporary_root = tempfile.TemporaryDirectory(prefix="nexo-drive-projection-")
+            projection_root, source_metadata = materialize_drive_bundle_root(
+                args.drive_bundle,
+                args.drive_current,
+                Path(temporary_root.name) / "TOWER_V06",
+            )
+        else:
+            verify_root_provenance(args.root, args.tower_commit)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        if temporary_root is not None:
+            temporary_root.cleanup()
         print(f"::error::public projection provenance check failed: {exc}", file=sys.stderr)
         return 1
 
@@ -163,11 +244,12 @@ def main() -> int:
     )
 
     projection = build_public_projection(
-        args.root,
+        projection_root,
         tower_repository=args.tower_repository,
         tower_commit=args.tower_commit,
         generated_at=generated_at,
     )
+    projection["manifest"].update(source_metadata)
 
     ok, detail = verify_projection(projection)
     if not ok:
@@ -175,6 +257,8 @@ def main() -> int:
         return 1
 
     changed = write_projection_if_changed(args.out, projection)
+    if temporary_root is not None:
+        temporary_root.cleanup()
 
     manifest = projection["manifest"]
     print(f"projection_fingerprint = {manifest['projection_fingerprint']}")
