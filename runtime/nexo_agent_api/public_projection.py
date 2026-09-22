@@ -225,7 +225,14 @@ def _campaign_source_links(payload: dict[str, Any]) -> list[dict[str, str]]:
             add(f"https://arxiv.org/abs/{arxiv_id}", value, "ARXIV")
 
     walk(payload.get("prior_art_snapshot"))
-    return [links[url] for url in sorted(links)]
+    kind_priority = {"OFFICIAL": 0, "PRIMARY": 1, "ARXIV": 2, "REFERENCE": 3}
+    return sorted(
+        links.values(),
+        key=lambda item: (
+            kind_priority.get(str(item.get("kind") or "REFERENCE").upper(), 4),
+            str(item.get("url") or ""),
+        ),
+    )
 
 
 def _load_campaigns(root: Path) -> list[dict[str, Any]]:
