@@ -105,16 +105,39 @@ def _next_executor_work(
     exclude_work_id: str,
     allowed_domains: Iterable[str] | None,
 ) -> dict[str, Any] | None:
+    """Choose continuation from canonical WORK state, not capability projection.
+
+    SELECT_NEXT decides ownership/continuation. Capability resolution belongs to
+    the executor after selection; using queue_for(EXECUTOR) here can incorrectly
+    hide valid READY work whose capability is materialized lazily.
+    """
     allowed = {str(value).upper() for value in (allowed_domains or []) if str(value).strip()}
-    for item in AgentService(root).queue_for("EXECUTOR"):
+    service = AgentService(root)
+    priority_rank = {"P0": 0, "CRITICAL": 0, "HIGH": 1, "P1": 1, "MEDIUM": 2, "P2": 2, "LOW": 3, "P3": 3}
+    state_rank = {"RUNNING": 0, "CHECKPOINTED": 1, "READY": 2}
+    candidates: list[dict[str, Any]] = []
+    for item in service._work_items():
         if str(item.get("id")) == exclude_work_id:
+            continue
+        if str(item.get("owner_role") or "").upper() != "EXECUTOR":
+            continue
+        state = _status(item)
+        if state not in _RESUMABLE_STATES:
+            continue
+        if service._has_legitimate_blocker(item):
+            continue
+        if str(item.get("execution_policy") or "AUTO").upper() == "MANUAL":
             continue
         domain = str(item.get("target_domain") or item.get("domain") or "").upper()
         if allowed and domain not in allowed:
             continue
-        if _status(item) in _RESUMABLE_STATES:
-            return item
-    return None
+        candidates.append(item)
+    candidates.sort(key=lambda item: (
+        state_rank.get(_status(item), 9),
+        priority_rank.get(str(item.get("priority") or "MEDIUM").upper(), 9),
+        str(item.get("id") or ""),
+    ))
+    return candidates[0] if candidates else None
 
 
 def _select_and_start_next(
