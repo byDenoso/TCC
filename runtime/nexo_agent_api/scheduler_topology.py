@@ -14,7 +14,9 @@ def reconcile_scheduler_policy(control: dict[str, Any]) -> dict[str, Any]:
     current = dict(control.get("domain_workflow_policy") or {})
     desired = {
         **current,
+        "scheduler": SCHEDULER_TOPOLOGY,
         "one_scheduler_for_all_domains": False,
+        "per_domain_schedulers_forbidden": False,
         "execution_scheduler_topology": SCHEDULER_TOPOLOGY,
         "execution_schedulers": dict(EXECUTION_SCHEDULERS),
         "scheduler_coordination": "CANONICAL_STATE_CURSOR_MATERIAL_DELTA",
