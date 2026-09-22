@@ -34,6 +34,7 @@ def _tower(tmp_path: Path, *, index_only: bool = False) -> Path:
     root = tmp_path / "TOWER_V06"
     (root / "entities" / "work").mkdir(parents=True)
     (root / "entities" / "test").mkdir(parents=True)
+    (root / "roadmaps").mkdir(parents=True)
     (root / "indexes").mkdir(parents=True)
     (root / "snapshot").mkdir(parents=True)
     (root / "manifests").mkdir(parents=True)
@@ -163,6 +164,78 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"secret_operational_note" not in raw
     assert b"private_runner_token_hint" not in raw
     assert b"never publish this" not in raw
+
+def test_campaigns_are_first_class_and_publish_source_links_without_leaking_roadmap(tmp_path):
+    root = _tower(tmp_path)
+    roadmap = {
+        "schema_version": "1.0",
+        "contract": "SCIENTIFIC_ROADMAP_V1",
+        "roadmap_id": "RM-DEMO-V1",
+        "campaign_id": "CAMP-DEMO",
+        "title": "Demo campaign",
+        "domain": "SCIENCE",
+        "subdomain": "COSMOLOGY/DARK_ENERGY",
+        "state": "ACTIVE",
+        "semantic_description": "Campaign exists before any materialized test.",
+        "semantic_state": "ACTIVE",
+        "claim_boundary": "Demo boundary.",
+        "atlas_projection": {
+            "visible": True,
+            "node_type": "CAMPAIGN",
+            "parent_subdomain": "Energia escura",
+            "label": "Demo · DDE",
+            "show_tests": False,
+            "private_layout_hint": "must never publish",
+        },
+        "source_links": [
+            {"label": "Official release", "url": "https://example.org/release", "kind": "OFFICIAL"},
+        ],
+        "prior_art_snapshot": {
+            "anchors": [
+                "Primary paper, arXiv:2503.14743",
+                "Independent paper, arXiv:2502.03515",
+            ],
+            "private_notes": "must never publish",
+        },
+        "execution_policy": {"secret_runtime_detail": "must never publish"},
+    }
+    (root / "roadmaps" / "RM-DEMO-V1.json").write_text(json.dumps(roadmap), encoding="utf-8")
+
+    projection = _build(root)
+
+    assert projection["counts"]["campaigns"] == 1
+    assert len(projection["campaigns"]) == 1
+    campaign = projection["campaigns"][0]
+    assert campaign["campaign_id"] == "CAMP-DEMO"
+    assert campaign["atlas_projection"] == {
+        "visible": True,
+        "node_type": "CAMPAIGN",
+        "parent_subdomain": "Energia escura",
+        "label": "Demo · DDE",
+        "show_tests": False,
+    }
+    assert campaign["source_links"] == [
+        {
+            "label": "Official release",
+            "url": "https://example.org/release",
+            "kind": "OFFICIAL",
+        },
+        {
+            "label": "Independent paper, arXiv:2502.03515",
+            "url": "https://arxiv.org/abs/2502.03515",
+            "kind": "ARXIV",
+        },
+        {
+            "label": "Primary paper, arXiv:2503.14743",
+            "url": "https://arxiv.org/abs/2503.14743",
+            "kind": "ARXIV",
+        },
+    ]
+    raw = projection_bytes(projection)
+    assert b"private_layout_hint" not in raw
+    assert b"private_notes" not in raw
+    assert b"secret_runtime_detail" not in raw
+
 
 def test_explicit_human_gate_index_survives_public_projection(tmp_path):
     projection = _build(_tower(tmp_path))

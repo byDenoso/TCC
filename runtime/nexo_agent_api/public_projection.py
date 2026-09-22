@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -54,6 +55,29 @@ TEST_FIELDS = (
     "campaign_id",
     "test_group_id",
     "scientific_fingerprint",
+)
+CAMPAIGN_FIELDS = (
+    "roadmap_id",
+    "campaign_id",
+    "title",
+    "domain",
+    "subdomain",
+    "state",
+    "priority",
+    "created_at",
+    "question",
+    "semantic_description",
+    "semantic_state",
+    "claim_boundary",
+)
+ATLAS_PROJECTION_FIELDS = (
+    "visible",
+    "node_type",
+    "parent_subdomain",
+    "label",
+    "show_tests",
+    "show_hypothesis_nodes",
+    "description_mode",
 )
 CAPABILITY_FIELDS = ("status", "backend", "contract_name")
 INTERDOMAIN_FIELDS = (
@@ -155,6 +179,91 @@ def _load_entities(root: Path, kind: str, fields: Iterable[str]) -> dict[str, di
     return loaded
 
 
+def _campaign_source_links(payload: dict[str, Any]) -> list[dict[str, str]]:
+    """Return public source links without projecting the full roadmap prior-art payload."""
+    links: dict[str, dict[str, str]] = {}
+
+    def add(url: str, label: str | None = None, kind: str = "REFERENCE") -> None:
+        normalized = str(url or "").strip()
+        if not normalized.startswith(("https://", "http://")):
+            return
+        links.setdefault(
+            normalized,
+            {
+                "label": str(label or normalized).strip(),
+                "url": normalized,
+                "kind": kind,
+            },
+        )
+
+    for item in payload.get("source_links") or []:
+        if isinstance(item, str):
+            add(item)
+        elif isinstance(item, dict):
+            add(
+                str(item.get("url") or ""),
+                str(item.get("label") or item.get("title") or item.get("url") or ""),
+                str(item.get("kind") or "REFERENCE").upper(),
+            )
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            for nested in value.values():
+                walk(nested)
+            return
+        if isinstance(value, list):
+            for nested in value:
+                walk(nested)
+            return
+        if not isinstance(value, str):
+            return
+
+        for url in re.findall(r"https?://[^\s\])}>\"']+", value):
+            add(url.rstrip(".,;:"), value, "REFERENCE")
+        for match in re.finditer(r"\barXiv\s*:\s*(\d{4}\.\d{4,5}(?:v\d+)?)", value, flags=re.IGNORECASE):
+            arxiv_id = match.group(1)
+            add(f"https://arxiv.org/abs/{arxiv_id}", value, "ARXIV")
+
+    walk(payload.get("prior_art_snapshot"))
+    kind_priority = {"OFFICIAL": 0, "PRIMARY": 1, "ARXIV": 2, "REFERENCE": 3}
+    return sorted(
+        links.values(),
+        key=lambda item: (
+            kind_priority.get(str(item.get("kind") or "REFERENCE").upper(), 4),
+            str(item.get("url") or ""),
+        ),
+    )
+
+
+def _load_campaigns(root: Path) -> list[dict[str, Any]]:
+    """Project roadmap campaigns as first-class, public, read-only Atlas entities."""
+    folder = root / "roadmaps"
+    if not folder.is_dir():
+        return []
+
+    campaigns: list[dict[str, Any]] = []
+    for path in sorted(folder.glob("*.json")):
+        payload = _read_json(path)
+        if not isinstance(payload, dict):
+            continue
+        campaign_id = str(payload.get("campaign_id") or "").strip()
+        if not campaign_id:
+            continue
+
+        record = _pick(payload, CAMPAIGN_FIELDS)
+        record["campaign_id"] = campaign_id
+        atlas_projection = payload.get("atlas_projection")
+        if isinstance(atlas_projection, dict):
+            record["atlas_projection"] = _pick(atlas_projection, ATLAS_PROJECTION_FIELDS)
+        sources = _campaign_source_links(payload)
+        if sources:
+            record["source_links"] = sources
+        campaigns.append(record)
+
+    campaigns.sort(key=lambda item: str(item.get("campaign_id") or ""))
+    return campaigns
+
+
 def build_public_projection(
     root: str | Path,
     *,
@@ -175,6 +284,7 @@ def build_public_projection(
     work_entities = _load_entities(root, "work", WORK_FIELDS)
     human_flags = _load_entities(root, "work", ("human_action_required",))
     test_entities = _load_entities(root, "test", TEST_FIELDS)
+    campaigns = _load_campaigns(root)
 
     # Index order is priority. Existence is the entity. An index entry without an
     # entity is reported as dropped, never rendered.
@@ -220,6 +330,7 @@ def build_public_projection(
             "active_work": len(work),
             "work_entities": len(work_entities),
             "tests": len(test_entities),
+            "campaigns": len(campaigns),
             "cross_domain": len(cross_domain),
             "capabilities": len(capabilities),
             "index_only_dropped": len(dropped),
@@ -231,6 +342,7 @@ def build_public_projection(
             _apply_target_domain_projection(dict(test_entities[key], id=key))
             for key in sorted(test_entities)
         ],
+        "campaigns": campaigns,
         "crossDomain": cross_domain,
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
