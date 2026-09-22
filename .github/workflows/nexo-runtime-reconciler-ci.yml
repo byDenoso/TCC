@@ -1,0 +1,35 @@
+name: NEXO Runtime Reconciler CI
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/nexo_agent_api/global_reconciler.py'
+      - 'runtime/nexo_agent_api/scheduler_topology.py'
+      - 'runtime/nexo_agent_api/test_global_reconciler.py'
+      - 'runtime/nexo_agent_api/test_scheduler_topology.py'
+      - '.github/workflows/nexo-runtime-reconciler-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/nexo_agent_api/global_reconciler.py'
+      - 'runtime/nexo_agent_api/scheduler_topology.py'
+      - 'runtime/nexo_agent_api/test_global_reconciler.py'
+      - 'runtime/nexo_agent_api/test_scheduler_topology.py'
+      - '.github/workflows/nexo-runtime-reconciler-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify reconciler and scheduler topology
+        run: |
+          set -euo pipefail
+          python -m unittest             runtime.nexo_agent_api.test_global_reconciler             runtime.nexo_agent_api.test_scheduler_topology
