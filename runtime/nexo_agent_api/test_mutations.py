@@ -241,7 +241,7 @@ class MutationInboxTests(unittest.TestCase):
             receipt["projection_refresh"]["tower_revision"],
             receipt["live_tower_refresh"]["revision"],
         )
-        self.assertTrue((self.root / "NEXO_TOWER_LIVE.json.gz").exists())
+        self.assertTrue((self.root / "NEXO_TOWER_LIVE.json").exists())
         self.assertTrue((self.root / "projections" / "public" / "latest.json").exists())
 
     def test_path_traversal_entity_name_is_rejected(self) -> None:
