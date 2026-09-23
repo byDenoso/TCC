@@ -150,7 +150,7 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
 
     # Keep derived role/index state coherent before packing the live Tower.
     # A projection failure never invalidates a canonical CAS mutation.
-    if entity_kind == "work":
+    if bool(request.get("material", True)):
         try:
             from .views import materialize_role_views
 
