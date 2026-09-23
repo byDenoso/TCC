@@ -6,6 +6,7 @@
     nexo_tower.py download --out FILE    raw live Tower bytes (CI reader)
     nexo_tower.py apply  REQUEST.json... mutate -> CAS write same file id -> readback -> notify ATLAS
     nexo_tower.py project --out DIR      build the public projection straight from Drive
+    nexo_tower.py inbox list|done IDS    proposals ChatGPT created in Drive NEXO_INBOX
 
 Every automation and every human-driven change goes through ``apply``; nothing
 else writes operational truth.
@@ -25,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from runtime.nexo_agent_api.drive_transport import (  # noqa: E402
+    DriveInbox,
     DriveTower,
     TowerConflict,
     nexo_home,
@@ -180,6 +182,17 @@ def cmd_project(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_inbox(args: argparse.Namespace) -> int:
+    inbox = DriveInbox(write=args.action == "done")
+    if args.action == "list":
+        _print({"items": [{k: item.get(k) for k in ("id", "name", "createdTime", "payload")} for item in inbox.pending()]})
+    else:
+        for file_id in args.ids:
+            inbox.mark_processed(file_id)
+        _print({"processed": args.ids})
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -192,6 +205,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--retries", type=int, default=2)
     p.set_defaults(func=cmd_apply)
     p = sub.add_parser("project"); p.add_argument("--out", required=True); p.add_argument("--no-timestamp", action="store_true"); p.set_defaults(func=cmd_project)
+    p = sub.add_parser("inbox", help="ChatGPT proposal inbox on Drive (create-only)")
+    p.add_argument("action", choices=["list", "done"])
+    p.add_argument("ids", nargs="*")
+    p.set_defaults(func=cmd_inbox)
     args = parser.parse_args(argv)
     return args.func(args)
 

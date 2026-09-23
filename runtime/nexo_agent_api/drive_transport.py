@@ -177,6 +177,67 @@ class DriveTower:
         }
 
 
+class DriveInbox:
+    """Create-only proposal inbox (ChatGPT -> Tower writer), never the Tower itself.
+
+    Writers outside the single Tower writer create one new file per message in
+    ``NEXO_INBOX``; the writer applies it and moves it to ``NEXO_INBOX/processed``.
+    """
+
+    FOLDER = "application/vnd.google-apps.folder"
+
+    def __init__(self, name: str = "NEXO_INBOX", *, session: Any = None, write: bool = False) -> None:
+        if session is None:
+            from google.auth.transport.requests import AuthorizedSession
+
+            session = AuthorizedSession(load_credentials(write=write))
+        self.session = session
+        self.name = name
+
+    def _query(self, q: str) -> list[dict[str, Any]]:
+        response = self.session.get(
+            _API,
+            params={"q": q, "fields": "files(id,name,createdTime,parents)", "orderBy": "createdTime", "pageSize": 200,
+                    "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"},
+            timeout=60,
+        )
+        if response.status_code >= 400:
+            raise RuntimeError(f"DRIVE_LIST_FAILED:{response.status_code}:{response.text[:300]}")
+        return response.json().get("files", [])
+
+    def _folder(self, name: str, parent: str | None = None) -> str | None:
+        q = f"name = '{name}' and mimeType = '{self.FOLDER}' and trashed = false"
+        if parent:
+            q += f" and '{parent}' in parents"
+        found = self._query(q)
+        return found[0]["id"] if found else None
+
+    def pending(self) -> list[dict[str, Any]]:
+        inbox = self._folder(self.name)
+        if not inbox:
+            return []
+        items = self._query(f"'{inbox}' in parents and mimeType != '{self.FOLDER}' and trashed = false")
+        for item in items:
+            raw = self.session.get(f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)
+            try:
+                item["payload"] = json.loads(raw.content.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                item["payload"] = None
+        return items
+
+    def mark_processed(self, file_id: str) -> None:
+        inbox = self._folder(self.name)
+        processed = self._folder("processed", inbox)
+        if not processed:
+            created = self.session.post(
+                _API, json={"name": "processed", "mimeType": self.FOLDER, "parents": [inbox]}, timeout=60
+            )
+            processed = created.json()["id"]
+        self.session.patch(
+            f"{_API}/{file_id}", params={"addParents": processed, "removeParents": inbox}, json={}, timeout=60
+        )
+
+
 @contextmanager
 def writer_lock(name: str = "tower.lock", *, stale_after: float = 3 * 3600) -> Iterator[Path]:
     """Exclusive local lock so overlapping automations never write concurrently."""
