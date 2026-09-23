@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import os
 import subprocess
@@ -131,6 +132,75 @@ def materialize_drive_bundle_root(
     return root, {key: value for key, value in metadata.items() if value is not None}
 
 
+def materialize_live_tower_root(
+    bundle_path: str | Path,
+    destination: str | Path,
+) -> tuple[Path, dict[str, object]]:
+    """Verify one stable live Tower bundle and materialize a read-only Tower root."""
+    bundle_path = Path(bundle_path)
+    with gzip.open(bundle_path, "rt", encoding="utf-8") as handle:
+        bundle = json.load(handle)
+
+    if bundle.get("contract") != "NEXO_TOWER_LIVE_V1":
+        raise ValueError(f"unsupported live Tower contract: {bundle.get('contract')!r}")
+    if bundle.get("authority") != "TOWER_V06" or bundle.get("storage") != "GOOGLE_DRIVE_PRIVATE":
+        raise ValueError("live Tower is not canonical TOWER_V06 storage")
+    if bundle.get("truth_owner") != "TOWER_V06@GOOGLE_DRIVE_PRIVATE":
+        raise ValueError("live Tower truth_owner is invalid")
+    if bundle.get("write_model") != "IN_PLACE_FILE_REVISION_CAS_READBACK":
+        raise ValueError("live Tower write_model is invalid")
+
+    files = bundle.get("files")
+    if not isinstance(files, dict) or bundle.get("file_count") != len(files):
+        raise ValueError("live Tower file_count does not match files payload")
+
+    canonical_files = json.dumps(
+        files,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    fingerprint = "sha256:" + hashlib.sha256(canonical_files).hexdigest()
+    if bundle.get("state_fingerprint") != fingerprint or bundle.get("revision") != fingerprint:
+        raise ValueError("live Tower revision/state_fingerprint does not match files payload")
+
+    stable_file_id = str(bundle.get("stable_file_id") or "").strip()
+    if not stable_file_id:
+        raise ValueError("live Tower stable_file_id is missing")
+
+    root = Path(destination).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    for relative, entry in files.items():
+        if not isinstance(relative, str) or not isinstance(entry, dict):
+            continue
+        target = (root / relative).resolve()
+        if target != root and root not in target.parents:
+            raise ValueError(f"unsafe live Tower path: {relative!r}")
+        encoding = entry.get("encoding")
+        if encoding == "json":
+            data = json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+        elif encoding == "text":
+            data = str(entry.get("data") if "data" in entry else entry.get("value") or "")
+        else:
+            continue
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(data, encoding="utf-8")
+
+    control = json.loads((root / "CONTROL.json").read_text(encoding="utf-8"))
+    if control.get("truth_owner") != bundle.get("truth_owner"):
+        raise ValueError("materialized CONTROL truth_owner differs from live Tower")
+
+    metadata = {
+        "export_role": "PUBLIC_READ_ONLY_DERIVED_COPY",
+        "tower_revision": bundle.get("revision"),
+        "tower_file_id": stable_file_id,
+        "source_state_fingerprint": bundle.get("state_fingerprint"),
+        "source_storage": bundle.get("storage"),
+        "truth_owner": bundle.get("truth_owner"),
+    }
+    return root, {key: value for key, value in metadata.items() if value is not None}
+
+
 def _manifest_bytes(projection: dict) -> bytes:
     return (
         json.dumps(
@@ -202,8 +272,9 @@ def main() -> int:
     parser.add_argument("--root", default="TOWER_V06", help="canonical Tower root")
     parser.add_argument("--out", default="TOWER_V06/snapshot/pages", help="output directory")
     parser.add_argument("--tower-repository", default="byDenoso/NEXO-Obsidian-Vault")
-    parser.add_argument("--tower-commit", default=None)
-    parser.add_argument("--drive-bundle", default=None, help="canonical TOWER.bundle.json.gz from Drive CURRENT")
+    parser.add_argument("--tower-commit", default=None, help="optional code provenance commit")
+    parser.add_argument("--live-tower", default=None, help="canonical NEXO_TOWER_LIVE.json.gz stable Drive state")
+    parser.add_argument("--drive-bundle", default=None, help="legacy canonical TOWER.bundle.json.gz from Drive CURRENT")
     parser.add_argument("--drive-current", default=None, help="CURRENT.json paired with --drive-bundle")
     parser.add_argument(
         "--no-timestamp",
@@ -212,15 +283,23 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.tower_commit:
-        print("::error::--tower-commit is required as code/provenance identity", file=sys.stderr)
+    if not args.live_tower and not args.tower_commit:
+        print("::error::--tower-commit is required only for legacy/root projection mode", file=sys.stderr)
         return 1
 
     temporary_root = None
     source_metadata: dict[str, object] = {}
     projection_root: str | Path = args.root
     try:
-        if args.drive_bundle:
+        if args.live_tower:
+            if args.drive_bundle or args.drive_current:
+                raise ValueError("--live-tower cannot be combined with legacy --drive-bundle/--drive-current")
+            temporary_root = tempfile.TemporaryDirectory(prefix="nexo-live-tower-projection-")
+            projection_root, source_metadata = materialize_live_tower_root(
+                args.live_tower,
+                Path(temporary_root.name) / "TOWER_V06",
+            )
+        elif args.drive_bundle:
             if not args.drive_current:
                 raise ValueError("--drive-current is required with --drive-bundle")
             temporary_root = tempfile.TemporaryDirectory(prefix="nexo-drive-projection-")
@@ -247,6 +326,8 @@ def main() -> int:
         projection_root,
         tower_repository=args.tower_repository,
         tower_commit=args.tower_commit,
+        tower_revision=source_metadata.get("tower_revision"),
+        tower_file_id=source_metadata.get("tower_file_id"),
         generated_at=generated_at,
     )
     projection["manifest"].update(source_metadata)
@@ -263,7 +344,9 @@ def main() -> int:
     manifest = projection["manifest"]
     print(f"projection_fingerprint = {manifest['projection_fingerprint']}")
     print(f"event_cursor           = {manifest['event_cursor']}")
-    print(f"tower_commit           = {manifest['tower_commit']}")
+    print(f"tower_commit           = {manifest.get('tower_commit')}")
+    print(f"tower_revision         = {manifest.get('tower_revision')}")
+    print(f"tower_file_id          = {manifest.get('tower_file_id')}")
     print(f"active_work            = {projection['counts']['active_work']}")
     print(f"index_only_dropped     = {projection['counts']['index_only_dropped']}")
     print(f"write_status           = {'UPDATED' if changed else 'NO_OP'}")
