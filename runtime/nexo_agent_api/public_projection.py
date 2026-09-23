@@ -55,7 +55,21 @@ TEST_FIELDS = (
     "campaign_id",
     "test_group_id",
     "scientific_fingerprint",
+    "hypothesis_id",
+    "hypothesis_ref",
+    "method",
+    "methodology",
+    "mechanism",
+    "dataset",
+    "datasets",
+    "verdict",
+    "scientific_verdict",
+    "claim_level",
+    "publication_status",
 )
+TEST_INPUT_FIELDS = ("input_contract", "result", "statistics", "scientific_result")
+TEST_STATISTICS_FIELDS = ("delta_chi2", "delta_bic", "ln_bayes_factor", "sigma_raw", "sigma_lee", "p_value")
+TEST_RESULT_FIELDS = ("parameter", "value", "err_lo", "err_hi", "unit")
 CAMPAIGN_FIELDS = (
     "roadmap_id",
     "campaign_id",
@@ -139,6 +153,69 @@ def _apply_target_domain_projection(payload: dict[str, Any]) -> dict[str, Any]:
         projected["domain_projection"] = "TARGET_DOMAIN"
     return projected
 
+
+
+def _public_dataset_values(value: Any) -> list[str | int | float]:
+    values = value if isinstance(value, list) else [value]
+    projected: list[str | int | float] = []
+    for item in values:
+        candidate: Any = item
+        if isinstance(item, dict):
+            candidate = next(
+                (item.get(key) for key in ("dataset", "dataset_id", "id", "name", "label")
+                 if isinstance(item.get(key), (str, int, float)) and not isinstance(item.get(key), bool)),
+                None,
+            )
+        if isinstance(candidate, (str, int, float)) and not isinstance(candidate, bool):
+            if not isinstance(candidate, str) or candidate.strip():
+                projected.append(candidate.strip() if isinstance(candidate, str) else candidate)
+    return list(dict.fromkeys(projected))
+
+
+def _public_numeric_fields(value: Any, fields: Iterable[str]) -> dict[str, int | float]:
+    if not isinstance(value, dict):
+        return {}
+    return {
+        key: value[key]
+        for key in fields
+        if isinstance(value.get(key), (int, float)) and not isinstance(value.get(key), bool)
+    }
+
+
+def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
+    """Project only the scientific fields consumed by ScienceProjectionV1."""
+    projected = _pick(entity, TEST_FIELDS)
+    input_contract = entity.get("input_contract")
+    dataset_value = projected.get("datasets", projected.get("dataset"))
+    if dataset_value is None and isinstance(input_contract, dict):
+        dataset_value = input_contract.get("datasets", input_contract.get("dataset"))
+    datasets = _public_dataset_values(dataset_value)
+    projected.pop("dataset", None)
+    if datasets:
+        projected["datasets"] = datasets
+    else:
+        projected.pop("datasets", None)
+
+    scientific_result = entity.get("result")
+    if not isinstance(scientific_result, dict):
+        scientific_result = entity.get("scientific_result")
+    result = {
+        key: scientific_result[key]
+        for key in TEST_RESULT_FIELDS
+        if isinstance(scientific_result, dict)
+        and key in scientific_result
+        and isinstance(scientific_result[key], (str, int, float))
+        and not isinstance(scientific_result[key], bool)
+    }
+    if result:
+        projected["scientific_result"] = result
+
+    statistics = _public_numeric_fields(entity.get("statistics"), TEST_STATISTICS_FIELDS)
+    if not statistics and isinstance(scientific_result, dict):
+        statistics = _public_numeric_fields(scientific_result.get("statistics"), TEST_STATISTICS_FIELDS)
+    if statistics:
+        projected["statistics"] = statistics
+    return projected
 
 def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
     """Project canonical Interdomain relations as derived Learning filaments."""
@@ -285,7 +362,7 @@ def build_public_projection(
 
     work_entities = _load_entities(root, "work", WORK_FIELDS)
     human_flags = _load_entities(root, "work", ("human_action_required",))
-    test_entities = _load_entities(root, "test", TEST_FIELDS)
+    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS))
     campaigns = _load_campaigns(root)
 
     # Index order is priority. Existence is the entity. An index entry without an
@@ -341,7 +418,7 @@ def build_public_projection(
         "human_gates": {"work_ids": human_work_ids, "count": len(human_work_ids)},
         "work": work,
         "tests": [
-            _apply_target_domain_projection(dict(test_entities[key], id=key))
+            _apply_target_domain_projection(_public_test_entity(dict(test_entities[key], id=key)))
             for key in sorted(test_entities)
         ],
         "campaigns": campaigns,
