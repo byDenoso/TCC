@@ -6,6 +6,7 @@
     nexo_tower.py download --out FILE    raw live Tower bytes (CI reader)
     nexo_tower.py apply  REQUEST.json... mutate -> CAS write same file id -> readback -> notify ATLAS
     nexo_tower.py project --out DIR      build the public projection straight from Drive
+    nexo_tower.py frontier [--roadmap ID] next executable roadmap test (canonical frontier logic)
     nexo_tower.py inbox list|done IDS    proposals ChatGPT created in Drive NEXO_INBOX
 
 Every automation and every human-driven change goes through ``apply``; nothing
@@ -182,6 +183,46 @@ def cmd_project(args: argparse.Namespace) -> int:
     return 0
 
 
+class _LocalTowerStore:
+    """Read-only store over a materialized live Tower, shaped like the MCP store."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+
+    def _json(self, relative: str) -> dict | None:
+        from runtime.nexo_agent_api.tower_paths import fs_path
+
+        path = fs_path(self.root, relative)
+        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
+
+    def read_roadmap_index(self) -> dict:
+        return self._json("indexes/active-roadmaps.json") or {"items": []}
+
+    def read_roadmap(self, entry: dict) -> dict | None:
+        relative = str(entry.get("relative_path") or "")
+        if not relative.startswith("roadmaps/") or ".." in relative.split("/"):
+            return None
+        return self._json(relative)
+
+    def get_work(self, work_id: str) -> dict | None:
+        return self._json(f"entities/work/{work_id}.json")
+
+
+def cmd_frontier(args: argparse.Namespace) -> int:
+    """Next executable roadmap test, using the canonical frontier logic (vault MCP module)."""
+    vault = Path(os.environ.get("NEXO_VAULT_PATH") or Path(__file__).resolve().parents[2] / "NEXO-Obsidian-Vault")
+    sys.path.insert(0, str(vault / "services" / "nexo-api"))
+    from app.scientific_roadmap import get_roadmap_frontier  # noqa: E402
+
+    raw, _ = DriveTower().download()
+    with tempfile.TemporaryDirectory(prefix="nexo-tower-frontier-") as work:
+        root, metadata = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        service = type("Service", (), {"store": _LocalTowerStore(root)})()
+        frontier = get_roadmap_frontier(service, args.roadmap)
+    _print({"tower_state_fingerprint": metadata["tower_revision"], **frontier})
+    return 0
+
+
 def cmd_inbox(args: argparse.Namespace) -> int:
     inbox = DriveInbox(write=args.action == "done")
     if args.action == "list":
@@ -205,6 +246,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--retries", type=int, default=2)
     p.set_defaults(func=cmd_apply)
     p = sub.add_parser("project"); p.add_argument("--out", required=True); p.add_argument("--no-timestamp", action="store_true"); p.set_defaults(func=cmd_project)
+    p = sub.add_parser("frontier", help="next executable roadmap test")
+    p.add_argument("--roadmap")
+    p.set_defaults(func=cmd_frontier)
     p = sub.add_parser("inbox", help="ChatGPT proposal inbox on Drive (create-only)")
     p.add_argument("action", choices=["list", "done"])
     p.add_argument("ids", nargs="*")
