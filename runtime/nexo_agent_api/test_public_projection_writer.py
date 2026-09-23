@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gzip
 import json
 import subprocess
 
@@ -9,7 +10,12 @@ from runtime.nexo_agent_api.public_projection import (
     build_public_projection,
     verify_projection,
 )
-from scripts.build_public_projection import verify_root_provenance, write_projection_if_changed
+from scripts.build_public_projection import (
+    materialize_live_tower_root,
+    verify_root_provenance,
+    write_projection_if_changed,
+)
+from runtime.nexo_agent_api.live_tower import build_live_tower_payload
 from runtime.nexo_agent_api.test_public_projection import _tower
 
 
@@ -106,3 +112,37 @@ def test_root_provenance_rejects_non_git_materialization(tmp_path):
     root = _tower(tmp_path)
     with pytest.raises(ValueError, match="not inside a readable Git checkout"):
         verify_root_provenance(root, "a" * 40)
+
+
+def test_live_tower_materializes_without_current_or_generation(tmp_path):
+    root = _tower(tmp_path / "source")
+    control_path = root / "CONTROL.json"
+    control = json.loads(control_path.read_text(encoding="utf-8"))
+    control["truth_owner"] = "TOWER_V06@GOOGLE_DRIVE_PRIVATE"
+    control["write_model"] = "IN_PLACE_FILE_REVISION_CAS_READBACK"
+    control_path.write_text(json.dumps(control), encoding="utf-8")
+
+    live = build_live_tower_payload(root, updated_at="2026-09-23T12:00:00Z")
+    bundle = tmp_path / "NEXO_TOWER_LIVE.json.gz"
+    with gzip.open(bundle, "wt", encoding="utf-8") as handle:
+        json.dump(live, handle, ensure_ascii=False, sort_keys=True)
+
+    materialized, metadata = materialize_live_tower_root(
+        bundle,
+        tmp_path / "materialized" / "TOWER_V06",
+    )
+
+    assert metadata["tower_revision"] == live["revision"]
+    assert metadata["tower_file_id"] == live["stable_file_id"]
+    assert not (materialized / "CURRENT.json").exists()
+
+    projection = build_public_projection(
+        materialized,
+        tower_revision=str(metadata["tower_revision"]),
+        tower_file_id=str(metadata["tower_file_id"]),
+        generated_at="2026-09-23T12:01:00Z",
+    )
+    ok, detail = verify_projection(projection)
+    assert ok, detail
+    assert projection["manifest"]["tower_file_id"] == live["stable_file_id"]
+    assert projection["manifest"]["tower_revision"] == live["revision"]
