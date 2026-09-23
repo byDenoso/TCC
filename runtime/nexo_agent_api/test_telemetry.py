@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .telemetry import enrich_materialized_state
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class TelemetryTests(unittest.TestCase):
@@ -39,7 +40,7 @@ class TelemetryTests(unittest.TestCase):
             root = self._base_root(td)
             for name in ("H1", "H2"):
                 (root / f"entities/hypothesis/{name}.json").write_text("{}", encoding="utf-8")
-            (root / "entities/test/T1.json").write_text("{}", encoding="utf-8")
+            (entity_path(root, "test", "T1")).write_text("{}", encoding="utf-8")
 
             enrich_materialized_state(root)
 
@@ -51,10 +52,10 @@ class TelemetryTests(unittest.TestCase):
     def test_derives_conservative_autonomy_and_delivery_metrics(self):
         with tempfile.TemporaryDirectory() as td:
             root = self._base_root(td)
-            (root / "entities/work/W-DONE.json").write_text(
+            (entity_path(root, "work", "W-DONE")).write_text(
                 json.dumps({"id": "W-DONE", "status": "DONE"}), encoding="utf-8"
             )
-            (root / "entities/work/W-VERIFIED.json").write_text(
+            (entity_path(root, "work", "W-VERIFIED")).write_text(
                 json.dumps({"id": "W-VERIFIED", "status": "VERIFIED"}), encoding="utf-8"
             )
             events = (

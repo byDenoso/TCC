@@ -17,6 +17,7 @@ from .public_projection import (
     projection_bytes,
     verify_projection,
 )
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 CONTROL = {
     "truth_owner": "byDenoso/NEXO-Obsidian-Vault@main:TOWER_V06",
@@ -60,7 +61,7 @@ def _tower(tmp_path: Path, *, index_only: bool = False) -> Path:
     )
 
     for work_id in ("WORK-A", "WORK-B"):
-        (root / "entities" / "work" / f"{work_id}.json").write_text(
+        (entity_path(root, "work", work_id)).write_text(
             json.dumps(
                 {
                     "id": work_id,
@@ -124,9 +125,9 @@ def test_wall_clock_does_not_change_the_fingerprint(tmp_path):
 def test_changed_canonical_state_changes_the_fingerprint(tmp_path):
     root = _tower(tmp_path)
     before = _build(root)["manifest"]["projection_fingerprint"]
-    payload = json.loads((root / "entities" / "work" / "WORK-A.json").read_text(encoding="utf-8"))
+    payload = json.loads((entity_path(root, "work", "WORK-A")).read_text(encoding="utf-8"))
     payload["status"] = "RUNNING"
-    (root / "entities" / "work" / "WORK-A.json").write_text(json.dumps(payload), encoding="utf-8")
+    (entity_path(root, "work", "WORK-A")).write_text(json.dumps(payload), encoding="utf-8")
     after = _build(root)["manifest"]["projection_fingerprint"]
     assert before != after
 
@@ -324,7 +325,7 @@ def test_missing_canonical_files_degrade_to_empty_not_to_invention(tmp_path):
 
 def test_target_domain_owns_public_projection_without_erasing_method_provenance(tmp_path):
     root = _tower(tmp_path)
-    (root / "entities" / "test" / "T-OLY-DEMO.json").write_text(
+    (entity_path(root, "test", "T-OLY-DEMO")).write_text(
         json.dumps(
             {
                 "id": "T-OLY-DEMO",
@@ -336,9 +337,9 @@ def test_target_domain_owns_public_projection_without_erasing_method_provenance(
         ),
         encoding="utf-8",
     )
-    payload = json.loads((root / "entities" / "work" / "WORK-A.json").read_text(encoding="utf-8"))
+    payload = json.loads((entity_path(root, "work", "WORK-A")).read_text(encoding="utf-8"))
     payload["target_domain"] = "OLYMPUS"
-    (root / "entities" / "work" / "WORK-A.json").write_text(json.dumps(payload), encoding="utf-8")
+    (entity_path(root, "work", "WORK-A")).write_text(json.dumps(payload), encoding="utf-8")
 
     projection = _build(root)
     test = next(item for item in projection["tests"] if item["id"] == "T-OLY-DEMO")
@@ -364,7 +365,7 @@ def test_interdomain_relations_are_projected_as_learning_filaments(tmp_path):
         "test_refs": ["T-OLY-DEMO"],
         "lesson_refs": ["ML-OLY-DEMO-001"],
     }
-    (root / "entities" / "interdomain" / f"{relation_id}.json").write_text(
+    (entity_path(root, "interdomain", relation_id)).write_text(
         json.dumps(relation), encoding="utf-8"
     )
     (root / "indexes" / "interdomain-active.json").write_text(

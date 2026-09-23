@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .telemetry import enrich_materialized_state
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class DependencyWaitTelemetryTests(unittest.TestCase):
@@ -44,7 +45,7 @@ class DependencyWaitTelemetryTests(unittest.TestCase):
                 {"id": "READY", "status": "READY", "human_action_required": True, "auto_retry_eligible": True},
             ]
             for item in work:
-                (root / "entities/work" / f"{item['id']}.json").write_text(json.dumps(item), encoding="utf-8")
+                (entity_path(root, "work", item['id'])).write_text(json.dumps(item), encoding="utf-8")
 
             result = enrich_materialized_state(root)
             roi = json.loads((root / "snapshot/ai-roi.json").read_text(encoding="utf-8"))

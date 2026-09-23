@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .views import _deferred_by_active_p0, _prioritize, materialize_role_views
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class StateMaterializationTests(unittest.TestCase):
@@ -37,13 +38,13 @@ class StateMaterializationTests(unittest.TestCase):
                     {"id": "W3", "entity_version": 2, "status": "READY", "kind": "RESEARCH"},
                 ],
             }))
-            (root / "entities/work/W1.json").write_text(json.dumps({
+            (entity_path(root, "work", "W1")).write_text(json.dumps({
                 "id": "W1", "entity_version": 2, "status": "RUNNING", "owner_role": "ADVISOR", "kind": "RESEARCH"
             }))
-            (root / "entities/work/W2.json").write_text(json.dumps({
+            (entity_path(root, "work", "W2")).write_text(json.dumps({
                 "id": "W2", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR", "kind": "RESEARCH"
             }))
-            (root / "entities/work/W3.json").write_text(json.dumps({
+            (entity_path(root, "work", "W3")).write_text(json.dumps({
                 "id": "W3", "entity_version": 3, "status": "DONE", "owner_role": "ADVISOR", "kind": "RESEARCH"
             }))
             (root / "events/migration/ZZZ.json").write_text(json.dumps({"event_id": "EVT-TOWER-V06-CUTOVER"}))
@@ -101,7 +102,7 @@ class StateMaterializationTests(unittest.TestCase):
                 "cold_backlog": True,
             }
             (root / "indexes/active-work.json").write_text(json.dumps({"count": 1, "work": [cold]}))
-            (root / "entities/work/COLD-EMERGENT.json").write_text(json.dumps(cold))
+            (entity_path(root, "work", "COLD-EMERGENT")).write_text(json.dumps(cold))
 
             materialize_role_views(root)
 

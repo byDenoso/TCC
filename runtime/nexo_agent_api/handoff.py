@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .service import TowerAgentIssue
+from .tower_paths import entity_path, json_file
 
 RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
 SEND_ROLES = RUNTIME_ROLES | {"DIRECTOR"}
@@ -27,7 +28,7 @@ def _write_event(root: Path, payload: dict) -> dict:
     event["created_at"] = _now()
     event_dir = root / "events" / datetime.now(timezone.utc).strftime("%Y-%m-%d")
     event_dir.mkdir(parents=True, exist_ok=True)
-    (event_dir / f"{event_id}.json").write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return event
 
 
@@ -54,7 +55,7 @@ def _latest_by_handoff(root: Path) -> dict[str, dict]:
 
 
 def _work_envelope(self, entity_ref: str) -> dict | None:
-    canonical_path = self.root / "entities" / "work" / f"{entity_ref}.json"
+    canonical_path = entity_path(self.root, "work", entity_ref)
     if canonical_path.exists():
         try:
             payload = json.loads(canonical_path.read_text(encoding="utf-8"))

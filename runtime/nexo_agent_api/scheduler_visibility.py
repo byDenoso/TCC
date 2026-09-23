@@ -6,6 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 from .mutations import apply_mutation_request
+from .tower_paths import entity_path
 
 RUNNABLE_TEST_STATES = {"READY", "RUNNING", "CHECKPOINTED", "QUEUED"}
 EXECUTOR_WORK_STATES = {"READY", "RUNNING", "CHECKPOINTED"}
@@ -101,7 +102,7 @@ def ensure_scheduler_visibility(root: str | Path, test: dict[str, Any], *, write
     if not test_id:
         return {"visible": False, "reason": "TEST_ID_MISSING"}
 
-    work_path = root / "entities" / "work" / f"{work_id}.json"
+    work_path = entity_path(root, "work", work_id)
     if work_path.exists():
         payload = json.loads(work_path.read_text(encoding="utf-8"))
         return {"visible": True, "outcome": "REUSED", "work_id": work_id, "work": payload}

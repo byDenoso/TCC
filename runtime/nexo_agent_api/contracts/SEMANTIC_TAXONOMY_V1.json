@@ -1,0 +1,185 @@
+{
+  "contract": "SEMANTIC_TAXONOMY_V1",
+  "authority": "GITHUB_MAIN_CONTRACT",
+  "consensus": "Claude + ChatGPT, 2026-09-23",
+  "unmapped_id": "UNMAPPED",
+  "entity_fields": {
+    "TEST.semantic": ["domain_id", "subdomain_id", "topic_id", "question_plain", "why_it_matters"],
+    "RESULT.semantic": ["result_meaning", "verdict_plain", "confidence_plain"],
+    "rule": "one primary topic_id per entity; ambiguous backfill is UNMAPPED, never invented"
+  },
+  "domains": [
+    {
+      "id": "science",
+      "label": "Science",
+      "subdomains": [
+        {
+          "id": "science.cosmology.h0",
+          "label": "Cosmology / H0",
+          "topics": [
+            {"id": "science.cosmology.h0.inference", "label": "H0 inference"},
+            {"id": "science.cosmology.h0.local_flows_homogeneity", "label": "Local flows & homogeneity"},
+            {"id": "science.cosmology.h0.systematics_vs_physics", "label": "Systematics vs new physics"},
+            {"id": "science.cosmology.h0.anchor_dependence", "label": "Distance-ladder & anchor dependence"}
+          ]
+        },
+        {
+          "id": "science.cosmology.dark_energy",
+          "label": "Cosmology / Dark Energy",
+          "topics": [
+            {"id": "science.cosmology.dark_energy.dynamics", "label": "Dynamical dark energy"},
+            {"id": "science.cosmology.dark_energy.microphysics", "label": "Dark-energy microphysics"},
+            {"id": "science.cosmology.dark_energy.interactions", "label": "Dark-sector interactions"},
+            {"id": "science.cosmology.dark_energy.perturbation_stability", "label": "Perturbations & stability"},
+            {"id": "science.cosmology.dark_energy.cross_probe_consistency", "label": "Cross-probe consistency"},
+            {"id": "science.cosmology.dark_energy.anomaly_reach", "label": "Explanatory reach across anomalies"}
+          ]
+        },
+        {
+          "id": "science.cosmology.dark_matter",
+          "label": "Cosmology / Dark Matter",
+          "topics": [
+            {"id": "science.cosmology.dark_matter.nature", "label": "Nature of dark matter"},
+            {"id": "science.cosmology.dark_matter.non_cdm_properties", "label": "Beyond collisionless CDM"}
+          ]
+        },
+        {
+          "id": "science.cosmology.lss_growth",
+          "label": "Cosmology / LSS & Growth",
+          "topics": [
+            {"id": "science.cosmology.lss_growth.galaxy_distribution", "label": "Galaxy distribution & 3D structure"},
+            {"id": "science.cosmology.lss_growth.megastructures", "label": "Megastructures"},
+            {"id": "science.cosmology.lss_growth.growth_rate", "label": "Growth rate"},
+            {"id": "science.cosmology.lss_growth.clusters_lensing", "label": "Clusters & weak lensing"},
+            {"id": "science.cosmology.lss_growth.selection_window", "label": "Selection functions & survey window"},
+            {"id": "science.cosmology.lss_growth.tracer_bias", "label": "Tracer bias & HOD"}
+          ]
+        },
+        {
+          "id": "science.methods.inference",
+          "label": "Methods / Inference",
+          "topics": [
+            {"id": "science.methods.inference.model_comparison", "label": "Model comparison"},
+            {"id": "science.methods.inference.parameter_sensitivity", "label": "Parameter & prior sensitivity"},
+            {"id": "science.methods.inference.null_calibration", "label": "Null calibration"},
+            {"id": "science.methods.inference.look_elsewhere", "label": "Look-elsewhere effects"},
+            {"id": "science.methods.inference.change_point", "label": "Change-point inference"}
+          ]
+        },
+        {
+          "id": "science.methods.robustness",
+          "label": "Methods / Robustness",
+          "topics": [
+            {"id": "science.methods.robustness.cross_dataset", "label": "Cross-dataset robustness"},
+            {"id": "science.methods.robustness.leave_one_out", "label": "Leave-one-out & influence"},
+            {"id": "science.methods.robustness.systematics", "label": "Systematics"},
+            {"id": "science.methods.robustness.replication", "label": "Independent replication"},
+            {"id": "science.methods.robustness.aggregation", "label": "Aggregation & coarse-graining"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "engineering",
+      "label": "Engineering",
+      "subdomains": [
+        {
+          "id": "engineering.nexo_runtime",
+          "label": "NEXO Runtime",
+          "topics": [
+            {"id": "engineering.nexo_runtime.state_integrity", "label": "State integrity"},
+            {"id": "engineering.nexo_runtime.concurrency", "label": "Concurrency & writers"},
+            {"id": "engineering.nexo_runtime.provenance", "label": "Provenance & event continuity"},
+            {"id": "engineering.nexo_runtime.decision_quality", "label": "Decision quality"},
+            {"id": "engineering.nexo_runtime.transfer_learning", "label": "Cross-domain transfer"}
+          ]
+        },
+        {
+          "id": "engineering.ai_agents",
+          "label": "AI Agents",
+          "topics": [
+            {"id": "engineering.ai_agents.instructions", "label": "Instructions & AGENTS.md"},
+            {"id": "engineering.ai_agents.context", "label": "Context engineering"},
+            {"id": "engineering.ai_agents.tools", "label": "Tool use"},
+            {"id": "engineering.ai_agents.delegation", "label": "Delegation & multi-agent workflows"},
+            {"id": "engineering.ai_agents.evaluation", "label": "Agent evaluation"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "olympus",
+      "label": "Olympus",
+      "projection_policy": "PRIVATE_ONLY",
+      "subdomains": [
+        {
+          "id": "olympus.body_composition",
+          "label": "Body Composition",
+          "topics": [
+            {"id": "olympus.body_composition.trajectory", "label": "Body-composition trajectory"},
+            {"id": "olympus.body_composition.change_point", "label": "Regime change & pivots"},
+            {"id": "olympus.body_composition.partitioning", "label": "Fat / lean-mass partitioning"},
+            {"id": "olympus.body_composition.causal_nulls", "label": "Causal null models"},
+            {"id": "olympus.body_composition.measurement", "label": "Measurement uncertainty"}
+          ]
+        },
+        {
+          "id": "olympus.training",
+          "label": "Training",
+          "topics": [
+            {"id": "olympus.training.performance", "label": "Performance"},
+            {"id": "olympus.training.stimulus", "label": "Training stimulus"},
+            {"id": "olympus.training.recovery", "label": "Recovery"}
+          ]
+        },
+        {
+          "id": "olympus.nutrition",
+          "label": "Nutrition",
+          "topics": [
+            {"id": "olympus.nutrition.energy_balance", "label": "Energy balance"},
+            {"id": "olympus.nutrition.protein", "label": "Protein"},
+            {"id": "olympus.nutrition.adherence", "label": "Dietary adherence"}
+          ]
+        }
+      ]
+    }
+  ],
+  "backfill": {
+    "campaign_to_subdomain": {
+      "CAMP-BLINDSPOT-LIGHT-20260918": "science.methods.robustness",
+      "CAMP-DDE-ANOMALIES-MEGA-20260922": "science.cosmology.dark_energy",
+      "CAMP-GROWTH-LSS": "science.cosmology.lss_growth",
+      "CAMP-GZ-01-GALAXY-REDSHIFT": "science.cosmology.lss_growth",
+      "CAMP-H0-HOMOGENEITY-LSS-20260917": "science.cosmology.h0",
+      "CAMP-H0-LCDM-ORIGIN-20260916": "science.cosmology.h0",
+      "CAMP-MEGASTRUCTURE-LCDM-ROUND12": "science.cosmology.lss_growth",
+      "CAMP-OLY-COMPPHYS-20260919": "olympus.body_composition",
+      "CAMP-OLY-MIQUEIAS-CAUSE-NULLS-20260920": "olympus.body_composition",
+      "CAMP-OLY-PIVOT-CROSSCHECK-20260920": "olympus.body_composition",
+      "CAMP-DARK-ENERGY-NATURE-20260923": "science.cosmology.dark_energy",
+      "CAMP-DARK-MATTER-NATURE-20260923": "science.cosmology.dark_matter",
+      "CAMP-GPT56-AGENT-SYSTEMS-20260923": "engineering.ai_agents",
+      "CAMP-H0-SYSTEMATICS-VS-PHYSICS-20260923": "science.cosmology.h0",
+      "CAMP-OVERNIGHT-FRONTIER-20260919": "UNMAPPED"
+    },
+    "roadmap_to_subdomain": {
+      "RM-DARK-ENERGY-NATURE-20260923-V1": "science.cosmology.dark_energy",
+      "RM-DARK-MATTER-NATURE-20260923-V1": "science.cosmology.dark_matter",
+      "RM-DDE-ANOMALIES-MEGA-20260922-V1": "science.cosmology.dark_energy",
+      "RM-GPT56-AGENT-SYSTEMS-20260923-V1": "engineering.ai_agents",
+      "RM-GZ01-GALAXY-3D-MAP-LIVE-V1": "science.cosmology.lss_growth",
+      "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1": "science.cosmology.h0"
+    },
+    "standalone_test_rules": {
+      "T-DEM26-*": "science.cosmology.dark_energy",
+      "T-LEARN26-*": "engineering.nexo_runtime",
+      "T-OLYPIVOT-*": "olympus.body_composition",
+      "T-OLYCAUSE-*": "olympus.body_composition",
+      "T-OLYPHYS-*": "olympus.body_composition",
+      "PEER-DETECTION-*": "UNMAPPED",
+      "T-AVGPROB-017A": "olympus.body_composition",
+      "T-AVGPROB-017B": "olympus.body_composition",
+      "T-AVGPROB-017C": "science.methods.robustness"
+    }
+  }
+}

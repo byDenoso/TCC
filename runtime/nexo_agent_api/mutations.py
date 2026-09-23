@@ -7,6 +7,7 @@ from typing import Any
 
 from .governance import evaluate_governance
 from .service import AgentService, TowerAgentIssue
+from .tower_paths import entity_path
 
 _SAFE_NAME = re.compile(r"^[A-Za-z0-9_.:-]+$")
 _CREATABLE_ENTITY_KINDS = {
@@ -96,7 +97,7 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
         }
 
     service = AgentService(root)
-    path = root / "entities" / entity_kind / f"{entity_name}.json"
+    path = entity_path(root, entity_kind, entity_name)
     seeded_new_entity = False
     if not path.exists() and expected_version == 0 and entity_kind in _CREATABLE_ENTITY_KINDS:
         path.parent.mkdir(parents=True, exist_ok=True)

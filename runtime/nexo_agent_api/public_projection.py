@@ -25,6 +25,9 @@ import json
 import re
 from pathlib import Path
 from typing import Any, Iterable
+from .live_tower import LIVE_TOWER_FILE_ID
+from .semantics import is_private, public_tree, resolve as resolve_semantic, status_group
+from .tower_paths import json_file
 
 SCHEMA_VERSION = "1"
 PROJECTION_CONTRACT = "NEXO_PUBLIC_PROJECTION_V1"
@@ -49,6 +52,8 @@ WORK_FIELDS = (
 TEST_FIELDS = (
     "id",
     "status",
+    "state",
+    "roadmap_id",
     "domain",
     "target_domain",
     "title",
@@ -215,6 +220,26 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
         statistics = _public_numeric_fields(scientific_result.get("statistics"), TEST_STATISTICS_FIELDS)
     if statistics:
         projected["statistics"] = statistics
+    return _with_semantics(projected, entity)
+
+
+# Olympus is personal/client health context: its free text never reaches the
+# public surface, only identity, lifecycle and meaning.
+_PRIVATE_TEXT_FIELDS = ("title", "mechanism", "method", "methodology", "datasets", "scientific_result", "statistics", "question", "semantic_description")
+
+
+def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[str, Any]:
+    """Normalise lifecycle (status vs legacy state) and attach the semantic block."""
+    lifecycle = projected.get("status") or projected.get("state")
+    if lifecycle:
+        projected["status"] = lifecycle
+    projected["status_group"] = status_group(lifecycle)
+    semantic = resolve_semantic(entity, entity_id=str(projected.get("id") or projected.get("campaign_id") or ""))
+    projected["semantic"] = semantic
+    if is_private(semantic):
+        for key in _PRIVATE_TEXT_FIELDS:
+            projected.pop(key, None)
+        projected["private"] = True
     return projected
 
 def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
@@ -228,7 +253,7 @@ def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
         relation_id = item.get("id")
         if not relation_id:
             continue
-        entity = _read_json(entity_root / f"{relation_id}.json", {}) or {}
+        entity = _read_json(json_file(entity_root, str(relation_id)), {}) or {}
         source = entity if isinstance(entity, dict) and entity else item
         filament = _pick(source, INTERDOMAIN_FIELDS)
         filament["id"] = str(relation_id)
@@ -335,7 +360,7 @@ def _load_campaigns(root: Path) -> list[dict[str, Any]]:
         sources = _campaign_source_links(payload)
         if sources:
             record["source_links"] = sources
-        campaigns.append(record)
+        campaigns.append(_with_semantics(record, payload))
 
     campaigns.sort(key=lambda item: str(item.get("campaign_id") or ""))
     return campaigns
@@ -347,7 +372,7 @@ def build_public_projection(
     tower_repository: str = "byDenoso/NEXO-Obsidian-Vault",
     tower_commit: str | None = None,
     tower_revision: str | None = None,
-    tower_file_id: str | None = None,
+    tower_file_id: str = LIVE_TOWER_FILE_ID,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Compile the public projection from canonical state under `root`.
@@ -423,6 +448,7 @@ def build_public_projection(
         ],
         "campaigns": campaigns,
         "crossDomain": cross_domain,
+        "taxonomy": public_tree(),
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
@@ -435,6 +461,8 @@ def build_public_projection(
         "tower_commit": tower_commit,
         "tower_revision": tower_revision,
         "tower_file_id": tower_file_id,
+        "source_storage": "GOOGLE_DRIVE_PRIVATE",
+        "source_state_fingerprint": tower_revision,
         "event_cursor": snapshot.get("event_cursor"),
         "projection_fingerprint": _fingerprint(content),
         "generated_at": generated_at,

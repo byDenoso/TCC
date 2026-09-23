@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from . import AgentService, TowerAgentIssue, materialize_role_views
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class HandoffProtocolTests(unittest.TestCase):
@@ -80,7 +81,7 @@ class HandoffProtocolTests(unittest.TestCase):
             "source_revision": "abc123",
             "required_outputs": ["benchmark_result.json"],
         }
-        (self.root / "entities/work/WORK::GZ01-B03.json").write_text(json.dumps(work))
+        (entity_path(self.root, "work", "WORK::GZ01-B03")).write_text(json.dumps(work))
         service = AgentService(self.root)
 
         created = service.emit_handoff(
@@ -111,7 +112,7 @@ class HandoffProtocolTests(unittest.TestCase):
             "thread_id": "THR::SCIENCE::GZ-01",
             "next_action": "freeze contract",
         }
-        path = self.root / "entities/work/WORK::GZ01-B03.json"
+        path = entity_path(self.root, "work", "WORK::GZ01-B03")
         path.write_text(json.dumps(work_v1))
         service = AgentService(self.root)
         created = service.emit_handoff(
@@ -145,7 +146,7 @@ class HandoffProtocolTests(unittest.TestCase):
             "thread_id": "THR::SCIENCE::GZ-01",
             "next_action": "learn",
         }
-        path = self.root / "entities/work/WORK::GZ01-B02.json"
+        path = entity_path(self.root, "work", "WORK::GZ01-B02")
         path.write_text(json.dumps(work_v1))
         service = AgentService(self.root)
         created = service.emit_handoff(

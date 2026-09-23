@@ -9,6 +9,7 @@ from . import materialize_role_views
 from .mutations import apply_mutation_request
 from .service import AgentService
 from .test_registry import register_test
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class UniversalTestIngressContractTests(unittest.TestCase):
@@ -37,7 +38,7 @@ class UniversalTestIngressContractTests(unittest.TestCase):
         })
 
     def _read(self, kind: str, entity_id: str) -> dict:
-        return json.loads((self.root / "entities" / kind / f"{entity_id}.json").read_text(encoding="utf-8"))
+        return json.loads((entity_path(self.root, kind, entity_id)).read_text(encoding="utf-8"))
 
     @staticmethod
     def _frozen_test(test_id: str) -> dict:
@@ -193,7 +194,7 @@ class UniversalTestIngressContractTests(unittest.TestCase):
     def test_check_is_not_promoted_by_canonical_mutation_writer(self) -> None:
         receipt = self._create("check", "CHECK::LINT::001", {"status": "PASS"})
         self.assertFalse(receipt["accepted"])
-        self.assertFalse((self.root / "entities" / "check" / "CHECK::LINT::001.json").exists())
+        self.assertFalse((entity_path(self.root, "check", "CHECK::LINT::001")).exists())
 
 
 if __name__ == "__main__":

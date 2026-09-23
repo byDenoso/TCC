@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from runtime.nexo_execution.core import TASK_REGISTRY
+from .tower_paths import entity_path, json_file
 
 
 class TowerAgentIssue(RuntimeError):
@@ -77,7 +78,7 @@ class AgentService:
     def _hydrate_work(self, entity_name: str) -> dict[str, Any]:
         for item in self._work_items():
             if str(item.get("id")) == entity_name:
-                path = self.root / "entities" / "work" / f"{entity_name}.json"
+                path = entity_path(self.root, "work", entity_name)
                 path.parent.mkdir(parents=True, exist_ok=True)
                 hydrated = dict(item)
                 hydrated.setdefault("entity_version", 1)
@@ -204,7 +205,7 @@ class AgentService:
     def _campaign_item(self, campaign_id: str, test_id: str, source: str | None = None) -> dict[str, Any]:
         kinds = [source] if source in {"test", "work"} else ["test", "work"]
         for kind in kinds:
-            path = self.root / "entities" / kind / f"{test_id}.json"
+            path = entity_path(self.root, kind, test_id)
             try:
                 payload = json.loads(path.read_text(encoding="utf-8"))
             except (FileNotFoundError, json.JSONDecodeError, OSError):
@@ -325,7 +326,7 @@ class AgentService:
         event_type: str,
         material: bool = True,
     ) -> dict[str, Any]:
-        path = self.root / "entities" / entity_kind / f"{entity_name}.json"
+        path = entity_path(self.root, entity_kind, entity_name)
         try:
             current = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError as exc:
@@ -365,5 +366,5 @@ class AgentService:
             "writer_role": writer_role.upper(),
             "material": material,
         }
-        (event_dir / f"{event_id}.json").write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+        json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
         return {"accepted": True, "entity_version": current_version + 1, "readback": "PASS", "event_id": event_id}

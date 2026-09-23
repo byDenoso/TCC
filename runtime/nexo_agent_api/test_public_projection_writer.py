@@ -17,6 +17,7 @@ from scripts.build_public_projection import (
 )
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload
 from runtime.nexo_agent_api.test_public_projection import _tower
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 def _build(root, *, commit="a" * 40, generated_at="2026-09-20T00:00:00Z"):
@@ -63,7 +64,7 @@ def test_changed_canonical_content_replaces_projection_and_manifest_together(tmp
     first = _build(root)
     assert write_projection_if_changed(out, first) is True
 
-    work_path = root / "entities" / "work" / "WORK-A.json"
+    work_path = entity_path(root, "work", "WORK-A")
     work = json.loads(work_path.read_text(encoding="utf-8"))
     work["status"] = "RUNNING"
     work_path.write_text(json.dumps(work), encoding="utf-8")

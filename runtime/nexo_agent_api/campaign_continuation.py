@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from .tower_paths import entity_path
 
 
 _SUCCESS_STATES = {"VERIFIED", "DONE", "COMPLETE", "COMPLETED", "TERMINALIZED", "PASS"}
@@ -62,7 +63,7 @@ class CampaignFrontierResolver:
         self.root = Path(root)
 
     def _entity(self, kind: str, entity_id: str) -> dict[str, Any] | None:
-        return _read_json(self.root / "entities" / kind / f"{entity_id}.json")
+        return _read_json(entity_path(self.root, kind, entity_id))
 
     def _campaign(self, campaign_id: str) -> tuple[dict[str, Any] | None, str | None]:
         campaign = self._entity("campaign", campaign_id)

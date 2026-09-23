@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from .service import AgentService
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class ExecutorCapabilityGateTests(unittest.TestCase):
@@ -51,7 +52,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             "resource_lock_available": True,
         }
         payload.update(extra)
-        (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
+        (entity_path(self.root, "work", name)).write_text(json.dumps(payload), encoding="utf-8")
 
     def write_minimal_work(self, name: str, task_id: str, **extra) -> None:
         payload = {
@@ -62,7 +63,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             "task_id": task_id,
         }
         payload.update(extra)
-        (self.root / "entities" / "work" / f"{name}.json").write_text(json.dumps(payload), encoding="utf-8")
+        (entity_path(self.root, "work", name)).write_text(json.dumps(payload), encoding="utf-8")
 
     def frozen_work(self, name: str = "W-FROZEN", **extra) -> dict:
         payload = {
@@ -83,11 +84,11 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
         return payload
 
     def write_ready_campaign(self) -> None:
-        (self.root / "entities" / "campaign" / "CAMP-1.json").write_text(
+        (entity_path(self.root, "campaign", "CAMP-1")).write_text(
             json.dumps({"id": "CAMP-1", "status": "ACTIVE", "execution_order": ["TEST::A"]}),
             encoding="utf-8",
         )
-        (self.root / "entities" / "test" / "TEST::A.json").write_text(
+        (entity_path(self.root, "test", "TEST::A")).write_text(
             json.dumps({
                 "id": "TEST::A",
                 "campaign_id": "CAMP-1",
@@ -99,7 +100,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
 
     def write_active_campaign(self) -> None:
         self.write_ready_campaign()
-        (self.root / "entities" / "test" / "TEST::A.json").write_text(
+        (entity_path(self.root, "test", "TEST::A")).write_text(
             json.dumps({
                 "id": "TEST::A",
                 "campaign_id": "CAMP-1",
@@ -109,7 +110,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
             }),
             encoding="utf-8",
         )
-        (self.root / "entities" / "run" / "RUN::A.json").write_text(
+        (entity_path(self.root, "run", "RUN::A")).write_text(
             json.dumps({"id": "RUN::A", "campaign_id": "CAMP-1", "test_id": "TEST::A", "status": "RUNNING"}),
             encoding="utf-8",
         )
@@ -152,7 +153,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
 
     def test_executor_accepts_frozen_test_contract_without_registered_task_id(self) -> None:
         payload = self.frozen_work()
-        (self.root / "entities" / "work" / "W-FROZEN.json").write_text(json.dumps(payload), encoding="utf-8")
+        (entity_path(self.root, "work", "W-FROZEN")).write_text(json.dumps(payload), encoding="utf-8")
         queue = AgentService(self.root).queue_for("EXECUTOR")
         self.assertEqual([item["id"] for item in queue], ["W-FROZEN"])
         self.assertIn("frozen_test", queue[0])
@@ -160,7 +161,7 @@ class ExecutorCapabilityGateTests(unittest.TestCase):
 
     def test_executor_queue_preserves_interdomain_ref(self) -> None:
         payload = self.frozen_work(interdomain_ref="META::INTERDOMAIN::TEST-001")
-        (self.root / "entities" / "work" / "W-FROZEN.json").write_text(json.dumps(payload), encoding="utf-8")
+        (entity_path(self.root, "work", "W-FROZEN")).write_text(json.dumps(payload), encoding="utf-8")
         queue = AgentService(self.root).queue_for("EXECUTOR")
         self.assertEqual(queue[0].get("interdomain_ref"), "META::INTERDOMAIN::TEST-001")
 

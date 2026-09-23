@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from . import AgentService
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class RequestIngressTests(unittest.TestCase):
@@ -35,7 +36,7 @@ class RequestIngressTests(unittest.TestCase):
         return self.service.ingest_request(**payload)
 
     def read_work(self, work_id: str) -> dict:
-        return json.loads((self.root / "entities" / "work" / f"{work_id}.json").read_text())
+        return json.loads((entity_path(self.root, "work", work_id)).read_text())
 
     def events(self) -> list[dict]:
         result = []
@@ -73,7 +74,7 @@ class RequestIngressTests(unittest.TestCase):
 
     def test_explicit_target_continues_existing_work_without_state_change(self):
         first = self.task(thread_id="CHAT-A")
-        work_path = self.root / "entities" / "work" / f"{first['work_id']}.json"
+        work_path = entity_path(self.root, "work", first['work_id'])
         work = json.loads(work_path.read_text())
         work["status"] = "RUNNING"
         work["entity_version"] = 2
@@ -97,7 +98,7 @@ class RequestIngressTests(unittest.TestCase):
 
     def test_terminal_duplicate_is_not_resurrected(self):
         first = self.task(thread_id="CHAT-A")
-        work_path = self.root / "entities" / "work" / f"{first['work_id']}.json"
+        work_path = entity_path(self.root, "work", first['work_id'])
         work = json.loads(work_path.read_text())
         work["status"] = "DONE"
         work["entity_version"] = 2
@@ -126,7 +127,7 @@ class RequestIngressTests(unittest.TestCase):
     def test_canonical_work_is_not_hidden_by_stale_active_index(self):
         (self.root / "indexes").mkdir(parents=True)
         stale = {"id": "OLD-WORK", "entity_version": 1, "status": "READY", "owner_role": "ADVISOR", "kind": "RESEARCH"}
-        (self.root / "entities" / "work" / "OLD-WORK.json").write_text(json.dumps(stale))
+        (entity_path(self.root, "work", "OLD-WORK")).write_text(json.dumps(stale))
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": [stale]}))
 
         created = self.service.ingest_request(
