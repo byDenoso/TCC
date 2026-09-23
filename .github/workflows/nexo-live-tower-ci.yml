@@ -1,0 +1,30 @@
+name: NEXO Live Tower CI
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/nexo_agent_api/live_tower.py'
+      - 'runtime/nexo_agent_api/mutations.py'
+      - 'runtime/nexo_agent_api/public_projection.py'
+      - 'runtime/nexo_agent_api/test_live_tower.py'
+      - 'runtime/nexo_agent_api/test_mutations.py'
+      - 'runtime/nexo_agent_api/test_public_projection.py'
+      - '.github/workflows/nexo-live-tower-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile runtime
+        run: python -m compileall -q runtime/nexo_agent_api
+      - name: Run live Tower mutation tests
+        run: |
+          python -m unittest -v             runtime.nexo_agent_api.test_live_tower             runtime.nexo_agent_api.test_mutations
