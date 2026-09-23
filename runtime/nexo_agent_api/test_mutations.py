@@ -212,6 +212,38 @@ class MutationInboxTests(unittest.TestCase):
         roi = json.loads((self.root / "snapshot" / "ai-roi.json").read_text())
         self.assertEqual(roi["active_work"]["count"], 0)
 
+    def test_material_test_mutation_refreshes_live_tower_and_public_projection(self) -> None:
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-LIVE-TOWER-1",
+            "entity_kind": "test",
+            "entity_name": "TEST-LIVE-1",
+            "expected_version": 0,
+            "changes": {
+                "id": "TEST-LIVE-1",
+                "status": "READY",
+                "domain": "ENGINEERING",
+                "title": "Live Tower integration test",
+            },
+            "writer_role": "ADVISOR",
+            "event_type": "TEST_CREATED",
+        })
+
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["readback"], "PASS")
+        self.assertEqual(receipt["live_tower_refresh"]["status"], "PASS")
+        self.assertEqual(
+            receipt["live_tower_refresh"]["stable_file_id"],
+            "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z",
+        )
+        self.assertEqual(receipt["projection_refresh"]["status"], "PASS")
+        self.assertEqual(receipt["projection_refresh"]["projection_state"], "CURRENT")
+        self.assertEqual(
+            receipt["projection_refresh"]["tower_revision"],
+            receipt["live_tower_refresh"]["revision"],
+        )
+        self.assertTrue((self.root / "NEXO_TOWER_LIVE.json.gz").exists())
+        self.assertTrue((self.root / "projections" / "public" / "latest.json").exists())
+
     def test_path_traversal_entity_name_is_rejected(self) -> None:
         receipt = apply_mutation_request(self.root, {
             "request_id": "REQ-3", "entity_kind": "work", "entity_name": "../bad",
