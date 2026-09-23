@@ -101,7 +101,8 @@ class LiveTowerTests(unittest.TestCase):
         path = self.root / LIVE_TOWER_NAME
         self.assertTrue(path.exists())
 
-        decoded = json.loads(gzip.decompress(path.read_bytes()).decode("utf-8"))
+        self.assertNotEqual(path.read_bytes()[:2], b"\x1f\x8b")  # JSON puro, igual ao objeto no Drive
+        decoded = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(decoded["stable_file_id"], LIVE_TOWER_FILE_ID)
         self.assertEqual(decoded["revision"], first["revision"])
 
@@ -117,3 +118,21 @@ class LiveTowerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_projection_materializes_plain_json_live_tower(tmp_path: Path) -> None:
+    """O objeto vivo atual no Drive é JSON puro; o builder da projeção lê direto."""
+    source = _tower(tmp_path / "projection-source")
+    control_path = source / "CONTROL.json"
+    control = json.loads(control_path.read_text(encoding="utf-8"))
+    control["truth_owner"] = "TOWER_V06@GOOGLE_DRIVE_PRIVATE"
+    control["write_model"] = "IN_PLACE_FILE_REVISION_CAS_READBACK"
+    control_path.write_text(json.dumps(control), encoding="utf-8")
+
+    published = publish_live_tower(source, updated_at="2026-09-23T12:00:00Z")
+    live = source / LIVE_TOWER_NAME
+    assert live.read_bytes()[:1] == b"{"
+
+    root, metadata = materialize_live_tower_root(live, tmp_path / "materialized" / "TOWER_V06")
+    assert metadata["tower_revision"] == published["revision"]
+    assert (root / "CONTROL.json").exists()

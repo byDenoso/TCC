@@ -138,8 +138,9 @@ def materialize_live_tower_root(
 ) -> tuple[Path, dict[str, object]]:
     """Verify one stable live Tower bundle and materialize a read-only Tower root."""
     bundle_path = Path(bundle_path)
-    with gzip.open(bundle_path, "rt", encoding="utf-8") as handle:
-        bundle = json.load(handle)
+    raw = bundle_path.read_bytes()
+    # Objeto vivo atual é JSON puro; o gzip anterior ao cutover continua legível.
+    bundle = json.loads((gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw).decode("utf-8"))
 
     if bundle.get("contract") != "NEXO_TOWER_LIVE_V1":
         raise ValueError(f"unsupported live Tower contract: {bundle.get('contract')!r}")
@@ -273,7 +274,7 @@ def main() -> int:
     parser.add_argument("--out", default="TOWER_V06/snapshot/pages", help="output directory")
     parser.add_argument("--tower-repository", default="byDenoso/NEXO-Obsidian-Vault")
     parser.add_argument("--tower-commit", default=None, help="optional code provenance commit")
-    parser.add_argument("--live-tower", default=None, help="canonical NEXO_TOWER_LIVE.json.gz stable Drive state")
+    parser.add_argument("--live-tower", default=None, help="canonical NEXO_TOWER_LIVE.json stable Drive state (legacy .json.gz accepted)")
     parser.add_argument("--drive-bundle", default=None, help="legacy canonical TOWER.bundle.json.gz from Drive CURRENT")
     parser.add_argument("--drive-current", default=None, help="CURRENT.json paired with --drive-bundle")
     parser.add_argument(
