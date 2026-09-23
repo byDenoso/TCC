@@ -269,6 +269,8 @@ def build_public_projection(
     *,
     tower_repository: str = "byDenoso/NEXO-Obsidian-Vault",
     tower_commit: str | None = None,
+    tower_revision: str | None = None,
+    tower_file_id: str | None = None,
     generated_at: str | None = None,
 ) -> dict[str, Any]:
     """Compile the public projection from canonical state under `root`.
@@ -354,6 +356,8 @@ def build_public_projection(
         "writeback": "FORBIDDEN",
         "tower_repository": tower_repository,
         "tower_commit": tower_commit,
+        "tower_revision": tower_revision,
+        "tower_file_id": tower_file_id,
         "event_cursor": snapshot.get("event_cursor"),
         "projection_fingerprint": _fingerprint(content),
         "generated_at": generated_at,
@@ -382,6 +386,8 @@ def verify_projection(projection: dict[str, Any]) -> tuple[bool, str]:
         return False, f"writeback={manifest.get('writeback')!r}"
     if not manifest.get("event_cursor"):
         return False, "event_cursor is missing"
-    if not manifest.get("tower_commit"):
-        return False, "tower_commit is missing"
+    if not manifest.get("tower_file_id"):
+        return False, "tower_file_id is missing"
+    if not (manifest.get("tower_revision") or manifest.get("tower_commit")):
+        return False, "tower_revision/tower_commit is missing"
     return True, actual

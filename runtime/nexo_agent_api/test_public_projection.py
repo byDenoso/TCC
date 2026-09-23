@@ -91,7 +91,11 @@ def _tower(tmp_path: Path, *, index_only: bool = False) -> Path:
 
 
 def _build(root: Path, **kwargs):
-    defaults = {"tower_commit": "a" * 40, "generated_at": "2026-09-18T00:00:00Z"}
+    defaults = {
+        "tower_revision": "sha256:" + "b" * 64,
+        "tower_file_id": "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z",
+        "generated_at": "2026-09-18T00:00:00Z",
+    }
     defaults.update(kwargs)
     return build_public_projection(root, **defaults)
 
@@ -265,7 +269,9 @@ def test_manifest_declares_itself_derived(tmp_path):
     assert manifest["writeback"] == "FORBIDDEN"
     assert manifest["tower_repository"] == "byDenoso/NEXO-Obsidian-Vault"
     assert manifest["event_cursor"] == "20260918T000000000000Z-abc"
-    assert manifest["tower_commit"] == "a" * 40
+    assert manifest["tower_revision"] == "sha256:" + "b" * 64
+    assert manifest["tower_file_id"] == "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z"
+    assert manifest["tower_commit"] is None
 
 
 def test_verification_accepts_an_untouched_projection(tmp_path):
@@ -289,12 +295,17 @@ def test_verification_rejects_a_projection_claiming_to_be_authoritative(tmp_path
     assert "projection_only" in detail
 
 
-def test_verification_requires_provenance(tmp_path):
+def test_verification_requires_live_tower_provenance(tmp_path):
     root = _tower(tmp_path)
-    without_commit = _build(root, tower_commit=None)
-    ok, detail = verify_projection(without_commit)
+    without_file = _build(root, tower_file_id=None)
+    ok, detail = verify_projection(without_file)
     assert not ok
-    assert "tower_commit" in detail
+    assert "tower_file_id" in detail
+
+    without_revision = _build(root, tower_revision=None, tower_commit=None)
+    ok, detail = verify_projection(without_revision)
+    assert not ok
+    assert "tower_revision/tower_commit" in detail
 
 
 def test_missing_canonical_files_degrade_to_empty_not_to_invention(tmp_path):

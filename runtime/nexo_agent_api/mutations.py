@@ -148,24 +148,82 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
 
     receipt = {"request_id": request_id, **governance_meta, **result}
 
-    # Work entities drive active-work, role views, and AI-ROI projections. Refresh
-    # them immediately after the canonical CAS write/readback so a terminal work
-    # mutation cannot remain visible as READY/CHECKPOINTED/WAIT_DEPENDENCY.
-    # Projection refresh is intentionally non-authoritative: if it fails, the
-    # canonical mutation remains accepted and callers receive an explicit receipt
-    # instead of retrying an already-committed write.
-    if entity_kind == "work":
+    # Keep derived role/index state coherent before packing the live Tower.
+    # A projection failure never invalidates a canonical CAS mutation.
+    if bool(request.get("material", True)):
         try:
             from .views import materialize_role_views
 
-            projection = materialize_role_views(root)
-            receipt["projection_refresh"] = {"status": "PASS", **projection}
-        except Exception as exc:  # projection failure must not invalidate committed CAS
-            receipt["projection_refresh"] = {
+            role_views = materialize_role_views(root)
+            receipt["role_view_refresh"] = {"status": "PASS", **role_views}
+        except Exception as exc:
+            receipt["role_view_refresh"] = {
                 "status": "FAILED",
                 "error_type": type(exc).__name__,
                 "message": str(exc),
             }
+
+    # Every material canonical mutation closes the state loop immediately:
+    # canonical files -> stable live Tower -> derived Atlas/public projection.
+    # External transport replaces the bytes of the same Drive file ID; this
+    # runtime receipt exposes the exact revision/fingerprint to publish/read back.
+    if bool(request.get("material", True)):
+        live_tower = None
+        try:
+            from .live_tower import publish_live_tower
+
+            live_tower = publish_live_tower(root)
+            receipt["live_tower_refresh"] = live_tower
+        except Exception as exc:
+            receipt["live_tower_refresh"] = {
+                "status": "FAILED",
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+            }
+
+        if live_tower and live_tower.get("status") == "PASS":
+            try:
+                from datetime import datetime, timezone
+                from .public_projection import (
+                    build_public_projection,
+                    projection_bytes,
+                    verify_projection,
+                )
+
+                public = build_public_projection(
+                    root,
+                    tower_revision=str(live_tower["revision"]),
+                    tower_file_id=str(live_tower["stable_file_id"]),
+                    generated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+                )
+                ok, detail = verify_projection(public)
+                if not ok:
+                    raise RuntimeError("PUBLIC_PROJECTION_VERIFY_FAILED:" + detail)
+
+                destination = root / "projections" / "public" / "latest.json"
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                temporary = destination.with_name(destination.name + ".tmp")
+                temporary.write_bytes(projection_bytes(public))
+                temporary.replace(destination)
+
+                receipt["projection_refresh"] = {
+                    "status": "PASS",
+                    "projection_state": "CURRENT",
+                    "path": str(destination),
+                    "tower_file_id": live_tower["stable_file_id"],
+                    "tower_revision": live_tower["revision"],
+                    "projection_fingerprint": public["manifest"]["projection_fingerprint"],
+                    "readback": "PASS",
+                }
+            except Exception as exc:
+                receipt["projection_refresh"] = {
+                    "status": "FAILED",
+                    "projection_state": "PROJECTION_STALE",
+                    "tower_file_id": live_tower["stable_file_id"],
+                    "tower_revision": live_tower["revision"],
+                    "error_type": type(exc).__name__,
+                    "message": str(exc),
+                }
 
     if governance.autonomy_level == "L3":
         receipt["l3_report"] = {
