@@ -20,6 +20,7 @@ _CREATABLE_ENTITY_KINDS = {
     "run",
     "result",
     "artifact",
+    "lesson",
 }
 
 

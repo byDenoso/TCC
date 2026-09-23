@@ -98,6 +98,19 @@ ATLAS_PROJECTION_FIELDS = (
     "show_hypothesis_nodes",
     "description_mode",
 )
+LESSON_FIELDS = (
+    "id",
+    "status",
+    "title",
+    "semantic",
+    "gap_type",
+    "intuition",
+    "explanation",
+    "exercise",
+    "source_signal_count",
+    "linked_test_ids",
+    "updated_at",
+)
 CAPABILITY_FIELDS = ("status", "backend", "contract_name")
 INTERDOMAIN_FIELDS = (
     "id",
@@ -225,7 +238,7 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
 
 # Olympus is personal/client health context: its free text never reaches the
 # public surface, only identity, lifecycle and meaning.
-_PRIVATE_TEXT_FIELDS = ("title", "mechanism", "method", "methodology", "datasets", "scientific_result", "statistics", "question", "semantic_description")
+_PRIVATE_TEXT_FIELDS = ("title", "intuition", "explanation", "exercise", "mechanism", "method", "methodology", "datasets", "scientific_result", "statistics", "question", "semantic_description")
 
 
 def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[str, Any]:
@@ -417,6 +430,10 @@ def build_public_projection(
     ]
 
     cross_domain = _load_cross_domain(root)
+    lessons = [
+        _with_semantics(dict(lesson, id=lesson_id), lesson)
+        for lesson_id, lesson in sorted(_load_entities(root, "lesson", LESSON_FIELDS).items())
+    ]
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {
@@ -436,6 +453,7 @@ def build_public_projection(
             "tests": len(test_entities),
             "campaigns": len(campaigns),
             "cross_domain": len(cross_domain),
+            "lessons": len(lessons),
             "capabilities": len(capabilities),
             "index_only_dropped": len(dropped),
             "needs_dener": len(human_work_ids),
@@ -449,6 +467,7 @@ def build_public_projection(
         "campaigns": campaigns,
         "crossDomain": cross_domain,
         "taxonomy": public_tree(),
+        "lessons": lessons,
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
