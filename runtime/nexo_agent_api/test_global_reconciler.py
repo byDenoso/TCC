@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .global_reconciler import reconcile_verified_work, validate_terminal_render_readback
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class GlobalReconcilerTests(unittest.TestCase):
@@ -25,7 +26,7 @@ class GlobalReconcilerTests(unittest.TestCase):
 
     def write_work(self, work_id: str, **payload) -> None:
         value = {"id": work_id, "entity_version": 1, "kind": "ACTION", "owner_role": "EXECUTOR", **payload}
-        (self.root / "entities" / "work" / f"{work_id}.json").write_text(json.dumps(value), encoding="utf-8")
+        (entity_path(self.root, "work", work_id)).write_text(json.dumps(value), encoding="utf-8")
 
     @staticmethod
     def proof(**overrides):
@@ -72,7 +73,7 @@ class GlobalReconcilerTests(unittest.TestCase):
 
         self.assertEqual(result["outcome"], "CLOSED_VERIFIED")
         self.assertFalse(result["replay"])
-        closed = json.loads((self.root / "entities" / "work" / "W-VERIFY.json").read_text())
+        closed = json.loads((entity_path(self.root, "work", "W-VERIFY")).read_text())
         self.assertEqual(closed["status"], "DONE")
         self.assertEqual(closed["closure_state"], "CLOSED_VERIFIED")
         self.assertEqual(closed["verification_status"], "PASS")
@@ -80,10 +81,10 @@ class GlobalReconcilerTests(unittest.TestCase):
         self.assertEqual(result["continuation"]["action"], "SELECT_NEXT")
         self.assertEqual(result["continuation"]["work_id"], "W-NEXT")
         self.assertTrue(result["continuation"]["started"])
-        next_work = json.loads((self.root / "entities" / "work" / "W-NEXT.json").read_text())
+        next_work = json.loads((entity_path(self.root, "work", "W-NEXT")).read_text())
         self.assertEqual(next_work["status"], "RUNNING")
         self.assertEqual(next_work["selection_state"], "SELECT_NEXT")
-        science = json.loads((self.root / "entities" / "work" / "W-SCI.json").read_text())
+        science = json.loads((entity_path(self.root, "work", "W-SCI")).read_text())
         self.assertEqual(science["status"], "READY")
 
     def test_failed_readback_keeps_work_verify_pending(self) -> None:
@@ -96,7 +97,7 @@ class GlobalReconcilerTests(unittest.TestCase):
                 readback=self.proof(http_status=503),
                 allowed_domains={"ENGINEERING"},
             )
-        work = json.loads((self.root / "entities" / "work" / "W-VERIFY.json").read_text())
+        work = json.loads((entity_path(self.root, "work", "W-VERIFY")).read_text())
         self.assertEqual(work["status"], "VERIFY_PENDING")
         self.assertNotIn("closure_state", work)
 

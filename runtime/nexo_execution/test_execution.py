@@ -276,17 +276,13 @@ class ExecutionTests(unittest.TestCase):
         )
         self.assertEqual(ResultVerifier().verify(contract, result)["status"], "PASS")
 
-    def test_actions_provider_sends_safe_contract_name_hash_and_canonical_ids(self):
+    def test_actions_provider_is_disabled_for_dispatch(self):
+        # Policy since 50163af: science runs on the caller's local/ChatGPT runtime.
         contract = ExecutionContract.from_dict(dict(BASE))
         provider = FakeActionsProvider()
-        response = provider.submit(contract, contract_name="canary-cosmology.json")
-        self.assertEqual(response["dispatch_http_status"], 204)
-        self.assertEqual(response["test_id"], contract.test_id)
-        self.assertEqual(response["run_id"], contract.run_id)
-        _, method, payload = provider.last_request
-        self.assertEqual(method, "POST")
-        self.assertEqual(payload["inputs"]["contract_name"], "canary-cosmology.json")
-        self.assertEqual(payload["inputs"]["expected_contract_hash"], contract.contract_hash)
+        with self.assertRaisesRegex(ValueError, "github_actions provider is disabled"):
+            provider.submit(contract, contract_name="canary-cosmology.json")
+        self.assertIsNone(getattr(provider, "last_request", None))
 
     def test_actions_provider_rejects_path_traversal(self):
         contract = ExecutionContract.from_dict(dict(BASE))

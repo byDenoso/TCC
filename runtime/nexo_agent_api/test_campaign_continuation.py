@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .campaign_continuation import CampaignFrontierResolver
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class CampaignFrontierResolverTests(unittest.TestCase):
@@ -20,7 +21,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
 
     def write(self, entity_kind: str, entity_id: str, **payload) -> None:
         data = {"id": entity_id, "entity_version": 1, **payload}
-        (self.root / "entities" / entity_kind / f"{entity_id}.json").write_text(
+        (entity_path(self.root, entity_kind, entity_id)).write_text(
             json.dumps(data), encoding="utf-8"
         )
 
@@ -156,7 +157,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
 
         self.assertEqual(frontier["ready"], ["T-H0-001"])
         self.assertEqual(frontier["campaign_source"], "test_group")
-        self.assertFalse((self.root / "entities" / "campaign" / "CAMP-H0.json").exists())
+        self.assertFalse((entity_path(self.root, "campaign", "CAMP-H0")).exists())
 
     def test_legacy_scientific_state_remains_a_legitimate_blocker(self) -> None:
         self.write(

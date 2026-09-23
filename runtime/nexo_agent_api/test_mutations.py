@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from .mutations import apply_mutation_request
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class MutationInboxTests(unittest.TestCase):
@@ -34,11 +35,11 @@ class MutationInboxTests(unittest.TestCase):
         })
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 2)
-        entity = json.loads((self.root / "entities" / "work" / "W1.json").read_text())
+        entity = json.loads((entity_path(self.root, "work", "W1")).read_text())
         self.assertEqual(entity["entity_version"], 2)
 
     def test_stale_request_returns_typed_receipt(self) -> None:
-        (self.root / "entities" / "work" / "W2.json").write_text(json.dumps({
+        (entity_path(self.root, "work", "W2")).write_text(json.dumps({
             "id": "W2", "entity_version": 3, "status": "RUNNING"
         }), encoding="utf-8")
         receipt = apply_mutation_request(self.root, {
@@ -60,7 +61,7 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "work" / "WORK::NEW.json").read_text())
+        entity = json.loads((entity_path(self.root, "work", "WORK::NEW")).read_text())
         self.assertEqual(entity["id"], "WORK::NEW")
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["status"], "READY")
@@ -85,7 +86,7 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "test" / "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY.json").read_text())
+        entity = json.loads((entity_path(self.root, "test", "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY")).read_text())
         self.assertEqual(entity["id"], "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY")
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["campaign_id"], "CAMP-GROWTH-LSS")
@@ -111,7 +112,7 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "test_group" / f"{group_id}.json").read_text())
+        entity = json.loads((entity_path(self.root, "test_group", group_id)).read_text())
         self.assertEqual(entity["id"], group_id)
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["group_kind"], "BATTERY")
@@ -140,7 +141,7 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
         self.assertEqual(receipt["readback"], "PASS")
-        entity = json.loads((self.root / "entities" / "hypothesis" / f"{hypothesis_id}.json").read_text())
+        entity = json.loads((entity_path(self.root, "hypothesis", hypothesis_id)).read_text())
         self.assertEqual(entity["id"], hypothesis_id)
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["status"], "OPEN")
@@ -156,7 +157,7 @@ class MutationInboxTests(unittest.TestCase):
         })
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
-        self.assertFalse((self.root / "entities" / "work" / "WORK::NEW.json").exists())
+        self.assertFalse((entity_path(self.root, "work", "WORK::NEW")).exists())
 
     def test_zero_version_rejects_mismatched_identity_for_test_group(self) -> None:
         receipt = apply_mutation_request(self.root, {
@@ -170,7 +171,7 @@ class MutationInboxTests(unittest.TestCase):
         })
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
-        self.assertFalse((self.root / "entities" / "test_group" / "TEST_GROUP::CAMP-GROWTH-LSS::A.json").exists())
+        self.assertFalse((entity_path(self.root, "test_group", "TEST_GROUP::CAMP-GROWTH-LSS::A")).exists())
 
     def test_work_terminal_mutation_refreshes_active_projection(self) -> None:
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({
@@ -183,7 +184,7 @@ class MutationInboxTests(unittest.TestCase):
                 "kind": "ACTION",
             }],
         }), encoding="utf-8")
-        (self.root / "entities" / "work" / "W-CLOSE.json").write_text(json.dumps({
+        (entity_path(self.root, "work", "W-CLOSE")).write_text(json.dumps({
             "id": "W-CLOSE",
             "entity_version": 1,
             "status": "READY",

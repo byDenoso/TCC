@@ -8,6 +8,7 @@ from uuid import uuid4
 from .mutations import apply_mutation_request
 from .scheduler_visibility import ensure_scheduler_visibility, scheduler_work_id
 from .service import TowerAgentIssue
+from .tower_paths import entity_path
 
 
 def _now() -> str:
@@ -15,7 +16,7 @@ def _now() -> str:
 
 
 def _read_entity(root: Path, kind: str, entity_id: str) -> dict | None:
-    path = root / "entities" / kind / f"{entity_id}.json"
+    path = entity_path(root, kind, entity_id)
     if not path.exists():
         return None
     payload = json.loads(path.read_text(encoding="utf-8"))

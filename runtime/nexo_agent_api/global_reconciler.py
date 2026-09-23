@@ -8,6 +8,7 @@ from typing import Any, Iterable
 
 from .mutations import apply_mutation_request
 from .service import AgentService
+from .tower_paths import entity_path
 
 _VERIFIED_READBACK_STATES = {"PASS", "SUCCESS", "VERIFIED"}
 _TERMINAL_WORK_STATES = {"DONE", "VERIFIED", "CLOSED", "CLOSED_VERIFIED"}
@@ -208,7 +209,7 @@ def reconcile_verified_work(
 ) -> dict[str, Any]:
     """Close VERIFY_PENDING after render proof, persist CLOSED_VERIFIED, then select next."""
     root = Path(root)
-    path = root / "entities" / "work" / f"{work_id}.json"
+    path = entity_path(root, "work", work_id)
     work = _read_json(path)
     if work is None:
         raise ValueError("WORK_NOT_FOUND")

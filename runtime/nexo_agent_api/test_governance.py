@@ -8,6 +8,7 @@ import unittest
 from pathlib import Path
 
 from .mutations import apply_mutation_request
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class GovernanceGateTests(unittest.TestCase):
@@ -23,13 +24,13 @@ class GovernanceGateTests(unittest.TestCase):
         (self.root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE"}), encoding="utf-8")
         (self.root / "snapshot" / "latest.json").write_text(json.dumps({}), encoding="utf-8")
         (self.root / "manifests" / "capabilities.json").write_text(json.dumps({"capabilities": {}}), encoding="utf-8")
-        (self.root / "entities" / "governance" / "NEXO_RSI_POLICY.json").write_text(json.dumps({
+        (entity_path(self.root, "governance", "NEXO_RSI_POLICY")).write_text(json.dumps({
             "id": "NEXO_RSI_POLICY",
             "entity_version": 1,
             "retry_limit": 3,
             "parallelism": 1,
         }), encoding="utf-8")
-        (self.root / "entities" / "strategy" / "L3_STRATEGY.json").write_text(json.dumps({
+        (entity_path(self.root, "strategy", "L3_STRATEGY")).write_text(json.dumps({
             "id": "L3_STRATEGY",
             "entity_version": 1,
             "priority": "normal",

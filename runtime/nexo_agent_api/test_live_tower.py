@@ -15,6 +15,7 @@ from .live_tower import (
     build_live_tower_payload,
     publish_live_tower,
 )
+from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class LiveTowerTests(unittest.TestCase):
@@ -25,7 +26,7 @@ class LiveTowerTests(unittest.TestCase):
         (self.root / "indexes").mkdir(parents=True)
         (self.root / "projections" / "public").mkdir(parents=True)
         (self.root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE"}), encoding="utf-8")
-        (self.root / "entities" / "work" / "W1.json").write_text(
+        (entity_path(self.root, "work", "W1")).write_text(
             json.dumps({"id": "W1", "status": "READY", "entity_version": 1}),
             encoding="utf-8",
         )
@@ -53,7 +54,7 @@ class LiveTowerTests(unittest.TestCase):
 
     def test_material_change_changes_revision(self) -> None:
         before = build_live_tower_payload(self.root)["revision"]
-        path = self.root / "entities" / "work" / "W1.json"
+        path = entity_path(self.root, "work", "W1")
         work = json.loads(path.read_text(encoding="utf-8"))
         work["status"] = "RUNNING"
         path.write_text(json.dumps(work), encoding="utf-8")
@@ -123,7 +124,7 @@ class LiveTowerTests(unittest.TestCase):
         self.assertEqual(decoded["stable_file_id"], LIVE_TOWER_FILE_ID)
         self.assertEqual(decoded["revision"], first["revision"])
 
-        work_path = self.root / "entities" / "work" / "W1.json"
+        work_path = entity_path(self.root, "work", "W1")
         work = json.loads(work_path.read_text(encoding="utf-8"))
         work["status"] = "DONE"
         work_path.write_text(json.dumps(work), encoding="utf-8")

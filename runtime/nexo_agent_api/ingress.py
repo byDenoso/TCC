@@ -7,6 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .service import TowerAgentIssue
+from .tower_paths import entity_path, json_file
 
 TERMINAL_WORK_STATES = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED"}
 MAX_REQUEST_REFS = 20
@@ -60,7 +61,7 @@ def _write_event(root: Path, *, event_type: str, work_id: str, entity_version: i
     }
     event_dir = root / "events" / datetime.now(timezone.utc).strftime("%Y-%m-%d")
     event_dir.mkdir(parents=True, exist_ok=True)
-    (event_dir / f"{event_id}.json").write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return event
 
 
@@ -89,7 +90,7 @@ def _append_ref_bounded(existing: list[dict] | None, ref: dict) -> list[dict]:
 
 
 def _work_path(root: Path, work_id: str) -> Path:
-    return root / "entities" / "work" / f"{work_id}.json"
+    return entity_path(root, "work", work_id)
 
 
 def _read_work(root: Path, work_id: str) -> dict | None:
