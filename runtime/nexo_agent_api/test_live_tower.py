@@ -6,6 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from scripts.build_public_projection import materialize_live_tower_root
+from .public_projection import build_public_projection, verify_projection
+from .test_public_projection import _tower
 from .live_tower import (
     LIVE_TOWER_FILE_ID,
     LIVE_TOWER_NAME,
@@ -56,6 +59,42 @@ class LiveTowerTests(unittest.TestCase):
         path.write_text(json.dumps(work), encoding="utf-8")
         after = build_live_tower_payload(self.root)["revision"]
         self.assertNotEqual(before, after)
+
+    def test_public_projection_materializes_directly_from_live_tower(self) -> None:
+        source = _tower(Path(self.tmp.name) / "projection-source")
+        control_path = source / "CONTROL.json"
+        control = json.loads(control_path.read_text(encoding="utf-8"))
+        control["truth_owner"] = "TOWER_V06@GOOGLE_DRIVE_PRIVATE"
+        control["write_model"] = "IN_PLACE_FILE_REVISION_CAS_READBACK"
+        control_path.write_text(json.dumps(control), encoding="utf-8")
+
+        payload = build_live_tower_payload(source, updated_at="2026-09-23T12:00:00Z")
+        bundle = Path(self.tmp.name) / "NEXO_TOWER_LIVE_SOURCE.json.gz"
+        with gzip.open(bundle, "wt", encoding="utf-8") as handle:
+            json.dump(payload, handle, ensure_ascii=False, sort_keys=True)
+
+        root, metadata = materialize_live_tower_root(
+            bundle,
+            Path(self.tmp.name) / "materialized" / "TOWER_V06",
+        )
+        self.assertFalse((root / "CURRENT.json").exists())
+
+        projection = build_public_projection(
+            root,
+            tower_revision=str(metadata["tower_revision"]),
+            tower_file_id=str(metadata["tower_file_id"]),
+            generated_at="2026-09-23T12:01:00Z",
+        )
+        ok, detail = verify_projection(projection)
+        self.assertTrue(ok, detail)
+        self.assertEqual(
+            projection["manifest"]["tower_file_id"],
+            LIVE_TOWER_FILE_ID,
+        )
+        self.assertEqual(
+            projection["manifest"]["tower_revision"],
+            payload["revision"],
+        )
 
     def test_publish_replaces_same_local_file_and_readbacks(self) -> None:
         first = publish_live_tower(self.root, updated_at="2026-09-23T12:00:00Z")

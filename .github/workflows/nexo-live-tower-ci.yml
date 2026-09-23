@@ -9,6 +9,8 @@ on:
       - 'runtime/nexo_agent_api/test_live_tower.py'
       - 'runtime/nexo_agent_api/test_mutations.py'
       - 'runtime/nexo_agent_api/test_public_projection.py'
+      - 'runtime/nexo_agent_api/test_public_projection_writer.py'
+      - 'scripts/build_public_projection.py'
       - '.github/workflows/nexo-live-tower-ci.yml'
 
 permissions:
@@ -23,8 +25,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Compile runtime
-        run: python -m compileall -q runtime/nexo_agent_api
+      - name: Compile runtime and projection publisher
+        run: |
+          python -m compileall -q runtime/nexo_agent_api
+          python -m py_compile scripts/build_public_projection.py
       - name: Run live Tower mutation tests
         run: |
           python -m unittest -v             runtime.nexo_agent_api.test_live_tower             runtime.nexo_agent_api.test_mutations
