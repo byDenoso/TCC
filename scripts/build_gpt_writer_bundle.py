@@ -58,6 +58,32 @@ def build() -> Path:
     return OUT
 
 
+# User-owned file in Drive NEXO_INBOX/_runtime/ (service accounts cannot own files;
+# they can update the content of a file the owner created).
+DRIVE_BUNDLE_FILE_ID = "1DBw9H1wUHjZkasE2BI-aEafCzNnjKOjV"
+
+
+def upload(path: Path) -> str:
+    """Publish the bundle to Drive so ChatGPT gets it as a real file (file_uri).
+
+    ChatGPT's GitHub connector shows file text but cannot hand it to the Python
+    sandbox; the Drive connector can. Uses the writer service account.
+    """
+    import sys
+
+    sys.path.insert(0, str(REPO))
+    from runtime.nexo_agent_api.drive_transport import _UPLOAD, DriveInbox
+
+    session = DriveInbox(write=True).session
+    session.patch(f"{_UPLOAD}/{DRIVE_BUNDLE_FILE_ID}", params={"uploadType": "media", "supportsAllDrives": "true"},
+                  data=path.read_bytes(), headers={"Content-Type": "text/plain"}, timeout=120).raise_for_status()
+    return DRIVE_BUNDLE_FILE_ID
+
+
 if __name__ == "__main__":
+    import sys
+
     out = build()
     print(out, out.stat().st_size)
+    if "--upload" in sys.argv:
+        print("drive file id:", upload(out))
