@@ -143,3 +143,15 @@ A cada pulso o Executor revisa até 3 testes CHECKPOINTED (os mais antigos prime
 3. o input é inalcançável com dados públicos → MUTATION_PROPOSAL com `result.verdict: "BLOCKED_INPUT"` e o motivo
    em `semantic.result_meaning`; o teste sai da fila de retomada (status BLOCKED_INPUT) e continua visível.
 Nunca marque CHECKPOINTED como READY nem invente o input.
+
+## DATA_BINDING — dado ligado para destravar teste (skill nexo-data-hydration)
+```json
+{"test_id": "T-...", "inputs": [{"name": "...", "url": "https://...", "sha256": "...", "format": "...",
+  "load": "como carregar", "checked": "valor conferido contra o paper", "license": "public"}],
+ "status": "BOUND|PARTIAL|UNAVAILABLE", "note": "português simples"}
+```
+Vira `artifact DATA_BINDING::*`. O Executor lê antes de retomar um CHECKPOINTED.
+
+## Escrita barrada pelo runtime
+Se GitHub e Doc forem recusados, imprima o envelope no relatório entre `NEXO_PENDING_PROPOSAL` e
+`END_NEXO_PENDING_PROPOSAL`. A próxima execução da mesma tarefa reenvia antes do trabalho novo.

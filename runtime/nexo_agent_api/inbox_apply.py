@@ -348,6 +348,7 @@ _KIND_ALIASES = {
     "OPERATOR_INTENT": "OPERATOR_INTENT", "INTENT": "OPERATOR_INTENT",
     "ROADMAP_ATTACH": "ROADMAP_ATTACH", "ATTACH": "ROADMAP_ATTACH",
     "SEMANTIC_BACKFILL": "SEMANTIC_BACKFILL", "BACKFILL": "SEMANTIC_BACKFILL", "MEANING_BACKFILL": "SEMANTIC_BACKFILL",
+    "DATA_BINDING": "DATA_BINDING", "BINDING": "DATA_BINDING",
     "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
 }
 _BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
@@ -422,4 +423,4 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
     except ProposalError as exc:
         # Keep the content in the Tower (nothing is lost) and say why it was not applied.
         return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")
-    return _record_request(item, body, kind if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT", "INTEGRITY_REPORT"} else "INBOX_RECORD")
+    return _record_request(item, body, kind if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT", "INTEGRITY_REPORT", "DATA_BINDING"} else "INBOX_RECORD")
