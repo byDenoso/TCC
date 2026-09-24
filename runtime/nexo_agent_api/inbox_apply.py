@@ -180,7 +180,13 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
     kind = str(item.get("kind") or "").upper()
     body = item.get("payload") if isinstance(item.get("payload"), dict) else {}
     if kind == "MUTATION_PROPOSAL":
-        return _result_request(item, body, root)
+        # One proposal may carry several results: {"tests": [{test_id, result, semantic, ...}, ...]}.
+        batch = body.get("tests") if isinstance(body.get("tests"), list) else [body]
+        requests = []
+        for index, entry in enumerate(batch):
+            named = dict(item, _inbox_name=f"{item.get('_inbox_name') or 'item'}-{index}") if len(batch) > 1 else item
+            requests.extend(_result_request(named, entry if isinstance(entry, dict) else {}, root))
+        return requests
     if kind == "HYPOTHESIS_PROPOSAL":
         return _hypothesis_requests(item, body, root)
     if kind == "LESSON_PROPOSAL":
