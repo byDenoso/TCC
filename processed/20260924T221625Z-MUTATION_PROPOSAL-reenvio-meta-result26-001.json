@@ -1,0 +1,40 @@
+{
+ "kind": "MUTATION_PROPOSAL",
+ "source": "CHATGPT",
+ "created_at": "2026-09-24T22:30:00Z",
+ "payload": {
+  "limitations": [
+   "A amostra cobre runtime/results com veredito terminal presentes na Tower atual; não cobre formatos externos ou futuros."
+  ],
+  "linked_signal_ids": [
+   "LEARNING_SIGNAL::20260924T152324Z-LEARNING-SIGNAL-INTEGRITY-SUPPLEMENT"
+  ],
+  "reproducibility": {
+   "code": "Contagem direta dos campos numbers/statistics em todos os runtime/results terminais schema nexo.scientific-result.v1.",
+   "data_sources": [
+    "NEXO_TOWER_LIVE.json revisão 2026-09-24T15:25:14.446Z"
+   ]
+  },
+  "result": {
+   "decision": "SCHEMA_NUMERIC_FIELD_SYSTEMIC",
+   "statistics": {
+    "n": 10,
+    "numbers_without_statistics_n": 10,
+    "rate": 1.0
+   },
+   "summary": "10/10 resultados runtime com veredito terminal e schema nexo.scientific-result.v1 têm numbers presente e statistics ausente.",
+   "verdict": "PROMOTED"
+  },
+  "semantic": {
+   "confidence_plain": "alta",
+   "domain_id": "engineering",
+   "question_plain": "Os resultados runtime usam sistematicamente numbers sem statistics?",
+   "result_meaning": "O problema não está restrito aos dois PROMOTED apontados pelo Guardião: os 10 resultados científicos runtime do schema v1 usam numbers e nenhum usa statistics. Isso indica divergência sistêmica de schema/normalização, sem mudar o conteúdo científico desses resultados.",
+   "subdomain_id": "engineering.nexo_runtime",
+   "topic_id": "engineering.nexo_runtime.state_integrity",
+   "verdict_plain": "Promovido",
+   "why_it_matters": "A divergência de campo torna a validação inconsistente entre produtores e auditores."
+  },
+  "test_id": "META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION"
+ }
+}
