@@ -47,6 +47,43 @@ def _semantic(existing: dict[str, Any] | None, proposed: dict[str, Any] | None) 
     return merged
 
 
+def _siblings(root: Path, roadmap_id: str | None) -> list[dict[str, Any]]:
+    if not roadmap_id:
+        return []
+    path = fs_path(root, f"roadmaps/{roadmap_id}.json")
+    if not path.is_file():
+        return []
+    refs = json.loads(path.read_text(encoding="utf-8")).get("frontier_refs") or []
+    return [e for e in (_entity(root, "test", str(r)) for r in refs) if e]
+
+
+def _complete_semantic(entity: dict[str, Any], semantic: dict[str, Any], root: Path) -> dict[str, Any]:
+    """Guarantee the block the ATLAS renders: valid taxonomy ids + plain-language fields.
+
+    Invalid or missing ids are resolved like the projection does (explicit -> campaign ->
+    roadmap -> rules), then from sibling tests of the same roadmap; question_plain falls
+    back to the frozen question and verdict_plain to the verdict, so no card is empty.
+    """
+    from .semantics import UNMAPPED, resolve
+
+    semantic = dict(semantic)
+    resolved = resolve({**entity, "semantic": semantic}, entity_id=entity.get("id"))
+    if resolved.get("domain_id") == UNMAPPED:
+        for sibling in _siblings(root, entity.get("roadmap_id")):
+            candidate = resolve(sibling, entity_id=sibling.get("id"))
+            if candidate.get("domain_id") != UNMAPPED:
+                resolved = {**candidate, "basis": "ROADMAP_SIBLING"}
+                break
+    for key in ("domain_id", "subdomain_id", "topic_id"):
+        if resolved.get(key) and resolved.get(key) != UNMAPPED:
+            semantic[key] = resolved[key]
+    if not semantic.get("question_plain") and (entity.get("question") or entity.get("scientific_question")):
+        semantic["question_plain"] = str(entity.get("question") or entity.get("scientific_question"))
+    if not semantic.get("verdict_plain") and entity.get("verdict"):
+        semantic["verdict_plain"] = str(entity["verdict"]).replace("_", " ").capitalize()
+    return semantic
+
+
 def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     test_id = str(body.get("test_id") or "").strip()
     if not test_id:
@@ -59,6 +96,7 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     semantic = _semantic(current, body.get("semantic"))
     if not semantic.get("result_meaning"):
         raise ProposalError(f"{test_id}: result without semantic.result_meaning")
+    semantic = _complete_semantic({**current, "verdict": verdict}, semantic, root)
     status = "REJECTED" if verdict in TERMINAL_VERDICTS else "DONE"
     changes = {
         "status": status,
@@ -93,16 +131,25 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     kill = _first(body, "kill_criteria", "kill_criterion", "criterio_kill")
     if not success or not kill:
         raise ProposalError(f"{test_id}: hypothesis without frozen success and kill criteria")
-    semantic = body.get("semantic") or {}
-    if not semantic.get("domain_id"):
-        raise ProposalError(f"{test_id}: hypothesis without semantic.domain_id")
     roadmap_id = body.get("roadmap_id")
+    siblings = _siblings(root, roadmap_id)
+    inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "hypothesis_id", "domain")}
+    question = _first(body, "question", "hypothesis", "hipotese", "hipótese")
+    semantic = _complete_semantic(
+        {"id": test_id, "roadmap_id": roadmap_id, "campaign_id": body.get("campaign_id") or inherited["campaign_id"], "question": question},
+        body.get("semantic") or {}, root,
+    )
+    if not semantic.get("domain_id"):
+        raise ProposalError(f"{test_id}: hypothesis without a resolvable semantic domain (give semantic.topic_id or roadmap_id)")
     changes = {
         "kind": "TEST", "status": "READY", "state": "READY",
         "priority": body.get("priority") or "P1",
         "domain": str(semantic.get("domain_id", "science")).upper(),
         "roadmap_id": roadmap_id,
-        "question": _first(body, "question", "hypothesis", "hipotese", "hipótese"),
+        "roadmap_test_id": test_id,
+        "campaign_id": body.get("campaign_id") or inherited["campaign_id"],
+        "hypothesis_id": body.get("hypothesis_id") or inherited["hypothesis_id"],
+        "question": question,
         "method": body.get("method"),
         "null": body.get("null"),
         "rival": body.get("rival"),

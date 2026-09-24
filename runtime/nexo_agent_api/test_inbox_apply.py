@@ -61,3 +61,25 @@ class InboxApplyTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SiteFormatTests(unittest.TestCase):
+    def test_new_hypothesis_inherits_roadmap_context_and_semantics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            sib = entity_path(root, "test", "S-1")
+            sib.parent.mkdir(parents=True)
+            sib.write_text(json.dumps({"id": "S-1", "campaign_id": "CAMP-X", "hypothesis_id": "HYP-X",
+                                       "semantic": {"topic_id": "science.cosmology.dark_matter.nature"}}))
+            (root / "roadmaps").mkdir()
+            (root / "roadmaps" / "RM-X.json").write_text(json.dumps({"frontier_refs": ["S-1"]}))
+            requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {
+                "test_id": "H-2", "roadmap_id": "RM-X", "question": "Does X happen?",
+                "success_criteria": "a", "kill_criteria": "b"}}, root)
+            test = requests[0]["changes"]
+            self.assertEqual(test["campaign_id"], "CAMP-X")
+            self.assertEqual(test["hypothesis_id"], "HYP-X")
+            self.assertEqual(test["roadmap_test_id"], "H-2")
+            self.assertEqual(test["semantic"]["subdomain_id"], "science.cosmology.dark_matter")
+            self.assertEqual(test["semantic"]["question_plain"], "Does X happen?")
+            self.assertEqual(requests[1]["merge"]["frontier_refs"], ["S-1", "H-2"])
