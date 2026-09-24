@@ -130,3 +130,16 @@ Enquanto faltar, o site mostra uma leitura automática marcada como provisória.
 Nunca escreva o nome de uma pessoa em ids, títulos ou textos públicos. Cada pessoa tem um `subject_code`
 de 3 letras (ex.: `MIQ`, `JOS`) em todo teste/campanha Olympus. O site mostra só o código; a projeção
 reescreve ids de campanha que contenham nomes (`CAMP-OLY-<código>-<hash>`). Novas campanhas: `CAMP-OLY-<código>-<tema>-<data>`.
+
+## Nenhum teste flutuando
+Todo teste pertence a um roadmap. `HYPOTHESIS_PROPOSAL` sem `roadmap_id` é ligada automaticamente ao roadmap ACTIVE
+da mesma subárea (senão, do mesmo domínio). Para ligar testes que já existem: `ROADMAP_ATTACH`
+`{"items": [{"test_id": "...", "roadmap_id": "opcional"}]}`.
+
+## CHECKPOINTED (em espera)
+A cada pulso o Executor revisa até 3 testes CHECKPOINTED (os mais antigos primeiro):
+1. o input que faltava agora existe → retome e grave o resultado (MUTATION_PROPOSAL);
+2. o resultado já existe em `runtime/results`/artifacts → grave-o (MUTATION_PROPOSAL);
+3. o input é inalcançável com dados públicos → MUTATION_PROPOSAL com `result.verdict: "BLOCKED_INPUT"` e o motivo
+   em `semantic.result_meaning`; o teste sai da fila de retomada (status BLOCKED_INPUT) e continua visível.
+Nunca marque CHECKPOINTED como READY nem invente o input.
