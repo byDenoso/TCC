@@ -200,6 +200,31 @@ def _public_numeric_fields(value: Any, fields: Iterable[str]) -> dict[str, int |
     }
 
 
+_STAT_ALIASES = {
+    "p_value": ("p_value", "global_p", "p", "pvalue", "p_global", "gaussian_full_covariance_global_p"),
+    "sigma_raw": ("sigma_raw", "sigma", "significance_sigma", "tension_sigma", "n_sigma", "z_sigma"),
+    "sigma_lee": ("sigma_lee", "sigma_global", "global_sigma"),
+    "delta_chi2": ("delta_chi2", "dchi2", "delta_chisq", "chi2_improvement"),
+    "delta_bic": ("delta_bic", "dbic", "bic_difference"),
+    "ln_bayes_factor": ("ln_bayes_factor", "lnB", "ln_b", "log_bayes_factor"),
+}
+
+
+def _aliased_statistics(entity: dict[str, Any], result: dict[str, Any]) -> dict[str, float]:
+    """Results store statistics under many names (the Learner flagged this as META-RESULT26-001);
+    map the common aliases onto the fields the site knows. Numbers only; nothing is computed."""
+    pools = [d for d in (entity.get("statistics"), result.get("statistics"), result.get("numbers"), result, entity)
+             if isinstance(d, dict)]
+    found: dict[str, float] = {}
+    for field, names in _STAT_ALIASES.items():
+        for pool in pools:
+            value = next((pool[n] for n in names if isinstance(pool.get(n), (int, float)) and not isinstance(pool.get(n), bool)), None)
+            if value is not None:
+                found[field] = value
+                break
+    return found
+
+
 def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
     """Project only the scientific fields consumed by ScienceProjectionV1."""
     projected = _pick(entity, TEST_FIELDS)
@@ -231,6 +256,8 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
     statistics = _public_numeric_fields(entity.get("statistics"), TEST_STATISTICS_FIELDS)
     if not statistics and isinstance(scientific_result, dict):
         statistics = _public_numeric_fields(scientific_result.get("statistics"), TEST_STATISTICS_FIELDS)
+    if not statistics:
+        statistics = _aliased_statistics(entity, scientific_result if isinstance(scientific_result, dict) else {})
     if statistics:
         projected["statistics"] = statistics
     if not projected.get("verdict"):
@@ -305,6 +332,27 @@ def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[s
             projected.pop(key, None)
         projected["private"] = True
     return projected
+
+def _load_integrity(root: Path) -> dict[str, Any] | None:
+    """Latest Guardião report (INTEGRITY_REPORT, or OPERATOR_INTENT carrying one) for the site's status strip."""
+    folder = root / "entities" / "artifact"
+    best: tuple[str, dict[str, Any]] | None = None
+    for path in folder.glob("*.json") if folder.is_dir() else []:
+        record = _read_json(path) or {}
+        payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
+        status = str(payload.get("status") or "").upper()
+        if status not in {"GREEN", "YELLOW", "RED"} or not isinstance(payload.get("checks"), list):
+            continue
+        stamp = str(record.get("created_at") or payload.get("date") or "")
+        if best is None or stamp > best[0]:
+            best = (stamp, payload)
+    if not best:
+        return None
+    checks = [c for c in best[1]["checks"] if isinstance(c, dict)]
+    failing = [str(c.get("area") or "") for c in checks if c.get("ok") is False]
+    return {"status": str(best[1]["status"]).upper(), "checked_at": best[0],
+            "checks_total": len(checks), "checks_failing": len(failing), "failing_areas": failing[:8]}
+
 
 def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
     """Project canonical Interdomain relations as derived Learning filaments."""
@@ -536,6 +584,7 @@ def build_public_projection(
     ]
 
     hypotheses = _load_hypotheses(root)
+    integrity = _load_integrity(root)
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {
@@ -572,6 +621,7 @@ def build_public_projection(
         "taxonomy": public_tree(),
         "lessons": lessons,
         "hypotheses": hypotheses,
+        "integrity": integrity,
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
