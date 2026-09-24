@@ -4,8 +4,11 @@ Todas as tarefas do GPT (Executor, Gaps, Learner) escrevem neste formato. O **NE
 aplica na Tower com `gpt/nexo_gpt_writer.py`, que completa o que faltar, mas quanto mais
 completo, melhor fica o site (ATLAS: cards, grafos, aba Aprendizado).
 
-Envelope (um arquivo por proposta; Google Doc em NEXO_INBOX com o JSON no corpo, ou
-`inbox/<nome>.json` no GitHub byDenoso/TCC branch `nexo-inbox`):
+Envelope (um arquivo por proposta). **Caminho principal: `inbox/<nome>.json` no GitHub
+byDenoso/TCC branch `nexo-inbox`** (JSON puro, sem o passo "criar Doc e depois colar", que às vezes
+deixa o Doc vazio). Reserva: Google Doc em NEXO_INBOX com o JSON no corpo — depois de criar, releia o
+Doc; se vier vazio ou com JSON inválido, grave a mesma proposta no GitHub e registre isso no relatório.
+O Writer move Docs vazios/inválidos para `NEXO_INBOX/processed/_invalid` (nunca apaga) para não travar a fila.
 
 ```json
 {"kind": "...", "source": "CHATGPT", "created_at": "2026-09-24T12:00:00Z", "payload": {...}}
