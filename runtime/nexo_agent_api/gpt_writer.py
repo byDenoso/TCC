@@ -6,6 +6,7 @@ the same rules as ``scripts/nexo_tower.py apply``:
 
     python nexo_gpt_writer.py apply  TOWER.json PROPOSALS.json OUT.json
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
+    python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]   (what to execute next)
 
 PROPOSALS.json is a list of inbox proposal envelopes ({kind, source, payload,
 created_at}) and/or raw writer requests ({entity_kind, ...} or {document, ...}).
@@ -56,6 +57,14 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) >= 2 and argv[0] == "frontier":
+        # Same frontier as the CLI writer: resume CHECKPOINTED/RUNNING first, then READY.
+        from .frontier import roadmap_frontier
+
+        with tempfile.TemporaryDirectory(prefix="nexo-gpt-frontier-") as work:
+            root, _ = materialize_live_tower(Path(argv[1]).read_bytes(), Path(work) / "TOWER_V06")
+            print(json.dumps(roadmap_frontier(root, argv[2] if len(argv) > 2 else None), ensure_ascii=False, indent=1))
+        return 0
     if len(argv) >= 2 and argv[0] == "verify":
         fingerprint = verify_live_tower(read_live_tower_bytes(Path(argv[1]).read_bytes()))
         ok = len(argv) < 3 or fingerprint == argv[2]

@@ -23,6 +23,7 @@ TEMPLATE = '''#!/usr/bin/env python3
 
     python nexo_gpt_writer.py apply  TOWER.json PROPOSALS.json OUT.json
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
+    python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
 
 Bundle sha256: {digest}
 """
