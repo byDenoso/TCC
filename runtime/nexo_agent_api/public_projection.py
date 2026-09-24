@@ -304,6 +304,9 @@ def _load_hypotheses(root: Path) -> list[dict[str, Any]]:
             continue
         hypothesis_id = str(entity.get("id") or entity.get("hypothesis_id") or path.stem)
         tests = tests_by_hypothesis.get(hypothesis_id, [])
+        declared = (entity.get("semantic") or {}).get("domain_id") if isinstance(entity.get("semantic"), dict) else None
+        if "OLYMPUS" in {str(entity.get("domain") or "").upper(), str(declared or "").upper()} or hypothesis_id.startswith("HYP-OLY"):
+            continue  # Olympus is private: never in the public projection
         record = {
             "id": hypothesis_id,
             "title": entity.get("title"),
