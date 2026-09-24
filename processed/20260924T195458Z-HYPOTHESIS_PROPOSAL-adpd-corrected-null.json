@@ -1,0 +1,35 @@
+{
+  "kind": "HYPOTHESIS_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-24T19:54:58Z",
+  "payload": {
+    "test_id": "T-H0HOM26-011-ADPD-CORRECTED-NULL",
+    "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1",
+    "hypothesis": {
+      "id": "HYP-H0-ADPD-CORRECTED-NULL-20260924",
+      "statement": "A anisotropia ADPD em escala de Gpc publicada no DESI DR1 deixa de ser estatisticamente anômala quando a mesma seleção é analisada com distância comóvel correta e nulos ΛCDM que incluem geometria, bias e RSD de forma equivalente.",
+      "model": "Anomalia aparente dominada por escolhas de distância e modelagem insuficiente dos mocks/nulos.",
+      "baseline": "O sinal anisotrópico permanece com global_p<0,01, orientação e escala estáveis mesmo após distância comóvel correta e nulos ΛCDM com geometria, bias e RSD equivalentes.",
+      "falsification_criterion": "A hipótese cai se a implementação corrigida e uma implementação independente concordarem em global_p<0,01 e preservarem a orientação/escala do sinal publicado."
+    },
+    "question": "Does the published DESI DR1 Gpc-scale ADPD anisotropy become consistent with LambdaCDM when comoving distance and geometry/bias/RSD-matched nulls are applied in an independent implementation?",
+    "null": "Após corrigir a distância e usar nulos ΛCDM equivalentes em geometria, bias e RSD, a anomalia ADPD continua robusta: global_p<0,01 e orientação/escala compatíveis entre a implementação corrigida e uma implementação independente.",
+    "rival": "Com distância comóvel correta e nulos ΛCDM equivalentes, o excesso ADPD perde significância global e fica compatível com o nulo, sem orientação/escala robusta.",
+    "method": "Usar exatamente os subsamples públicos do artigo, sem alterar cortes após olhar os resultados. Implementar o estatístico ADPD em duas rotas: (A) reconstrução mínima corrigida a partir da definição publicada; (B) implementação independente. Converter redshift para distância comóvel com cosmologia fiducial congelada antes do cálculo. Processar dados e mocks com o mesmo pipeline; mocks devem reproduzir máscara/geometria, bias do traçador e RSD. Calcular o máximo predeclarado sobre bins de escala/orientação e obter global_p pela mesma busca aplicada aos mocks. Comparar as duas implementações antes do veredito.",
+    "data": "DESI DR1 subsamples públicos do estudo ADPD (Zenodo record 20118015 ou registro corretivo oficialmente supersedente), repositório citado no commit c9810c2beb6caccc82d25fd4e723425818a4c063 apenas como referência da definição publicada, e mocks públicos equivalentes em geometria/bias/RSD, incluindo a família DESI-FLAMINGO usada na análise independente quando o artefato exato for pinado por versão/hash.",
+    "success_criteria": "PROMOTED se ambas as implementações retornarem global_p>=0,05 após correção e concordarem no estatístico global dentro de 10% relativo, sem orientação/escala persistente pré-declarada. Se 0,01<=global_p<0,05 ou as implementações divergirem >10%, INCONCLUSIVE.",
+    "kill_criteria": "REJECTED se ambas as implementações concordarem em global_p<0,01 e o máximo permanecer na mesma orientação e faixa de escala pré-declaradas do sinal publicado.",
+    "claim_boundary": "PROMOTED significará apenas que o sinal ADPD publicado não é robusto ao tratamento corrigido de distância e nulos realistas nesta reprodução. Não prova isotropia perfeita do Universo nem resolve sozinho a tensão de H0.",
+    "depends_on": ["T-H0HOM26-005"],
+    "priority": "P0",
+    "linked_signal_ids": [],
+    "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.h0",
+      "topic_id": "science.cosmology.h0.local_flows_homogeneity",
+      "question_plain": "A anisotropia ADPD do DESI desaparece quando distância, geometria, bias e RSD são tratados de forma equivalente nos dados e nos mocks?",
+      "why_it_matters": "Isso separa uma possível anisotropia cosmológica de um efeito produzido pelo pipeline e pela calibração incompleta do nulo.",
+      "confidence_plain": "média"
+    }
+  }
+}
