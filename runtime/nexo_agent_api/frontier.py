@@ -100,7 +100,8 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             if state in RESUMABLE:
                 resumable.append(base)
                 continue
-            if state.startswith("BLOCKED"):
+            if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
+                # DRAFT = hypothesis still missing frozen criteria; the Learner completes it, the Executor waits.
                 waiting.append({**base, "reason": state})
                 continue
             deps = [str(d) for d in (entity.get("depends_on") or [])]

@@ -89,13 +89,20 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     if not test_id:
         raise ProposalError("MUTATION_PROPOSAL without payload.test_id")
     current = _entity(root, "test", test_id)
+    created: list[dict[str, Any]] = []
     if current is None:
-        raise ProposalError(f"test {test_id} does not exist in the Tower")
+        # A result for a test that was never registered (e.g. run straight from a chat): register it, then record.
+        created = _hypothesis_requests(item, {**body, "_allow_draft": True, "_status": "RUNNING"}, root)
+        current = {"id": test_id, "entity_version": 0}
     result = body.get("result") or {}
     verdict = str(_first(result, "verdict", "veredito") or body.get("verdict") or "").upper() or None
     semantic = _semantic(current, body.get("semantic"))
     if not semantic.get("result_meaning"):
-        raise ProposalError(f"{test_id}: result without semantic.result_meaning")
+        # Never reject a result for a missing plain reading: write a provisional one; the backfill replaces it.
+        summary = _first(result, "summary", "resumo")
+        semantic["result_meaning"] = (str(summary) if summary else
+                                      f"Veredito registrado: {(verdict or 'sem veredito').lower()}. Leitura simples pendente.")
+        semantic["result_meaning_source"] = "WRITER_PROVISIONAL"
     semantic = _complete_semantic({**current, "verdict": verdict}, semantic, root)
     status = ("BLOCKED_INPUT" if verdict and verdict.startswith("BLOCKED")
               else "REJECTED" if verdict in TERMINAL_VERDICTS else "DONE")
@@ -113,11 +120,12 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "inbox_ref": item.get("_inbox_id"),
         "semantic": semantic,
     }
-    return [{
-        "request_id": f"REQ-INBOX-{_slug(str(item.get('_inbox_name') or test_id))}",
+    version = 1 if created else int(current.get("entity_version") or 0)
+    return created + [{
+        "request_id": f"REQ-INBOX-RESULT-{_slug(str(item.get('_inbox_name') or test_id))}",
         "entity_kind": "test",
         "entity_name": test_id,
-        "expected_version": int(current.get("entity_version") or 0),
+        "expected_version": version,
         "writer_role": "EXECUTOR",
         "event_type": "TEST_RESULT_RECORDED",
         "changes": {k: v for k, v in changes.items() if v not in (None, "", [], {})},
@@ -171,18 +179,29 @@ def _attach_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         requests.append({"request_id": f"REQ-INBOX-FRONTIER-ATTACH-{_slug(rid)}", "document": f"roadmaps/{rid}.json",
                          "merge": {"frontier_refs": refs}})
     if not requests:
-        raise ProposalError("ROADMAP_ATTACH: nothing to attach")
+        return []  # already attached: a no-op, not a failure
     return requests
 
 
 def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     test_id = str(body.get("test_id") or f"HYP-{_slug(str(item.get('_inbox_name') or body.get('title') or 'X'))}")
-    if _entity(root, "test", test_id) is not None:
-        raise ProposalError(f"test {test_id} already exists")
+    existing_test = _entity(root, "test", test_id)
+    if existing_test is not None:
+        # Same test proposed again: fill what is still empty instead of rejecting (frozen fields are never replaced).
+        fill = {k: v for k, v in body.items() if k in ("method", "null", "rival", "claim_boundary", "priority")
+                and v and not existing_test.get(k)}
+        sem = {k: v for k, v in (body.get("semantic") or {}).items() if v and not (existing_test.get("semantic") or {}).get(k)}
+        if sem:
+            fill["semantic"] = {**(existing_test.get("semantic") or {}), **sem}
+        if not fill:
+            return []
+        return [{"request_id": f"REQ-INBOX-ENRICH-{_slug(test_id)}", "entity_kind": "test", "entity_name": test_id,
+                 "expected_version": int(existing_test.get("entity_version") or 0), "writer_role": "ADVISOR",
+                 "event_type": "TEST_ENRICHED", "changes": fill}]
     success = _first(body, "success_criteria", "criterio_sucesso", "critério_sucesso")
     kill = _first(body, "kill_criteria", "kill_criterion", "criterio_kill")
-    if not success or not kill:
-        raise ProposalError(f"{test_id}: hypothesis without frozen success and kill criteria")
+    # Missing frozen criteria never drop the idea: it is stored as DRAFT (visible, not executable) until completed.
+    lifecycle = body.get("_status") or ("READY" if success and kill else "DRAFT")
     roadmap_id = body.get("roadmap_id") or _infer_roadmap(root, test_id, body.get("semantic") or {})
     siblings = _siblings(root, roadmap_id)
     inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "hypothesis_id", "domain")}
@@ -192,9 +211,12 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         body.get("semantic") or {}, root,
     )
     if not semantic.get("domain_id"):
-        raise ProposalError(f"{test_id}: hypothesis without a resolvable semantic domain (give semantic.topic_id or roadmap_id)")
+        # Unknown area: file it under the roadmap's domain, else engineering for META, else science (UNMAPPED topic).
+        fallback = (inherited.get("domain") or ("engineering" if test_id.upper().startswith("META-") else "science"))
+        semantic = {**semantic, "domain_id": str(fallback).lower(), "basis": "WRITER_FALLBACK"}
     changes = {
-        "kind": "TEST", "status": "READY", "state": "READY",
+        "kind": "TEST", "status": lifecycle, "state": lifecycle,
+        "draft_reason": None if lifecycle != "DRAFT" else "faltam critérios congelados de sucesso/kill",
         "priority": body.get("priority") or "P1",
         "domain": str(semantic.get("domain_id", "science")).upper(),
         "roadmap_id": roadmap_id,
@@ -261,9 +283,11 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
 
 def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     semantic = body.get("semantic") or {}
-    topic = str(body.get("topic_id") or semantic.get("topic_id") or "").strip()
+    topic = str(body.get("topic_id") or semantic.get("topic_id") or semantic.get("subdomain_id") or "").strip()
     if not topic:
-        raise ProposalError("LESSON_PROPOSAL without topic_id")
+        linked = [(_entity(root, "test", str(t)) or {}).get("semantic") or {} for t in body.get("linked_test_ids") or []]
+        topic = next((str(x.get("topic_id") or x.get("subdomain_id")) for x in linked if x.get("topic_id") or x.get("subdomain_id")),
+                     "general." + _slug(str(body.get("title") or item.get("_inbox_name") or "lesson")).lower())
     lesson_id = f"LESSON::{topic}"
     current = _entity(root, "lesson", lesson_id)
     changes = {
@@ -323,7 +347,7 @@ def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -
                 "changes": changes,
             })
     if not requests:
-        raise ProposalError("SEMANTIC_BACKFILL: nothing to fill (unknown ids or fields already present)")
+        return []  # nothing left to fill: a no-op, not a failure
     return requests
 
 

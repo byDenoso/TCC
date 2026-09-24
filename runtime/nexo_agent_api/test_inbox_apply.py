@@ -32,14 +32,19 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual(request["changes"]["semantic"]["topic_id"], "x")
         self.assertEqual(request["changes"]["semantic"]["result_meaning"], "Nada robusto.")
 
-    def test_unapplicable_proposals_are_recorded_not_lost(self):
-        for item in ({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-1", "result": {}}},
-                     {"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "NOPE", "result": {"verdict": "PASS"}}},
-                     {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "H-1", "semantic": {"domain_id": "science"}}}):
-            [request] = proposal_to_requests(item, self.root)
-            self.assertEqual(request["entity_kind"], "artifact")
-            self.assertTrue(request["changes"]["kind"].startswith("UNAPPLIED_"))
-            self.assertIn("_not_applied_reason", request["changes"]["payload"])
+    def test_incomplete_proposals_are_completed_not_rejected(self):
+        # result without a plain reading -> provisional reading, still recorded on the test
+        [request] = proposal_to_requests({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-1", "result": {}}}, self.root)
+        self.assertEqual(request["entity_kind"], "test")
+        self.assertEqual(request["changes"]["semantic"]["result_meaning_source"], "WRITER_PROVISIONAL")
+        # result for a test that does not exist -> the test is registered first, then the result
+        requests = proposal_to_requests({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "NOPE", "result": {"verdict": "PASS"}}}, self.root)
+        tests = [r for r in requests if r.get("entity_kind") == "test"]
+        self.assertEqual([r["entity_name"] for r in tests], ["NOPE", "NOPE"])
+        self.assertEqual(tests[-1]["changes"]["verdict"], "PASS")
+        # hypothesis without frozen criteria -> DRAFT, never READY, never dropped
+        requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "H-1", "semantic": {"domain_id": "science"}}}, self.root)
+        self.assertEqual(requests[0]["changes"]["status"], "DRAFT")
 
     def test_generic_shapes_are_understood(self):
         # no kind, batch under "results", verdict at top level, meaning only in verdict_plain
