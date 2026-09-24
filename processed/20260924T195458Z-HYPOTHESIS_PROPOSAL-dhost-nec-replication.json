@@ -1,0 +1,35 @@
+{
+  "kind": "HYPOTHESIS_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-24T19:54:58Z",
+  "payload": {
+    "test_id": "T-DEM26-007-DHOST-NEC-REPLICATION",
+    "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+    "hypothesis": {
+      "id": "HYP-DE-DHOST-NEC-REPLICATION-20260924",
+      "statement": "O ramo beyond-Horndeski/DHOST cT-compatível promovido em T-DEM26-006 pode ser reproduzido numericamente por uma implementação independente, mantendo cruzamento de w=-1 e estabilidade escalar no Universo tardio.",
+      "model": "Ramo beyond-Horndeski/DHOST degenerado e cT-compatível com cruzamento estável da NEC/phantom divide.",
+      "baseline": "A estabilidade observada na auditoria de literatura não é reproduzível de forma independente quando as equações e condições de estabilidade são implementadas literalmente.",
+      "falsification_criterion": "A hipótese cai se a implementação independente não reproduzir nenhum ponto de cruzamento estável reportado, ou se todo ponto reproduzido violar degenerescência, ausência de ghost, estabilidade de gradiente ou a condição cT-compatível em 0<=z<=2."
+    },
+    "question": "Can the cT-compatible beyond-Horndeski/DHOST stable NEC-crossing branch promoted by T-DEM26-006 be independently reproduced from the published equations and parameter choices?",
+    "null": "A implementação independente das equações publicadas não reproduz qualquer solução tardia que cruze w=-1 e permaneça simultaneamente degenerada, sem ghost, sem instabilidade de gradiente e cT-compatível em 0<=z<=2.",
+    "rival": "A implementação independente reproduz pelo menos uma solução publicada de cruzamento e encontra uma vizinhança local não degenerada em que as condições de estabilidade continuam satisfeitas em 0<=z<=2.",
+    "method": "Implementar literalmente as equações de fundo e perturbações do ramo beyond-Horndeski/DHOST usado na evidência de T-DEM26-006. Reproduzir primeiro um ponto/solução reportado; depois fazer uma varredura local pré-fixada de ±1% em cada parâmetro contínuo livre ao redor da solução reproduzida, mantendo as relações de degenerescência. Em cada ponto, verificar w(z), matriz cinética, velocidade/gradiente escalar e condição tensorial cT-compatível em uma malha fixa de 201 pontos em z entre 0 e 2. Nenhum dado observacional entra neste estágio.",
+    "data": "Equações, definições e escolhas de parâmetros publicadas nas referências de T-DEM26-006, em particular arXiv:2503.22515 e DOI 10.1103/kqqh-6r4q; usar a versão pública exata disponível na execução e registrar hash/versão do artefato consultado.",
+    "success_criteria": "PROMOTED se pelo menos uma solução publicada de cruzamento for reproduzida e pelo menos 5 pontos distintos da varredura local ±1% permanecerem degenerados, sem ghost, sem instabilidade de gradiente e cT-compatíveis em toda a faixa 0<=z<=2. Com reprodução isolada sem vizinhança estável, INCONCLUSIVE.",
+    "kill_criteria": "REJECTED se nenhum ponto publicado de cruzamento puder ser reproduzido sob as equações literais, ou se todos os pontos reproduzidos falharem pelo menos uma condição indispensável de estabilidade/degenerescência/cT em 0<=z<=2.",
+    "claim_boundary": "Mesmo PROMOTED, o teste demonstra apenas reprodutibilidade e robustez local da viabilidade teórica do ramo DHOST. Não demonstra preferência observacional, não mede evidência cosmológica e não afirma que a Natureza use essa física.",
+    "depends_on": ["T-DEM26-006"],
+    "priority": "P0",
+    "linked_signal_ids": [],
+    "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.dark_energy",
+      "topic_id": "science.cosmology.dark_energy.perturbation_stability",
+      "question_plain": "O ramo DHOST que passou na triagem teórica continua estável quando reproduzido numericamente de forma independente?",
+      "why_it_matters": "Uma solução publicada só vira base confiável para testes observacionais se outra implementação conseguir reproduzir o cruzamento e as condições de estabilidade.",
+      "confidence_plain": "média"
+    }
+  }
+}
