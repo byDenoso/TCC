@@ -85,6 +85,14 @@ def build_live_tower_payload(
             "encoding": "json",
             "value": json.loads(path.read_text(encoding="utf-8")),
         }
+    # Contracts are carried from ``base`` but a local edit (writer document merge)
+    # must win, otherwise contract updates are silently dropped on repack.
+    for path in sorted(root.glob("contracts/**/*.json")):
+        if path.is_file():
+            try:
+                files[logical_path(root, path)] = {"encoding": "json", "value": json.loads(path.read_text(encoding="utf-8"))}
+            except ValueError:
+                pass  # keep the carried-over base entry
 
     files = dict(sorted(files.items()))
     fingerprint = "sha256:" + hashlib.sha256(_canonical(files)).hexdigest()

@@ -201,3 +201,15 @@ class ProposalParsingTests(unittest.TestCase):
         from runtime.nexo_agent_api.drive_transport import _parse_proposal
 
         self.assertIsNone(_parse_proposal(b"no json here"))
+
+
+class ContractOverlayTests(unittest.TestCase):
+    def test_local_contract_edit_wins_over_base(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = _tower(Path(tmp) / "seed")
+            base["files"]["contracts/X.json"] = {"encoding": "json", "value": {"v": 1}}
+            root, _ = materialize_live_tower(_raw(base), Path(tmp) / "work")
+            (root / "contracts").mkdir(exist_ok=True)
+            (root / "contracts" / "X.json").write_text(json.dumps({"v": 2}))
+            packed = build_live_tower_payload(root, base=base)
+            self.assertEqual(packed["files"]["contracts/X.json"]["value"], {"v": 2})
