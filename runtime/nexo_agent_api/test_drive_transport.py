@@ -188,3 +188,16 @@ class ReaderCacheTests(unittest.TestCase):
         DriveTower(session=drive).download()
         DriveTower(session=drive, write=True).download()
         self.assertEqual(drive.media_calls, 2)
+
+
+class ProposalParsingTests(unittest.TestCase):
+    def test_doc_export_with_fence_and_bom_is_parsed(self):
+        from runtime.nexo_agent_api.drive_transport import _parse_proposal
+
+        raw = '﻿Proposta\n```json\n{"kind": "LEARNING_SIGNAL", "payload": {"a": 1}}\n```\n'.encode("utf-8")
+        self.assertEqual(_parse_proposal(raw)["kind"], "LEARNING_SIGNAL")
+
+    def test_garbage_is_none(self):
+        from runtime.nexo_agent_api.drive_transport import _parse_proposal
+
+        self.assertIsNone(_parse_proposal(b"no json here"))

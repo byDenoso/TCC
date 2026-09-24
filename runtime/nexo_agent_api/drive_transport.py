@@ -203,6 +203,22 @@ class DriveTower:
         }
 
 
+def _parse_proposal(raw: bytes) -> Any:
+    """JSON proposal from a file or an exported Doc (BOM, code fences and prose around it tolerated)."""
+    try:
+        text = raw.decode("utf-8-sig").strip()
+    except UnicodeDecodeError:
+        return None
+    # The outermost braces bound the JSON, so code fences or a heading are ignored.
+    start, end = text.find("{"), text.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        return json.loads(text[start:end + 1])
+    except ValueError:
+        return None
+
+
 class DriveInbox:
     """Create-only proposal inbox (ChatGPT -> Tower writer), never the Tower itself.
 
@@ -223,7 +239,7 @@ class DriveInbox:
     def _query(self, q: str) -> list[dict[str, Any]]:
         response = self.session.get(
             _API,
-            params={"q": q, "fields": "files(id,name,createdTime,parents)", "orderBy": "createdTime", "pageSize": 200,
+            params={"q": q, "fields": "files(id,name,createdTime,parents,mimeType)", "orderBy": "createdTime", "pageSize": 200,
                     "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"},
             timeout=60,
         )
@@ -244,12 +260,17 @@ class DriveInbox:
             return []
         items = self._query(f"'{inbox}' in parents and mimeType != '{self.FOLDER}' and trashed = false")
         for item in items:
-            raw = self.session.get(f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)
-            try:
-                item["payload"] = json.loads(raw.content.decode("utf-8"))
-            except (ValueError, UnicodeDecodeError):
-                item["payload"] = None
+            item["payload"] = _parse_proposal(self._content(item))
         return items
+
+    def _content(self, item: dict[str, Any]) -> bytes:
+        # ChatGPT's Drive connector cannot upload raw .json files, but it can create
+        # Google Docs: a Doc whose body is the JSON is exported as plain text.
+        if str(item.get("mimeType", "")).startswith("application/vnd.google-apps."):
+            response = self.session.get(f"{_API}/{item['id']}/export", params={"mimeType": "text/plain"}, timeout=60)
+        else:
+            response = self.session.get(f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)
+        return response.content
 
     def mark_processed(self, file_id: str) -> None:
         inbox = self._folder(self.name)
