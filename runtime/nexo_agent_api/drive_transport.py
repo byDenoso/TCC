@@ -14,6 +14,7 @@ role the remaining window is the upload itself.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import time
@@ -37,6 +38,10 @@ class TowerConflict(RuntimeError):
 
 class TowerReadbackMismatch(RuntimeError):
     """Drive returned different state than what was written."""
+
+
+def _tower_cache_path(md5: str) -> Path:
+    return nexo_home() / "cache" / f"tower-{md5}.json"
 
 
 def nexo_home() -> Path:
@@ -111,6 +116,7 @@ class DriveTower:
 
     def __init__(self, file_id: str = LIVE_TOWER_FILE_ID, *, session: Any = None, write: bool = False) -> None:
         self.file_id = file_id
+        self.write = write
         if session is None:
             from google.auth.transport.requests import AuthorizedSession
 
@@ -129,13 +135,33 @@ class DriveTower:
         )
         return DriveHead.from_meta(response.json())
 
-    def download(self) -> tuple[bytes, DriveHead]:
+    def download(self, *, cache: bool | None = None) -> tuple[bytes, DriveHead]:
+        """Live Tower bytes. Readers reuse a local copy whose md5 matches the Drive head.
+
+        The cache is content-addressed (Drive md5Checksum, re-verified on read), so a
+        stale copy can never be returned; writers (write=True) always fetch fresh bytes.
+        """
         head = self.head()
+        use_cache = (not self.write) if cache is None else cache
+        cached = _tower_cache_path(head.md5) if use_cache and head.md5 else None
+        if cached and cached.is_file():
+            raw = cached.read_bytes()
+            if hashlib.md5(raw).hexdigest() == head.md5:
+                return raw, head
         response = self._check(
             self.session.get(f"{_API}/{self.file_id}", params={"alt": "media", "supportsAllDrives": "true"}, timeout=300),
             "DOWNLOAD",
         )
-        return response.content, head
+        raw = response.content
+        if cached and hashlib.md5(raw).hexdigest() == head.md5:
+            try:
+                cached.parent.mkdir(parents=True, exist_ok=True)
+                for old in cached.parent.glob("tower-*.json"):
+                    old.unlink(missing_ok=True)  # keep only the current revision
+                cached.write_bytes(raw)
+            except OSError:
+                pass  # cache is an optimisation only
+        return raw, head
 
     def read(self) -> tuple[dict[str, Any], DriveHead]:
         raw, head = self.download()
