@@ -183,42 +183,14 @@ def cmd_project(args: argparse.Namespace) -> int:
     return 0
 
 
-class _LocalTowerStore:
-    """Read-only store over a materialized live Tower, shaped like the MCP store."""
-
-    def __init__(self, root: Path) -> None:
-        self.root = root
-
-    def _json(self, relative: str) -> dict | None:
-        from runtime.nexo_agent_api.tower_paths import fs_path
-
-        path = fs_path(self.root, relative)
-        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
-
-    def read_roadmap_index(self) -> dict:
-        return self._json("indexes/active-roadmaps.json") or {"items": []}
-
-    def read_roadmap(self, entry: dict) -> dict | None:
-        relative = str(entry.get("relative_path") or "")
-        if not relative.startswith("roadmaps/") or ".." in relative.split("/"):
-            return None
-        return self._json(relative)
-
-    def get_work(self, work_id: str) -> dict | None:
-        return self._json(f"entities/work/{work_id}.json")
-
-
 def cmd_frontier(args: argparse.Namespace) -> int:
-    """Next executable roadmap test, using the canonical frontier logic (vault MCP module)."""
-    vault = Path(os.environ.get("NEXO_VAULT_PATH") or Path(__file__).resolve().parents[2] / "NEXO-Obsidian-Vault")
-    sys.path.insert(0, str(vault / "services" / "nexo-api"))
-    from app.scientific_roadmap import get_roadmap_frontier  # noqa: E402
+    """Next executable roadmap work (V1 inline tests and V2 frontier_refs)."""
+    from runtime.nexo_agent_api.frontier import roadmap_frontier
 
     raw, _ = DriveTower().download()
     with tempfile.TemporaryDirectory(prefix="nexo-tower-frontier-") as work:
         root, metadata = materialize_live_tower(raw, Path(work) / "TOWER_V06")
-        service = type("Service", (), {"store": _LocalTowerStore(root)})()
-        frontier = get_roadmap_frontier(service, args.roadmap)
+        frontier = roadmap_frontier(root, args.roadmap)
     _print({"tower_state_fingerprint": metadata["tower_revision"], **frontier})
     return 0
 

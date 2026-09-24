@@ -1,0 +1,125 @@
+"""Executable roadmap frontier over a materialized live Tower.
+
+Reads both roadmap shapes found in the Tower:
+  V1  inline frozen ``tests`` (roadmap_test_id, depends_on, ...) resolved to TEST entities by id
+  V2  ``frontier_refs`` naming TEST entities directly
+and returns what an executor should do next. A malformed roadmap is reported
+in ``skipped_roadmaps`` instead of stopping every other lane.
+
+Order: resume RUNNING/CHECKPOINTED work first, then READY tests whose
+dependencies are terminal, highest roadmap priority first.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+from .tower_paths import entity_path, fs_path
+
+TERMINAL = {"DONE", "VERIFIED", "RESULT", "REJECTED", "FAILED", "INCONCLUSIVE", "SUPERSEDED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED"}
+RESUMABLE = {"RUNNING", "CHECKPOINTED"}
+PRIORITY_RANK = {"P0": 0, "CRITICAL": 1, "HIGH": 2, "MEDIUM_HIGH": 3, "MEDIUM": 4, "NORMAL": 5, "P1": 5, "LOW": 6, "P2": 6}
+
+
+def _read(path: Path) -> dict[str, Any] | None:
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _lifecycle(test: dict[str, Any] | None) -> str:
+    if not test:
+        return "MISSING"
+    return str(test.get("state") or test.get("status") or "READY").upper()
+
+
+def _dependency_met(dep: str, status_of) -> bool:
+    dep = str(dep)
+    if dep.startswith("ONE_OF:"):
+        return any(status_of(option) in TERMINAL for option in dep[len("ONE_OF:"):].split("|") if option)
+    return status_of(dep) in TERMINAL
+
+
+def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[str, Any]:
+    root = Path(root)
+    index = _read(fs_path(root, "indexes/active-roadmaps.json")) or {"items": []}
+    cache: dict[str, dict[str, Any] | None] = {}
+
+    def test(test_id: str) -> dict[str, Any] | None:
+        if test_id not in cache:
+            cache[test_id] = _read(entity_path(root, "test", test_id))
+        return cache[test_id]
+
+    def status_of(test_id: str) -> str:
+        return _lifecycle(test(test_id))
+
+    resumable: list[dict[str, Any]] = []
+    ready: list[dict[str, Any]] = []
+    waiting: list[dict[str, Any]] = []
+    skipped: list[dict[str, Any]] = []
+
+    items = [item for item in index.get("items", []) if isinstance(item, dict)]
+    items.sort(key=lambda item: (PRIORITY_RANK.get(str(item.get("priority") or "NORMAL").upper(), 9), str(item.get("roadmap_id"))))
+    for item in items:
+        rid = str(item.get("roadmap_id") or "")
+        if roadmap_id and rid != roadmap_id:
+            continue
+        if str(item.get("state") or "").upper() != "ACTIVE":
+            continue
+        relative = str(item.get("relative_path") or f"roadmaps/{rid}.json")
+        roadmap = _read(fs_path(root, relative))
+        if not roadmap:
+            skipped.append({"roadmap_id": rid, "reason": "ROADMAP_DOCUMENT_MISSING"})
+            continue
+        if isinstance(roadmap.get("frontier_refs"), list):
+            refs = [str(ref) for ref in roadmap["frontier_refs"]]
+        elif isinstance(roadmap.get("tests"), list):
+            refs = [str(t.get("roadmap_test_id")) for t in roadmap["tests"] if isinstance(t, dict) and t.get("roadmap_test_id")]
+        else:
+            refs = []
+        if not refs:
+            skipped.append({"roadmap_id": rid, "reason": "ACTIVE_ROADMAP_WITHOUT_TESTS"})
+            continue
+        for ref in refs:
+            entity = test(ref)
+            state = _lifecycle(entity)
+            base = {"roadmap_id": rid, "test_id": ref, "state": state, "priority": item.get("priority")}
+            if state in TERMINAL:
+                continue
+            if entity is None:
+                skipped.append({**base, "reason": "FRONTIER_TEST_NOT_MATERIALIZED"})
+                continue
+            if state in RESUMABLE:
+                resumable.append(base)
+                continue
+            if state.startswith("BLOCKED"):
+                waiting.append({**base, "reason": state})
+                continue
+            deps = [str(d) for d in (entity.get("depends_on") or [])]
+            unmet = [d for d in deps if not _dependency_met(d, status_of)]
+            if unmet:
+                waiting.append({**base, "waiting_on": unmet})
+            else:
+                ready.append(base)
+
+    if resumable:
+        action, pick = "RESUME_EXISTING", resumable[0]
+    elif ready:
+        action, pick = "EXECUTE_READY", ready[0]
+    elif waiting:
+        action, pick = "WAIT_DEPENDENCY", None
+    else:
+        action, pick = "COMPLETE", None
+    return {
+        "state": action,
+        "next": pick,
+        "resumable": resumable,
+        "ready": ready,
+        "waiting": waiting,
+        "skipped_roadmaps": skipped,
+        "rule": "RESUME_BEFORE_NEW; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL",
+    }

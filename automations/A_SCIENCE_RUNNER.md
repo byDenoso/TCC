@@ -17,15 +17,15 @@ Leia primeiro `automations/OPERATING_CONTRACT.md`. Ele vence qualquer outra inst
    - Depois de aplicado/rejeitado: `inbox done <id>`.
 4. **Retomar cômputo real primeiro:** procure na Tower WORK/TEST `RUNNING` ou `CHECKPOINTED`
    (`python scripts/nexo_tower.py pull` e leia `entities/work`, `entities/test`). Se algum pode continuar, continue ele.
-5. **Fronteira:** `python scripts/nexo_tower.py frontier`.
-   - `CONTINUE_EXISTING` / `RECONCILE_EXISTING` / `RECOVER_EXISTING`: continue o mesmo teste, reparando o que faltar.
-   - `READY_TO_MATERIALIZE`: crie TEST + WORK com o id canônico retornado (`canonical_test_id`, `work_id`),
-     copiando a especificação congelada do roadmap sem reinterpretar, e com o bloco `semantic`
-     (subdomínio pelo roadmap via taxonomia; `question_plain` e `why_it_matters` em português simples).
-   - `WAIT_DEPENDENCY`: só a cadeia afetada espera; vá para outra lane (outro roadmap, teste independente).
-   - `COMPLETE` / `NO_ACTIVE_ROADMAP`: rode a próxima hipótese `READY` do registro de hipóteses, ou
-     proponha 1 hipótese de melhoria de método/execução do próprio NEXO (auto-evolução) como HYPOTHESIS
-     com critério de promoção congelado.
+5. **Fronteira:** `python scripts/nexo_tower.py frontier` (lê roadmaps V1 com testes inline e V2 com `frontier_refs`).
+   - `RESUME_EXISTING`: continue o teste em `next` (CHECKPOINTED/RUNNING), reparando o que faltar.
+   - `EXECUTE_READY`: execute o teste em `next` (dependências já terminais; `ONE_OF:a|b` exige só uma).
+   - `WAIT_DEPENDENCY`: só a cadeia afetada espera; vá para outra lane.
+   - `COMPLETE`: rode a próxima hipótese `READY` do registro, ou proponha 1 HYPOTHESIS de breakthrough
+     (anomalias do ΛCDM, energia escura, matéria escura) ou de melhoria do próprio NEXO, com critério congelado.
+   - `skipped_roadmaps` lista roadmaps ACTIVE inválidos (sem testes, documento ausente): corrija-os pela Tower
+     quando a correção for determinística; senão registre no relatório. Nunca pare por causa deles.
+   - Itens `LESSON_PROPOSAL` do inbox pertencem à automação C.
 6. **Executar:** implemente/rode o teste com cômputo local (Python deste PC; benchmarks do TCC;
    dados públicos baixados sob demanda para `%USERPROFILE%/.nexo/data`). Orçamento por pulso: ~90 min de
    cômputo; se não couber, faça checkpoint real (artefatos + estado) e registre `CHECKPOINTED` com o próximo passo.
