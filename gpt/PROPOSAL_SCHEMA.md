@@ -108,3 +108,22 @@ Testes com id `META-*` (domain_id `engineering`) são hipóteses sobre o própri
  "semantic": {"domain_id": "engineering", "topic_id": "engineering.nexo_runtime"}}
 ```
 Vira `artifact INTEGRITY_REPORT::*`. O Guardião nunca corrige nada.
+
+## SEMANTIC_BACKFILL — completar leitura simples de entidades existentes
+Preenche só o que está vazio (use `"overwrite": true` para corrigir). Serve para testes, hipóteses e lições.
+```json
+{"items": [
+  {"id": "DDEUDS26-001-EFFECTIVE-WZ",
+   "semantic": {"question_plain": "A energia escura muda com o tempo?", "why_it_matters": "...",
+                "result_meaning": "2–3 frases simples", "verdict_plain": "Inconclusivo", "confidence_plain": "média",
+                "topic_id": "science.cosmology.dark_energy.equation_of_state"}},
+  {"id": "T-OLYCAUSE-016A", "subject_code": "MIQ", "semantic": {"question_plain": "..."}}
+]}
+```
+Todo teste precisa de `question_plain` e `why_it_matters`; todo teste concluído precisa de `result_meaning` e `verdict_plain`.
+Enquanto faltar, o site mostra uma leitura automática marcada como provisória.
+
+## Olympus (pessoas reais)
+Nunca escreva o nome de uma pessoa em ids, títulos ou textos públicos. Cada pessoa tem um `subject_code`
+de 3 letras (ex.: `MIQ`, `JOS`) em todo teste/campanha Olympus. O site mostra só o código; a projeção
+reescreve ids de campanha que contenham nomes (`CAMP-OLY-<código>-<hash>`). Novas campanhas: `CAMP-OLY-<código>-<tema>-<data>`.

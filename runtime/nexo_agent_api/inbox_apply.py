@@ -234,6 +234,47 @@ def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     }]
 
 
+_BACKFILL_FIELDS = ("title", "subject_code", "question_plain")
+
+
+def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """SEMANTIC_BACKFILL: fill plain-language fields on EXISTING tests/hypotheses/lessons.
+    Only empty semantic keys are filled unless the entry says overwrite=true; nothing else changes."""
+    entries = body.get("items") or body.get("tests") or body.get("entries") or ([body] if body.get("id") or body.get("test_id") else [])
+    requests: list[dict[str, Any]] = []
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            continue
+        entity_id = str(entry.get("id") or entry.get("test_id") or entry.get("hypothesis_id") or "").strip()
+        kind = str(entry.get("entity_kind") or ("hypothesis" if entity_id.startswith("HYP") else "lesson" if entity_id.startswith("LESSON::") else "test"))
+        current = _entity(root, kind, entity_id) if entity_id else None
+        if current is None:
+            continue
+        old = dict(current.get("semantic") or {})
+        new = {k: v for k, v in (entry.get("semantic") or {}).items() if v not in (None, "", [])}
+        if not entry.get("overwrite"):
+            new = {k: v for k, v in new.items() if not old.get(k)}
+        changes: dict[str, Any] = {}
+        if new:
+            changes["semantic"] = {**old, **new}
+        for field in ("subject_code",):
+            code = re.sub(r"[^A-Z0-9]", "", str(entry.get(field) or "").upper())
+            code = code if len(code) <= 4 else code[:3]
+            if len(code) >= 2 and (entry.get("overwrite") or not current.get(field)):
+                changes[field] = code  # a short code, never a name
+        if changes:
+            requests.append({
+                "request_id": f"REQ-INBOX-BACKFILL-{_slug(entity_id)}-{index}",
+                "entity_kind": kind, "entity_name": entity_id,
+                "expected_version": int(current.get("entity_version") or 0),
+                "writer_role": "ADVISOR", "event_type": "SEMANTIC_BACKFILLED",
+                "changes": changes,
+            })
+    if not requests:
+        raise ProposalError("SEMANTIC_BACKFILL: nothing to fill (unknown ids or fields already present)")
+    return requests
+
+
 def _record_request(item: dict[str, Any], body: dict[str, Any], kind: str) -> list[dict[str, Any]]:
     """Learning signals and operator intents are kept as artifacts the GPT Learner reads back."""
     name = str(item.get("_inbox_name") or "item")
@@ -253,6 +294,7 @@ _KIND_ALIASES = {
     "LESSON_PROPOSAL": "LESSON_PROPOSAL", "LESSON": "LESSON_PROPOSAL",
     "LEARNING_SIGNAL": "LEARNING_SIGNAL", "SIGNAL": "LEARNING_SIGNAL", "KNOWLEDGE_GAP": "LEARNING_SIGNAL", "GAP": "LEARNING_SIGNAL",
     "OPERATOR_INTENT": "OPERATOR_INTENT", "INTENT": "OPERATOR_INTENT",
+    "SEMANTIC_BACKFILL": "SEMANTIC_BACKFILL", "BACKFILL": "SEMANTIC_BACKFILL", "MEANING_BACKFILL": "SEMANTIC_BACKFILL",
     "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
 }
 _BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
@@ -320,6 +362,8 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             return _hypothesis_requests(item, body, root)
         if kind == "LESSON_PROPOSAL":
             return _lesson_request(item, body, root)
+        if kind == "SEMANTIC_BACKFILL":
+            return _backfill_requests(item, body, root)
     except ProposalError as exc:
         # Keep the content in the Tower (nothing is lost) and say why it was not applied.
         return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")

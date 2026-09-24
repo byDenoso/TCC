@@ -233,7 +233,39 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
         statistics = _public_numeric_fields(scientific_result.get("statistics"), TEST_STATISTICS_FIELDS)
     if statistics:
         projected["statistics"] = statistics
-    return _with_semantics(projected, entity)
+    projected = _with_semantics(projected, entity)
+    semantic = projected["semantic"]
+    if not semantic.get("result_meaning"):
+        # Private (Olympus) tests only get the verdict sentence, never their free-text summary.
+        source = {} if projected.get("private") else (scientific_result if isinstance(scientific_result, dict) else {})
+        derived = _derived_meaning({} if projected.get("private") else entity, source,
+                                   verdict=(scientific_result or {}).get("verdict") if isinstance(scientific_result, dict) else None)
+        if derived:
+            # Stopgap until the GPT writes the real plain reading; the site labels it as automatic.
+            semantic["result_meaning"] = derived
+            semantic["result_meaning_source"] = "DERIVED"
+    return projected
+
+
+_VERDICT_PT = {
+    "PROMOTED": "Resultado positivo: a hipótese passou nos critérios definidos antes do teste.",
+    "SUPPORTED": "Resultado positivo: os dados apoiam a hipótese dentro dos limites do teste.",
+    "INCONCLUSIVE": "Inconclusivo: os dados não bastaram para decidir a favor nem contra a hipótese.",
+    "REJECTED": "Hipótese rejeitada: os dados contrariam o que ela previa.",
+    "NULL": "Resultado nulo: nenhum efeito além do esperado pelo modelo padrão.",
+    "BLOCKED": "Teste bloqueado antes de chegar a um veredito.",
+}
+
+
+def _derived_meaning(entity: dict[str, Any], result: dict[str, Any], verdict: Any = None) -> str | None:
+    verdict = str(verdict or result.get("verdict") or entity.get("verdict") or entity.get("scientific_verdict") or "").upper()
+    base = next((text for key, text in _VERDICT_PT.items() if key in verdict), None)
+    summary = next((str(v).strip() for v in (result.get("summary"), result.get("resumo"), entity.get("summary"))
+                    if isinstance(v, str) and v.strip() and "canonical status" not in v), None)
+    if summary and len(summary) > 280:
+        summary = summary[:277].rsplit(" ", 1)[0] + "…"
+    parts = [p for p in (base, summary) if p]
+    return " ".join(parts) or None
 
 
 # Olympus is personal/client health context: its free text never reaches the
@@ -524,6 +556,7 @@ def build_public_projection(
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
+    content = _pseudonymize_private(content, test_entities, campaigns)
 
     manifest = {
         "authority": "TOWER_V06",
@@ -571,3 +604,56 @@ def verify_projection(projection: dict[str, Any]) -> tuple[bool, str]:
     if not (manifest.get("tower_revision") or manifest.get("tower_commit")):
         return False, "tower_revision/tower_commit is missing"
     return True, actual
+
+
+# ── Olympus pseudonyms ─────────────────────────────────────────────────────
+# Olympus work is about real people. The public surface shows a short code per
+# person (subject_code, e.g. "MIQ"), never a name. Names can hide inside ids
+# (CAMP-OLY-<NAME>-...), so every private campaign id is rewritten everywhere.
+_OLY_TECH_TOKENS = {"COMPPHYS", "PIVOT", "CROSSCHECK", "CAUSE", "NULLS", "PHYS", "AVGPROB", "BODY", "COMP",
+                    "GENETICS", "STRENGTH", "TRAINING", "NUTRITION", "HEALTH", "OLY", "OLYMPUS", "CAMP"}
+
+
+def _subject_code(campaign_id: str, explicit: Any = None) -> str:
+    if isinstance(explicit, str) and explicit.strip():
+        return re.sub(r"[^A-Z0-9]", "", explicit.upper())[:4] or "ANON"
+    parts = campaign_id.upper().split("-")
+    if "OLY" in parts:
+        after = parts[parts.index("OLY") + 1:]
+        if after and after[0].isalpha() and len(after[0]) >= 3 and after[0] not in _OLY_TECH_TOKENS:
+            return after[0][:3]
+    return "GRP"
+
+
+def _pseudonymize_private(content: dict[str, Any], tests: dict[str, dict], campaigns: list[dict]) -> dict[str, Any]:
+    private_tests = {t["id"]: t for t in content.get("tests", []) if t.get("private")}
+    explicit = {}
+    for key, raw in tests.items():
+        if key in private_tests and raw.get("campaign_id"):
+            explicit.setdefault(str(raw["campaign_id"]), raw.get("subject_code"))
+    for campaign in campaigns:
+        cid = str(campaign.get("campaign_id") or "")
+        if cid.upper().startswith("CAMP-OLY") or is_private(campaign.get("semantic") or {}):
+            explicit.setdefault(cid, campaign.get("subject_code"))
+    mapping: dict[str, str] = {}
+    for cid, code_hint in explicit.items():
+        code = _subject_code(cid, code_hint)
+        digest = hashlib.sha256(cid.encode("utf-8")).hexdigest()[:4].upper()
+        mapping[cid] = f"CAMP-OLY-{code}-{digest}"
+    for test in private_tests.values():
+        cid = str(test.get("campaign_id") or "")
+        test["subject_code"] = mapping.get(cid, "CAMP-OLY-GRP").split("-")[2]
+    if not mapping:
+        return content
+    pattern = re.compile("|".join(re.escape(k) for k in sorted(mapping, key=len, reverse=True)))
+
+    def scrub(value: Any) -> Any:
+        if isinstance(value, str):
+            return pattern.sub(lambda m: mapping[m.group(0)], value)
+        if isinstance(value, list):
+            return [scrub(v) for v in value]
+        if isinstance(value, dict):
+            return {scrub(k): scrub(v) for k, v in value.items()}
+        return value
+
+    return scrub(content)

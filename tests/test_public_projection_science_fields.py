@@ -95,3 +95,13 @@ def test_hypotheses_are_projected_with_fields_derived_from_their_tests(tmp_path)
     assert (hyp["statement"], hyp["model"], hyp["baseline"]) == ("Dark matter self-interacts", "SIDM fits better", "CDM fits")
     assert hyp["falsification_criterion"] == "No velocity dependence works"
     assert projection["manifest"]["source_snapshot_id"].startswith("LIVE_TOWER@sha256:")
+
+
+def test_olympus_campaign_names_are_pseudonymized():
+    from runtime.nexo_agent_api.public_projection import _pseudonymize_private
+    content = {"tests": [{"id": "T-OLY-1", "private": True, "campaign_id": "CAMP-OLY-JOSUE-PIVOT-20260920"}],
+               "campaigns": [], "work": [{"campaign_id": "CAMP-OLY-JOSUE-PIVOT-20260920"}]}
+    out = _pseudonymize_private(content, {"T-OLY-1": {"campaign_id": "CAMP-OLY-JOSUE-PIVOT-20260920"}}, [])
+    blob = str(out)
+    assert "JOSUE" not in blob
+    assert out["tests"][0]["subject_code"] == "JOS"
