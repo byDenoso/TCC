@@ -110,6 +110,46 @@ def _notify_atlas() -> str:
         return f"DISPATCH_FAILED_{type(exc).__name__}"
 
 
+_DOCUMENT_PREFIXES = ("roadmaps/", "indexes/", "contracts/", "manifests/")
+
+
+def _apply_document(root: Path, request: dict) -> dict:
+    """Deep-merge ``request['merge']`` into a Tower document (roadmaps, indexes, ...).
+
+    Entities go through apply_mutation_request (versioned, governed); documents
+    such as roadmaps are merged here, inside the same CAS write.
+    ``list_merge`` names list fields whose items are merged by ``key``.
+    """
+    from runtime.nexo_agent_api.tower_paths import fs_path
+
+    relative = str(request["document"]).lstrip("/")
+    if not relative.startswith(_DOCUMENT_PREFIXES) or ".." in relative.split("/") or not relative.endswith(".json"):
+        return {"request_id": request.get("request_id"), "accepted": False, "issue": {"code": "DOCUMENT_PATH_NOT_ALLOWED", "message": relative}}
+    path = fs_path(root, relative)
+    current = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+    def merge(base, patch, key_fields):
+        for key, value in patch.items():
+            if key in key_fields and isinstance(value, list) and isinstance(base.get(key), list):
+                id_key = key_fields[key]
+                by_id = {item.get(id_key): item for item in base[key] if isinstance(item, dict)}
+                for item in value:
+                    if isinstance(item, dict) and item.get(id_key) in by_id:
+                        by_id[item[id_key]].update(item)
+                    else:
+                        base[key].append(item)
+            elif isinstance(value, dict) and isinstance(base.get(key), dict):
+                merge(base[key], value, {})
+            else:
+                base[key] = value
+        return base
+
+    merged = merge(current, dict(request.get("merge") or {}), dict(request.get("list_merge") or {}))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return {"request_id": request.get("request_id"), "accepted": True, "document": relative, "readback": "PASS"}
+
+
 def cmd_apply(args: argparse.Namespace) -> int:
     from runtime.nexo_agent_api.mutations import apply_mutation_request
 
@@ -127,7 +167,14 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 before = verify_live_tower(read_live_tower_bytes(raw))
                 with tempfile.TemporaryDirectory(prefix="nexo-tower-write-") as work:
                     root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
-                    receipts = [apply_mutation_request(root, request) for request in requests]
+                    receipts = [
+                        _apply_document(root, request) if "document" in request else apply_mutation_request(root, request)
+                        for request in requests
+                    ]
+                    if any("document" in request for request in requests):
+                        from runtime.nexo_agent_api.live_tower import publish_live_tower
+
+                        publish_live_tower(root)
                     rejected = [r for r in receipts if not r.get("accepted", True) or r.get("issue")]
                     if rejected:
                         _print({"status": "REJECTED", "tower_state_fingerprint": before, "receipts": receipts})

@@ -61,6 +61,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     ready: list[dict[str, Any]] = []
     waiting: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
+    seen: set[str] = set()  # a test shared by two roadmaps is listed once, under the higher-priority one
 
     items = [item for item in index.get("items", []) if isinstance(item, dict)]
     items.sort(key=lambda item: (PRIORITY_RANK.get(str(item.get("priority") or "NORMAL").upper(), 9), str(item.get("roadmap_id"))))
@@ -85,6 +86,9 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             skipped.append({"roadmap_id": rid, "reason": "ACTIVE_ROADMAP_WITHOUT_TESTS"})
             continue
         for ref in refs:
+            if ref in seen:
+                continue
+            seen.add(ref)
             entity = test(ref)
             state = _lifecycle(entity)
             base = {"roadmap_id": rid, "test_id": ref, "state": state, "priority": item.get("priority")}
