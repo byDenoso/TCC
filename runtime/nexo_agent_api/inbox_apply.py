@@ -97,7 +97,8 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     if not semantic.get("result_meaning"):
         raise ProposalError(f"{test_id}: result without semantic.result_meaning")
     semantic = _complete_semantic({**current, "verdict": verdict}, semantic, root)
-    status = "REJECTED" if verdict in TERMINAL_VERDICTS else "DONE"
+    status = ("BLOCKED_INPUT" if verdict and verdict.startswith("BLOCKED")
+              else "REJECTED" if verdict in TERMINAL_VERDICTS else "DONE")
     changes = {
         "status": status,
         "state": status,
@@ -123,6 +124,57 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     }]
 
 
+def _infer_roadmap(root: Path, test_id: str, semantic: dict[str, Any]) -> str | None:
+    """A test asked for in a chat must not float: attach it to the ACTIVE roadmap of the same area.
+    Match on subdomain first, then domain, using the semantic of each roadmap's frontier tests."""
+    index = json.loads(fs_path(root, "indexes/active-roadmaps.json").read_text(encoding="utf-8"))         if fs_path(root, "indexes/active-roadmaps.json").is_file() else {"items": []}
+    wanted_sub = str(semantic.get("subdomain_id") or ".".join(str(semantic.get("topic_id") or "").split(".")[:3]) or "")
+    wanted_dom = str(semantic.get("domain_id") or wanted_sub.split(".")[0] or ("engineering" if test_id.upper().startswith("META-") else ""))
+    by_sub, by_dom = None, None
+    for item in index.get("items", []):
+        if not isinstance(item, dict):
+            continue
+        rid, state = str(item.get("roadmap_id") or ""), str(item.get("state") or "").upper()
+        subs = {str((e.get("semantic") or {}).get("subdomain_id") or "") for e in _siblings(root, rid)}
+        doms = {s.split(".")[0] for s in subs if s}
+        rank = 0 if state == "ACTIVE" else 1
+        if wanted_sub and wanted_sub in subs and (by_sub is None or rank < by_sub[0]):
+            by_sub = (rank, rid)
+        if wanted_dom and wanted_dom in doms and (by_dom is None or rank < by_dom[0]):
+            by_dom = (rank, rid)
+    return (by_sub or by_dom or (None, None))[1]
+
+
+def _attach_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """ROADMAP_ATTACH: put existing roadmap-less tests on a roadmap frontier (explicit or inferred)."""
+    requests: list[dict[str, Any]] = []
+    merged: dict[str, list[str]] = {}
+    for entry in body.get("items") or body.get("tests") or []:
+        if not isinstance(entry, dict):
+            continue
+        test_id = str(entry.get("test_id") or entry.get("id") or "")
+        current = _entity(root, "test", test_id) if test_id else None
+        if current is None:
+            continue
+        rid = entry.get("roadmap_id") or current.get("roadmap_id") or _infer_roadmap(root, test_id, current.get("semantic") or {})
+        path = fs_path(root, f"roadmaps/{rid}.json") if rid else None
+        if not path or not path.is_file():
+            continue
+        refs = merged.setdefault(rid, list(json.loads(path.read_text(encoding="utf-8")).get("frontier_refs") or []))
+        if test_id not in refs:
+            refs.append(test_id)
+        if current.get("roadmap_id") != rid:
+            requests.append({"request_id": f"REQ-INBOX-ATTACH-{_slug(test_id)}", "entity_kind": "test", "entity_name": test_id,
+                             "expected_version": int(current.get("entity_version") or 0), "writer_role": "ADVISOR",
+                             "event_type": "TEST_ATTACHED_TO_ROADMAP", "changes": {"roadmap_id": rid}})
+    for rid, refs in merged.items():
+        requests.append({"request_id": f"REQ-INBOX-FRONTIER-ATTACH-{_slug(rid)}", "document": f"roadmaps/{rid}.json",
+                         "merge": {"frontier_refs": refs}})
+    if not requests:
+        raise ProposalError("ROADMAP_ATTACH: nothing to attach")
+    return requests
+
+
 def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     test_id = str(body.get("test_id") or f"HYP-{_slug(str(item.get('_inbox_name') or body.get('title') or 'X'))}")
     if _entity(root, "test", test_id) is not None:
@@ -131,7 +183,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     kill = _first(body, "kill_criteria", "kill_criterion", "criterio_kill")
     if not success or not kill:
         raise ProposalError(f"{test_id}: hypothesis without frozen success and kill criteria")
-    roadmap_id = body.get("roadmap_id")
+    roadmap_id = body.get("roadmap_id") or _infer_roadmap(root, test_id, body.get("semantic") or {})
     siblings = _siblings(root, roadmap_id)
     inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "hypothesis_id", "domain")}
     question = _first(body, "question", "hypothesis", "hipotese", "hipótese")
@@ -294,6 +346,7 @@ _KIND_ALIASES = {
     "LESSON_PROPOSAL": "LESSON_PROPOSAL", "LESSON": "LESSON_PROPOSAL",
     "LEARNING_SIGNAL": "LEARNING_SIGNAL", "SIGNAL": "LEARNING_SIGNAL", "KNOWLEDGE_GAP": "LEARNING_SIGNAL", "GAP": "LEARNING_SIGNAL",
     "OPERATOR_INTENT": "OPERATOR_INTENT", "INTENT": "OPERATOR_INTENT",
+    "ROADMAP_ATTACH": "ROADMAP_ATTACH", "ATTACH": "ROADMAP_ATTACH",
     "SEMANTIC_BACKFILL": "SEMANTIC_BACKFILL", "BACKFILL": "SEMANTIC_BACKFILL", "MEANING_BACKFILL": "SEMANTIC_BACKFILL",
     "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
 }
@@ -364,6 +417,8 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             return _lesson_request(item, body, root)
         if kind == "SEMANTIC_BACKFILL":
             return _backfill_requests(item, body, root)
+        if kind == "ROADMAP_ATTACH":
+            return _attach_requests(item, body, root)
     except ProposalError as exc:
         # Keep the content in the Tower (nothing is lost) and say why it was not applied.
         return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")
