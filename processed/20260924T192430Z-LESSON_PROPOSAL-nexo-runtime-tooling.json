@@ -1,0 +1,25 @@
+{
+  "kind": "LESSON_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-24T19:24:30Z",
+  "payload": {
+    "topic_id": "engineering.nexo_runtime",
+    "title": "Mapa operacional do runtime do NEXO",
+    "gap_type": "TOOL",
+    "intuition": "Pense no NEXO como uma central com um livro-caixa único: a Tower guarda o estado, o contrato define como operar, as skills dizem como executar cada classe de trabalho e os conectores são apenas braços que leem ou escrevem sistemas externos.",
+    "explanation": "A leitura de estado vem da projeção pública ou da Tower quando execução exige o conteúdo completo. Mudanças não entram direto na Tower: viram propostas no inbox e o NEXO_WRITER_PROCEDURE é o único caminho de aplicação com checagem de revisão e readback. GitHub guarda código e o inbox principal; Drive guarda Tower, contrato, skills e o writer canônico.",
+    "exercise": "Exercício de 2 min: um teste terminou no Python. Qual é a sequência mínima para ele aparecer como estado canônico? Resposta: gerar MUTATION_PROPOSAL → gravar no inbox → executar NEXO_WRITER_PROCEDURE → validar readback da Tower.",
+    "linked_test_ids": [],
+    "linked_signal_ids": [
+      "LEARNING_SIGNAL::20260924T101531Z-LEARNING-SIGNAL-NEXO-RUNTIME-TOOLING-JSON"
+    ],
+    "semantic": {
+      "domain_id": "engineering",
+      "subdomain_id": "engineering.nexo_runtime",
+      "topic_id": "engineering.nexo_runtime",
+      "question_plain": "Onde ficam estado, regras, execução e escrita no runtime do NEXO?",
+      "why_it_matters": "Separar essas funções evita tratar projeções, memória ou código como fonte de verdade operacional.",
+      "confidence_plain": "alta"
+    }
+  }
+}
