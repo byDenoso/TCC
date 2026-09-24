@@ -208,6 +208,7 @@ class ContractOverlayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = _tower(Path(tmp) / "seed")
             base["files"]["contracts/X.json"] = {"encoding": "json", "value": {"v": 1}}
+            base["file_count"] = len(base["files"])
             root, _ = materialize_live_tower(_raw(base), Path(tmp) / "work")
             (root / "contracts").mkdir(exist_ok=True)
             (root / "contracts" / "X.json").write_text(json.dumps({"v": 2}))
