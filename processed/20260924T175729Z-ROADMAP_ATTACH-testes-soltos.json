@@ -1,0 +1,48 @@
+{
+ "kind": "ROADMAP_ATTACH",
+ "source": "CLAUDE",
+ "created_at": "2026-09-24T18:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "test_id": "GZSB-07-EROSITA-SELECTION-DEPTH-INTERACTION"
+   },
+   {
+    "test_id": "GZSB-09-WL-CALIBRATOR-HIGHZ-HIERARCHY"
+   },
+   {
+    "test_id": "T-DEM26-006"
+   },
+   {
+    "test_id": "T-H0HOM26-003"
+   },
+   {
+    "test_id": "T-H0HOM26-004"
+   },
+   {
+    "test_id": "T-H0HOM26-005"
+   },
+   {
+    "test_id": "T-H0HOM26-009"
+   },
+   {
+    "test_id": "T-LEARN26-001"
+   },
+   {
+    "test_id": "T-LEARN26-002"
+   },
+   {
+    "test_id": "T-LEARN26-003"
+   },
+   {
+    "test_id": "T-MEGA26-LCDM-BIAS-HOD-152"
+   },
+   {
+    "test_id": "T-MEGA26-LCDM-EVT-LMAX-149"
+   },
+   {
+    "test_id": "T-MEGA26-LCDM-TRACER-DENSITY-151"
+   }
+  ]
+ }
+}
