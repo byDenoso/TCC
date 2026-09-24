@@ -1,0 +1,33 @@
+{
+  "kind": "ROADMAP_ATTACH",
+  "source": "CHATGPT_EXECUTOR",
+  "created_at": "2026-09-24T19:36:00Z",
+  "payload": {
+    "items": [
+      {
+        "test_id": "T-DEM26-006",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-H0HOM26-003",
+        "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1"
+      },
+      {
+        "test_id": "T-H0HOM26-004",
+        "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1"
+      },
+      {
+        "test_id": "T-H0HOM26-005",
+        "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1"
+      },
+      {
+        "test_id": "T-H0HOM26-009",
+        "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1"
+      },
+      {
+        "test_id": "T-MEGA26-LCDM-BIAS-HOD-152",
+        "roadmap_id": "RM-DDE-ANOMALIES-MEGA-20260922-V1"
+      }
+    ]
+  }
+}
