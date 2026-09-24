@@ -7,7 +7,7 @@
     nexo_tower.py apply  REQUEST.json... mutate -> CAS write same file id -> readback -> notify ATLAS
     nexo_tower.py project --out DIR      build the public projection straight from Drive
     nexo_tower.py frontier [--roadmap ID] next executable roadmap test (canonical frontier logic)
-    nexo_tower.py inbox list|done IDS    proposals ChatGPT created in Drive NEXO_INBOX
+    nexo_tower.py inbox list|apply|done  ChatGPT proposals (GitHub issues, nexo-inbox branch, Drive NEXO_INBOX)
 
 Every automation and every human-driven change goes through ``apply``; nothing
 else writes operational truth.
@@ -283,16 +283,114 @@ class GitHubInbox:
         self._git("push", "-q", "origin", f"HEAD:{self.BRANCH}")
 
 
+class IssueInbox:
+    """ChatGPT proposals as GitHub issues on ``byDenoso/TCC`` (third create-only inbox).
+
+    Opening an issue is the lightest write ChatGPT's GitHub connector allows, so it
+    works when both the Drive file and the branch commit are refused. An issue is a
+    proposal when its title starts with ``[NEXO_INBOX]`` or it carries the
+    ``nexo-proposal`` label. The body is the proposal envelope: the first fenced
+    ```json block, or the whole body. The repo is public, so only issues opened by
+    ``TRUSTED_AUTHORS`` count. Applied issues get a comment and are closed.
+    """
+
+    REPO = "byDenoso/TCC"
+    TITLE_PREFIX = "[NEXO_INBOX]"
+    LABEL = "nexo-proposal"
+    TRUSTED_AUTHORS = frozenset({"byDenoso"})
+
+    def __init__(self) -> None:
+        self.token = os.environ.get("NEXO_INBOX_GITHUB_TOKEN") or os.environ.get("GITHUB_TOKEN") or self._gh_token()
+        if not self.token:
+            raise RuntimeError("GITHUB_TOKEN (or gh auth) required to read the issue inbox")
+
+    @staticmethod
+    def _gh_token() -> str:
+        import subprocess
+
+        try:
+            out = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True, timeout=20)
+        except (OSError, subprocess.SubprocessError):
+            return ""
+        return out.stdout.strip() if out.returncode == 0 else ""
+
+    def _api(self, path: str, method: str = "GET", body: dict | None = None):
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{self.REPO}{path}",
+            data=json.dumps(body).encode() if body is not None else None,
+            method=method,
+            headers={"Authorization": f"Bearer {self.token}", "Accept": "application/vnd.github+json",
+                     "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "nexo-tower-writer"},
+        )
+        with urllib.request.urlopen(request, timeout=60) as response:
+            raw = response.read()
+        return json.loads(raw) if raw else None
+
+    @staticmethod
+    def envelope(body: str):
+        import re
+
+        match = re.search(r"```(?:json)?[ \t]*\n(.*?)```", body or "", re.S)
+        text = match.group(1) if match else (body or "")
+        try:
+            return json.loads(text)
+        except ValueError:
+            return {"unparseable": text[:2000]}
+
+    @classmethod
+    def select(cls, issues: list[dict]) -> list[dict]:
+        items = []
+        for issue in issues:
+            if "pull_request" in issue:
+                continue
+            labels = {label.get("name") for label in issue.get("labels", [])}
+            if not (str(issue.get("title", "")).startswith(cls.TITLE_PREFIX) or cls.LABEL in labels):
+                continue
+            if (issue.get("user") or {}).get("login") not in cls.TRUSTED_AUTHORS:
+                continue
+            items.append({"id": f"issue:{issue['number']}", "name": f"issue-{issue['number']}",
+                          "createdTime": issue.get("created_at"), "payload": cls.envelope(issue.get("body") or "")})
+        return items
+
+    def pending(self) -> list[dict]:
+        return self.select(self._api("/issues?state=open&per_page=100&sort=created&direction=asc") or [])
+
+    def mark_processed(self, item_id: str) -> None:
+        number = item_id.split(":", 1)[1]
+        self._api(f"/issues/{number}/comments", "POST", {"body": "Applied by the NEXO Tower writer (CAS + readback)."})
+        self._api(f"/issues/{number}", "PATCH", {"state": "closed", "state_reason": "completed"})
+
+
+def _collect_inbox(github: "GitHubInbox") -> list[dict]:
+    """Every inbox, oldest first. A failing secondary inbox is logged, never fatal."""
+    items = [dict(i, source="GITHUB") for i in github.pending()]
+    for source, factory in (("ISSUE", IssueInbox), ("DRIVE", DriveInbox)):
+        try:
+            items += [dict(i, source=source) for i in factory().pending()]
+        except Exception as exc:
+            print(f"{source.lower()} inbox unavailable: {type(exc).__name__}: {exc}"[:300], file=sys.stderr)
+    items.sort(key=lambda i: str(i.get("createdTime") or ""))
+    return items
+
+
+def _mark(github: "GitHubInbox", item_ids: list[str]) -> None:
+    drive = issues = None
+    for item_id in item_ids:
+        if item_id.startswith("github:"):
+            github.mark_processed(item_id)
+        elif item_id.startswith("issue:"):
+            issues = issues or IssueInbox()
+            issues.mark_processed(item_id)
+        else:
+            drive = drive or DriveInbox(write=True)
+            drive.mark_processed(item_id)
+
+
 def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
     """Apply every inbox proposal (generic converter) in ONE CAS write, then mark them processed."""
     from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
 
-    items = [dict(i, source="GITHUB") for i in github.pending()]
-    try:
-        items += [dict(i, source="DRIVE") for i in DriveInbox().pending()]
-    except Exception as exc:
-        print(f"drive inbox unavailable: {exc}", file=sys.stderr)
-    items.sort(key=lambda i: str(i.get("createdTime") or ""))
+    items = _collect_inbox(github)
     if not items:
         _print({"status": "EMPTY"})
         return 0
@@ -325,13 +423,7 @@ def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
         json.dump(requests, handle, ensure_ascii=False)
     code = cmd_apply(argparse.Namespace(requests=[handle.name], dry_run=args.dry_run, retries=2))
     if code == 0 and not args.dry_run:
-        drive = None
-        for item_id in used:
-            if item_id.startswith("github:"):
-                github.mark_processed(item_id)
-            else:
-                drive = drive or DriveInbox(write=True)
-                drive.mark_processed(item_id)
+        _mark(github, used)
     print(json.dumps({"inbox_applied": used if code == 0 else [], "skipped": skipped}, ensure_ascii=False))
     return code
 
@@ -339,23 +431,12 @@ def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
 def cmd_inbox(args: argparse.Namespace) -> int:
     github = GitHubInbox()
     if args.action == "list":
-        items = [dict(item, source="GITHUB") for item in github.pending()]
-        try:
-            items += [dict({k: item.get(k) for k in ("id", "name", "createdTime", "payload")}, source="DRIVE")
-                      for item in DriveInbox().pending()]
-        except Exception as exc:  # Drive inbox is legacy; GitHub is the primary path
-            items.append({"id": None, "source": "DRIVE", "error": f"{type(exc).__name__}: {exc}"[:300]})
-        _print({"items": items})
+        _print({"items": [{k: item.get(k) for k in ("id", "source", "name", "createdTime", "payload")}
+                          for item in _collect_inbox(github)]})
     elif args.action == "apply":
         return _inbox_apply(github, args)
     else:
-        drive = None
-        for item_id in args.ids:
-            if item_id.startswith("github:"):
-                github.mark_processed(item_id)
-            else:
-                drive = drive or DriveInbox(write=True)
-                drive.mark_processed(item_id)
+        _mark(github, args.ids)
         _print({"processed": args.ids})
     return 0
 

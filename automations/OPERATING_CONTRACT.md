@@ -67,7 +67,13 @@ Termine cada execução com um relatório curto em português: o que rodou, o qu
 (fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
 
 ## ChatGPT inboxes
-ChatGPT proposals arrive in two create-only inboxes; `python scripts/nexo_tower.py inbox list` reads both:
-- Drive folder `NEXO_INBOX` (primary when the Drive connector accepts the JSON file).
-- GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/` (fallback: ChatGPT's GitHub MCP can always commit a file).
-Apply with `apply`, then `inbox done <id>` (`github:<name>` ids are moved to `processed/`).
+ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them:
+- Drive folder `NEXO_INBOX` (when the Drive connector accepts the JSON file).
+- GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/` (when the GitHub connector can commit a file).
+- GitHub issues on `byDenoso/TCC` (when both writes above are refused): title starting with `[NEXO_INBOX]`
+  (or label `nexo-proposal`), body = the proposal envelope, ideally inside a ```json block. Only issues
+  opened by `byDenoso` count (the repo is public). Applied issues get a comment and are closed.
+All three feed the same converter and the same single CAS write + readback; none writes the Tower directly.
+`inbox apply` applies everything pending and marks it processed; `inbox done <id>` does it by hand
+(`github:<name>` ids move to `processed/`, `issue:<n>` ids are closed). Reading issues needs `GITHUB_TOKEN`
+(or `NEXO_INBOX_GITHUB_TOKEN`, or a logged-in `gh`); without it the issue inbox is skipped with a log.
