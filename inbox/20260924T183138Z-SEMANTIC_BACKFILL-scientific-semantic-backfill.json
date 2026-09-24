@@ -1,0 +1,97 @@
+{
+  "kind": "SEMANTIC_BACKFILL",
+  "source": "CHATGPT",
+  "payload": {
+    "items": [
+      {
+        "id": "DDEMEGA26-002",
+        "semantic": {
+          "question_plain": "Que combinações de parâmetros de energia escura variável (w0, wa) continuam permitidas pelos dados mais recentes (DESI, CMB, supernovas)?",
+          "why_it_matters": "Ajuda a decidir se a energia escura muda com o tempo ou se o modelo padrão (ΛCDM) basta.",
+          "result_meaning": "Ainda existe uma faixa de energia escura dinâmica compatível com os dados registrados. A atualização Lyα puxa o combinado em direção ao ΛCDM, mas não elimina essa faixa; isso mantém um espaço fenomenológico vivo, não uma detecção.",
+          "verdict_plain": "Região DDE ainda viável",
+          "confidence_plain": "média",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "DDEMEGA26-003",
+        "semantic": {
+          "question_plain": "Quanto as histórias de energia escura ainda permitidas mudam a expansão e o crescimento de estruturas nas épocas observadas?",
+          "why_it_matters": "Ajuda a decidir se a energia escura muda com o tempo ou se o modelo padrão (ΛCDM) basta.",
+          "result_meaning": "As histórias DDE permitidas mudam o crescimento em menos de 2%, enquanto H, distância, P linear e fσ8 chegam à faixa de 2–5%. Pelo critério congelado, isso permanece inconclusivo.",
+          "verdict_plain": "Inconclusivo",
+          "confidence_plain": "média",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "DDEMEGA26-013",
+        "semantic": {
+          "question_plain": "A mesma energia escura variável consegue reduzir a tensão de H0 sem quebrar a concordância com BAO, CMB e supernovas?",
+          "why_it_matters": "A tensão de H0 é uma das principais discrepâncias observacionais atuais da cosmologia.",
+          "result_meaning": "Não: a energia escura dinâmica registrada empurra H0 para baixo, na direção oposta à medida local. Ela não resolve a tensão de H0 neste teste.",
+          "verdict_plain": "Não resolve H0",
+          "confidence_plain": "alta",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "DDEMEGA26-014",
+        "semantic": {
+          "question_plain": "Essa energia escura variável empurra o S8 na direção e no tamanho necessários para resolver a discordância das lentes gravitacionais?",
+          "why_it_matters": "O crescimento das estruturas (S8) é outro ponto em que os dados podem discordar do modelo padrão.",
+          "result_meaning": "A energia escura dinâmica permitida mexe no crescimento apenas em nível percentual e o sinal depende da localização/normalização do posterior. O efeito é pequeno demais para fechar a discrepância de S8 com a evidência registrada, então o resultado é inconclusivo.",
+          "verdict_plain": "Inconclusivo",
+          "confidence_plain": "média",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "DDEMEGA26-015",
+        "semantic": {
+          "question_plain": "A energia escura variável poderia explicar anomalias em alto redshift sem violar os limites do CMB e do BAO?",
+          "why_it_matters": "Se o efeito late-time for subpercentual em alto redshift, anomalias precoces exigem uma identidade de modelo diferente.",
+          "result_meaning": "Não: no envelope CPL registrado, a influência da energia escura já é subpercentual em alto redshift, com mudança de H(z) de cerca de 0,22% em z=8 e 0,05% em z=15 no teste conservador. Uma explicação material em alto z exigiria outro tipo de modelo.",
+          "verdict_plain": "CPL tardio rejeitado como causa de alto z",
+          "confidence_plain": "alta",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "DDEUDS26-005-PERTURBATION-STABILITY",
+        "semantic": {
+          "question_plain": "O UDS é fisicamente estável (sem instabilidades) em toda a faixa de redshift relevante?",
+          "why_it_matters": "Um modelo observacionalmente interessante não serve se sua evolução de fundo ou perturbações for instável no domínio testado.",
+          "result_meaning": "A realização UDS fixada completou a evolução de fundo, perturbações lineares, P(k) e CMB sem estado não finito. No domínio reproduzido, o setor testado permaneceu estável; isso não é uma prova de microfísica fechada.",
+          "verdict_plain": "Estável no domínio testado",
+          "confidence_plain": "alta",
+          "topic_id": "science.cosmology.dark_energy.equation_of_state"
+        }
+      },
+      {
+        "id": "GZSB-11-R1-PUBLISHED-HSC-PROFILE-SYSTEMATICS",
+        "semantic": {
+          "question_plain": "Os resultados publicados do HSC mostram um erro sistemático grande nos perfis dos aglomerados?",
+          "why_it_matters": "Um sistemático de perfil pode deslocar a calibração de massa e imitar uma anomalia de crescimento.",
+          "result_meaning": "Há um efeito local grande em um subconjunto de perfis HSC, com fração de poor-fit registrada de 15,4% e razão de massa de 0,2 no caso destacado. O resumo público não mostra se esse efeito cresce com o redshift nem se move a calibração em pelo menos 1σ; o teste pai continua aberto.",
+          "verdict_plain": "Sistemática local; materialidade em alto z aberta",
+          "confidence_plain": "média",
+          "topic_id": "science.cosmology.lss_growth"
+        }
+      },
+      {
+        "id": "GZSB-12-R1-PUBLISHED-DIAGONAL-LOO-SURROGATE",
+        "semantic": {
+          "question_plain": "Tirar um calibrador de cada vez muda a calibração do eROSITA em alto redshift em 1σ ou mais?",
+          "why_it_matters": "Se um único calibrador dominar o resultado, a aparente anomalia pode ser frágil à escolha do survey.",
+          "result_meaning": "O surrogate público mostra sensibilidade ao retirar DES, com influência máxima registrada de cerca de 1,44σ e tensão par-a-par máxima de 1,51σ. Isso não prova que o posterior nativo seja dominado por um calibrador; o teste pai continua aberto.",
+          "verdict_plain": "Surrogate sensível; teste nativo aberto",
+          "confidence_plain": "média",
+          "topic_id": "science.cosmology.lss_growth"
+        }
+      }
+    ]
+  },
+  "created_at": "2026-09-24T18:31:38Z"
+}
