@@ -110,6 +110,25 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             else:
                 ready.append(base)
 
+    # Tests marked READY on the entity itself but outside every ACTIVE roadmap (Learner/"Quero testar X"
+    # hypotheses without a roadmap, or in a PLANNED one) are executable too; without this they are invisible.
+    if not roadmap_id:
+        folder = root / "entities" / "test"
+        for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+            entity = _read(path)
+            if not entity or not entity.get("id") or str(entity["id"]) in seen:
+                continue
+            if _lifecycle(entity) != "READY" or not (entity.get("state") or entity.get("status")):
+                continue
+            ref = str(entity["id"])
+            seen.add(ref)
+            base = {"roadmap_id": entity.get("roadmap_id"), "test_id": ref, "state": "READY",
+                    "priority": entity.get("priority"), "source": "ENTITY_READY"}
+            deps = [str(d) for d in (entity.get("depends_on") or [])]
+            unmet = [d for d in deps if not _dependency_met(d, status_of)]
+            (waiting if unmet else ready).append({**base, "waiting_on": unmet} if unmet else base)
+        ready.sort(key=lambda t: (t.get("source") == "ENTITY_READY", PRIORITY_RANK.get(str(t.get("priority") or "NORMAL").upper(), 9)))
+
     if resumable:
         action, pick = "RESUME_EXISTING", resumable[0]
     elif ready:
@@ -121,9 +140,12 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     return {
         "state": action,
         "next": pick,
+        # What one Executor pulse can run in parallel (MAX_PARALLEL_TESTS=6): READY work first, because
+        # CHECKPOINTED tests usually wait on missing inputs and must not starve executable ones.
+        "batch": (ready + resumable)[:6],
         "resumable": resumable,
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
-        "rule": "RESUME_BEFORE_NEW; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL",
+        "rule": "RESUME_BEFORE_NEW; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
     }
