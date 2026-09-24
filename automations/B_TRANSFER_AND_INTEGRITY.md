@@ -14,6 +14,9 @@ Leia primeiro `automations/OPERATING_CONTRACT.md`.
    - IDs duplicados, referências quebradas (`campaign_id`, `hypothesis_id`, `depends_on`, `test_refs`);
    - TEST/CAMPAIGN sem `semantic` explícito → preencha pelo backfill da taxonomia (basis ≠ UNMAPPED)
      via `apply` com `event_type: SEMANTIC_BACKFILL`; UNMAPPED fica listado no relatório;
+   - TEST concluído sem `semantic.result_meaning` → escreva, a partir do resultado já persistido
+     (estatísticas, veredito, claim_boundary), `result_meaning`, `verdict_plain` e `confidence_plain` em português
+     simples; nunca reinterprete nem promova o claim — só traduza o que já está lá (`event_type: RESULT_MEANING_BACKFILL`);
    - `status` e `state` divergentes na mesma entidade → alinhe `status` ao lifecycle real;
    - índices (`indexes/*.json`) apontando para entidades inexistentes → corrija o índice (índice é derivado).
    Correções derivadas/determinísticas: aplique direto. Qualquer coisa que mude significado científico: não.
