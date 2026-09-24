@@ -67,13 +67,26 @@ Termine cada execução com um relatório curto em português: o que rodou, o qu
 (fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
 
 ## ChatGPT inboxes
-ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them:
-- Drive folder `NEXO_INBOX` (when the Drive connector accepts the JSON file).
-- GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/` (when the GitHub connector can commit a file).
-- GitHub issues on `byDenoso/TCC` (when both writes above are refused): title starting with `[NEXO_INBOX]`
+ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them.
+Use them in this order (the first is canonical; the others are fallbacks only when the one above is refused):
+1. **Canonical:** GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/`.
+2. Fallback: Drive folder `NEXO_INBOX` (when the Drive connector accepts the JSON file).
+3. Last resort: GitHub issues on `byDenoso/TCC` (when both writes above are refused): title starting with `[NEXO_INBOX]`
   (or label `nexo-proposal`), body = the proposal envelope, ideally inside a ```json block. Only issues
   opened by `byDenoso` count (the repo is public). Applied issues get a comment and are closed.
 All three feed the same converter and the same single CAS write + readback; none writes the Tower directly.
 `inbox apply` applies everything pending and marks it processed; `inbox done <id>` does it by hand
 (`github:<name>` ids move to `processed/`, `issue:<n>` ids are closed). Reading issues needs `GITHUB_TOKEN`
 (or `NEXO_INBOX_GITHUB_TOKEN`, or a logged-in `gh`); without it the issue inbox is skipped with a log.
+
+### Tower upload bridge (ChatGPT runtime)
+When the ChatGPT runtime applies the inbox itself, the Tower file is updated only through this path:
+1. Keep the applied Tower as a preserved TXT file (never import a temporary TXT directly: the runtime blocks it).
+2. Reference it as `sediment://...`.
+3. `update_file` on the **same canonical Tower file_id** (never create a new file).
+4. Readback of that file_id: fingerprint must equal the locally projected one.
+5. Only then move the inbox JSONs to `processed/` and update `tower-head.json`, then re-read it.
+
+Failure rule: without step 4 PASS, the report says "não afirmo que chegou à Tower", keeps the JSONs in
+`inbox/`, and reports the projected fingerprint separately from the real one. Never report a projected
+fingerprint as the Tower head.
