@@ -32,16 +32,26 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual(request["changes"]["semantic"]["topic_id"], "x")
         self.assertEqual(request["changes"]["semantic"]["result_meaning"], "Nada robusto.")
 
-    def test_result_without_meaning_or_unknown_test_is_rejected(self):
-        with self.assertRaises(ProposalError):
-            proposal_to_requests({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-1", "result": {}}}, self.root)
-        with self.assertRaises(ProposalError):
-            proposal_to_requests({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "NOPE"}}, self.root)
+    def test_unapplicable_proposals_are_recorded_not_lost(self):
+        for item in ({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-1", "result": {}}},
+                     {"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "NOPE", "result": {"verdict": "PASS"}}},
+                     {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "H-1", "semantic": {"domain_id": "science"}}}):
+            [request] = proposal_to_requests(item, self.root)
+            self.assertEqual(request["entity_kind"], "artifact")
+            self.assertTrue(request["changes"]["kind"].startswith("UNAPPLIED_"))
+            self.assertIn("_not_applied_reason", request["changes"]["payload"])
 
-    def test_hypothesis_needs_frozen_criteria(self):
-        with self.assertRaises(ProposalError):
-            proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "H-1",
-                                  "semantic": {"domain_id": "science"}}}, self.root)
+    def test_generic_shapes_are_understood(self):
+        # no kind, batch under "results", verdict at top level, meaning only in verdict_plain
+        item = {"payload": {"results": [{"test_id": "T-1", "veredito": "PASS", "semantic": {"verdict_plain": "Passou."}}]}}
+        [request] = proposal_to_requests(item, self.root)
+        self.assertEqual(request["entity_kind"], "test")
+        self.assertEqual(request["changes"]["verdict"], "PASS")
+        self.assertEqual(request["changes"]["semantic"]["result_meaning"], "Passou.")
+
+    def test_unknown_kind_is_recorded(self):
+        [request] = proposal_to_requests({"kind": "SOMETHING_NEW", "payload": {"x": 1}}, self.root)
+        self.assertEqual(request["changes"]["kind"], "INBOX_RECORD")
 
     def test_signal_is_recorded_as_artifact(self):
         [request] = proposal_to_requests({"kind": "LEARNING_SIGNAL", "payload": {"signals": []}, "_inbox_name": "a b"}, self.root)

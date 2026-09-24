@@ -172,25 +172,78 @@ def _record_request(item: dict[str, Any], body: dict[str, Any], kind: str) -> li
     }]
 
 
+_KIND_ALIASES = {
+    "MUTATION_PROPOSAL": "MUTATION_PROPOSAL", "RESULT": "MUTATION_PROPOSAL", "TEST_RESULT": "MUTATION_PROPOSAL",
+    "RESULT_PROPOSAL": "MUTATION_PROPOSAL", "EXECUTION_RESULT": "MUTATION_PROPOSAL",
+    "HYPOTHESIS_PROPOSAL": "HYPOTHESIS_PROPOSAL", "HYPOTHESIS": "HYPOTHESIS_PROPOSAL", "TEST_PROPOSAL": "HYPOTHESIS_PROPOSAL",
+    "LESSON_PROPOSAL": "LESSON_PROPOSAL", "LESSON": "LESSON_PROPOSAL",
+    "LEARNING_SIGNAL": "LEARNING_SIGNAL", "SIGNAL": "LEARNING_SIGNAL", "KNOWLEDGE_GAP": "LEARNING_SIGNAL", "GAP": "LEARNING_SIGNAL",
+    "OPERATOR_INTENT": "OPERATOR_INTENT", "INTENT": "OPERATOR_INTENT",
+}
+_BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
+
+
+def _infer_kind(body: dict[str, Any]) -> str | None:
+    if body.get("test_id") and (body.get("result") or body.get("verdict") or body.get("veredito")):
+        return "MUTATION_PROPOSAL"
+    if _first(body, "success_criteria", "criterio_sucesso", "critério_sucesso") and _first(body, "kill_criteria", "kill_criterion", "criterio_kill"):
+        return "HYPOTHESIS_PROPOSAL"
+    if (body.get("topic_id") or (body.get("semantic") or {}).get("topic_id")) and _first(body, "intuition", "intuicao", "intuição", "exercise", "exercicio", "exercício"):
+        return "LESSON_PROPOSAL"
+    if body.get("signals") or body.get("gap_type"):
+        return "LEARNING_SIGNAL"
+    return None
+
+
+def _normalize_result(body: dict[str, Any]) -> dict[str, Any]:
+    """Pull verdict/meaning from wherever the GPT put them, so format drift never blocks a result."""
+    body = dict(body)
+    result = dict(body.get("result") or {})
+    for key in ("verdict", "veredito", "decision", "decisão", "statistics", "estatísticas", "summary", "resumo"):
+        if key in body and key not in result:
+            result[key] = body[key]
+    body["result"] = result
+    semantic = dict(body.get("semantic") or {})
+    if not semantic.get("result_meaning"):
+        meaning = _first(semantic, "verdict_plain", "summary_plain") or _first(body, "result_meaning", "meaning", "significado")             or _first(result, "summary", "resumo", "interpretation", "interpretação")
+        if meaning:
+            semantic["result_meaning"] = str(meaning)
+    body["semantic"] = semantic
+    return body
+
+
 def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[str, Any]]:
-    """``item`` is the proposal envelope ({kind, source, payload, created_at}) plus _inbox_id/_inbox_name."""
+    """Any ChatGPT proposal -> writer requests. Tolerant by design: known shapes become
+    governed mutations; anything else is recorded as an artifact instead of blocking the inbox.
+
+    ``item`` is the envelope ({kind, source, payload, created_at}) plus _inbox_id/_inbox_name;
+    a bare payload (no envelope) is accepted too.
+    """
     root = Path(root)
     if not isinstance(item, dict):
         raise ProposalError("proposal is not a JSON object")
-    kind = str(item.get("kind") or "").upper()
-    body = item.get("payload") if isinstance(item.get("payload"), dict) else {}
-    if kind == "MUTATION_PROPOSAL":
-        # One proposal may carry several results: {"tests": [{test_id, result, semantic, ...}, ...]}.
-        batch = body.get("tests") if isinstance(body.get("tests"), list) else [body]
-        requests = []
+    body = item.get("payload") if isinstance(item.get("payload"), dict) else {k: v for k, v in item.items() if not k.startswith("_")}
+    raw_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
+    first = batch[0] if batch and isinstance(batch[0], dict) else {}
+    kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"
+    if batch is not None and kind in {"MUTATION_PROPOSAL", "HYPOTHESIS_PROPOSAL", "LESSON_PROPOSAL"}:
+        requests: list[dict[str, Any]] = []
         for index, entry in enumerate(batch):
-            named = dict(item, _inbox_name=f"{item.get('_inbox_name') or 'item'}-{index}") if len(batch) > 1 else item
-            requests.extend(_result_request(named, entry if isinstance(entry, dict) else {}, root))
+            if not isinstance(entry, dict):
+                continue
+            named = dict(item, kind=kind, payload=entry, _inbox_name=f"{item.get('_inbox_name') or 'item'}-{index}")
+            requests.extend(proposal_to_requests(named, root))
         return requests
-    if kind == "HYPOTHESIS_PROPOSAL":
-        return _hypothesis_requests(item, body, root)
-    if kind == "LESSON_PROPOSAL":
-        return _lesson_request(item, body, root)
-    if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT"}:
-        return _record_request(item, body, kind)
-    raise ProposalError(f"unknown kind {kind!r}")
+
+    try:
+        if kind == "MUTATION_PROPOSAL":
+            return _result_request(item, _normalize_result(body), root)
+        if kind == "HYPOTHESIS_PROPOSAL":
+            return _hypothesis_requests(item, body, root)
+        if kind == "LESSON_PROPOSAL":
+            return _lesson_request(item, body, root)
+    except ProposalError as exc:
+        # Keep the content in the Tower (nothing is lost) and say why it was not applied.
+        return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")
+    return _record_request(item, body, kind if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT"} else "INBOX_RECORD")
