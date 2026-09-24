@@ -1,0 +1,30 @@
+{
+  "kind": "DATA_BINDING",
+  "source": "CHATGPT_EXECUTOR",
+  "created_at": "2026-09-24T19:36:00Z",
+  "payload": {
+    "test_id": "T-H0HOM26-003",
+    "status": "PARTIAL",
+    "inputs": [
+      {
+        "name": "EDD corrected All CF4 Individual Distances",
+        "url": "https://edd.ifa.hawaii.edu/",
+        "sha256": null,
+        "format": "EDD public catalogue/table",
+        "load": "Use the corrected All CF4 Individual Distances release corresponding to Tully et al. 2023; freeze the exact downloaded artifact and byte SHA256 before compute.",
+        "checked": "EDD states the August 2022 tables were flawed and must not be used; corrected CF4 tables are the current public release, with 55,877 galaxies.",
+        "license": "public"
+      },
+      {
+        "name": "Whitford-Howlett-Davis Measuring_bulkflows",
+        "url": "https://github.com/abbew25/Measuring_bulkflows",
+        "sha256": null,
+        "format": "Git repository",
+        "load": "Freeze current public commit before compute; current HEAD observed in this pulse: fc818a1632826b54975f7fd372ead28872b018fa.",
+        "checked": "The 2023 MNRAS paper identifies this repository as the code source; current history includes estimator-coordinate fixes in April 2026, so the commit must be explicit.",
+        "license": "public repository"
+      }
+    ],
+    "note": "Fontes primárias estão localizadas e o repositório de referência foi pinado por commit, mas o catálogo CF4 ainda precisa de download exato+SHA256 e a bateria >=2000 do nulo linear ainda não foi executada."
+  }
+}
