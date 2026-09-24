@@ -1,0 +1,27 @@
+{
+  "kind": "LESSON_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-24T19:24:30Z",
+  "payload": {
+    "topic_id": "science.cosmology.lss_growth",
+    "title": "Do catálogo ao mapa cosmológico 3D",
+    "gap_type": "METHOD",
+    "intuition": "Imagine o levantamento como uma lanterna iluminando uma sala escura por frestas: os pontos observados são galáxias, mas a forma aparente também carrega o desenho da lanterna. O mapa físico só aparece depois de converter ângulo+redshift em posição comóvel e corrigir a função de seleção.",
+    "explanation": "Para cada galáxia, converta redshift em distância comóvel χ(z) no modelo fiducial e use RA/Dec para obter XYZ; depois estime densidade sempre contra um catálogo aleatório que reproduza máscara, completude e seleção radial. A razão dados/aleatórios separa estrutura cósmica do desenho do levantamento; sem isso, bordas e regiões rasas viram filamentos falsos.",
+    "exercise": "Exercício de 2 min: duas regiões do céu têm 100 e 50 galáxias observadas, mas a segunda tem completude de 50% e a primeira de 100%. Qual parece mais densa antes e depois da correção? Resposta: antes, a primeira parece 2× mais densa; corrigindo completude, ambas correspondem a ~100 galáxias equivalentes e a diferença desaparece.",
+    "linked_test_ids": [
+      "GZ01-B03-T02-SELECTION-CORRECTED-XYZ"
+    ],
+    "linked_signal_ids": [
+      "LEARNING_SIGNAL::20260924T095940Z-LEARNING-SIGNAL-LSS-GROWTH-MAPPING-JSON"
+    ],
+    "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.lss_growth",
+      "topic_id": "science.cosmology.lss_growth",
+      "question_plain": "Como um catálogo de galáxias vira um mapa cosmológico 3D sem confundir seleção observacional com estrutura real?",
+      "why_it_matters": "Sem corrigir geometria e completude do levantamento, o mapa pode fabricar estruturas que não existem.",
+      "confidence_plain": "alta"
+    }
+  }
+}
