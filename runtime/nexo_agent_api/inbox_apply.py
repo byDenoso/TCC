@@ -159,13 +159,15 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "claim_boundary": body.get("claim_boundary"),
         "depends_on": body.get("depends_on") or [],
         "proposed_by": "CHATGPT",
+        "origin": "META" if test_id.upper().startswith("META-") else body.get("origin"),
+        "linked_signal_ids": body.get("linked_signal_ids"),
         "semantic": semantic,
     }
     requests = [{
         "request_id": f"REQ-INBOX-{_slug(str(item.get('_inbox_name') or test_id))}",
         "entity_kind": "test", "entity_name": test_id, "expected_version": 0,
         "writer_role": "ADVISOR", "event_type": "ROADMAP_TEST_FROZEN",
-        "changes": {k: v for k, v in changes.items() if v not in (None, "")},
+        "changes": {k: v for k, v in changes.items() if v not in (None, "", [])},
     }]
     # The hypothesis itself (Ciência > Hipóteses): create or enrich its entity.
     block = body.get("hypothesis") if isinstance(body.get("hypothesis"), dict) else {}
@@ -220,6 +222,7 @@ def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "explanation": _first(body, "explanation", "explicacao", "explicação", "formal"),
         "exercise": _first(body, "exercise", "exercicio", "exercício"),
         "linked_test_ids": body.get("linked_test_ids"),
+        "linked_signal_ids": body.get("linked_signal_ids"),
         "updated_at": item.get("created_at"),
     }
     return [{
@@ -250,6 +253,7 @@ _KIND_ALIASES = {
     "LESSON_PROPOSAL": "LESSON_PROPOSAL", "LESSON": "LESSON_PROPOSAL",
     "LEARNING_SIGNAL": "LEARNING_SIGNAL", "SIGNAL": "LEARNING_SIGNAL", "KNOWLEDGE_GAP": "LEARNING_SIGNAL", "GAP": "LEARNING_SIGNAL",
     "OPERATOR_INTENT": "OPERATOR_INTENT", "INTENT": "OPERATOR_INTENT",
+    "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
 }
 _BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
 
@@ -261,6 +265,8 @@ def _infer_kind(body: dict[str, Any]) -> str | None:
         return "HYPOTHESIS_PROPOSAL"
     if (body.get("topic_id") or (body.get("semantic") or {}).get("topic_id")) and _first(body, "intuition", "intuicao", "intuição", "exercise", "exercicio", "exercício"):
         return "LESSON_PROPOSAL"
+    if body.get("checks") and body.get("status") in {"GREEN", "YELLOW", "RED"}:
+        return "INTEGRITY_REPORT"
     if body.get("signals") or body.get("gap_type"):
         return "LEARNING_SIGNAL"
     return None
@@ -317,4 +323,4 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
     except ProposalError as exc:
         # Keep the content in the Tower (nothing is lost) and say why it was not applied.
         return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")
-    return _record_request(item, body, kind if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT"} else "INBOX_RECORD")
+    return _record_request(item, body, kind if kind in {"LEARNING_SIGNAL", "OPERATOR_INTENT", "INTEGRITY_REPORT"} else "INBOX_RECORD")

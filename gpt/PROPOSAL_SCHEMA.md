@@ -88,3 +88,23 @@ Vira `lesson LESSON::<topic_id>` e aparece no ATLAS (lente Aprendizado), perto d
    agrega por `topic_id` (≥2 sinais ou 1 com confiança ≥0,8), prioriza o que destrava testes ativos e emite
    LESSON_PROPOSAL (e a mini-aula no chat).
 4. **Writer** grava a lição → ATLAS atualiza sozinho.
+
+## Linha de montagem (papel único por tarefa)
+| Tarefa | Grava só | Lê |
+|---|---|---|
+| Gaps (diária) | LEARNING_SIGNAL `evidence_kind: PARAPHRASE` | conversas |
+| Learner autônomo (diária) | HYPOTHESIS_PROPOSAL (+ teste META-*), MUTATION_PROPOSAL das próprias hipóteses, LESSON_PROPOSAL, LEARNING_SIGNAL `RUNTIME_CHANGE_PROPOSAL` | resultados, sinais, INTEGRITY_REPORT |
+| Executor (horária) | MUTATION_PROPOSAL, LEARNING_SIGNAL `RUNTIME_FAILURE` | `frontier` |
+| Writer (horária) | a Tower (dono único) | inbox |
+| Guardião (diária 06:00) | INTEGRITY_REPORT, LEARNING_SIGNAL `INTEGRITY` | tudo (só audita) |
+
+Consumo: hipóteses e lições citam em `linked_signal_ids` os ids `LEARNING_SIGNAL::*` que consumiram; sinal citado não é reprocessado.
+Testes com id `META-*` (domain_id `engineering`) são hipóteses sobre o próprio sistema; recebem `origin: META`.
+
+## INTEGRITY_REPORT (Guardião)
+```json
+{"date": "2026-09-25", "status": "GREEN|YELLOW|RED",
+ "checks": [{"area": "tower|site|inbox|tasks|science|cycle|contract", "ok": true, "detail": "..."}],
+ "semantic": {"domain_id": "engineering", "topic_id": "engineering.nexo_runtime"}}
+```
+Vira `artifact INTEGRITY_REPORT::*`. O Guardião nunca corrige nada.
