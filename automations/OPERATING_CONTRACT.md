@@ -65,3 +65,9 @@ materialmente diferente exige nova identidade TEST.
 
 Termine cada execução com um relatório curto em português: o que rodou, o que mudou na Tower
 (fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
+
+## ChatGPT inboxes
+ChatGPT proposals arrive in two create-only inboxes; `python scripts/nexo_tower.py inbox list` reads both:
+- Drive folder `NEXO_INBOX` (primary when the Drive connector accepts the JSON file).
+- GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/` (fallback: ChatGPT's GitHub MCP can always commit a file).
+Apply with `apply`, then `inbox done <id>` (`github:<name>` ids are moved to `processed/`).

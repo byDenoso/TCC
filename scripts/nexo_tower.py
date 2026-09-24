@@ -277,13 +277,67 @@ def cmd_frontier(args: argparse.Namespace) -> int:
     return 0
 
 
+class GitHubInbox:
+    """ChatGPT proposals as files on the TCC ``nexo-inbox`` branch (``inbox/*.json``).
+
+    ChatGPT's Drive connector cannot create raw JSON files, but its GitHub MCP can
+    commit them. Applied files are moved to ``processed/``. Uses the machine's git
+    access through a dedicated clone under NEXO_HOME.
+    """
+
+    BRANCH = "nexo-inbox"
+
+    def __init__(self) -> None:
+        import subprocess
+
+        self.repo = nexo_home() / "tcc-inbox"
+        self._sp = subprocess
+        if not (self.repo / ".git").is_dir():
+            self._sp.run(["git", "clone", "-q", "--depth", "1", "--branch", self.BRANCH,
+                          "https://github.com/byDenoso/TCC.git", str(self.repo)], check=True, timeout=300)
+
+    def _git(self, *args: str):
+        return self._sp.run(["git", "-C", str(self.repo), *args], capture_output=True, text=True, timeout=120)
+
+    def pending(self) -> list[dict]:
+        self._git("fetch", "-q", "--depth", "1", "origin", self.BRANCH)
+        self._git("reset", "-q", "--hard", f"origin/{self.BRANCH}")
+        items = []
+        for path in sorted((self.repo / "inbox").glob("*.json")):
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except ValueError:
+                payload = {"unparseable": path.read_text(encoding="utf-8", errors="replace")[:2000]}
+            created = payload.get("created_at") if isinstance(payload, dict) else None
+            items.append({"id": f"github:{path.name}", "name": path.name, "createdTime": created, "payload": payload})
+        return items
+
+    def mark_processed(self, item_id: str) -> None:
+        name = item_id.split(":", 1)[1]
+        self._git("mv", f"inbox/{name}", f"processed/{name}")
+        self._git("-c", "user.name=NEXO Tower Writer", "-c", "user.email=denosooo2@gmail.com",
+                  "commit", "-q", "-m", f"inbox: processed {name}")
+        self._git("push", "-q", "origin", f"HEAD:{self.BRANCH}")
+
+
 def cmd_inbox(args: argparse.Namespace) -> int:
-    inbox = DriveInbox(write=args.action == "done")
+    github = GitHubInbox()
     if args.action == "list":
-        _print({"items": [{k: item.get(k) for k in ("id", "name", "createdTime", "payload")} for item in inbox.pending()]})
+        items = [dict(item, source="GITHUB") for item in github.pending()]
+        try:
+            items += [dict({k: item.get(k) for k in ("id", "name", "createdTime", "payload")}, source="DRIVE")
+                      for item in DriveInbox().pending()]
+        except Exception as exc:  # Drive inbox is legacy; GitHub is the primary path
+            items.append({"id": None, "source": "DRIVE", "error": f"{type(exc).__name__}: {exc}"[:300]})
+        _print({"items": items})
     else:
-        for file_id in args.ids:
-            inbox.mark_processed(file_id)
+        drive = None
+        for item_id in args.ids:
+            if item_id.startswith("github:"):
+                github.mark_processed(item_id)
+            else:
+                drive = drive or DriveInbox(write=True)
+                drive.mark_processed(item_id)
         _print({"processed": args.ids})
     return 0
 
