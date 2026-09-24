@@ -1,0 +1,30 @@
+{
+  "kind": "DATA_BINDING",
+  "source": "CHATGPT_EXECUTOR",
+  "created_at": "2026-09-24T19:36:00Z",
+  "payload": {
+    "test_id": "T-MEGA26-LCDM-BIAS-HOD-152",
+    "status": "PARTIAL",
+    "inputs": [
+      {
+        "name": "Round12 primary EuclidLargeBox/EuclidLargeMocks payload",
+        "url": "https://adlibitum.oats.inaf.it/pierluigi.monaco/euclid_mocks.html",
+        "sha256": null,
+        "format": "Halo light-cone/mock payloads",
+        "load": "Use only the exact T147-frozen EuclidLargeBox/EuclidLargeMocks objects after immutable object ID and byte SHA256 are bound.",
+        "checked": "Tower T147 has metadata, cosmology, HOD source and geometry frozen but explicitly lacks the exact consumed payload object+hash.",
+        "license": "public archive"
+      },
+      {
+        "name": "Round12 FLAMINGO-10K holdout payload",
+        "url": "https://flamingo.strw.leidenuniv.nl/",
+        "sha256": null,
+        "format": "Public halo/matter products",
+        "load": "Use only exact T147-selected holdout object(s) after immutable object ID and byte SHA256 are bound.",
+        "checked": "Tower T147 freezes FLAMINGO-10K/D3A metadata and product family, but exact downstream payload hashes remain unresolved.",
+        "license": "public data release"
+      }
+    ],
+    "note": "T152 não pode ser executado legitimamente ainda: sua dependência T147 segue CHECKPOINTED no requisito de payload+hash. O lane permanece recuperável; não há base para KILL nem para retunar HOD."
+  }
+}
