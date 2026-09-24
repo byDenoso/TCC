@@ -233,13 +233,20 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
         statistics = _public_numeric_fields(scientific_result.get("statistics"), TEST_STATISTICS_FIELDS)
     if statistics:
         projected["statistics"] = statistics
+    if not projected.get("verdict"):
+        # Results store the verdict under several names; the site needs one.
+        sr = scientific_result if isinstance(scientific_result, dict) else {}
+        verdict = next((v for v in (entity.get("scientific_verdict"), entity.get("decision"), sr.get("verdict"),
+                                    sr.get("decision"), sr.get("claim_decision"), (entity.get("semantic") or {}).get("verdict_plain"))
+                        if isinstance(v, str) and v.strip()), None)
+        if verdict:
+            projected["verdict"] = verdict.strip()
     projected = _with_semantics(projected, entity)
     semantic = projected["semantic"]
     if not semantic.get("result_meaning"):
         # Private (Olympus) tests only get the verdict sentence, never their free-text summary.
         source = {} if projected.get("private") else (scientific_result if isinstance(scientific_result, dict) else {})
-        derived = _derived_meaning({} if projected.get("private") else entity, source,
-                                   verdict=(scientific_result or {}).get("verdict") if isinstance(scientific_result, dict) else None)
+        derived = _derived_meaning({} if projected.get("private") else entity, source, verdict=projected.get("verdict"))
         if derived:
             # Stopgap until the GPT writes the real plain reading; the site labels it as automatic.
             semantic["result_meaning"] = derived
@@ -248,18 +255,22 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
 
 
 _VERDICT_PT = {
-    "PROMOTED": "Resultado positivo: a hipótese passou nos critérios definidos antes do teste.",
+    "PROMOT": "Resultado positivo: a hipótese passou nos critérios definidos antes do teste.",
     "SUPPORTED": "Resultado positivo: os dados apoiam a hipótese dentro dos limites do teste.",
-    "INCONCLUSIVE": "Inconclusivo: os dados não bastaram para decidir a favor nem contra a hipótese.",
-    "REJECTED": "Hipótese rejeitada: os dados contrariam o que ela previa.",
+    "INCONCLUS": "Inconclusivo: os dados não bastaram para decidir a favor nem contra a hipótese.",
+    "REJECT": "Hipótese rejeitada: os dados contrariam o que ela previa.",
     "NULL": "Resultado nulo: nenhum efeito além do esperado pelo modelo padrão.",
     "BLOCKED": "Teste bloqueado antes de chegar a um veredito.",
+    "PASS": "Passou na verificação definida antes do teste.",
+    "CONSISTENT": "Os dados são consistentes com o modelo padrão; nenhuma anomalia detectada.",
 }
 
 
 def _derived_meaning(entity: dict[str, Any], result: dict[str, Any], verdict: Any = None) -> str | None:
     verdict = str(verdict or result.get("verdict") or entity.get("verdict") or entity.get("scientific_verdict") or "").upper()
     base = next((text for key, text in _VERDICT_PT.items() if key in verdict), None)
+    if not base and verdict:
+        base = "Veredito técnico registrado: " + verdict.replace("__", " · ").replace("_", " ").lower() + "."
     summary = next((str(v).strip() for v in (result.get("summary"), result.get("resumo"), entity.get("summary"))
                     if isinstance(v, str) and v.strip() and "canonical status" not in v), None)
     if summary and len(summary) > 280:
