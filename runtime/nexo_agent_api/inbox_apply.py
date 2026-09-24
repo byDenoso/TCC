@@ -153,6 +153,25 @@ def _infer_roadmap(root: Path, test_id: str, semantic: dict[str, Any]) -> str | 
     return (by_sub or by_dom or (None, None))[1]
 
 
+def _roadmap_index(root: Path) -> list[dict[str, Any]]:
+    path = fs_path(root, "indexes/active-roadmaps.json")
+    return [i for i in (json.loads(path.read_text(encoding="utf-8")).get("items") or []) if isinstance(i, dict)] if path.is_file() else []
+
+
+def _roadmap_listing(root: Path, test_id: str) -> str | None:
+    """The roadmap whose frontier already lists this test (the entity just lacks the field)."""
+    for item in _roadmap_index(root):
+        rid = str(item.get("roadmap_id") or "")
+        doc = fs_path(root, f"roadmaps/{rid}.json")
+        if doc.is_file() and test_id in (json.loads(doc.read_text(encoding="utf-8")).get("frontier_refs") or []):
+            return rid
+    return None
+
+
+def _roadmap_of_campaign(root: Path, campaign_id: Any) -> str | None:
+    return next((str(i["roadmap_id"]) for i in _roadmap_index(root) if campaign_id and i.get("campaign_id") == campaign_id), None)
+
+
 def _attach_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """ROADMAP_ATTACH: put existing roadmap-less tests on a roadmap frontier (explicit or inferred)."""
     requests: list[dict[str, Any]] = []
@@ -164,7 +183,8 @@ def _attach_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         current = _entity(root, "test", test_id) if test_id else None
         if current is None:
             continue
-        rid = entry.get("roadmap_id") or current.get("roadmap_id") or _infer_roadmap(root, test_id, current.get("semantic") or {})
+        rid = (entry.get("roadmap_id") or current.get("roadmap_id") or _roadmap_listing(root, test_id)
+               or _roadmap_of_campaign(root, current.get("campaign_id")) or _infer_roadmap(root, test_id, current.get("semantic") or {}))
         path = fs_path(root, f"roadmaps/{rid}.json") if rid else None
         if not path or not path.is_file():
             continue
