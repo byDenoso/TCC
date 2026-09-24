@@ -71,3 +71,27 @@ class PublicScienceTestProjectionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_hypotheses_are_projected_with_fields_derived_from_their_tests(tmp_path):
+    import json
+
+    from runtime.nexo_agent_api.public_projection import build_public_projection
+    from runtime.nexo_agent_api.tower_paths import entity_path
+
+    (tmp_path / "CONTROL.json").write_text(json.dumps({"truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE"}))
+    for kind, eid, body in (
+        ("hypothesis", "HYP-1", {"id": "HYP-1", "title": "Dark matter self-interacts", "status": "OPEN", "domain": "SCIENCE"}),
+        ("hypothesis", "HYP-OLY", {"id": "HYP-OLY", "title": "private", "semantic": {"domain_id": "olympus"}}),
+        ("test", "T-1", {"id": "T-1", "hypothesis_id": "HYP-1", "null": "CDM fits", "rival": "SIDM fits better",
+                         "kill_criteria": "No velocity dependence works", "semantic": {"topic_id": "science.cosmology.dark_matter.nature"}}),
+    ):
+        path = entity_path(tmp_path, kind, eid)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(body))
+    projection = build_public_projection(tmp_path, tower_revision="sha256:" + "b" * 64)
+    [hyp] = projection["hypotheses"]
+    assert hyp["id"] == "HYP-1"
+    assert (hyp["statement"], hyp["model"], hyp["baseline"]) == ("Dark matter self-interacts", "SIDM fits better", "CDM fits")
+    assert hyp["falsification_criterion"] == "No velocity dependence works"
+    assert projection["manifest"]["source_snapshot_id"].startswith("LIVE_TOWER@sha256:")

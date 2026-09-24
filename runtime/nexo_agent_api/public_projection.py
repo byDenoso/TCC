@@ -278,6 +278,52 @@ def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
     return projected
 
 
+def _load_hypotheses(root: Path) -> list[dict[str, Any]]:
+    """Public hypotheses for the ATLAS (Ciência > Hipóteses).
+
+    Hypothesis entities are often thin (title/status/domain); the scientific content
+    lives in their frozen tests. Missing fields are derived from the linked tests:
+    statement <- title/statement, model <- rival, baseline <- null,
+    falsification_criterion <- kill criteria. Private (Olympus) hypotheses stay out.
+    """
+    folder = root / "entities" / "hypothesis"
+    if not folder.is_dir():
+        return []
+    tests_by_hypothesis: dict[str, list[dict[str, Any]]] = {}
+    test_folder = root / "entities" / "test"
+    if test_folder.is_dir():
+        for path in sorted(test_folder.glob("*.json")):
+            test = _read_json(path)
+            if isinstance(test, dict) and test.get("hypothesis_id"):
+                tests_by_hypothesis.setdefault(str(test["hypothesis_id"]), []).append(test)
+    first = lambda tests, *keys: next((t[k] for t in tests for k in keys if t.get(k)), None)
+    projected: list[dict[str, Any]] = []
+    for path in sorted(folder.glob("*.json")):
+        entity = _read_json(path)
+        if not isinstance(entity, dict):
+            continue
+        hypothesis_id = str(entity.get("id") or entity.get("hypothesis_id") or path.stem)
+        tests = tests_by_hypothesis.get(hypothesis_id, [])
+        record = {
+            "id": hypothesis_id,
+            "title": entity.get("title"),
+            "status": entity.get("status") or entity.get("state"),
+            "statement": entity.get("statement") or entity.get("proposition") or entity.get("title"),
+            "model": entity.get("model") or first(tests, "rival", "model"),
+            "baseline": entity.get("baseline") or first(tests, "null", "baseline_model"),
+            "falsification_criterion": entity.get("falsification_criterion") or first(tests, "kill_criteria", "falsification_criterion"),
+            "test_ids": sorted(str(t.get("id")) for t in tests if t.get("id")),
+        }
+        semantic_source = {**entity, "campaign_id": entity.get("campaign_id") or first(tests, "campaign_id"),
+                           "roadmap_id": first(tests, "roadmap_id"),
+                           "semantic": entity.get("semantic") or first(tests, "semantic") or {}}
+        projected_record = _with_semantics({k: v for k, v in record.items() if v not in (None, "", [])}, semantic_source)
+        if projected_record.get("private"):
+            continue
+        projected.append(projected_record)
+    return projected
+
+
 def _load_entities(root: Path, kind: str, fields: Iterable[str]) -> dict[str, dict[str, Any]]:
     folder = root / "entities" / kind
     if not folder.is_dir():
@@ -435,6 +481,8 @@ def build_public_projection(
         for lesson_id, lesson in sorted(_load_entities(root, "lesson", LESSON_FIELDS).items())
     ]
 
+    hypotheses = _load_hypotheses(root)
+
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {
         str(capability_id): _pick(definition, CAPABILITY_FIELDS)
@@ -454,6 +502,7 @@ def build_public_projection(
             "campaigns": len(campaigns),
             "cross_domain": len(cross_domain),
             "lessons": len(lessons),
+            "hypotheses": len(hypotheses),
             "capabilities": len(capabilities),
             "index_only_dropped": len(dropped),
             "needs_dener": len(human_work_ids),
@@ -468,6 +517,7 @@ def build_public_projection(
         "crossDomain": cross_domain,
         "taxonomy": public_tree(),
         "lessons": lessons,
+        "hypotheses": hypotheses,
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
@@ -482,6 +532,9 @@ def build_public_projection(
         "tower_file_id": tower_file_id,
         "source_storage": "GOOGLE_DRIVE_PRIVATE",
         "source_state_fingerprint": tower_revision,
+        # Live Tower builds have no snapshot; the revision identifies the source state
+        # (readers such as the ATLAS sync check require a non-empty id).
+        "source_snapshot_id": f"LIVE_TOWER@{tower_revision}" if tower_revision else None,
         "event_cursor": snapshot.get("event_cursor"),
         "projection_fingerprint": _fingerprint(content),
         "generated_at": generated_at,
