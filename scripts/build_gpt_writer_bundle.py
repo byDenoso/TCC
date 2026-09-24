@@ -46,9 +46,11 @@ def build() -> Path:
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("runtime/__init__.py", "")
         for package in ("nexo_agent_api", "nexo_execution", "portable_camb"):
-            for path in sorted((REPO / "runtime" / package).glob("*")):
-                if path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
-                    archive.write(path, f"runtime/{package}/{path.name}")
+            package_root = REPO / "runtime" / package
+            for path in sorted(package_root.rglob("*")):
+                if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
+                    rel = path.relative_to(package_root).as_posix()
+                    archive.write(path, f"runtime/{package}/{rel}")
         for path in sorted((REPO / "contracts").rglob("*.json")):
             archive.write(path, path.relative_to(REPO).as_posix())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
