@@ -167,6 +167,30 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "writer_role": "ADVISOR", "event_type": "ROADMAP_TEST_FROZEN",
         "changes": {k: v for k, v in changes.items() if v not in (None, "")},
     }]
+    # The hypothesis itself (Ciência > Hipóteses): create or enrich its entity.
+    block = body.get("hypothesis") if isinstance(body.get("hypothesis"), dict) else {}
+    hypothesis_id = str(block.get("id") or changes.get("hypothesis_id") or f"HYP-{_slug(test_id)}")
+    fields = {
+        "title": block.get("title") or block.get("statement") or question,
+        "statement": block.get("statement") or question,
+        "model": block.get("model") or body.get("rival"),
+        "baseline": block.get("baseline") or body.get("null"),
+        "falsification_criterion": block.get("falsification_criterion") or kill,
+        "status": block.get("status") or "OPEN",
+        "domain": changes.get("domain"),
+        "semantic": {k: semantic.get(k) for k in ("domain_id", "subdomain_id", "topic_id", "question_plain", "why_it_matters") if semantic.get(k)},
+    }
+    existing = _entity(root, "hypothesis", hypothesis_id)
+    hyp_changes = {k: v for k, v in fields.items() if v not in (None, "", {}) and (existing is None or not existing.get(k))}
+    if hyp_changes:
+        requests.append({
+            "request_id": f"REQ-INBOX-HYP-{_slug(hypothesis_id)}",
+            "entity_kind": "hypothesis", "entity_name": hypothesis_id,
+            "expected_version": int((existing or {}).get("entity_version") or 0),
+            "writer_role": "ADVISOR", "event_type": "HYPOTHESIS_UPSERTED",
+            "changes": hyp_changes,
+        })
+    requests[0]["changes"]["hypothesis_id"] = hypothesis_id
     if roadmap_id:
         path = fs_path(root, f"roadmaps/{roadmap_id}.json")
         if path.is_file():

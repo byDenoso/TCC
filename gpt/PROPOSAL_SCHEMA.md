@@ -52,6 +52,18 @@ Nunca promova além do que o teste sustenta. Resultado nulo é resultado.
 }
 ```
 Com `roadmap_id`, o writer herda campanha/hipótese do roadmap e põe o teste na fronteira.
+Opcional (recomendado quando é uma hipótese nova), aparece em Ciência > Hipóteses:
+```json
+"hypothesis": {"id": "HYP-...", "statement": "enunciado", "model": "modelo rival",
+               "baseline": "modelo nulo", "falsification_criterion": "o que derruba a hipótese"}
+```
+Sem esse bloco o writer deriva a hipótese do próprio teste (rival, null, kill).
+
+## "Quero testar X" (qualquer conversa)
+1. Monte na hora a HYPOTHESIS_PROPOSAL completa (com bloco `hypothesis`, semantic, critérios congelados, método e dados); escolha o `roadmap_id` mais próximo.
+2. Se dá para executar agora com dados públicos: rode no Python e gere a MUTATION_PROPOSAL do resultado.
+3. Rode o NEXO_WRITER_PROCEDURE (contrato MCP) na mesma conversa → aparece no ATLAS em minutos.
+4. Se não dá para executar agora: grave só a hipótese; o Executor pega na fronteira.
 
 ## LEARNING_SIGNAL — lacuna de conhecimento do Dener (tarefa Gaps)
 ```json

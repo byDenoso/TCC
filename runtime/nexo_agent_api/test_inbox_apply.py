@@ -82,4 +82,8 @@ class SiteFormatTests(unittest.TestCase):
             self.assertEqual(test["roadmap_test_id"], "H-2")
             self.assertEqual(test["semantic"]["subdomain_id"], "science.cosmology.dark_matter")
             self.assertEqual(test["semantic"]["question_plain"], "Does X happen?")
-            self.assertEqual(requests[1]["merge"]["frontier_refs"], ["S-1", "H-2"])
+            [merge] = [r for r in requests if "document" in r]
+            self.assertEqual(merge["merge"]["frontier_refs"], ["S-1", "H-2"])
+            [hyp] = [r for r in requests if r.get("entity_kind") == "hypothesis"]
+            self.assertEqual(hyp["entity_name"], "HYP-X")
+            self.assertEqual(hyp["changes"]["falsification_criterion"], "b")
