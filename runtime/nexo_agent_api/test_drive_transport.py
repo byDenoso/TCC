@@ -130,3 +130,61 @@ class DriveTransportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class _Md5Drive(FakeDrive):
+    """FakeDrive with a real md5 and a media-download counter."""
+
+    def __init__(self, raw: bytes) -> None:
+        super().__init__(raw)
+        self.media_calls = 0
+
+    def _meta(self) -> dict:
+        import hashlib
+
+        return {"headRevisionId": str(self.revision), "md5Checksum": hashlib.md5(self.raw).hexdigest(), "size": str(len(self.raw))}
+
+    def get(self, url, params=None, timeout=None):
+        if (params or {}).get("alt") == "media":
+            self.media_calls += 1
+        return super().get(url, params=params, timeout=timeout)
+
+
+class ReaderCacheTests(unittest.TestCase):
+    def setUp(self) -> None:
+        import os
+
+        self.tmp = tempfile.TemporaryDirectory()
+        self._home = os.environ.get("NEXO_HOME")
+        os.environ["NEXO_HOME"] = self.tmp.name
+        self.raw = _raw(_tower(Path(self.tmp.name) / "seed"))
+
+    def tearDown(self) -> None:
+        import os
+
+        if self._home is None:
+            os.environ.pop("NEXO_HOME", None)
+        else:
+            os.environ["NEXO_HOME"] = self._home
+        self.tmp.cleanup()
+
+    def test_reader_reuses_copy_while_head_md5_is_unchanged(self):
+        drive = _Md5Drive(self.raw)
+        tower = DriveTower(session=drive)
+        self.assertEqual(tower.download()[0], self.raw)
+        self.assertEqual(tower.download()[0], self.raw)
+        self.assertEqual(drive.media_calls, 1)
+
+    def test_changed_head_is_downloaded_again(self):
+        drive = _Md5Drive(self.raw)
+        tower = DriveTower(session=drive)
+        tower.download()
+        drive.raw = self.raw.replace(b"READY", b"RESULT")
+        self.assertIn(b"RESULT", tower.download()[0])
+        self.assertEqual(drive.media_calls, 2)
+
+    def test_writer_never_uses_the_cache(self):
+        drive = _Md5Drive(self.raw)
+        DriveTower(session=drive).download()
+        DriveTower(session=drive, write=True).download()
+        self.assertEqual(drive.media_calls, 2)
