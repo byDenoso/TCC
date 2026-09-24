@@ -243,6 +243,14 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
             projected["verdict"] = verdict.strip()
     projected = _with_semantics(projected, entity)
     semantic = projected["semantic"]
+    if projected.get("private") and projected.get("verdict"):
+        # Private verdict codes can embed names (e.g. "..._<NAME>_SENSITIVITY_ONLY"): publish only the class.
+        raw = str(projected["verdict"]).upper()
+        projected["verdict"] = next((k for k in ("PROMOT", "REJECT", "INCONCLUS", "SUPPORT", "CONTRADICT") if k in raw), "REGISTRADO")
+        projected["verdict"] = {"PROMOT": "PROMOTED", "REJECT": "REJECTED", "INCONCLUS": "INCONCLUSIVE",
+                                "SUPPORT": "SUPPORTED", "CONTRADICT": "REJECTED"}.get(projected["verdict"], projected["verdict"])
+        for key in ("verdict_plain",):
+            semantic.pop(key, None)
     if not semantic.get("result_meaning"):
         # Private (Olympus) tests only get the verdict sentence, never their free-text summary.
         source = {} if projected.get("private") else (scientific_result if isinstance(scientific_result, dict) else {})
