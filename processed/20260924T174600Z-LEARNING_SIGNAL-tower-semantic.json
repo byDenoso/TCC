@@ -1,0 +1,1 @@
+{"kind":"LEARNING_SIGNAL","source":"CHATGPT","payload":{"signals":[{"topic_id":"engineering.nexo_runtime.state_integrity","evidence_kind":"INTEGRITY","gap_type":"TOOL","evidence":"84 de 99 TEST estão sem topic_id válido na taxonomia; LESSONs estão válidas.","confidence":0.99}]},"created_at":"2026-09-24T17:46:00Z"}
