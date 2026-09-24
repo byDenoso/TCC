@@ -283,6 +283,59 @@ class GitHubInbox:
         self._git("push", "-q", "origin", f"HEAD:{self.BRANCH}")
 
 
+def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
+    """Apply every inbox proposal (generic converter) in ONE CAS write, then mark them processed."""
+    from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
+
+    items = [dict(i, source="GITHUB") for i in github.pending()]
+    try:
+        items += [dict(i, source="DRIVE") for i in DriveInbox().pending()]
+    except Exception as exc:
+        print(f"drive inbox unavailable: {exc}", file=sys.stderr)
+    items.sort(key=lambda i: str(i.get("createdTime") or ""))
+    if not items:
+        _print({"status": "EMPTY"})
+        return 0
+    raw, _ = DriveTower().download()
+    requests, used, skipped = [], [], []
+    with tempfile.TemporaryDirectory(prefix="nexo-inbox-") as work:
+        root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        for item in items:
+            envelope = item.get("payload")
+            if not isinstance(envelope, dict):
+                skipped.append({"id": item["id"], "reason": "UNPARSEABLE"})
+                continue
+            try:
+                requests += proposal_to_requests({**envelope, "_inbox_id": item["id"], "_inbox_name": item["name"]}, root)
+                used.append(item["id"])
+            except ProposalError as exc:
+                skipped.append({"id": item["id"], "reason": str(exc)})
+    # Several proposals may target the same entity (a GPT pulse re-running a test):
+    # the newest wins, so one write never conflicts with itself on entity_version.
+    latest: dict[tuple, dict] = {}
+    for request in requests:
+        key = ("document", request["document"], request.get("request_id")) if "document" in request             else (request["entity_kind"], request["entity_name"])
+        latest.pop(key, None)
+        latest[key] = request
+    requests = list(latest.values())
+    if not requests:
+        _print({"status": "NOTHING_APPLICABLE", "skipped": skipped})
+        return 0
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as handle:
+        json.dump(requests, handle, ensure_ascii=False)
+    code = cmd_apply(argparse.Namespace(requests=[handle.name], dry_run=args.dry_run, retries=2))
+    if code == 0 and not args.dry_run:
+        drive = None
+        for item_id in used:
+            if item_id.startswith("github:"):
+                github.mark_processed(item_id)
+            else:
+                drive = drive or DriveInbox(write=True)
+                drive.mark_processed(item_id)
+    print(json.dumps({"inbox_applied": used if code == 0 else [], "skipped": skipped}, ensure_ascii=False))
+    return code
+
+
 def cmd_inbox(args: argparse.Namespace) -> int:
     github = GitHubInbox()
     if args.action == "list":
@@ -293,6 +346,8 @@ def cmd_inbox(args: argparse.Namespace) -> int:
         except Exception as exc:  # Drive inbox is legacy; GitHub is the primary path
             items.append({"id": None, "source": "DRIVE", "error": f"{type(exc).__name__}: {exc}"[:300]})
         _print({"items": items})
+    elif args.action == "apply":
+        return _inbox_apply(github, args)
     else:
         drive = None
         for item_id in args.ids:
@@ -321,8 +376,9 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--roadmap")
     p.set_defaults(func=cmd_frontier)
     p = sub.add_parser("inbox", help="ChatGPT proposal inbox on Drive (create-only)")
-    p.add_argument("action", choices=["list", "done"])
+    p.add_argument("action", choices=["list", "done", "apply"])
     p.add_argument("ids", nargs="*")
+    p.add_argument("--dry-run", action="store_true")
     p.set_defaults(func=cmd_inbox)
     args = parser.parse_args(argv)
     return args.func(args)
