@@ -37,6 +37,8 @@ Para cada tópico elegível, crie ou atualize `entity_kind: lesson`, id `LESSON:
 ```
 
 Tom: professor bom e direto, português, sem condescendência. Priorize o que destrava os testes ativos do roadmap.
+Itens `LESSON_PROPOSAL` do inbox (criados pela task "NEXO · Learner" do ChatGPT) viram entity `lesson`
+diretamente (validando `topic_id` na taxonomia).
 Depois de consumir sinais do inbox: `inbox done <ids>`.
 
 ## Relatório

@@ -110,6 +110,46 @@ def _notify_atlas() -> str:
         return f"DISPATCH_FAILED_{type(exc).__name__}"
 
 
+_DOCUMENT_PREFIXES = ("roadmaps/", "indexes/", "contracts/", "manifests/")
+
+
+def _apply_document(root: Path, request: dict) -> dict:
+    """Deep-merge ``request['merge']`` into a Tower document (roadmaps, indexes, ...).
+
+    Entities go through apply_mutation_request (versioned, governed); documents
+    such as roadmaps are merged here, inside the same CAS write.
+    ``list_merge`` names list fields whose items are merged by ``key``.
+    """
+    from runtime.nexo_agent_api.tower_paths import fs_path
+
+    relative = str(request["document"]).lstrip("/")
+    if not relative.startswith(_DOCUMENT_PREFIXES) or ".." in relative.split("/") or not relative.endswith(".json"):
+        return {"request_id": request.get("request_id"), "accepted": False, "issue": {"code": "DOCUMENT_PATH_NOT_ALLOWED", "message": relative}}
+    path = fs_path(root, relative)
+    current = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+    def merge(base, patch, key_fields):
+        for key, value in patch.items():
+            if key in key_fields and isinstance(value, list) and isinstance(base.get(key), list):
+                id_key = key_fields[key]
+                by_id = {item.get(id_key): item for item in base[key] if isinstance(item, dict)}
+                for item in value:
+                    if isinstance(item, dict) and item.get(id_key) in by_id:
+                        by_id[item[id_key]].update(item)
+                    else:
+                        base[key].append(item)
+            elif isinstance(value, dict) and isinstance(base.get(key), dict):
+                merge(base[key], value, {})
+            else:
+                base[key] = value
+        return base
+
+    merged = merge(current, dict(request.get("merge") or {}), dict(request.get("list_merge") or {}))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    return {"request_id": request.get("request_id"), "accepted": True, "document": relative, "readback": "PASS"}
+
+
 def cmd_apply(args: argparse.Namespace) -> int:
     from runtime.nexo_agent_api.mutations import apply_mutation_request
 
@@ -127,7 +167,14 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 before = verify_live_tower(read_live_tower_bytes(raw))
                 with tempfile.TemporaryDirectory(prefix="nexo-tower-write-") as work:
                     root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
-                    receipts = [apply_mutation_request(root, request) for request in requests]
+                    receipts = [
+                        _apply_document(root, request) if "document" in request else apply_mutation_request(root, request)
+                        for request in requests
+                    ]
+                    if any("document" in request for request in requests):
+                        from runtime.nexo_agent_api.live_tower import publish_live_tower
+
+                        publish_live_tower(root)
                     rejected = [r for r in receipts if not r.get("accepted", True) or r.get("issue")]
                     if rejected:
                         _print({"status": "REJECTED", "tower_state_fingerprint": before, "receipts": receipts})
@@ -183,42 +230,14 @@ def cmd_project(args: argparse.Namespace) -> int:
     return 0
 
 
-class _LocalTowerStore:
-    """Read-only store over a materialized live Tower, shaped like the MCP store."""
-
-    def __init__(self, root: Path) -> None:
-        self.root = root
-
-    def _json(self, relative: str) -> dict | None:
-        from runtime.nexo_agent_api.tower_paths import fs_path
-
-        path = fs_path(self.root, relative)
-        return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
-
-    def read_roadmap_index(self) -> dict:
-        return self._json("indexes/active-roadmaps.json") or {"items": []}
-
-    def read_roadmap(self, entry: dict) -> dict | None:
-        relative = str(entry.get("relative_path") or "")
-        if not relative.startswith("roadmaps/") or ".." in relative.split("/"):
-            return None
-        return self._json(relative)
-
-    def get_work(self, work_id: str) -> dict | None:
-        return self._json(f"entities/work/{work_id}.json")
-
-
 def cmd_frontier(args: argparse.Namespace) -> int:
-    """Next executable roadmap test, using the canonical frontier logic (vault MCP module)."""
-    vault = Path(os.environ.get("NEXO_VAULT_PATH") or Path(__file__).resolve().parents[2] / "NEXO-Obsidian-Vault")
-    sys.path.insert(0, str(vault / "services" / "nexo-api"))
-    from app.scientific_roadmap import get_roadmap_frontier  # noqa: E402
+    """Next executable roadmap work (V1 inline tests and V2 frontier_refs)."""
+    from runtime.nexo_agent_api.frontier import roadmap_frontier
 
     raw, _ = DriveTower().download()
     with tempfile.TemporaryDirectory(prefix="nexo-tower-frontier-") as work:
         root, metadata = materialize_live_tower(raw, Path(work) / "TOWER_V06")
-        service = type("Service", (), {"store": _LocalTowerStore(root)})()
-        frontier = get_roadmap_frontier(service, args.roadmap)
+        frontier = roadmap_frontier(root, args.roadmap)
     _print({"tower_state_fingerprint": metadata["tower_revision"], **frontier})
     return 0
 
