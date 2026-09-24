@@ -93,9 +93,44 @@ def cmd_pull(args: argparse.Namespace) -> int:
     return 0
 
 
-def _notify_atlas() -> str:
+def _push_signal(fingerprint: str) -> str:
+    """Trigger the Pages deploy by pushing a tiny head marker to Pantheon.
+
+    Push-triggered runs start immediately (GitHub throttles the cron to hours).
+    Uses a dedicated clone under NEXO_HOME and the machine's normal git access;
+    no token is read or handled here.
+    """
+    import subprocess
+
+    repo = nexo_home() / "pantheon-signal"
+    run = lambda *args: subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, timeout=120)
+    try:
+        if not (repo / ".git").is_dir():
+            clone = subprocess.run(
+                ["git", "clone", "-q", "--depth", "1", f"https://github.com/{PAGES_REPOSITORY}.git", str(repo)],
+                capture_output=True, text=True, timeout=300,
+            )
+            if clone.returncode:
+                return "SIGNAL_CLONE_FAILED"
+        run("fetch", "-q", "--depth", "1", "origin", "main")
+        run("reset", "-q", "--hard", "origin/main")
+        marker = repo / "nexo-one" / "tower-head.json"
+        marker.write_text(json.dumps({"tower_revision": fingerprint, "signalled_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}, indent=2) + "\n", encoding="utf-8")
+        run("add", str(marker))
+        commit = run("-c", "user.name=NEXO Tower Writer", "-c", "user.email=denosooo2@gmail.com", "commit", "-q", "-m", f"tower: head {fingerprint[:19]} (Pages refresh signal)")
+        if commit.returncode:
+            return "SIGNAL_NOTHING_TO_COMMIT" if "nothing" in commit.stdout + commit.stderr else "SIGNAL_COMMIT_FAILED"
+        push = run("push", "-q", "origin", "HEAD:main")
+        return "PUSHED_SIGNAL" if push.returncode == 0 else "SIGNAL_PUSH_FAILED"
+    except Exception as exc:  # the throttled cron still converges
+        return f"SIGNAL_FAILED_{type(exc).__name__}"
+
+
+def _notify_atlas(fingerprint: str = "") -> str:
     token = os.environ.get("NEXO_PAGES_DISPATCH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
+        if fingerprint and os.environ.get("NEXO_PAGES_SIGNAL", "1") != "0":
+            return _push_signal(fingerprint)
         return "SKIPPED_NO_TOKEN_CRON_RECONCILES"
     request = urllib.request.Request(
         f"https://api.github.com/repos/{PAGES_REPOSITORY}/dispatches",
@@ -193,7 +228,7 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 "before": before,
                 "after": write["state_fingerprint"],
                 "write": write,
-                "atlas_notify": _notify_atlas(),
+                "atlas_notify": _notify_atlas(write["state_fingerprint"]),
                 "receipts": receipts,
             })
             return 0
