@@ -71,6 +71,12 @@ TEST_FIELDS = (
     "scientific_verdict",
     "claim_level",
     "publication_status",
+    "review_state",
+    "rank_score",
+    "origin_kind",
+    "prereg_hash",
+    "contests_test_id",
+    "decoy",
 )
 TEST_INPUT_FIELDS = ("input_contract", "result", "statistics", "scientific_result")
 TEST_STATISTICS_FIELDS = ("delta_chi2", "delta_bic", "ln_bayes_factor", "sigma_raw", "sigma_lee", "p_value")
@@ -354,6 +360,18 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
             "checks_total": len(checks), "checks_failing": len(failing), "failing_areas": failing[:8]}
 
 
+def _load_evolution(root: Path) -> dict[str, Any] | None:
+    """Closed loop for the ATLAS: Dener's gate, charters and stop progress, review ladder, genome, diary, decoys."""
+    from .evolution import evolution_status
+
+    try:
+        status = evolution_status(root, public=True)
+    except Exception:  # the projection never fails because of the evolution layer
+        return None
+    empty = not (status["charters"] or status["genome"]["genes"] or status["thoughts"])
+    return None if empty else status
+
+
 def _load_cross_domain(root: Path) -> list[dict[str, Any]]:
     """Project canonical Interdomain relations as derived Learning filaments."""
     index = _read_json(root / "indexes" / "interdomain-active.json", {}) or {}
@@ -622,6 +640,7 @@ def build_public_projection(
         "lessons": lessons,
         "hypotheses": hypotheses,
         "integrity": integrity,
+        "evolution": _load_evolution(root),
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }

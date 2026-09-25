@@ -328,7 +328,7 @@ def _tests(root: Path) -> list[dict[str, Any]]:
     return out
 
 
-def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, Any]]) -> dict[str, Any]:
+def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, Any]], clock: bool = True) -> dict[str, Any]:
     rid = str(roadmap.get("roadmap_id") or roadmap.get("id") or "")
     charter = roadmap.get("charter") or {}
     since = str(charter.get("chartered_at") or "")
@@ -344,7 +344,7 @@ def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, 
             break
     budget, stop = charter.get("budget") or {}, charter.get("stop") or {}
     days = None
-    if since:
+    if since and clock:
         try:
             days = (datetime.now(timezone.utc) - datetime.fromisoformat(since.replace("Z", "+00:00"))).days
         except ValueError:
@@ -364,7 +364,8 @@ def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, 
             "kill_streak": stop.get("kill_consecutive_refuted"), "stop_reached": reason}
 
 
-def evolution_status(root: str | Path, now: datetime | None = None) -> dict[str, Any]:
+def evolution_status(root: str | Path, now: datetime | None = None, public: bool = False) -> dict[str, Any]:
+    """Task view (default) or public ATLAS view (public=True: deterministic, no clock, adds diary/lineage)."""
     root = Path(root)
     now = now or datetime.now(timezone.utc)
     tests = _tests(root)
@@ -382,7 +383,7 @@ def evolution_status(root: str | Path, now: datetime | None = None) -> dict[str,
     decoys = _read(root, DECOYS_DOC)
     revealed = decoys.get("revealed") or []
     positive = [t for t in tests if str(t.get("verdict") or "").upper() in POSITIVE_VERDICTS and not t.get("decoy")]
-    return {
+    status = {
         "arm_for_this_run": "canary" if now.hour % 2 else "canonical",
         "gate": {
             "charters_waiting": [{"roadmap_id": r["roadmap_id"], "question": (r.get("charter") or {}).get("question")}
@@ -394,9 +395,22 @@ def evolution_status(root: str | Path, now: datetime | None = None) -> dict[str,
             "referee_1": [t["id"] for t in positive if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")],
             "referee_2": [t["id"] for t in positive if t.get("review_state") == "REFEREE1_PASSED"],
         },
-        "roadmaps": [roadmap_progress(root, r, tests) for r in roadmaps if (r.get("charter") or {}).get("status") == "CHARTERED"],
+        "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps
+                     if (r.get("charter") or {}).get("status") == "CHARTERED"],
         "genome": {"generation": int(genome.get("generation") or 0),
                    "genes": [{k: g.get(k) for k in ("id", "status", "canonical", "canary")} for g in genome.get("genes") or []]},
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
     }
+    if public:
+        status.pop("arm_for_this_run")
+        status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
+            "status", "question", "budget", "stop", "chartered_at", "closed_at", "close_reason", "rival_of")}}
+            for r in roadmaps if r.get("charter")]
+        status["thoughts"] = (_read(root, THOUGHTS_DOC).get("entries") or [])[-40:]
+        status["genome"]["lineage"] = genome.get("lineage") or []
+        status["genome"]["fitness"] = (genome.get("fitness") or [])[-120:]
+        reviewed = [t for t in positive if t.get("review_state")]
+        status["reviews"] = {s: sum(1 for t in reviewed if t.get("review_state") == s)
+                             for s in ("PENDING_REVIEW", "CONTESTED", "REFEREE1_PASSED", "CONFIRMED", "REFUTED")}
+    return status
