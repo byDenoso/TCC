@@ -1,0 +1,1 @@
+{"kind":"FITNESS_REPORT","source":"GUARDIAO","payload":{"measurements":[{"arm":"canonical","value":-0.02,"components":{"confirmed_results":0,"tests_executed_noncontest":76,"runtime_refusals":1,"decoys_missed":0,"raw_ratio":0}}]}}
