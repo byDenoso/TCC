@@ -1,0 +1,56 @@
+{
+  "kind": "BATCH",
+  "source": "GUARDIAO",
+  "created_at": "2026-09-25T03:52:00Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "LEARNING_SIGNAL",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:52:00Z",
+        "payload": {
+          "evidence_kind": "INTEGRITY",
+          "gap_type": "TOOL",
+          "topic_id": "engineering.antibody",
+          "evidence": "JSON vazio apareceu no inbox → o produtor criou um arquivo sem envelope válido → quarentenar em processed/_invalid, nunca reconstruir conteúdo ausente e exigir gravação seguida de releitura."
+        }
+      },
+      {
+        "kind": "INTEGRITY_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:52:00Z",
+        "payload": {
+          "date": "2026-09-25",
+          "status": "YELLOW",
+          "checks": [
+            {
+              "area": "tower",
+              "ok": true,
+              "detail": "Tower permanece válida e com readback PASS."
+            },
+            {
+              "area": "inbox",
+              "ok": true,
+              "detail": "Um JSON vazio foi movido intacto para processed/_invalid; o inbox ficou sem proposta inválida."
+            },
+            {
+              "area": "producer_integrity",
+              "ok": false,
+              "detail": "Foi detectada uma criação de arquivo vazio por um produtor; anticorpo registrado para impedir reconstrução inventada e exigir readback."
+            },
+            {
+              "area": "site",
+              "ok": true,
+              "detail": "tower-head estava sincronizado com a Tower antes deste lote corretivo."
+            },
+            {
+              "area": "tasks",
+              "ok": true,
+              "detail": "A falha foi de persistência de proposta, não tarefa parada."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
