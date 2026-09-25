@@ -1,0 +1,115 @@
+{
+  "kind": "SEMANTIC_BACKFILL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T01:52:30Z",
+  "payload": {
+    "items": [
+      {
+        "id": "T-OLYCAUSE-016A",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "T-OLYCAUSE-016B",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "T-OLYCAUSE-016C",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "T-OLYCAUSE-016D",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016A",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016B",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016C",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016D",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "redact_names": [
+          "Miquéias Da Silva Souza",
+          "Miqueias Da Silva Souza",
+          "Miquéias",
+          "Miqueias"
+        ]
+      },
+      {
+        "id": "T-OLYPHYS-014",
+        "entity_kind": "test",
+        "subject_code": "NAT",
+        "redact_names": [
+          "Natália",
+          "Natalia"
+        ]
+      },
+      {
+        "id": "WORK::T-OLYPHYS-014",
+        "entity_kind": "work",
+        "subject_code": "NAT",
+        "redact_names": [
+          "Natália",
+          "Natalia"
+        ]
+      }
+    ]
+  }
+}
