@@ -1,0 +1,124 @@
+{
+ "kind": "BATCH",
+ "source": "DENER",
+ "created_at": "2026-09-25T04:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "kind": "ROADMAP_ATTACH",
+    "source": "DENER",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "items": [
+      {
+       "test_id": "META-CKPT26-001-INPUT-BINDING",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-SEM26-001-FRONTIER-TOPIC-COVERAGE",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-SEM26-002-UNMAPPED-WORK-CONCENTRATION",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-CKPT26-002-LIVE-ROADMAP-AGING",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-INBOX26-001-EMPTY-DOC-SYSTEMICITY",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "T-LEARN26-001",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "T-LEARN26-002",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "T-LEARN26-003",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      },
+      {
+       "test_id": "T-LEARN26-004",
+       "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1"
+      }
+     ]
+    }
+   },
+   {
+    "kind": "ROADMAP_CLOSE",
+    "source": "DENER",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "roadmap_id": "RM-GPT56-AGENT-SYSTEMS-20260923-V1",
+     "reason": "MERGED",
+     "final_report": "Desempenho do GPT deixou de ser um domínio próprio: os testes passaram para o roadmap de engenharia do NEXO (RM-NEXO-SELF-ENGINEERING-V1)."
+    }
+   },
+   {
+    "kind": "GENOME_MUTATION",
+    "source": "DENER",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "gene": "executor.max_parallel_tests",
+     "value": 10,
+     "rationale": "decisão do Dener: até 10 testes leves por ciclo, sem MCMC pesado",
+     "refs": [
+      "RM-NEXO-SELF-ENGINEERING-V1"
+     ]
+    }
+   },
+   {
+    "kind": "OPERATOR_INTENT",
+    "source": "DENER",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "action": "CANONIZE",
+     "gene": "executor.max_parallel_tests",
+     "approved_by": "DENER",
+     "evidence": "ordem direta do Dener em 2026-09-25"
+    }
+   },
+   {
+    "kind": "GENOME_MUTATION",
+    "source": "DENER",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "gene": "executor.test_weight",
+     "value": "leve: sem MCMC pesado; ajuste analítico, grade de verossimilhança ou bootstrap curto; teste pesado vira DRAFT com motivo",
+     "seed": true
+    }
+   },
+   {
+    "kind": "NEXO_THOUGHT",
+    "source": "PITIA",
+    "created_at": "2026-09-25T04:00:00Z",
+    "payload": {
+     "entries": [
+      {
+       "kind": "QUESTION",
+       "text": "Tenho seis perguntas esperando a assinatura do Dener. Enquanto isso, sigo testando as que já estavam em andamento — agora até dez por hora.",
+       "refs": [
+        "RM-DARK-ENERGY-NATURE-20260923-V1",
+        "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1",
+        "RM-NEXO-SELF-ENGINEERING-V1"
+       ]
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
