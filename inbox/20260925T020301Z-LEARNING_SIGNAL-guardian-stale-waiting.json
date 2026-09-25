@@ -1,0 +1,12 @@
+{
+  "kind": "LEARNING_SIGNAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T02:03:01Z",
+  "payload": {
+    "evidence_kind": "INTEGRITY",
+    "gap_type": "TOOL",
+    "topic_id": "engineering.nexo_runtime.state_integrity",
+    "evidence": "Há 16 testes em espera há mais de 3 dias sem resolução material registrada.",
+    "confidence": 0.99
+  }
+}
