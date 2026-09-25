@@ -181,3 +181,9 @@ New optional test fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art
 READY hypotheses get `prereg_hash` automatically. Positive results start at `review_state: PENDING_REVIEW`.
 
 Charters may be semi-permanent: `renewable: true, review_every_days: N, objectives: [...], priority: "P0"` — never closed by budget; `status` reports `review_due` for a course review by Dener.
+
+## Test batteries (GitHub Actions, public and free)
+`TEST_BATTERY {battery_id?, tests:[{test_id, script, requirements[], timeout_min<=340, prediction}]}` — up to 20 registered, non-Olympus tests.
+Each script is self-contained and writes `{verdict, decision, summary, statistics, semantic}` to `os.environ["RESULT_PATH"]`.
+The Writer robot marks them RUNNING, dispatches `NEXO test battery` (byDenoso/Pantheon, isolated runners, no secrets),
+collects results as `BATTERY_STATUS DONE` and records them like any result; a crash sends the test back to READY.
