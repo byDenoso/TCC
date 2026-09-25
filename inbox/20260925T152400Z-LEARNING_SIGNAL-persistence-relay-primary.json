@@ -1,0 +1,16 @@
+{
+  "kind": "LEARNING_SIGNAL",
+  "source": "DENER_CONVERSATION",
+  "created_at": "2026-09-25T15:24:00Z",
+  "payload": {
+    "evidence_kind": "INTEGRITY",
+    "gap_type": "TOOL",
+    "topic_id": "engineering.persistence_relay_primary",
+    "evidence": "Persistência de tarefas agendadas mudou para relay HTTP connector-free como primeira rota. O runtime envia JSON base64url em partes para /api/inbox-drop; o relay persiste e faz read-back no nexo-inbox. GitHub/Drive connector writes ficam como espelho/recuperação. Writer Action continua único escritor unattended da Tower.",
+    "semantic": {
+      "question_plain": "Como permitir persistência mesmo quando o runtime agendado não expõe escrita GitHub/Drive?",
+      "result_meaning": "Mover a credencial de persistência para o relay server-side e exigir somente GET + read-back no runtime agendado.",
+      "practical_decision": "Relay HTTP primeiro; GitHub e Drive como fallback; Writer Action continua aplicando a Tower."
+    }
+  }
+}
