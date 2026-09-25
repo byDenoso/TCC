@@ -157,3 +157,25 @@ Vira `artifact DATA_BINDING::*`. O Executor lê antes de retomar um CHECKPOINTED
 ## Escrita barrada pelo runtime
 Se GitHub e Doc forem recusados, imprima o envelope no relatório entre `NEXO_PENDING_PROPOSAL` e
 `END_NEXO_PENDING_PROPOSAL`. A próxima execução da mesma tarefa reenvia antes do trabalho novo.
+
+## Closed loop (writer ≥ 2026-09-25; skill `nexo-closed-loop`)
+
+Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queues, charter progress with
+`stop_reached`, genome (canonical/canary), decoys and `arm_for_this_run`.
+
+| Kind | Payload | Effect |
+|---|---|---|
+| `BATCH` | `items: [envelopes]` | each envelope applied on its own |
+| `ROADMAP_CHARTER` | roadmap_id?, title, question, scope, data, budget{max_tests,max_days}, stop{success_confirmed,kill_consecutive_refuted}, rationale, refs, rival_of? | `roadmaps/<id>.json` charter PROPOSED (new roadmap if absent) |
+| `OPERATOR_INTENT` `action: APPROVE_CHARTER\|REJECT_CHARTER\|CANONIZE\|REJECT_CANARY`, `source: "DENER"` | roadmap_id / gene | the two gates; any other source is only recorded |
+| `ROADMAP_CLOSE` | roadmap_id, reason SUCCESS\|KILL\|BUDGET, final_report | charter CLOSED, index state CLOSED |
+| `CONTEST` | test_id, reason, refs, source REFEREE_1\|SENTINEL, contest_test{frozen hypothesis} | test `review_state: CONTESTED` (max 2) + contest test P0 |
+| `VERDICT_REVIEW` | test_id, referee 1\|2, outcome SURVIVED\|REFUTED, evidence | ladder → REFEREE1_PASSED → CONFIRMED / REFUTED |
+| `GENOME_MUTATION` | gene, value, current_value, rationale, refs, metric (`seed:true` = generation 0) | gene CANARY; spine genes are no-ops |
+| `GENOME_ROLLBACK` | gene, reason, fitness | canary dropped |
+| `FITNESS_REPORT` | measurements[{gene?, arm, value, components}] | `evolution/genome.json` fitness |
+| `NEXO_THOUGHT` | entries[{kind, text, refs[]}] | Pítia's diary (entries without refs dropped) |
+| `DECOY_PLANT` / `DECOY_REVEAL` | commitment sha256("test_id:secret") / test_id, secret | decoy audit |
+
+New optional test fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art`, `prediction`, `contests_test_id`.
+READY hypotheses get `prereg_hash` automatically. Positive results start at `review_state: PENDING_REVIEW`.
