@@ -307,6 +307,14 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
 
 def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind: str) -> list[dict[str, Any]]:
     decoys = _read(root, DECOYS_DOC)
+    if kind == "DECOY_CALL":
+        # Any task that suspects a result is a planted decoy says so publicly; it counts as caught at reveal.
+        test_id = str(body.get("test_id") or "")
+        if not test_id:
+            return []
+        calls = (decoys.get("calls") or []) + [{"test_id": test_id, "by": item.get("source") or body.get("by"),
+                                                "reason": body.get("reason"), "at": _now(item)}]
+        return [_doc(DECOYS_DOC, {"calls": calls[-200:]}, f"REQ-DECOY-CALL-{test_id}-{_now(item)[:16]}")]
     if kind == "DECOY_PLANT":
         commitment = str(body.get("commitment") or "").lower().removeprefix("sha256:")
         if len(commitment) != 64:
@@ -319,7 +327,8 @@ def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind:
     test = _entity(root, "test", test_id)
     if digest not in planted or test is None:
         return []
-    caught = test.get("review_state") in {"CONTESTED", "REFUTED"} or str(test.get("verdict") or "").upper() not in POSITIVE_VERDICTS
+    called = any(c.get("test_id") == test_id for c in decoys.get("calls") or [])
+    caught = called or test.get("review_state") in {"CONTESTED", "REFUTED"} or str(test.get("verdict") or "").upper() not in POSITIVE_VERDICTS
     requests = [_doc(DECOYS_DOC, {"revealed": (decoys.get("revealed") or []) + [{"test_id": test_id, "caught": caught, "at": _now(item),
                                                                                  "commitment": digest}]}, f"REQ-DECOY-REVEAL-{test_id}")]
     update = _test_update(root, test_id, {"decoy": True, "review_state": "REFUTED", "decoy_caught": caught},
