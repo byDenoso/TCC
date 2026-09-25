@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from runtime.nexo_agent_api.evolution import evolution_status
 from runtime.nexo_agent_api.frontier import roadmap_frontier
 from runtime.nexo_agent_api.tower_paths import entity_path
 
@@ -41,7 +42,7 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual([r["test_id"] for r in frontier["ready"]], ["T2", "T4"])
         self.assertEqual(frontier["waiting"][0]["test_id"], "T3")
 
-    def test_resume_beats_new_and_bad_roadmaps_are_not_fatal(self):
+    def test_ready_beats_checkpointed_and_bad_roadmaps_are_not_fatal(self):
         self._index(
             {"roadmap_id": "RM-EMPTY", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-EMPTY.json"},
             {"roadmap_id": "RM-V1", "state": "ACTIVE", "priority": "P1", "relative_path": "roadmaps/RM-V1.json"},
@@ -52,9 +53,35 @@ class FrontierTests(unittest.TestCase):
         self._test("TEST::X", "READY")
         self._test("TEST::Y", "CHECKPOINTED")
         frontier = roadmap_frontier(self.root)
-        self.assertEqual(frontier["state"], "RESUME_EXISTING")
-        self.assertEqual(frontier["next"]["test_id"], "TEST::Y")
+        self.assertEqual(frontier["state"], "EXECUTE_READY")
+        self.assertEqual(frontier["next"]["test_id"], "TEST::X")
+        self.assertEqual(frontier["batch"][0]["test_id"], "TEST::X")
+        self.assertEqual(frontier["resumable"][0]["test_id"], "TEST::Y")
         self.assertEqual(frontier["skipped_roadmaps"][0]["reason"], "ACTIVE_ROADMAP_WITHOUT_TESTS")
+
+
+    def test_running_still_beats_ready(self):
+        self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
+        self._roadmap("RM-A", frontier_refs=["T-RUN", "T-READY"])
+        self._test("T-RUN", "RUNNING")
+        self._test("T-READY", "READY")
+        frontier = roadmap_frontier(self.root)
+        self.assertEqual(frontier["state"], "RESUME_EXISTING")
+        self.assertEqual(frontier["next"]["test_id"], "T-RUN")
+        self.assertEqual(frontier["batch"][0]["test_id"], "T-RUN")
+
+    def test_status_lists_non_closed_roadmaps_not_only_chartered(self):
+        self._roadmap("RM-PROPOSED", state="ACTIVE", campaign_id="CAMP-P", charter={"status": "PROPOSED"}, frontier_refs=["T-P"])
+        self._roadmap("RM-CHARTERED", state="ACTIVE", campaign_id="CAMP-C", charter={"status": "CHARTERED"}, frontier_refs=["T-C"])
+        self._roadmap("RM-CLOSED", state="CLOSED", campaign_id="CAMP-X", charter={"status": "CLOSED"}, frontier_refs=[])
+        self._test("T-P", "READY", roadmap_id="RM-PROPOSED")
+        self._test("T-C", "CHECKPOINTED", roadmap_id="RM-CHARTERED")
+        status = evolution_status(self.root)
+        rows = {r["roadmap_id"]: r for r in status["roadmaps"]}
+        self.assertEqual(set(rows), {"RM-PROPOSED", "RM-CHARTERED"})
+        self.assertEqual(rows["RM-PROPOSED"]["campaign_id"], "CAMP-P")
+        self.assertEqual(rows["RM-PROPOSED"]["ready"], 1)
+        self.assertEqual(rows["RM-CHARTERED"]["resumable"], 1)
 
 
 if __name__ == "__main__":
