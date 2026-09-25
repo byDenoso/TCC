@@ -1,0 +1,10 @@
+{
+ "kind": "ROADMAP_ATTACH",
+ "source": "CLAUDE",
+ "created_at": "2026-09-24T22:30:00Z",
+ "payload": {
+  "items": [
+   {"test_id":"GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY"},{"test_id":"GZSB-05-R2-PUBLISHED-TABLE-MORPHOLOGY"},{"test_id":"GZSB-06A-EROSITA-S8-LOO-INFLUENCE-STANDALONE"},{"test_id":"GZSB-07-EROSITA-SELECTION-DEPTH-INTERACTION"},{"test_id":"GZSB-09-R1-PUBLISHED-CROSSCAL-HIGHZ-AUDIT"},{"test_id":"GZSB-09-WL-CALIBRATOR-HIGHZ-HIERARCHY"},{"test_id":"GZSB-11-R1-PUBLISHED-HSC-PROFILE-SYSTEMATICS"},{"test_id":"GZSB-12-R1-PUBLISHED-DIAGONAL-LOO-SURROGATE"},{"test_id":"PEER-DETECTION-D00-V1"},{"test_id":"PEER-DETECTION-D01-V1"},{"test_id":"PEER-DETECTION-D04-V1"},{"test_id":"PEER-DETECTION-D09-V1"},{"test_id":"T-AVGPROB-017C"},{"test_id":"T-BLIND26-001"},{"test_id":"T-BLIND26-002"},{"test_id":"T-BLIND26-003"},{"test_id":"T-BLIND26-004"},{"test_id":"T-BLIND26-005"},{"test_id":"T-BLIND26-006"},{"test_id":"T-BLIND26-007"},{"test_id":"T-BLIND26-008"},{"test_id":"T-BLIND26-009"},{"test_id":"T-DEM26-001"},{"test_id":"T-DEM26-002"},{"test_id":"T-DEM26-003"},{"test_id":"T-DEM26-004"},{"test_id":"T-DEM26-004-R2-LITERATURE-STABILITY-WINDOW"},{"test_id":"T-DEM26-004A"},{"test_id":"T-DEM26-005"},{"test_id":"T-DEM26-005-R2-KIDS-LEGACY-STABLE-BASIS-AUDIT"},{"test_id":"T-DEM26-006-R2-DHOST-DEGENERACY-BRANCH"},{"test_id":"T-H0HOM26-001"},{"test_id":"T-H0HOM26-002"},{"test_id":"T-H0HOM26-003-R2-PUBLISHED-CF4-ESTIMATOR-AUDIT"},{"test_id":"T-H0HOM26-006"},{"test_id":"T-H0HOM26-007"},{"test_id":"T-H0HOM26-008"},{"test_id":"T-H0LCDM26-001"},{"test_id":"T-H0LCDM26-002"},{"test_id":"T-H0LCDM26-003"},{"test_id":"T-H0LCDM26-004"},{"test_id":"T-H0LCDM26-005"},{"test_id":"T-H0LCDM26-006"},{"test_id":"T-H0LCDM26-007"},{"test_id":"T-H0LCDM26-008"},{"test_id":"T-H0LCDM26-009"},{"test_id":"T-H0LCDM26-010"},{"test_id":"T-LEARN26-001"},{"test_id":"T-LEARN26-002"},{"test_id":"T-LEARN26-003"},{"test_id":"T-LEARN26-004"},{"test_id":"T-MEGA26-LCDM-EVT-LMAX-149"},{"test_id":"T-MEGA26-LCDM-TRACER-DENSITY-151"},{"test_id":"T-SCI-7FEED882E269E24C1874"}
+  ]
+ }
+}
