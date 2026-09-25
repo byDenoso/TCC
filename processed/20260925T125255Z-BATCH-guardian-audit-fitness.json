@@ -1,0 +1,134 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T12:52:55.300Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "SEMANTIC_BACKFILL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:52:55.300Z",
+        "payload": {
+          "items": [
+            {
+              "id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+              "entity_kind": "test",
+              "semantic": {
+                "why_it_matters": "Verifica se o gargalo de entrada persiste fora da amostra original; uma falha impede generalizar o diagnóstico operacional."
+              }
+            },
+            {
+              "id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-2",
+              "entity_kind": "test",
+              "semantic": {
+                "why_it_matters": "Procura dependências dinâmicas que a análise estática pode perder; qualquer caminho ativo derruba a conclusão de isolamento da cópia."
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "FITNESS_REPORT",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:52:55.300Z",
+        "payload": {
+          "measurements": [
+            {
+              "arm": "canonical",
+              "value": 0,
+              "components": {
+                "window": "current_generation",
+                "confirmed_results": 0,
+                "tests_executed": 37,
+                "runtime_refusals": 0,
+                "decoys_missed": 0,
+                "excluded_contest_tests": 3,
+                "excluded_decoys": 0,
+                "formula": "0/37 - 0.02*0 - 0.05*0"
+              }
+            },
+            {
+              "arm": "canary",
+              "value": 0,
+              "components": {
+                "window": "current_generation",
+                "confirmed_results": 0,
+                "tests_executed": 1,
+                "runtime_refusals": 0,
+                "decoys_missed": 0,
+                "excluded_contest_tests": 1,
+                "excluded_decoys": 0,
+                "formula": "0/1 - 0.02*0 - 0.05*0"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "INTEGRITY_REPORT",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:52:55.300Z",
+        "payload": {
+          "date": "2026-09-25",
+          "status": "YELLOW",
+          "checks": [
+            {
+              "area": "tower",
+              "ok": true,
+              "detail": "verify PASS; contagem declarada coincide com o conteúdo e o fingerprint foi validado."
+            },
+            {
+              "area": "site",
+              "ok": true,
+              "detail": "tower-head publicado coincide com a revisão auditada da Tower."
+            },
+            {
+              "area": "inbox",
+              "ok": true,
+              "detail": "3 JSONs aguardam processamento; tower-head recente, portanto o Writer reserva não foi acionado."
+            },
+            {
+              "area": "tasks",
+              "ok": false,
+              "detail": "2 laços operacionais estão atrasados, pertencentes a PITIA e LEARNER; nenhuma tarefa foi alterada."
+            },
+            {
+              "area": "science",
+              "ok": true,
+              "detail": "Nenhum roadmap marcou stop_reached; a campanha renovável não pediu revisão nesta leitura."
+            },
+            {
+              "area": "cycle",
+              "ok": false,
+              "detail": "Há 11 itens na fila REFEREE_1, 1 na REFEREE_2 e 2 laços atrasados."
+            },
+            {
+              "area": "contract",
+              "ok": true,
+              "detail": "Contrato, três skills ativas e schema de propostas foram carregados; braço desta execução: canonical."
+            },
+            {
+              "area": "privacy",
+              "ok": true,
+              "detail": "0 ocorrências em texto livre; 9 ocorrências permanecem somente em identificadores legados."
+            },
+            {
+              "area": "semantic",
+              "ok": true,
+              "detail": "2 campos why_it_matters ausentes receberam o saneamento registrado neste lote; demais campos obrigatórios estavam presentes."
+            },
+            {
+              "area": "fitness",
+              "ok": true,
+              "detail": "Relatório emitido para canonical e canary com componentes da fórmula; nenhum canary ativo exigiu rollback."
+            }
+          ],
+          "semantic": {
+            "domain_id": "engineering",
+            "topic_id": "engineering.nexo_runtime"
+          }
+        }
+      }
+    ]
+  }
+}
