@@ -1,0 +1,93 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT_CONVERSATION",
+  "created_at": "2026-09-25T15:12:00Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT_CONVERSATION",
+        "created_at": "2026-09-25T15:12:00Z",
+        "payload": {
+          "test_id": "T-MEGA26-LCDM-EVT-LMAX-149",
+          "inputs": [
+            {
+              "name": "EuclidLargeBox/EuclidLargeMocks release",
+              "url": "https://adlibitum.oats.inaf.it/pierluigi.monaco/euclid_mocks.html",
+              "format": "per-realisation public archive products",
+              "load": "Retrieve the exact frozen EuclidLargeBox/EuclidLargeMocks realisation products selected by T147, then hash every consumed object before running.",
+              "checked": "Official 2025 Euclid mock paper/release documents 1000 EuclidLargeBox realisations and public mock products.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "A fonte oficial está identificada, mas o teste congelado exige os objetos exatos das 1000 realizações e seus SHA256. O runtime atual não dispõe desses payloads; não alterar finder, seleção, bins nem regra de cauda."
+        }
+      },
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT_CONVERSATION",
+        "created_at": "2026-09-25T15:12:00Z",
+        "payload": {
+          "test_id": "T-MEGA26-LCDM-TRACER-DENSITY-151",
+          "inputs": [
+            {
+              "name": "EuclidLargeBox/EuclidLargeMocks frozen fields and tracer population",
+              "url": "https://adlibitum.oats.inaf.it/pierluigi.monaco/euclid_mocks.html",
+              "format": "mock halo/galaxy catalogues",
+              "load": "Bind the same frozen fields used by T149 and apply the preregistered thinning/population adapter at fixed matter field.",
+              "checked": "Official release documents Euclid ELG mocks populated with HOD from Flagship; exact matched-field density treatments still require payload binding.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "Fonte pública identificada; falta ligar os mesmos campos e o adapter de thinning/population congelado para as classes de densidade. Não há veredito antes disso."
+        }
+      },
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT_CONVERSATION",
+        "created_at": "2026-09-25T15:12:00Z",
+        "payload": {
+          "test_id": "T-MEGA26-LCDM-BIAS-HOD-152",
+          "inputs": [
+            {
+              "name": "Euclid HOD/halo selection basis",
+              "url": "https://adlibitum.oats.inaf.it/pierluigi.monaco/euclid_mocks.html",
+              "format": "mock halo/galaxy catalogues",
+              "load": "Bind frozen halo/HOD selections spanning tracer bias at fixed volume; do not retune after reading L_max tails.",
+              "checked": "Official mock release identifies the HOD population basis; exact frozen selection objects/adapters remain to be bound.",
+              "license": "public"
+            },
+            {
+              "name": "FLAMINGO-10K holdout metadata",
+              "url": "https://flamingo.strw.leidenuniv.nl/simulations.html",
+              "format": "public simulation/halo catalogue release",
+              "load": "Use only as unchanged holdout after exact selected object(s) are identified and hashed.",
+              "checked": "Official FLAMINGO page lists FLAMINGO-10K as DMO, 2.8 cGpc, 10080^3 CDM and public halo-catalogue family.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "O teste continua READY; faltam apenas os objetos/adapters exatos para HOD/halo selection e holdout. Não retunar após olhar as caudas."
+        }
+      },
+      {
+        "kind": "LEARNING_SIGNAL",
+        "source": "CHATGPT_CONVERSATION",
+        "created_at": "2026-09-25T15:12:00Z",
+        "payload": {
+          "signals": [
+            {
+              "topic_id": "science.cosmology.large_scale_structure",
+              "evidence": "Priorizar a execução imediata de T-MEGA26-LCDM-EVT-LMAX-149, T-MEGA26-LCDM-TRACER-DENSITY-151 e T-MEGA26-LCDM-BIAS-HOD-152. Não tratar ausência de payload pesado como resultado; hidratar os objetos exatos e executar com o contrato congelado.",
+              "evidence_kind": "PARAPHRASE",
+              "gap_type": "TOOL",
+              "confidence": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
