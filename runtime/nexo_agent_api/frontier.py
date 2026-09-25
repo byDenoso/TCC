@@ -147,12 +147,49 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
                 PRIORITY_RANK.get(str(t.get("priority") or "NORMAL").upper(), 9))
     ready.sort(key=_rank)
 
+    def _round_robin_by_roadmap(entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Preserve rank inside a roadmap while preventing cross-roadmap starvation."""
+        lanes: dict[str, list[dict[str, Any]]] = {}
+        lane_order: list[str] = []
+        for entry in entries:
+            lane = str(entry.get("roadmap_id") or "__UNATTACHED__")
+            if lane not in lanes:
+                lanes[lane] = []
+                lane_order.append(lane)
+            lanes[lane].append(entry)
+        ordered: list[dict[str, Any]] = []
+        while any(lanes[lane] for lane in lane_order):
+            for lane in lane_order:
+                if lanes[lane]:
+                    ordered.append(lanes[lane].pop(0))
+        return ordered
+
+    # Contests remain globally first. Inside contest and ordinary READY classes,
+    # rotate roadmaps so a long queue in one campaign cannot hide other ACTIVE
+    # campaigns from the Executor's bounded batch.
+    contest_ready = [entry for entry in ready if (test(entry["test_id"]) or {}).get("contests_test_id")]
+    ordinary_ready = [entry for entry in ready if not (test(entry["test_id"]) or {}).get("contests_test_id")]
+    fair_ready = _round_robin_by_roadmap(contest_ready) + _round_robin_by_roadmap(ordinary_ready)
+
     running = [item for item in resumable if item.get("state") == "RUNNING"]
     checkpointed = [item for item in resumable if item.get("state") == "CHECKPOINTED"]
+    fair_checkpointed = _round_robin_by_roadmap(checkpointed)
+
+    genome = _read(root / "evolution" / "genome.json") or {}
+    genes = {str(g.get("id")): g.get("canonical") for g in genome.get("genes", []) if isinstance(g, dict)}
+    try:
+        max_batch = max(1, int(genes.get("executor.max_parallel_tests", 10)))
+    except (TypeError, ValueError):
+        max_batch = 10
+    try:
+        checkpoint_quota = max(0, int(genes.get("executor.checkpoint_reviews_per_run", 3)))
+    except (TypeError, ValueError):
+        checkpoint_quota = 3
+
     if running:
         action, pick = "RESUME_EXISTING", running[0]
-    elif ready:
-        action, pick = "EXECUTE_READY", ready[0]
+    elif fair_ready:
+        action, pick = "EXECUTE_READY", fair_ready[0]
     elif checkpointed:
         action, pick = "RESUME_EXISTING", checkpointed[0]
     elif waiting:
@@ -162,10 +199,11 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     return {
         "state": action,
         "next": pick,
-        "batch": (running + ready + checkpointed)[:10],
+        "batch": (running + fair_ready + checkpointed)[:max_batch],
+        "checkpoint_review": fair_checkpointed[:checkpoint_quota],
         "resumable": resumable,
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
-        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
+        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; CONTESTS_FIRST; READY_ROADMAP_ROUND_ROBIN; CHECKPOINT_REVIEW_QUOTA_FROM_GENOME; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
     }
