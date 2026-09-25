@@ -6,8 +6,9 @@ Reads both roadmap shapes found in the Tower:
 and returns what an executor should do next. A malformed roadmap is reported
 in ``skipped_roadmaps`` instead of stopping every other lane.
 
-Order: resume RUNNING/CHECKPOINTED work first, then READY tests whose
-dependencies are terminal, highest roadmap priority first.
+Order: continue RUNNING work first; then READY tests whose dependencies are terminal;
+only then revisit CHECKPOINTED work. This prevents stale checkpoints from starving
+new executable tests while preserving continuity for work that is actually running.
 """
 
 from __future__ import annotations
@@ -139,10 +140,14 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
                 PRIORITY_RANK.get(str(t.get("priority") or "NORMAL").upper(), 9))
     ready.sort(key=_rank)
 
-    if resumable:
-        action, pick = "RESUME_EXISTING", resumable[0]
+    running = [item for item in resumable if item.get("state") == "RUNNING"]
+    checkpointed = [item for item in resumable if item.get("state") == "CHECKPOINTED"]
+    if running:
+        action, pick = "RESUME_EXISTING", running[0]
     elif ready:
         action, pick = "EXECUTE_READY", ready[0]
+    elif checkpointed:
+        action, pick = "RESUME_EXISTING", checkpointed[0]
     elif waiting:
         action, pick = "WAIT_DEPENDENCY", None
     else:
@@ -150,12 +155,10 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     return {
         "state": action,
         "next": pick,
-        # What one Executor pulse can run (gene executor.max_parallel_tests, up to 10 light tests): READY work first, because
-        # CHECKPOINTED tests usually wait on missing inputs and must not starve executable ones.
-        "batch": (ready + resumable)[:10],
+        "batch": (running + ready + checkpointed)[:10],
         "resumable": resumable,
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
-        "rule": "RESUME_BEFORE_NEW; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
+        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
     }
