@@ -1,0 +1,197 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T03:32:00Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T03:32:00Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.72,
+                "expected_effect": "A amostra independente ainda terá pelo menos 70% de checkpoints classificados como INPUT_BINDING."
+              },
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "INPUT_BINDING_SURVIVES_STRATIFIED_REPLICATION",
+                "summary": "Duas seleções independentes, cada uma com 5 checkpoints e no máximo 4 por roadmap, deram 5/5 casos de gargalo primário de binding/hidratação de inputs (100% em ambas).",
+                "statistics": {
+                  "windows": 2,
+                  "n_per_window": 5,
+                  "input_binding_n_per_window": [
+                    5,
+                    5
+                  ],
+                  "input_binding_rate_per_window": [
+                    1,
+                    1
+                  ]
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "O gargalo de inputs continua dominante quando repetimos a análise em checkpoints independentes e limitamos a concentração por roadmap?",
+                "why_it_matters": "Se sobreviver à estratificação, o diagnóstico deixa de depender de uma única família de testes.",
+                "result_meaning": "Nas duas seleções independentes, todos os checkpoints avaliados continuaram parados por inputs, dependências ou hidratação, não por erro explícito de cálculo. O diagnóstico original sobreviveu ao teste adversário.",
+                "verdict_plain": "Passou no teste, em revisão",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "A Tower atual oferece apenas dois roadmaps com checkpoints elegíveis; a estratificação ficou limitada a 1+4 casos por janela."
+              ],
+              "reproducibility": {
+                "code": "Classificação determinística de campos de checkpoint/dependência com duas janelas disjuntas no roadmap dominante e o checkpoint do segundo roadmap em ambas.",
+                "data_sources": [
+                  "NEXO_TOWER_LIVE.json"
+                ],
+                "attempts": [
+                  {
+                    "window": "A",
+                    "n": 5,
+                    "input_binding_n": 5
+                  },
+                  {
+                    "window": "B",
+                    "n": 5,
+                    "input_binding_n": 5
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T03:32:00Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-1",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.55,
+                "expected_effect": "Após estratificação por roadmap, pelo menos 50% dos checkpoints antigos continuarão ligados à fronteira resumable ACTIVE."
+              },
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "AGING_SURVIVES_ROADMAP_STRATIFICATION",
+                "summary": "Em duas seleções estratificadas de 6 checkpoints antigos, 5/6 (83,3%) permanecem na fronteira resumable atual; resultado idêntico nas duas janelas.",
+                "statistics": {
+                  "windows": 2,
+                  "n_per_window": 6,
+                  "resumable_n_per_window": [
+                    5,
+                    5
+                  ],
+                  "rate_per_window": [
+                    0.8333333333,
+                    0.8333333333
+                  ]
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "Os checkpoints antigos ainda pertencem à ciência ativa quando limitamos a contribuição de cada roadmap?",
+                "why_it_matters": "Isso verifica se o aging é um problema vivo ou apenas acúmulo histórico.",
+                "result_meaning": "Mesmo limitando a concentração por roadmap, cinco de seis checkpoints antigos em cada janela continuam na fronteira retomável. Portanto, o aging ainda afeta trabalho científico ativo.",
+                "verdict_plain": "Passou no teste, em revisão",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "Há forte concentração de checkpoints em um único roadmap; o limite de cinco casos reduz essa dominância, mas não cria diversidade inexistente na Tower."
+              ],
+              "reproducibility": {
+                "code": "Interseção de checkpoints previamente documentados como antigos com frontier.resumable atual; duas janelas independentes de cinco casos do roadmap dominante mais um caso do segundo roadmap.",
+                "data_sources": [
+                  "NEXO_TOWER_LIVE.json",
+                  "frontier atual"
+                ],
+                "attempts": [
+                  {
+                    "window": "A",
+                    "n": 6,
+                    "resumable_n": 5
+                  },
+                  {
+                    "window": "B",
+                    "n": 6,
+                    "resumable_n": 5
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T03:32:00Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.8,
+                "expected_effect": "Nenhuma das cinco árvores de dependência ativas alcançará transitivamente a cópia stale do contrato até profundidade 3."
+              },
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "STALE_EMBEDDED_COPY_TRANSITIVELY_UNREACHABLE",
+                "summary": "0/5 árvores de bootstrap alcançam a cópia stale contracts/MCP_RUNTIME_CONTRACT_V1.json até profundidade 3. Duas estratégias independentes de resolução de referências deram o mesmo resultado.",
+                "statistics": {
+                  "bootstrap_trees": 5,
+                  "stale_reachable_n": 0,
+                  "depth": 3,
+                  "independent_parsers": 2
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "Algum bootstrap ativo chega indiretamente à cópia antiga do contrato?",
+                "why_it_matters": "Uma referência indireta significaria que a cópia antiga ainda pode contaminar a execução mesmo sem aparecer diretamente no bootstrap.",
+                "result_meaning": "Nenhuma das cinco árvores de dependência chegou à cópia antiga até profundidade três. Os bootstraps chegam à referência atual do contrato, mas não à cópia stale contestada.",
+                "verdict_plain": "Passou no teste, em revisão",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "O teste cobre o grafo estático observável na Tower até profundidade 3; não prova ausência de acesso dinâmico fora desse grafo."
+              ],
+              "reproducibility": {
+                "code": "Travessia de referências de arquivos da Tower a partir de cinco bootstraps, profundidade 3, repetida com busca literal de paths e resolução recursiva de strings normalizadas.",
+                "data_sources": [
+                  "NEXO_TOWER_LIVE.json"
+                ],
+                "attempts": [
+                  {
+                    "parser": "literal_path",
+                    "stale_reachable_n": 0
+                  },
+                  {
+                    "parser": "normalized_string_graph",
+                    "stale_reachable_n": 0
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
