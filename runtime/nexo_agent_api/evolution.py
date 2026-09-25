@@ -377,6 +377,44 @@ def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, 
             "renewable": bool(charter.get("renewable")), "review_due": review_due}
 
 
+def _hours_since(stamps: list[str], now: datetime) -> float | None:
+    parsed = []
+    for stamp in stamps:
+        try:
+            parsed.append(datetime.fromisoformat(str(stamp).replace("Z", "+00:00")))
+        except ValueError:
+            continue
+    if not parsed:
+        return None
+    latest = max(p if p.tzinfo else p.replace(tzinfo=timezone.utc) for p in parsed)
+    return round((now - latest).total_seconds() / 3600, 1)
+
+
+def _emergence(root: Path, tests: list[dict[str, Any]], genome: dict[str, Any], now: datetime) -> dict[str, Any]:
+    """Anti-stagnation pressure: which loop is quiet and what each task must do about it this run."""
+    thoughts = _read(root, THOUGHTS_DOC).get("entries") or []
+    since = {
+        "thought": _hours_since([t.get("at") for t in thoughts], now),
+        "dream": _hours_since([t.get("at") for t in thoughts if t.get("kind") == "DREAM"], now),
+        "genome_mutation": _hours_since([g.get("canary_since") for g in genome.get("genes") or []]
+                                        + [l.get("at") for l in genome.get("lineage") or []], now),
+        "fitness": _hours_since([f.get("at") for f in genome.get("fitness") or []], now),
+        "new_hypothesis": _hours_since([t.get("created_at") or t.get("frozen_at") for t in tests
+                                        if t.get("proposed_by") == "CHATGPT"], now),
+        "result": _hours_since([t.get("executed_at") for t in tests if t.get("verdict")], now),
+        "contest": _hours_since([c.get("at") for t in tests for c in t.get("contests") or []], now),
+        "decoy": _hours_since([d.get("at") for d in _read(root, DECOYS_DOC).get("planted") or []], now),
+    }
+    limits = {"thought": 6, "dream": 24, "genome_mutation": 48, "fitness": 12, "new_hypothesis": 6,
+              "result": 3, "contest": 12, "decoy": 168}
+    owners = {"thought": "PITIA", "dream": "PITIA", "genome_mutation": "PITIA/LEARNER", "fitness": "GUARDIAO",
+              "new_hypothesis": "LEARNER", "result": "EXECUTOR", "contest": "REFUTADOR", "decoy": "GUARDIAO"}
+    stale = [{"loop": k, "hours": v, "owner": owners[k]} for k, v in since.items() if v is None or v > limits[k]]
+    return {"hours_since": since, "limits_h": limits, "stale": stale,
+            "rule": "The owner of every stale loop MUST produce at least one item of that loop this run "
+                    "(a thought with refs, a dream, a canary proposal, a fitness report, a hypothesis, a contest or a decoy)."}
+
+
 def evolution_status(root: str | Path, now: datetime | None = None, public: bool = False) -> dict[str, Any]:
     """Task view (default) or public ATLAS view (public=True: deterministic, no clock, adds diary/lineage)."""
     root = Path(root)
@@ -417,6 +455,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
     }
+    if not public:
+        status["emergence"] = _emergence(root, tests, genome, now)
     if public:
         status.pop("arm_for_this_run")
         status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
