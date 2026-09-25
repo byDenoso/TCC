@@ -1,0 +1,33 @@
+{
+  "kind": "BATCH",
+  "source": "GUARDIAO",
+  "created_at": "2026-09-25T03:12:30Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "INTEGRITY_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:12:30Z",
+        "payload": {
+          "date": "2026-09-25",
+          "status": "YELLOW",
+          "checks": [
+            {"area":"tower","ok":true,"detail":"Writer verify PASS na Tower completa."},
+            {"area":"site","ok":true,"detail":"tower-head aponta para a mesma revisão da Tower."},
+            {"area":"inbox","ok":true,"detail":"GitHub inbox sem propostas pendentes; Drive inbox sem JSON/Docs pendentes."},
+            {"area":"science","ok":true,"detail":"Fronteira contém testes READY e CHECKPOINTED; sem falha estrutural do writer."},
+            {"area":"contract","ok":true,"detail":"Contrato runtime schema 1.11 ativo e writer do Drive carregado."},
+            {"area":"privacy","ok":false,"detail":"Varredura conservadora encontrou 3 entidades com texto potencialmente incompatível com a regra de redaction; requer saneamento dedicado antes de marcar GREEN."}
+          ],
+          "semantic":{"domain_id":"engineering","topic_id":"engineering.nexo_runtime"}
+        }
+      },
+      {
+        "kind":"LEARNING_SIGNAL",
+        "source":"GUARDIAO",
+        "created_at":"2026-09-25T03:12:30Z",
+        "payload":{"signals":[{"topic_id":"engineering.antibody","evidence_kind":"INTEGRITY","gap_type":"TOOL","confidence":0.9,"evidence":"Varredura de privacidade sinalizou 3 entidades suspeitas; causa provável é texto livre residual fora dos campos já saneados; remédio: revisão dedicada com subject_code e redact_names, sem imprimir conteúdo sensível."}]}
+      }
+    ]
+  }
+}
