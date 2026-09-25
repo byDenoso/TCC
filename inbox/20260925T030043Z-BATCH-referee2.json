@@ -1,0 +1,194 @@
+{
+ "kind": "BATCH",
+ "source": "CHATGPT",
+ "created_at": "2026-09-25T02:53:00Z",
+ "payload": {
+  "items": [
+   {
+    "kind": "HYPOTHESIS_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T02:53:00Z",
+    "payload": {
+     "test_id": "META-ROADMAP26-001-AUTOATTACH-REPAIR",
+     "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+     "question": "O Writer consegue reparar automaticamente testes legados sem roadmap quando recebe ROADMAP_ATTACH sem roadmap_id?",
+     "hypothesis": {
+      "id": "HYP-META-ROADMAP-AUTOATTACH-20260925",
+      "statement": "A autoanexação do Writer consegue ligar a maioria dos testes legados sem roadmap a um roadmap compatível.",
+      "model": "Autoanexação por área e proximidade semântica.",
+      "baseline": "A maioria permanece flutuando sem roadmap.",
+      "falsification_criterion": "No máximo 2 de 7 casos recebem roadmap_id válido."
+     },
+     "null": "O Writer não consegue ligar automaticamente a maioria dos testes legados sem roadmap quando recebe ROADMAP_ATTACH sem roadmap_id.",
+     "rival": "O Writer consegue escolher e ligar automaticamente um roadmap compatível para a maioria dos testes legados sem roadmap.",
+     "method": "Em cópia local da Tower, aplicar ROADMAP_ATTACH sem roadmap_id aos 7 testes apontados pelos sinais de integridade e recontar quantos recebem roadmap_id.",
+     "data": "Tower atual e Writer canônico do Drive; 7 testes científicos sem roadmap após as exclusões formais.",
+     "success_criteria": "PROMOTED se pelo menos 5 de 7 casos receberem roadmap_id válido.",
+     "kill_criteria": "REJECTED se no máximo 2 de 7 receberem roadmap_id válido; 3 ou 4 = INCONCLUSIVE.",
+     "claim_boundary": "Valida o mecanismo de autoanexação em cópia local; não afirma que a Tower viva já foi reparada.",
+     "depends_on": [],
+     "priority": "P1",
+     "origin_kind": "INTEGRITY",
+     "prior_art": [
+      "META-CKPT26-002-LIVE-ROADMAP-AGING"
+     ],
+     "rank_score": 0.86,
+     "linked_signal_ids": [
+      "LEARNING_SIGNAL::20260925T014500Z-LEARNING-SIGNAL-GUARDIAN-INTEGRITY-JSON",
+      "LEARNING_SIGNAL::20260925T020302Z-LEARNING-SIGNAL-GUARDIAN-ROADMAP-GAPS-JSON"
+     ],
+     "semantic": {
+      "domain_id": "engineering",
+      "subdomain_id": "engineering.nexo_runtime",
+      "topic_id": "engineering.nexo_runtime.state_integrity",
+      "question_plain": "O Writer consegue recolocar automaticamente testes científicos sem roadmap no roadmap certo?",
+      "why_it_matters": "Teste sem roadmap fica fora do encadeamento científico e pode escapar da execução correta.",
+      "confidence_plain": "alta"
+     }
+    }
+   },
+   {
+    "kind": "MUTATION_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T02:53:00Z",
+    "payload": {
+     "tests": [
+      {
+       "test_id": "META-ROADMAP26-001-AUTOATTACH-REPAIR",
+       "result": {
+        "verdict": "PROMOTED",
+        "decision": "AUTOATTACH_MAJORITY_PASS",
+        "summary": "Em 7 casos, 5 receberam roadmap_id automaticamente; o gate congelado exigia pelo menos 5.",
+        "statistics": {
+         "cases": 7,
+         "attached": 5,
+         "rate": 0.7142857143
+        }
+       },
+       "semantic": {
+        "domain_id": "engineering",
+        "subdomain_id": "engineering.nexo_runtime",
+        "topic_id": "engineering.nexo_runtime.state_integrity",
+        "question_plain": "O Writer consegue recolocar automaticamente testes científicos sem roadmap no roadmap certo?",
+        "why_it_matters": "Teste sem roadmap fica fora do encadeamento científico e pode escapar da execução correta.",
+        "result_meaning": "A autoanexação funcionou em 5 de 7 casos e atingiu exatamente o critério de promoção. Dois casos continuam sem ligação automática, então o mecanismo é útil, mas não universal.",
+        "verdict_plain": "Promovido",
+        "confidence_plain": "média"
+       },
+       "limitations": [
+        "Teste executado em cópia local da Tower; dois casos permaneceram sem roadmap."
+       ],
+       "linked_signal_ids": [
+        "LEARNING_SIGNAL::20260925T014500Z-LEARNING-SIGNAL-GUARDIAN-INTEGRITY-JSON",
+        "LEARNING_SIGNAL::20260925T020302Z-LEARNING-SIGNAL-GUARDIAN-ROADMAP-GAPS-JSON"
+       ]
+      }
+     ]
+    }
+   },
+   {
+    "kind": "LESSON_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T02:53:00Z",
+    "payload": {
+     "topic_id": "engineering.nexo_runtime.state_integrity",
+     "title": "Reanexar testes flutuantes sem escolher roadmap à mão",
+     "gap_type": "METHOD",
+     "intuition": "O Writer tenta inferir o roadmap mais próximo quando recebe um teste sem vínculo explícito.",
+     "explanation": "ROADMAP_ATTACH sem roadmap_id recuperou 5 de 7 casos. Os casos restantes mostram que a inferência automática não cobre toda entidade legada.",
+     "exercise": "Se 7 testes flutuam e 5 são ligados automaticamente, aplique a autoanexação em lote e investigue apenas os 2 restantes.",
+     "linked_test_ids": [
+      "META-ROADMAP26-001-AUTOATTACH-REPAIR"
+     ],
+     "linked_signal_ids": [
+      "LEARNING_SIGNAL::20260925T014500Z-LEARNING-SIGNAL-GUARDIAN-INTEGRITY-JSON",
+      "LEARNING_SIGNAL::20260925T020302Z-LEARNING-SIGNAL-GUARDIAN-ROADMAP-GAPS-JSON"
+     ],
+     "semantic": {
+      "domain_id": "engineering",
+      "subdomain_id": "engineering.nexo_runtime",
+      "topic_id": "engineering.nexo_runtime.state_integrity",
+      "question_plain": "Como recuperar testes sem roadmap com o mínimo de intervenção manual?",
+      "why_it_matters": "Reduz trabalho manual e recoloca testes no fluxo científico sem inventar vínculos."
+     }
+    }
+   },
+   {
+    "kind": "HYPOTHESIS_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T02:53:00Z",
+    "payload": {
+     "test_id": "META-UNAPPLIED26-001-STALE-DEADLETTER",
+     "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+     "question": "Os artefatos UNAPPLIED_* atuais são resíduos históricos ou falhas ainda ativas?",
+     "hypothesis": {
+      "id": "HYP-META-UNAPPLIED-STALENESS-20260925",
+      "statement": "A maioria dos UNAPPLIED_* materializados é resíduo histórico cujo alvo já foi aplicado ou superado.",
+      "model": "Dead letters persistentes após recuperação parcial.",
+      "baseline": "Os UNAPPLIED_* representam falhas ativas ainda não resolvidas.",
+      "falsification_criterion": "Com pelo menos 5 casos, 80% ou mais dos alvos continuam ausentes."
+     },
+     "null": "Artefatos UNAPPLIED_* materializados representam falhas ainda ativas, não resíduos históricos.",
+     "rival": "Artefatos UNAPPLIED_* materializados são resíduos históricos cujos alvos já foram aplicados ou superados.",
+     "method": "Inspecionar cada UNAPPLIED_* atual e verificar se há entidade-alvo correspondente já materializada na Tower.",
+     "data": "Dois artefatos UNAPPLIED_* atuais na Tower.",
+     "success_criteria": "PROMOTED somente com pelo menos 5 casos e 80% ou mais dos alvos já aplicados ou superados.",
+     "kill_criteria": "REJECTED somente com pelo menos 5 casos e 80% ou mais dos alvos ainda ausentes; menos de 5 casos = INCONCLUSIVE.",
+     "claim_boundary": "Diagnóstico do estado dos dead letters; não remove nem reaplica artefatos.",
+     "priority": "P2",
+     "origin_kind": "INTEGRITY",
+     "rank_score": 0.54,
+     "linked_signal_ids": [
+      "LEARNING_SIGNAL::20260925T020303Z-LEARNING-SIGNAL-GUARDIAN-UNAPPLIED-JSON"
+     ],
+     "semantic": {
+      "domain_id": "engineering",
+      "subdomain_id": "engineering.nexo_runtime",
+      "topic_id": "engineering.nexo_runtime.state_integrity",
+      "question_plain": "Os UNAPPLIED_* que ainda aparecem são falhas ativas ou resíduos antigos?",
+      "why_it_matters": "Separar falha ativa de resíduo evita retrabalho e alarmes falsos.",
+      "confidence_plain": "baixa"
+     }
+    }
+   },
+   {
+    "kind": "MUTATION_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T02:53:00Z",
+    "payload": {
+     "tests": [
+      {
+       "test_id": "META-UNAPPLIED26-001-STALE-DEADLETTER",
+       "result": {
+        "verdict": "INCONCLUSIVE",
+        "decision": "INSUFFICIENT_CASES",
+        "summary": "Há apenas 2 casos UNAPPLIED_*; o protocolo META exige pelo menos 5 para decisão terminal.",
+        "statistics": {
+         "cases": 2,
+         "minimum_required": 5,
+         "existing_entity_reference_cases": 1
+        }
+       },
+       "semantic": {
+        "domain_id": "engineering",
+        "subdomain_id": "engineering.nexo_runtime",
+        "topic_id": "engineering.nexo_runtime.state_integrity",
+        "question_plain": "Os UNAPPLIED_* que ainda aparecem são falhas ativas ou resíduos antigos?",
+        "why_it_matters": "Separar falha ativa de resíduo evita retrabalho e alarmes falsos.",
+        "result_meaning": "A amostra atual tem só 2 casos, abaixo do mínimo de 5. Um deles referencia entidade já existente, mas isso não basta para concluir que os UNAPPLIED_* são resíduos históricos.",
+        "verdict_plain": "Inconclusivo",
+        "confidence_plain": "baixa"
+       },
+       "limitations": [
+        "Apenas 2 casos disponíveis; abaixo do mínimo pré-definido de 5."
+       ],
+       "linked_signal_ids": [
+        "LEARNING_SIGNAL::20260925T020303Z-LEARNING-SIGNAL-GUARDIAN-UNAPPLIED-JSON"
+       ]
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
