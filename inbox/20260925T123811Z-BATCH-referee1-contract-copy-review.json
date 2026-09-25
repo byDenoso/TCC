@@ -1,0 +1,45 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T12:38:11.472Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "VERDICT_REVIEW",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:38:11.472Z",
+        "payload": {
+          "test_id": "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP",
+          "referee": 1,
+          "outcome": "SURVIVED",
+          "evidence": "A contestação registrada como CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1 encontrou 0/5 árvores de dependência alcançando a cópia stale, atendendo ao critério congelado de sobrevivência. A inferência fica limitada ao conjunto de árvores inspecionado.",
+          "contest_test_id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1"
+        }
+      },
+      {
+        "kind": "CONTEST",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:38:11.472Z",
+        "payload": {
+          "test_id": "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP",
+          "reason": "A primeira contestação usou árvores de dependência estáticas. Para reduzir risco de imports condicionais ou resolução dinâmica, proponho uma replicação independente observando os caminhos efetivamente abertos na inicialização dos cinco bootstraps ativos.",
+          "refs": [
+            "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP",
+            "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "source": "REFEREE_1",
+          "contest_test": {
+            "question": "A inicialização instrumentada dos cinco bootstraps ativos resolve ou abre, direta ou indiretamente, a cópia stale do contrato?",
+            "null": "Pelo menos um dos cinco bootstraps resolve ou abre a cópia stale durante a inicialização.",
+            "rival": "Nenhum dos cinco bootstraps resolve ou abre a cópia stale durante a inicialização.",
+            "method": "Instrumentar file-open e resolução de imports desde o launcher de cada bootstrap ativo, em ambiente isolado e com a mesma revisão da Tower; registrar caminhos normalizados e hashes, sem alterar os arquivos. Avaliar cinco casos.",
+            "data": "Os cinco launchers de papel ativos e seus caminhos transitivos na revisão corrente da Tower/runtime; comparar os caminhos observados com a cópia stale referida pelo teste original.",
+            "success_criteria": "SURVIVED se n=5 e 0/5 inicializações resolverem ou abrirem a cópia stale.",
+            "kill_criteria": "REFUTED se qualquer inicialização resolver ou abrir a cópia stale; n<5 ou falha de instrumentação é inconclusivo."
+          }
+        }
+      }
+    ]
+  }
+}
