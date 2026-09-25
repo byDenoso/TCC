@@ -285,9 +285,12 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         entries.append({"id": entry.get("id") or f"TH-{_now(item)[:16]}-{index}", "at": _now(item),
                         "kind": str(entry.get("kind") or "SURPRISE").upper(), "text": str(entry["text"])[:600],
                         "refs": [str(r) for r in entry["refs"]][:12]})
-    if not entries:
+    retire = {str(r) for r in body.get("retire") or []}
+    if not entries and not retire:
         return []
     old = _read(root, THOUGHTS_DOC).get("entries") or []
+    # Retired thoughts stay in the history (nothing is deleted) but leave the public diary.
+    old = [dict(e, retired=True) if e.get("id") in retire else e for e in old]
     return [_doc(THOUGHTS_DOC, {"entries": (old + entries)[-300:]}, f"REQ-THOUGHT-{_now(item)[:16]}")]
 
 
@@ -407,7 +410,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
             "status", "question", "budget", "stop", "chartered_at", "closed_at", "close_reason", "rival_of")}}
             for r in roadmaps if r.get("charter")]
-        status["thoughts"] = (_read(root, THOUGHTS_DOC).get("entries") or [])[-40:]
+        status["thoughts"] = [e for e in _read(root, THOUGHTS_DOC).get("entries") or [] if not e.get("retired")][-40:]
         status["genome"]["lineage"] = genome.get("lineage") or []
         status["genome"]["fitness"] = (genome.get("fitness") or [])[-120:]
         status["reviews"] = {s: sum(1 for t in positive if (t.get("review_state") or "PENDING_REVIEW") == s)
