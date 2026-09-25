@@ -452,7 +452,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
                                  for g in genome.get("genes") or [] if g.get("status") == "CANARY"],
         },
         "review_queue": {
-            "referee_1": [t["id"] for t in positive if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")],
+            "referee_1": [t["id"] for t in positive if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")
+                          or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
             "referee_2": [t["id"] for t in positive if t.get("review_state") == "REFEREE1_PASSED"],
         },
         "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps
