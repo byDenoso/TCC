@@ -1,0 +1,166 @@
+{
+  "kind": "MUTATION_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T00:58:00Z",
+  "payload": {
+    "tests": [
+      {
+        "test_id": "T-DEH26-001-PRIORITY-STATE-OF-ART",
+        "result": {
+          "verdict": "PROMOTED",
+          "decision": "DIRECTED_SEARCH_SUPPORTS_DISTINCT_COMBINATION",
+          "summary": "A busca dirigida cobriu CKN/UV-IR, HDE com horizonte cosmológico, finitude do Hilbert de de Sitter e supersymmetric P(X)/ghost condensate. Foram encontrados precedentes claros para as peças separadas, mas nenhum trabalho na amostra dirigida que implemente simultaneamente seleção independente da escala cosmológica + completion local P(X) + matching radiativamente protegido equivalente a R=1. Isso promove apenas a novidade potencial da combinação, não prioridade absoluta nem validade física.",
+          "statistics": {
+            "targeted_search_date": "2026-09-25",
+            "scispace_results_reviewed": 10,
+            "full_chain_matches_found": 0
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.microphysics",
+          "question_plain": "A nossa cadeia holografia → escala meV → EFT local protegida já existe na literatura?",
+          "why_it_matters": "Evita chamar de novidade uma combinação que já tenha sido derivada.",
+          "result_meaning": "As peças principais já existem na literatura, inclusive trabalhos ligando CKN/horizonte à escala de energia escura e trabalhos de P(X) supersimétrico. Na busca dirigida não apareceu a cadeia completa até um matching R=1 radiativamente protegido; isso sustenta novidade potencial da combinação, sem provar prioridade absoluta.",
+          "verdict_plain": "Busca dirigida favorece novidade potencial da combinação",
+          "confidence_plain": "média"
+        },
+        "limitations": [
+          "Busca dirigida sem revisão sistemática exaustiva por todas as notações equivalentes.",
+          "Resultados de repositórios/preprints foram tratados como contexto, não como evidência equivalente a literatura estabelecida."
+        ],
+        "reproducibility": {
+          "code": "Busca semântica SciSpace + busca web dirigida por CKN, HDE, finite de Sitter Hilbert e supersymmetric P(X).",
+          "data_sources": [
+            "arXiv:hep-th/9803132",
+            "arXiv:hep-th/0403127",
+            "arXiv:1012.3748",
+            "arXiv:2410.01471",
+            "arXiv:2404.13684",
+            "arXiv:2607.09732",
+            "doi:10.31219/osf.io/m8t6h_v1"
+          ]
+        }
+      },
+      {
+        "test_id": "T-DEH26-002-SCALE-CIRCULARITY",
+        "result": {
+          "verdict": "REJECTED",
+          "decision": "CIRCULAR_SCALE_RECOVERY",
+          "summary": "Com H0=70 km/s/Mpc e ΩDE=0,685, a identidade de de Sitter/Friedmann dá H∞=1,236e-33 eV, ρ∞=2,717e-11 eV^4, M=2,283 meV e S_dS=3,07e122. O valor meV só aparece depois de inserir a expansão tardia observada; nenhuma condição independente para H∞/S_dS foi derivada.",
+          "statistics": {
+            "H0_km_s_Mpc": 70,
+            "Omega_DE": 0.685,
+            "Hinf_eV": 1.2358294714560557e-33,
+            "rho_inf_eV4": 2.716666213084745e-11,
+            "M_meV": 2.2830166057036823,
+            "S_dS": 3.0652829376690635e+122
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.microphysics",
+          "question_plain": "A holografia realmente prevê 2,3 meV ou apenas reescreve o valor observado?",
+          "why_it_matters": "Sem seleção independente, a escala correta é consistência algébrica, não solução do problema da constante cosmológica.",
+          "result_meaning": "A conta reproduz 2,283 meV exatamente na ordem esperada, mas usa H0 e ΩDE como entradas. Portanto a versão atual não prevê a escala: ela a reescreve em linguagem de horizonte/entropia.",
+          "verdict_plain": "Rejeitado para seleção independente da escala",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "Rejeita apenas a alegação de seleção independente na formulação atual; não rejeita CKN/HDE como frameworks.",
+          "Uma condição QG independente futura para S_dS/H∞ constituiria novo teste."
+        ],
+        "reproducibility": {
+          "code": "Cálculo determinístico em Python/SymPy; artifact local sha256 9b11b301a9d67908f9532f05be968d5367582e3577478d4109fda1c2666d4ed4.",
+          "data_sources": [
+            "Relação semiclassica de de Sitter/Friedmann",
+            "arXiv:hep-th/9803132",
+            "arXiv:hep-th/0403127"
+          ]
+        }
+      },
+      {
+        "test_id": "T-DEH26-003-TREE-MATCHING-R1",
+        "result": {
+          "verdict": "PROMOTED",
+          "decision": "TREE_LEVEL_R1_IDENTITY",
+          "summary": "Com φ=Mθ e Xφ=−(∂φ)²/2, o termo angular é χ²Xφ/M². Eliminando o radial no limite adiabático obtém-se exatamente P(X)=X²/M⁴−2X=M⁴(y²−2y)=(X−M⁴)²/M⁴−M⁴. Na parametrização P=(X−m²)²/λ−V0, os parâmetros de P(X) são m²=M⁴, λ=M⁴ e V0=M⁴, logo R=λV0/(m²)²=1. O m² desta definição não é a massa quadrática do potencial radial.",
+          "statistics": {
+            "exact_symbolic_identity": true,
+            "R_tree": 1
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.microphysics",
+          "question_plain": "O R=1 aparece sozinho no matching clássico ou foi colocado à mão?",
+          "why_it_matters": "Se R=1 for identidade do matching, o problema muda de ajuste entre três parâmetros para estabilidade quântica de uma estrutura única.",
+          "result_meaning": "No nível clássico, R=1 aparece automaticamente: a mesma escala M fixa os três coeficientes da EFT. Isso fecha o matching tree-level, mas não diz se os loops preservam a relação.",
+          "verdict_plain": "Promovido no tree level",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "Resultado restrito ao limite radial adiabático e à normalização escolhida.",
+          "Não demonstra proteção radiativa nem origem de M.",
+          "A massa quadrática do radial em V(χ) é um parâmetro distinto do símbolo m² usado na parametrização de P(X); identificá-los produz o artefato R=1/4."
+        ],
+        "reproducibility": {
+          "code": "Eliminação simbólica do radial com SymPy; artifact local sha256 9b11b301a9d67908f9532f05be968d5367582e3577478d4109fda1c2666d4ed4.",
+          "data_sources": [
+            "álgebra do completion local"
+          ]
+        }
+      },
+      {
+        "test_id": "T-DEH26-004-RADIATIVE-STABILITY-BOSONIC",
+        "result": {
+          "verdict": "REJECTED",
+          "decision": "BOSONIC_ONE_LOOP_BREAKS_ONE_PARAMETER_SURFACE",
+          "summary": "Para o potencial O(2) V=M⁴+M²r²+r⁴/4, as massas de fundo dão m_rad²=2M²+3r² e m_G²=2M²+r². A divergência escalar de um loop é proporcional a m_rad⁴+m_G⁴=8M⁴+16M²r²+10r⁴. As razões loop/tree são 8,16,40, portanto não são uma renormalização de uma única escala M.",
+          "statistics": {
+            "tree_coefficients": [
+              "1",
+              "1",
+              "1/4"
+            ],
+            "one_loop_shape_coefficients": [
+              "8",
+              "16",
+              "10"
+            ],
+            "loop_to_tree_ratios": [
+              8,
+              16,
+              40
+            ],
+            "one_parameter_closed": false
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.microphysics",
+          "question_plain": "Os loops quânticos preservam R=1 no modelo bosônico mínimo?",
+          "why_it_matters": "Sem proteção radiativa, o R=1 clássico volta a exigir contratermos independentes e perde a vantagem de naturalidade.",
+          "result_meaning": "O completion bosônico mínimo não é fechado sob renormalização de um loop. Os termos constante, quadrático e quártico recebem correções em proporções diferentes, então R=1 não fica protegido apenas pela forma clássica.",
+          "verdict_plain": "Rejeitado para o completion bosônico mínimo",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "Teste de divergências do setor escalar O(2); não inclui cancelamentos fermiônicos/supersimétricos.",
+          "Não exclui completions com simetria adicional, sequestering ou estrutura no-scale."
+        ],
+        "reproducibility": {
+          "code": "Mass matrix radial+Goldstone e divergência Coleman-Weinberg ∝Σm_i^4, calculados simbolicamente; artifact local sha256 9b11b301a9d67908f9532f05be968d5367582e3577478d4109fda1c2666d4ed4.",
+          "data_sources": [
+            "QFT escalar de um loop",
+            "arXiv:1012.3748 para rota SUSY subsequente"
+          ]
+        }
+      }
+    ]
+  }
+}
