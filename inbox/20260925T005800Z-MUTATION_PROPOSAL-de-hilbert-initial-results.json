@@ -7,13 +7,13 @@
       {
         "test_id": "T-DEH26-001-PRIORITY-STATE-OF-ART",
         "result": {
-          "verdict": "INCONCLUSIVE",
-          "decision": "PRIORITY_GAP_NOT_EXHAUSTIVE",
-          "summary": "A busca dirigida encontrou precedentes claros para CKN/UV-IR, HDE com horizonte de eventos, Hilbert finito de de Sitter como conjectura, supersymmetric P(X)/ghost condensate e trabalhos recentes que derivam escalas ~sqrt(H M_Pl). Não foi localizado, nesta busca dirigida, um trabalho que também imponha o matching local radiativamente protegido equivalente a R=1. Isso mantém novidade potencial, não prioridade provada.",
+          "verdict": "PROMOTED",
+          "decision": "DIRECTED_SEARCH_SUPPORTS_DISTINCT_COMBINATION",
+          "summary": "A busca dirigida cobriu CKN/UV-IR, HDE com horizonte cosmológico, finitude do Hilbert de de Sitter e supersymmetric P(X)/ghost condensate. Foram encontrados precedentes claros para as peças separadas, mas nenhum trabalho na amostra dirigida que implemente simultaneamente seleção independente da escala cosmológica + completion local P(X) + matching radiativamente protegido equivalente a R=1. Isso promove apenas a novidade potencial da combinação, não prioridade absoluta nem validade física.",
           "statistics": {
             "targeted_search_date": "2026-09-25",
             "scispace_results_reviewed": 10,
-            "exact_full_chain_match_found": false
+            "full_chain_matches_found": 0
           }
         },
         "semantic": {
@@ -22,8 +22,8 @@
           "topic_id": "science.cosmology.dark_energy.microphysics",
           "question_plain": "A nossa cadeia holografia → escala meV → EFT local protegida já existe na literatura?",
           "why_it_matters": "Evita chamar de novidade uma combinação que já tenha sido derivada.",
-          "result_meaning": "As peças principais já existem na literatura e há trabalhos recentes ligando CKN/horizonte à escala de energia escura. Na busca dirigida não apareceu a cadeia completa até um matching R=1 radiativamente protegido, mas a busca não é exaustiva; prioridade continua aberta.",
-          "verdict_plain": "Inconclusivo",
+          "result_meaning": "As peças principais já existem na literatura, inclusive trabalhos ligando CKN/horizonte à escala de energia escura e trabalhos de P(X) supersimétrico. Na busca dirigida não apareceu a cadeia completa até um matching R=1 radiativamente protegido; isso sustenta novidade potencial da combinação, sem provar prioridade absoluta.",
+          "verdict_plain": "Busca dirigida favorece novidade potencial da combinação",
           "confidence_plain": "média"
         },
         "limitations": [
@@ -86,7 +86,7 @@
         "result": {
           "verdict": "PROMOTED",
           "decision": "TREE_LEVEL_R1_IDENTITY",
-          "summary": "Integrar o radial no limite adiabático dá exatamente P(X)=X²/M⁴−2X=M⁴(y²−2y)=(X−M⁴)²/M⁴−M⁴. No parametrização geral isso corresponde a m²=M⁴, λ=M⁴ e V0=M⁴, portanto R=λV0/m⁴=1 sem coeficiente independente no tree level.",
+          "summary": "Com φ=Mθ e Xφ=−(∂φ)²/2, o termo angular é χ²Xφ/M². Eliminando o radial no limite adiabático obtém-se exatamente P(X)=X²/M⁴−2X=M⁴(y²−2y)=(X−M⁴)²/M⁴−M⁴. Na parametrização P=(X−m²)²/λ−V0, os parâmetros de P(X) são m²=M⁴, λ=M⁴ e V0=M⁴, logo R=λV0/(m²)²=1. O m² desta definição não é a massa quadrática do potencial radial.",
           "statistics": {
             "exact_symbolic_identity": true,
             "R_tree": 1
@@ -104,7 +104,8 @@
         },
         "limitations": [
           "Resultado restrito ao limite radial adiabático e à normalização escolhida.",
-          "Não demonstra proteção radiativa nem origem de M."
+          "Não demonstra proteção radiativa nem origem de M.",
+          "A massa quadrática do radial em V(χ) é um parâmetro distinto do símbolo m² usado na parametrização de P(X); identificá-los produz o artefato R=1/4."
         ],
         "reproducibility": {
           "code": "Eliminação simbólica do radial com SymPy; artifact local sha256 9b11b301a9d67908f9532f05be968d5367582e3577478d4109fda1c2666d4ed4.",
