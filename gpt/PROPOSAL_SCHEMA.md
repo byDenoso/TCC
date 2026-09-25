@@ -179,3 +179,5 @@ Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queu
 
 New optional test fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art`, `prediction`, `contests_test_id`.
 READY hypotheses get `prereg_hash` automatically. Positive results start at `review_state: PENDING_REVIEW`.
+
+Charters may be semi-permanent: `renewable: true, review_every_days: N, objectives: [...], priority: "P0"` — never closed by budget; `status` reports `review_due` for a course review by Dener.
