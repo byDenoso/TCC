@@ -35,6 +35,17 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
     report: dict = {"before": before, "applied": [], "rejected": [], "receipts": []}
     with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
         root, _ = materialize_live_tower(tower_raw, Path(work) / "TOWER_V06")
+        # A BATCH is applied item by item, so later envelopes see earlier ones (e.g. canary then canonize).
+        flat: list[dict] = []
+        for item in items:
+            payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+            if str(item.get("kind") or "").upper() == "BATCH" and isinstance(payload.get("items"), list):
+                base = item.get("_inbox_name") or "batch"
+                flat += [{**sub, "_inbox_name": f"{base}-{i}", "_inbox_id": item.get("_inbox_id")}
+                         for i, sub in enumerate(payload["items"]) if isinstance(sub, dict)]
+            else:
+                flat.append(item)
+        items = flat
         for index, item in enumerate(items):
             label = item.get("_inbox_name") or item.get("request_id") or f"item-{index}"
             try:

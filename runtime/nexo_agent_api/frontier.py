@@ -150,9 +150,9 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     return {
         "state": action,
         "next": pick,
-        # What one Executor pulse can run in parallel (MAX_PARALLEL_TESTS=6): READY work first, because
+        # What one Executor pulse can run (gene executor.max_parallel_tests, up to 10 light tests): READY work first, because
         # CHECKPOINTED tests usually wait on missing inputs and must not starve executable ones.
-        "batch": (ready + resumable)[:6],
+        "batch": (ready + resumable)[:10],
         "resumable": resumable,
         "ready": ready,
         "waiting": waiting,
