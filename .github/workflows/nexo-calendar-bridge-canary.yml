@@ -1,0 +1,40 @@
+name: NEXO Calendar Bridge Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/nexo-calendar-bridge-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test writer service account Calendar access
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.NEXO_DRIVE_WRITER_JSON }}
+        run: |
+          pip install --quiet google-auth requests
+          python - <<'PY'
+          import json, os, requests
+          from google.oauth2 import service_account
+          from google.auth.transport.requests import AuthorizedSession
+          info=json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+          print("service_account_domain", info.get("client_email","").split("@")[-1])
+          scopes=["https://www.googleapis.com/auth/calendar.readonly"]
+          creds=service_account.Credentials.from_service_account_info(info, scopes=scopes)
+          s=AuthorizedSession(creds)
+          for url in [
+              "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=10",
+              "https://www.googleapis.com/calendar/v3/calendars/primary",
+          ]:
+              r=s.get(url,timeout=30)
+              print("calendar_probe", r.status_code, r.text[:300].replace("\n"," "))
+          PY
