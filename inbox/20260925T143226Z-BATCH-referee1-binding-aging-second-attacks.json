@@ -1,0 +1,81 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T14:32:26.000Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "VERDICT_REVIEW",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:32:26.000Z",
+        "payload": {
+          "test_id": "META-CKPT26-001-INPUT-BINDING",
+          "referee": 1,
+          "outcome": "SURVIVED",
+          "evidence": "A primeira contestação não reuniu a amostra independente mínima: n=0 e a lista original necessária à exclusão não estava preservada. Assim, ela não demonstrou o critério de refutação do resultado original. A sobrevivência é provisória e limitada ao fracasso deste ataque; não confirma causalidade.",
+          "contest_test_id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1"
+        }
+      },
+      {
+        "kind": "CONTEST",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:32:26.000Z",
+        "payload": {
+          "test_id": "META-CKPT26-001-INPUT-BINDING",
+          "reason": "A primeira contestação tentou outra amostra estática e falhou por falta de casos independentes. O segundo ataque usa evidência longitudinal materialmente distinta: o evento que efetivamente desbloqueou checkpoints, em vez da descrição textual do estado.",
+          "refs": [
+            "META-CKPT26-001-INPUT-BINDING",
+            "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "source": "REFEREE_1",
+          "contest_test": {
+            "question": "Nos checkpoints posteriormente retomados, binding ou hidratação foi de fato o evento imediatamente anterior ao desbloqueio?",
+            "null": "No máximo 40% dos checkpoints retomados foram precedidos por DATA_BINDING, WORK_BINDING_UPDATED ou evidência equivalente de hidratação.",
+            "rival": "Pelo menos 70% foram precedidos por evento explícito de binding ou hidratação.",
+            "method": "Congelar uma janela anterior de 14 dias; selecionar até 20 checkpoints que passaram de CHECKPOINTED para READY, RUNNING ou RESULT; para cada ID, classificar apenas o último evento material anterior à transição. Deduplicar por test_id e não usar o texto do checkpoint como evidência.",
+            "data": "Ledger de eventos e versões de entidades da Tower, excluindo a amostra estática do teste original quando os IDs forem recuperáveis.",
+            "success_criteria": "SURVIVED se n≥5 e pelo menos 70% tiverem binding ou hidratação como evento material imediatamente anterior ao desbloqueio.",
+            "kill_criteria": "REFUTED se n≥5 e no máximo 40% tiverem esse precursor; entre 40% e 70%, ou n<5, é inconclusivo."
+          }
+        }
+      },
+      {
+        "kind": "VERDICT_REVIEW",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:32:26.000Z",
+        "payload": {
+          "test_id": "META-CKPT26-002-LIVE-ROADMAP-AGING",
+          "referee": 1,
+          "outcome": "SURVIVED",
+          "evidence": "A contestação estratificada congelou corte de 48 horas e máximo de cinco casos por roadmap; encontrou 5/5 checkpoints antigos ainda na fronteira resumable, acima do limiar de 50%. A conclusão sobre aging sobreviveu a este ataque, embora os cinco casos ainda pertençam a um único roadmap.",
+          "contest_test_id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-1"
+        }
+      },
+      {
+        "kind": "CONTEST",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:32:26.000Z",
+        "payload": {
+          "test_id": "META-CKPT26-002-LIVE-ROADMAP-AGING",
+          "reason": "A primeira contestação alterou corte e estratificação, mas permaneceu concentrada em um roadmap. O segundo ataque exige persistência temporal em snapshots independentes, evitando que uma fotografia transitória seja confundida com dívida viva.",
+          "refs": [
+            "META-CKPT26-002-LIVE-ROADMAP-AGING",
+            "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-1",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "source": "REFEREE_1",
+          "contest_test": {
+            "question": "Os checkpoints antigos continuam resumable de forma persistente em três snapshots independentes, e não apenas em uma fotografia da fronteira?",
+            "null": "Menos de 50% dos IDs congelados aparecem como resumable em pelo menos dois de três snapshots.",
+            "rival": "Pelo menos 50% aparecem como resumable em pelo menos dois de três snapshots.",
+            "method": "Congelar os até cinco IDs elegíveis da primeira contestação; observar três revisões da Tower separadas por no mínimo seis horas; em cada uma, executar frontier sem reclassificar estados e registrar presença por ID.",
+            "data": "IDs e seleção da primeira contestação, três revisões canônicas posteriores da Tower e respectivas saídas frontier.",
+            "success_criteria": "SURVIVED se n≥5 e pelo menos 50% dos IDs estiverem resumable em no mínimo dois dos três snapshots.",
+            "kill_criteria": "REFUTED se n≥5 e no máximo 25% persistirem; entre 25% e 50%, snapshot ausente ou separação temporal insuficiente é inconclusivo."
+          }
+        }
+      }
+    ]
+  }
+}
