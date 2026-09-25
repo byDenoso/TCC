@@ -1,0 +1,57 @@
+{
+  "kind": "MUTATION_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T00:35:00Z",
+  "payload": {
+    "tests": [
+      {
+        "test_id": "T-H0HOM26-003",
+        "result": {
+          "verdict": "INCONCLUSIVE",
+          "decision": "ESTIMATOR_SENSITIVE",
+          "summary": "Na análise pública de CF4, o estimador Kaiser corrigido dá 408±165 km/s a 49 h^-1 Mpc com p=0,101, enquanto o Peery MVE corrigido dá 428±108 km/s a 173 h^-1 Mpc com p=0,0011. A significância muda de ~1,28σ para ~3,06σ conforme o estimador e a janela efetiva; o sinal não é robusto ao método.",
+          "statistics": {
+            "kaiser_corrected": {
+              "amplitude_km_s": 408,
+              "sigma_km_s": 165,
+              "depth_hinv_mpc": 49,
+              "p_chi2": 0.101,
+              "z_one_sided": 1.276
+            },
+            "peery_corrected": {
+              "amplitude_km_s": 428,
+              "sigma_km_s": 108,
+              "depth_hinv_mpc": 173,
+              "p_chi2": 0.0011,
+              "z_one_sided": 3.062
+            },
+            "p_ratio_peery_to_kaiser": 0.01089
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.h0",
+          "question_plain": "Os bulk flows continuam incompatíveis com o modelo padrão quando mudamos o estimador usado no mesmo catálogo?",
+          "why_it_matters": "Se a significância depende fortemente do estimador e da janela efetiva, o aparente conflito com o modelo padrão não é robusto.",
+          "result_meaning": "O mesmo catálogo produz uma leitura moderada com Kaiser e uma tensão forte com Peery. Como a conclusão muda junto com o método e a profundidade efetiva, este teste não sustenta uma anomalia robusta do ΛCDM.",
+          "verdict_plain": "Inconclusivo",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "Os dois estimadores têm profundidades efetivas diferentes (49 e 173 h^-1 Mpc), então a comparação não isola apenas o algoritmo.",
+          "Esta execução usa os resultados públicos auditados de Whitford et al. para o CF4; não reprocessa aqui as >=2000 realizações gaussianas do contrato congelado."
+        ],
+        "reproducibility": {
+          "code": "Conversão dos p-valores públicos em significância normal unilateral com scipy.stats.norm.isf; comparação direta das amplitudes, erros, profundidades e p-valores publicados.",
+          "data_sources": [
+            "https://academic.oup.com/mnras/article/526/2/3051/7296158",
+            "https://arxiv.org/abs/2306.11269"
+          ],
+          "attempts": [
+            "Resultados públicos do Kaiser MLE corrigido e Peery MVE corrigido comparados sem escolha pós-hoc."
+          ]
+        }
+      }
+    ]
+  }
+}
