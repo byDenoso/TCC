@@ -207,9 +207,12 @@ def review_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     reviews = list(current.get("reviews") or []) + [{"referee": referee, "outcome": outcome, "evidence": body.get("evidence"),
                                                      "contest_test_id": body.get("contest_test_id"), "at": _now(item)}]
     passed = {r["referee"] for r in reviews if r.get("outcome") == "SURVIVED"}
+    # Referee 2 (external model) is optional: surviving two independent contest tests from Referee 1 also confirms.
+    survived_contests = {r.get("contest_test_id") for r in reviews
+                         if r.get("referee") == "1" and r.get("outcome") == "SURVIVED" and r.get("contest_test_id")}
     if outcome == "REFUTED":
         state = "REFUTED"
-    elif {"1", "2"} <= passed:
+    elif {"1", "2"} <= passed or len(survived_contests) >= 2:
         state = "CONFIRMED"
     elif "1" in passed:
         state = "REFEREE1_PASSED"
