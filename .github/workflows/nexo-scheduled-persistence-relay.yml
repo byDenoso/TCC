@@ -40,8 +40,7 @@ jobs:
           import json, os, re
           from pathlib import Path
 
-          p=Path(os.environ["REQUEST_PATH"])
-          data=json.loads(p.read_text(encoding="utf-8"))
+          data=json.loads(Path(os.environ["REQUEST_PATH"]).read_text(encoding="utf-8"))
           if set(data) != {"stable_id","envelope"}:
               raise SystemExit("request must contain exactly stable_id,envelope")
           sid=data["stable_id"]
@@ -64,38 +63,39 @@ jobs:
         run: |
           set -euo pipefail
           REPO="$GITHUB_REPOSITORY"
-          ENCODED=$(base64 -w0 /tmp/envelope.json)
-          if META=$(gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" 2>/dev/null); then
-            EXISTING=$(printf '%s' "$META" | python -c 'import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d["content"]).decode(), end="")')
-            EXPECTED=$(cat /tmp/envelope.json)
-            if [ "$EXISTING" != "$EXPECTED" ]; then
-              echo "stable_id collision with different payload" >&2
-              exit 65
-            fi
-            echo "relay readback PASS existing $TARGET"
+
+          if gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" >/tmp/meta.json 2>/dev/null; then
+            python - <<'PY'
+          import base64, json
+          meta=json.load(open("/tmp/meta.json",encoding="utf-8"))
+          got=base64.b64decode(meta["content"])
+          exp=open("/tmp/envelope.json","rb").read()
+          if got != exp:
+              raise SystemExit("stable_id collision with different payload")
+          print("relay readback PASS existing")
+          PY
             exit 0
           fi
-          PAYLOAD=$(python - <<'PY'
-          import json, os
+
+          python - <<'PY' >/tmp/payload.json
+          import base64, json
+          body=open("/tmp/envelope.json","rb").read()
           print(json.dumps({
-            "message":"NEXO scheduled persistence relay",
-            "content":os.environ["ENCODED"],
-            "branch":"nexo-inbox",
+              "message":"NEXO scheduled persistence relay",
+              "content":base64.b64encode(body).decode(),
+              "branch":"nexo-inbox",
           }))
           PY
-          )
-          printf '%s' "$PAYLOAD" | gh api --method PUT "repos/$REPO/contents/$TARGET" --input - >/tmp/put.json
-          META=$(gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox")
-          printf '%s' "$META" | python - <<'PY'
-          import sys,json,base64
-          meta=json.load(sys.stdin)
+
+          gh api --method PUT "repos/$REPO/contents/$TARGET" --input /tmp/payload.json >/tmp/put.json
+          gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" >/tmp/meta.json
+
+          python - <<'PY'
+          import base64, json
+          meta=json.load(open("/tmp/meta.json",encoding="utf-8"))
           got=base64.b64decode(meta["content"])
           exp=open("/tmp/envelope.json","rb").read()
           if got != exp:
               raise SystemExit("relay readback mismatch")
           print("relay readback PASS")
           PY
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET: ${{ steps.validate.outputs.target }}
-          ENCODED: ${{ env.ENCODED }}
