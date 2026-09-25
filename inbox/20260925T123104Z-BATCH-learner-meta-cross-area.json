@@ -1,0 +1,207 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T12:31:04.288Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:31:04.288Z",
+        "payload": {
+          "test_id": "META-EVENT26-001-REPLAY-SIGNATURE",
+          "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+          "campaign_objective": "4. Transformar o que for CONFIRMADO em resultado publicável (TCC / paper PRD); integridade de eventos evita contagem e auditoria inconsistentes.",
+          "question": "Na janela móvel de 24 horas da Tower, algum teste terminal aparece em dois eventos TEST_RESULT_RECORDED com o mesmo sufixo de oito caracteres no event_id, enquanto entity_version avança?",
+          "null": "Nenhum teste tem sufixo repetido em seus eventos terminais.",
+          "rival": "Pelo menos um teste tem sufixo repetido em eventos terminais separados, com avanço de entity_version, indicando uma assinatura repetida que merece auditoria de idempotência.",
+          "method": "Agrupar eventos TEST_RESULT_RECORDED por entity_name em uma janela UTC fixa de 24 horas; comparar os oito caracteres finais de event_id entre eventos do mesmo teste; exigir pelo menos cinco testes distintos e registrar o avanço de entity_version.",
+          "data": "Tower.events, apenas entidades TEST não-Olympus e resultados terminais na janela móvel de 24 horas; unidade = teste distinto.",
+          "success_criteria": "Com n≥5 testes distintos, sucesso se ≥1 teste tiver dois eventos TEST_RESULT_RECORDED com o mesmo sufixo de oito caracteres e entity_version crescente.",
+          "kill_criteria": "Com n≥5 testes distintos, rejeitar se nenhum teste tiver sufixo repetido. Com n<5, classificar INCONCLUSIVE.",
+          "claim_boundary": "Este teste identifica repetição de sufixo no ledger e incremento de versão; não prova a causa, replay do Writer, efeito duplicado externo ou corrupção científica.",
+          "depends_on": [
+            "LEARNING_SIGNAL::20260925T035952Z-LEARNING-SIGNAL-WRITER-BRIDGE-CANARY"
+          ],
+          "priority": "P1",
+          "hypothesis": {
+            "id": "HYP-META-EVENT-REPLAY-SIGNATURE-20260925",
+            "statement": "A preservação exata dos bytes no transporte não garante unicidade do registro posterior: alguns resultados podem reaparecer no ledger com assinatura curta repetida e versão incrementada.",
+            "model": "O Writer pode aplicar mais de uma vez a mesma proposta ou registrar eventos equivalentes sob retries.",
+            "baseline": "Cada evento terminal tem uma assinatura distinta dentro de cada teste.",
+            "falsification_criterion": "Nenhum sufixo de event_id se repete dentro do mesmo teste em pelo menos cinco testes terminais distintos na janela congelada."
+          },
+          "prediction": {
+            "p_promoted": 0.55,
+            "expected_effect": "Espero ao menos um caso de sufixo repetido com avanço de versão, mas a evidência não identificará o mecanismo."
+          },
+          "prior_art": [
+            {
+              "citation": "AWS Builders’ Library, Making retries safe with idempotent APIs",
+              "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+              "relevance": "Descreve identificadores de requisição como mecanismo para reconhecer repetições seguras.",
+              "relation": "ALREADY_REFUTED=false; fundamenta o teste de idempotência, sem provar o comportamento da Tower."
+            }
+          ],
+          "rank_score": 0.88,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "rank_components": {
+            "novidade": 0.8,
+            "testabilidade": 0.95,
+            "custo_inverso": 0.9,
+            "impacto_no_roadmap": 0.85
+          },
+          "origin_kind": "META",
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.state_integrity",
+            "question_plain": "Um mesmo teste aparece mais de uma vez no registro de resultados da Tower?",
+            "why_it_matters": "Repetições podem confundir auditorias e a contagem de resultados, mesmo quando o arquivo transportado chegou intacto.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:31:04.288Z",
+        "payload": {
+          "test_id": "XAREA26-002-SELECTION-BINDING-STABILITY",
+          "roadmap_id": "RM-DENER-CORE-CAMPAIGN-V1",
+          "campaign_objective": "2. Energia escura: decidir se ela é constante ou dinâmica (DESI + supernovas + CMB), controlando a seleção e a janela dos dados de grande escala.",
+          "question": "Nos testes de estrutura em grande escala do DESI, ligar e fixar a função de seleção, catálogo aleatório, pesos e janela antes do cálculo reduz mudanças posteriores na interpretação cosmológica?",
+          "null": "Após ligar esses insumos com versão e hash, a classificação do modelo e os parâmetros continuam estáveis dentro de um erro-padrão em pelo menos quatro de cinco análises independentes.",
+          "rival": "Análises com binding incompleto mudam a classificação ou deslocam parâmetros em pelo menos um erro-padrão após os insumos serem ligados; controles completos permanecem estáveis.",
+          "method": "Pré-classificar pelo registro Tower se cada análise tem seleção, randoms, pesos, window e covariance identificados, pinados e ligados antes do compute; em cinco ou mais análises independentes, comparar saídas antes/depois do binding e controles completos usando a mesma regra de decisão congelada.",
+          "data": "DESI DR1 LSS catalogs e análises associadas; testes e WORKs do roadmap de mapa 3D na Tower. Não substituir arquivos ausentes por mocks ou resumos publicados.",
+          "success_criteria": "Em n≥5 análises independentes, apoiar o rival se ≥3 análises incompletamente ligadas mudarem classificação ou deslocarem ao menos 1σ após binding, enquanto nenhum controle totalmente ligado mudar na mesma magnitude.",
+          "kill_criteria": "Com n≥5, rejeitar se ≤1 análise incompletamente ligada mudar e os controles completos apresentarem frequência semelhante; se não houver cinco análises comparáveis e inputs pinados, manter em espera.",
+          "claim_boundary": "O teste avalia estabilidade operacional e interpretativa das análises selecionadas; não decide se energia escura dinâmica existe nem se uma estrutura observada é real.",
+          "depends_on": [
+            "RM-GZ01-GALAXY-3D-MAP-LIVE-V1",
+            "T-MEGA26-LCDM-EVT-LMAX-149",
+            "T-MEGA26-LCDM-TRACER-DENSITY-151",
+            "T-MEGA26-LCDM-BIAS-HOD-152",
+            "LEARNING_SIGNAL::20260924T095940Z-LEARNING-SIGNAL-LSS-GROWTH-MAPPING-JSON"
+          ],
+          "priority": "P1",
+          "hypothesis": {
+            "id": "HYP-XAREA-SELECTION-BINDING-LSS-20260925",
+            "statement": "Em análises de estrutura do DESI, a incompletude no vínculo de seleção, pesos e janela explica parte das mudanças tardias na leitura cosmológica; um registro completo antes do cálculo deve estabilizar a interpretação.",
+            "model": "Erro de binding operacional pode contaminar comparação cosmológica entre modelos.",
+            "baseline": "A estabilidade do resultado não depende materialmente da completude do binding.",
+            "falsification_criterion": "Em cinco ou mais análises comparáveis, a frequência de mudança após binding incompleto não supera a dos controles com binding completo."
+          },
+          "prior_art": [
+            {
+              "citation": "DESI 2024 II: Sample Definitions, Characteristics, and Two-point Clustering Statistics",
+              "url": "https://arxiv.org/abs/2411.12020",
+              "relevance": "Documenta catálogos LSS, randoms, pesos, correções de completude e janelas por amostra.",
+              "relation": "ALREADY_REFUTED=false; mostra por que os insumos precisam acompanhar o teste."
+            },
+            {
+              "citation": "Impact and mitigation of spectroscopic systematics on DESI DR1 clustering measurements",
+              "url": "https://arxiv.org/abs/2405.17208",
+              "relevance": "Quantifica como sistemáticos espectroscópicos e seus pesos afetam medidas de clustering e parâmetros cosmológicos.",
+              "relation": "ALREADY_REFUTED=false; motiva comparação prospectiva da estabilidade após binding."
+            }
+          ],
+          "rank_score": 0.75,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "rank_components": {
+            "novidade": 0.82,
+            "testabilidade": 0.7,
+            "custo_inverso": 0.6,
+            "impacto_no_roadmap": 0.85
+          },
+          "origin_kind": "CROSS_AREA",
+          "cold_area_rationale": "science.cosmology.lss_growth não tem hipóteses registradas na Tower, embora haja testes na área; esta hipótese cobre a lacuna de baixa cobertura e supera a fração fria mínima de 20% nesta rodada.",
+          "linked_signal_ids": [
+            "LEARNING_SIGNAL::20260924T095940Z-LEARNING-SIGNAL-LSS-GROWTH-MAPPING-JSON"
+          ],
+          "semantic": {
+            "domain_id": "science",
+            "subdomain_id": "science.cosmology.lss_growth",
+            "topic_id": "science.cosmology.lss_growth",
+            "question_plain": "A ligação completa da seleção do levantamento antes do cálculo deixa a conclusão cosmológica mais estável?",
+            "why_it_matters": "Uma função de seleção incompleta pode fazer diferenças instrumentais parecerem estruturas ou preferência por um modelo.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T12:31:04.288Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "META-EVENT26-001-REPLAY-SIGNATURE",
+              "arm": "canonical",
+              "prediction": {
+                "p_promoted": 0.55,
+                "expected_effect": "Espero ao menos um caso de sufixo repetido com avanço de versão, mas a evidência não identificará o mecanismo."
+              },
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "REPEATED_EVENT_SIGNATURE_WITH_VERSION_INCREMENT",
+                "summary": "Na janela auditada, 1 de 29 testes distintos teve dois registros terminais com o mesmo sufixo de oito caracteres; a entity_version passou de 2 para 3. Isso justifica auditar idempotência, mas não identifica a causa nem prova efeito duplicado.",
+                "statistics": {
+                  "unique_tests": 29,
+                  "terminal_event_records": 32,
+                  "multiple_terminal_events": 3,
+                  "tests_with_repeated_signature": 1,
+                  "records_in_repeated_case": 2,
+                  "entity_versions": [
+                    2,
+                    3
+                  ]
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "Um mesmo teste aparece mais de uma vez no registro de resultados da Tower?",
+                "why_it_matters": "Se uma assinatura de evento se repete com nova versão, a auditoria precisa distinguir retry de novo resultado.",
+                "result_meaning": "Um de 29 testes distintos apresentou dois registros com o mesmo sufixo de evento e versão crescente. É um sinal localizado para investigar; não prova por si só repetição de efeito externo nem falha científica.",
+                "verdict_plain": "Sinal localizado; mecanismo ainda não identificado.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "O significado do sufixo de oito caracteres não está documentado no artefato consultado.",
+                "Um caso não estima frequência estável nem demonstra que houve replay da proposta.",
+                "O ledger registra eventos, não efeitos externos."
+              ],
+              "reproducibility": {
+                "code": "Agrupar events do tipo TEST_RESULT_RECORDED por teste na janela UTC fixa; comparar o sufixo final de oito caracteres do event_id e entity_version.",
+                "data_sources": [
+                  "NEXO_TOWER_LIVE.json:events/**"
+                ],
+                "attempts": [
+                  {
+                    "method": "consulta agrupada por teste e assinatura curta",
+                    "n": 29,
+                    "terminal_event_records": 32,
+                    "matching_tests": 1
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
