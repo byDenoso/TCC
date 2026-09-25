@@ -67,6 +67,22 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
     return (None if after == before else packed), report
 
 
+def _stop_closures(raw: bytes) -> list[dict]:
+    from datetime import datetime, timezone
+
+    from .evolution import evolution_status
+
+    with tempfile.TemporaryDirectory(prefix="nexo-robot-status-") as work:
+        root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        roadmaps = evolution_status(root).get("roadmaps", [])
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return [{"kind": "ROADMAP_CLOSE", "source": "WRITER_ROBOT", "created_at": now, "_inbox_name": f"robot-close-{r['roadmap_id']}",
+             "payload": {"roadmap_id": r["roadmap_id"], "reason": r["stop_reached"],
+                         "final_report": f"Fechado automaticamente pelo critério de parada ({r['stop_reached']}): "
+                                         f"{r['confirmed']} confirmados, {r['tests_used']} testes usados."}}
+            for r in roadmaps if r.get("stop_reached")]
+
+
 class _GitHubInbox:
     """byDenoso/TCC@nexo-inbox inbox/*.json via the REST API (optional; needs a token with Contents read/write)."""
 
@@ -139,6 +155,13 @@ def main(argv: list[str]) -> int:
         for attempt in range(3):
             raw, base = tower.download(cache=False)
             packed, report = apply_to_tower(raw, items)
+            # Mechanical duties the GPT should not spend a run on: close roadmaps whose stop criterion was met.
+            closes = _stop_closures(packed or raw)
+            if closes:
+                packed, extra = apply_to_tower(packed or raw, closes)
+                report["applied"] = report.get("applied", []) + extra.get("applied", [])
+                report["after"] = extra.get("after", report.get("after"))
+                report["status"] = "READY_TO_UPLOAD"
             if packed is None:
                 break
             if os.environ.get("NEXO_ROBOT_DRY"):
