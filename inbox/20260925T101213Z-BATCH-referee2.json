@@ -1,0 +1,149 @@
+{
+ "kind": "BATCH",
+ "source": "CHATGPT",
+ "created_at": "2026-09-25T10:09:24Z",
+ "payload": {
+  "items": [
+   {
+    "kind": "MUTATION_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T10:09:24Z",
+    "payload": {
+     "tests": [
+      {
+       "test_id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1",
+       "arm": "canary",
+       "prediction": {
+        "p_promoted": 0.9,
+        "expected_effect": "0/5 árvores alcançam a cópia stale até profundidade 3 em duas implementações independentes."
+       },
+       "result": {
+        "verdict": "REJECTED",
+        "decision": "TRANSITIVE_PATH_TO_STALE_COPY_FOUND",
+        "summary": "5/5 bootstraps ativos alcançam transitivamente a cópia stale em profundidade 2; duas implementações independentes reproduziram o resultado.",
+        "statistics": {
+         "bootstrap_trees": 5,
+         "depth_limit": 3,
+         "reachable_counts": [
+          5,
+          5
+         ],
+         "shortest_depth": 2
+        }
+       },
+       "semantic": {
+        "domain_id": "engineering",
+        "subdomain_id": "engineering.nexo_runtime",
+        "topic_id": "engineering.nexo_runtime.state_integrity",
+        "question_plain": "Algum dos cinco bootstraps ativos chega indiretamente à cópia antiga do contrato?",
+        "why_it_matters": "Um caminho transitivo mostra que a cópia antiga não é apenas dívida inerte de proveniência.",
+        "result_meaning": "Os cinco bootstraps alcançam a cópia antiga por um caminho transitivo de dois passos. Isso contradiz a previsão congelada de 0/5 e derruba esta contestação.",
+        "verdict_plain": "Não passou no teste",
+        "confidence_plain": "alta"
+       },
+       "limitations": [
+        "Demonstra alcançabilidade estática; não mede se o conteúdo stale é efetivamente interpretado em toda execução."
+       ],
+       "reproducibility": {
+        "data_sources": [
+         "NEXO_TOWER_LIVE.json"
+        ],
+        "attempts": [
+         {
+          "method": "literal_exact_path",
+          "n": 5,
+          "reachable_n": 5,
+          "shortest_depth": 2
+         },
+         {
+          "method": "normalized_unique_basename",
+          "n": 5,
+          "reachable_n": 5,
+          "shortest_depth": 2
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "MUTATION_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T10:09:24Z",
+    "payload": {
+     "tests": [
+      {
+       "test_id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-1",
+       "arm": "canonical",
+       "prediction": {
+        "p_promoted": 0.75,
+        "expected_effect": "Após o corte pré-fixado e limite de 5 por roadmap, pelo menos 50% dos checkpoints antigos permanecerão na fronteira resumable."
+       },
+       "result": {
+        "verdict": "PROMOTED",
+        "decision": "AGING_SURVIVES_STRATIFIED_CUTOFF",
+        "summary": "A seleção determinística elegível atingiu n=5 e 5/5 checkpoints antigos permaneceram na fronteira resumable (100%), acima do limiar congelado de 50%.",
+        "statistics": {
+         "n": 5,
+         "resumable_n": 5,
+         "rate": 1.0,
+         "threshold": 0.5
+        }
+       },
+       "semantic": {
+        "domain_id": "engineering",
+        "subdomain_id": "engineering.nexo_runtime",
+        "topic_id": "engineering.nexo_runtime.state_integrity",
+        "question_plain": "A conclusão de que aging afeta ciência viva sobrevive quando o conjunto é estratificado por roadmap e o corte é pré-fixado?",
+        "why_it_matters": "Se checkpoints antigos continuam na fronteira ativa, o aging ainda afeta trabalho científico vivo.",
+        "result_meaning": "Com o corte congelado e no máximo cinco casos do roadmap dominante, todos os cinco casos elegíveis selecionados continuam retomáveis. O diagnóstico de aging sobreviveu a esta contestação.",
+        "verdict_plain": "Passou no teste, em revisão",
+        "confidence_plain": "alta"
+       },
+       "limitations": [
+        "A Tower atual concentra checkpoints elegíveis em um roadmap; o limite de cinco reduz a dominância, mas não cria diversidade entre roadmaps.",
+        "Um checkpoint sem timestamp utilizável foi excluído do corte temporal."
+       ],
+       "reproducibility": {
+        "data_sources": [
+         "NEXO_TOWER_LIVE.json",
+         "frontier atual"
+        ],
+        "selection": "CHECKPOINTED com timestamp observável anterior ao corte; ordenação determinística por id; máximo 5 por roadmap; interseção com frontier.resumable.",
+        "attempts": [
+         {
+          "method": "deterministic_stratified_cutoff",
+          "n": 5,
+          "resumable_n": 5
+         },
+         {
+          "method": "threshold_null_check",
+          "null_rate_lt": 0.5,
+          "observed_rate": 1.0
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "kind": "LEARNING_SIGNAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T10:09:24Z",
+    "payload": {
+     "signals": [
+      {
+       "topic_id": "engineering.nexo_runtime.state_integrity",
+       "evidence_kind": "RUNTIME_FAILURE",
+       "gap_type": "TOOL",
+       "test_id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+       "evidence": "A amostra original não preserva IDs na Tower atual; sem isso, a independência exigida pela contestação não pode ser demonstrada sem risco de vazamento."
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
