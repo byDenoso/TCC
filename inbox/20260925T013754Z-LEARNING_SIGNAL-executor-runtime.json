@@ -1,0 +1,41 @@
+{
+  "kind": "LEARNING_SIGNAL",
+  "source": "CHATGPT_TASK_EXECUTOR",
+  "created_at": "2026-09-25T01:37:54Z",
+  "payload": {
+    "signals": [
+      {
+        "topic_id": "engineering.nexo_runtime.data_access",
+        "test_id": "T-MEGA26-LCDM-EVT-LMAX-149",
+        "evidence_kind": "RUNTIME_FAILURE",
+        "gap_type": "TOOL",
+        "confidence": 0.98,
+        "evidence": "Os 1000 EuclidLargeBox/EuclidLargeMocks são públicos, mas os halo catalogs ficam em tape e exigem async recall externo; o runtime atual não materializou os produtos exatos, então o EVT congelado não foi executado."
+      },
+      {
+        "topic_id": "engineering.nexo_runtime.data_access",
+        "test_id": "T-MEGA26-LCDM-TRACER-DENSITY-151",
+        "evidence_kind": "RUNTIME_FAILURE",
+        "gap_type": "TOOL",
+        "confidence": 0.98,
+        "evidence": "O teste matched-field exige os mesmos campos Round12 e tratamentos de densidade; os produtos exatos não foram materializados no runtime, portanto não foi permitido substituir por mock/surrogate."
+      },
+      {
+        "topic_id": "engineering.nexo_runtime.compute",
+        "test_id": "T-H0HOM26-003",
+        "evidence_kind": "RUNTIME_FAILURE",
+        "gap_type": "TOOL",
+        "confidence": 0.85,
+        "evidence": "CF4 e o código público foram localizados, mas o contrato exige >=2000 realizações lineares na geometria real com CAMB e dois estimadores; a execução exata não foi materializada nesta rodada e nenhum resumo publicado foi usado como substituto."
+      },
+      {
+        "topic_id": "engineering.nexo_runtime.compute",
+        "test_id": "T-H0HOM26-004",
+        "evidence_kind": "RUNTIME_FAILURE",
+        "gap_type": "TOOL",
+        "confidence": 0.9,
+        "evidence": "Os LSScats v1.5, 1000 EZmocks e 25 AbacusSummit são públicos, mas o cálculo D2/RH sobre o conjunto completo não foi materializado no runtime; nenhum resultado de literatura foi promovido como execução do contrato."
+      }
+    ]
+  }
+}
