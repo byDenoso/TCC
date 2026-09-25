@@ -95,6 +95,10 @@ def charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         "rationale": body.get("rationale"),
         "refs": body.get("refs") or [],
         "rival_of": body.get("rival_of"),
+        "renewable": bool(body.get("renewable")),
+        "review_every_days": body.get("review_every_days"),
+        "objectives": body.get("objectives"),
+        "priority": body.get("priority"),
         "proposed_by": body.get("proposed_by") or item.get("source") or "PITIA",
         "proposed_at": _now(item),
     }
@@ -131,7 +135,7 @@ def operator_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
         return [
             _doc(f"roadmaps/{rid}.json", {"charter": charter, "status": "ACTIVE"}, f"REQ-CHARTER-APPROVE-{rid}"),
             _doc("indexes/active-roadmaps.json",
-                 {"items": [{"roadmap_id": rid, "state": "ACTIVE", "priority": body.get("priority") or "NORMAL",
+                 {"items": [{"roadmap_id": rid, "state": "ACTIVE", "priority": body.get("priority") or charter.get("priority") or "NORMAL",
                              "relative_path": f"roadmaps/{rid}.json"}]},
                  f"REQ-INDEX-ACTIVATE-{rid}", {"items": "roadmap_id"}),
         ]
@@ -358,13 +362,19 @@ def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, 
             reason = "SUCCESS"
         elif stop.get("kill_consecutive_refuted") and streak >= int(stop["kill_consecutive_refuted"]):
             reason = "KILL"
-        elif (budget.get("max_tests") and len(executed) >= int(budget["max_tests"])) or (
-                budget.get("max_days") and days is not None and days >= int(budget["max_days"])):
+        elif not charter.get("renewable") and (
+                (budget.get("max_tests") and len(executed) >= int(budget["max_tests"])) or (
+                budget.get("max_days") and days is not None and days >= int(budget["max_days"]))):
             reason = "BUDGET"
+    review_due = None
+    if charter.get("renewable") and charter.get("review_every_days") and days is not None:
+        # Semi-permanent campaign: never closes on budget; asks Dener for a course review every N days.
+        review_due = days >= int(charter["review_every_days"]) and days % int(charter["review_every_days"]) < 1
     return {"roadmap_id": rid, "charter_status": charter.get("status"), "confirmed": confirmed,
             "success_target": stop.get("success_confirmed"), "tests_used": len(executed), "max_tests": budget.get("max_tests"),
             "days": days, "max_days": budget.get("max_days"), "refuted_streak": streak,
-            "kill_streak": stop.get("kill_consecutive_refuted"), "stop_reached": reason}
+            "kill_streak": stop.get("kill_consecutive_refuted"), "stop_reached": reason,
+            "renewable": bool(charter.get("renewable")), "review_due": review_due}
 
 
 def evolution_status(root: str | Path, now: datetime | None = None, public: bool = False) -> dict[str, Any]:
