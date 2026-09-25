@@ -1,0 +1,72 @@
+{
+  "kind": "INTEGRITY_REPORT",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T02:03:00Z",
+  "payload": {
+    "date": "2026-09-25",
+    "status": "YELLOW",
+    "checks": [
+      {
+        "area": "tower",
+        "ok": true,
+        "detail": "verify/readback PASS; semantic de testes e lições válido"
+      },
+      {
+        "area": "site",
+        "ok": true,
+        "detail": "projeção pública indisponível para leitura; fallback tower-head coincide com a revisão atual"
+      },
+      {
+        "area": "inbox",
+        "ok": true,
+        "detail": "nenhuma proposta pendente no GitHub inbox nem no NEXO_INBOX"
+      },
+      {
+        "area": "tasks",
+        "ok": true,
+        "detail": "Writer e Executor dentro de 2h; Gaps, Learner e Guardião dentro de 3h; nenhum bloco pendente visível"
+      },
+      {
+        "area": "science_waiting",
+        "ok": false,
+        "detail": "16 testes em espera há mais de 3 dias sem resolução material do Executor"
+      },
+      {
+        "area": "science_integrity",
+        "ok": true,
+        "detail": "0 semantic incompleto; 0 PROMOTED sem estatística; 0 alteração explícita de critério congelado"
+      },
+      {
+        "area": "olympus_privacy",
+        "ok": true,
+        "detail": "0 teste sem subject_code e 0 ocorrência residual de nome em texto público de entities/"
+      },
+      {
+        "area": "cycle_roadmap",
+        "ok": false,
+        "detail": "7 testes sem roadmap após excluir Olympus e PEER-DETECTION-*"
+      },
+      {
+        "area": "cycle_unapplied",
+        "ok": false,
+        "detail": "2 artefatos UNAPPLIED_* permanecem na Tower"
+      },
+      {
+        "area": "cycle_learning",
+        "ok": true,
+        "detail": "0 LEARNING_SIGNAL sem vínculo há mais de 7 dias; 0 hipótese nunca executada há mais de 14 dias"
+      },
+      {
+        "area": "contract",
+        "ok": true,
+        "detail": "contrato canônico carregado do Drive; nenhuma divergência inferida de snapshots históricos"
+      }
+    ],
+    "semantic": {
+      "summary_plain": "O NEXO está operacional e íntegro, mas há acúmulo de trabalho científico antigo e alguns vínculos de roadmap ainda incompletos.",
+      "impact_plain": "Nada indica corrupção da Tower ou parada das automações. O risco atual é envelhecimento da fila e estado parcialmente não reconciliado.",
+      "needs_dener": "não",
+      "next_step_plain": "O Executor deve revisar a fila antiga; o Writer deve reconciliar os artefatos UNAPPLIED_* e os vínculos faltantes quando houver propostas apropriadas."
+    }
+  }
+}
