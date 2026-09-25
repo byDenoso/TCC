@@ -126,6 +126,8 @@ Preenche só o que está vazio (use `"overwrite": true` para corrigir). Serve pa
 Todo teste precisa de `question_plain` e `why_it_matters`; todo teste concluído precisa de `result_meaning` e `verdict_plain`.
 Enquanto faltar, o site mostra uma leitura automática marcada como provisória.
 
+Para saneamento de privacidade, cada item de `SEMANTIC_BACKFILL` também pode usar `{id, entity_kind, subject_code, redact_names:[...]}`. O Writer substitui cada nome listado pelo `subject_code` em campos de texto livre da entidade (incluindo `title`, `display_name`, `source_ref/source_refs` e justificativas), preservando `id`, campos `*_id`/`*_ids`, `entity_version` e o próprio `subject_code`.
+
 ## Olympus (pessoas reais)
 Nunca escreva o nome de uma pessoa em ids, títulos ou textos públicos. Cada pessoa tem um `subject_code`
 de 3 letras (ex.: `MIQ`, `JOS`) em todo teste/campanha Olympus. O site mostra só o código; a projeção
