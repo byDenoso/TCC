@@ -1,0 +1,458 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T13:29:21Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T13:29:21Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.25,
+                "expected_effect": "Previsão congelada antes da execução futura: ao menos cinco casos novos, independentes e estratificados poderão ser identificados."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: a lista de IDs da amostra original não foi preservada, então não é possível provar que cinco checkpoints atuais sejam independentes dela; há 13 checkpoints em duas áreas, mas a seleção estratificada não identifica os não usados.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "Em uma amostra independente e estratificada de checkpoints, binding/hidratação ainda explica pelo menos 70% dos casos?",
+                "why_it_matters": "A independência da amostra é necessária para contestar o resultado original.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque a lista de IDs da amostra original não foi preservada, então não é possível provar que cinco checkpoints atuais sejam independentes dela; há 13 checkpoints em duas áreas, mas a seleção estratificada não identifica os não usados..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "a lista de IDs da amostra original não foi preservada, então não é possível provar que cinco checkpoints atuais sejam independentes dela; há 13 checkpoints em duas áreas, mas a seleção estratificada não identifica os não usados."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-2",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.25,
+                "expected_effect": "Um caminho dinâmico ativo para a cópia incorporada antiga será encontrado em pelo menos um dos cinco papéis."
+              },
+              "result": {
+                "verdict": "INCONCLUSIVE",
+                "decision": "INCONCLUSIVE_RUNTIME_TRACE",
+                "summary": "Inspecionei cinco configurações de bootstrap. Não há referência contratual direta nelas nem fonte executável para rastrear; encontrei uma referência de configuração compartilhada à cópia antiga, mas não consegui provar carregamento dinâmico ativo.",
+                "statistics": {
+                  "bootstrap_n": 5,
+                  "bootstrap_contract_ref_n": 0,
+                  "stale_config_path_n": 1,
+                  "executable_runtime_modules_traced": 0,
+                  "trace_coverage": 0,
+                  "dynamic_paths_confirmed": 0,
+                  "attempts": 5
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "Algum bootstrap resolve dinamicamente a cópia antiga do contrato em execução?",
+                "why_it_matters": "Um caminho ativo para uma cópia desatualizada poderia fazer os papéis seguirem regras divergentes.",
+                "result_meaning": "A configuração aponta para um arquivo antigo, mas as cinco configurações não expõem carregadores executáveis. Sem rastreamento de runtime, não é possível confirmar nem excluir que esse caminho seja usado.",
+                "verdict_plain": "Inconclusivo",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "Cobertura de runtime 0/5: a Tower contém configurações, não os módulos executáveis carregados por elas.",
+                "Uma referência estática no bootstrap compartilhado não satisfaz o critério de carregamento dinâmico."
+              ],
+              "reproducibility": {
+                "code": "Varri os cinco bootstrap/*.json e quatro manifests runtime; contei referências ao contrato, marcadores de resolução dinâmica e fontes executáveis presentes.",
+                "data_sources": [
+                  "Drive Tower 1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z",
+                  "https://api.github.com/repos/byDenoso/Pantheon/git/trees/main?recursive=1"
+                ],
+                "attempts": 5
+              }
+            },
+            {
+              "test_id": "T-H0LSS26-001-ENVIRONMENT-RESIDUAL",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.2,
+                "expected_effect": "Previsão congelada antes da execução futura: a amplitude residual sobreviverá em duas janelas independentes."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: o produto de correção de fluxo e a covariância necessária à regressão GLS não estão disponíveis como dados carregáveis nesta rodada.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.h0",
+                "topic_id": "science.cosmology.hubble_tension.systematics",
+                "question_plain": "Após correções de velocidade peculiar congeladas, ainda existe correlação entre resíduos de distância de SNe Ia e um campo de ambiente LSS definido independentemente?",
+                "why_it_matters": "Sem a correção e covariância completas, uma correlação residual não pode ser interpretada.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque o produto de correção de fluxo e a covariância necessária à regressão GLS não estão disponíveis como dados carregáveis nesta rodada..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "o produto de correção de fluxo e a covariância necessária à regressão GLS não estão disponíveis como dados carregáveis nesta rodada."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "DMN26-006-JOINT-SUBSTRUCTURE-HOLDOUT",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.25,
+                "expected_effect": "Previsão congelada antes da execução futura: a combinação melhora modestamente o melhor probe isolado e permanece sensível a escolhas de prior."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: a análise exige ajuste hierárquico conjunto, holdouts e variações de prior; excede o peso leve permitido nesta execução.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.dark_matter",
+                "topic_id": "science.cosmology.dark_matter.small_scale_structure",
+                "question_plain": "Uma análise conjunta atualizada de satélites da Via Láctea e lentes fortes restringe o corte de pequena escala sem ser dominada por um único probe ou pela prior bariônica?",
+                "why_it_matters": "Robustez a probes e priors é essencial para interpretar uma restrição de matéria escura.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque a análise exige ajuste hierárquico conjunto, holdouts e variações de prior; excede o peso leve permitido nesta execução..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "a análise exige ajuste hierárquico conjunto, holdouts e variações de prior; excede o peso leve permitido nesta execução."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "T-DEH26-006-COSMOLOGY-HOLDOUT",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.2,
+                "expected_effect": "Previsão congelada antes da execução futura: sem matching completo, o teste não mostrará ganho robusto sobre modelos de referência."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: o ajuste multi-dataset com SN, BAO, CMB e growth exige likelihoods e inferência mais pesada que o limite leve; matching prévio e holdout também não estão ligados.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.dark_energy",
+                "topic_id": "science.cosmology.dark_energy.microphysics",
+                "question_plain": "A realização holográfica+local produz uma previsão cosmológica distinta e compatível com dados atuais sem retuning?",
+                "why_it_matters": "Uma previsão fixada antes do ajuste evita confundir adaptação posterior com poder preditivo.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque o ajuste multi-dataset com SN, BAO, CMB e growth exige likelihoods e inferência mais pesada que o limite leve; matching prévio e holdout também não estão ligados..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "o ajuste multi-dataset com SN, BAO, CMB e growth exige likelihoods e inferência mais pesada que o limite leve; matching prévio e holdout também não estão ligados."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "T-MEGA26-LCDM-EVT-LMAX-149",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.15,
+                "expected_effect": "Previsão congelada antes da execução futura: a escala máxima observada permanecerá compatível com a distribuição de mocks."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: o critério exige mil simulações; isso excede o teste leve permitido nesta rodada.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.lss_growth",
+                "topic_id": "science.cosmology.lss_growth",
+                "question_plain": "Qual o maior tamanho de estrutura esperado em mil simulações do modelo padrão?",
+                "why_it_matters": "A cauda extrema precisa ser calibrada por um conjunto grande de mocks.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque o critério exige mil simulações; isso excede o teste leve permitido nesta rodada..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "o critério exige mil simulações; isso excede o teste leve permitido nesta rodada."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "T-MEGA26-LCDM-TRACER-DENSITY-151",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.2,
+                "expected_effect": "Previsão congelada antes da execução futura: a variação de densidade mudará a distribuição medida, mas não poderá ser isolada sem mocks equivalentes."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: o teste precisa de dados de seleção e simulações comparáveis por densidade de traçadores, ainda não ligados com a mesma janela e esforço nulo.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.lss_growth",
+                "topic_id": "science.cosmology.lss_growth",
+                "question_plain": "Quanto a densidade de objetos observados muda o tamanho das estruturas detectadas?",
+                "why_it_matters": "Diferenças de densidade podem alterar o tamanho medido sem mudança física real.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque o teste precisa de dados de seleção e simulações comparáveis por densidade de traçadores, ainda não ligados com a mesma janela e esforço nulo..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "o teste precisa de dados de seleção e simulações comparáveis por densidade de traçadores, ainda não ligados com a mesma janela e esforço nulo."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "META-TRANSPORT26-001-CLEAN-BRIDGE",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.35,
+                "expected_effect": "Previsão congelada antes da execução futura: uma das rotas terá menos recusas, sem artefatos residuais."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: não encontrei cinco tentativas comparáveis por rota, com payloads de tamanho semelhante e recibos suficientes para contar recusas, verificação e artefatos residuais.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "O caminho atual de gravação reduz falhas sem deixar artefatos temporários depois da verificação?",
+                "why_it_matters": "A confiabilidade de gravação depende de medições repetidas por rota, e não de casos isolados.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque não encontrei cinco tentativas comparáveis por rota, com payloads de tamanho semelhante e recibos suficientes para contar recusas, verificação e artefatos residuais..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "não encontrei cinco tentativas comparáveis por rota, com payloads de tamanho semelhante e recibos suficientes para contar recusas, verificação e artefatos residuais."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "T-H0HOM26-004",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.25,
+                "expected_effect": "Previsão congelada antes da execução futura: o resultado ficará dentro da envoltória de mocks após igualar janela e seleção."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: o protocolo exige mil mocks EZ e validação em 25 mocks adicionais; é mais pesado que a política leve.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.h0",
+                "topic_id": "science.cosmology.hubble_tension",
+                "question_plain": "O DESI mostra a transição esperada para um Universo homogêneo em grandes escalas?",
+                "why_it_matters": "Mocks com a mesma janela são necessários para calibrar o teste de homogeneidade.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque o protocolo exige mil mocks EZ e validação em 25 mocks adicionais; é mais pesado que a política leve..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "o protocolo exige mil mocks EZ e validação em 25 mocks adicionais; é mais pesado que a política leve."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            },
+            {
+              "test_id": "T-H0HOM26-005",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.2,
+                "expected_effect": "Previsão congelada antes da execução futura: sem código, amostras e estado editorial atuais, a replicação permanece não decidida."
+              },
+              "result": {
+                "verdict": "DRAFT",
+                "decision": "DRAFT_INPUT_OR_WEIGHT",
+                "summary": "Não executado nesta rodada: não consegui verificar a situação editorial atual nem ligar o código e o registro de subamostras corrigidos; o contrato exige essa verificação antes de computar.",
+                "statistics": {
+                  "executed": false,
+                  "attempts": 0
+                }
+              },
+              "semantic": {
+                "domain_id": "science",
+                "subdomain_id": "science.cosmology.h0",
+                "topic_id": "science.cosmology.hubble_tension",
+                "question_plain": "A anisotropia publicada em escala de Gpc sobrevive a uma replicação independente?",
+                "why_it_matters": "Uma nota editorial ou correção posterior pode alterar quais inputs e claims são válidos.",
+                "result_meaning": "Não há resultado científico; mantive o teste em rascunho porque não consegui verificar a situação editorial atual nem ligar o código e o registro de subamostras corrigidos; o contrato exige essa verificação antes de computar..",
+                "verdict_plain": "Rascunho — sem resultado científico.",
+                "confidence_plain": "baixa"
+              },
+              "limitations": [
+                "não consegui verificar a situação editorial atual nem ligar o código e o registro de subamostras corrigidos; o contrato exige essa verificação antes de computar."
+              ],
+              "reproducibility": {
+                "code": "Não executado; previsão e critério existentes preservados.",
+                "data_sources": [],
+                "attempts": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T13:29:21Z",
+        "payload": {
+          "test_id": "T-H0LCDM26-003",
+          "inputs": [
+            {
+              "name": "pantheon_plus_distances",
+              "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/Pantheon+_Data/4_DISTANCES_AND_COVAR/Pantheon+SH0ES.dat",
+              "sha256": "1cb0fc379ef066afdc2ffd1857681cc478024570d8a3eba284fb645775198cf8",
+              "format": "ASCII table; 1701 linhas × 47 colunas",
+              "load": "astropy.table.Table.read(url, format='ascii')",
+              "checked": "Presença de zHD, zCMB, VPEC, VPECERR, USED_IN_SH0ES_HF e IS_CALIBRATOR.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "A tabela Pantheon+ está ligada e contém os campos requeridos; faltam o produto congelado de correção de fluxo e a covariância de redshift necessária para retomar."
+        }
+      },
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T13:29:21Z",
+        "payload": {
+          "test_id": "T-H0LCDM26-004",
+          "inputs": [
+            {
+              "name": "shoes_ladder_L",
+              "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/SH0ES_Data/alll_shoes_ceph_topantheonwt6.0_112221.fits",
+              "sha256": "9a2ce872dd20ed4fdf5005ce62a805d3eefbbb0b20b0c614013e7c0094009db8",
+              "format": "FITS; NAXIS=2, NAXIS1=3492, NAXIS2=47",
+              "load": "astropy.io.fits.open(url)[0].data",
+              "checked": "Cabeçalho FITS e dimensões conferidos.",
+              "license": "public"
+            },
+            {
+              "name": "shoes_ladder_y",
+              "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/SH0ES_Data/ally_shoes_ceph_topantheonwt6.0_112221.fits",
+              "sha256": "10bb034ca3fff53f6625c9fe47ebd054b37ef45d1140af1c766831cfa6871433",
+              "format": "FITS; NAXIS=1, NAXIS1=3492",
+              "load": "astropy.io.fits.open(url)[0].data",
+              "checked": "Cabeçalho FITS e dimensão conferidos.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "Vetor e matriz L estão ligados; a covariância C não foi baixada: o repositório oficial devolve apenas o ponteiro Git LFS (OID a42778672d25df7a559bd2949b1e412b99b2e35dd9a36895f6b38828be019172; tamanho anunciado 48781440 bytes). Âncoras e covariância compartilhada seguem incompletas."
+        }
+      },
+      {
+        "kind": "DATA_BINDING",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T13:29:21Z",
+        "payload": {
+          "test_id": "T-H0LCDM26-005",
+          "inputs": [
+            {
+              "name": "shoes_ladder_L",
+              "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/SH0ES_Data/alll_shoes_ceph_topantheonwt6.0_112221.fits",
+              "sha256": "9a2ce872dd20ed4fdf5005ce62a805d3eefbbb0b20b0c614013e7c0094009db8",
+              "format": "FITS; NAXIS=2, NAXIS1=3492, NAXIS2=47",
+              "load": "astropy.io.fits.open(url)[0].data",
+              "checked": "Cabeçalho FITS e dimensões conferidos.",
+              "license": "public"
+            },
+            {
+              "name": "shoes_ladder_y",
+              "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/SH0ES_Data/ally_shoes_ceph_topantheonwt6.0_112221.fits",
+              "sha256": "10bb034ca3fff53f6625c9fe47ebd054b37ef45d1140af1c766831cfa6871433",
+              "format": "FITS; NAXIS=1, NAXIS1=3492",
+              "load": "astropy.io.fits.open(url)[0].data",
+              "checked": "Cabeçalho FITS e dimensão conferidos.",
+              "license": "public"
+            }
+          ],
+          "status": "PARTIAL",
+          "note": "Os produtos matriciais y e L estão ligados; a covariância C, catálogo de Cefeidas, priors externos e likelihood de escada completa não foram ligados. O ponteiro Git LFS da covariância não é um dado carregável."
+        }
+      }
+    ]
+  }
+}
