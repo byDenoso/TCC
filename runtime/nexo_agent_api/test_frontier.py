@@ -17,6 +17,7 @@ class FrontierTests(unittest.TestCase):
         (self.root / "indexes").mkdir()
         (self.root / "roadmaps").mkdir()
         (self.root / "entities" / "test").mkdir(parents=True)
+        (self.root / "evolution").mkdir()
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
@@ -83,6 +84,40 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual(rows["RM-PROPOSED"]["ready"], 1)
         self.assertEqual(rows["RM-CHARTERED"]["resumable"], 1)
 
+
+    def test_batch_round_robins_ready_across_roadmaps(self):
+        self._index(
+            {"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"},
+            {"roadmap_id": "RM-B", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-B.json"},
+        )
+        self._roadmap("RM-A", frontier_refs=[f"A-{i}" for i in range(12)])
+        self._roadmap("RM-B", frontier_refs=["B-1"])
+        for i in range(12):
+            self._test(f"A-{i}", "READY", roadmap_id="RM-A")
+        self._test("B-1", "READY", roadmap_id="RM-B")
+        frontier = roadmap_frontier(self.root)
+        batch_ids = [row["test_id"] for row in frontier["batch"]]
+        self.assertIn("B-1", batch_ids)
+        self.assertLess(batch_ids.index("B-1"), 3)
+
+    def test_checkpoint_review_quota_is_visible_even_when_ready_batch_is_full(self):
+        (self.root / "evolution" / "genome.json").write_text(json.dumps({"genes": [
+            {"id": "executor.max_parallel_tests", "canonical": 10},
+            {"id": "executor.checkpoint_reviews_per_run", "canonical": 2},
+        ]}))
+        self._index(
+            {"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"},
+            {"roadmap_id": "RM-B", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-B.json"},
+        )
+        self._roadmap("RM-A", frontier_refs=[f"A-{i}" for i in range(12)])
+        self._roadmap("RM-B", frontier_refs=["B-C1", "B-C2", "B-C3"])
+        for i in range(12):
+            self._test(f"A-{i}", "READY", roadmap_id="RM-A")
+        for tid in ("B-C1", "B-C2", "B-C3"):
+            self._test(tid, "CHECKPOINTED", roadmap_id="RM-B")
+        frontier = roadmap_frontier(self.root)
+        self.assertEqual(len(frontier["batch"]), 10)
+        self.assertEqual([row["test_id"] for row in frontier["checkpoint_review"]], ["B-C1", "B-C2"])
 
     def test_materialized_checkpoint_missing_from_frontier_refs_is_visible(self):
         self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
