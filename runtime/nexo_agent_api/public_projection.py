@@ -166,9 +166,23 @@ def _fingerprint(payload: Any) -> str:
     return "sha256:" + hashlib.sha256(_canonical_blob(payload).encode("utf-8")).hexdigest()
 
 
+def _fold_gpt_performance(value: Any) -> Any:
+    """GPT performance is NEXO engineering, not its own domain: fold every domain-like field."""
+    if isinstance(value, dict):
+        return {k: ("ENGINEERING" if k in ("domain", "target_domain", "domain_id") and str(v or "").upper().replace("-", "_")
+                    in {"GPT_PERFORMANCE", "GPT_PERF"} else _fold_gpt_performance(v)) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_fold_gpt_performance(v) for v in value]
+    return value
+
+
 def _apply_target_domain_projection(payload: dict[str, Any]) -> dict[str, Any]:
     """Render target-owned work/tests under the target domain without erasing provenance."""
     projected = dict(payload)
+    for key in ("domain", "target_domain"):
+        # GPT performance is part of NEXO engineering, not a domain of its own (Dener, 2026-09-25).
+        if str(projected.get(key) or "").upper() in {"GPT_PERFORMANCE", "GPT-PERFORMANCE"}:
+            projected[key] = "ENGINEERING"
     source_domain = projected.get("domain")
     target_domain = projected.get("target_domain")
     if target_domain and source_domain and target_domain != source_domain:
@@ -645,6 +659,7 @@ def build_public_projection(
         "index_only_dropped": sorted(dropped),
     }
     content = _pseudonymize_private(content, test_entities, campaigns)
+    content = _fold_gpt_performance(content)
 
     manifest = {
         "authority": "TOWER_V06",
