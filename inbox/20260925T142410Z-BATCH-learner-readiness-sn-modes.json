@@ -1,0 +1,150 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T14:24:10.000Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:24:10.000Z",
+        "payload": {
+          "test_id": "META-READINESS26-001-DRAFT-YIELD",
+          "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+          "campaign_objective": "4. Transformar o que for CONFIRMADO em resultado publicável (TCC / paper PRD); usar melhor os slots do Executor aumenta a chance de resultados auditáveis.",
+          "question": "Um escore prospectivo de prontidão, calculado antes da seleção da fronteira, prevê quais testes terminarão como DRAFT, BLOCKED_INPUT ou INCONCLUSIVE por falta de dados ou desenho inexequível?",
+          "null": "O escore de prontidão não discrimina desfechos improdutivos no conjunto de validação temporal: AUROC inferior a 0,60 e diferença menor que 10 pontos percentuais entre faixas.",
+          "rival": "Testes com baixa prontidão têm taxa de DRAFT, BLOCKED_INPUT ou INCONCLUSIVE pelo menos 30 pontos percentuais maior, com AUROC de pelo menos 0,75 no conjunto temporal posterior.",
+          "method": "Antes de olhar os desfechos, pontuar cada teste em quatro itens binários: inputs obrigatórios ligados, nulo executável com esforço equivalente, custo dentro do gene executor.test_weight e disponibilidade do mínimo de sementes ou janelas. Usar pelo menos 20 casos históricos; ajustar o limiar apenas na metade temporal anterior e avaliar uma única vez na metade posterior.",
+          "data": "Histórico não-Olympus da Tower: seleções de fronteira, dependências declaradas, DATA_BINDING, resultados, bloqueios e falhas de execução. Unidade = tentativa de teste; a ordem temporal é preservada.",
+          "success_criteria": "Com n≥20 e pelo menos cinco casos por metade temporal, apoiar o rival se a faixa baixa tiver taxa de desfecho improdutivo ≥30 pontos percentuais maior e AUROC≥0,75 no holdout temporal.",
+          "kill_criteria": "Com n≥20, rejeitar se a diferença for <10 pontos percentuais e AUROC<0,60 no holdout. Se o tamanho ou a classe mínima não forem atingidos, manter INCONCLUSIVE.",
+          "claim_boundary": "O teste avalia triagem de prontidão e uso de slots; não autoriza bloquear hipóteses, alterar a fronteira nem mudar critérios científicos.",
+          "depends_on": [
+            "INTEGRITY_REPORT::BATCH-0",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "priority": "P1",
+          "hypothesis": {
+            "id": "HYP-META-EXECUTION-READINESS-20260925",
+            "statement": "Uma checagem prospectiva de prontidão baseada em dados ligados, nulo viável, custo permitido e replicação mínima prevê tentativas que consumirão um slot sem produzir resultado conclusivo.",
+            "model": "A maior parte dos rascunhos operacionais é antecedida por dependências observáveis antes da execução.",
+            "baseline": "Os desfechos improdutivos não são previsíveis por esses sinais antes da execução.",
+            "falsification_criterion": "No holdout temporal, AUROC<0,60 e diferença de taxa<10 pontos percentuais entre baixa e alta prontidão."
+          },
+          "prediction": {
+            "p_promoted": 0.68,
+            "expected_effect": "Espero discriminação moderada, concentrada nos casos com dados ainda não ligados."
+          },
+          "prior_art": [
+            {
+              "citation": "Memory-aware Adaptive Scheduling of Scientific Workflows on Heterogeneous Architectures",
+              "url": "https://arxiv.org/abs/2503.22365",
+              "relevance": "Mostra que dependências e recursos observáveis podem orientar agendamento adaptativo de workflows científicos.",
+              "relation": "ALREADY_REFUTED=false; motiva a triagem, sem validar este escore nem seus limiares."
+            }
+          ],
+          "rank_score": 0.835,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "rank_components": {
+            "novidade": 0.75,
+            "testabilidade": 0.9,
+            "custo_inverso": 0.9,
+            "impacto_no_roadmap": 0.8
+          },
+          "origin_kind": "INTEGRITY_REPORT",
+          "cold_area_rationale": "execution_readiness ainda não tinha hipótese registrada; cobre uma área fria de engenharia sem repetir idempotência ou atraso do inbox.",
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.execution_readiness",
+            "question_plain": "Dá para saber antes quais testes ainda não estão prontos para usar um slot do Executor?",
+            "why_it_matters": "Uma triagem bem calibrada pode reduzir rascunhos e deixar mais capacidade para testes que já têm dados e controles executáveis.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-25T14:24:10.000Z",
+        "payload": {
+          "test_id": "XAREA26-003-SN-COVARIANCE-MODES",
+          "roadmap_id": "RM-DENER-CORE-CAMPAIGN-V1",
+          "campaign_objective": "1. Tensão de H₀: decidir entre sistemáticas e nova física; 2. Energia escura: decidir entre constante e dinâmica com DESI, supernovas e CMB.",
+          "question": "Um pequeno conjunto pré-declarado de modos de covariância e calibração de supernovas desloca na mesma direção a inferência local de H₀ e a preferência aparente por w₀-wa?",
+          "null": "Os modos pré-declarados explicam menos de 10% do deslocamento em pelo menos um dos dois desfechos ou produzem sinais incompatíveis entre compilações.",
+          "rival": "A mesma família de modos explica pelo menos 30% do deslocamento de ambos os desfechos, com direção replicada em duas compilações e nulo por permutação com p≤0,01.",
+          "method": "Usar produtos públicos de covariância de pelo menos duas compilações entre Pantheon+, Union3 e DES-SN5YR. Antes do cálculo, congelar os modos de maior variância associados a calibração, seleção e redshift; estimar resposta linear de H₀ e w₀-wa ao projetar cada modo, com permutação ou troca de sinal de igual esforço e validação por compilação.",
+          "data": "Vetores de distância, matrizes de covariância e metadados públicos das compilações selecionadas; combinações públicas DESI DR2 + CMB apenas como referência da direção do deslocamento. Nenhum dado ausente será substituído por resumo publicado.",
+          "success_criteria": "Apoiar o rival se a mesma família pré-declarada explicar ≥30% do deslocamento em H₀ e em w₀-wa, com o mesmo sinal em pelo menos duas compilações e p≤0,01 contra o nulo de igual esforço.",
+          "kill_criteria": "Rejeitar se explicar <10% de qualquer desfecho ou se o sinal não replicar entre duas compilações. Com apenas uma compilação ou inputs incompletos, manter em espera.",
+          "claim_boundary": "O teste mede sensibilidade compartilhada a modos sistemáticos; não resolve sozinho a tensão de H₀, não confirma energia escura dinâmica e não substitui a análise cosmológica completa.",
+          "depends_on": [
+            "RM-DENER-CORE-CAMPAIGN-V1"
+          ],
+          "priority": "P1",
+          "hypothesis": {
+            "id": "HYP-XAREA-SN-COVARIANCE-H0-DE-20260925",
+            "statement": "Modos compartilhados de calibração, seleção e redshift em supernovas podem mover simultaneamente H₀ e a preferência por energia escura dinâmica.",
+            "model": "Uma componente sistemática comum aos vetores de distância propaga-se para dois alvos cosmológicos hoje tratados em frentes separadas.",
+            "baseline": "As sensibilidades de H₀ e w₀-wa não se alinham numa família comum de modos.",
+            "falsification_criterion": "Menos de 10% de um dos deslocamentos é explicado ou a direção não replica em duas compilações."
+          },
+          "prediction": {
+            "p_promoted": 0.44,
+            "expected_effect": "Espero sensibilidade compartilhada parcial, mas não suficiente para explicar integralmente nenhum dos dois sinais."
+          },
+          "prior_art": [
+            {
+              "citation": "A Comprehensive Measurement of the Local Value of the Hubble Constant with 1 km/s/Mpc Uncertainty from the Hubble Space Telescope and the SH0ES Team",
+              "url": "https://arxiv.org/abs/2112.04510",
+              "relevance": "Documenta a construção de covariâncias e numerosas variantes de análise na escala de distâncias com Pantheon+.",
+              "relation": "ALREADY_REFUTED=false; fornece base para congelar modos sistemáticos, sem testar o vínculo com w₀-wa."
+            },
+            {
+              "citation": "DESI DR2 Results II: Measurements of Baryon Acoustic Oscillations and Cosmological Constraints",
+              "url": "https://arxiv.org/abs/2507.09981",
+              "relevance": "Registra que a escolha da amostra de supernovas e seus sistemáticos afeta a inferência de energia escura.",
+              "relation": "ALREADY_REFUTED=false; motiva o alvo de w₀-wa, sem demonstrar um modo comum com H₀."
+            },
+            {
+              "citation": "Dynamical Dark Energy in Light of DESI DR2",
+              "url": "https://arxiv.org/abs/2504.06118",
+              "relevance": "Compara inferências de energia escura usando Pantheon+, Union3 e DES-SN5YR.",
+              "relation": "ALREADY_REFUTED=false; justifica replicação entre compilações."
+            }
+          ],
+          "rank_score": 0.795,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "rank_components": {
+            "novidade": 0.8,
+            "testabilidade": 0.75,
+            "custo_inverso": 0.75,
+            "impacto_no_roadmap": 0.9
+          },
+          "origin_kind": "CROSS_AREA_SYNTHESIS",
+          "cold_area_rationale": "science.cosmology.systematics tinha apenas uma hipótese registrada; uma de duas propostas nesta rodada cobre área fria, superando a fração mínima de 20%.",
+          "semantic": {
+            "domain_id": "science",
+            "subdomain_id": "science.cosmology",
+            "topic_id": "science.cosmology.systematics",
+            "question_plain": "O mesmo tipo de erro das supernovas pode empurrar H₀ e a leitura da energia escura ao mesmo tempo?",
+            "why_it_matters": "Uma causa compartilhada mudaria a prioridade entre nova física e controle de sistemáticas em duas metas centrais da campanha.",
+            "confidence_plain": "baixa a média"
+          }
+        }
+      }
+    ]
+  }
+}
