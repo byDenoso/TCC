@@ -67,6 +67,14 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
     return (None if after == before else packed), report
 
 
+def _queued_batteries(raw: bytes) -> list[dict]:
+    from .evolution import pending_batteries
+
+    with tempfile.TemporaryDirectory(prefix="nexo-robot-bat-") as work:
+        root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        return pending_batteries(root)
+
+
 def _stop_closures(raw: bytes) -> list[dict]:
     from datetime import datetime, timezone
 
@@ -160,9 +168,17 @@ def main(argv: list[str]) -> int:
                 if isinstance(entry.get("envelope"), dict) and entry.get("id"):
                     items.append({**entry["envelope"], "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + entry["id"]})
                     gateway_ids.append(entry["id"])
-        if not items:
-            print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
-            return 0
+        updates_file = os.environ.get("NEXO_BATTERY_UPDATES", "")
+        if updates_file and Path(updates_file).is_file():
+            try:
+                updates = json.loads(Path(updates_file).read_text(encoding="utf-8"))
+            except ValueError:
+                updates = []
+            for index, update in enumerate(updates if isinstance(updates, list) else []):
+                if isinstance(update, dict):
+                    items.append({**update, "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
+        dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
+        dispatched: list[str] = []
         for attempt in range(3):
             raw, base = tower.download(cache=False)
             packed, report = apply_to_tower(raw, items)
@@ -173,7 +189,24 @@ def main(argv: list[str]) -> int:
                 report["applied"] = report.get("applied", []) + extra.get("applied", [])
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
+            # Batteries queued by the Executor: hand their specs to the dispatcher step and mark them DISPATCHED.
+            queued = _queued_batteries(packed or raw)
+            if queued and dispatch_dir:
+                Path(dispatch_dir).mkdir(parents=True, exist_ok=True)
+                marks = []
+                for battery in queued:
+                    Path(dispatch_dir, f"{battery['id']}.json").write_text(json.dumps(battery, ensure_ascii=False), encoding="utf-8")
+                    marks.append({"kind": "BATTERY_STATUS", "source": "WRITER_ROBOT", "_inbox_name": f"robot-dispatch-{battery['id']}",
+                                  "payload": {"battery_id": battery["id"], "status": "DISPATCHED", "run_ref": "github-actions"}})
+                packed, extra = apply_to_tower(packed or raw, marks)
+                report["applied"] = report.get("applied", []) + extra.get("applied", [])
+                report["after"] = extra.get("after", report.get("after"))
+                report["status"] = "READY_TO_UPLOAD"
+                dispatched = [b["id"] for b in queued]
             if packed is None:
+                if not items:
+                    print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
+                    return 0
                 break
             if os.environ.get("NEXO_ROBOT_DRY"):
                 print(json.dumps({"status": "DRY_RUN", "pending": len(pending), "items": len(items),

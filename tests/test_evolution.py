@@ -114,3 +114,23 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
     test = _test(root, "T-D")
     assert test["decoy"] is True and test["decoy_caught"] is False
     assert evolution_status(root)["decoys"] == {"planted": 1, "revealed": 1, "caught": 0}
+
+
+def test_battery_dispatch_and_collect(tmp_path):
+    root = _tower(tmp_path)
+    for tid in ("T-A", "T-B"):
+        _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": tid, "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
+    _apply(root, {"kind": "TEST_BATTERY", "created_at": "2026-09-25T14:00:00Z", "payload": {"battery_id": "bat-1", "tests": [
+        {"test_id": "T-A", "script": "print(1)", "prediction": {"p_promoted": 0.2}},
+        {"test_id": "T-B", "script": "print(2)"}, {"test_id": "MISSING", "script": "x"}]}})
+    from runtime.nexo_agent_api.evolution import pending_batteries
+    assert [b["id"] for b in pending_batteries(root)] == ["bat-1"]
+    assert _test(root, "T-A")["status"] == "RUNNING" and _test(root, "T-A")["prediction"] == {"p_promoted": 0.2}
+    _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": "bat-1", "status": "DISPATCHED"}})
+    assert pending_batteries(root) == []
+    _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": "bat-1", "status": "DONE", "results": [
+        {"test_id": "T-A", "ok": True, "result": {"verdict": "PROMOTED", "summary": "x"}},
+        {"test_id": "T-B", "ok": False, "log_tail": "Traceback"}]}})
+    assert _test(root, "T-A")["verdict"] == "PROMOTED" and _test(root, "T-A")["review_state"] == "PENDING_REVIEW"
+    assert _test(root, "T-B")["status"] == "READY" and "Traceback" in _test(root, "T-B")["last_runtime_failure"]["log_tail"]
+    assert evolution_status(root)["batteries"] == {"QUEUED": 0, "DISPATCHED": 0, "DONE": 1}

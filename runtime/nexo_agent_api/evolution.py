@@ -31,6 +31,8 @@ SPINE_PREFIXES = ("contract", "writer", "frozen", "criteria", "fitness", "spine"
 GENOME_DOC = "evolution/genome.json"
 THOUGHTS_DOC = "evolution/thoughts.json"
 DECOYS_DOC = "evolution/decoys.json"
+BATTERIES_DOC = "evolution/batteries.json"
+MAX_BATTERY_TESTS = 20
 
 
 def _read(root: Path, relative: str) -> dict[str, Any]:
@@ -336,6 +338,92 @@ def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind:
     return requests + ([update] if update else [])
 
 
+# ── Test batteries: the Executor dispatches, GitHub Actions computes (public, free, parallel) ──
+
+def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """TEST_BATTERY {battery_id?, tests:[{test_id, script, requirements[], timeout_min, prediction}]} -> QUEUED.
+    Each test must already be registered with frozen criteria; its prediction is recorded before any compute."""
+    doc = _read(root, BATTERIES_DOC)
+    batteries = list(doc.get("batteries") or [])
+    bid = str(body.get("battery_id") or f"bat-{_now(item)[:19].replace(':', '').replace('-', '')}").lower()
+    bid = "".join(c if c.isalnum() or c == "-" else "-" for c in bid)[:48]
+    if any(b.get("id") == bid for b in batteries):
+        return []
+    tests, requests = [], []
+    for spec in (body.get("tests") or [])[:MAX_BATTERY_TESTS]:
+        test_id = str(spec.get("test_id") or "")
+        current = _entity(root, "test", test_id) if test_id else None
+        if current is None or not str(spec.get("script") or "").strip():
+            continue
+        if str(current.get("domain") or "").upper() == "OLYMPUS" or current.get("private"):
+            continue  # personal data never leaves for a public runner
+        tests.append({"test_id": test_id, "script": str(spec["script"]), "requirements": [str(r) for r in spec.get("requirements") or []][:20],
+                      "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": spec.get("prediction")})
+        changes = {"status": "RUNNING", "state": "RUNNING", "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid}
+        if spec.get("prediction") and not current.get("prediction"):
+            changes["prediction"] = spec["prediction"]
+        update = _test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_DISPATCHED")
+        if update:
+            requests.append(update)
+    if not tests:
+        return []
+    batteries.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"), "tests": tests})
+    return [_doc(BATTERIES_DOC, {"batteries": batteries[-200:]}, f"REQ-BATTERY-{bid}")] + requests
+
+
+def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Path, result_fn) -> list[dict[str, Any]]:
+    """BATTERY_STATUS {battery_id, status DISPATCHED|DONE, run_id?, results:[{test_id, ok, result, semantic, log_tail}]}."""
+    doc = _read(root, BATTERIES_DOC)
+    batteries = list(doc.get("batteries") or [])
+    bid, status = str(body.get("battery_id") or ""), str(body.get("status") or "").upper()
+    index = next((i for i, b in enumerate(batteries) if b.get("id") == bid), None)
+    if index is None or batteries[index].get("status") == "DONE" or status not in {"DISPATCHED", "DONE", "QUEUED"}:
+        return []
+    battery = dict(batteries[index], status=status)
+    requests: list[dict[str, Any]] = []
+    if status == "DISPATCHED":
+        battery.update({"dispatched_at": _now(item), "run_ref": body.get("run_ref")})
+    if status == "DONE":
+        ok = bad = 0
+        for entry in body.get("results") or []:
+            test_id = str(entry.get("test_id") or "")
+            if entry.get("ok") and isinstance(entry.get("result"), dict):
+                ok += 1
+                requests += result_fn(dict(item, _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
+                                      {"test_id": test_id, "result": entry["result"], "semantic": entry.get("semantic") or {},
+                                       "reproducibility": {"runner": "GITHUB_ACTIONS", "battery_id": bid, "run_ref": body.get("run_ref"),
+                                                           "log_tail": str(entry.get("log_tail") or "")[-1500:]},
+                                       "arm": entry.get("arm")}, root)
+            else:
+                bad += 1  # a crash is never a scientific result: the test goes back to READY
+                update = _test_update(root, test_id, {"status": "READY", "state": "READY", "execution": None,
+                                                      "last_runtime_failure": {"battery_id": bid, "at": _now(item),
+                                                                               "log_tail": str(entry.get("log_tail") or "")[-800:]}},
+                                      f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
+                if update:
+                    requests.append(update)
+        battery.update({"completed_at": _now(item), "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
+    batteries[index] = battery
+    return [_doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{status}-{bid}")] + requests
+
+
+def pending_batteries(root: Path, stale_hours: float = 8.0) -> list[dict[str, Any]]:
+    """QUEUED batteries, plus DISPATCHED ones that never reported back (lost dispatch): re-dispatched."""
+    now = datetime.now(timezone.utc)
+    out = []
+    for battery in _read(root, BATTERIES_DOC).get("batteries") or []:
+        if battery.get("status") == "QUEUED":
+            out.append(battery)
+        elif battery.get("status") == "DISPATCHED" and battery.get("dispatched_at"):
+            try:
+                at = datetime.fromisoformat(str(battery["dispatched_at"]).replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            if (now - at).total_seconds() > stale_hours * 3600:
+                out.append(battery)
+    return out
+
+
 # ── Read side: what each task needs to know (writer CLI `status`) ───────────
 
 def _tests(root: Path) -> list[dict[str, Any]]:
@@ -469,6 +557,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
                      if (r.get("charter") or {}).get("status") == "CHARTERED"],
         "genome": {"generation": int(genome.get("generation") or 0),
                    "genes": [{k: g.get(k) for k in ("id", "status", "canonical", "canary")} for g in genome.get("genes") or []]},
+        "batteries": {s: sum(1 for x in _read(root, BATTERIES_DOC).get("batteries") or [] if x.get("status") == s)
+                      for s in ("QUEUED", "DISPATCHED", "DONE")},
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
     }

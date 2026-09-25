@@ -438,7 +438,7 @@ _KIND_ALIASES = {
     "CONTEST": "CONTEST", "REFUTATION": "CONTEST", "VERDICT_REVIEW": "VERDICT_REVIEW", "REVIEW": "VERDICT_REVIEW",
     "GENOME_MUTATION": "GENOME_MUTATION", "MUTATION_CANARY": "GENOME_MUTATION", "GENOME_ROLLBACK": "GENOME_ROLLBACK",
     "FITNESS_REPORT": "FITNESS_REPORT", "NEXO_THOUGHT": "NEXO_THOUGHT", "THOUGHT": "NEXO_THOUGHT",
-    "DECOY_PLANT": "DECOY_PLANT", "DECOY_REVEAL": "DECOY_REVEAL", "DECOY_CALL": "DECOY_CALL",
+    "DECOY_PLANT": "DECOY_PLANT", "DECOY_REVEAL": "DECOY_REVEAL", "DECOY_CALL": "DECOY_CALL", "TEST_BATTERY": "TEST_BATTERY", "BATTERY": "TEST_BATTERY", "BATTERY_STATUS": "BATTERY_STATUS",
 }
 _EVOLUTION = {
     "ROADMAP_CHARTER": evolution.charter_requests,
@@ -452,6 +452,9 @@ _EVOLUTION = {
     "DECOY_PLANT": lambda item, body, root: evolution.decoy_requests(item, body, root, "DECOY_PLANT"),
     "DECOY_REVEAL": lambda item, body, root: evolution.decoy_requests(item, body, root, "DECOY_REVEAL"),
     "DECOY_CALL": lambda item, body, root: evolution.decoy_requests(item, body, root, "DECOY_CALL"),
+    "TEST_BATTERY": evolution.battery_requests,
+    "BATTERY_STATUS": lambda item, body, root: evolution.battery_status_requests(
+        item, body, root, lambda i, b, r: _result_request(i, _normalize_result(b), r)),
 }
 _BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
 
