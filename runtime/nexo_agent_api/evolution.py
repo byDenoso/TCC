@@ -399,7 +399,9 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
     status = {
         "arm_for_this_run": "canary" if now.hour % 2 else "canonical",
         "gate": {
-            "charters_waiting": [{"roadmap_id": r["roadmap_id"], "question": (r.get("charter") or {}).get("question")}
+            "charters_waiting": [{"roadmap_id": r["roadmap_id"], "question": (r.get("charter") or {}).get("question"),
+                                  "objectives": (r.get("charter") or {}).get("objectives"),
+                                  "renewable": bool((r.get("charter") or {}).get("renewable"))}
                                  for r in roadmaps if (r.get("charter") or {}).get("status") == "PROPOSED"],
             "canaries_waiting": [{"gene": g.get("id"), "canary": g.get("canary"), "since": g.get("canary_since")}
                                  for g in genome.get("genes") or [] if g.get("status") == "CANARY"],
