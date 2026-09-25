@@ -84,5 +84,14 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual(rows["RM-CHARTERED"]["resumable"], 1)
 
 
+    def test_materialized_checkpoint_missing_from_frontier_refs_is_visible(self):
+        self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
+        self._roadmap("RM-A", frontier_refs=["T-READY"])
+        self._test("T-READY", "READY", roadmap_id="RM-A")
+        self._test("T-ORPHAN-CKPT", "CHECKPOINTED", roadmap_id="RM-A")
+        frontier = roadmap_frontier(self.root)
+        self.assertIn("T-ORPHAN-CKPT", [r["test_id"] for r in frontier["resumable"]])
+
+
 if __name__ == "__main__":
     unittest.main()
