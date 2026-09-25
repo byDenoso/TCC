@@ -1,0 +1,12 @@
+{
+ "kind": "OPERATOR_INTENT",
+ "source": "DENER",
+ "created_at": "2026-09-25T03:40:00Z",
+ "payload": {
+  "action": "APPROVE_CHARTER",
+  "roadmap_id": "RM-DENER-CORE-CAMPAIGN-V1",
+  "approved_by": "DENER",
+  "priority": "P0",
+  "evidence": "Dener no chat em 2026-09-25: 'Pode aprovar' (campanha principal semi-permanente)."
+ }
+}
