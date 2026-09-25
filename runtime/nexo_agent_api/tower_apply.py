@@ -8,7 +8,7 @@ from pathlib import Path
 from .tower_paths import fs_path
 
 
-_DOCUMENT_PREFIXES = ("roadmaps/", "indexes/", "contracts/", "manifests/")
+_DOCUMENT_PREFIXES = ("roadmaps/", "indexes/", "contracts/", "manifests/", "evolution/")
 
 
 def apply_document(root: Path, request: dict) -> dict:

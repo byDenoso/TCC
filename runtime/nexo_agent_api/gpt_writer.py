@@ -65,6 +65,14 @@ def main(argv: list[str]) -> int:
             root, _ = materialize_live_tower(Path(argv[1]).read_bytes(), Path(work) / "TOWER_V06")
             print(json.dumps(roadmap_frontier(root, argv[2] if len(argv) > 2 else None), ensure_ascii=False, indent=1))
         return 0
+    if len(argv) >= 2 and argv[0] == "status":
+        # Closed-loop view: Dener's gate, referee queues, roadmap stop criteria, genome, decoys, canary arm.
+        from .evolution import evolution_status
+
+        with tempfile.TemporaryDirectory(prefix="nexo-gpt-status-") as work:
+            root, _ = materialize_live_tower(Path(argv[1]).read_bytes(), Path(work) / "TOWER_V06")
+            print(json.dumps(evolution_status(root), ensure_ascii=False, indent=1, default=str))
+        return 0
     if len(argv) >= 2 and argv[0] == "verify":
         fingerprint = verify_live_tower(read_live_tower_bytes(Path(argv[1]).read_bytes()))
         ok = len(argv) < 3 or fingerprint == argv[2]

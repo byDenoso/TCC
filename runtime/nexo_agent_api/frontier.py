@@ -128,7 +128,16 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             deps = [str(d) for d in (entity.get("depends_on") or [])]
             unmet = [d for d in deps if not _dependency_met(d, status_of)]
             (waiting if unmet else ready).append({**base, "waiting_on": unmet} if unmet else base)
-        ready.sort(key=lambda t: (t.get("source") == "ENTITY_READY", PRIORITY_RANK.get(str(t.get("priority") or "NORMAL").upper(), 9)))
+    # Contest tests (refutation) first, then the Learner's own rubric score, then roadmap priority.
+    def _rank(t: dict[str, Any]) -> tuple:
+        entity = test(t["test_id"]) or {}
+        try:
+            score = -float(entity.get("rank_score") or 0)
+        except (TypeError, ValueError):
+            score = 0.0
+        return (not entity.get("contests_test_id"), t.get("source") == "ENTITY_READY", score,
+                PRIORITY_RANK.get(str(t.get("priority") or "NORMAL").upper(), 9))
+    ready.sort(key=_rank)
 
     if resumable:
         action, pick = "RESUME_EXISTING", resumable[0]

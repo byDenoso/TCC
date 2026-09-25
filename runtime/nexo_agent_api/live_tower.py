@@ -35,6 +35,7 @@ _JSON_SURFACES = (
     "snapshot/**/*.json",
     "bootstrap/**/*.json",
     "queues/**/*.json",
+    "evolution/**/*.json",
 )
 
 

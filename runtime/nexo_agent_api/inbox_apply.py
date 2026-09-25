@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+from . import evolution
 from .tower_paths import entity_path, fs_path
 
 TERMINAL_VERDICTS = {"REJECTED", "FAILED", "FALSIFIED"}
@@ -118,8 +119,12 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "executed_by": "CHATGPT_TASK_EXECUTOR",
         "executed_at": item.get("created_at"),
         "inbox_ref": item.get("_inbox_id"),
+        "prediction": body.get("prediction") or result.get("prediction"),
+        "arm": body.get("arm"),
         "semantic": semantic,
     }
+    if verdict in evolution.POSITIVE_VERDICTS and not current.get("review_state"):
+        changes["review_state"] = "PENDING_REVIEW"  # a positive result must survive two referees to count
     version = 1 if created else int(current.get("entity_version") or 0)
     return created + [{
         "request_id": f"REQ-INBOX-RESULT-{_slug(str(item.get('_inbox_name') or test_id))}",
@@ -255,8 +260,18 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "proposed_by": "CHATGPT",
         "origin": "META" if test_id.upper().startswith("META-") else body.get("origin"),
         "linked_signal_ids": body.get("linked_signal_ids"),
+        "rank_score": body.get("rank_score"),
+        "rank_rubric": body.get("rank_rubric"),
+        "origin_kind": body.get("origin_kind"),
+        "prior_art": body.get("prior_art"),
+        "prediction": body.get("prediction"),
+        "contests_test_id": body.get("contests_test_id"),
         "semantic": semantic,
     }
+    if lifecycle == "READY":
+        # Public pre-registration: the frozen design's hash; the inbox commit that carried it is the timestamp.
+        changes["prereg_hash"] = evolution.prereg_hash(test_id, changes)
+        changes["prereg_ref"] = item.get("_inbox_name") or item.get("_inbox_id")
     requests = [{
         "request_id": f"REQ-INBOX-{_slug(str(item.get('_inbox_name') or test_id))}",
         "entity_kind": "test", "entity_name": test_id, "expected_version": 0,
@@ -419,6 +434,23 @@ _KIND_ALIASES = {
     "SEMANTIC_BACKFILL": "SEMANTIC_BACKFILL", "BACKFILL": "SEMANTIC_BACKFILL", "MEANING_BACKFILL": "SEMANTIC_BACKFILL",
     "DATA_BINDING": "DATA_BINDING", "BINDING": "DATA_BINDING",
     "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
+    "ROADMAP_CHARTER": "ROADMAP_CHARTER", "CHARTER": "ROADMAP_CHARTER", "ROADMAP_CLOSE": "ROADMAP_CLOSE",
+    "CONTEST": "CONTEST", "REFUTATION": "CONTEST", "VERDICT_REVIEW": "VERDICT_REVIEW", "REVIEW": "VERDICT_REVIEW",
+    "GENOME_MUTATION": "GENOME_MUTATION", "MUTATION_CANARY": "GENOME_MUTATION", "GENOME_ROLLBACK": "GENOME_ROLLBACK",
+    "FITNESS_REPORT": "FITNESS_REPORT", "NEXO_THOUGHT": "NEXO_THOUGHT", "THOUGHT": "NEXO_THOUGHT",
+    "DECOY_PLANT": "DECOY_PLANT", "DECOY_REVEAL": "DECOY_REVEAL",
+}
+_EVOLUTION = {
+    "ROADMAP_CHARTER": evolution.charter_requests,
+    "ROADMAP_CLOSE": evolution.close_requests,
+    "CONTEST": lambda item, body, root: evolution.contest_requests(item, body, root, _hypothesis_requests),
+    "VERDICT_REVIEW": evolution.review_requests,
+    "GENOME_MUTATION": evolution.mutation_requests,
+    "GENOME_ROLLBACK": evolution.rollback_requests,
+    "FITNESS_REPORT": evolution.fitness_requests,
+    "NEXO_THOUGHT": evolution.thought_requests,
+    "DECOY_PLANT": lambda item, body, root: evolution.decoy_requests(item, body, root, "DECOY_PLANT"),
+    "DECOY_REVEAL": lambda item, body, root: evolution.decoy_requests(item, body, root, "DECOY_REVEAL"),
 }
 _BATCH_KEYS = ("tests", "results", "items", "proposals", "entries", "lessons", "hypotheses")
 
@@ -466,6 +498,14 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         raise ProposalError("proposal is not a JSON object")
     body = item.get("payload") if isinstance(item.get("payload"), dict) else {k: v for k, v in item.items() if not k.startswith("_")}
     raw_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    if raw_kind == "BATCH":
+        # Several envelopes in one inbox file (bootstrap, multi-kind runs): each is applied on its own.
+        requests = []
+        for index, entry in enumerate(body.get("items") or []):
+            if isinstance(entry, dict):
+                requests.extend(proposal_to_requests({**entry, "_inbox_name": f"{item.get('_inbox_name') or 'batch'}-{index}",
+                                                      "_inbox_id": item.get("_inbox_id")}, root))
+        return requests
     batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
     first = batch[0] if batch and isinstance(batch[0], dict) else {}
     kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"
@@ -489,6 +529,14 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             return _backfill_requests(item, body, root)
         if kind == "ROADMAP_ATTACH":
             return _attach_requests(item, body, root)
+        if kind in _EVOLUTION:
+            requests = _EVOLUTION[kind](item, body, root)
+            # Nothing to do (duplicate, spine gene, closed roadmap...) -> keep the proposal as a record, never fail.
+            return requests or _record_request(item, body, f"{kind}_NOOP")
+        if kind == "OPERATOR_INTENT":
+            gate = evolution.operator_requests(item, body, root)
+            if gate:
+                return gate + _record_request(item, body, "OPERATOR_INTENT")
     except ProposalError as exc:
         # Keep the content in the Tower (nothing is lost) and say why it was not applied.
         return _record_request(item, {**body, "_not_applied_reason": str(exc)}, f"UNAPPLIED_{kind}")
