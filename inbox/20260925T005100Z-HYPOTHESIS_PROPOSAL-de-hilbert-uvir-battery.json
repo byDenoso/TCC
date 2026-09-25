@@ -3,161 +3,33 @@
   "source": "CHATGPT",
   "created_at": "2026-09-25T00:51:00Z",
   "payload": {
-  "tests": [
-    {
-      "test_id": "T-DEH26-001-PRIORITY-STATE-OF-ART",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "A literatura já contém o mecanismo completo que liga entropia/Hilbert de de Sitter ou CKN à escala meV e ao matching local radiativamente protegido R=1?",
-      "null": "As peças relevantes já existem separadamente e/ou o mecanismo combinado já foi demonstrado, de modo que não há novidade técnica identificável.",
-      "rival": "A literatura contém holografia/UV-IR e P(X)/ghost condensate separadamente, mas não demonstra a cadeia completa de seleção independente da escala mais matching local radiativamente protegido equivalente a R=1.",
-      "method": "Busca de prioridade dirigida em CKN/UV-IR, HDE com horizonte de eventos e Hubble cutoff, finitude do Hilbert de de Sitter, P(X)/ghost condensate supersimétrico e trabalhos recentes que derivam sqrt(H M_Pl); classificar literatura existente, extensão proposta e novidade potencial.",
-      "data": "CKN 1998; Li 2004 HDE; Banks/Fischler e trabalhos de de Sitter finito; Khoury-Lehners-Ovrut 2010; Adolf et al. 2024 CKN dark energy; literatura HDE DESI DR2 2026; SciSpace semantic priority search em 2026-09-25.",
-      "success_criteria": "PROMOTED se a busca dirigida encontrar precedentes para as peças separadas mas nenhum trabalho que demonstre simultaneamente seleção independente da escala cosmológica e matching local radiativamente protegido equivalente a R=1; INCONCLUSIVE se a busca não tiver cobertura suficiente.",
-      "kill_criteria": "REJECTED se for encontrado um trabalho anterior que já derive a mesma cadeia completa com as mesmas condições materiais.",
-      "claim_boundary": "Teste de prioridade, retrospectivo e não exaustivo. Ausência em busca dirigida não prova novidade absoluta nem valida a física.",
-      "depends_on": [],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "A nossa cadeia holografia → escala meV → EFT local protegida já existe na literatura?"
-      },
-      "hypothesis": {
-        "id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-        "statement": "A geometria/entropia de de Sitter pode selecionar a escala de energia escura, enquanto uma EFT local protegida usa a mesma escala para impor o matching R=1 sem ajuste independente.",
-        "model": "Seleção UV/IR holográfica assintótica + completion local P(X) protegido.",
-        "baseline": "ΛCDM/HDE convencional ou EFT local em que a escala meV é recebida como parâmetro e R=1 não é protegido.",
-        "falsification_criterion": "A hipótese perde seu conteúdo explicativo se a escala só for recuperada inserindo H∞/ρDE observados, se R=1 não sobreviver às correções quânticas, ou se a realização cosmológica não produzir previsão distinguível compatível com dados."
-      }
+    "test_id": "T-DEH26-001-PRIORITY-STATE-OF-ART",
+    "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+    "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
+    "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
+    "question": "A literatura já contém o mecanismo completo que liga entropia/Hilbert de de Sitter ou CKN à escala meV e ao matching local radiativamente protegido R=1?",
+    "null": "As peças relevantes já existem separadamente e/ou o mecanismo combinado já foi demonstrado, de modo que não há novidade técnica identificável.",
+    "rival": "A literatura contém holografia/UV-IR e P(X)/ghost condensate separadamente, mas não demonstra a cadeia completa de seleção independente da escala mais matching local radiativamente protegido equivalente a R=1.",
+    "method": "Busca de prioridade dirigida em CKN/UV-IR, HDE com horizonte de eventos e Hubble cutoff, finitude do Hilbert de de Sitter, P(X)/ghost condensate supersimétrico e trabalhos recentes que derivam sqrt(H M_Pl); classificar literatura existente, extensão proposta e novidade potencial.",
+    "data": "CKN 1998; Li 2004 HDE; Banks/Fischler e trabalhos de de Sitter finito; Khoury-Lehners-Ovrut 2010; Adolf et al. 2024 CKN dark energy; literatura HDE DESI DR2 2026; SciSpace semantic priority search em 2026-09-25.",
+    "success_criteria": "PROMOTED se a busca dirigida encontrar precedentes para as peças separadas mas nenhum trabalho que demonstre simultaneamente seleção independente da escala cosmológica e matching local radiativamente protegido equivalente a R=1; INCONCLUSIVE se a busca não tiver cobertura suficiente.",
+    "kill_criteria": "REJECTED se for encontrado um trabalho anterior que já derive a mesma cadeia completa com as mesmas condições materiais.",
+    "claim_boundary": "Teste de prioridade, retrospectivo e não exaustivo. Ausência em busca dirigida não prova novidade absoluta nem valida a física.",
+    "depends_on": [],
+    "priority": "P0",
+    "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.dark_energy",
+      "topic_id": "science.cosmology.dark_energy.microphysics",
+      "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
+      "question_plain": "A nossa cadeia holografia → escala meV → EFT local protegida já existe na literatura?"
     },
-    {
-      "test_id": "T-DEH26-002-SCALE-CIRCULARITY",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "A relação holográfica/de Sitter prevê a escala meV sem usar como entrada a própria expansão tardia observada?",
-      "null": "M≈rho_DE^(1/4)≈sqrt(M_Pl H∞) apenas reexpressa Friedmann/entropia após H∞ ou rho_DE ser fornecido pelos dados, sem seleção independente.",
-      "rival": "Uma condição independente de quantização, equilíbrio ou contagem de estados determina S_dS/H∞ e portanto M antes de usar a densidade de energia escura observada.",
-      "method": "Derivar S_dS=8π² Mbar_Pl²/H∞², rho=3 Mbar_Pl²H∞² e M=rho^(1/4); rastrear dependências de entrada. Considerar o teste aprovado apenas se H∞ ou equivalente for determinado por condição independente, não pelo fit de DE.",
-      "data": "Constantes fundamentais e relação semiclassica de de Sitter; como verificação numérica usar H0=70 km/s/Mpc e ΩDE=0.685, explicitamente marcados como inputs observacionais e não como previsão.",
-      "success_criteria": "PROMOTED se M≈2–3 meV for obtido a partir de uma condição independente que não contenha H∞, ρDE ou ΩDE observados como entrada material.",
-      "kill_criteria": "REJECTED se o valor meV só aparecer depois de inserir H∞, H0×sqrt(ΩDE), ρDE ou quantidade algebraicamente equivalente.",
-      "claim_boundary": "Gate de não-circularidade. Reproduzir 2.3 meV a partir de H∞ observado conta como identidade/consistência, não como explicação da escala.",
-      "depends_on": [
-        "T-DEH26-001-PRIORITY-STATE-OF-ART"
-      ],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "A holografia realmente prevê 2,3 meV ou apenas reescreve o valor observado?"
-      }
-    },
-    {
-      "test_id": "T-DEH26-003-TREE-MATCHING-R1",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "O completion escalar local de um único parâmetro gera exatamente a P(X) alvo e R=1 no nível clássico?",
-      "null": "A forma P(X) ou R=1 exige ao menos um coeficiente independente ajustado à mão.",
-      "rival": "Integrar o modo radial de Ψ=χe^{iθ} com V(χ)=(M²+χ²/2)² gera P(X)=M⁴(y²−2y) e os coeficientes m², λ e V0 descendem da mesma escala M, implicando R=1 identicamente.",
-      "method": "No limite radial adiabático, resolver ∂L/∂χ=0, substituir χ(X) na ação e reescrever P(X) como (X−M⁴)²/M⁴−M⁴; calcular R=λV0/m⁴ com convenções dimensionalmente consistentes.",
-      "data": "Álgebra simbólica do completion local; sem dados cosmológicos.",
-      "success_criteria": "PROMOTED se a eliminação do radial produzir exatamente a P(X) alvo e R=1 sem parâmetro independente adicional.",
-      "kill_criteria": "REJECTED se aparecer coeficiente livre necessário para obter a forma alvo ou se R≠1 após matching consistente de dimensões.",
-      "claim_boundary": "Resultado clássico/tree-level e retrospectivo. Não implica proteção radiativa, origem de M ou viabilidade cosmológica.",
-      "depends_on": [],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "O R=1 aparece sozinho no matching clássico ou foi colocado à mão?"
-      }
-    },
-    {
-      "test_id": "T-DEH26-004-RADIATIVE-STABILITY-BOSONIC",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "O completion bosônico mínimo preserva a relação de um único parâmetro que implica R=1 a um loop?",
-      "null": "Correções de Coleman-Weinberg renormalizam independentemente os termos constante, quadrático e quártico, quebrando a superfície de um parâmetro.",
-      "rival": "A estrutura V=(M²+χ²/2)² é fechada sob renormalização a um loop, ou as correções preservam R=1 sem contratermos independentes.",
-      "method": "Calcular V''(χ), usar a estrutura divergente ΔV∝[V''(χ)]² e comparar as razões dos coeficientes de M⁴, M²χ² e χ⁴ com as do potencial original.",
-      "data": "Completion escalar mínimo em 4D; cálculo analítico de um loop no setor bosônico.",
-      "success_criteria": "PROMOTED se a divergência for proporcional ao potencial original (ou removível por renormalização de uma única escala M) de modo que R=1 permaneça identidade.",
-      "kill_criteria": "REJECTED se os contratermos requererem renormalizações independentes que permitam deslocar R de 1.",
-      "claim_boundary": "Teste do completion bosônico mínimo apenas; falha não exclui completion protegido por simetria/SUSY.",
-      "depends_on": [
-        "T-DEH26-003-TREE-MATCHING-R1"
-      ],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "Os loops quânticos preservam R=1 no modelo bosônico mínimo?"
-      }
-    },
-    {
-      "test_id": "T-DEH26-005-SUSY-PROTECTION",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "Uma completion N=1 SUSY pode proteger o matching R=1 após normalização de Kähler, SUSY breaking e acoplamento gravitacional?",
-      "null": "O non-renormalization do superpotential não basta: Kähler, normalização de campo, supergravidade ou SUSY breaking reintroduzem parâmetros independentes/vacuum energy e destroem a proteção material de R=1.",
-      "rival": "Existe uma completion N=1 mínima, por exemplo W=M²Φ+Φ³/6 com operadores superiores controlados, na qual a relação que gera R=1 sobrevive às correções relevantes sem nova hierarquia comparável ao problema original.",
-      "method": "Construir a ação N=1 mínima; separar proteção do superpotential de renormalização de Kähler; canonizar campos; incluir escala de SUSY breaking e termo gravitacional; derivar o matching EFT e estimar δR. Nenhuma escolha pós-hoc de contratermos para forçar R=1.",
-      "data": "Literatura de supersymmetric P(X)/ghost condensate e cálculo EFT simbólico; parâmetros de SUSY breaking tratados por faixas predeclaradas, não ajustados ao resultado cosmológico.",
-      "success_criteria": "PROMOTED se |δR| permanecer tecnicamente natural e controlado pela simetria em toda faixa predeclarada, sem contratermo de vacuum energy independente ajustado à escala meV.",
-      "kill_criteria": "REJECTED se manter R≈1 exigir cancelamento independente da energia de vácuo ou ajuste de parâmetros sem proteção; INCONCLUSIVE se o resultado depender de UV/SUGRA não especificada.",
-      "claim_boundary": "Proteção local apenas; não prova seleção holográfica de M nem identifica a teoria UV fundamental.",
-      "depends_on": [
-        "T-DEH26-004-RADIATIVE-STABILITY-BOSONIC"
-      ],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "SUSY consegue proteger o matching R=1 sem reintroduzir outro ajuste fino?"
-      }
-    },
-    {
-      "test_id": "T-DEH26-006-COSMOLOGY-HOLDOUT",
-      "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
-      "campaign_id": "CAMP-DARK-ENERGY-NATURE-20260923",
-      "hypothesis_id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
-      "question": "A realização holográfica+local produz uma previsão cosmológica distinta e compatível com dados atuais sem retuning?",
-      "null": "Depois do matching, o modelo é observacionalmente equivalente a Λ/HDE convencional ou sofre tensões maiores em background, crescimento ou CMB, sem previsão nova independente.",
-      "rival": "O modelo fixa parâmetros suficientes para produzir uma trajetória/perturbação pré-declarada que passa DESI DR2+SN+CMB+growth e acerta um holdout sem retuning.",
-      "method": "Fixar os parâmetros pelo matching dos testes anteriores antes do fit; comparar com ΛCDM e HDE convencional no mesmo stack, incluindo DESI DR2 BAO, pelo menos duas compilações SN, CMB e RSD/lensing; reservar um bloco como holdout; reportar Δχ², AIC/BIC e posterior-predictive/holdout.",
-      "data": "DESI DR2 BAO e produtos públicos, Pantheon+/Union3 ou DES-Dovekie/DESY5 conforme disponibilidade, CMB público e RSD/lensing; reutilizar likelihoods canônicas do roadmap quando semanticamente idênticas.",
-      "success_criteria": "PROMOTED se a previsão pré-fixada passa todos os blocos principais, não degrada nenhum em Δχ²>4, melhora o ajuste total de forma material após penalização e prevê o holdout na direção observada sem retuning.",
-      "kill_criteria": "REJECTED se for indistinguível de Λ/HDE após matching sem ganho preditivo, ou se qualquer bloco principal degradar Δχ²>9, ou se o holdout pré-fixado falhar claramente; demais casos INCONCLUSIVE.",
-      "claim_boundary": "Teste cosmológico de uma realização especificada; não promove a interpretação de Hilbert/QG se os gates de não-circularidade e proteção local não passarem.",
-      "depends_on": [
-        "T-DEH26-002-SCALE-CIRCULARITY",
-        "T-DEH26-005-SUSY-PROTECTION"
-      ],
-      "priority": "P0",
-      "semantic": {
-        "domain_id": "science",
-        "subdomain_id": "science.cosmology.dark_energy",
-        "topic_id": "science.cosmology.dark_energy.microphysics",
-        "why_it_matters": "Testa se a escala meV e o matching local podem ser derivados sem circularidade nem ajuste fino escondido.",
-        "question_plain": "Depois de fixar os parâmetros, o modelo prevê algo que os dados confirmam sem ajuste posterior?"
-      }
+    "hypothesis": {
+      "id": "HYP-DE-HILBERT-UVIR-MATCHING-V1",
+      "statement": "A geometria/entropia de de Sitter pode selecionar a escala de energia escura, enquanto uma EFT local protegida usa a mesma escala para impor o matching R=1 sem ajuste independente.",
+      "model": "Seleção UV/IR holográfica assintótica + completion local P(X) protegido.",
+      "baseline": "ΛCDM/HDE convencional ou EFT local em que a escala meV é recebida como parâmetro e R=1 não é protegido.",
+      "falsification_criterion": "A hipótese perde seu conteúdo explicativo se a escala só for recuperada inserindo H∞/ρDE observados, se R=1 não sobreviver às correções quânticas, ou se a realização cosmológica não produzir previsão distinguível compatível com dados."
     }
-  ]
-}
+  }
 }
