@@ -1,0 +1,101 @@
+name: NEXO Scheduled Persistence Relay
+
+on:
+  push:
+    branches:
+      - 'nexo/dispatch-runtime'
+    paths:
+      - 'nexo_persist/requests/*.json'
+
+permissions:
+  contents: write
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select exactly one persistence request
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^nexo_persist/requests/.*\.json$' || true)
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "Expected exactly one persistence request; found ${#files[@]}" >&2
+            exit 64
+          fi
+          printf 'path=%s\n' "${files[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate request
+        id: validate
+        env:
+          REQUEST_PATH: ${{ steps.request.outputs.path }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, re
+          from pathlib import Path
+
+          p=Path(os.environ["REQUEST_PATH"])
+          data=json.loads(p.read_text(encoding="utf-8"))
+          if set(data) != {"stable_id","envelope"}:
+              raise SystemExit("request must contain exactly stable_id,envelope")
+          sid=data["stable_id"]
+          if not isinstance(sid,str) or not re.fullmatch(r"[a-z0-9-]{4,60}",sid):
+              raise SystemExit("invalid stable_id")
+          env=data["envelope"]
+          if not isinstance(env,dict) or not isinstance(env.get("kind"),str) or not isinstance(env.get("source"),str) or "payload" not in env:
+              raise SystemExit("invalid envelope")
+          target=f"inbox/scheduled-{sid}.json"
+          canonical=json.dumps(env,ensure_ascii=False,separators=(",",":"),sort_keys=True)+"\n"
+          Path("/tmp/envelope.json").write_text(canonical,encoding="utf-8")
+          print(f"stable_id={sid}")
+          print(f"target={target}")
+          PY
+
+      - name: Persist idempotently to nexo-inbox
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ steps.validate.outputs.target }}
+        run: |
+          set -euo pipefail
+          REPO="$GITHUB_REPOSITORY"
+          ENCODED=$(base64 -w0 /tmp/envelope.json)
+          if META=$(gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" 2>/dev/null); then
+            EXISTING=$(printf '%s' "$META" | python -c 'import sys,json,base64; d=json.load(sys.stdin); print(base64.b64decode(d["content"]).decode(), end="")')
+            EXPECTED=$(cat /tmp/envelope.json)
+            if [ "$EXISTING" != "$EXPECTED" ]; then
+              echo "stable_id collision with different payload" >&2
+              exit 65
+            fi
+            echo "relay readback PASS existing $TARGET"
+            exit 0
+          fi
+          PAYLOAD=$(python - <<'PY'
+          import json, os
+          print(json.dumps({
+            "message":"NEXO scheduled persistence relay",
+            "content":os.environ["ENCODED"],
+            "branch":"nexo-inbox",
+          }))
+          PY
+          )
+          printf '%s' "$PAYLOAD" | gh api --method PUT "repos/$REPO/contents/$TARGET" --input - >/tmp/put.json
+          META=$(gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox")
+          printf '%s' "$META" | python - <<'PY'
+          import sys,json,base64
+          meta=json.load(sys.stdin)
+          got=base64.b64decode(meta["content"])
+          exp=open("/tmp/envelope.json","rb").read()
+          if got != exp:
+              raise SystemExit("relay readback mismatch")
+          print("relay readback PASS")
+          PY
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ steps.validate.outputs.target }}
+          ENCODED: ${{ env.ENCODED }}
