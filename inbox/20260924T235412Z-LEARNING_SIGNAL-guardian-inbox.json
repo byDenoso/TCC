@@ -1,1 +1,0 @@
-{"kind":"LEARNING_SIGNAL","source":"CHATGPT_GUARDIAN","created_at":"2026-09-24T23:54:12Z","payload":{"signals":[{"evidence_kind":"INTEGRITY","gap_type":"TOOL","topic_id":"engineering.nexo_runtime.inbox_integrity","evidence":"Há 2 UNAPPLIED_* antigos na Tower e a branch nexo-inbox não pôde ser enumerada por diretório.","confidence":0.95}]}}
