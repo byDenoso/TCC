@@ -1,0 +1,213 @@
+{
+  "kind": "SEMANTIC_BACKFILL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T01:16:00Z",
+  "payload": {
+    "items": [
+      {
+        "id": "HYP-OLY-BIA-CONFOUND-V1",
+        "entity_kind": "hypothesis",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "HYP-OLY-MULTIOBS-V1",
+        "entity_kind": "hypothesis",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "HYP-OLY-PERSISTENCE-V1",
+        "entity_kind": "hypothesis",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "HYP-OLY-PIVOT-V1",
+        "entity_kind": "hypothesis",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "HYP-OLY-SEQACC-V1",
+        "entity_kind": "hypothesis",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "META::INTERDOMAIN::COSMO-OLYMPUS-SELECTION-AWARE-CHANGE-001",
+        "entity_kind": "interdomain",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "T-AVGPROB-017A",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-AVGPROB-017B",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYCAUSE-016A",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYCAUSE-016B",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYCAUSE-016C",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYCAUSE-016D",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPHYS-011",
+        "entity_kind": "test",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPHYS-012",
+        "entity_kind": "test",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPHYS-013",
+        "entity_kind": "test",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPHYS-014",
+        "entity_kind": "test",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPIVOT-015A",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPIVOT-015B",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "T-OLYPIVOT-015C",
+        "entity_kind": "test",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "CAMP-OLY-COMPPHYS-20260919",
+        "entity_kind": "test_group",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "CAMP-OLY-MIQUEIAS-CAUSE-NULLS-20260920",
+        "entity_kind": "test_group",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "CAMP-OLY-PIVOT-CROSSCHECK-20260920",
+        "entity_kind": "test_group",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::OLYMPUS-SELECTION-AWARE-CHANGE-VALIDATION-001",
+        "entity_kind": "work",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016A",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016B",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016C",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYCAUSE-016D",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPHYS-011",
+        "entity_kind": "work",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPHYS-012",
+        "entity_kind": "work",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPHYS-013",
+        "entity_kind": "work",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPHYS-014",
+        "entity_kind": "work",
+        "subject_code": "GRP",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPIVOT-015A",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPIVOT-015B",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      },
+      {
+        "id": "WORK::T-OLYPIVOT-015C",
+        "entity_kind": "work",
+        "subject_code": "MIQ",
+        "overwrite": true
+      }
+    ]
+  }
+}
