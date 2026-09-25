@@ -1,0 +1,1 @@
+{"stable_id":"scheduled-persist-canary-001","envelope":{"kind":"LEARNING_SIGNAL","source":"SCHEDULED_PERSIST_CANARY","payload":{"evidence_kind":"INTEGRITY","gap_type":"TOOL","topic_id":"engineering.scheduled_persistence_relay","evidence":"scheduled GitHub persistence relay canary"}}}
