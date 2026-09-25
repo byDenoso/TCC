@@ -410,7 +410,6 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         status["thoughts"] = (_read(root, THOUGHTS_DOC).get("entries") or [])[-40:]
         status["genome"]["lineage"] = genome.get("lineage") or []
         status["genome"]["fitness"] = (genome.get("fitness") or [])[-120:]
-        reviewed = [t for t in positive if t.get("review_state")]
-        status["reviews"] = {s: sum(1 for t in reviewed if t.get("review_state") == s)
+        status["reviews"] = {s: sum(1 for t in positive if (t.get("review_state") or "PENDING_REVIEW") == s)
                              for s in ("PENDING_REVIEW", "CONTESTED", "REFEREE1_PASSED", "CONFIRMED", "REFUTED")}
     return status
