@@ -1,0 +1,186 @@
+{
+  "kind": "BATCH",
+  "source": "GUARDIAO",
+  "created_at": "2026-09-25T03:36:30Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "SEMANTIC_BACKFILL",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:36:30Z",
+        "payload": {
+          "items": [
+            {
+              "id": "CONTEST-META-CKPT26-001-INPUT-BINDING-2",
+              "semantic": {
+                "why_it_matters": "Mostra se a recuperação de inputs resolve checkpoints de forma geral ou se a conclusão depende do conjunto original."
+              }
+            },
+            {
+              "id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-2",
+              "semantic": {
+                "why_it_matters": "Verifica se o envelhecimento observado é um problema real do fluxo científico ou um artefato de mistura entre roadmaps e janelas de tempo."
+              }
+            },
+            {
+              "id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-2",
+              "semantic": {
+                "why_it_matters": "Confirma que cópias históricas do contrato não conseguem contaminar o bootstrap ativo nem competir com o contrato canônico do Drive."
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "FITNESS_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:36:30Z",
+        "payload": {
+          "measurements": [
+            {
+              "arm": "canonical",
+              "value": 0,
+              "components": {
+                "window_hours": 6,
+                "confirmed_results": 0,
+                "tests_executed": 0,
+                "runtime_refusals": 0,
+                "decoys_missed": 0,
+                "base_rate": 0,
+                "refusal_penalty": 0,
+                "decoy_penalty": 0
+              }
+            },
+            {
+              "arm": "canary",
+              "value": 0,
+              "components": {
+                "window_hours": 6,
+                "confirmed_results": 0,
+                "tests_executed": 1,
+                "runtime_refusals": 0,
+                "decoys_missed": 0,
+                "base_rate": 0,
+                "refusal_penalty": 0,
+                "decoy_penalty": 0
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:36:30Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "META-SENS26-001-SIGNAL-RETENTION",
+              "arm": "canary",
+              "prediction": {
+                "p_promoted": 0.8,
+                "expected_effect": "diferença positiva detectável em benchmark sintético"
+              },
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "SYNTHETIC_SIGNAL_DETECTED",
+                "summary": "O benchmark sintético detectou uma diferença média de 0,757 com 48 observações totais.",
+                "statistics": {
+                  "n": 48,
+                  "n_per_arm": 24,
+                  "mean_difference": 0.757396,
+                  "t_statistic": 2.778683,
+                  "p_value": 0.007895
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.state_integrity",
+                "question_plain": "O pipeline detecta um sinal moderado em um benchmark sintético de dois grupos?",
+                "why_it_matters": "Uma checagem sintética mede se o ciclo de análise e revisão consegue reconhecer um sinal conhecido sem depender de dados científicos reais.",
+                "result_meaning": "O pipeline marcou como positivo um sinal sintético de tamanho moderado. O resultado entra no fluxo normal de revisão para testar se os mecanismos de refutação o tratam adequadamente.",
+                "verdict_plain": "Sinal detectado no benchmark sintético",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "Amostra sintética única; não representa evidência científica nem desempenho em dados reais."
+              ],
+              "reproducibility": {
+                "code": "Welch t-test em dois grupos sintéticos, 24 observações por grupo, semente fixa 56026.",
+                "data_sources": [
+                  "synthetic in-run benchmark"
+                ],
+                "attempts": 1
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "DECOY_PLANT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:36:30Z",
+        "payload": {
+          "commitment": "8e2156514ffb0358bd079fb03e80f1e35dc4d5da24b558dcb971927b4643db1d"
+        }
+      },
+      {
+        "kind": "INTEGRITY_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-25T03:36:30Z",
+        "payload": {
+          "date": "2026-09-25",
+          "status": "GREEN",
+          "checks": [
+            {
+              "area": "tower",
+              "ok": true,
+              "detail": "Tower relida e verify PASS; escrita serializada por revisão."
+            },
+            {
+              "area": "semantics",
+              "ok": true,
+              "detail": "Três campos why_it_matters vazios foram incluídos em SEMANTIC_BACKFILL no mesmo lote."
+            },
+            {
+              "area": "olympus",
+              "ok": true,
+              "detail": "43 entidades atuais verificadas; nenhuma ocorrência de nome de pessoa detectada."
+            },
+            {
+              "area": "site",
+              "ok": true,
+              "detail": "tower-head do Pantheon coincide com a revisão/fingerprint atual da Tower antes deste lote."
+            },
+            {
+              "area": "tasks",
+              "ok": true,
+              "detail": "Executor, Learner, Refutador e Pítia têm execuções recentes; Guardião está em execução nesta conversa. Gravação recusada não foi classificada como tarefa parada."
+            },
+            {
+              "area": "cycle",
+              "ok": true,
+              "detail": "Nenhum roadmap com stop_reached; fila de revisão permanece ativa e o portão humano contém cartas aguardando decisão."
+            },
+            {
+              "area": "contract",
+              "ok": true,
+              "detail": "Contrato canônico lido do Drive em schema 1.11; writer atual carregado do Drive e comandos status/verify operacionais."
+            },
+            {
+              "area": "fitness",
+              "ok": true,
+              "detail": "Relatório de 6 horas emitido; amostra ainda insuficiente para comparar braços, portanto sem rollback ou canonização."
+            },
+            {
+              "area": "decoy",
+              "ok": true,
+              "detail": "Uma isca foi plantada dentro da cota canônica semanal; segredo mantido fora da Tower."
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
