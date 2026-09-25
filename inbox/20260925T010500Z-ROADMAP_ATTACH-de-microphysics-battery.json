@@ -1,0 +1,33 @@
+{
+  "kind": "ROADMAP_ATTACH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-25T01:05:00Z",
+  "payload": {
+    "items": [
+      {
+        "test_id": "T-DEM26-001",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-DEM26-002",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-DEM26-003",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-DEM26-004",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-DEM26-005",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      },
+      {
+        "test_id": "T-DEM26-006",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1"
+      }
+    ]
+  }
+}
