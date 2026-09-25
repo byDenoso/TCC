@@ -1,0 +1,158 @@
+{
+ "kind": "BATCH",
+ "source": "CHATGPT",
+ "created_at": "2026-09-25T04:05:00Z",
+ "payload": {
+  "items": [
+   {
+    "kind": "HYPOTHESIS_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T04:05:00Z",
+    "payload": {
+     "test_id": "META-READY26-001-EXECUTABLE-READINESS",
+     "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+     "question": "O rótulo READY prevê prontidão executável real ou mistura testes executáveis com testes ainda dependentes de binding/adapters?",
+     "hypothesis": {
+      "id": "HYP-META-READY-EXECUTABILITY-20260925",
+      "statement": "Testes READY com dependências explícitas não resolvidas têm probabilidade materialmente menor de produzir resultado no pulso seguinte do Executor do que READY sem essas dependências.",
+      "model": "Testes READY com dependências explícitas não resolvidas têm probabilidade materialmente menor de produzir resultado no pulso seguinte do Executor do que READY sem essas dependências.",
+      "baseline": "O estado READY já separa adequadamente prontidão lógica de prontidão executável; dependências explícitas não reduzem materialmente a taxa de resultado no pulso seguinte.",
+      "falsification_criterion": "REJECTED se houver >=5 casos totais e a diferença absoluta for <10 pontos percentuais ou favorecer o grupo com dependência; demais casos INCONCLUSIVE."
+     },
+     "null": "O estado READY já separa adequadamente prontidão lógica de prontidão executável; dependências explícitas não reduzem materialmente a taxa de resultado no pulso seguinte.",
+     "rival": "READY é permissivo: dependências de dados, binding ou adapter ainda abertas predizem checkpoint/falha de execução no pulso seguinte.",
+     "method": "Construir coorte histórica de testes que entraram em READY; congelar o primeiro pulso do Executor após READY como janela. Classificar dependência explícita antes do pulso e comparar RESULT vs não-RESULT entre grupos, com mínimo de 5 casos por grupo quando disponível.",
+     "data": "Histórico canônico da Tower: transições de estado, checkpoints, runs e resultados; sem conteúdo Olympus.",
+     "success_criteria": "CONFIRMED/PROMOTED se houver >=5 casos totais, pelo menos 2 em cada grupo, e a taxa de RESULT no pulso seguinte for >=30 pontos percentuais menor no grupo com dependência explícita.",
+     "kill_criteria": "REJECTED se houver >=5 casos totais e a diferença absoluta for <10 pontos percentuais ou favorecer o grupo com dependência; demais casos INCONCLUSIVE.",
+     "claim_boundary": "Mede valor preditivo operacional do rótulo READY e de dependências explícitas no histórico observado; não altera o Writer, contrato ou semântica do estado.",
+     "priority": "P1",
+     "origin_kind": "PITIA_THOUGHT",
+     "prior_art": {
+      "refs": [
+       "arXiv:2503.22365",
+       "arXiv:2605.07238"
+      ],
+      "verdict": "EXTEND"
+     },
+     "rank_rubric": {
+      "custo_inverso": 0.9,
+      "impacto_no_roadmap": 0.85,
+      "novidade": 0.75,
+      "testabilidade": 0.9
+     },
+     "rank_score": 0.845,
+     "linked_signal_ids": [],
+     "semantic": {
+      "domain_id": "engineering",
+      "subdomain_id": "engineering.nexo_runtime",
+      "topic_id": "engineering.nexo_runtime.execution_readiness",
+      "question_plain": "READY quer dizer que o teste realmente consegue rodar no próximo pulso?",
+      "why_it_matters": "Se READY mistura trabalho executável com dependências abertas, a fila parece saudável enquanto desperdiça pulsos do Executor."
+     },
+     "prediction": "READY com dependência explícita terá taxa de RESULT no pulso seguinte pelo menos 30 p.p. menor."
+    }
+   },
+   {
+    "kind": "HYPOTHESIS_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T04:05:00Z",
+    "payload": {
+     "test_id": "T-XAREA26-001-DDE-H0-COHERENT-TRANSITION",
+     "roadmap_id": "RM-DDE-ANOMALIES-MEGA-20260922-V1",
+     "question": "Uma transição tardia na expansão aparece de forma coerente em DESI+SN e na reconstrução de H0(z), ou cada sinal escolhe uma escala de redshift diferente?",
+     "hypothesis": {
+      "id": "HYP-XAREA-DDE-H0-COHERENCE-20260925",
+      "statement": "Se a preferência por energia escura dinâmica e a tensão de H0 compartilham física tardia, reconstruções independentes devem localizar uma mudança compatível em redshift dentro das incertezas.",
+      "model": "Se a preferência por energia escura dinâmica e a tensão de H0 compartilham física tardia, reconstruções independentes devem localizar uma mudança compatível em redshift dentro das incertezas.",
+      "baseline": "As escalas de transição inferidas por DESI+SN e por H0(z) são incompatíveis; a aparente conexão é coincidência, degenerescência ou sistemática de catálogo.",
+      "falsification_criterion": "REJECTED se os intervalos de 95% de z_t não se sobrepuserem ou se a coerência desaparecer em 2 de 3 catálogos; demais casos INCONCLUSIVE."
+     },
+     "null": "As escalas de transição inferidas por DESI+SN e por H0(z) são incompatíveis; a aparente conexão é coincidência, degenerescência ou sistemática de catálogo.",
+     "rival": "Uma única alteração tardia na história de expansão produz transições compatíveis em BAO+SN e em uma reconstrução independente de H0(z).",
+     "method": "Fazer duas reconstruções separadas e cegas da posição de mudança: (A) DESI DR2 BAO + SN com expansão flexível; (B) medidas de H0/distância em bins sem usar o mesmo termo de transição. Comparar posterior de z_t e repetir entre Pantheon+, Union3 e DES-SN5YR.",
+     "data": "DESI DR2 BAO, Pantheon+, Union3, DES-SN5YR e compilação pública de medidas tardias de distância/H0; análises independentes por construção.",
+     "success_criteria": "PROMOTED se os intervalos de 68% de z_t das duas reconstruções se sobrepuserem e o sinal persistir em pelo menos 2 de 3 catálogos SN, com ΔBIC<=-6 ou evidência equivalente em cada reconstrução.",
+     "kill_criteria": "REJECTED se os intervalos de 95% de z_t não se sobrepuserem ou se a coerência desaparecer em 2 de 3 catálogos; demais casos INCONCLUSIVE.",
+     "claim_boundary": "Testa coerência de escala de redshift entre duas áreas; não demonstra mecanismo microfísico nem resolve H0 por si só.",
+     "priority": "P1",
+     "origin_kind": "CROSS_AREA",
+     "prior_art": {
+      "refs": [
+       "arXiv:2510.14390",
+       "arXiv:2505.22369",
+       "arXiv:2503.21600"
+      ],
+      "verdict": "EXTEND"
+     },
+     "rank_rubric": {
+      "custo_inverso": 0.55,
+      "impacto_no_roadmap": 0.9,
+      "novidade": 0.8,
+      "testabilidade": 0.75
+     },
+     "rank_score": 0.755,
+     "linked_signal_ids": [],
+     "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.cross_area",
+      "topic_id": "science.cosmology.cross_area.dark_energy_h0",
+      "question_plain": "A possível mudança da energia escura acontece na mesma época cósmica em que a reconstrução de H0 muda?",
+      "why_it_matters": "Uma escala de transição comum seria uma assinatura mais difícil de atribuir a uma única sistemática de catálogo."
+     },
+     "prediction": "Se houver física tardia comum, as duas reconstruções localizarão z_t compatível e a compatibilidade sobreviverá a pelo menos dois catálogos SN."
+    }
+   },
+   {
+    "kind": "HYPOTHESIS_PROPOSAL",
+    "source": "CHATGPT",
+    "created_at": "2026-09-25T04:05:00Z",
+    "payload": {
+     "test_id": "DMN26-007-ROTATION-DIVERSITY-HOLDOUT",
+     "roadmap_id": "RM-DARK-MATTER-NATURE-20260923-V1",
+     "question": "A diversidade extrema das curvas de rotação de anãs continua excedendo ΛCDM+bárions quando o teste é feito em holdout com movimentos não circulares modelados?",
+     "hypothesis": {
+      "id": "HYP-DMN26-007-ROTATION-DIVERSITY-HOLDOUT",
+      "statement": "Depois de controlar massa, tamanho do disco e movimentos não circulares, os extremos observados de forma da curva de rotação ainda são mais frequentes que em simulações ΛCDM hidrodinâmicas em um conjunto holdout.",
+      "model": "Depois de controlar massa, tamanho do disco e movimentos não circulares, os extremos observados de forma da curva de rotação ainda são mais frequentes que em simulações ΛCDM hidrodinâmicas em um conjunto holdout.",
+      "baseline": "ΛCDM+bárions e efeitos cinemáticos reproduzem a frequência e a amplitude da diversidade observada em holdout.",
+      "falsification_criterion": "REJECTED se p>=0,1 em qualquer variante principal ou se o excesso desaparecer após pareamento bariônico; demais casos INCONCLUSIVE."
+     },
+     "null": "ΛCDM+bárions e efeitos cinemáticos reproduzem a frequência e a amplitude da diversidade observada em holdout.",
+     "rival": "Uma discrepância residual de diversidade em holdout favorece física de halo adicional, como autointeração, sem identificar ainda o modelo correto.",
+     "method": "Pré-definir uma métrica de forma da curva em raio interno normalizado, ajustar nuisances cinemáticas em amostra de treino e comparar apenas a distribuição holdout observada com mocks ΛCDM hidrodinâmicos pareados em Vmax, massa estelar e tamanho. Repetir com e sem correção de movimentos não circulares.",
+     "data": "Curvas de rotação públicas de galáxias anãs e suites públicas ΛCDM hidrodinâmicas/mocks adequados; split treino/holdout congelado antes do ajuste final.",
+     "success_criteria": "PROMOTED se a cauda de diversidade holdout observada exceder o envelope ΛCDM a p<0,01 em ambas as variantes cinemáticas e o efeito permanecer após pareamento das propriedades bariônicas.",
+     "kill_criteria": "REJECTED se p>=0,1 em qualquer variante principal ou se o excesso desaparecer após pareamento bariônico; demais casos INCONCLUSIVE.",
+     "claim_boundary": "Restringe a suficiência de ΛCDM+bárions para diversidade cinemática de anãs; não identifica SIDM, WDM ou outra microfísica específica.",
+     "priority": "P1",
+     "origin_kind": "COLD_AREA",
+     "prior_art": {
+      "refs": [
+       "arXiv:2510.11800",
+       "arXiv:2203.16652",
+       "arXiv:1706.07478"
+      ],
+      "verdict": "EXTEND"
+     },
+     "rank_rubric": {
+      "custo_inverso": 0.6,
+      "impacto_no_roadmap": 0.8,
+      "novidade": 0.65,
+      "testabilidade": 0.7
+     },
+     "rank_score": 0.685,
+     "linked_signal_ids": [],
+     "semantic": {
+      "domain_id": "science",
+      "subdomain_id": "science.cosmology.dark_matter",
+      "topic_id": "science.cosmology.dark_matter.rotation_curve_diversity",
+      "question_plain": "As curvas de rotação mais estranhas das galáxias anãs continuam estranhas depois de modelar os efeitos bariônicos e cinemáticos conhecidos?",
+      "why_it_matters": "Se a cauda extrema sobreviver a um holdout limpo, ela vira evidência mais útil sobre a natureza da matéria escura; se sumir, evita transformar modelagem imperfeita em nova física."
+     },
+     "prediction": "A maior parte da diversidade será absorvida por bárions/cinemática, mas a cauda extrema poderá permanecer acima do envelope ΛCDM em holdout."
+    }
+   }
+  ]
+ }
+}
