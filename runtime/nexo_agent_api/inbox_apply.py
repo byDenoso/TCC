@@ -536,6 +536,8 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         if kind in _EVOLUTION:
             requests = _EVOLUTION[kind](item, body, root)
             # Nothing to do (duplicate, spine gene, closed roadmap...) -> keep the proposal as a record, never fail.
+            if not requests and kind == "BATTERY_STATUS":
+                return []  # re-collected battery already applied: silent no-op (robot polls every 15 min)
             return requests or _record_request(item, body, f"{kind}_NOOP")
         if kind == "OPERATOR_INTENT":
             gate = evolution.operator_requests(item, body, root)
