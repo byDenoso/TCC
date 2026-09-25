@@ -149,6 +149,17 @@ def main(argv: list[str]) -> int:
         github = _GitHubInbox(os.environ.get("NEXO_INBOX_GITHUB_TOKEN", "").strip())
         for entry in github.pending():
             items.append({**entry["payload"], "_inbox_name": entry["name"], "_inbox_id": "github:" + entry["path"]})
+        gateway_file = os.environ.get("NEXO_GATEWAY_ITEMS", "")
+        gateway_ids = []
+        if gateway_file and Path(gateway_file).is_file():
+            try:
+                gateway = json.loads(Path(gateway_file).read_text(encoding="utf-8")).get("items") or []
+            except ValueError:
+                gateway = []
+            for entry in gateway:
+                if isinstance(entry.get("envelope"), dict) and entry.get("id"):
+                    items.append({**entry["envelope"], "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + entry["id"]})
+                    gateway_ids.append(entry["id"])
         if not items:
             print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
             return 0
@@ -191,7 +202,12 @@ def main(argv: list[str]) -> int:
                    "applied": len(report.get("applied", [])), "rejected": [r.get("item") for r in report.get("rejected", [])],
                    "write": report.get("write")}
         print(json.dumps(summary, ensure_ascii=False))
+        applied = {str(n) for n in report.get("applied", [])}
+        acked = [g for g in gateway_ids if f"gw-{g}" in applied or any(n.startswith(f"gw-{g}-") for n in applied)]
         out = os.environ.get("GITHUB_OUTPUT")
+        if out and acked and report.get("write"):
+            with open(out, "a", encoding="utf-8") as handle:
+                handle.write("gateway_applied=" + ",".join(acked) + chr(10))
         if out and report.get("write"):
             with open(out, "a", encoding="utf-8") as handle:
                 handle.write("tower_revision=" + str(report["write"]["state_fingerprint"]) + "\n")
