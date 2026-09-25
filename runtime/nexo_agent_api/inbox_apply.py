@@ -333,6 +333,29 @@ def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
 _BACKFILL_FIELDS = ("title", "subject_code", "question_plain")
 
 
+def _redact_names(current: dict[str, Any], names: list[Any], code: Any) -> dict[str, Any]:
+    """Privacy: replace person names by the subject code in every free-text field (titles, display_name,
+    source_ref, justifications...). Ids and version fields are never touched. Returns changed top-level keys."""
+    words = [str(n).strip() for n in names if len(str(n).strip()) >= 3]
+    if not words:
+        return {}
+    code = re.sub(r"[^A-Z0-9]", "", str(code or "").upper())[:4] or "OLY"
+    pattern = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(w) for w in words) + r")(?![a-z])", re.IGNORECASE)
+
+    def walk(value: Any, key: str) -> Any:
+        if key == "id" or key.endswith("_id") or key.endswith("_ids") or key in ("entity_version", "subject_code"):
+            return value
+        if isinstance(value, str):
+            return pattern.sub(code, value)
+        if isinstance(value, list):
+            return [walk(v, key) for v in value]
+        if isinstance(value, dict):
+            return {k: walk(v, k) for k, v in value.items()}
+        return value
+
+    return {k: new for k, v in current.items() if (new := walk(v, k)) != v}
+
+
 def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """SEMANTIC_BACKFILL: fill plain-language fields on EXISTING tests/hypotheses/lessons.
     Only empty semantic keys are filled unless the entry says overwrite=true; nothing else changes."""
@@ -358,6 +381,8 @@ def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -
             code = code if len(code) <= 4 else code[:3]
             if len(code) >= 2 and (entry.get("overwrite") or not current.get(field)):
                 changes[field] = code  # a short code, never a name
+        redacted = _redact_names(current, entry.get("redact_names") or [], entry.get("subject_code") or current.get("subject_code"))
+        changes.update({k: v for k, v in redacted.items() if k not in changes})
         if changes:
             requests.append({
                 "request_id": f"REQ-INBOX-BACKFILL-{_slug(entity_id)}-{index}",

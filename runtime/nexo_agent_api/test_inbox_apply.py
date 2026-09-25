@@ -92,3 +92,18 @@ class SiteFormatTests(unittest.TestCase):
             [hyp] = [r for r in requests if r.get("entity_kind") == "hypothesis"]
             self.assertEqual(hyp["entity_name"], "HYP-X")
             self.assertEqual(hyp["changes"]["falsification_criterion"], "b")
+
+
+class RedactTests(unittest.TestCase):
+    def test_backfill_redacts_names_in_legacy_fields_but_not_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = entity_path(root, "campaign", "CAMP-OLY-JOAO-1")
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({"id": "CAMP-OLY-JOAO-1", "entity_version": 2, "subject_code": "JOA",
+                                        "title": "Campanha do Joao", "meta": {"display_name": "JOAO SILVA", "source_ref": "x/joao.csv"}}))
+            [req] = proposal_to_requests({"kind": "SEMANTIC_BACKFILL", "payload": {"items": [
+                {"id": "CAMP-OLY-JOAO-1", "entity_kind": "campaign", "redact_names": ["Joao", "Silva"]}]}}, root)
+            self.assertEqual(req["changes"]["title"], "Campanha do JOA")
+            self.assertEqual(req["changes"]["meta"], {"display_name": "JOA JOA", "source_ref": "x/JOA.csv"})
+            self.assertNotIn("id", req["changes"])
