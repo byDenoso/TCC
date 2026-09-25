@@ -1,0 +1,16 @@
+{
+  "kind": "SEMANTIC_BACKFILL",
+  "source": "CHATGPT_TASK_EXECUTOR",
+  "created_at": "2026-09-25T01:37:54Z",
+  "payload": {
+    "items": [
+      {
+        "id": "T-LEARN26-004",
+        "entity_kind": "test",
+        "semantic": {
+          "verdict_plain": "Resultado registrado"
+        }
+      }
+    ]
+  }
+}
