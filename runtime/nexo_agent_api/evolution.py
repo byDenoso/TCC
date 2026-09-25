@@ -474,8 +474,15 @@ def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, 
     if charter.get("renewable") and charter.get("review_every_days") and days is not None:
         # Semi-permanent campaign: never closes on budget; asks Dener for a course review every N days.
         review_due = days >= int(charter["review_every_days"]) and days % int(charter["review_every_days"]) < 1
-    return {"roadmap_id": rid, "charter_status": charter.get("status"), "confirmed": confirmed,
+    lifecycle = [str(t.get("state") or t.get("status") or "").upper() for t in mine]
+    frontier_refs = roadmap.get("frontier_refs") if isinstance(roadmap.get("frontier_refs"), list) else []
+    return {"roadmap_id": rid, "campaign_id": roadmap.get("campaign_id"),
+            "state": roadmap.get("state") or roadmap.get("status"),
+            "charter_status": charter.get("status"), "confirmed": confirmed,
             "success_target": stop.get("success_confirmed"), "tests_used": len(executed), "max_tests": budget.get("max_tests"),
+            "tests_total": len(mine), "frontier_count": len(frontier_refs),
+            "ready": sum(1 for s in lifecycle if s == "READY"),
+            "resumable": sum(1 for s in lifecycle if s in {"RUNNING", "CHECKPOINTED"}),
             "days": days, "max_days": budget.get("max_days"), "refuted_streak": streak,
             "kill_streak": stop.get("kill_consecutive_refuted"), "stop_reached": reason,
             "renewable": bool(charter.get("renewable")), "review_due": review_due}
@@ -553,8 +560,11 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
                           or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
             "referee_2": [t["id"] for t in positive if t.get("review_state") == "REFEREE1_PASSED"],
         },
+        # Visibility is not a gate: every non-closed roadmap in the Tower is shown to tasks.
+        # charter_status remains explicit so gate semantics stay separate from execution visibility.
         "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps
-                     if (r.get("charter") or {}).get("status") == "CHARTERED"],
+                     if str((r.get("charter") or {}).get("status") or "").upper() != "CLOSED"
+                     and str(r.get("state") or r.get("status") or "").upper() != "CLOSED"],
         "genome": {"generation": int(genome.get("generation") or 0),
                    "genes": [{k: g.get(k) for k in ("id", "status", "canonical", "canary")} for g in genome.get("genes") or []]},
         "batteries": {s: sum(1 for x in _read(root, BATTERIES_DOC).get("batteries") or [] if x.get("status") == s)
