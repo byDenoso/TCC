@@ -1,0 +1,16 @@
+{
+  "kind": "LEARNING_SIGNAL",
+  "source": "DENER_CONVERSATION",
+  "created_at": "2026-09-25T15:12:00Z",
+  "payload": {
+    "evidence_kind": "INTEGRITY",
+    "gap_type": "TOOL",
+    "topic_id": "engineering.writer_ownership",
+    "evidence": "Scheduled ChatGPT automations do not own Tower byte writes. Persist proposals with read-back; the sole unattended Tower writer is byDenoso/Pantheon GitHub Actions workflow 'NEXO Writer robot', using the canonical writer, CAS and read-back. Guardiao audits and enqueues repairs but never writes Tower bytes.",
+    "semantic": {
+      "question_plain": "Quem deve escrever a Tower quando as automações agendadas não conseguem concluir a escrita?",
+      "result_meaning": "A escrita durável da Tower fica centralizada no Writer robot do GitHub Actions; tarefas agendadas apenas produzem propostas.",
+      "practical_decision": "Usar inbox -> GitHub Actions Writer -> CAS/read-back -> tower-head/ATLAS."
+    }
+  }
+}
