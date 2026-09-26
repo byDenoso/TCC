@@ -356,22 +356,45 @@ def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[s
 def _load_integrity(root: Path) -> dict[str, Any] | None:
     """Latest Guardião report (INTEGRITY_REPORT, or OPERATOR_INTENT carrying one) for the site's status strip."""
     folder = root / "entities" / "artifact"
-    best: tuple[str, dict[str, Any]] | None = None
+    best: tuple[str, dict[str, Any], int] | None = None
+    mapped_statuses = {
+        "PASS_WITH_PENDING_WRITER": ("writer", False),
+        "YELLOW_WRITER_LAG": ("writer", True),
+        "PASS_WITH_RECOVERY_GAP": ("recovery", True),
+        "PERSISTED_INBOX_PENDING_WRITER": ("inbox", True),
+    }
     for path in folder.glob("*.json") if folder.is_dir() else []:
         record = _read_json(path) or {}
         payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
-        status = str(payload.get("status") or "").upper()
-        if status not in {"GREEN", "YELLOW", "RED"} or not isinstance(payload.get("checks"), list):
+        raw_status = str(payload.get("status") or "").upper()
+        if raw_status in {"GREEN", "YELLOW", "RED"}:
+            status = raw_status
+        elif raw_status in mapped_statuses:
+            status = "YELLOW"
+        else:
+            continue
+        raw_checks = payload.get("checks")
+        if isinstance(raw_checks, list):
+            checks = [check for check in raw_checks if isinstance(check, dict)]
+            checks_total = len(checks)
+        elif isinstance(raw_checks, dict) and raw_checks and raw_status in mapped_statuses:
+            # New reports use keyed diagnostic maps. Publish only one aggregate
+            # outcome for known states; retain only the count because raw values
+            # may contain private details and correlated findings.
+            area, failed = mapped_statuses[raw_status]
+            checks = [{"area": area, "ok": not failed}]
+            checks_total = len(raw_checks)
+        else:
             continue
         stamp = str(record.get("created_at") or payload.get("date") or "")
         if best is None or stamp > best[0]:
-            best = (stamp, payload)
+            best = (stamp, {"status": status, "checks": checks}, checks_total)
     if not best:
         return None
-    checks = [c for c in best[1]["checks"] if isinstance(c, dict)]
+    checks = best[1]["checks"]
     failing = [str(c.get("area") or "") for c in checks if c.get("ok") is False]
-    return {"status": str(best[1]["status"]).upper(), "checked_at": best[0],
-            "checks_total": len(checks), "checks_failing": len(failing), "failing_areas": failing[:8]}
+    return {"status": best[1]["status"], "checked_at": best[0],
+            "checks_total": best[2], "checks_failing": len(failing), "failing_areas": failing[:8]}
 
 
 def _load_evolution(root: Path) -> dict[str, Any] | None:
@@ -760,3 +783,4 @@ def _pseudonymize_private(content: dict[str, Any], tests: dict[str, dict], campa
         return value
 
     return scrub(content)
+
