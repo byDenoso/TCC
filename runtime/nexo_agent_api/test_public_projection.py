@@ -170,6 +170,45 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"private_runner_token_hint" not in raw
     assert b"never publish this" not in raw
 
+
+def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
+    cases = (
+        ("PASS_WITH_PENDING_WRITER", 0, []),
+        ("YELLOW_WRITER_LAG", 1, ["writer"]),
+        ("PASS_WITH_RECOVERY_GAP", 1, ["recovery"]),
+        ("PERSISTED_INBOX_PENDING_WRITER", 1, ["inbox"]),
+    )
+    for index, (status, failing, areas) in enumerate(cases):
+        root = _tower(tmp_path / str(index))
+        artifact_dir = root / "entities" / "artifact"
+        artifact_dir.mkdir()
+        report = {
+            "created_at": f"2026-09-26T14:{index:02d}:00Z",
+            "payload": {
+                "status": status,
+                "checks": {
+                    "tower_write_readback": "PENDING_NEXT_WRITER",
+                    "durable_unapplied_count_min": 1,
+                    "private_diagnostic": "must never be published",
+                },
+            },
+        }
+        (artifact_dir / "report.json").write_text(json.dumps(report), encoding="utf-8")
+
+        projection = _build(root)
+        integrity = projection["integrity"]
+        assert integrity == {
+            "status": "YELLOW",
+            "checked_at": report["created_at"],
+            "checks_total": len(report["payload"]["checks"]),
+            "checks_failing": failing,
+            "failing_areas": areas,
+        }
+        raw = projection_bytes(projection)
+        assert b"PENDING_NEXT_WRITER" not in raw
+        assert b"must never be published" not in raw
+
+
 def test_campaigns_are_first_class_and_publish_source_links_without_leaking_roadmap(tmp_path):
     root = _tower(tmp_path)
     roadmap = {
@@ -381,3 +420,4 @@ def test_interdomain_relations_are_projected_as_learning_filaments(tmp_path):
             "via": "LEARNING_INTERDOMAIN",
         }
     ]
+
