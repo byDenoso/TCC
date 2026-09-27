@@ -1,0 +1,10 @@
+{
+  "kind": "OPERATOR_INTENT",
+  "source": "DENER",
+  "created_at": "2026-09-27T14:37:01Z",
+  "payload": {
+    "action": "APPROVE_CHARTER",
+    "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+    "reason": "Colocar este roadmap na fila executável para o Executor começar a trabalhar nos testes."
+  }
+}
