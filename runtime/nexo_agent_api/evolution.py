@@ -33,6 +33,7 @@ GENOME_DOC = "evolution/genome.json"
 THOUGHTS_DOC = "evolution/thoughts.json"
 DECOYS_DOC = "evolution/decoys.json"
 BATTERIES_DOC = "evolution/batteries.json"
+INCIDENTS_DOC = "evolution/incidents.json"
 MAX_BATTERY_TESTS = 20
 
 
@@ -113,7 +114,9 @@ def charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
 
 
 def _gate_is_dener(item: dict[str, Any], body: dict[str, Any]) -> bool:
-    return "DENER" in {str(item.get("source") or "").upper(), str(body.get("approved_by") or "").upper()}
+    # Gate authority comes from the envelope source, never from a field an
+    # unattended task could self-assert inside the payload.
+    return str(item.get("source") or "").upper() == "DENER"
 
 
 def operator_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]] | None:
@@ -148,13 +151,20 @@ def operator_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     if not current or current.get("status") != "CANARY":
         return None
     if action == "REJECT_CANARY":
-        return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None, "last_decision": {"action": "REJECTED", "at": at}}]},
+        return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None,
+                                               "incident_id": None, "canary_id": None,
+                                               "last_decision": {"action": "REJECTED", "at": at,
+                                                                 "incident_id": current.get("incident_id"),
+                                                                 "canary_id": current.get("canary_id")}}]},
                      f"REQ-GENE-REJECT-{gene}", {"genes": "id"})]
     generation = int(genome.get("generation") or 0) + 1
     return [_doc(GENOME_DOC, {
         "generation": generation,
         "genes": [{"id": gene, "status": "CANONICAL", "canonical": current.get("canary"), "canary": None,
-                   "last_decision": {"action": "CANONIZED", "at": at, "generation": generation}}],
+                   "incident_id": None, "canary_id": None,
+                   "last_decision": {"action": "CANONIZED", "at": at, "generation": generation,
+                                     "incident_id": current.get("incident_id"),
+                                     "canary_id": current.get("canary_id")}}],
         "lineage": (genome.get("lineage") or []) + [{"generation": generation, "gene": gene, "from": current.get("canonical"),
                                                      "to": current.get("canary"), "at": at, "rationale": current.get("rationale"),
                                                      "evidence": body.get("evidence")}],
@@ -192,9 +202,11 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
         attack_id = str(attack.get("test_id") or f"CONTEST-{test_id}-{len(contests) + 1}")
         requests += hypothesis_fn(item, {**attack, "test_id": attack_id, "contests_test_id": test_id,
                                          "roadmap_id": attack.get("roadmap_id") or current.get("roadmap_id"),
+                                         "incident_id": current.get("incident_id"),
                                          "priority": "P0"}, root)
     entry = {"n": len(contests) + 1, "by": str(body.get("source") or body.get("referee") or "REFEREE_1").upper(),
-             "reason": body.get("reason"), "contest_test_id": attack_id, "at": _now(item), "refs": body.get("refs")}
+             "reason": body.get("reason"), "contest_test_id": attack_id, "incident_id": current.get("incident_id"),
+             "at": _now(item), "refs": body.get("refs")}
     update = _test_update(root, test_id, {"review_state": "CONTESTED", "contests": contests + [entry]},
                           f"REQ-CONTEST-{test_id}-{len(contests) + 1}", "RESULT_CONTESTED")
     return requests + ([update] if update else [])
@@ -236,6 +248,11 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     gene = str(body.get("gene") or "").strip()
     if not gene or _spine(gene):
         return []  # the spine is not evolvable; the caller records the proposal as a recommendation
+    incident_id = resolve_incident_id(root, body.get("incident_id"), refs=body.get("refs") or [])
+    if body.get("incident_id") and not incident_id:
+        return []  # never attach a canary to an ungrounded incident id
+    if incident_id and not incident_confirmed(root, incident_id):
+        return []  # causal canaries require an actually CONFIRMED test, never a declared state
     genome = _read(root, GENOME_DOC)
     current = next((g for g in genome.get("genes") or [] if g.get("id") == gene), None)
     if current and current.get("status") == "CANARY":
@@ -252,6 +269,11 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     entry = {"id": gene, "status": "CANARY", "canary": body.get("value"), "canary_since": _now(item),
              "rationale": body.get("rationale"), "refs": body.get("refs") or [], "proposed_by": item.get("source") or body.get("proposed_by"),
              "metric": body.get("metric") or "confirmed_per_test", "scope": body.get("scope") or "GLOBAL"}
+    if incident_id:
+        seed = json.dumps({"gene": gene, "incident_id": incident_id, "value": body.get("value")},
+                          ensure_ascii=False, sort_keys=True, default=str)
+        entry["incident_id"] = incident_id
+        entry["canary_id"] = "CANARY-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:12].upper()
     if not current:
         entry["canonical"] = body.get("current_value")
     merge: dict[str, Any] = {"genes": [entry]}
@@ -267,18 +289,32 @@ def rollback_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     if not current or current.get("status") != "CANARY":
         return []
     history = list(current.get("rolled_back") or []) + [{"value": current.get("canary"), "at": _now(item), "reason": body.get("reason"),
-                                                        "fitness": body.get("fitness")}]
-    return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None, "rolled_back": history}]},
+                                                        "fitness": body.get("fitness"),
+                                                        "incident_id": current.get("incident_id"),
+                                                        "canary_id": current.get("canary_id")}]
+    return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None,
+                                         "incident_id": None, "canary_id": None, "rolled_back": history}]},
                  f"REQ-GENE-ROLLBACK-{gene}-{_now(item)[:13]}", {"genes": "id"})]
 
 
 def fitness_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     genome = _read(root, GENOME_DOC)
-    rows = [dict(m, at=_now(item), generation=int(genome.get("generation") or 0))
-            for m in body.get("measurements") or [] if isinstance(m, dict)]
+    genes = {str(g.get("id")): g for g in genome.get("genes") or [] if isinstance(g, dict) and g.get("id")}
+
+    def enrich(measurement: dict[str, Any]) -> dict[str, Any]:
+        row = dict(measurement, at=_now(item), generation=int(genome.get("generation") or 0))
+        gene = genes.get(str(row.get("gene") or ""))
+        if gene and gene.get("status") == "CANARY":
+            if gene.get("incident_id"):
+                row.setdefault("incident_id", gene.get("incident_id"))
+            if gene.get("canary_id"):
+                row.setdefault("canary_id", gene.get("canary_id"))
+        return row
+
+    rows = [enrich(m) for m in body.get("measurements") or [] if isinstance(m, dict)]
     if body.get("value") is not None:
-        rows.append({"arm": body.get("arm") or "canonical", "value": body.get("value"), "components": body.get("components"),
-                     "at": _now(item), "generation": int(genome.get("generation") or 0)})
+        rows.append(enrich({"gene": body.get("gene"), "arm": body.get("arm") or "canonical",
+                            "value": body.get("value"), "components": body.get("components")}))
     if not rows:
         return []
     return [_doc(GENOME_DOC, {"fitness": (genome.get("fitness") or [])[-500:] + rows}, f"REQ-FITNESS-{_now(item)[:16]}")]
@@ -540,6 +576,292 @@ def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, 
     return sorted(result, key=lambda cluster: (-cluster["occurrences"], cluster["code"]))[:20]
 
 
+
+def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """Repeated automation LEARNING_SIGNALs -> deterministic private incident candidates.
+
+    Opening is evidence driven: at least two distinct artifacts must carry the
+    same stable code *and* the same explicit topic_id. Clock/stale pressure is
+    deliberately not an input here.
+    """
+    tests = tests or _tests(root)
+    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    folder = root / "entities" / "artifact"
+    for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(record, dict) or str(record.get("kind") or "").upper() != "LEARNING_SIGNAL":
+            continue
+        source = str(record.get("source") or "").strip().upper()
+        if source not in _AUTOMATION_SIGNAL_SOURCES:
+            continue
+        payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
+        signals = payload.get("signals") if isinstance(payload.get("signals"), list) else []
+        artifact_id = str(record.get("id") or path.stem)
+        stamp = str(record.get("created_at") or payload.get("created_at") or "")
+        try:
+            parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+            parsed = parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+            stamp = parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except ValueError:
+            stamp = ""
+        seen_here: set[tuple[str, str]] = set()
+        for signal in signals:
+            if not isinstance(signal, dict):
+                continue
+            raw_code = signal.get("code") or signal.get("signal_code")
+            semantic = signal.get("semantic") if isinstance(signal.get("semantic"), dict) else {}
+            raw_topic = signal.get("topic_id") or semantic.get("topic_id")
+            if not isinstance(raw_code, str) or not isinstance(raw_topic, str):
+                continue
+            code = raw_code.strip().upper()
+            topic_id = raw_topic.strip().lower()
+            if not 3 <= len(code) <= 80 or any(char not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for char in code):
+                continue
+            if not 3 <= len(topic_id) <= 160 or any(char not in "abcdefghijklmnopqrstuvwxyz0123456789_.:-" for char in topic_id):
+                continue
+            key = (code, topic_id)
+            if key in seen_here:
+                continue  # one artifact is one independent observation at most
+            seen_here.add(key)
+            digest = hashlib.sha256((code + "\n" + topic_id).encode("utf-8")).hexdigest()[:16].upper()
+            group = groups.setdefault(key, {
+                "incident_id": "INC-" + digest,
+                "signal_code": code,
+                "topic_id": topic_id,
+                "evidence_refs": set(),
+                "source_roles": set(),
+                "signal_test_ids": set(),
+                "timestamps": set(),
+                "private": False,
+            })
+            group["evidence_refs"].add(artifact_id)
+            group["source_roles"].add(source)
+            if stamp:
+                group["timestamps"].add(stamp)
+            single_test = signal.get("test_id")
+            if single_test:
+                group["signal_test_ids"].add(str(single_test))
+            many_tests = signal.get("test_ids")
+            if isinstance(many_tests, list):
+                group["signal_test_ids"].update(str(test_id) for test_id in many_tests if test_id)
+            resolved = resolve_semantic({"semantic": {**semantic, "topic_id": raw_topic}}, entity_id=artifact_id)
+            group["private"] = bool(group["private"] or record.get("private") or signal.get("private")
+                                    or is_private(semantic) or is_private(resolved))
+    candidates = []
+    for group in groups.values():
+        evidence = sorted(group["evidence_refs"])
+        if len(evidence) < 2:
+            continue
+        stamps = sorted(group["timestamps"])
+        candidates.append({
+            "incident_id": group["incident_id"],
+            "signal_code": group["signal_code"],
+            "topic_id": group["topic_id"],
+            "evidence_count": len(evidence),
+            "evidence_refs": evidence,
+            "source_roles": sorted(group["source_roles"]),
+            "signal_test_ids": sorted(group["signal_test_ids"]),
+            "first_seen": stamps[0] if stamps else None,
+            "last_seen": stamps[-1] if stamps else None,
+            "private": bool(group["private"]),
+        })
+    return sorted(candidates, key=lambda incident: incident["incident_id"])
+
+
+def _incident_registry(root: Path) -> list[dict[str, Any]]:
+    return [item for item in _read(root, INCIDENTS_DOC).get("incidents") or [] if isinstance(item, dict)]
+
+
+def resolve_incident_id(root: Path, declared: Any = None, *, signal_refs: list[Any] | None = None,
+                        refs: list[Any] | None = None) -> str | None:
+    """Resolve an incident only from recurrent evidence or already-linked canonical entities."""
+    candidates = _incident_candidates(root)
+    known = {str(item.get("incident_id")) for item in candidates}
+    known.update(str(item.get("incident_id")) for item in _incident_registry(root) if item.get("incident_id"))
+    declared_id = str(declared or "").strip()
+    if declared_id:
+        return declared_id if declared_id in known else None
+
+    wanted_signals = {str(ref) for ref in signal_refs or [] if ref}
+    if wanted_signals:
+        matches = [item["incident_id"] for item in candidates if wanted_signals.intersection(item["evidence_refs"])]
+        if len(set(matches)) == 1:
+            return matches[0]
+
+    matches: set[str] = set()
+    for ref in refs or []:
+        ref_id = str(ref or "")
+        if ref_id in known:
+            matches.add(ref_id)
+            continue
+        for kind in ("test", "hypothesis", "lesson"):
+            entity = _entity(root, kind, ref_id)
+            if entity and entity.get("incident_id") in known:
+                matches.add(str(entity["incident_id"]))
+        for candidate in candidates:
+            if ref_id in candidate["evidence_refs"]:
+                matches.add(candidate["incident_id"])
+    return next(iter(matches)) if len(matches) == 1 else None
+
+
+def incident_confirmed(root: Path, incident_id: str) -> bool:
+    return any(test.get("incident_id") == incident_id and not test.get("contests_test_id")
+               and test.get("review_state") == "CONFIRMED" for test in _tests(root))
+
+
+def _entities(root: Path, kind: str) -> list[dict[str, Any]]:
+    folder = root / "entities" / kind
+    out: list[dict[str, Any]] = []
+    for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(value, dict):
+            out.append(value)
+    return out
+
+
+def _derived_incident(root: Path, candidate: dict[str, Any], tests: list[dict[str, Any]],
+                      genome: dict[str, Any]) -> dict[str, Any]:
+    incident_id = candidate["incident_id"]
+    related = [test for test in tests if test.get("incident_id") == incident_id]
+    primary = [test for test in related if not test.get("contests_test_id")]
+    contest_ids = sorted(str(test.get("id")) for test in related if test.get("contests_test_id") and test.get("id"))
+
+    hypothesis_ids = {str(test.get("hypothesis_id")) for test in related if test.get("hypothesis_id")}
+    for hypothesis in _entities(root, "hypothesis"):
+        if hypothesis.get("incident_id") == incident_id and hypothesis.get("id"):
+            hypothesis_ids.add(str(hypothesis["id"]))
+
+    test_ids = sorted(str(test.get("id")) for test in primary if test.get("id"))
+    related_test_ids = {str(test.get("id")) for test in related if test.get("id")}
+    lesson_ids: set[str] = set()
+    for lesson in _entities(root, "lesson"):
+        linked_incidents = {str(value) for value in lesson.get("linked_incident_ids") or []}
+        linked_tests = {str(value) for value in lesson.get("linked_test_ids") or []}
+        if (lesson.get("incident_id") == incident_id or incident_id in linked_incidents
+                or bool(related_test_ids.intersection(linked_tests))):
+            if lesson.get("id"):
+                lesson_ids.add(str(lesson["id"]))
+
+    canaries = [gene for gene in genome.get("genes") or []
+                if isinstance(gene, dict) and gene.get("status") == "CANARY" and gene.get("incident_id") == incident_id]
+    rolled_back = []
+    manual_decisions = []
+    for gene in genome.get("genes") or []:
+        if not isinstance(gene, dict):
+            continue
+        for event in gene.get("rolled_back") or []:
+            if isinstance(event, dict) and event.get("incident_id") == incident_id:
+                rolled_back.append(event)
+        decision = gene.get("last_decision") if isinstance(gene.get("last_decision"), dict) else {}
+        if decision.get("incident_id") == incident_id and decision.get("action") in {"CANONIZED", "REJECTED"}:
+            manual_decisions.append(decision)
+
+    review_states = {str(test.get("review_state") or "") for test in primary}
+    verdicts = {str(test.get("verdict") or "").upper() for test in primary}
+    if lesson_ids and (rolled_back or "REFUTED" in review_states or manual_decisions):
+        state = "CLOSED"
+    elif rolled_back:
+        state = "ROLLED_BACK"
+    elif canaries:
+        state = "CANARY"
+    elif "CONFIRMED" in review_states or manual_decisions:
+        state = "CONFIRMED"
+    elif "REFUTED" in review_states or bool(verdicts.intersection({"REJECTED", "FAILED", "FALSIFIED"})):
+        state = "REFUTED"
+    elif review_states.intersection({"PENDING_REVIEW", "CONTESTED", "REFEREE1_PASSED"}) or verdicts.intersection(POSITIVE_VERDICTS):
+        state = "REVIEWING"
+    elif any(test.get("prereg_hash") for test in primary):
+        state = "PREREGISTERED"
+    else:
+        state = "OBSERVED"
+
+    next_owner = {
+        "OBSERVED": "LEARNER",
+        "PREREGISTERED": "EXECUTOR",
+        "REVIEWING": "REFUTADOR",
+        "CONFIRMED": "LEARNER",
+        "REFUTED": "LEARNER",
+        "CANARY": "GUARDIAO",
+        "ROLLED_BACK": "LEARNER",
+        "CLOSED": "NONE",
+    }[state]
+    canary_ids = sorted(str(gene.get("canary_id")) for gene in canaries if gene.get("canary_id"))
+    rollback_ids = sorted(str(event.get("canary_id")) for event in rolled_back if event.get("canary_id"))
+    closed_at = None
+    if state == "CLOSED":
+        stamps = [str(event.get("at")) for event in rolled_back + manual_decisions if event.get("at")]
+        stamps += [str(lesson.get("updated_at")) for lesson in _entities(root, "lesson")
+                   if lesson.get("id") in lesson_ids and lesson.get("updated_at")]
+        closed_at = max(stamps) if stamps else candidate.get("last_seen")
+
+    return {
+        **candidate,
+        "state": state,
+        "next_owner": next_owner,
+        "hypothesis_ids": sorted(hypothesis_ids),
+        "test_ids": test_ids,
+        "contest_test_ids": contest_ids,
+        "lesson_ids": sorted(lesson_ids),
+        "canary_ids": sorted(set(canary_ids + rollback_ids)),
+        "closed_at": closed_at,
+    }
+
+
+def incident_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
+    """Materialize deterministic incident lifecycle state inside the private Tower."""
+    root = Path(root)
+    tests = _tests(root)
+    genome = _read(root, GENOME_DOC)
+    desired = [_derived_incident(root, candidate, tests, genome) for candidate in _incident_candidates(root, tests)]
+    current = {str(item.get("incident_id")): item for item in _incident_registry(root) if item.get("incident_id")}
+    updates = [item for item in desired if current.get(item["incident_id"]) != item]
+    if not updates:
+        return []
+    fingerprint = hashlib.sha256(json.dumps(updates, ensure_ascii=False, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+    return [_doc(INCIDENTS_DOC, {"incidents": updates}, "REQ-INCIDENT-RECONCILE-" + fingerprint,
+                 {"incidents": "incident_id"})]
+
+
+def _public_entity_ids(root: Path, kind: str, ids: list[Any]) -> list[str]:
+    safe = []
+    for raw_id in ids:
+        entity_id = str(raw_id or "")
+        entity = _entity(root, kind, entity_id)
+        if not entity or entity.get("private"):
+            continue
+        semantic = entity.get("semantic") if isinstance(entity.get("semantic"), dict) else {}
+        if is_private(semantic) or is_private(resolve_semantic(entity, entity_id=entity_id)):
+            continue
+        safe.append(entity_id)
+    return sorted(set(safe))
+
+
+def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out = []
+    for incident in incidents:
+        if incident.get("private"):
+            continue
+        out.append({
+            "incident_id": incident.get("incident_id"),
+            "state": incident.get("state"),
+            "evidence_count": int(incident.get("evidence_count") or 0),
+            "public_ids": {
+                "tests": _public_entity_ids(root, "test", incident.get("test_ids") or [])
+                         + _public_entity_ids(root, "test", incident.get("contest_test_ids") or []),
+                "hypotheses": _public_entity_ids(root, "hypothesis", incident.get("hypothesis_ids") or []),
+                "lessons": _public_entity_ids(root, "lesson", incident.get("lesson_ids") or []),
+            },
+            "next_owner": incident.get("next_owner"),
+        })
+    return sorted(out, key=lambda item: str(item.get("incident_id") or ""))
+
+
 def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, Any]], clock: bool = True) -> dict[str, Any]:
     rid = str(roadmap.get("roadmap_id") or roadmap.get("id") or "")
     charter = roadmap.get("charter") or {}
@@ -646,6 +968,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
     decoys = _read(root, DECOYS_DOC)
     revealed = decoys.get("revealed") or []
     positive = [t for t in tests if str(t.get("verdict") or "").upper() in POSITIVE_VERDICTS and not t.get("decoy")]
+    incidents = _incident_registry(root)
     status = {
         "arm_for_this_run": "canary" if now.hour % 2 else "canonical",
         "gate": {
@@ -673,11 +996,13 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
         "signal_clusters": _signal_clusters(root, tests),
+        "incidents": incidents,
     }
     if not public:
         status["emergence"] = _emergence(root, tests, genome, now)
     if public:
         status.pop("arm_for_this_run")
+        status["incidents"] = _public_incidents(root, incidents)
         status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
             "status", "question", "budget", "stop", "chartered_at", "closed_at", "close_reason", "rival_of")}}
             for r in roadmaps if r.get("charter")]
