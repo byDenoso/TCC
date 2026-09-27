@@ -339,17 +339,64 @@ def _derived_meaning(entity: dict[str, Any], result: dict[str, Any], verdict: An
 _PRIVATE_TEXT_FIELDS = ("title", "intuition", "explanation", "exercise", "mechanism", "method", "methodology", "datasets", "scientific_result", "statistics", "question", "semantic_description")
 
 
+def _short_public_title(value: Any, limit: int = 104) -> str | None:
+    """Compact a canonical plain-language question into a stable public label."""
+    if not isinstance(value, str):
+        return None
+    text = re.sub(r"\\s+", " ", value).strip()
+    if not text:
+        return None
+    if len(text) <= limit:
+        return text
+    shortened = text[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:")
+    return (shortened or text[: limit - 1]).rstrip() + "…"
+
+
+def _private_test_title(entity_id: Any) -> str | None:
+    """Safe Olympus label derived only from the technical id, never private free text."""
+    raw = str(entity_id or "").upper()
+    match = re.match(r"^T-(AVGPROB|OLYCAUSE|OLYPHYS|OLYPIVOT)-(.+)$", raw)
+    if not match:
+        return None
+    prefix, suffix = match.groups()
+    family = {
+        "AVGPROB": "probabilidade média",
+        "OLYCAUSE": "causas",
+        "OLYPHYS": "física",
+        "OLYPIVOT": "pivô",
+    }[prefix]
+    return f"Teste Olympus de {family} {suffix}"
+
+
 def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[str, Any]:
-    """Normalise lifecycle (status vs legacy state) and attach the semantic block."""
+    """Normalise lifecycle and preserve safe canonical human semantics."""
     lifecycle = projected.get("status") or projected.get("state")
     if lifecycle:
         projected["status"] = lifecycle
     projected["status_group"] = status_group(lifecycle)
     semantic = resolve_semantic(entity, entity_id=str(projected.get("id") or projected.get("campaign_id") or ""))
+    canonical_semantic = entity.get("semantic") if isinstance(entity.get("semantic"), dict) else {}
+    if not is_private(semantic):
+        for key in ("question_plain", "result_meaning", "why_it_matters", "verdict_plain", "confidence_plain"):
+            value = canonical_semantic.get(key)
+            if isinstance(value, str) and value.strip():
+                semantic[key] = value.strip()
+        if not projected.get("title"):
+            title = _short_public_title(semantic.get("question_plain"))
+            if title:
+                projected["title"] = title
     projected["semantic"] = semantic
     if is_private(semantic):
         for key in _PRIVATE_TEXT_FIELDS:
             projected.pop(key, None)
+        # Private hypothesis links deliberately do not enter the public graph: the
+        # canonical relation remains in the Tower but would otherwise dangle after
+        # private hypotheses are filtered from hypotheses[].
+        projected.pop("hypothesis_id", None)
+        projected.pop("hypothesis_ref", None)
+        safe_title = _private_test_title(projected.get("id"))
+        if safe_title:
+            projected["title"] = safe_title
         projected["private"] = True
     return projected
 
