@@ -42,19 +42,23 @@ Tópico novo na taxonomia = PR no TCC (contrato Git), não mutação da Tower.
 A/B/C se comunicam pelo bus privado já existente em `events/`, nunca por texto solto em relatório como substituto de estado.
 
 - Ler fila do próprio papel: `python scripts/nexo_tower.py handoff list --role <EXECUTOR|ADVISOR|LEARNER>`.
-- Ao assumir um item: `handoff ack <handoff_id> --role <papel>`.
-- Só depois de persistir a ação/resultados correspondentes com readback: `handoff done <handoff_id> --role <papel>`.
-- `handoff fail` é só para falha/blocker real; apenas o destinatário pode mudar PENDING → ACK → DONE/FAILED.
+- Ao assumir um item, marque o recebimento com `handoff ack <handoff_id> --role <papel>`. O código `ACK` significa apenas “recebi e assumi este trabalho”.
+- Só depois de persistir a ação ou resultado e confirmar pela releitura da Tower, use `handoff done <handoff_id> --role <papel>`. `DONE` significa “concluído e confirmado na fonte canônica”.
+- Use `handoff fail` apenas quando a execução realmente falhar ou houver bloqueio legítimo. `FAILED` significa “não foi possível concluir”. Somente o destinatário pode alterar esses estados técnicos.
 - Envio novo: grave um JSON privado e rode `python scripts/nexo_tower.py handoff create <arquivo.json>`.
   O envio material usa o mesmo writer lock, o mesmo file id canônico da Tower, CAS, readback e sinalização do ATLAS de `apply`.
 - `request_id` é chave idempotente estável: retry do MESMO envio reutiliza exatamente o mesmo `request_id`; conteúdo diferente exige novo `request_id`.
 - Campos obrigatórios do envelope: `request_id`, `from_role`, `to_role`, `handoff_type`, `entity_ref`, `thread_id`,
-  `summary_plain`, `why_it_matters`, `next_action`. Os três últimos são português simples, direto e acionável.
+  `summary_plain`, `why_it_matters`, `next_action`. Os três últimos são texto para leitura humana:
+  diga primeiro o fato concreto, depois por que isso importa e por fim a ação específica. Não copie IDs, códigos de estado
+  ou nomes internos de campos para esse texto. Se um termo técnico científico for necessário, explique-o em linguagem comum na mesma frase.
 - Opcionais: `objective_ref`, `confidence_plain`, `evidence_refs` estruturado, `source_links`,
-  `correlation_id`, `parent_handoff_id`.
+  `correlation_id`, `parent_handoff_id`. `confidence_plain` deve dizer em português o grau de confiança e a razão,
+  por exemplo “Confiança moderada porque a fonte mede X, mas ainda não testa Y”. Nunca use apenas rótulos como HIGH/LOW.
 - Cada `source_links[]` tem no mínimo `label`, `url`, `access_date`; quando vier de pesquisa pública, registre também,
   quando disponíveis, `publisher`, `authors`, `date`, `supports`, `uncertainty`, `next_test_impact`.
-- Handoffs ficam privados na Tower. Texto livre, URLs, `topic_id`, contexto causal e refs canônicas de handoff nunca são superfície pública do ATLAS.
+- Os repasses entre automações ficam privados na Tower. Texto livre, URLs, `topic_id`, contexto causal e refs canônicas
+  nunca são superfície pública do ATLAS. Os campos técnicos continuam existindo para rastreabilidade, mas não devem ser repetidos dentro do texto humano.
 - O runtime suprime da inbox trabalho que ficou stale/terminal ou mudou de owner; não ressuscite handoff antigo manualmente.
 
 ### Pesquisa pública direcionada
