@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import argparse
 import io
 import json
 import tempfile
@@ -65,6 +66,61 @@ class InboxApplyTests(unittest.TestCase):
         [request] = proposal_to_requests({"kind": "LEARNING_SIGNAL", "payload": {"signals": []}, "_inbox_name": "a b"}, self.root)
         self.assertEqual(request["entity_kind"], "artifact")
         self.assertEqual(request["entity_name"], "LEARNING_SIGNAL::A-B")
+
+    def test_private_drive_handoff_becomes_a_canonical_handoff_operation(self):
+        handoff = {
+            "request_id": "REQ-PRIVATE-INBOX-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::DARK-ENERGY",
+            "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
+            "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
+            "next_action": "Compare as previsões da fonte com o teste já planejado.",
+        }
+
+        [request] = proposal_to_requests({"kind": "HANDOFF", "_inbox_source": "DRIVE", "payload": handoff}, self.root)
+
+        self.assertEqual(request["nexo_operation"], "HANDOFF_CREATE")
+        self.assertEqual(request["handoff"], handoff)
+
+    def test_public_handoff_proposal_stays_in_inbox(self):
+        with self.assertRaisesRegex(ProposalError, "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"):
+            proposal_to_requests({
+                "kind": "HANDOFF",
+                "_inbox_source": "GITHUB",
+                "payload": {"request_id": "REQ-PUBLIC-HANDOFF"},
+            }, self.root)
+
+    def test_declared_drive_source_cannot_authorize_a_private_handoff(self):
+        with self.assertRaisesRegex(ProposalError, "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"):
+            proposal_to_requests({
+                "kind": "HANDOFF",
+                "source": "DRIVE",
+                "payload": {"request_id": "REQ-SPOOFED-PRIVATE-HANDOFF"},
+            }, self.root)
+
+    def test_private_drive_handoff_transition_becomes_a_canonical_transition_operation(self):
+        transition = {"handoff_id": "HO-EXISTING", "state": "ACK", "writer_role": "EXECUTOR"}
+
+        [request] = proposal_to_requests({
+            "kind": "HANDOFF_TRANSITION",
+            "_inbox_source": "DRIVE",
+            "payload": transition,
+        }, self.root)
+
+        self.assertEqual(request["nexo_operation"], "HANDOFF_TRANSITION")
+        self.assertEqual(request["_inbox_source"], "DRIVE")
+        self.assertEqual(request["transition"], transition)
+
+    def test_public_handoff_transition_stays_in_inbox(self):
+        with self.assertRaisesRegex(ProposalError, "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"):
+            proposal_to_requests({
+                "kind": "HANDOFF_TRANSITION",
+                "_inbox_source": "GATEWAY",
+                "payload": {"handoff_id": "HO-EXISTING", "state": "ACK", "writer_role": "EXECUTOR"},
+            }, self.root)
 
 
 
@@ -185,6 +241,159 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
 
 
 class HandoffCLIPersistenceTests(unittest.TestCase):
+    def test_unattended_writer_applies_private_handoff_acknowledgement(self):
+        from runtime.nexo_agent_api import AgentService
+        from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower, read_live_tower_bytes
+
+        handoff = {
+            "request_id": "REQ-ROBOT-ACK-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::DARK-ENERGY",
+            "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
+            "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
+            "next_action": "Compare as previsões da fonte com o teste já planejado.",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            source.mkdir()
+            (source / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+                "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+            }), encoding="utf-8")
+            created = AgentService(source).emit_handoff(**handoff)
+            publish_live_tower(source)
+            tower_raw = (source / LIVE_TOWER_NAME).read_bytes()
+
+        packed, report = apply_to_tower(tower_raw, [{
+            "kind": "HANDOFF_TRANSITION",
+            "_inbox_source": "DRIVE",
+            "payload": {"handoff_id": created["handoff_id"], "state": "ACK", "writer_role": "EXECUTOR"},
+        }])
+
+        self.assertIsNotNone(packed)
+        self.assertEqual(report["rejected"], [])
+        stored = read_live_tower_bytes(packed)
+        events = [entry["value"] for name, entry in stored["files"].items() if name.startswith("events/")]
+        self.assertEqual([event["state"] for event in events], ["PENDING", "ACK"])
+
+    def test_gpt_writer_lists_only_the_recipient_handoff_inbox(self):
+        from runtime.nexo_agent_api import AgentService
+        from runtime.nexo_agent_api.gpt_writer import main
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower
+
+        handoff = {
+            "request_id": "REQ-ROLE-INBOX-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::DARK-ENERGY",
+            "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
+            "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
+            "next_action": "Compare as previsões da fonte com o teste já planejado.",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            source.mkdir()
+            (source / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+                "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+            }), encoding="utf-8")
+            AgentService(source).emit_handoff(**handoff)
+            publish_live_tower(source)
+            tower_file = Path(tmp) / "tower.json"
+            tower_file.write_bytes((source / LIVE_TOWER_NAME).read_bytes())
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                code = main(["handoff", str(tower_file), "list", "EXECUTOR"])
+
+        self.assertEqual(code, 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["role"], "EXECUTOR")
+        self.assertEqual(result["count"], 1)
+        self.assertEqual(result["items"][0]["request_id"], "REQ-ROLE-INBOX-001")
+        self.assertEqual(result["items"][0]["next_action"], handoff["next_action"])
+
+    def test_unattended_writer_persists_drive_handoff_into_the_live_tower(self):
+        from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower, read_live_tower_bytes
+
+        handoff = {
+            "request_id": "REQ-ROBOT-HANDOFF-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::DARK-ENERGY",
+            "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
+            "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
+            "next_action": "Compare as previsões da fonte com o teste já planejado.",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source"
+            source.mkdir()
+            (source / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+                "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+            }), encoding="utf-8")
+            publish_live_tower(source)
+            tower_raw = (source / LIVE_TOWER_NAME).read_bytes()
+
+        packed, report = apply_to_tower(tower_raw, [{"kind": "HANDOFF", "_inbox_source": "DRIVE", "payload": handoff}])
+
+        self.assertIsNotNone(packed)
+        self.assertEqual(report["status"], "READY_TO_UPLOAD")
+        self.assertEqual(report["rejected"], [])
+        self.assertEqual(report["receipts"][0]["request_id"], handoff["request_id"])
+        stored = read_live_tower_bytes(packed)
+        events = [entry["value"] for name, entry in stored["files"].items() if name.startswith("events/")]
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0]["event_type"], "HANDOFF_CREATED")
+        self.assertEqual(events[0]["to_role"], "EXECUTOR")
+
+    def test_public_inbox_cannot_spoof_drive_source_or_be_marked_processed(self):
+        from scripts import nexo_tower
+
+        item = {
+            "id": "github:private-handoff.json",
+            "name": "private-handoff.json",
+            "source": "GITHUB",
+            "payload": {
+                "kind": "HANDOFF",
+                "source": "DRIVE",
+                "payload": {"request_id": "REQ-SPOOFED-HANDOFF"},
+            },
+        }
+        calls = {"apply": 0, "mark": []}
+
+        class FakeDriveTower:
+            def download(self):
+                return b"raw", "BASE-HEAD"
+
+        def fake_materialize(raw, dest):
+            Path(dest).mkdir(parents=True, exist_ok=True)
+            return Path(dest), {}
+
+        output = io.StringIO()
+        with patch.object(nexo_tower, "_collect_inbox", lambda github: [item]), \
+             patch.object(nexo_tower, "DriveTower", FakeDriveTower), \
+             patch.object(nexo_tower, "materialize_live_tower", fake_materialize), \
+             patch.object(nexo_tower, "cmd_apply", lambda args: calls.__setitem__("apply", calls["apply"] + 1) or 0), \
+             patch.object(nexo_tower, "_mark", lambda github, ids: calls["mark"].extend(ids)), \
+             contextlib.redirect_stdout(output):
+            code = nexo_tower._inbox_apply(object(), argparse.Namespace(dry_run=False))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls["apply"], 0)
+        self.assertEqual(calls["mark"], [])
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["status"], "NOTHING_APPLICABLE")
+        self.assertEqual(result["skipped"][0]["reason"], "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX")
+
     def test_create_handoff_uses_writer_lock_cas_readback_and_atlas_notification(self):
         from scripts import nexo_tower
 
@@ -287,6 +496,81 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
         self.assertEqual(payload["after"], "sha256:after")
         self.assertEqual(payload["handoff"]["request_id"], "REQ-CLI-HANDOFF-001")
         self.assertEqual(payload["handoff"]["source_links"][0]["access_date"], "2026-09-27")
+
+    def test_apply_handoff_operation_uses_the_canonical_writer_path(self):
+        from scripts import nexo_tower
+
+        calls = {"lock": 0, "cas": 0, "notify": []}
+
+        class FakeLock:
+            def __enter__(self):
+                calls["lock"] += 1
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        class FakeDriveTower:
+            def __init__(self, write=False):
+                self.write = write
+
+            def download(self):
+                return b"raw-before", "BASE-HEAD"
+
+            def compare_and_swap(self, base, packed):
+                assert self.write is True
+                assert base == "BASE-HEAD"
+                assert packed == b"raw-after"
+                calls["cas"] += 1
+                return {"status": "PASS", "state_fingerprint": "sha256:after", "readback": "PASS"}
+
+        def fake_materialize(raw, dest):
+            self.assertEqual(raw, b"raw-before")
+            Path(dest).mkdir(parents=True, exist_ok=True)
+            return Path(dest), {"tower_revision": "sha256:before"}
+
+        def fake_publish(root):
+            (Path(root) / nexo_tower.LIVE_TOWER_NAME).write_bytes(b"raw-after")
+            return {"status": "PASS", "state_fingerprint": "sha256:after", "readback": "PASS"}
+
+        def fake_verify(raw):
+            return {b"raw-before": "sha256:before", b"raw-after": "sha256:after"}[raw]
+
+        handoff = {
+            "request_id": "REQ-CLI-INBOX-HANDOFF-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::DARK-ENERGY",
+            "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
+            "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
+            "next_action": "Compare as previsões da fonte com o teste já planejado.",
+        }
+        output = io.StringIO()
+        with tempfile.TemporaryDirectory() as tmp:
+            request_file = Path(tmp) / "handoff.json"
+            request_file.write_text(json.dumps({"nexo_operation": "HANDOFF_CREATE", "_inbox_source": "DRIVE",
+                                                "handoff": handoff}), encoding="utf-8")
+            args = argparse.Namespace(requests=[str(request_file)], retries=0, dry_run=False)
+            with patch.object(nexo_tower, "DriveTower", FakeDriveTower), \
+                 patch.object(nexo_tower, "writer_lock", lambda: FakeLock()), \
+                 patch.object(nexo_tower, "materialize_live_tower", fake_materialize), \
+                 patch.object(nexo_tower, "read_live_tower_bytes", lambda raw: raw), \
+                 patch.object(nexo_tower, "verify_live_tower", fake_verify), \
+                 patch("runtime.nexo_agent_api.live_tower.publish_live_tower", fake_publish), \
+                 patch.object(nexo_tower, "_notify_atlas", lambda fingerprint: calls["notify"].append(fingerprint) or "DISPATCHED_TEST"), \
+                 contextlib.redirect_stdout(output):
+                code = nexo_tower.cmd_apply(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls["lock"], 1)
+        self.assertEqual(calls["cas"], 1)
+        self.assertEqual(calls["notify"], ["sha256:after"])
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["write"]["readback"], "PASS")
+        self.assertEqual(result["receipts"][0]["request_id"], handoff["request_id"])
 
 if __name__ == "__main__":
     unittest.main()

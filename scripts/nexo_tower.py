@@ -150,6 +150,7 @@ from runtime.nexo_agent_api.tower_apply import apply_document as _apply_document
 
 
 def cmd_apply(args: argparse.Namespace) -> int:
+    from runtime.nexo_agent_api import AgentService, TowerAgentIssue
     from runtime.nexo_agent_api.mutations import apply_mutation_request
 
     requests = []
@@ -166,11 +167,57 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 before = verify_live_tower(read_live_tower_bytes(raw))
                 with tempfile.TemporaryDirectory(prefix="nexo-tower-write-") as work:
                     root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
-                    receipts = [
-                        _apply_document(root, request) if "document" in request else apply_mutation_request(root, request)
-                        for request in requests
-                    ]
-                    if any("document" in request for request in requests):
+                    receipts = []
+                    for request in requests:
+                        operation = request.get("nexo_operation")
+                        if operation in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
+                            if str(request.get("_inbox_source") or "").upper() != "DRIVE":
+                                receipts.append({
+                                    "accepted": False,
+                                    "issue": {"code": "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX",
+                                              "message": "private handoffs can only be created from the Drive inbox"},
+                                })
+                            else:
+                                try:
+                                    service = AgentService(root)
+                                    if operation == "HANDOFF_CREATE":
+                                        envelope = request.get("handoff")
+                                        if not isinstance(envelope, dict):
+                                            raise TypeError("handoff must be a JSON object")
+                                        receipts.append(service.emit_handoff(**envelope))
+                                    else:
+                                        transition = request.get("transition")
+                                        if not isinstance(transition, dict):
+                                            raise TypeError("transition must be a JSON object")
+                                        receipts.append(service.transition_handoff(
+                                            transition.get("handoff_id", ""),
+                                            state=transition.get("state", ""),
+                                            writer_role=transition.get("writer_role", ""),
+                                        ))
+                                except TowerAgentIssue as exc:
+                                    _print({
+                                        "status": "REJECTED",
+                                        "tower_state_fingerprint": before,
+                                        "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
+                                        "receipts": receipts,
+                                    })
+                                    return 2
+                                except (TypeError, AttributeError):
+                                    _print({
+                                        "status": "REJECTED",
+                                        "tower_state_fingerprint": before,
+                                        "issue": {"code": "HANDOFF_ENVELOPE_INVALID",
+                                                  "message": "handoff data is incomplete or has unsupported fields"},
+                                        "receipts": receipts,
+                                    })
+                                    return 2
+                        else:
+                            receipts.append(
+                                _apply_document(root, request) if "document" in request
+                                else apply_mutation_request(root, request)
+                            )
+                    if any("document" in request or request.get("nexo_operation") in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}
+                           for request in requests):
                         from runtime.nexo_agent_api.live_tower import publish_live_tower
 
                         publish_live_tower(root)
@@ -490,18 +537,23 @@ def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
                 skipped.append({"id": item["id"], "reason": "UNPARSEABLE"})
                 continue
             try:
-                requests += proposal_to_requests({**envelope, "_inbox_id": item["id"], "_inbox_name": item["name"]}, root)
+                requests += proposal_to_requests({**envelope, "_inbox_source": item.get("source"),
+                                                  "_inbox_id": item["id"], "_inbox_name": item["name"]}, root)
                 used.append(item["id"])
             except ProposalError as exc:
                 skipped.append({"id": item["id"], "reason": str(exc)})
     # Several proposals may target the same entity (a GPT pulse re-running a test):
     # the newest wins, so one write never conflicts with itself on entity_version.
     latest: dict[tuple, dict] = {}
+    handoffs = []
     for request in requests:
+        if request.get("nexo_operation") in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
+            handoffs.append(request)
+            continue
         key = ("document", request["document"], request.get("request_id")) if "document" in request             else (request["entity_kind"], request["entity_name"])
         latest.pop(key, None)
         latest[key] = request
-    requests = list(latest.values())
+    requests = list(latest.values()) + handoffs
     if not requests:
         _print({"status": "NOTHING_APPLICABLE", "skipped": skipped})
         return 0

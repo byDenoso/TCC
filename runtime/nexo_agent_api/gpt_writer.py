@@ -7,6 +7,7 @@ the same rules as ``scripts/nexo_tower.py apply``:
     python nexo_gpt_writer.py apply  TOWER.json PROPOSALS.json OUT.json
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]   (what to execute next)
+    python nexo_gpt_writer.py handoff TOWER.json list ROLE   (messages addressed to one role)
 
 PROPOSALS.json is a list of inbox proposal envelopes ({kind, source, payload,
 created_at}) and/or raw writer requests ({entity_kind, ...} or {document, ...}).
@@ -28,7 +29,9 @@ from .tower_apply import apply_requests
 
 
 def _is_request(item: dict) -> bool:
-    return "document" in item or "entity_kind" in item
+    return "document" in item or "entity_kind" in item or item.get("nexo_operation") in {
+        "HANDOFF_CREATE", "HANDOFF_TRANSITION",
+    }
 
 
 def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, dict]:
@@ -42,7 +45,8 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
             if str(item.get("kind") or "").upper() == "BATCH" and isinstance(payload.get("items"), list):
                 base = item.get("_inbox_name") or "batch"
-                flat += [{**sub, "_inbox_name": f"{base}-{i}", "_inbox_id": item.get("_inbox_id")}
+                flat += [{**sub, "_inbox_source": item.get("_inbox_source"),
+                          "_inbox_name": f"{base}-{i}", "_inbox_id": item.get("_inbox_id")}
                          for i, sub in enumerate(payload["items"]) if isinstance(sub, dict)]
             else:
                 flat.append(item)
@@ -54,7 +58,49 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             except ProposalError as exc:
                 report["rejected"].append({"item": label, "reason": str(exc)})
                 continue
-            receipts = apply_requests(root, requests)
+            receipts = []
+            for request in requests:
+                operation = request.get("nexo_operation")
+                if operation not in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
+                    receipts.extend(apply_requests(root, [request]))
+                    continue
+                if str(request.get("_inbox_source") or "").upper() != "DRIVE":
+                    receipts.append({
+                        "accepted": False,
+                        "issue": {"code": "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"},
+                    })
+                    continue
+                from . import AgentService, TowerAgentIssue
+
+                try:
+                    service = AgentService(root)
+                    if operation == "HANDOFF_CREATE":
+                        envelope = request.get("handoff")
+                        if not isinstance(envelope, dict):
+                            raise TypeError("handoff must be a JSON object")
+                        receipts.append(service.emit_handoff(**envelope))
+                    else:
+                        transition = request.get("transition")
+                        if not isinstance(transition, dict):
+                            raise TypeError("transition must be a JSON object")
+                        receipts.append(service.transition_handoff(
+                            transition.get("handoff_id", ""),
+                            state=transition.get("state", ""),
+                            writer_role=transition.get("writer_role", ""),
+                        ))
+                except TowerAgentIssue as exc:
+                    receipts.append({
+                        "accepted": False,
+                        "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
+                    })
+                    continue
+                except (TypeError, AttributeError):
+                    receipts.append({"accepted": False, "issue": {"code": "HANDOFF_ENVELOPE_INVALID"}})
+                    continue
+                else:
+                    from .live_tower import publish_live_tower
+
+                    publish_live_tower(root)
             failed = [r for r in receipts if not r.get("accepted", True) or r.get("issue")]
             report["receipts"].extend(receipts)
             if failed:
@@ -146,6 +192,20 @@ class _GitHubInbox:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
+        from . import AgentService
+
+        role = argv[3].upper()
+        with tempfile.TemporaryDirectory(prefix="nexo-gpt-handoff-") as work:
+            root, metadata = materialize_live_tower(Path(argv[1]).read_bytes(), Path(work) / "TOWER_V06")
+            items = AgentService(root).inbox_for(role)
+        print(json.dumps({
+            "tower_state_fingerprint": metadata["tower_revision"],
+            "role": role,
+            "count": len(items),
+            "items": items,
+        }, ensure_ascii=False, indent=1))
+        return 0
     if len(argv) >= 2 and argv[0] == "frontier":
         # Same frontier as the CLI writer: resume CHECKPOINTED/RUNNING first, then READY.
         from .frontier import roadmap_frontier
@@ -166,10 +226,12 @@ def main(argv: list[str]) -> int:
         for entry in pending:
             payload = entry.get("payload")
             if isinstance(payload, dict):
-                items.append({**payload, "_inbox_name": entry.get("name"), "_inbox_id": entry.get("id")})
+                items.append({**payload, "_inbox_source": "DRIVE",
+                              "_inbox_name": entry.get("name"), "_inbox_id": entry.get("id")})
         github = _GitHubInbox(os.environ.get("NEXO_INBOX_GITHUB_TOKEN", "").strip())
         for entry in github.pending():
-            items.append({**entry["payload"], "_inbox_name": entry["name"], "_inbox_id": "github:" + entry["path"]})
+            items.append({**entry["payload"], "_inbox_source": "GITHUB",
+                          "_inbox_name": entry["name"], "_inbox_id": "github:" + entry["path"]})
         gateway_file = os.environ.get("NEXO_GATEWAY_ITEMS", "")
         gateway_ids = []
         if gateway_file and Path(gateway_file).is_file():
@@ -179,7 +241,8 @@ def main(argv: list[str]) -> int:
                 gateway = []
             for entry in gateway:
                 if isinstance(entry.get("envelope"), dict) and entry.get("id"):
-                    items.append({**entry["envelope"], "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + entry["id"]})
+                    items.append({**entry["envelope"], "_inbox_source": "GATEWAY",
+                                  "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + entry["id"]})
                     gateway_ids.append(entry["id"])
         updates_file = os.environ.get("NEXO_BATTERY_UPDATES", "")
         if updates_file and Path(updates_file).is_file():
@@ -189,7 +252,8 @@ def main(argv: list[str]) -> int:
                 updates = []
             for index, update in enumerate(updates if isinstance(updates, list) else []):
                 if isinstance(update, dict):
-                    items.append({**update, "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
+                    items.append({**update, "_inbox_source": "WRITER_ROBOT",
+                                  "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
         dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
         dispatched: list[str] = []
         for attempt in range(3):
