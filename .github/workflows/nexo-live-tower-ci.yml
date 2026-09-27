@@ -5,9 +5,15 @@ on:
     paths:
       - 'runtime/nexo_agent_api/live_tower.py'
       - 'runtime/nexo_agent_api/mutations.py'
+      - 'runtime/nexo_agent_api/evolution.py'
+      - 'runtime/nexo_agent_api/inbox_apply.py'
+      - 'runtime/nexo_agent_api/gpt_writer.py'
       - 'runtime/nexo_agent_api/public_projection.py'
+      - 'gpt/nexo_gpt_writer.py'
       - 'runtime/nexo_agent_api/test_live_tower.py'
       - 'runtime/nexo_agent_api/test_mutations.py'
+      - 'runtime/nexo_agent_api/test_incident_lifecycle.py'
+      - 'runtime/nexo_agent_api/test_inbox_apply.py'
       - 'runtime/nexo_agent_api/test_public_projection.py'
       - 'runtime/nexo_agent_api/test_public_projection_writer.py'
       - 'scripts/build_public_projection.py'
@@ -29,6 +35,13 @@ jobs:
         run: |
           python -m compileall -q runtime/nexo_agent_api
           python -m py_compile scripts/build_public_projection.py
-      - name: Run live Tower mutation tests
+      - name: Compile generated writer bundle
+        run: python -m py_compile gpt/nexo_gpt_writer.py
+      - name: Run live Tower and incident lifecycle tests
         run: |
-          python -m unittest -v             runtime.nexo_agent_api.test_live_tower             runtime.nexo_agent_api.test_mutations
+          python -m unittest -v \
+            runtime.nexo_agent_api.test_live_tower \
+            runtime.nexo_agent_api.test_mutations \
+            runtime.nexo_agent_api.test_incident_lifecycle \
+            runtime.nexo_agent_api.test_inbox_apply \
+            runtime.nexo_agent_api.test_public_projection

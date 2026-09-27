@@ -172,6 +172,44 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"never publish this" not in raw
 
 
+def test_private_handoff_free_text_and_research_links_never_reach_public_projection(tmp_path):
+    root = _tower(tmp_path)
+    events = root / "events" / "2026-09-27"
+    events.mkdir(parents=True)
+    (events / "handoff.json").write_text(json.dumps({
+        "event_id": "EV-HO-1",
+        "handoff_id": "HO-PRIVATE-1",
+        "request_id": "REQ-PRIVATE-1",
+        "from_role": "ADVISOR",
+        "to_role": "EXECUTOR",
+        "state": "PENDING",
+        "summary_plain": "SEGREDO_HANDOFF_RESUMO",
+        "why_it_matters": "SEGREDO_HANDOFF_PORQUE",
+        "next_action": "SEGREDO_HANDOFF_ACAO",
+        "objective_ref": "OBJ::PRIVATE",
+        "evidence_refs": [{"ref": "TEST::PRIVATE"}],
+        "source_links": [{
+            "label": "SEGREDO_FONTE",
+            "url": "https://private.example/research",
+            "access_date": "2026-09-27",
+            "supports": "SEGREDO_SUPORTE",
+        }],
+    }), encoding="utf-8")
+
+    raw = projection_bytes(_build(root))
+    for secret in (
+        b"SEGREDO_HANDOFF_RESUMO",
+        b"SEGREDO_HANDOFF_PORQUE",
+        b"SEGREDO_HANDOFF_ACAO",
+        b"OBJ::PRIVATE",
+        b"TEST::PRIVATE",
+        b"SEGREDO_FONTE",
+        b"private.example",
+        b"SEGREDO_SUPORTE",
+    ):
+        assert secret not in raw
+
+
 def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
     cases = (
         ("PASS_WITH_PENDING_WRITER", 0, []),
@@ -210,23 +248,82 @@ def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
         assert b"must never be published" not in raw
 
 
-def test_evolution_projection_is_retained_when_only_recurrent_signals_exist(tmp_path):
+def test_raw_signal_clusters_are_not_published_without_materialized_incident(tmp_path):
     root = _tower(tmp_path)
     artifacts = root / "entities" / "artifact"
     artifacts.mkdir()
-    for artifact_id, source in (("SIGNAL-A", "CHATGPT_TASK_EXECUTOR"), ("SIGNAL-B", "CHATGPT")):
+    for artifact_id, source in (("SIGNAL-A", "CHATGPT_TASK_EXECUTOR"), ("SIGNAL-B", "CHATGPT_TASK_EXECUTOR")):
         (artifacts / f"{artifact_id}.json").write_text(json.dumps({
             "id": artifact_id,
             "kind": "LEARNING_SIGNAL",
             "source": source,
             "created_at": "2026-09-26T10:00:00Z",
-            "payload": {"signals": [{"code": "EMPTY_FRONTIER_ACTIVE_ROADMAP", "symptom": "private detail"}]},
+            "payload": {"signals": [{
+                "code": "EMPTY_FRONTIER_ACTIVE_ROADMAP",
+                "topic_id": "engineering.nexo.frontier",
+                "symptom": "private detail",
+            }]},
         }), encoding="utf-8")
 
-    evolution = _load_evolution(root)
-    assert evolution is not None
-    assert evolution["signal_clusters"][0]["code"] == "EMPTY_FRONTIER_ACTIVE_ROADMAP"
-    assert "private detail" not in json.dumps(evolution)
+    projection = _build(root)
+    raw = projection_bytes(projection)
+    assert b"EMPTY_FRONTIER_ACTIVE_ROADMAP" not in raw
+    assert b"engineering.nexo.frontier" not in raw
+    assert b"private detail" not in raw
+
+
+def test_public_incident_summaries_use_reviewed_copy_or_neutral_fallback_without_raw_joins(tmp_path):
+    root = _tower(tmp_path)
+    evolution_dir = root / "evolution"
+    evolution_dir.mkdir()
+    (evolution_dir / "incidents.json").write_text(json.dumps({
+        "incidents": [
+            {
+                "incident_id": "INC-KNOWN",
+                "state": "OBSERVED",
+                "evidence_count": 2,
+                "signal_code": "WRITER_LAG_PATTERN",
+                "topic_id": "engineering.nexo.writer.secret",
+                "evidence_refs": ["SECRET-REF-A", "SECRET-REF-B"],
+                "source_roles": ["GUARDIAO"],
+                "private": False,
+            },
+            {
+                "incident_id": "INC-UNKNOWN",
+                "state": "OBSERVED",
+                "evidence_count": 3,
+                "signal_code": "UNREVIEWED_INTERNAL_PATTERN",
+                "topic_id": "engineering.nexo.internal.secret",
+                "evidence_refs": ["SECRET-REF-C", "SECRET-REF-D", "SECRET-REF-E"],
+                "source_roles": ["EXECUTOR"],
+                "private": False,
+            },
+        ]
+    }), encoding="utf-8")
+
+    projection = _build(root)
+    incidents = {item["incident_id"]: item for item in projection["evolution"]["incidents"]}
+    assert incidents["INC-KNOWN"]["summary_pt"] == (
+        "O sistema detectou atrasos repetidos para registrar e confirmar mudanças."
+    )
+    assert incidents["INC-UNKNOWN"]["summary_pt"] == (
+        "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa."
+    )
+    for incident in incidents.values():
+        assert set(incident) == {
+            "incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner"
+        }
+
+    raw = projection_bytes(projection)
+    for secret in (
+        b"WRITER_LAG_PATTERN",
+        b"UNREVIEWED_INTERNAL_PATTERN",
+        b"engineering.nexo.writer.secret",
+        b"engineering.nexo.internal.secret",
+        b"SECRET-REF-A",
+        b"SECRET-REF-E",
+    ):
+        assert secret not in raw
 
 
 def test_campaigns_are_first_class_and_publish_source_links_without_leaking_roadmap(tmp_path):

@@ -210,6 +210,12 @@ def _attach_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
 
 def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     test_id = str(body.get("test_id") or f"HYP-{_slug(str(item.get('_inbox_name') or body.get('title') or 'X'))}")
+    incident_id = evolution.resolve_incident_id(
+        root,
+        body.get("incident_id"),
+        signal_refs=body.get("linked_signal_ids") or [],
+        refs=body.get("refs") or [],
+    )
     existing_test = _entity(root, "test", test_id)
     if existing_test is not None:
         # Same test proposed again: fill what is still empty instead of rejecting (frozen fields are never replaced).
@@ -218,6 +224,8 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         sem = {k: v for k, v in (body.get("semantic") or {}).items() if v and not (existing_test.get("semantic") or {}).get(k)}
         if sem:
             fill["semantic"] = {**(existing_test.get("semantic") or {}), **sem}
+        if incident_id and not existing_test.get("incident_id"):
+            fill["incident_id"] = incident_id
         if not fill:
             return []
         return [{"request_id": f"REQ-INBOX-ENRICH-{_slug(test_id)}", "entity_kind": "test", "entity_name": test_id,
@@ -259,6 +267,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "depends_on": body.get("depends_on") or [],
         "proposed_by": "CHATGPT",
         "origin": "META" if test_id.upper().startswith("META-") else body.get("origin"),
+        "incident_id": incident_id,
         "linked_signal_ids": body.get("linked_signal_ids"),
         "rank_score": body.get("rank_score"),
         "rank_rubric": body.get("rank_rubric"),
@@ -289,6 +298,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "falsification_criterion": block.get("falsification_criterion") or kill,
         "status": block.get("status") or "OPEN",
         "domain": changes.get("domain"),
+        "incident_id": incident_id,
         "semantic": {k: semantic.get(k) for k in ("domain_id", "subdomain_id", "topic_id", "question_plain", "why_it_matters") if semantic.get(k)},
     }
     existing = _entity(root, "hypothesis", hypothesis_id)
@@ -325,8 +335,19 @@ def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
                      "general." + _slug(str(body.get("title") or item.get("_inbox_name") or "lesson")).lower())
     lesson_id = f"LESSON::{topic}"
     current = _entity(root, "lesson", lesson_id)
+    incident_id = evolution.resolve_incident_id(
+        root,
+        body.get("incident_id"),
+        signal_refs=body.get("linked_signal_ids") or [],
+        refs=body.get("linked_test_ids") or [],
+    )
+    linked_incidents = list((current or {}).get("linked_incident_ids") or [])
+    if incident_id and incident_id not in linked_incidents:
+        linked_incidents.append(incident_id)
     changes = {
         "title": body.get("title"), "status": "ACTIVE",
+        "incident_id": incident_id,
+        "linked_incident_ids": linked_incidents or None,
         "semantic": _semantic(current, {**semantic, "topic_id": topic}),
         "gap_type": body.get("gap_type"),
         "intuition": _first(body, "intuition", "intuicao", "intuição"),

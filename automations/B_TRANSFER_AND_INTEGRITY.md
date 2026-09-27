@@ -6,11 +6,22 @@ Leia primeiro `automations/OPERATING_CONTRACT.md`.
 
 1. Código fresco (`git pull --ff-only` em TCC, Pantheon, vault).
 2. `python scripts/nexo_tower.py status`.
+3. **Repasses para o ADVISOR:** `python scripts/nexo_tower.py handoff list --role ADVISOR`.
+   - Ao assumir, marque como recebido (`ACK`). Marque como concluído (`DONE`) somente depois de a correção, hipótese
+     ou transferência estar gravada e confirmada pela releitura da Tower.
+   - Marque como falhou (`FAILED`) apenas diante de bloqueio real.
+   - Correção, fonte primária ou transferência que gere trabalho executável para A → repasse para EXECUTOR.
+     Lacuna ou aprendizagem que deva seguir para C → repasse para LEARNER.
+   - Nos campos humanos do repasse, escreva o que aconteceu, por que isso muda a decisão e o que o próximo papel deve fazer.
+     Não despeje nomes internos como IDs, códigos de estado ou nomes de campos no texto.
+   - Pesquisa pública segue o contrato comum: fonte primária/oficial primeiro, links completos, incerteza explícita,
+     e nenhum resumo da web vira resultado científico ou altera critério congelado.
+4. Estado do ATLAS:
    - `OUTDATED`: dispare o Pages (`NEXO_PAGES_DISPATCH_TOKEN`/`GITHUB_TOKEN` se houver; senão
      `workflow_dispatch` do workflow "NEXO ONE GitHub Pages" pela UI do GitHub no navegador) e confira de novo
      em 10 min. Se o build falhar, leia o job, corrija a causa no código (PR) — não force exportação manual.
-3. `python -m pytest -q` no TCC e `npm test` em `Pantheon/nexo-one`. Falha nova = corrigir (PR) ou registrar.
-4. Auditoria da Tower (materialize com `pull`):
+5. `python -m pytest -q` no TCC e `npm test` em `Pantheon/nexo-one`. Falha nova = corrigir (PR) ou registrar.
+6. Auditoria da Tower (materialize com `pull`):
    - IDs duplicados, referências quebradas (`campaign_id`, `hypothesis_id`, `depends_on`, `test_refs`);
    - TEST/CAMPAIGN sem `semantic` explícito → preencha pelo backfill da taxonomia (basis ≠ UNMAPPED)
      via `apply` com `event_type: SEMANTIC_BACKFILL`; UNMAPPED fica listado no relatório;
@@ -20,7 +31,7 @@ Leia primeiro `automations/OPERATING_CONTRACT.md`.
    - `status` e `state` divergentes na mesma entidade → alinhe `status` ao lifecycle real;
    - índices (`indexes/*.json`) apontando para entidades inexistentes → corrija o índice (índice é derivado).
    Correções derivadas/determinísticas: aplique direto. Qualquer coisa que mude significado científico: não.
-5. Pantheon `nexo-one/scripts/tower-consistency.mjs` também audita; rode-o se existir e compare.
+7. Pantheon `nexo-one/scripts/tower-consistency.mjs` também audita; rode-o se existir e compare.
 
 ## Parte 2 — Transferência de metodologia
 

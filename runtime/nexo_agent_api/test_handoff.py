@@ -23,9 +23,15 @@ class HandoffProtocolTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def emit(self, service, **kwargs):
+        kwargs.setdefault("request_id", f"REQ-TEST-{kwargs.get('handoff_type')}-{kwargs.get('entity_ref')}")
+        kwargs.setdefault("summary_plain", "Há uma atualização operacional pronta para o próximo papel.")
+        kwargs.setdefault("why_it_matters", "A próxima etapa depende desta passagem de contexto.")
+        return service.emit_handoff(**kwargs)
+
     def test_director_handoff_routes_pending_ack_done(self):
         service = AgentService(self.root)
-        created = service.emit_handoff(
+        created = self.emit(service, 
             from_role="DIRECTOR",
             to_role="EXECUTOR",
             handoff_type="WORK_READY",
@@ -45,10 +51,83 @@ class HandoffProtocolTests(unittest.TestCase):
         with self.assertRaises(TowerAgentIssue):
             service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
 
+    def test_request_id_retries_are_idempotent_and_preserve_source_citations(self):
+        service = AgentService(self.root)
+        payload = {
+            "request_id": "REQ-HO-RESEARCH-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DARK-ENERGY",
+            "thread_id": "THR::SCIENCE::DARK-ENERGY",
+            "summary_plain": "Uma fonte primária nova restringe o próximo teste discriminante.",
+            "why_it_matters": "A evidência muda qual comparação observacional deve ser priorizada.",
+            "next_action": "Executar o teste discriminante já congelado com a nova fonte pública.",
+            "objective_ref": "OBJ::DARK-ENERGY-NATURE",
+            "confidence_plain": "Confiança moderada; a fonte sustenta o dado, não o veredito científico.",
+            "evidence_refs": [{"ref": "TEST::DE-01", "kind": "TEST", "relation": "MOTIVA"}],
+            "source_links": [{
+                "label": "Primary release",
+                "url": "https://example.org/primary",
+                "access_date": "2026-09-27",
+                "publisher": "Example Survey",
+                "authors": ["A. Author", "B. Author"],
+                "date": "2026-09-26",
+                "supports": "Mede a quantidade observacional usada pelo teste.",
+                "uncertainty": "Não estabelece causalidade por si só.",
+                "next_test_impact": "Prioriza a comparação já pré-registrada.",
+            }],
+            "correlation_id": "CORR-DE-01",
+        }
+        first = service.emit_handoff(**payload)
+        replay = service.emit_handoff(**payload)
+
+        self.assertEqual(replay["handoff_id"], first["handoff_id"])
+        self.assertEqual(replay["event_id"], first["event_id"])
+        self.assertEqual(replay["source_links"][0]["access_date"], "2026-09-27")
+        self.assertEqual(len(list((self.root / "events").rglob("*.json"))), 1)
+
+        changed = dict(payload)
+        changed["next_action"] = "Fazer outra coisa."
+        with self.assertRaises(TowerAgentIssue) as conflict:
+            service.emit_handoff(**changed)
+        self.assertEqual(conflict.exception.code, "HANDOFF_REQUEST_ID_CONFLICT")
+
+    def test_only_recipient_transitions_and_citations_survive_terminal_events(self):
+        service = AgentService(self.root)
+        created = service.emit_handoff(
+            request_id="REQ-HO-CITATION-001",
+            from_role="EXECUTOR",
+            to_role="LEARNER",
+            handoff_type="RESULT_READY",
+            entity_ref="WORK::SCIENCE-01",
+            thread_id="THR::SCIENCE::01",
+            summary_plain="O teste terminou e o resultado canônico está disponível.",
+            why_it_matters="O Learner pode transformar o resultado persistido em aprendizagem sem reexecutar o teste.",
+            next_action="Ler o resultado canônico e registrar a lição aplicável.",
+            evidence_refs=[{"ref": "TEST::SCIENCE-01", "kind": "TEST"}],
+            source_links=[{
+                "label": "Official data release",
+                "url": "https://example.org/data",
+                "access_date": "2026-09-27",
+                "supports": "Fonte primária do dado usado no teste.",
+                "uncertainty": "A fonte não substitui a análise do TEST.",
+                "next_test_impact": "Nenhum critério congelado é alterado.",
+            }],
+        )
+        with self.assertRaises(TowerAgentIssue):
+            service.transition_handoff(created["handoff_id"], state="ACK", writer_role="ADVISOR")
+
+        ack = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="LEARNER")
+        done = service.transition_handoff(created["handoff_id"], state="DONE", writer_role="LEARNER")
+        self.assertEqual(ack["source_links"], created["source_links"])
+        self.assertEqual(done["evidence_refs"], created["evidence_refs"])
+        self.assertEqual(service.inbox_for("LEARNER"), [])
+
     def test_bootstrap_projects_only_five_actionable_handoffs(self):
         service = AgentService(self.root)
         for i in range(6):
-            service.emit_handoff(
+            self.emit(service, 
                 from_role="ADVISOR",
                 to_role="EXECUTOR",
                 handoff_type="WORK_READY",
@@ -84,7 +163,7 @@ class HandoffProtocolTests(unittest.TestCase):
         (entity_path(self.root, "work", "WORK::GZ01-B03")).write_text(json.dumps(work))
         service = AgentService(self.root)
 
-        created = service.emit_handoff(
+        created = self.emit(service, 
             from_role="ADVISOR",
             to_role="EXECUTOR",
             handoff_type="WORK_READY",
@@ -115,7 +194,7 @@ class HandoffProtocolTests(unittest.TestCase):
         path = entity_path(self.root, "work", "WORK::GZ01-B03")
         path.write_text(json.dumps(work_v1))
         service = AgentService(self.root)
-        created = service.emit_handoff(
+        created = self.emit(service, 
             from_role="DIRECTOR",
             to_role="ADVISOR",
             handoff_type="CAMPAIGN_READY_FOR_BINDING",
@@ -149,7 +228,7 @@ class HandoffProtocolTests(unittest.TestCase):
         path = entity_path(self.root, "work", "WORK::GZ01-B02")
         path.write_text(json.dumps(work_v1))
         service = AgentService(self.root)
-        created = service.emit_handoff(
+        created = self.emit(service, 
             from_role="DIRECTOR",
             to_role="LEARNER",
             handoff_type="WORK_VERIFIED",

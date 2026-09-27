@@ -405,7 +405,8 @@ def _load_evolution(root: Path) -> dict[str, Any] | None:
         status = evolution_status(root, public=True)
     except Exception:  # the projection never fails because of the evolution layer
         return None
-    empty = not (status["charters"] or status["genome"]["genes"] or status["thoughts"] or status.get("signal_clusters"))
+    empty = not (status["charters"] or status["genome"]["genes"] or status["thoughts"]
+                     or status.get("signal_clusters") or status.get("incidents"))
     return None if empty else status
 
 
