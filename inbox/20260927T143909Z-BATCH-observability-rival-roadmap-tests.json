@@ -1,0 +1,209 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-27T14:39:09Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:39:09Z",
+        "payload": {
+          "test_id": "META-OBS26-001-TEMPORAL-PROVENANCE-COVERAGE",
+          "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+          "question": "A completude de proveniência temporal prevê se testes de autoengenharia chegam a um resultado decisivo em vez de INCONCLUSIVE/BLOCKED_INPUT?",
+          "null": "A taxa de resultados decisivos difere em menos de 15 pontos percentuais entre cadeias com alta e baixa completude temporal.",
+          "rival": "Cadeias com alta completude temporal apresentam pelo menos 30 pontos percentuais a mais de resultados decisivos que cadeias com baixa completude.",
+          "method": "No snapshot congelado da Tower, selecionar testes de engenharia concluídos com desfecho registrado. Antes de olhar o desfecho, calcular uma pontuação binária de completude temporal exigindo created_at do teste, timestamp do resultado/evento e referências temporais resolvíveis quando declaradas. Comparar a proporção PROMOTED/REJECTED versus INCONCLUSIVE/BLOCKED_INPUT entre os grupos; exigir pelo menos 10 casos por grupo.",
+          "data": "Tower canônica: entidades de teste de engenharia, eventos de resultado e referências já materializadas.",
+          "success_criteria": "PROMOTED se houver >=10 casos por grupo e a diferença de taxa decisiva alta−baixa for >=0,30, com razão de risco >=1,5 em pelo menos duas divisões temporais independentes.",
+          "kill_criteria": "REJECTED se houver >=10 casos por grupo e a diferença absoluta for <0,15 nas duas divisões, ou se a direção inverter entre divisões; amostra menor = INCONCLUSIVE.",
+          "claim_boundary": "Associação operacional dentro do NEXO; não prova que cobertura temporal seja a única causa dos erros de previsão.",
+          "priority": "P0",
+          "origin_kind": "DENER",
+          "prediction": {
+            "p_promoted": 0.7,
+            "expected_effect": "Maior completude temporal deve aumentar claramente a fração de resultados decidíveis."
+          },
+          "prior_art": [
+            "META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE",
+            "CONTEST-META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE-1",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "rank_score": 0.91,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "hypothesis": {
+            "id": "HYP-META-OBS26-001",
+            "statement": "Cobertura temporal incompleta é um determinante importante da indecidibilidade recente da autoengenharia.",
+            "model": "Observabilidade temporal prediz poder discriminante.",
+            "baseline": "A lógica dos ataques domina e a completude temporal pouco altera a decisão.",
+            "falsification_criterion": "Com amostra suficiente, alta e baixa completude têm taxas decisivas semelhantes ou a direção não replica."
+          },
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.observability",
+            "question_plain": "Quando o histórico temporal está completo, os testes do NEXO conseguem decidir com muito mais frequência?",
+            "why_it_matters": "Se sim, o sistema deve medir observabilidade antes de fazer previsões fortes, em vez de culpar o ataque depois.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:39:09Z",
+        "payload": {
+          "test_id": "META-OBS26-002-PREDICTION-CALIBRATION-BY-COVERAGE",
+          "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+          "question": "A calibração de p_promoted piora sistematicamente quando a observabilidade pré-teste é incompleta?",
+          "null": "O erro de calibração das previsões difere em menos de 0,05 entre estratos de alta e baixa observabilidade.",
+          "rival": "O estrato de baixa observabilidade tem erro de calibração pelo menos 0,15 maior ou Brier score pelo menos 25% pior.",
+          "method": "Selecionar testes de engenharia concluídos que possuam prediction.p_promoted congelado e desfecho binário decisivo. Calcular a completude observacional usando somente campos existentes antes do resultado; estratificar em alta/baixa; calcular Brier score e erro absoluto de calibração em duas janelas temporais independentes sem retunar o corte.",
+          "data": "Tower canônica: predictions congeladas, timestamps, data bindings e resultados de testes de engenharia.",
+          "success_criteria": "PROMOTED se cada estrato tiver >=10 casos e baixa observabilidade apresentar Brier >=25% pior ou erro de calibração >=0,15 maior em ambas as janelas.",
+          "kill_criteria": "REJECTED se cada estrato tiver >=10 casos e a diferença de erro for <0,05 em ambas as janelas ou favorecer baixa observabilidade; amostra menor = INCONCLUSIVE.",
+          "claim_boundary": "Testa calibração interna das probabilidades do Executor/Learner; não avalia a verdade científica das hipóteses externas.",
+          "priority": "P0",
+          "origin_kind": "DENER",
+          "prediction": {
+            "p_promoted": 0.72,
+            "expected_effect": "Previsões feitas com observabilidade incompleta devem ser mais superconfiantes e menos calibradas."
+          },
+          "prior_art": [
+            "META-RANK26-002-RANKSCORE-CALIBRATION",
+            "META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "rank_score": 0.89,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "hypothesis": {
+            "id": "HYP-META-OBS26-002",
+            "statement": "A baixa cobertura observacional explica parte material da má calibração preditiva da autoengenharia.",
+            "model": "Erro preditivo depende da observabilidade pré-teste.",
+            "baseline": "Erro preditivo independe da observabilidade.",
+            "falsification_criterion": "Com amostra suficiente, a calibração não piora no estrato de baixa observabilidade."
+          },
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.prediction_calibration",
+            "question_plain": "As previsões do NEXO ficam mais erradas quando ele tenta prever com histórico incompleto?",
+            "why_it_matters": "Isso permite reduzir confiança antes do teste quando faltam evidências observáveis, em vez de descobrir a limitação só depois.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:39:09Z",
+        "payload": {
+          "test_id": "META-OBS26-003-OBSERVABILITY-GATE-REPLAY",
+          "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+          "question": "Um gate de observabilidade aplicado antes da previsão teria evitado resultados indecidíveis sem bloquear a maioria dos resultados úteis?",
+          "null": "Um gate pré-teste baseado apenas em inputs, timestamps e referências disponíveis evita menos de 50% dos casos posteriormente INCONCLUSIVE/BLOCKED_INPUT ou bloqueia mais de 25% dos casos decisivos.",
+          "rival": "O gate evita pelo menos 80% dos casos posteriormente INCONCLUSIVE/BLOCKED_INPUT e bloqueia no máximo 20% dos casos decisivos.",
+          "method": "Replay cego dos primeiros 30 testes de engenharia elegíveis em ordem temporal. Para cada teste, reconstruir apenas a informação disponível antes do resultado e aplicar um gate congelado: required inputs materializados, timestamps essenciais resolvíveis e pelo menos uma referência verificável quando o contrato depende de proveniência. Só depois revelar o desfecho e construir matriz de confusão.",
+          "data": "Tower canônica: histórico de testes, DATA_BINDING, eventos e resultados de engenharia.",
+          "success_criteria": "PROMOTED se houver >=20 casos elegíveis, sensibilidade para indecidíveis >=0,80 e taxa de bloqueio indevido de decisivos <=0,20, replicadas em duas metades temporais.",
+          "kill_criteria": "REJECTED se houver >=20 casos e sensibilidade <0,50 ou bloqueio indevido >0,25 em qualquer metade; amostra menor = INCONCLUSIVE.",
+          "claim_boundary": "Valida um gate de confiança, não autoriza alterar automaticamente o contrato ou a spine do NEXO.",
+          "priority": "P0",
+          "origin_kind": "DENER",
+          "prediction": {
+            "p_promoted": 0.68,
+            "expected_effect": "Um gate simples de observabilidade deve filtrar a maior parte dos testes que não tinham como discriminar antes da execução."
+          },
+          "prior_art": [
+            "META-CKPT26-001-INPUT-BINDING",
+            "META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION",
+            "RM-NEXO-SELF-ENGINEERING-V1"
+          ],
+          "rank_score": 0.93,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "hypothesis": {
+            "id": "HYP-META-OBS26-003",
+            "statement": "É possível detectar antecipadamente a maior parte da indecidibilidade usando apenas observabilidade pré-teste.",
+            "model": "Gate pré-teste de observabilidade reduz previsões sem base.",
+            "baseline": "A indecidibilidade só aparece depois e não é previsível pelos inputs disponíveis.",
+            "falsification_criterion": "O replay mostra baixa sensibilidade ou bloqueio excessivo de resultados decisivos."
+          },
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.observability_gate",
+            "question_plain": "Dá para perceber antes da execução quando o NEXO não tem informação suficiente para fazer uma previsão forte?",
+            "why_it_matters": "Um gate bom reduz testes e previsões desperdiçados sem esconder resultados que realmente poderiam decidir algo.",
+            "confidence_plain": "média"
+          }
+        }
+      },
+      {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:39:09Z",
+        "payload": {
+          "test_id": "META-OBS26-004-MISSINGNESS-ABLATION",
+          "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+          "question": "Qual família de informação ausente reproduz causalmente as falhas de observabilidade: timestamps, data bindings ou referências/proveniência?",
+          "null": "Nenhuma família isolada de missingness reproduz pelo menos 50% das falhas observadas em mais de um subsistema.",
+          "rival": "Uma família de missingness reproduz pelo menos 70% das falhas observadas em dois ou mais subsistemas sem alterar os demais campos.",
+          "method": "Selecionar 12 cadeias completas de engenharia, divididas em duas janelas. Em cópias isoladas, ablater separadamente e sem retuning: timestamps essenciais, DATA_BINDING/inputs e refs de proveniência. Rodar os mesmos leitores status/frontier e verificadores usados pelo runtime; medir qual ablação reproduz null/stale, CHECKPOINTED indevido ou indecidibilidade.",
+          "data": "Cópias isoladas da Tower canônica e writer canônico; nenhuma edição da Tower viva.",
+          "success_criteria": "PROMOTED se uma família isolada reproduzir >=70% das falhas-alvo em >=2 subsistemas e o efeito aparecer nas duas janelas.",
+          "kill_criteria": "REJECTED se nenhuma família atingir 50% em dois subsistemas ou se a família dominante inverter entre janelas; menos de 12 cadeias completas = INCONCLUSIVE.",
+          "claim_boundary": "Isola classes de missingness no runtime; não identifica automaticamente a correção de código nem autoriza mutação da spine.",
+          "priority": "P1",
+          "origin_kind": "DENER",
+          "prediction": {
+            "p_promoted": 0.6,
+            "expected_effect": "A ausência de proveniência/input materializado deve explicar mais falhas que timestamps isoladamente."
+          },
+          "prior_art": [
+            "CONTEST-META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE-1",
+            "META-CKPT26-001-INPUT-BINDING",
+            "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP"
+          ],
+          "rank_score": 0.87,
+          "rank_rubric": {
+            "novidade": 0.3,
+            "testabilidade": 0.3,
+            "custo_inverso": 0.2,
+            "impacto_no_roadmap": 0.2
+          },
+          "hypothesis": {
+            "id": "HYP-META-OBS26-004",
+            "statement": "As falhas de observabilidade são dominadas por uma classe identificável de missingness e não por ausência genérica de dados.",
+            "model": "Uma ablação específica reproduz a maioria das falhas.",
+            "baseline": "As falhas são distribuídas e nenhuma classe isolada domina.",
+            "falsification_criterion": "Nenhuma classe reproduz metade das falhas em dois subsistemas ou a dominância não replica."
+          },
+          "semantic": {
+            "domain_id": "engineering",
+            "subdomain_id": "engineering.nexo_runtime",
+            "topic_id": "engineering.nexo_runtime.missingness_ablation",
+            "question_plain": "O que quebra mais a observabilidade do NEXO: tempo, inputs ou referências de proveniência?",
+            "why_it_matters": "Separar a causa evita corrigir timestamps quando o problema real está em inputs ou referências ausentes.",
+            "confidence_plain": "média"
+          }
+        }
+      }
+    ]
+  }
+}
