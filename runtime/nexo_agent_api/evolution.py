@@ -486,10 +486,10 @@ _AUTOMATION_SIGNAL_SOURCES = {
 }
 
 _INCIDENT_PUBLIC_COPY_PT = {
-    "WRITER_LAG_PATTERN": "Foi detectada uma recorrência de atraso no fluxo de escrita do sistema.",
-    "EMPTY_FRONTIER_ACTIVE_ROADMAP": "Foi detectada uma recorrência de frente ativa sem testes disponíveis para execução.",
+    "WRITER_LAG_PATTERN": "O sistema detectou atrasos repetidos para registrar e confirmar mudanças.",
+    "EMPTY_FRONTIER_ACTIVE_ROADMAP": "Uma área de trabalho ativa ficou repetidamente sem um próximo teste pronto para executar.",
 }
-_INCIDENT_PUBLIC_FALLBACK_PT = "Foi detectado um padrão operacional recorrente e ele está sendo investigado de forma controlada."
+_INCIDENT_PUBLIC_FALLBACK_PT = "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa."
 
 
 def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, Any]]:
