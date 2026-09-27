@@ -35,7 +35,8 @@ _SOURCE_LINK_FIELDS = {
 # prose intended for a person. Scientific jargon is allowed; internal transport
 # jargon is not.
 _MACHINE_ONLY_PLAIN_TOKENS = {
-    "ACK", "PENDING", "DONE", "FAILED",
+    "ACK", "PENDING", "DONE", "FAILED", "READY", "RUNNING", "CHECKPOINTED",
+    "CONFIRMED", "REFUTED", "CANONICAL", "BLOCKED", "HIGH", "MEDIUM", "LOW", "UNKNOWN",
     "READBACK", "FINGERPRINT", "PAYLOAD", "HANDOFF", "CANARY",
     "REQUEST_ID", "TOPIC_ID", "ENTITY_REF", "EVIDENCE_REFS", "SOURCE_LINKS",
 }
