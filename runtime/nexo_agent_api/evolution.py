@@ -251,6 +251,9 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     incident_id = resolve_incident_id(root, body.get("incident_id"), refs=body.get("refs") or [])
     if body.get("incident_id") and not incident_id:
         return []  # never attach a canary to an ungrounded incident id
+    if incident_id and any(item.get("incident_id") == incident_id and item.get("state") == "CLOSED"
+                           for item in _incident_registry(root)):
+        return []  # terminal incidents never reopen through a new canary/mutation
     if incident_id and not incident_confirmed(root, incident_id):
         return []  # causal canaries require an actually CONFIRMED test, never a declared state
     genome = _read(root, GENOME_DOC)
@@ -482,6 +485,12 @@ _AUTOMATION_SIGNAL_SOURCES = {
     "PITIA", "LEARNER", "REFUTADOR",
 }
 
+_INCIDENT_PUBLIC_COPY_PT = {
+    "WRITER_LAG_PATTERN": "Foi detectada uma recorrência de atraso no fluxo de escrita do sistema.",
+    "EMPTY_FRONTIER_ACTIVE_ROADMAP": "Foi detectada uma recorrência de frente ativa sem testes disponíveis para execução.",
+}
+_INCIDENT_PUBLIC_FALLBACK_PT = "Foi detectado um padrão operacional recorrente e ele está sendo investigado de forma controlada."
+
 
 def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Read-only shadow groups for repeated stable signal codes; never projects free-text causes."""
@@ -580,12 +589,15 @@ def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, 
 def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     """Repeated automation LEARNING_SIGNALs -> deterministic private incident candidates.
 
-    Opening is evidence driven: at least two distinct artifacts must carry the
-    same stable code *and* the same explicit topic_id. Clock/stale pressure is
-    deliberately not an input here.
+    A first incident opens only from >=2 distinct automation artifacts with the
+    same normalized stable code and explicit topic_id. Once an incident is
+    CLOSED its evidence is frozen: >=2 later, previously unassociated eligible
+    artifacts open one deterministic child linked by parent_incident_id.
+    Clock/stale pressure and conversation-only evidence are never inputs here.
     """
     tests = tests or _tests(root)
-    groups: dict[tuple[str, str], dict[str, Any]] = {}
+    registry = _incident_registry(root)
+    groups: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
     folder = root / "entities" / "artifact"
     for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
         try:
@@ -626,50 +638,111 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
             if key in seen_here:
                 continue  # one artifact is one independent observation at most
             seen_here.add(key)
-            digest = hashlib.sha256((code + "\n" + topic_id).encode("utf-8")).hexdigest()[:16].upper()
-            group = groups.setdefault(key, {
-                "incident_id": "INC-" + digest,
-                "signal_code": code,
-                "topic_id": topic_id,
-                "evidence_refs": set(),
-                "source_roles": set(),
-                "signal_test_ids": set(),
-                "timestamps": set(),
-                "private": False,
-            })
-            group["evidence_refs"].add(artifact_id)
-            group["source_roles"].add(source)
-            if stamp:
-                group["timestamps"].add(stamp)
-            single_test = signal.get("test_id")
-            if single_test:
-                group["signal_test_ids"].add(str(single_test))
-            many_tests = signal.get("test_ids")
-            if isinstance(many_tests, list):
-                group["signal_test_ids"].update(str(test_id) for test_id in many_tests if test_id)
-            resolved = resolve_semantic({"semantic": {**semantic, "topic_id": raw_topic}}, entity_id=artifact_id)
-            group["private"] = bool(group["private"] or record.get("private") or signal.get("private")
-                                    or is_private(semantic) or is_private(resolved))
-    candidates = []
-    for group in groups.values():
-        evidence = sorted(group["evidence_refs"])
-        if len(evidence) < 2:
-            continue
-        stamps = sorted(group["timestamps"])
-        candidates.append({
-            "incident_id": group["incident_id"],
-            "signal_code": group["signal_code"],
-            "topic_id": group["topic_id"],
-            "evidence_count": len(evidence),
-            "evidence_refs": evidence,
-            "source_roles": sorted(group["source_roles"]),
-            "signal_test_ids": sorted(group["signal_test_ids"]),
-            "first_seen": stamps[0] if stamps else None,
-            "last_seen": stamps[-1] if stamps else None,
-            "private": bool(group["private"]),
-        })
-    return sorted(candidates, key=lambda incident: incident["incident_id"])
 
+            test_ids: set[str] = set()
+            if signal.get("test_id"):
+                test_ids.add(str(signal["test_id"]))
+            if isinstance(signal.get("test_ids"), list):
+                test_ids.update(str(test_id) for test_id in signal["test_ids"] if test_id)
+            resolved = resolve_semantic({"semantic": {**semantic, "topic_id": raw_topic}}, entity_id=artifact_id)
+            groups.setdefault(key, {})[artifact_id] = {
+                "artifact_id": artifact_id,
+                "source": source,
+                "timestamp": stamp,
+                "test_ids": test_ids,
+                "private": bool(record.get("private") or signal.get("private")
+                                or is_private(semantic) or is_private(resolved)),
+            }
+
+    def compose(code: str, topic_id: str, incident_id: str, observations: list[dict[str, Any]],
+                *, current: dict[str, Any] | None = None, parent_incident_id: str | None = None) -> dict[str, Any]:
+        current = current or {}
+        evidence = set(str(ref) for ref in current.get("evidence_refs") or [])
+        source_roles = set(str(role) for role in current.get("source_roles") or [])
+        signal_test_ids = set(str(test_id) for test_id in current.get("signal_test_ids") or [])
+        stamps = {str(stamp) for stamp in (current.get("first_seen"), current.get("last_seen")) if stamp}
+        private = bool(current.get("private"))
+        for observation in observations:
+            evidence.add(observation["artifact_id"])
+            source_roles.add(observation["source"])
+            signal_test_ids.update(observation["test_ids"])
+            if observation["timestamp"]:
+                stamps.add(observation["timestamp"])
+            private = private or observation["private"]
+        ordered_stamps = sorted(stamps)
+        return {
+            "incident_id": incident_id,
+            "parent_incident_id": parent_incident_id or current.get("parent_incident_id"),
+            "signal_code": code,
+            "topic_id": topic_id,
+            "evidence_count": len(evidence),
+            "evidence_refs": sorted(evidence),
+            "source_roles": sorted(source_roles),
+            "signal_test_ids": sorted(signal_test_ids),
+            "first_seen": ordered_stamps[0] if ordered_stamps else current.get("first_seen"),
+            "last_seen": ordered_stamps[-1] if ordered_stamps else current.get("last_seen"),
+            "private": private,
+        }
+
+    candidates: list[dict[str, Any]] = []
+    all_keys = set(groups)
+    all_keys.update(
+        (str(item.get("signal_code") or ""), str(item.get("topic_id") or ""))
+        for item in registry if item.get("signal_code") and item.get("topic_id")
+    )
+    for code, topic_id in sorted(all_keys):
+        observations = groups.get((code, topic_id), {})
+        existing = [item for item in registry
+                    if item.get("signal_code") == code and item.get("topic_id") == topic_id and item.get("incident_id")]
+        associated = {str(ref) for item in existing for ref in item.get("evidence_refs") or []}
+        unassociated = [obs for artifact_id, obs in observations.items() if artifact_id not in associated]
+        unassociated.sort(key=lambda obs: (obs.get("timestamp") or "", obs["artifact_id"]))
+
+        open_items = [item for item in existing if item.get("state") != "CLOSED"]
+        for item in existing:
+            if item.get("state") == "CLOSED" or (open_items and item is not open_items[-1]):
+                # Existing terminal/legacy siblings remain visible to resolution
+                # but reconciliation never mutates their frozen evidence below.
+                candidates.append(dict(item))
+
+        if open_items:
+            active = open_items[-1]
+            candidates.append(compose(code, topic_id, str(active["incident_id"]), unassociated, current=active))
+            continue
+
+        if not existing:
+            if len(unassociated) < 2:
+                continue
+            base_id = "INC-" + hashlib.sha256((code + "\n" + topic_id).encode("utf-8")).hexdigest()[:16].upper()
+            candidates.append(compose(code, topic_id, base_id, unassociated))
+            continue
+
+        closed = [item for item in existing if item.get("state") == "CLOSED"]
+        if not closed:
+            continue
+        parent = max(closed, key=lambda item: str(item.get("closed_at") or item.get("last_seen") or ""))
+        anchor = str(parent.get("closed_at") or parent.get("last_seen") or "")
+        later = [obs for obs in unassociated if obs.get("timestamp") and (not anchor or obs["timestamp"] > anchor)]
+        if len(later) < 2:
+            continue
+        recurrence_seed = "\n".join([
+            code,
+            topic_id,
+            str(parent["incident_id"]),
+            later[0]["artifact_id"],
+            later[1]["artifact_id"],
+        ])
+        child_id = "INC-" + hashlib.sha256(recurrence_seed.encode("utf-8")).hexdigest()[:16].upper()
+        candidates.append(compose(
+            code, topic_id, child_id, later, parent_incident_id=str(parent["incident_id"])
+        ))
+
+    by_id: dict[str, dict[str, Any]] = {}
+    for candidate in candidates:
+        incident_id = str(candidate.get("incident_id") or "")
+        if incident_id:
+            by_id[incident_id] = candidate
+    return [by_id[key] for key in sorted(by_id)]
 
 def _incident_registry(root: Path) -> list[dict[str, Any]]:
     return [item for item in _read(root, INCIDENTS_DOC).get("incidents") or [] if isinstance(item, dict)]
@@ -818,8 +891,13 @@ def incident_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
     root = Path(root)
     tests = _tests(root)
     genome = _read(root, GENOME_DOC)
-    desired = [_derived_incident(root, candidate, tests, genome) for candidate in _incident_candidates(root, tests)]
     current = {str(item.get("incident_id")): item for item in _incident_registry(root) if item.get("incident_id")}
+    desired = []
+    for candidate in _incident_candidates(root, tests):
+        existing = current.get(str(candidate.get("incident_id") or ""))
+        if existing and existing.get("state") == "CLOSED":
+            continue  # terminal lifecycle and evidence are immutable
+        desired.append(_derived_incident(root, candidate, tests, genome))
     updates = [item for item in desired if current.get(item["incident_id"]) != item]
     if not updates:
         return []
@@ -847,10 +925,15 @@ def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[
     for incident in incidents:
         if incident.get("private"):
             continue
+        summary_pt = _INCIDENT_PUBLIC_COPY_PT.get(
+            str(incident.get("signal_code") or "").upper(),
+            _INCIDENT_PUBLIC_FALLBACK_PT,
+        )
         out.append({
             "incident_id": incident.get("incident_id"),
             "state": incident.get("state"),
             "evidence_count": int(incident.get("evidence_count") or 0),
+            "summary_pt": summary_pt,
             "public_ids": {
                 "tests": _public_entity_ids(root, "test", incident.get("test_ids") or [])
                          + _public_entity_ids(root, "test", incident.get("contest_test_ids") or []),
@@ -1002,6 +1085,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         status["emergence"] = _emergence(root, tests, genome, now)
     if public:
         status.pop("arm_for_this_run")
+        status.pop("signal_clusters", None)  # raw codes/topics remain private; incidents expose reviewed copy only
         status["incidents"] = _public_incidents(root, incidents)
         status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
             "status", "question", "budget", "stop", "chartered_at", "closed_at", "close_reason", "rival_of")}}
