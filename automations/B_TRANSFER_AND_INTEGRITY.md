@@ -6,13 +6,16 @@ Leia primeiro `automations/OPERATING_CONTRACT.md`.
 
 1. Código fresco (`git pull --ff-only` em TCC, Pantheon, vault).
 2. `python scripts/nexo_tower.py status`.
-3. **Handoffs para ADVISOR:** `python scripts/nexo_tower.py handoff list --role ADVISOR`.
-   - ACK ao assumir; DONE só depois da correção/hipótese/transferência correspondente estar persistida com readback.
-   - FAILED só para blocker real.
-   - Correção, fonte primária ou transferência que gere trabalho executável para A → handoff para EXECUTOR.
-     Lacuna/aprendizado que deva seguir para C → handoff para LEARNER.
-   - Pesquisa pública segue o contrato comum: fonte primária/official primeiro, source links completos, incerteza explícita,
-     e nenhum resumo web vira resultado científico ou altera critério congelado.
+3. **Repasses para o ADVISOR:** `python scripts/nexo_tower.py handoff list --role ADVISOR`.
+   - Ao assumir, marque como recebido (`ACK`). Marque como concluído (`DONE`) somente depois de a correção, hipótese
+     ou transferência estar gravada e confirmada pela releitura da Tower.
+   - Marque como falhou (`FAILED`) apenas diante de bloqueio real.
+   - Correção, fonte primária ou transferência que gere trabalho executável para A → repasse para EXECUTOR.
+     Lacuna ou aprendizagem que deva seguir para C → repasse para LEARNER.
+   - Nos campos humanos do repasse, escreva o que aconteceu, por que isso muda a decisão e o que o próximo papel deve fazer.
+     Não despeje nomes internos como IDs, códigos de estado ou nomes de campos no texto.
+   - Pesquisa pública segue o contrato comum: fonte primária/oficial primeiro, links completos, incerteza explícita,
+     e nenhum resumo da web vira resultado científico ou altera critério congelado.
 4. Estado do ATLAS:
    - `OUTDATED`: dispare o Pages (`NEXO_PAGES_DISPATCH_TOKEN`/`GITHUB_TOKEN` se houver; senão
      `workflow_dispatch` do workflow "NEXO ONE GitHub Pages" pela UI do GitHub no navegador) e confira de novo
