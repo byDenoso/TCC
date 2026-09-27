@@ -366,9 +366,15 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
     for path in folder.glob("*.json") if folder.is_dir() else []:
         record = _read_json(path) or {}
         payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
-        raw_status = str(payload.get("status") or "").upper()
+        raw_status = str(payload.get("status") or payload.get("overall_status") or "").upper()
         if raw_status in {"GREEN", "YELLOW", "RED"}:
             status = raw_status
+        elif raw_status in {"PASS", "OK"}:
+            status = "GREEN"
+        elif raw_status in {"WARN", "WARNING"}:
+            status = "YELLOW"
+        elif raw_status in {"FAIL", "FAILED", "ERROR"}:
+            status = "RED"
         elif raw_status in mapped_statuses:
             status = "YELLOW"
         else:
@@ -377,16 +383,23 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
         if isinstance(raw_checks, list):
             checks = [check for check in raw_checks if isinstance(check, dict)]
             checks_total = len(checks)
-        elif isinstance(raw_checks, dict) and raw_checks and raw_status in mapped_statuses:
-            # New reports use keyed diagnostic maps. Publish only one aggregate
-            # outcome for known states; retain only the count because raw values
-            # may contain private details and correlated findings.
-            area, failed = mapped_statuses[raw_status]
-            checks = [{"area": area, "ok": not failed}]
+        elif isinstance(raw_checks, dict) and raw_checks:
+            # Current Guardiao reports publish keyed areas with PASS/WARN/FAIL.
+            # Keep only area + aggregate boolean so private diagnostics never leak.
+            checks = []
+            for area, detail in raw_checks.items():
+                detail_status = str(detail.get("status") or "").upper() if isinstance(detail, dict) else ""
+                if detail_status in {"FAIL", "FAILED", "ERROR", "RED"}:
+                    ok = False
+                elif detail_status in {"PASS", "OK", "GREEN"}:
+                    ok = True
+                else:
+                    ok = None
+                checks.append({"area": str(area), "ok": ok})
             checks_total = len(raw_checks)
         else:
             continue
-        stamp = str(record.get("created_at") or payload.get("date") or "")
+        stamp = str(payload.get("checked_at") or record.get("created_at") or payload.get("date") or "")
         if best is None or stamp > best[0]:
             best = (stamp, {"status": status, "checks": checks}, checks_total)
     if not best:
