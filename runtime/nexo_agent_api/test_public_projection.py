@@ -304,10 +304,10 @@ def test_public_incident_summaries_use_reviewed_copy_or_neutral_fallback_without
     projection = _build(root)
     incidents = {item["incident_id"]: item for item in projection["evolution"]["incidents"]}
     assert incidents["INC-KNOWN"]["summary_pt"] == (
-        "Foi detectada uma recorrência de atraso no fluxo de escrita do sistema."
+        "O sistema detectou atrasos repetidos para registrar e confirmar mudanças."
     )
     assert incidents["INC-UNKNOWN"]["summary_pt"] == (
-        "Foi detectado um padrão operacional recorrente e ele está sendo investigado de forma controlada."
+        "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa."
     )
     for incident in incidents.values():
         assert set(incident) == {
