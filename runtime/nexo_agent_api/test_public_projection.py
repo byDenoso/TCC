@@ -172,6 +172,44 @@ def test_only_allowlisted_fields_are_published(tmp_path):
     assert b"never publish this" not in raw
 
 
+def test_private_handoff_free_text_and_research_links_never_reach_public_projection(tmp_path):
+    root = _tower(tmp_path)
+    events = root / "events" / "2026-09-27"
+    events.mkdir(parents=True)
+    (events / "handoff.json").write_text(json.dumps({
+        "event_id": "EV-HO-1",
+        "handoff_id": "HO-PRIVATE-1",
+        "request_id": "REQ-PRIVATE-1",
+        "from_role": "ADVISOR",
+        "to_role": "EXECUTOR",
+        "state": "PENDING",
+        "summary_plain": "SEGREDO_HANDOFF_RESUMO",
+        "why_it_matters": "SEGREDO_HANDOFF_PORQUE",
+        "next_action": "SEGREDO_HANDOFF_ACAO",
+        "objective_ref": "OBJ::PRIVATE",
+        "evidence_refs": [{"ref": "TEST::PRIVATE"}],
+        "source_links": [{
+            "label": "SEGREDO_FONTE",
+            "url": "https://private.example/research",
+            "access_date": "2026-09-27",
+            "supports": "SEGREDO_SUPORTE",
+        }],
+    }), encoding="utf-8")
+
+    raw = projection_bytes(_build(root))
+    for secret in (
+        b"SEGREDO_HANDOFF_RESUMO",
+        b"SEGREDO_HANDOFF_PORQUE",
+        b"SEGREDO_HANDOFF_ACAO",
+        b"OBJ::PRIVATE",
+        b"TEST::PRIVATE",
+        b"SEGREDO_FONTE",
+        b"private.example",
+        b"SEGREDO_SUPORTE",
+    ):
+        assert secret not in raw
+
+
 def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
     cases = (
         ("PASS_WITH_PENDING_WRITER", 0, []),
