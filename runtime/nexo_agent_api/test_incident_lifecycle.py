@@ -272,7 +272,7 @@ class IncidentLifecycleTests(unittest.TestCase):
         public_status = evolution_status(self.root, public=True)
         [summary] = public_status["incidents"]
         self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner"})
-        self.assertEqual(summary["summary_pt"], "Foi detectada uma recorrência de atraso no fluxo de escrita do sistema.")
+        self.assertEqual(summary["summary_pt"], "O sistema detectou atrasos repetidos para registrar e confirmar mudanças.")
         self.assertEqual(summary["incident_id"], public_incident["incident_id"])
         serialized = json.dumps(summary)
         self.assertNotIn("evidence_refs", serialized)
@@ -288,7 +288,7 @@ class IncidentLifecycleTests(unittest.TestCase):
         )
         self.assertEqual(
             unknown["summary_pt"],
-            "Foi detectado um padrão operacional recorrente e ele está sendo investigado de forma controlada.",
+            "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa.",
         )
         unknown_raw = json.dumps(unknown)
         self.assertNotIn("UNREVIEWED_SIGNAL", unknown_raw)
