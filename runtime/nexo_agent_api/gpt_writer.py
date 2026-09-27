@@ -21,6 +21,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+from . import evolution
 from .inbox_apply import ProposalError, proposal_to_requests
 from .live_tower import LIVE_TOWER_NAME, materialize_live_tower, read_live_tower_bytes, verify_live_tower
 from .tower_apply import apply_requests
@@ -60,6 +61,18 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
                 report["rejected"].append({"item": label, "reason": failed[0].get("issue")})
             else:
                 report["applied"].append(label)
+
+        # Incident lifecycle is derived from canonical evidence already present in
+        # the materialized Tower. Agents never declare incident state directly.
+        incident_requests = evolution.incident_reconcile_requests(root)
+        if incident_requests:
+            incident_receipts = apply_requests(root, incident_requests)
+            incident_failed = [r for r in incident_receipts if not r.get("accepted", True) or r.get("issue")]
+            report["receipts"].extend(incident_receipts)
+            if incident_failed:
+                report["rejected"].append({"item": "incident-reconcile", "reason": incident_failed[0].get("issue")})
+            else:
+                report["reconciled"] = [r.get("document") or r.get("entity_name") for r in incident_receipts]
         packed = (root / LIVE_TOWER_NAME).read_bytes()
     after = verify_live_tower(read_live_tower_bytes(packed))
     report["after"] = after
