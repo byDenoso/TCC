@@ -121,6 +121,47 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
         self.assertEqual(done["evidence_refs"], envelope["evidence_refs"])
         self.assertEqual(service.inbox_for("EXECUTOR"), [])
 
+    def test_human_fields_reject_internal_codes_but_keep_structured_refs_private(self):
+        from runtime.nexo_agent_api import AgentService, TowerAgentIssue
+
+        service = AgentService(self.root)
+        base = {
+            "request_id": "REQ-CI-LANGUAGE-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DE-LANGUAGE",
+            "thread_id": "THR::DE-LANGUAGE",
+            "summary_plain": "Uma nova medição pública pode ajudar a separar duas explicações para a energia escura.",
+            "why_it_matters": "Ela permite comparar previsões diferentes sem mudar as regras já definidas para o teste.",
+            "next_action": "Use a fonte citada no próximo teste já planejado e registre o efeito observado.",
+            "confidence_plain": "Confiança moderada porque a fonte mede a quantidade necessária, mas ainda não decide qual explicação é correta.",
+            "evidence_refs": [{"ref": "TEST::DE-LANGUAGE", "kind": "TEST"}],
+        }
+        created = service.emit_handoff(**base)
+        self.assertEqual(created["evidence_refs"], [{"ref": "TEST::DE-LANGUAGE", "kind": "TEST"}])
+        self.assertNotIn("TEST::DE-LANGUAGE", created["summary_plain"])
+
+        bad = dict(base, request_id="REQ-CI-LANGUAGE-RAW-REF",
+                   summary_plain="Use TEST::DE-LANGUAGE e aguarde o readback.")
+        with self.assertRaises(TowerAgentIssue) as leaked:
+            service.emit_handoff(**bad)
+        self.assertIn(
+            leaked.exception.code,
+            {"HANDOFF_PLAIN_FIELD_LEAKS_INTERNAL_REF", "HANDOFF_PLAIN_FIELD_MACHINE_LANGUAGE"},
+        )
+
+        bad_confidence = dict(base, request_id="REQ-CI-LANGUAGE-CONFIDENCE", confidence_plain="HIGH")
+        with self.assertRaises(TowerAgentIssue) as machine_confidence:
+            service.emit_handoff(**bad_confidence)
+        self.assertEqual(machine_confidence.exception.code, "HANDOFF_PLAIN_FIELD_MACHINE_LANGUAGE")
+
+        bad_field = dict(base, request_id="REQ-CI-LANGUAGE-FIELD",
+                         next_action="Atualize o topic_id antes de continuar.")
+        with self.assertRaises(TowerAgentIssue) as field_name:
+            service.emit_handoff(**bad_field)
+        self.assertEqual(field_name.exception.code, "HANDOFF_PLAIN_FIELD_LEAKS_INTERNAL_REF")
+
     def test_same_request_id_with_different_content_is_rejected(self):
         from runtime.nexo_agent_api import AgentService, TowerAgentIssue
 
