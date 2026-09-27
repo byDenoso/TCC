@@ -27,7 +27,7 @@ class HandoffProtocolTests(unittest.TestCase):
         kwargs.setdefault("request_id", f"REQ-TEST-{kwargs.get('handoff_type')}-{kwargs.get('entity_ref')}")
         kwargs.setdefault("summary_plain", "Há uma atualização operacional pronta para o próximo papel.")
         kwargs.setdefault("why_it_matters", "A próxima etapa depende desta passagem de contexto.")
-        return self.emit(service, **kwargs)
+        return service.emit_handoff(**kwargs)
 
     def test_director_handoff_routes_pending_ack_done(self):
         service = AgentService(self.root)
