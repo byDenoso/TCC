@@ -615,3 +615,68 @@ class RedactTests(unittest.TestCase):
             self.assertEqual(req["changes"]["title"], "Campanha do JOA")
             self.assertEqual(req["changes"]["meta"], {"display_name": "JOA JOA", "source_ref": "x/JOA.csv"})
             self.assertNotIn("id", req["changes"])
+
+
+class CampaignSemanticBackfillTests(unittest.TestCase):
+    def test_new_roadmap_charter_keeps_public_plain_language(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            [request] = proposal_to_requests({"kind": "ROADMAP_CHARTER", "created_at": "2026-09-27T00:00:00Z", "payload": {
+                "roadmap_id": "RM-NEW-CAMPAIGN",
+                "title": "Pergunta sobre o Universo",
+                "question": "Can the public data distinguish the competing models?",
+                "semantic": {
+                    "question_plain": "Os dados públicos conseguem distinguir os modelos em disputa?",
+                    "why_it_matters": "A resposta mostra se novas observações podem testar essas explicações.",
+                },
+            }}, root)
+
+            self.assertEqual(request["document"], "roadmaps/RM-NEW-CAMPAIGN.json")
+            self.assertEqual(request["merge"]["title"], "Pergunta sobre o Universo")
+            self.assertEqual(
+                request["merge"]["semantic"]["question_plain"],
+                "Os dados públicos conseguem distinguir os modelos em disputa?",
+            )
+
+    def test_campaign_backfill_updates_roadmap_copy_without_replacing_science_question(self):
+        from runtime.nexo_agent_api.tower_apply import apply_document
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            roadmaps = root / "roadmaps"
+            roadmaps.mkdir()
+            path = roadmaps / "RM-DARK-ENERGY.json"
+            original_question = "Is late-time acceleration consistent with Lambda?"
+            path.write_text(json.dumps({
+                "roadmap_id": "RM-DARK-ENERGY",
+                "campaign_id": "CAMP-DARK-ENERGY",
+                "title": "Nature of dark energy",
+                "question": original_question,
+                "semantic": {"domain_id": "science"},
+            }), encoding="utf-8")
+
+            [request] = proposal_to_requests({"kind": "SEMANTIC_BACKFILL", "payload": {"items": [{
+                "id": "CAMP-DARK-ENERGY",
+                "entity_kind": "campaign",
+                "roadmap_id": "RM-DARK-ENERGY",
+                "title": "Natureza da energia escura",
+                "overwrite": True,
+                "semantic": {
+                    "question_plain": "A aceleração recente do Universo é compatível com uma constante cosmológica?",
+                    "why_it_matters": "A resposta ajuda a distinguir uma constante de explicações que mudam com o tempo.",
+                },
+            }]}}, root)
+
+            self.assertEqual(request["document"], "roadmaps/RM-DARK-ENERGY.json")
+            receipt = apply_document(root, request)
+            self.assertTrue(receipt["accepted"])
+            self.assertEqual(receipt["readback"], "PASS")
+
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["title"], "Natureza da energia escura")
+            self.assertEqual(saved["question"], original_question)
+            self.assertEqual(saved["semantic"]["domain_id"], "science")
+            self.assertEqual(
+                saved["semantic"]["question_plain"],
+                "A aceleração recente do Universo é compatível com uma constante cosmológica?",
+            )

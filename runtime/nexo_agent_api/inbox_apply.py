@@ -369,6 +369,23 @@ def _lesson_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
 _BACKFILL_FIELDS = ("title", "subject_code", "question_plain")
 
 
+def _campaign_roadmap(root: Path, campaign_id: str, roadmap_id: str | None) -> tuple[str, dict[str, Any]] | None:
+    folder = root / "roadmaps"
+    if not folder.is_dir():
+        return None
+    for path in sorted(folder.glob("*.json")):
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(current, dict) or str(current.get("campaign_id") or "") != campaign_id:
+            continue
+        if roadmap_id and path.stem != roadmap_id and str(current.get("roadmap_id") or "") != roadmap_id:
+            continue
+        return f"roadmaps/{path.name}", current
+    return None
+
+
 def _redact_names(current: dict[str, Any], names: list[Any], code: Any) -> dict[str, Any]:
     """Privacy: replace person names by the subject code in every free-text field (titles, display_name,
     source_ref, justifications...). Ids and version fields are never touched. Returns changed top-level keys."""
@@ -403,6 +420,34 @@ def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -
         entity_id = str(entry.get("id") or entry.get("test_id") or entry.get("hypothesis_id") or "").strip()
         kind = str(entry.get("entity_kind") or ("hypothesis" if entity_id.startswith("HYP") else "lesson" if entity_id.startswith("LESSON::") else "test"))
         current = _entity(root, kind, entity_id) if entity_id else None
+        if current is None and kind == "campaign" and entity_id:
+            roadmap = _campaign_roadmap(root, entity_id, str(entry.get("roadmap_id") or "").strip() or None)
+            if roadmap:
+                relative, current = roadmap
+                old = dict(current.get("semantic") or {})
+                new = {k: v for k, v in (entry.get("semantic") or {}).items() if v not in (None, "", [])}
+                if not entry.get("overwrite"):
+                    new = {k: v for k, v in new.items() if not old.get(k)}
+                changes: dict[str, Any] = {}
+                if new:
+                    changes["semantic"] = {**old, **new}
+                title = str(entry.get("title") or "").strip()
+                if title and (entry.get("overwrite") or not current.get("title")):
+                    changes["title"] = title
+                for field in ("subject_code",):
+                    code = re.sub(r"[^A-Z0-9]", "", str(entry.get(field) or "").upper())
+                    code = code if len(code) <= 4 else code[:3]
+                    if len(code) >= 2 and (entry.get("overwrite") or not current.get(field)):
+                        changes[field] = code
+                redacted = _redact_names(current, entry.get("redact_names") or [], entry.get("subject_code") or current.get("subject_code"))
+                changes.update({k: v for k, v in redacted.items() if k not in changes})
+                if changes:
+                    requests.append({
+                        "request_id": f"REQ-INBOX-BACKFILL-{_slug(entity_id)}-{index}",
+                        "document": relative,
+                        "merge": changes,
+                    })
+                continue
         if current is None:
             continue
         old = dict(current.get("semantic") or {})
@@ -412,6 +457,9 @@ def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -
         changes: dict[str, Any] = {}
         if new:
             changes["semantic"] = {**old, **new}
+        title = str(entry.get("title") or "").strip()
+        if title and (entry.get("overwrite") or not current.get("title")):
+            changes["title"] = title
         for field in ("subject_code",):
             code = re.sub(r"[^A-Z0-9]", "", str(entry.get(field) or "").upper())
             code = code if len(code) <= 4 else code[:3]
