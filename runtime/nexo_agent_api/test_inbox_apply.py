@@ -69,6 +69,80 @@ class InboxApplyTests(unittest.TestCase):
 
 
 
+class HandoffProtocolCIRegressionTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / "entities" / "work").mkdir(parents=True)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_idempotent_send_recipient_transition_and_citations(self):
+        from runtime.nexo_agent_api import AgentService, TowerAgentIssue
+
+        service = AgentService(self.root)
+        envelope = {
+            "request_id": "REQ-CI-HANDOFF-001",
+            "from_role": "ADVISOR",
+            "to_role": "EXECUTOR",
+            "handoff_type": "RESEARCH_READY",
+            "entity_ref": "WORK::DE-CI",
+            "thread_id": "THR::DE-CI",
+            "summary_plain": "Uma fonte primária relevante foi ligada ao objetivo atual.",
+            "why_it_matters": "Ela altera a prioridade do próximo teste discriminante, não o resultado científico.",
+            "next_action": "Executar o teste já congelado usando a fonte citada como entrada observacional.",
+            "objective_ref": "OBJ::DARK-ENERGY-NATURE",
+            "evidence_refs": [{"ref": "TEST::DE-CI", "kind": "TEST"}],
+            "source_links": [{
+                "label": "Original survey release",
+                "url": "https://example.org/survey",
+                "access_date": "2026-09-27",
+                "publisher": "Example Survey",
+                "authors": ["A. Author"],
+                "date": "2026-09-26",
+                "supports": "Sustenta a medição observacional usada como entrada.",
+                "uncertainty": "Não determina o veredito científico.",
+                "next_test_impact": "Prioriza o próximo discriminante sem reescrever critérios.",
+            }],
+        }
+        first = service.emit_handoff(**envelope)
+        replay = service.emit_handoff(**envelope)
+        self.assertEqual(first["event_id"], replay["event_id"])
+        self.assertEqual(len(list((self.root / "events").rglob("*.json"))), 1)
+
+        with self.assertRaises(TowerAgentIssue) as wrong:
+            service.transition_handoff(first["handoff_id"], state="ACK", writer_role="LEARNER")
+        self.assertEqual(wrong.exception.code, "HANDOFF_WRITER_MISMATCH")
+
+        ack = service.transition_handoff(first["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        done = service.transition_handoff(first["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(ack["source_links"][0]["url"], "https://example.org/survey")
+        self.assertEqual(done["evidence_refs"], envelope["evidence_refs"])
+        self.assertEqual(service.inbox_for("EXECUTOR"), [])
+
+    def test_same_request_id_with_different_content_is_rejected(self):
+        from runtime.nexo_agent_api import AgentService, TowerAgentIssue
+
+        service = AgentService(self.root)
+        base = {
+            "request_id": "REQ-CI-HANDOFF-CONFLICT",
+            "from_role": "EXECUTOR",
+            "to_role": "LEARNER",
+            "handoff_type": "RESULT_READY",
+            "entity_ref": "WORK::CI",
+            "thread_id": "THR::CI",
+            "summary_plain": "O resultado canônico está pronto.",
+            "why_it_matters": "A aprendizagem depende deste resultado persistido.",
+            "next_action": "Registrar a lição vinculada ao resultado.",
+        }
+        service.emit_handoff(**base)
+        changed = dict(base, next_action="Executar uma ação materialmente diferente.")
+        with self.assertRaises(TowerAgentIssue) as conflict:
+            service.emit_handoff(**changed)
+        self.assertEqual(conflict.exception.code, "HANDOFF_REQUEST_ID_CONFLICT")
+
+
 class HandoffCLIPersistenceTests(unittest.TestCase):
     def test_create_handoff_uses_writer_lock_cas_readback_and_atlas_notification(self):
         from scripts import nexo_tower
