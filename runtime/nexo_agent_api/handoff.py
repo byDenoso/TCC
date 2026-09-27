@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -28,6 +29,24 @@ _SOURCE_LINK_FIELDS = {
     "uncertainty",
     "next_test_impact",
 }
+
+# Human-facing handoff fields are deliberately separate from canonical IDs/state.
+# These tokens already have structured private fields and should not be copied into
+# prose intended for a person. Scientific jargon is allowed; internal transport
+# jargon is not.
+_MACHINE_ONLY_PLAIN_TOKENS = {
+    "ACK", "PENDING", "DONE", "FAILED",
+    "READBACK", "FINGERPRINT", "PAYLOAD", "HANDOFF", "CANARY",
+    "REQUEST_ID", "TOPIC_ID", "ENTITY_REF", "EVIDENCE_REFS", "SOURCE_LINKS",
+}
+_PRIVATE_REF_RE = re.compile(
+    r"\b(?:REQ|HO|INC|TEST|WORK|HYP|LESSON|RM|ART)(?:::|[-:])[A-Z0-9_.:-]+\b",
+    re.IGNORECASE,
+)
+_SNAKE_FIELD_RE = re.compile(
+    r"\b(?:request_id|topic_id|entity_ref|evidence_refs|source_links|correlation_id|parent_handoff_id)\b",
+    re.IGNORECASE,
+)
 
 
 def _now() -> str:
@@ -84,7 +103,22 @@ def _required_plain(value: object, field: str) -> str:
             f"{field} is required and must be non-empty plain text.",
             {"field": field},
         )
-    return " ".join(value.strip().split())
+    text = " ".join(value.strip().split())
+    if _PRIVATE_REF_RE.search(text) or _SNAKE_FIELD_RE.search(text):
+        raise TowerAgentIssue(
+            "HANDOFF_PLAIN_FIELD_LEAKS_INTERNAL_REF",
+            "Human-facing handoff text must explain the meaning without copying internal IDs or field names.",
+            {"field": field},
+        )
+    words = {token.upper() for token in re.findall(r"[A-Za-z_]+", text)}
+    leaked = sorted(words.intersection(_MACHINE_ONLY_PLAIN_TOKENS))
+    if leaked:
+        raise TowerAgentIssue(
+            "HANDOFF_PLAIN_FIELD_MACHINE_LANGUAGE",
+            "Human-facing handoff text must use ordinary Portuguese instead of internal transport/state jargon.",
+            {"field": field, "tokens": leaked},
+        )
+    return text
 
 
 def _normalize_evidence_refs(value: object) -> list[dict]:
