@@ -39,6 +39,7 @@ class IncidentLifecycleTests(unittest.TestCase):
         source: str = "GUARDIAO",
         domain_id: str = "engineering",
         symptom: str = "detail",
+        created_at: str | None = None,
     ) -> None:
         signal = {"code": code, "semantic": {"domain_id": domain_id}, "symptom": symptom}
         if topic_id is not None:
@@ -47,7 +48,7 @@ class IncidentLifecycleTests(unittest.TestCase):
             "id": artifact_id,
             "kind": "LEARNING_SIGNAL",
             "source": source,
-            "created_at": f"2026-09-26T10:{len(list((self.root / 'entities' / 'artifact').glob('*.json'))):02d}:00Z",
+            "created_at": created_at or f"2026-09-26T10:{len(list((self.root / 'entities' / 'artifact').glob('*.json'))):02d}:00Z",
             "payload": {"signals": [signal]},
         }
         (self.root / "entities" / "artifact" / f"{artifact_id}.json").write_text(
@@ -175,18 +176,123 @@ class IncidentLifecycleTests(unittest.TestCase):
         self.assertEqual(closed["next_owner"], "NONE")
         self.assertEqual(closed["lesson_ids"], ["LESSON::engineering.nexo.writer"])
 
+    def test_closed_incident_recurs_as_deterministic_child_without_rewriting_parent(self) -> None:
+        self.signal("SIG-A", created_at="2026-09-26T10:00:00Z")
+        self.signal("SIG-B", source="EXECUTOR", created_at="2026-09-26T10:01:00Z")
+        parent = self.apply_reconcile()
+        parent_id = parent["incident_id"]
+
+        entity_path(self.root, "test", "INC-T1").write_text(json.dumps({
+            "id": "INC-T1",
+            "entity_version": 1,
+            "incident_id": parent_id,
+            "review_state": "REFUTED",
+            "verdict": "FALSIFIED",
+        }), encoding="utf-8")
+        entity_path(self.root, "lesson", "LESSON::engineering.nexo.writer").write_text(json.dumps({
+            "id": "LESSON::engineering.nexo.writer",
+            "entity_version": 1,
+            "linked_incident_ids": [parent_id],
+            "updated_at": "2026-09-26T14:00:00Z",
+        }), encoding="utf-8")
+        self.apply_reconcile()
+        frozen_parent = dict(self.current_incident(parent_id))
+        self.assertEqual(frozen_parent["state"], "CLOSED")
+        self.assertEqual(frozen_parent["evidence_refs"], ["SIG-A", "SIG-B"])
+
+        # Conversation-only and a single automation observation do not recur.
+        self.signal("CHAT-LATER", source="CHATGPT", created_at="2026-09-26T15:00:00Z")
+        self.signal("SIG-C", source="GUARDIAO", created_at="2026-09-26T15:01:00Z")
+        self.assertEqual(incident_reconcile_requests(self.root), [])
+
+        # The second previously unassociated automation observation opens one child.
+        self.signal("SIG-D", source="PITIA", created_at="2026-09-26T15:02:00Z")
+        request = incident_reconcile_requests(self.root)
+        self.assertEqual(len(request), 1)
+        [child] = request[0]["merge"]["incidents"]
+        self.assertNotEqual(child["incident_id"], parent_id)
+        self.assertEqual(child["parent_incident_id"], parent_id)
+        self.assertEqual(child["evidence_refs"], ["SIG-C", "SIG-D"])
+        self.assertEqual(child["state"], "OBSERVED")
+        apply_document(self.root, request[0])
+
+        # Parent remains terminal and replaying exactly the same artifacts is a no-op.
+        self.assertEqual(self.current_incident(parent_id), frozen_parent)
+        self.assertEqual(incident_reconcile_requests(self.root), [])
+
+    def test_closed_incident_rejects_new_canary_even_if_old_test_was_confirmed(self) -> None:
+        self.signal("SIG-A", created_at="2026-09-26T10:00:00Z")
+        self.signal("SIG-B", source="EXECUTOR", created_at="2026-09-26T10:01:00Z")
+        incident = self.apply_reconcile()
+        incident_id = incident["incident_id"]
+        entity_path(self.root, "test", "INC-CLOSED-T1").write_text(json.dumps({
+            "id": "INC-CLOSED-T1",
+            "entity_version": 1,
+            "incident_id": incident_id,
+            "review_state": "CONFIRMED",
+            "verdict": "SUPPORTED",
+        }), encoding="utf-8")
+        # Close through a recorded manual decision + durable lesson, then freeze it.
+        fs_path(self.root, GENOME_DOC).write_text(json.dumps({
+            "genes": [{
+                "id": "executor.rank_weight",
+                "status": "CANONICAL",
+                "canonical": 1,
+                "canary": None,
+                "last_decision": {
+                    "action": "REJECTED",
+                    "incident_id": incident_id,
+                    "canary_id": "CANARY-OLD",
+                    "at": "2026-09-26T13:00:00Z",
+                },
+            }]
+        }), encoding="utf-8")
+        entity_path(self.root, "lesson", "LESSON::closed").write_text(json.dumps({
+            "id": "LESSON::closed",
+            "entity_version": 1,
+            "linked_incident_ids": [incident_id],
+            "updated_at": "2026-09-26T14:00:00Z",
+        }), encoding="utf-8")
+        self.apply_reconcile()
+        self.assertEqual(self.current_incident(incident_id)["state"], "CLOSED")
+
+        self.assertEqual(mutation_requests(
+            {"source": "LEARNER", "created_at": "2026-09-26T15:00:00Z"},
+            {"gene": "executor.rank_weight", "value": 2, "incident_id": incident_id},
+            self.root,
+        ), [])
+        frozen = dict(self.current_incident(incident_id))
+        self.assertEqual(incident_reconcile_requests(self.root), [])
+        self.assertEqual(self.current_incident(incident_id), frozen)
+
     def test_public_status_is_minimal_and_private_incidents_do_not_leak(self) -> None:
         self.signal("PUB-A")
         self.signal("PUB-B", source="EXECUTOR")
         public_incident = self.apply_reconcile()
         public_status = evolution_status(self.root, public=True)
         [summary] = public_status["incidents"]
-        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "public_ids", "next_owner"})
+        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner"})
+        self.assertEqual(summary["summary_pt"], "Foi detectada uma recorrência de atraso no fluxo de escrita do sistema.")
         self.assertEqual(summary["incident_id"], public_incident["incident_id"])
         serialized = json.dumps(summary)
         self.assertNotIn("evidence_refs", serialized)
         self.assertNotIn("signal_code", serialized)
         self.assertNotIn("topic_id", serialized)
+
+        self.signal("UNKNOWN-A", code="UNREVIEWED_SIGNAL", topic_id="engineering.nexo.unknown")
+        self.signal("UNKNOWN-B", code="UNREVIEWED_SIGNAL", topic_id="engineering.nexo.unknown", source="PITIA")
+        self.apply_reconcile()
+        unknown = next(
+            item for item in evolution_status(self.root, public=True)["incidents"]
+            if item["incident_id"] != public_incident["incident_id"]
+        )
+        self.assertEqual(
+            unknown["summary_pt"],
+            "Foi detectado um padrão operacional recorrente e ele está sendo investigado de forma controlada.",
+        )
+        unknown_raw = json.dumps(unknown)
+        self.assertNotIn("UNREVIEWED_SIGNAL", unknown_raw)
+        self.assertNotIn("engineering.nexo.unknown", unknown_raw)
 
         # A private Olympus pattern is still tracked in the private Tower but is
         # absent from the public evolution payload.
