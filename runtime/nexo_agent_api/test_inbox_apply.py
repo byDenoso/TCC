@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
@@ -63,6 +66,112 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual(request["entity_kind"], "artifact")
         self.assertEqual(request["entity_name"], "LEARNING_SIGNAL::A-B")
 
+
+
+
+class HandoffCLIPersistenceTests(unittest.TestCase):
+    def test_create_handoff_uses_writer_lock_cas_readback_and_atlas_notification(self):
+        from scripts import nexo_tower
+
+        calls = {"lock": 0, "cas": 0, "notify": []}
+
+        class FakeLock:
+            def __enter__(self):
+                calls["lock"] += 1
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+        class FakeDriveTower:
+            def __init__(self, write=False):
+                self.write = write
+
+            def download(self):
+                return b"raw-before", "BASE-HEAD"
+
+            def compare_and_swap(self, base, packed):
+                self_base = base
+                assert self.write is True
+                assert self_base == "BASE-HEAD"
+                assert packed == b"raw-after"
+                calls["cas"] += 1
+                return {
+                    "status": "PASS",
+                    "state_fingerprint": "sha256:after",
+                    "head_revision_id": "HEAD-AFTER",
+                    "readback": "PASS",
+                }
+
+        def fake_materialize(raw, dest):
+            self.assertEqual(raw, b"raw-before")
+            Path(dest).mkdir(parents=True, exist_ok=True)
+            return Path(dest), {"tower_revision": "sha256:before"}
+
+        def fake_publish(root):
+            (Path(root) / nexo_tower.LIVE_TOWER_NAME).write_bytes(b"raw-after")
+            return {"status": "PASS", "revision": "sha256:after"}
+
+        def fake_verify(raw):
+            if raw == b"raw-before":
+                return "sha256:before"
+            if raw == b"raw-after":
+                return "sha256:after"
+            raise AssertionError(raw)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            envelope = Path(tmp) / "handoff.json"
+            envelope.write_text(json.dumps({
+                "request_id": "REQ-CLI-HANDOFF-001",
+                "from_role": "EXECUTOR",
+                "to_role": "LEARNER",
+                "handoff_type": "RESULT_READY",
+                "entity_ref": "WORK::SCIENCE-CLI",
+                "thread_id": "THR::SCIENCE::CLI",
+                "summary_plain": "O resultado persistido está pronto para aprendizagem.",
+                "why_it_matters": "A próxima automação pode continuar sem reconstruir o contexto.",
+                "next_action": "Ler o resultado canônico e registrar a lição correspondente.",
+                "evidence_refs": [{"ref": "TEST::SCIENCE-CLI", "kind": "TEST"}],
+                "source_links": [{
+                    "label": "Primary paper",
+                    "url": "https://example.org/paper",
+                    "access_date": "2026-09-27",
+                    "publisher": "Example Collaboration",
+                    "authors": ["A. Author"],
+                    "date": "2026-09-26",
+                    "supports": "Sustenta apenas a entrada observacional citada.",
+                    "uncertainty": "Não é um resultado do NEXO.",
+                    "next_test_impact": "Informa o próximo teste discriminante sem mudar critérios congelados.",
+                }],
+            }), encoding="utf-8")
+            args = type("Args", (), {
+                "action": "create",
+                "envelope": str(envelope),
+                "dry_run": False,
+                "retries": 0,
+            })()
+
+            output = io.StringIO()
+            with patch.object(nexo_tower, "DriveTower", FakeDriveTower), \
+                 patch.object(nexo_tower, "writer_lock", lambda: FakeLock()), \
+                 patch.object(nexo_tower, "materialize_live_tower", fake_materialize), \
+                 patch.object(nexo_tower, "read_live_tower_bytes", lambda raw: raw), \
+                 patch.object(nexo_tower, "verify_live_tower", fake_verify), \
+                 patch("runtime.nexo_agent_api.live_tower.publish_live_tower", fake_publish), \
+                 patch.object(nexo_tower, "_notify_atlas", lambda fingerprint: calls["notify"].append(fingerprint) or "DISPATCHED_TEST"), \
+                 contextlib.redirect_stdout(output):
+                code = nexo_tower.cmd_handoff(args)
+
+        self.assertEqual(code, 0)
+        self.assertEqual(calls["lock"], 1)
+        self.assertEqual(calls["cas"], 1)
+        self.assertEqual(calls["notify"], ["sha256:after"])
+        payload = json.loads(output.getvalue())
+        self.assertEqual(payload["status"], "PASS")
+        self.assertEqual(payload["write"]["readback"], "PASS")
+        self.assertEqual(payload["after"], "sha256:after")
+        self.assertEqual(payload["handoff"]["request_id"], "REQ-CLI-HANDOFF-001")
+        self.assertEqual(payload["handoff"]["source_links"][0]["access_date"], "2026-09-27")
 
 if __name__ == "__main__":
     unittest.main()
