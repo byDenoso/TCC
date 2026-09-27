@@ -1,0 +1,180 @@
+{
+  "kind": "BATCH",
+  "source": "CHATGPT",
+  "created_at": "2026-09-27T14:30:53Z",
+  "payload": {
+    "items": [
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:30:53Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-CONTEST-CONTEST-META-BATTERY26-001-RUNNER-CANARY-1-1-1",
+              "result": {
+                "verdict": "PROMOTED",
+                "decision": "NINE_OF_NINE_FIXED_LIMITS_PASS",
+                "summary": "As 9 combinações pré-especificadas de 3 sementes por 3 tamanhos de amostra passaram os mesmos limites congelados, sem retuning: |média|<0,01 e |desvio-padrão−1|<0,01 em todas as execuções.",
+                "statistics": {
+                  "successes": 9,
+                  "total": 9,
+                  "seeds": [
+                    104729,
+                    130363,
+                    155921
+                  ],
+                  "sample_sizes": [
+                    50000,
+                    100000,
+                    200000
+                  ],
+                  "max_abs_mean": 0.009445793911488495,
+                  "max_abs_std_minus_1": 0.0020444932052022
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.test_battery",
+                "question_plain": "Os mesmos limites do canário continuam válidos quando o tamanho da amostra muda, sem ajustar os critérios depois de ver os dados?",
+                "why_it_matters": "Se os limites só funcionassem em um tamanho específico, o canário poderia parecer robusto por acidente.",
+                "result_meaning": "As nove combinações passaram os limites congelados sem retuning. Isso fortalece a robustez do canário apenas para esse gerador sintético; o resultado ainda segue para a revisão normal antes de qualquer confirmação.",
+                "verdict_plain": "Passou no teste, em revisão",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "O teste cobre somente o gerador normal sintético previsto no contrato; não prova robustez do runner para cargas ou distribuições diferentes.",
+                "A execução foi local e determinística, sem usar GitHub Actions."
+              ],
+              "reproducibility": {
+                "code": "numpy.random.default_rng(seed).normal(size=n); média e desvio-padrão populacional (ddof=0); limites congelados |mean|<0.01 e |std-1|<0.01.",
+                "data_sources": [
+                  "gerador sintético local; nenhuma fonte externa"
+                ],
+                "attempts": [
+                  {
+                    "seeds": [
+                      104729,
+                      130363,
+                      155921
+                    ],
+                    "sample_sizes": [
+                      50000,
+                      100000,
+                      200000
+                    ],
+                    "retuned": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:30:53Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE-1",
+              "result": {
+                "verdict": "REJECTED",
+                "decision": "CREATED_AT_ONLY_NOT_SUFFICIENT",
+                "summary": "Em uma cópia isolada da mesma revisão, 25 de 28 hipóteses sem created_at puderam ser reparadas usando apenas eventos HYPOTHESIS_UPSERTED independentes já existentes. Mesmo após preencher somente esses timestamps, hours_since.new_hypothesis continuou nulo e o laço permaneceu stale; o critério de kill foi atendido.",
+                "statistics": {
+                  "missing_created_at": 28,
+                  "repairable_from_independent_events": 25,
+                  "repaired_in_isolated_copy": 25,
+                  "before_hours_since_new_hypothesis": null,
+                  "after_hours_since_new_hypothesis": null,
+                  "stale_before": true,
+                  "stale_after": true
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.emergence",
+                "question_plain": "Preencher apenas os created_at ausentes resolve o detector de nova hipótese que está retornando nulo?",
+                "why_it_matters": "Se não resolver, o defeito está também na lógica de detecção e não apenas na ausência de timestamps.",
+                "result_meaning": "Preencher 25 timestamps recuperáveis não tirou new_hypothesis do estado nulo e stale. Portanto, a ausência de created_at sozinha não explica o defeito; existe outro requisito ou bug no cálculo de emergência.",
+                "verdict_plain": "Hipótese refutada neste teste",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "O reparo foi feito somente em cópia isolada; nenhum byte da Tower foi alterado.",
+                "Três hipóteses sem created_at não tinham evidência temporal independente adequada e foram deixadas intactas.",
+                "O teste identifica que created_at não é causa suficiente, mas não localiza sozinho a segunda causa."
+              ],
+              "reproducibility": {
+                "code": "Localizar hipóteses sem created_at; casar somente eventos HYPOTHESIS_UPSERTED independentes por id; preencher 25 timestamps em cópia isolada; executar o comando status do writer canônico antes e depois.",
+                "data_sources": [
+                  "revisão canônica da Tower usada nesta conversa"
+                ],
+                "attempts": [
+                  {
+                    "repair_scope": "created_at only",
+                    "repairable": 25,
+                    "retuned": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "kind": "MUTATION_PROPOSAL",
+        "source": "CHATGPT",
+        "created_at": "2026-09-27T14:30:53Z",
+        "payload": {
+          "tests": [
+            {
+              "test_id": "CONTEST-CONTEST-CONTEST-META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION-1-1-1",
+              "result": {
+                "verdict": "INCONCLUSIVE",
+                "decision": "INSUFFICIENT_POST_CUTOFF_CASES",
+                "summary": "O contrato exige os 10 primeiros resultados runtime elegíveis posteriores ao corte independente. Na revisão atual não existe caso pós-corte elegível suficiente para formar a amostra congelada; com n=0, o teste não pode decidir generalização.",
+                "statistics": {
+                  "eligible_post_cutoff": 0,
+                  "required": 10,
+                  "cutoff_utc": "2026-09-27T02:59:12Z"
+                }
+              },
+              "semantic": {
+                "domain_id": "engineering",
+                "subdomain_id": "engineering.nexo_runtime",
+                "topic_id": "engineering.nexo_runtime.numeric_normalization",
+                "question_plain": "O normalizador preserva exatamente os campos numéricos nos dez primeiros resultados novos, sem depender dos casos usados antes?",
+                "why_it_matters": "Uma replicação temporal independente testa se a normalização generaliza em vez de apenas reproduzir exemplos antigos.",
+                "result_meaning": "Ainda não há dez resultados pós-corte para executar a replicação congelada; nesta revisão há zero casos elegíveis. O teste fica inconclusivo, sem promover nem refutar a normalização.",
+                "verdict_plain": "Inconclusivo",
+                "confidence_plain": "alta"
+              },
+              "limitations": [
+                "A ausência de casos pós-corte impede medir a taxa de igualdade exigida.",
+                "Nenhum caso anterior foi reutilizado para preencher artificialmente a amostra."
+              ],
+              "reproducibility": {
+                "code": "Varredura determinística de runtime/results; aplicar os filtros congelados e exigir timestamp posterior ao corte do teste pai.",
+                "data_sources": [
+                  "revisão canônica da Tower usada nesta conversa"
+                ],
+                "attempts": [
+                  {
+                    "eligible": 0,
+                    "required": 10,
+                    "retuned": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
