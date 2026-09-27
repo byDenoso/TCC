@@ -248,6 +248,53 @@ def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
         assert b"must never be published" not in raw
 
 
+def test_guardian_thematic_integrity_report_without_checks_still_advances_heartbeat(tmp_path):
+    root = _tower(tmp_path)
+    artifact_dir = root / "entities" / "artifact"
+    artifact_dir.mkdir()
+    (artifact_dir / "old.json").write_text(json.dumps({
+        "kind": "INTEGRITY_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-26T14:47:20Z",
+        "payload": {"status": "PERSISTED_INBOX_PENDING_WRITER", "checks": []},
+    }), encoding="utf-8")
+    (artifact_dir / "new.json").write_text(json.dumps({
+        "kind": "INTEGRITY_REPORT",
+        "source": "GUARDIAO",
+        "created_at": "2026-09-27T22:08:21Z",
+        "payload": {"status": "WARN", "title": "Thematic integrity report"},
+    }), encoding="utf-8")
+
+    integrity = _build(root)["integrity"]
+    assert integrity == {
+        "status": "YELLOW",
+        "checked_at": "2026-09-27T22:08:21Z",
+        "checks_total": 0,
+        "checks_failing": 0,
+        "failing_areas": [],
+    }
+
+
+def test_legacy_olympus_science_method_projects_to_olympus_lane(tmp_path):
+    root = _tower(tmp_path)
+    (entity_path(root, "test", "T-OLYCAUSE-DEMO")).write_text(
+        json.dumps({
+            "id": "T-OLYCAUSE-DEMO",
+            "status": "RESULT",
+            "domain": "SCIENCE",
+        }),
+        encoding="utf-8",
+    )
+
+    projected = next(item for item in _build(root)["tests"] if item["id"] == "T-OLYCAUSE-DEMO")
+    assert projected["status_group"] == "DONE"
+    assert projected["domain"] == "OLYMPUS"
+    assert projected["target_domain"] == "OLYMPUS"
+    assert projected["method_domain"] == "SCIENCE"
+    assert projected["domain_projection"] == "SEMANTIC_TARGET_DOMAIN"
+    assert projected["private"] is True
+
+
 def test_raw_signal_clusters_are_not_published_without_materialized_incident(tmp_path):
     root = _tower(tmp_path)
     artifacts = root / "entities" / "artifact"
