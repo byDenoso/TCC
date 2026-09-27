@@ -101,6 +101,12 @@ materialmente diferente exige nova identidade TEST.
 Termine cada execução com um relatório curto em português: o que rodou, o que mudou na Tower
 (fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
 
+## Limite do runtime ChatGPT
+
+- No runtime ChatGPT, a persistência de proposals usa diretamente o inbox canônico GitHub `byDenoso/TCC@nexo-inbox/inbox/` quando as ações `create_file` e `fetch_file` estão disponíveis. Um `fetch_file` com conteúdo exatamente igual ao gravado confirma apenas **PERSISTED no inbox**; não significa ACK, DONE nem aplicação na Tower.
+- Não dependa de branch intermediária, relay ou "wake" para considerar uma proposal persistida, salvo se existir no branch padrão um consumidor ativo e verificável para essa etapa. A ausência desse consumidor não deve criar estados como `STAGED_PENDING_RELAY` ou `PERSISTED_WAKE_PENDING`: use o inbox canônico já definido abaixo.
+- Comunicação privada entre rotinas continua exclusivamente em `python scripts/nexo_tower.py handoff ...`. Se o runtime ChatGPT não expõe execução desse comando (ou interface equivalente com lock, CAS e readback), ele não pode criar/ACK/DONE handoffs e deve relatar essa limitação sem simular o estado.
+
 ## ChatGPT inboxes
 ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them.
 Use them in this order (the first is canonical; the others are fallbacks only when the one above is refused):
