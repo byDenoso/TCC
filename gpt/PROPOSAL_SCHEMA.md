@@ -170,17 +170,20 @@ Testes com id `META-*` (domain_id `engineering`) são hipóteses sobre o própri
 Vira `artifact INTEGRITY_REPORT::*`. O Guardião nunca corrige nada.
 
 ## SEMANTIC_BACKFILL — completar leitura simples de entidades existentes
-Preenche só o que está vazio (use `"overwrite": true` para corrigir). Serve para testes, hipóteses e lições.
+Preenche só o que está vazio (use `"overwrite": true` para corrigir). Serve para testes, hipóteses, lições e campanhas públicas. Para campanhas, use `entity_kind: "campaign"` mais o `roadmap_id`; o Writer atualiza o documento da campanha sem substituir a pergunta científica original. `title` recebe o nome curto em português mostrado ao público.
 ```json
 {"items": [
   {"id": "DDEUDS26-001-EFFECTIVE-WZ",
    "semantic": {"question_plain": "A energia escura muda com o tempo?", "why_it_matters": "...",
                 "result_meaning": "2–3 frases simples", "verdict_plain": "Inconclusivo", "confidence_plain": "média",
                 "topic_id": "science.cosmology.dark_energy.equation_of_state"}},
+  {"id": "CAMP-DARK-ENERGY-NATURE-20260923", "entity_kind": "campaign", "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+   "title": "Natureza da energia escura", "overwrite": true,
+   "semantic": {"question_plain": "A expansão acelerada recente é compatível com uma constante cosmológica?", "why_it_matters": "..."}},
   {"id": "T-OLYCAUSE-016A", "subject_code": "MIQ", "semantic": {"question_plain": "..."}}
 ]}
 ```
-Todo teste precisa de `question_plain` e `why_it_matters`; todo teste concluído precisa de `result_meaning` e `verdict_plain`.
+Toda campanha pública precisa de `title`, `question_plain` e `why_it_matters`. Todo teste precisa de `question_plain` e `why_it_matters`; todo teste concluído precisa de `result_meaning` e `verdict_plain`.
 Enquanto faltar, o site mostra uma leitura automática marcada como provisória.
 
 Para saneamento de privacidade, cada item de `SEMANTIC_BACKFILL` também pode usar `{id, entity_kind, subject_code, redact_names:[...]}`. O Writer substitui cada nome listado pelo `subject_code` em campos de texto livre da entidade (incluindo `title`, `display_name`, `source_ref/source_refs` e justificativas), preservando `id`, campos `*_id`/`*_ids`, `entity_version` e o próprio `subject_code`.
@@ -223,7 +226,7 @@ Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queu
 | Kind | Payload | Effect |
 |---|---|---|
 | `BATCH` | `items: [envelopes]` | each envelope applied on its own |
-| `ROADMAP_CHARTER` | roadmap_id?, title, question, scope, data, budget{max_tests,max_days}, stop{success_confirmed,kill_consecutive_refuted}, rationale, refs, rival_of? | `roadmaps/<id>.json` charter PROPOSED (new roadmap if absent) |
+| `ROADMAP_CHARTER` | roadmap_id?, `title` (curto, em português), question, `semantic{question_plain,why_it_matters}`, scope, data, budget{max_tests,max_days}, stop{success_confirmed,kill_consecutive_refuted}, rationale, refs, rival_of? | `roadmaps/<id>.json` charter PROPOSED (new roadmap if absent), com leitura pública em português |
 | `OPERATOR_INTENT` `action: APPROVE_CHARTER\|REJECT_CHARTER\|CANONIZE\|REJECT_CANARY`, `source: "DENER"` | roadmap_id / gene | the two gates; any other source is only recorded |
 | `ROADMAP_CLOSE` | roadmap_id, reason SUCCESS\|KILL\|BUDGET, final_report | charter CLOSED, index state CLOSED |
 | `CONTEST` | test_id, reason, refs, source REFEREE_1\|SENTINEL, contest_test{frozen hypothesis} | test `review_state: CONTESTED` (max 2) + contest test P0 |

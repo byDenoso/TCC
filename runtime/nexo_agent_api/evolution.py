@@ -107,6 +107,11 @@ def charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         "proposed_at": _now(item),
     }
     merge: dict[str, Any] = {"charter": {k: v for k, v in charter.items() if v not in (None, "", [])}}
+    semantic = body.get("semantic")
+    if isinstance(semantic, dict):
+        plain_semantic = {k: v for k, v in semantic.items() if v not in (None, "", [])}
+        if plain_semantic:
+            merge["semantic"] = plain_semantic
     if not existing:
         merge.update({"roadmap_id": rid, "status": "PROPOSED", "frontier_refs": [],
                       "title": body.get("title") or body.get("question"), "domain": body.get("domain")})
