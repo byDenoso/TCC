@@ -7,6 +7,7 @@
     nexo_tower.py apply  REQUEST.json... mutate -> CAS write same file id -> readback -> notify ATLAS
     nexo_tower.py project --out DIR      build the public projection straight from Drive
     nexo_tower.py frontier [--roadmap ID] next executable roadmap test (canonical frontier logic)
+    nexo_tower.py handoff list|create|ack|done|fail  canonical role-to-role communication
     nexo_tower.py inbox list|apply|done  ChatGPT proposals (GitHub issues, nexo-inbox branch, Drive NEXO_INBOX)
 
 Every automation and every human-driven change goes through ``apply``; nothing
@@ -201,6 +202,91 @@ def cmd_apply(args: argparse.Namespace) -> int:
                 return 3
             time.sleep(min(30, 2 ** attempt))
     return 3
+
+
+
+def _handoff_write(args: argparse.Namespace, mutate) -> int:
+    """Persist one handoff lifecycle mutation through the canonical Tower writer path."""
+    from runtime.nexo_agent_api import AgentService, TowerAgentIssue
+    from runtime.nexo_agent_api.live_tower import publish_live_tower
+
+    attempts = max(1, int(getattr(args, "retries", 2)) + 1)
+    for attempt in range(1, attempts + 1):
+        try:
+            with writer_lock():
+                drive = DriveTower(write=True)
+                raw, base = drive.download()
+                before = verify_live_tower(read_live_tower_bytes(raw))
+                with tempfile.TemporaryDirectory(prefix="nexo-handoff-write-") as work:
+                    root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+                    try:
+                        handoff = mutate(AgentService(root))
+                    except TowerAgentIssue as exc:
+                        _print({
+                            "status": "REJECTED",
+                            "tower_state_fingerprint": before,
+                            "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
+                        })
+                        return 2
+                    publish_live_tower(root)
+                    packed = (root / LIVE_TOWER_NAME).read_bytes()
+                    after = verify_live_tower(read_live_tower_bytes(packed))
+                    if after == before:
+                        _print({
+                            "status": "NO_OP",
+                            "tower_state_fingerprint": before,
+                            "handoff": handoff,
+                        })
+                        return 0
+                    if getattr(args, "dry_run", False):
+                        _print({"status": "DRY_RUN", "before": before, "after": after, "handoff": handoff})
+                        return 0
+                    write = drive.compare_and_swap(base, packed)
+            _print({
+                "status": "PASS",
+                "before": before,
+                "after": write["state_fingerprint"],
+                "write": write,
+                "atlas_notify": _notify_atlas(write["state_fingerprint"]),
+                "handoff": handoff,
+            })
+            return 0
+        except TowerConflict as exc:
+            if attempt == attempts:
+                _print({"status": "CONFLICT", "detail": str(exc), "attempts": attempt})
+                return 3
+            time.sleep(min(30, 2 ** attempt))
+    return 3
+
+
+def cmd_handoff(args: argparse.Namespace) -> int:
+    from runtime.nexo_agent_api import AgentService
+
+    if args.action == "list":
+        raw, _ = DriveTower().download()
+        with tempfile.TemporaryDirectory(prefix="nexo-handoff-list-") as work:
+            root, metadata = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+            items = AgentService(root).inbox_for(args.role)
+        _print({
+            "tower_state_fingerprint": metadata["tower_revision"],
+            "role": args.role.upper(),
+            "count": len(items),
+            "items": items,
+        })
+        return 0
+
+    if args.action == "create":
+        payload = json.loads(Path(args.envelope).read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            _print({"status": "REJECTED", "issue": {"code": "HANDOFF_ENVELOPE_INVALID", "message": "handoff envelope must be a JSON object"}})
+            return 2
+        return _handoff_write(args, lambda service: service.emit_handoff(**payload))
+
+    target = {"ack": "ACK", "done": "DONE", "fail": "FAILED"}[args.action]
+    return _handoff_write(
+        args,
+        lambda service: service.transition_handoff(args.handoff_id, state=target, writer_role=args.role),
+    )
 
 
 def cmd_project(args: argparse.Namespace) -> int:
@@ -456,6 +542,23 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("frontier", help="next executable roadmap test")
     p.add_argument("--roadmap")
     p.set_defaults(func=cmd_frontier)
+    p = sub.add_parser("handoff", help="canonical private role-to-role handoff lifecycle")
+    h = p.add_subparsers(dest="action", required=True)
+    q = h.add_parser("list", help="list actionable handoffs for one recipient role")
+    q.add_argument("--role", required=True)
+    q.set_defaults(func=cmd_handoff)
+    q = h.add_parser("create", help="create one handoff from a JSON envelope")
+    q.add_argument("envelope", help="JSON file containing the handoff envelope")
+    q.add_argument("--dry-run", action="store_true")
+    q.add_argument("--retries", type=int, default=2)
+    q.set_defaults(func=cmd_handoff)
+    for action in ("ack", "done", "fail"):
+        q = h.add_parser(action, help=f"{action} one handoff as its recipient")
+        q.add_argument("handoff_id")
+        q.add_argument("--role", required=True, help="recipient role performing the transition")
+        q.add_argument("--dry-run", action="store_true")
+        q.add_argument("--retries", type=int, default=2)
+        q.set_defaults(func=cmd_handoff)
     p = sub.add_parser("inbox", help="ChatGPT proposal inbox on Drive (create-only)")
     p.add_argument("action", choices=["list", "done", "apply"])
     p.add_argument("ids", nargs="*")
