@@ -375,6 +375,17 @@ def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[s
         projected["status"] = lifecycle
     projected["status_group"] = status_group(lifecycle)
     semantic = resolve_semantic(entity, entity_id=str(projected.get("id") or projected.get("campaign_id") or ""))
+    if is_private(semantic) and str(projected.get("domain") or "").upper() != "OLYMPUS":
+        # Legacy Olympus tests were authored with domain=SCIENCE because the
+        # statistical method came from science. The canonical semantic taxonomy
+        # owns presentation: keep the method provenance and project the target
+        # domain as OLYMPUS so lanes and the graph count the same entities.
+        source_domain = projected.get("domain")
+        projected["target_domain"] = "OLYMPUS"
+        if source_domain:
+            projected["method_domain"] = source_domain
+        projected["domain"] = "OLYMPUS"
+        projected["domain_projection"] = "SEMANTIC_TARGET_DOMAIN"
     canonical_semantic = entity.get("semantic") if isinstance(entity.get("semantic"), dict) else {}
     if not is_private(semantic):
         for key in ("question_plain", "result_meaning", "why_it_matters", "verdict_plain", "confidence_plain"):
@@ -444,6 +455,15 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
                     ok = None
                 checks.append({"area": str(area), "ok": ok})
             checks_total = len(raw_checks)
+        elif (
+            str(record.get("kind") or "").upper() == "INTEGRITY_REPORT"
+            and str(record.get("source") or "").upper() in {"GUARDIAO", "GUARDIAN"}
+        ):
+            # A thematic Guardiao integrity report is still a valid pulse. Older
+            # rounds did not always repeat the aggregate checks block, so do not
+            # freeze guardian.checked_at merely because that optional summary is absent.
+            checks = []
+            checks_total = 0
         else:
             continue
         stamp = str(payload.get("checked_at") or record.get("created_at") or payload.get("date") or "")
