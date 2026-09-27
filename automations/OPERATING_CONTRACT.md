@@ -103,9 +103,10 @@ Termine cada execução com um relatório curto em português: o que rodou, o qu
 
 ## Limite do runtime ChatGPT
 
-- No runtime ChatGPT, a persistência de proposals usa diretamente o inbox canônico GitHub `byDenoso/TCC@nexo-inbox/inbox/` quando as ações `create_file` e `fetch_file` estão disponíveis. Um `fetch_file` com conteúdo exatamente igual ao gravado confirma apenas **PERSISTED no inbox**; não significa ACK, DONE nem aplicação na Tower.
-- Não dependa de branch intermediária, relay ou "wake" para considerar uma proposal persistida, salvo se existir no branch padrão um consumidor ativo e verificável para essa etapa. A ausência desse consumidor não deve criar estados como `STAGED_PENDING_RELAY` ou `PERSISTED_WAKE_PENDING`: use o inbox canônico já definido abaixo.
-- Comunicação privada entre rotinas continua exclusivamente em `python scripts/nexo_tower.py handoff ...`. Se o runtime ChatGPT não expõe execução desse comando (ou interface equivalente com lock, CAS e readback), ele não pode criar/ACK/DONE handoffs e deve relatar essa limitação sem simular o estado.
+- O repositório `byDenoso/TCC` e o branch `nexo-inbox` são publicamente legíveis. No runtime ChatGPT, esse inbox GitHub só pode receber **proposals saneadas para exposição pública**: sem dados privados ou pessoais, credenciais ou segredos, conteúdo confidencial da Tower, nem envelopes ou conteúdo de handoff privado. Antes de gravar, remova ou generalize qualquer conteúdo não público; se isso alterar o significado necessário da proposal, não a persista nesse canal.
+- Conteúdo privado usa exclusivamente o canal privado canônico já definido em `python scripts/nexo_tower.py handoff ...` (ou interface equivalente com lock, CAS e readback). **Proposal não é handoff**: nunca use `nexo-inbox`, issues ou outro recurso público do repositório como fallback para comunicação privada entre rotinas. Se o runtime ChatGPT não expõe writer privado compatível, declare o bloqueio e não persista o conteúdo privado.
+- Para uma proposal saneada, `create_file` seguido de `fetch_file` com conteúdo exatamente igual confirma apenas **PERSISTED no inbox**; não significa ACK, DONE nem aplicação na Tower. A semântica e a autoridade da Tower permanecem inalteradas.
+- Não dependa de branch intermediária, relay ou "wake" para considerar uma proposal saneada persistida, salvo se existir no branch padrão um consumidor ativo e verificável para essa etapa. A ausência desse consumidor não deve criar estados como `STAGED_PENDING_RELAY` ou `PERSISTED_WAKE_PENDING`: use o inbox canônico apenas quando o conteúdo cumprir a regra de saneamento acima.
 
 ## ChatGPT inboxes
 ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them.
