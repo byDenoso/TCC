@@ -72,6 +72,12 @@ As automações podem pesquisar a internet quando isso responde a um objetivo NE
 5. Não declare “progresso” por ter lido fontes. Há progresso somente quando a nova evidência foi ligada por ref/source link a uma mudança rastreável de priorização, hipótese, teste, handoff ou resultado persistido.
 6. Quando uma pesquisa for útil ao próximo papel, passe-a via handoff com `objective_ref`, `evidence_refs` e `source_links`; preserve incerteza explícita.
 
+## Resolução de especificação científica por ancestralidade
+
+Antes de declarar `SCIENTIFIC_DEFINITION_MISSING`, resolva primeiro a especificação já congelada na linhagem canônica: TEST → HYPOTHESIS/WORK originário → roadmap/campanha → refs/parent/predecessor → TESTs ancestrais → RESULT/CHECKPOINT/DATA_BINDING → prior_art/artefatos. Reutilize somente definições já congeladas cuja ligação ao TEST atual seja inequívoca, incluindo estimand/observable, null/rival, seleção, dados/versão, janela/domínio, método/estatística, parâmetros/priors, prediction e success/kill/decision rule.
+
+Se a ancestralidade resolver univocamente a definição, registre as refs de proveniência, valide que o contrato científico não mudou e prossiga com o MESMO TEST_ID. Se houver definições ancestrais materialmente incompatíveis sem desambiguação canônica, não escolha a mais conveniente: aí sim `SCIENTIFIC_DEFINITION_MISSING` é legítimo e deve voltar ao Learner. Nunca use o resultado observado para escolher retrospectivamente qual definição aplicar.
+
 ## Blockers (regra anti-burocracia)
 
 Blocker legítimo é SÓ:
