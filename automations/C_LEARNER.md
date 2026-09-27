@@ -6,6 +6,13 @@ perto dos testes que a motivaram.
 
 Leia primeiro `automations/OPERATING_CONTRACT.md`.
 
+Antes de gerar lições, rode `python scripts/nexo_tower.py handoff list --role LEARNER`.
+ACK cada handoff assumido; use `evidence_refs`, `source_links`, `objective_ref` e a Tower canônica como contexto privado.
+Só marque DONE depois de a lição/hipótese correspondente estar persistida com readback; FAILED apenas para blocker real.
+Quando a aprendizagem gerar um novo discriminante acionável, envie um handoff para ADVISOR com `request_id` estável,
+`summary_plain`, `why_it_matters`, `next_action` e refs/citações estruturadas. Pesquisa pública é permitida apenas
+para objetivo NEXO atual e segue a preferência por papers/releases/dados primários do contrato; leitura web não é RESULT.
+
 ## Fontes de sinal (só estas)
 
 1. `python scripts/nexo_tower.py inbox list` → itens `LEARNING_SIGNAL` criados pelo ChatGPT:
