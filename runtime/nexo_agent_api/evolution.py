@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .semantics import is_private, resolve as resolve_semantic
 from .tower_paths import entity_path, fs_path
 
 MAX_CONTESTS = 2
@@ -439,6 +440,106 @@ def _tests(root: Path) -> list[dict[str, Any]]:
     return out
 
 
+_CONVERSATION_SIGNAL_SOURCES = {"CHATGPT", "CHATGPT_CONVERSATION", "CONVERSATION", "DENER_CONVERSATION"}
+_AUTOMATION_SIGNAL_SOURCES = {
+    "CHATGPT_TASK_EXECUTOR", "CHATGPT_TASK_GUARDIAN", "CHATGPT_GUARDIAN", "EXECUTOR", "GUARDIAO",
+    "PITIA", "LEARNER", "REFUTADOR",
+}
+
+
+def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Read-only shadow groups for repeated stable signal codes; never projects free-text causes."""
+    test_by_id = {str(test.get("id")): test for test in tests if test.get("id")}
+    private_test_ids = {
+        test_id for test_id, test in test_by_id.items()
+        if test.get("private") or is_private(resolve_semantic(test, entity_id=test_id))
+    }
+    groups: dict[str, dict[str, Any]] = {}
+    folder = root / "entities" / "artifact"
+    for path in sorted(folder.glob("*.json")) if folder.is_dir() else []:
+        try:
+            record = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if not isinstance(record, dict) or str(record.get("kind") or "").upper() != "LEARNING_SIGNAL":
+            continue
+        if record.get("private") or is_private(record.get("semantic") if isinstance(record.get("semantic"), dict) else {}):
+            continue
+        source = str(record.get("source") or "").strip().upper()
+        if source in _CONVERSATION_SIGNAL_SOURCES:
+            source_family = "CONVERSATION"
+        elif source in _AUTOMATION_SIGNAL_SOURCES:
+            source_family = "AUTOMATION"
+        else:
+            continue
+        payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
+        signals = payload.get("signals") if isinstance(payload.get("signals"), list) else []
+        artifact_id = str(record.get("id") or path.stem)
+        stamp = str(record.get("created_at") or payload.get("created_at") or "")
+        try:
+            parsed = datetime.fromisoformat(stamp.replace("Z", "+00:00"))
+            parsed = parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+            stamp = parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except ValueError:
+            stamp = ""
+        for signal in signals:
+            if not isinstance(signal, dict):
+                continue
+            raw_code = signal.get("code") or signal.get("signal_code")
+            if not isinstance(raw_code, str):
+                continue
+            code = raw_code.strip().upper()
+            if not 3 <= len(code) <= 80 or any(char not in "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" for char in code):
+                continue
+            semantic = signal.get("semantic") if isinstance(signal.get("semantic"), dict) else {}
+            topic_id = signal.get("topic_id") or semantic.get("topic_id")
+            signal_semantic = dict(semantic)
+            if topic_id:
+                signal_semantic["topic_id"] = topic_id
+            resolved_semantic = resolve_semantic({"semantic": signal_semantic}, entity_id=artifact_id)
+            if is_private(signal_semantic) or is_private(resolved_semantic):
+                continue
+            resolved_topic = resolved_semantic.get("topic_id")
+            test_refs: list[str] = []
+            single_test = signal.get("test_id")
+            if single_test:
+                test_refs.append(str(single_test))
+            many_tests = signal.get("test_ids")
+            if isinstance(many_tests, list):
+                test_refs.extend(str(test_id) for test_id in many_tests if test_id)
+            if test_refs and any(test_id not in test_by_id or test_id in private_test_ids for test_id in test_refs):
+                continue
+            group = groups.setdefault(code, {
+                "cluster_id": "SIG-" + hashlib.sha256(code.encode("utf-8")).hexdigest()[:12],
+                "code": code, "artifacts": set(), "sources": set(), "topic_ids": set(), "test_ids": set(),
+                "timestamps": set(),
+            })
+            group["artifacts"].add(artifact_id)
+            group["sources"].add(source_family)
+            if resolved_topic:
+                group["topic_ids"].add(resolved_topic)
+            group["test_ids"].update(test_refs)
+            if stamp:
+                group["timestamps"].add(stamp)
+    result = []
+    for group in groups.values():
+        occurrences = len(group["artifacts"])
+        if occurrences < 2:
+            continue
+        timestamps = sorted(group["timestamps"])
+        result.append({
+            "cluster_id": group["cluster_id"],
+            "code": group["code"],
+            "occurrences": occurrences,
+            "sources": sorted(group["sources"]),
+            "topic_ids": sorted(group["topic_ids"])[:8],
+            "test_ids": sorted(group["test_ids"])[:12],
+            "first_seen": timestamps[0] if timestamps else None,
+            "last_seen": timestamps[-1] if timestamps else None,
+        })
+    return sorted(result, key=lambda cluster: (-cluster["occurrences"], cluster["code"]))[:20]
+
+
 def roadmap_progress(root: Path, roadmap: dict[str, Any], tests: list[dict[str, Any]], clock: bool = True) -> dict[str, Any]:
     rid = str(roadmap.get("roadmap_id") or roadmap.get("id") or "")
     charter = roadmap.get("charter") or {}
@@ -571,6 +672,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
                       for s in ("QUEUED", "DISPATCHED", "DONE")},
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
+        "signal_clusters": _signal_clusters(root, tests),
     }
     if not public:
         status["emergence"] = _emergence(root, tests, genome, now)

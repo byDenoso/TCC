@@ -13,6 +13,7 @@ import json
 from pathlib import Path
 
 from .public_projection import (
+    _load_evolution,
     build_public_projection,
     projection_bytes,
     verify_projection,
@@ -207,6 +208,25 @@ def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
         raw = projection_bytes(projection)
         assert b"PENDING_NEXT_WRITER" not in raw
         assert b"must never be published" not in raw
+
+
+def test_evolution_projection_is_retained_when_only_recurrent_signals_exist(tmp_path):
+    root = _tower(tmp_path)
+    artifacts = root / "entities" / "artifact"
+    artifacts.mkdir()
+    for artifact_id, source in (("SIGNAL-A", "CHATGPT_TASK_EXECUTOR"), ("SIGNAL-B", "CHATGPT")):
+        (artifacts / f"{artifact_id}.json").write_text(json.dumps({
+            "id": artifact_id,
+            "kind": "LEARNING_SIGNAL",
+            "source": source,
+            "created_at": "2026-09-26T10:00:00Z",
+            "payload": {"signals": [{"code": "EMPTY_FRONTIER_ACTIVE_ROADMAP", "symptom": "private detail"}]},
+        }), encoding="utf-8")
+
+    evolution = _load_evolution(root)
+    assert evolution is not None
+    assert evolution["signal_clusters"][0]["code"] == "EMPTY_FRONTIER_ACTIVE_ROADMAP"
+    assert "private detail" not in json.dumps(evolution)
 
 
 def test_campaigns_are_first_class_and_publish_source_links_without_leaking_roadmap(tmp_path):

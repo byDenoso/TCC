@@ -84,6 +84,59 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual(rows["RM-PROPOSED"]["ready"], 1)
         self.assertEqual(rows["RM-CHARTERED"]["resumable"], 1)
 
+    def test_public_status_groups_recurrent_signals_without_merging_causes_or_private_refs(self):
+        artifacts = self.root / "entities" / "artifact"
+        artifacts.mkdir()
+        self._test("T-A", "DONE")
+        self._test("T-B", "DONE")
+        self._test("T-PRIVATE", "DONE", semantic={"topic_id": "olympus"})
+
+        rows = (
+            ("S-1", "2026-09-24T10:00:00Z", "CHATGPT_TASK_EXECUTOR", {
+                "code": "READY_INPUTS_NOT_MATERIALIZED", "topic_id": "engineering.nexo_runtime.state_integrity",
+                "test_id": "T-A", "symptom": "private symptom text",
+            }),
+            ("S-2", "2026-09-25T10:00:00Z", "CHATGPT_CONVERSATION", {
+                "code": "READY_INPUTS_NOT_MATERIALIZED", "topic_id": "engineering.nexo_runtime.state_integrity",
+                "test_id": "T-B", "remedy": "private remedy text",
+            }),
+            ("S-3", "2026-09-26T10:00:00Z", "CHATGPT", {
+                "code": "SINGLE_OCCURRENCE", "topic_id": "engineering.nexo_runtime.state_integrity",
+                "test_id": "T-B",
+            }),
+            ("S-4", "2026-09-26T11:00:00Z", "CHATGPT", {
+                "code": "READY_INPUTS_NOT_MATERIALIZED", "topic_id": "olympus",
+                "test_id": "T-PRIVATE", "symptom": "private Olympus text",
+            }),
+            ("S-5", "2026-09-26T12:00:00Z", "CHATGPT", {
+                "code": "READY_INPUTS_NOT_MATERIALIZED", "topic_id": "olympus",
+                "symptom": "private Olympus text without a test reference",
+            }),
+        )
+        for artifact_id, created_at, source, signal in rows:
+            signals = [signal]
+            if artifact_id == "S-1":
+                signals.append({**signal, "cause": "private cause text"})
+            (artifacts / f"{artifact_id}.json").write_text(json.dumps({
+                "id": artifact_id, "kind": "LEARNING_SIGNAL", "created_at": created_at, "source": source,
+                "payload": {"signals": signals},
+            }), encoding="utf-8")
+
+        status = evolution_status(self.root, public=True)
+        clusters = status["signal_clusters"]
+        self.assertEqual(len(clusters), 1)
+        cluster = clusters[0]
+        self.assertEqual(cluster["code"], "READY_INPUTS_NOT_MATERIALIZED")
+        self.assertEqual(cluster["occurrences"], 2)
+        self.assertEqual(cluster["sources"], ["AUTOMATION", "CONVERSATION"])
+        self.assertEqual(cluster["topic_ids"], ["engineering.nexo_runtime.state_integrity"])
+        self.assertEqual(cluster["test_ids"], ["T-A", "T-B"])
+        self.assertEqual((cluster["first_seen"], cluster["last_seen"]),
+                         ("2026-09-24T10:00:00Z", "2026-09-25T10:00:00Z"))
+        self.assertEqual(evolution_status(self.root, public=True)["signal_clusters"], clusters)
+        self.assertNotIn("private", json.dumps(clusters).lower())
+        self.assertNotIn("T-PRIVATE", json.dumps(clusters))
+
 
     def test_batch_round_robins_ready_across_roadmaps(self):
         self._index(
