@@ -1,19 +1,76 @@
 # NEXO · Formato das propostas do GPT (fonte única)
 
-Todas as tarefas do GPT (Executor, Gaps, Learner) escrevem neste formato. O **NEXO · Writer**
-aplica na Tower com `gpt/nexo_gpt_writer.py`, que completa o que faltar, mas quanto mais
-completo, melhor fica o site (ATLAS: cards, grafos, aba Aprendizado).
+Todos os agentes do GPT escrevem neste formato. O **NEXO · Writer** aplica as propostas na Tower
+privada e atualiza o ATLAS público apenas com a projeção permitida. O conteúdo deve explicar em
+português simples o que aconteceu, por que importa e qual é o próximo passo.
 
-Envelope (um arquivo por proposta). **Caminho principal: `inbox/<nome>.json` no GitHub
-byDenoso/TCC branch `nexo-inbox`** (JSON puro, sem o passo "criar Doc e depois colar", que às vezes
-deixa o Doc vazio). Reserva: Google Doc em NEXO_INBOX com o JSON no corpo — depois de criar, releia o
-Doc; se vier vazio ou com JSON inválido, grave a mesma proposta no GitHub e registre isso no relatório.
-O Writer move Docs vazios/inválidos para `NEXO_INBOX/processed/_invalid` (nunca apaga) para não travar a fila.
+Envelope (um arquivo ou documento por proposta):
 
 ```json
 {"kind": "...", "source": "CHATGPT", "created_at": "2026-09-24T12:00:00Z", "payload": {...}}
 ```
 Nome: `<utc>-<kind>-<slug>`.
+
+**Privacidade e destino:** GitHub `byDenoso/TCC@nexo-inbox` é público e aceita somente propostas
+sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de
+handoff. Handoffs entre agentes e outras mensagens privadas devem ser um Google Doc com JSON no corpo,
+criado em `NEXO_INBOX` no Drive privado. Depois de criar, releia o documento e confirme que o JSON está
+inteiro. Se essa rota falhar, mantenha a proposta como pendente; não copie conteúdo privado para o
+GitHub público. O Writer existente lê o Drive e aplica a mensagem à Tower com controle de versão e
+readback.
+
+## HANDOFF — passar trabalho ou conversa a outro agente
+
+Use um handoff quando houver uma próxima ação concreta que pertence a outro papel. O evento mantém
+um resumo compreensível, a relação com o objetivo, as evidências e o identificador da conversa; não
+grave a transcrição inteira. Campos em linguagem natural devem explicar o sentido, sem códigos de
+campo ou instruções técnicas para o destinatário. Valores estruturados, como `entity_ref`, ficam nos
+campos de referência.
+
+**Sempre salve handoffs e transições no Drive privado `NEXO_INBOX`. Nunca os publique no inbox do GitHub.**
+
+Criar um handoff:
+```json
+{
+  "kind": "HANDOFF",
+  "source": "CHATGPT",
+  "created_at": "2026-09-27T12:00:00Z",
+  "payload": {
+    "request_id": "REQ-UTC-UNICO",
+    "from_role": "ADVISOR",
+    "to_role": "EXECUTOR",
+    "handoff_type": "RESEARCH_READY",
+    "entity_ref": "WORK::ID-DA-ENTIDADE",
+    "thread_id": "ID-DA-CONVERSA",
+    "summary_plain": "O que foi descoberto, em uma frase simples.",
+    "why_it_matters": "Como isso ajuda o objetivo atual.",
+    "next_action": "Uma ação específica para o papel que vai receber o trabalho.",
+    "objective_ref": "ID-DO-OBJETIVO",
+    "confidence_plain": "Confiança moderada porque a fonte sustenta a comparação, mas não decide qual explicação está correta.",
+    "evidence_refs": [{"ref": "TEST::ID", "kind": "TEST"}],
+    "source_links": [{"label": "Artigo", "url": "https://example.org/paper", "access_date": "2026-09-27"}]
+  }
+}
+```
+
+O destinatário consulta sua fila de mensagens no Tower usando o bundle existente:
+`python nexo_gpt_writer.py handoff <TOWER.json> list <PAPEL>`. A fila contém apenas mensagens
+direcionadas a esse papel que ainda estão abertas.
+
+Ao assumir o trabalho, envie `HANDOFF_ACK`; ao concluir, envie `HANDOFF_DONE`; quando não puder
+prosseguir, envie `HANDOFF_FAILED`. As transições também são documentos JSON no Drive privado:
+```json
+{
+  "kind": "HANDOFF_TRANSITION",
+  "source": "CHATGPT",
+  "created_at": "2026-09-27T12:15:00Z",
+  "payload": {"handoff_id": "HO-ID-DO-HANDOFF", "state": "ACK", "writer_role": "EXECUTOR"}
+}
+```
+
+O Writer valida se o papel que responde é o destinatário original. `ACK` mantém a mensagem ativa;
+`DONE` e `FAILED` encerram essa etapa e preservam o histórico privado. Não marque como concluído até
+que a ação descrita esteja registrada ou tenha um motivo claro para parar.
 
 ## Semântica (obrigatória em tudo que vira teste ou lição)
 IDs de `SEMANTIC_TAXONOMY_V1` (runtime/nexo_agent_api/contracts/SEMANTIC_TAXONOMY_V1.json):

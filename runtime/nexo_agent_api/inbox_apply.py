@@ -460,6 +460,9 @@ _KIND_ALIASES = {
     "GENOME_MUTATION": "GENOME_MUTATION", "MUTATION_CANARY": "GENOME_MUTATION", "GENOME_ROLLBACK": "GENOME_ROLLBACK",
     "FITNESS_REPORT": "FITNESS_REPORT", "NEXO_THOUGHT": "NEXO_THOUGHT", "THOUGHT": "NEXO_THOUGHT",
     "DECOY_PLANT": "DECOY_PLANT", "DECOY_REVEAL": "DECOY_REVEAL", "DECOY_CALL": "DECOY_CALL", "TEST_BATTERY": "TEST_BATTERY", "BATTERY": "TEST_BATTERY", "BATTERY_STATUS": "BATTERY_STATUS",
+    "HANDOFF": "HANDOFF", "NEXO_HANDOFF": "HANDOFF", "AGENT_HANDOFF": "HANDOFF",
+    "HANDOFF_TRANSITION": "HANDOFF_TRANSITION", "HANDOFF_ACK": "HANDOFF_TRANSITION",
+    "HANDOFF_DONE": "HANDOFF_TRANSITION", "HANDOFF_FAILED": "HANDOFF_TRANSITION",
 }
 _EVOLUTION = {
     "ROADMAP_CHARTER": evolution.charter_requests,
@@ -528,12 +531,52 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         requests = []
         for index, entry in enumerate(body.get("items") or []):
             if isinstance(entry, dict):
-                requests.extend(proposal_to_requests({**entry, "_inbox_name": f"{item.get('_inbox_name') or 'batch'}-{index}",
+                requests.extend(proposal_to_requests({**entry, "_inbox_source": item.get("_inbox_source"),
+                                                      "_inbox_name": f"{item.get('_inbox_name') or 'batch'}-{index}",
                                                       "_inbox_id": item.get("_inbox_id")}, root))
         return requests
     batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
     first = batch[0] if batch and isinstance(batch[0], dict) else {}
     kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"
+    if kind in {"HANDOFF", "HANDOFF_TRANSITION"}:
+        if str(item.get("_inbox_source") or "").upper() != "DRIVE":
+            raise ProposalError("PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX")
+        if kind == "HANDOFF":
+            envelope = body.get("handoff") if isinstance(body.get("handoff"), dict) else body
+            allowed = {
+                "request_id", "from_role", "to_role", "handoff_type", "entity_ref", "thread_id",
+                "summary_plain", "why_it_matters", "next_action", "objective_ref", "confidence_plain",
+                "evidence_refs", "source_links", "correlation_id", "parent_handoff_id",
+            }
+            unknown = sorted(set(envelope) - allowed)
+            if unknown:
+                raise ProposalError("HANDOFF_FIELDS_UNSUPPORTED:" + ",".join(unknown))
+            required = (
+                "request_id", "from_role", "to_role", "handoff_type", "entity_ref", "thread_id",
+                "summary_plain", "why_it_matters", "next_action",
+            )
+            missing = [key for key in required if not isinstance(envelope.get(key), str) or not envelope[key].strip()]
+            if missing:
+                raise ProposalError("HANDOFF_FIELDS_REQUIRED:" + ",".join(missing))
+            return [{"nexo_operation": "HANDOFF_CREATE", "_inbox_source": "DRIVE", "handoff": dict(envelope)}]
+
+        transition = body.get("transition") if isinstance(body.get("transition"), dict) else body
+        unknown = sorted(set(transition) - {"handoff_id", "state", "writer_role"})
+        if unknown:
+            raise ProposalError("HANDOFF_TRANSITION_FIELDS_UNSUPPORTED:" + ",".join(unknown))
+        fixed_state = {"HANDOFF_ACK": "ACK", "HANDOFF_DONE": "DONE", "HANDOFF_FAILED": "FAILED"}.get(raw_kind)
+        state = str(transition.get("state") or fixed_state or "").upper()
+        if fixed_state and state != fixed_state:
+            raise ProposalError("HANDOFF_TRANSITION_STATE_CONFLICT")
+        if state not in {"ACK", "DONE", "FAILED"}:
+            raise ProposalError("HANDOFF_TRANSITION_STATE_INVALID")
+        required = ("handoff_id", "writer_role")
+        missing = [key for key in required if not isinstance(transition.get(key), str) or not transition[key].strip()]
+        if missing:
+            raise ProposalError("HANDOFF_TRANSITION_FIELDS_REQUIRED:" + ",".join(missing))
+        return [{"nexo_operation": "HANDOFF_TRANSITION", "_inbox_source": "DRIVE",
+                 "transition": {"handoff_id": transition["handoff_id"], "state": state,
+                                "writer_role": transition["writer_role"]}}]
     if batch is not None and kind in {"MUTATION_PROPOSAL", "HYPOTHESIS_PROPOSAL", "LESSON_PROPOSAL"}:
         requests: list[dict[str, Any]] = []
         for index, entry in enumerate(batch):
