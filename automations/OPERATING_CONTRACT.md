@@ -37,6 +37,37 @@ Todo resultado leva `semantic.result_meaning`, `verdict_plain`, `confidence_plai
 sem abrir o código. Se nenhum tópico serve, use o subdomínio; se nada serve, `UNMAPPED` — nunca invente.
 Tópico novo na taxonomia = PR no TCC (contrato Git), não mutação da Tower.
 
+## Coordenação canônica entre automações
+
+A/B/C se comunicam pelo bus privado já existente em `events/`, nunca por texto solto em relatório como substituto de estado.
+
+- Ler fila do próprio papel: `python scripts/nexo_tower.py handoff list --role <EXECUTOR|ADVISOR|LEARNER>`.
+- Ao assumir um item: `handoff ack <handoff_id> --role <papel>`.
+- Só depois de persistir a ação/resultados correspondentes com readback: `handoff done <handoff_id> --role <papel>`.
+- `handoff fail` é só para falha/blocker real; apenas o destinatário pode mudar PENDING → ACK → DONE/FAILED.
+- Envio novo: grave um JSON privado e rode `python scripts/nexo_tower.py handoff create <arquivo.json>`.
+  O envio material usa o mesmo writer lock, o mesmo file id canônico da Tower, CAS, readback e sinalização do ATLAS de `apply`.
+- `request_id` é chave idempotente estável: retry do MESMO envio reutiliza exatamente o mesmo `request_id`; conteúdo diferente exige novo `request_id`.
+- Campos obrigatórios do envelope: `request_id`, `from_role`, `to_role`, `handoff_type`, `entity_ref`, `thread_id`,
+  `summary_plain`, `why_it_matters`, `next_action`. Os três últimos são português simples, direto e acionável.
+- Opcionais: `objective_ref`, `confidence_plain`, `evidence_refs` estruturado, `source_links`,
+  `correlation_id`, `parent_handoff_id`.
+- Cada `source_links[]` tem no mínimo `label`, `url`, `access_date`; quando vier de pesquisa pública, registre também,
+  quando disponíveis, `publisher`, `authors`, `date`, `supports`, `uncertainty`, `next_test_impact`.
+- Handoffs ficam privados na Tower. Texto livre, URLs, `topic_id`, contexto causal e refs canônicas de handoff nunca são superfície pública do ATLAS.
+- O runtime suprime da inbox trabalho que ficou stale/terminal ou mudou de owner; não ressuscite handoff antigo manualmente.
+
+### Pesquisa pública direcionada
+
+As automações podem pesquisar a internet quando isso responde a um objetivo NEXO atual e melhora uma decisão/teste discriminante concreto.
+
+1. Prefira paper primário, release original de survey/missão/colaboração e dado oficial. Review ou notícia serve para descoberta, não como evidência final quando a fonte primária existe.
+2. Para cada fonte usada, guarde URL, publisher/autores, data da fonte, data de acesso, o que ela sustenta, incerteza/limite e como altera o próximo teste discriminante.
+3. Resumo da web nunca é RESULT científico. Só resultado produzido pelo teste canônico, com cômputo e persistência, pode alterar veredito.
+4. Pesquisa externa não reescreve hipótese, null/rival, seleção, success/kill, decision rule ou claim boundary já congelados. Se a nova fonte exige desenho materialmente diferente, abra nova identidade TEST/HYPOTHESIS.
+5. Não declare “progresso” por ter lido fontes. Há progresso somente quando a nova evidência foi ligada por ref/source link a uma mudança rastreável de priorização, hipótese, teste, handoff ou resultado persistido.
+6. Quando uma pesquisa for útil ao próximo papel, passe-a via handoff com `objective_ref`, `evidence_refs` e `source_links`; preserve incerteza explícita.
+
 ## Blockers (regra anti-burocracia)
 
 Blocker legítimo é SÓ:
