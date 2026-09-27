@@ -7,11 +7,14 @@ perto dos testes que a motivaram.
 Leia primeiro `automations/OPERATING_CONTRACT.md`.
 
 Antes de gerar lições, rode `python scripts/nexo_tower.py handoff list --role LEARNER`.
-ACK cada handoff assumido; use `evidence_refs`, `source_links`, `objective_ref` e a Tower canônica como contexto privado.
-Só marque DONE depois de a lição/hipótese correspondente estar persistida com readback; FAILED apenas para blocker real.
-Quando a aprendizagem gerar um novo discriminante acionável, envie um handoff para ADVISOR com `request_id` estável,
-`summary_plain`, `why_it_matters`, `next_action` e refs/citações estruturadas. Pesquisa pública é permitida apenas
-para objetivo NEXO atual e segue a preferência por papers/releases/dados primários do contrato; leitura web não é RESULT.
+Marque como recebido (`ACK`) cada repasse assumido; use `evidence_refs`, `source_links`, `objective_ref` e a Tower
+como contexto privado. Só marque como concluído (`DONE`) depois de a lição ou hipótese correspondente estar gravada
+e confirmada pela releitura da Tower; use `FAILED` apenas para bloqueio real.
+Quando a aprendizagem gerar um novo teste capaz de diferenciar explicações concorrentes, envie um repasse ao ADVISOR
+com `request_id` estável. Em `summary_plain`, diga o fato em português claro; em `why_it_matters`, explique a consequência;
+em `next_action`, diga exatamente o que fazer; em `confidence_plain`, explique o grau de confiança e o motivo.
+IDs, códigos e referências permanecem nos campos estruturados. Pesquisa pública só vale para um objetivo NEXO atual e
+deve priorizar papers, releases originais e dados oficiais; leitura da web não é resultado científico.
 
 ## Fontes de sinal (só estas)
 
