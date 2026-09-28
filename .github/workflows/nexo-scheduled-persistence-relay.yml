@@ -99,3 +99,12 @@ jobs:
               raise SystemExit("relay readback mismatch")
           print("relay readback PASS")
           PY
+
+      - name: Wake the Writer robot now
+        # Without this the proposal waits for GitHub's throttled */5 schedule (measured p50 54 min, p90 3.4 h).
+        # Needs repo secret PANTHEON_WAKE_TOKEN (fine-grained PAT: byDenoso/Pantheon, Actions read+write). Absent = skip.
+        env:
+          GH_TOKEN: ${{ secrets.PANTHEON_WAKE_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then echo "PANTHEON_WAKE_TOKEN not set; robot will pick this up on its schedule"; exit 0; fi
+          gh workflow run nexo-writer-robot.yml -R byDenoso/Pantheon --ref main && echo "writer robot dispatched"
