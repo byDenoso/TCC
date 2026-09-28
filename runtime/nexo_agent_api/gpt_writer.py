@@ -109,6 +109,18 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             else:
                 report["applied"].append(label)
 
+        # Contest lifecycle is mechanical: attacks cannot be attacked, and a completed
+        # depth-1 attack closes the original from its frozen criterion result.
+        contest_requests = evolution.contest_chain_reconcile_requests(root)
+        if contest_requests:
+            contest_receipts = apply_requests(root, contest_requests)
+            contest_failed = [r for r in contest_receipts if not r.get("accepted", True) or r.get("issue")]
+            report["receipts"].extend(contest_receipts)
+            if contest_failed:
+                report["rejected"].append({"item": "contest-chain-reconcile", "reason": contest_failed[0].get("issue")})
+            else:
+                report["reconciled_contests"] = [r.get("document") or r.get("entity_name") for r in contest_receipts]
+
         # Incident lifecycle is derived from canonical evidence already present in
         # the materialized Tower. Agents never declare incident state directly.
         incident_requests = evolution.incident_reconcile_requests(root)
