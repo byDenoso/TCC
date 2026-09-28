@@ -79,6 +79,31 @@ TEST_FIELDS = (
     "decoy",
 )
 TEST_INPUT_FIELDS = ("input_contract", "result", "statistics", "scientific_result")
+# Inputs used only to derive a narrow, sanitized entity read model for NEXO ONE.
+# They are never copied wholesale to the public projection.
+TEST_DETAIL_INPUT_FIELDS = (
+    "question",
+    "prediction",
+    "null",
+    "rival",
+    "success_criteria",
+    "kill_criteria",
+    "claim_boundary",
+    "limitations",
+    "created_at",
+    "updated_at",
+    "executed_at",
+    "frozen_at",
+    "prereg_ref",
+    "reviews",
+    "contests",
+    "parent_test_id",
+    "depends_on",
+    "battery_id",
+    "run_ref",
+    "execution",
+    "reproducibility",
+)
 TEST_STATISTICS_FIELDS = ("delta_chi2", "delta_bic", "ln_bayes_factor", "sigma_raw", "sigma_lee", "p_value")
 TEST_RESULT_FIELDS = ("parameter", "value", "err_lo", "err_hi", "unit")
 CAMPAIGN_FIELDS = (
@@ -245,6 +270,223 @@ def _aliased_statistics(entity: dict[str, Any], result: dict[str, Any]) -> dict[
     return found
 
 
+def _public_text(value: Any, limit: int = 1200) -> str | None:
+    """Return one bounded public string; nested/untyped payloads never pass through."""
+    if not isinstance(value, str):
+        return None
+    text = " ".join(value.split()).strip()
+    if not text:
+        return None
+    if len(text) > limit:
+        text = text[: limit - 1].rsplit(" ", 1)[0].rstrip() + "…"
+    return text
+
+
+def _public_text_values(value: Any, *, limit: int = 1200, max_items: int = 16) -> list[str]:
+    values = value if isinstance(value, list) else [value]
+    output: list[str] = []
+    for item in values:
+        text = _public_text(item, limit=limit)
+        if text and text not in output:
+            output.append(text)
+        if len(output) >= max_items:
+            break
+    return output
+
+
+def _public_timestamp(value: Any) -> str | None:
+    text = _public_text(value, limit=64)
+    if not text:
+        return None
+    # Public timestamps must be explicit ISO-like values, not arbitrary text.
+    return text if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", text) else None
+
+
+def _public_prediction(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict):
+        return None
+    output: dict[str, Any] = {}
+    effect = _public_text(value.get("expected_effect"), limit=800)
+    if effect:
+        output["expected_effect"] = effect
+    probability = value.get("p_promoted")
+    if isinstance(probability, (int, float)) and not isinstance(probability, bool):
+        output["p_promoted"] = probability
+    return output or None
+
+
+def _public_prereg(entity: dict[str, Any]) -> dict[str, Any] | None:
+    """Project only frozen scientific intent needed to compare promise with result."""
+    prereg: dict[str, Any] = {}
+    prediction = _public_prediction(entity.get("prediction"))
+    if prediction:
+        prereg["prediction"] = prediction
+    for source, target in (("null", "null"), ("rival", "rival")):
+        value = _public_text(entity.get(source), limit=1400)
+        if value:
+            prereg[target] = value
+
+    success = _public_text_values(entity.get("success_criteria"), limit=1200)
+    kill = _public_text_values(entity.get("kill_criteria"), limit=1200)
+    if success or kill:
+        criterion: dict[str, Any] = {}
+        if success:
+            criterion["success"] = success
+        if kill:
+            criterion["kill"] = kill
+        prereg["criterion"] = criterion
+
+    prereg_hash = _public_text(entity.get("prereg_hash"), limit=160)
+    prereg_ref = _public_text(entity.get("prereg_ref"), limit=400)
+    if prereg_hash:
+        prereg["hash"] = prereg_hash
+    if prereg_ref:
+        prereg["ref"] = prereg_ref
+    at = next(
+        (
+            stamp
+            for stamp in (
+                _public_timestamp(entity.get("frozen_at")),
+                _public_timestamp(entity.get("created_at")),
+            )
+            if stamp
+        ),
+        None,
+    )
+    if at:
+        prereg["at"] = at
+    return prereg or None
+
+
+def _public_reviews(entity: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize contest/review history without leaking raw evidence or refs."""
+    events: list[dict[str, Any]] = []
+    axes: dict[str, str] = {}
+    for contest in entity.get("contests") or []:
+        if not isinstance(contest, dict):
+            continue
+        contest_id = _public_text(contest.get("contest_test_id"), limit=240)
+        axis = _public_text(contest.get("reason"), limit=700)
+        if contest_id and axis:
+            axes[contest_id] = axis
+        event = {
+            "kind": "CONTEST",
+            "by": _public_text(contest.get("by"), limit=80) or "REFEREE_1",
+            "axis": axis,
+            "outcome": "PENDING",
+            "at": _public_timestamp(contest.get("at")),
+            "contest_test_id": contest_id,
+        }
+        events.append({k: v for k, v in event.items() if v is not None})
+
+    for review in entity.get("reviews") or []:
+        if not isinstance(review, dict):
+            continue
+        contest_id = _public_text(review.get("contest_test_id"), limit=240)
+        event = {
+            "kind": "VERDICT_REVIEW",
+            "by": _public_text(review.get("referee"), limit=80),
+            "axis": axes.get(contest_id or ""),
+            "outcome": _public_text(review.get("outcome"), limit=80),
+            "at": _public_timestamp(review.get("at")),
+            "contest_test_id": contest_id,
+        }
+        events.append({k: v for k, v in event.items() if v is not None})
+
+    return sorted(
+        events,
+        key=lambda item: (
+            str(item.get("at") or ""),
+            str(item.get("kind") or ""),
+            str(item.get("contest_test_id") or ""),
+        ),
+    )
+
+
+def _public_execution(entity: dict[str, Any]) -> dict[str, Any] | None:
+    execution: dict[str, Any] = {}
+    stamp = _public_timestamp(entity.get("executed_at"))
+    if stamp:
+        execution["at"] = stamp
+    reproducibility = entity.get("reproducibility")
+    if not isinstance(reproducibility, dict):
+        reproducibility = {}
+    for key in ("battery_id", "run_ref", "runner"):
+        value = _public_text(entity.get(key), limit=400) or _public_text(reproducibility.get(key), limit=400)
+        if value:
+            execution[key] = value
+    return execution or None
+
+
+def _public_test_parents(entity: dict[str, Any]) -> list[str]:
+    parents: list[str] = []
+    for value in (
+        entity.get("hypothesis_id"),
+        entity.get("hypothesis_ref"),
+        entity.get("parent_test_id"),
+        entity.get("contests_test_id"),
+    ):
+        text = _public_text(value, limit=260)
+        if text and text not in parents and text != str(entity.get("id") or ""):
+            parents.append(text)
+    return parents
+
+
+def _attach_public_test_details(projected: dict[str, Any], entity: dict[str, Any]) -> dict[str, Any]:
+    """Add the bounded read model used by entity pages. Call only after privacy classification."""
+    projected["entity_kind"] = "TEST"
+    question = _public_text(entity.get("question"), limit=1600)
+    if question:
+        projected["question"] = question
+    prereg = _public_prereg(entity)
+    if prereg:
+        projected["prereg"] = prereg
+    reviews = _public_reviews(entity)
+    if reviews:
+        projected["review"] = reviews
+    limitations = _public_text_values(entity.get("limitations"), limit=1200, max_items=20)
+    if limitations:
+        projected["limitations"] = limitations
+    claim_boundary = _public_text(entity.get("claim_boundary"), limit=1600)
+    if claim_boundary:
+        projected["claim_boundary"] = claim_boundary
+    for key in ("created_at", "updated_at", "executed_at"):
+        stamp = _public_timestamp(entity.get(key))
+        if stamp:
+            projected[key] = stamp
+    execution = _public_execution(entity)
+    if execution:
+        projected["execution"] = execution
+    parents = _public_test_parents(entity)
+    if parents:
+        projected["parents"] = parents
+    dependencies = [
+        item
+        for item in (_public_text(value, limit=300) for value in (entity.get("depends_on") or []))
+        if item
+    ]
+    if dependencies:
+        projected["depends_on"] = list(dict.fromkeys(dependencies))[:24]
+    return projected
+
+
+def _attach_test_children(tests: list[dict[str, Any]]) -> None:
+    """Invert only direct public test lineage; dependency edges remain separate."""
+    by_id = {str(test.get("id")): test for test in tests if test.get("id") and not test.get("private")}
+    for child in by_id.values():
+        child_id = str(child["id"])
+        for parent_id in child.get("parents") or []:
+            parent = by_id.get(str(parent_id))
+            if not parent or parent is child:
+                continue
+            parent.setdefault("children", [])
+            if child_id not in parent["children"]:
+                parent["children"].append(child_id)
+    for test in by_id.values():
+        if test.get("children"):
+            test["children"] = sorted(test["children"])
+
+
 def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
     """Project only the scientific fields consumed by ScienceProjectionV1."""
     projected = _pick(entity, TEST_FIELDS)
@@ -290,6 +532,8 @@ def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
             projected["verdict"] = verdict.strip()
     projected = _with_semantics(projected, entity)
     semantic = projected["semantic"]
+    if not projected.get("private"):
+        projected = _attach_public_test_details(projected, entity)
     if projected.get("private") and projected.get("verdict"):
         # Private verdict codes can embed names (e.g. "..._<NAME>_SENSITIVITY_ONLY"): publish only the class.
         raw = str(projected["verdict"]).upper()
@@ -542,15 +786,24 @@ def _load_hypotheses(root: Path) -> list[dict[str, Any]]:
         declared = (entity.get("semantic") or {}).get("domain_id") if isinstance(entity.get("semantic"), dict) else None
         if "OLYMPUS" in {str(entity.get("domain") or "").upper(), str(declared or "").upper()} or hypothesis_id.startswith("HYP-OLY"):
             continue  # Olympus is private: never in the public projection
+        test_ids = sorted(str(t.get("id")) for t in tests if t.get("id"))
+        roadmap_ids = sorted({str(t.get("roadmap_id")) for t in tests if t.get("roadmap_id")})
         record = {
             "id": hypothesis_id,
+            "entity_kind": "HYPOTHESIS",
             "title": entity.get("title"),
             "status": entity.get("status") or entity.get("state"),
             "statement": entity.get("statement") or entity.get("proposition") or entity.get("title"),
             "model": entity.get("model") or first(tests, "rival", "model"),
             "baseline": entity.get("baseline") or first(tests, "null", "baseline_model"),
             "falsification_criterion": entity.get("falsification_criterion") or first(tests, "kill_criteria", "falsification_criterion"),
-            "test_ids": sorted(str(t.get("id")) for t in tests if t.get("id")),
+            "claim_boundary": _public_text(entity.get("claim_boundary"), limit=1600),
+            "created_at": _public_timestamp(entity.get("created_at")),
+            "updated_at": _public_timestamp(entity.get("updated_at")),
+            "test_ids": test_ids,
+            "children": test_ids,
+            "roadmap_ids": roadmap_ids,
+            "parents": roadmap_ids,
         }
         semantic_source = {**entity, "campaign_id": entity.get("campaign_id") or first(tests, "campaign_id"),
                            "roadmap_id": first(tests, "roadmap_id"),
@@ -663,6 +916,265 @@ def _load_campaigns(root: Path) -> list[dict[str, Any]]:
     return campaigns
 
 
+def _public_roadmaps(
+    root: Path,
+    tests: list[dict[str, Any]],
+    hypotheses: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Project every public roadmap as a first-class navigable entity."""
+    folder = root / "roadmaps"
+    if not folder.is_dir():
+        return []
+
+    public_tests = [test for test in tests if not test.get("private")]
+    hypothesis_ids = {str(hyp.get("id")) for hyp in hypotheses if hyp.get("id")}
+    output: list[dict[str, Any]] = []
+
+    for path in sorted(folder.glob("*.json")):
+        payload = _read_json(path)
+        if not isinstance(payload, dict):
+            continue
+        roadmap_id = str(payload.get("roadmap_id") or payload.get("id") or path.stem)
+        semantic = resolve_semantic(payload, entity_id=roadmap_id)
+        if (
+            is_private(semantic)
+            or str(payload.get("domain") or "").upper() == "OLYMPUS"
+            or roadmap_id.upper().startswith(("RM-OLY", "OLY"))
+        ):
+            continue
+
+        linked_tests = [
+            test for test in public_tests
+            if str(test.get("roadmap_id") or "") == roadmap_id
+        ]
+        test_ids = sorted(str(test["id"]) for test in linked_tests if test.get("id"))
+        declared_hypotheses = [
+            text
+            for text in (
+                _public_text(value, limit=260)
+                for value in (payload.get("hypothesis_refs") or payload.get("hypothesis_ids") or [])
+            )
+            if text and text in hypothesis_ids
+        ]
+        linked_hypotheses = [
+            str(test.get("hypothesis_id") or test.get("hypothesis_ref"))
+            for test in linked_tests
+            if (test.get("hypothesis_id") or test.get("hypothesis_ref"))
+            and str(test.get("hypothesis_id") or test.get("hypothesis_ref")) in hypothesis_ids
+        ]
+        roadmap_hypotheses = sorted(set(declared_hypotheses + linked_hypotheses))
+        frontier = [
+            text
+            for text in (
+                _public_text(value, limit=260)
+                for value in (payload.get("frontier_refs") or [])
+            )
+            if text
+        ]
+
+        reviews = [str(test.get("review_state") or "").upper() for test in linked_tests]
+        statuses = [str(test.get("status") or test.get("state") or "").upper() for test in linked_tests]
+        progress = {
+            "total": len(linked_tests),
+            "confirmed": sum(1 for value in reviews if value == "CONFIRMED"),
+            "refuted": sum(1 for value in reviews if value == "REFUTED"),
+            "in_review": sum(1 for value in reviews if value in {"PENDING_REVIEW", "CONTESTED", "REFEREE1_PASSED"}),
+            "blocked": sum(1 for value in statuses if value.startswith("BLOCKED")),
+            "ready": sum(1 for value in statuses if value == "READY"),
+            "resumable": sum(1 for value in statuses if value in {"RUNNING", "CHECKPOINTED"}),
+            "result": sum(1 for value in statuses if value == "RESULT"),
+            "frontier": len(frontier),
+        }
+
+        charter = payload.get("charter") if isinstance(payload.get("charter"), dict) else {}
+        safe_charter: dict[str, Any] = {}
+        charter_status = _public_text(charter.get("status"), limit=80)
+        charter_question = _public_text(charter.get("question"), limit=1800)
+        objectives = _public_text_values(charter.get("objectives"), limit=1000, max_items=20)
+        if charter_status:
+            safe_charter["status"] = charter_status
+        if charter_question:
+            safe_charter["question"] = charter_question
+        if objectives:
+            safe_charter["objectives"] = objectives
+        budget = charter.get("budget") if isinstance(charter.get("budget"), dict) else {}
+        safe_budget = {
+            key: budget[key]
+            for key in ("max_tests", "max_days")
+            if isinstance(budget.get(key), (int, float)) and not isinstance(budget.get(key), bool)
+        }
+        if safe_budget:
+            safe_charter["budget"] = safe_budget
+        stop = charter.get("stop") if isinstance(charter.get("stop"), dict) else {}
+        safe_stop = {
+            key: stop[key]
+            for key in ("success_confirmed", "kill_consecutive_refuted")
+            if isinstance(stop.get(key), (int, float)) and not isinstance(stop.get(key), bool)
+        }
+        if safe_stop:
+            safe_charter["stop"] = safe_stop
+        if isinstance(charter.get("renewable"), bool):
+            safe_charter["renewable"] = charter["renewable"]
+        if isinstance(charter.get("review_every_days"), (int, float)) and not isinstance(charter.get("review_every_days"), bool):
+            safe_charter["review_every_days"] = charter["review_every_days"]
+        for key in ("chartered_at", "closed_at"):
+            stamp = _public_timestamp(charter.get(key))
+            if stamp:
+                safe_charter[key] = stamp
+        close_reason = _public_text(charter.get("close_reason"), limit=160)
+        if close_reason:
+            safe_charter["close_reason"] = close_reason
+
+        record: dict[str, Any] = {
+            "id": roadmap_id,
+            "roadmap_id": roadmap_id,
+            "entity_kind": "ROADMAP",
+            "title": _public_text(payload.get("title"), limit=500),
+            "question": _public_text(payload.get("question"), limit=1800) or charter_question,
+            "domain": _public_text(payload.get("domain"), limit=120),
+            "subdomain": _public_text(payload.get("subdomain"), limit=240),
+            "priority": _public_text(payload.get("priority"), limit=80),
+            "status": _public_text(payload.get("status") or payload.get("state"), limit=80),
+            "state": _public_text(payload.get("state") or payload.get("status"), limit=80),
+            "claim_boundary": _public_text(payload.get("claim_boundary"), limit=1800),
+            "created_at": _public_timestamp(payload.get("created_at")),
+            "campaign_id": _public_text(payload.get("campaign_id"), limit=260),
+            "charter": safe_charter or None,
+            "test_ids": test_ids,
+            "hypothesis_ids": roadmap_hypotheses,
+            "frontier_test_ids": list(dict.fromkeys(frontier)),
+            "children": roadmap_hypotheses + [test_id for test_id in test_ids if not any(
+                test_id in (hyp.get("test_ids") or []) for hyp in hypotheses
+            )],
+            "progress": progress,
+        }
+        output.append({key: value for key, value in record.items() if value not in (None, "", [])})
+
+    return output
+
+
+_EVENT_TIME_RE = re.compile(r"^(\d{8}T\d{6})(\d{0,6})(Z|[+-]\d{4})")
+
+
+def _event_time(event_id: Any) -> str | None:
+    """Normalize the immutable event-id clock to ISO-8601 without using wall time."""
+    text = str(event_id or "")
+    match = _EVENT_TIME_RE.match(text)
+    if not match:
+        return None
+    base, fraction, zone = match.groups()
+    zone_iso = "+00:00" if zone == "Z" else f"{zone[:3]}:{zone[3:]}"
+    iso = (
+        f"{base[:4]}-{base[4:6]}-{base[6:8]}T"
+        f"{base[9:11]}:{base[11:13]}:{base[13:15]}"
+        + (f".{fraction.ljust(6, '0')}" if fraction else "")
+        + zone_iso
+    )
+    try:
+        from datetime import datetime, timezone
+        parsed = datetime.fromisoformat(iso).astimezone(timezone.utc)
+    except ValueError:
+        return None
+    return parsed.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def _public_event_role(event_type: str) -> str | None:
+    value = event_type.upper()
+    if "NEXO_THOUGHT" in value:
+        return "PITIA"
+    if "HYPOTHESIS" in value or "LESSON" in value:
+        return "LEARNER"
+    if (
+        "CONTEST" in value
+        or "REFEREE" in value
+        or value in {"RESULT_REFUTED", "RESULT_CONFIRMED", "RESULT_CONTESTED"}
+    ):
+        return "REFUTADOR"
+    if (
+        value.startswith("TEST_")
+        or value == "ROADMAP_TEST_FROZEN"
+        or "DATA_BINDING" in value
+        or "BATTERY" in value
+    ):
+        return "EXECUTOR"
+    if (
+        "INTEGRITY" in value
+        or "FITNESS" in value
+        or "DECOY" in value
+        or "GENOME_ROLLBACK" in value
+        or "ROADMAP_CLOSE" in value
+    ):
+        return "GUARDIAO"
+    if "OPERATOR_INTENT" in value or "CHARTER_APPROVED" in value or "CANONIZE" in value:
+        return "DENER"
+    return None
+
+
+def _public_activity(
+    root: Path,
+    public_entity_ids: set[str],
+    *,
+    limit: int = 240,
+) -> tuple[list[dict[str, Any]], dict[str, str]]:
+    """Sanitized closed-loop event stream plus earliest immutable observation per public entity."""
+    events_root = root / "events"
+    if not events_root.is_dir():
+        return [], {}
+    activity: list[dict[str, Any]] = []
+    first_seen: dict[str, str] = {}
+    for path in sorted(events_root.rglob("*.json")):
+        event = _read_json(path)
+        if not isinstance(event, dict):
+            continue
+        event_type = str(event.get("event_type") or "")
+        role = _public_event_role(event_type)
+        stamp = _event_time(event.get("event_id") or path.stem)
+        if not stamp:
+            continue
+        entity_name = _public_text(event.get("entity_name") or event.get("entity_ref"), limit=300)
+        is_public_entity = bool(entity_name and entity_name in public_entity_ids)
+        if is_public_entity:
+            previous = first_seen.get(entity_name)
+            if previous is None or stamp < previous:
+                first_seen[entity_name] = stamp
+        if role is None:
+            continue
+        # Entity-bearing events are shown only when the target is already in the public read model.
+        # System-level audit/thought events may be shown without an entity id.
+        if entity_name and not is_public_entity:
+            if event_type not in {"INTEGRITY_REPORT_RECORDED", "NEXO_THOUGHT_RECORDED", "NEXO_THOUGHT_NOOP_RECORDED"}:
+                continue
+            entity_name = None
+        item: dict[str, Any] = {
+            "event_type": event_type,
+            "role": role,
+            "at": stamp,
+        }
+        if entity_name:
+            item["entity_id"] = entity_name
+            kind = _public_text(event.get("entity_kind"), limit=80)
+            if kind:
+                item["entity_kind"] = kind.upper()
+        activity.append(item)
+    activity.sort(key=lambda item: (str(item.get("at") or ""), str(item.get("event_type") or ""), str(item.get("entity_id") or "")))
+    return activity[-limit:], first_seen
+
+
+def _attach_observation_times(entities: list[dict[str, Any]], first_seen: dict[str, str]) -> None:
+    for entity in entities:
+        entity_id = str(entity.get("id") or entity.get("roadmap_id") or "")
+        observed = first_seen.get(entity_id)
+        if observed:
+            entity["first_observed_at"] = observed
+        explicit = _public_timestamp(entity.get("created_at"))
+        if explicit:
+            entity["created_at_effective"] = explicit
+            entity["created_at_source"] = "ENTITY"
+        elif observed:
+            entity["created_at_effective"] = observed
+            entity["created_at_source"] = "EVENT_FIRST_OBSERVED"
+
+
 def build_public_projection(
     root: str | Path,
     *,
@@ -684,7 +1196,7 @@ def build_public_projection(
 
     work_entities = _load_entities(root, "work", WORK_FIELDS)
     human_flags = _load_entities(root, "work", ("human_action_required",))
-    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS))
+    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS, *TEST_DETAIL_INPUT_FIELDS))
     campaigns = _load_campaigns(root)
 
     # Index order is priority. Existence is the entity. An index entry without an
@@ -719,7 +1231,22 @@ def build_public_projection(
         for lesson_id, lesson in sorted(_load_entities(root, "lesson", LESSON_FIELDS).items())
     ]
 
+    tests = [
+        _apply_target_domain_projection(_public_test_entity(dict(test_entities[key], id=key)))
+        for key in sorted(test_entities)
+    ]
+    _attach_test_children(tests)
     hypotheses = _load_hypotheses(root)
+    roadmaps = _public_roadmaps(root, tests, hypotheses)
+    public_entity_ids = {
+        str(item.get("id"))
+        for item in [*tests, *hypotheses, *roadmaps]
+        if item.get("id") and not item.get("private")
+    }
+    activity, first_seen = _public_activity(root, public_entity_ids)
+    _attach_observation_times([item for item in tests if not item.get("private")], first_seen)
+    _attach_observation_times(hypotheses, first_seen)
+    _attach_observation_times(roadmaps, first_seen)
     integrity = _load_integrity(root)
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
@@ -739,6 +1266,8 @@ def build_public_projection(
             "work_entities": len(work_entities),
             "tests": len(test_entities),
             "campaigns": len(campaigns),
+            "roadmaps": len(roadmaps),
+            "activity": len(activity),
             "cross_domain": len(cross_domain),
             "lessons": len(lessons),
             "hypotheses": len(hypotheses),
@@ -748,11 +1277,10 @@ def build_public_projection(
         },
         "human_gates": {"work_ids": human_work_ids, "count": len(human_work_ids)},
         "work": work,
-        "tests": [
-            _apply_target_domain_projection(_public_test_entity(dict(test_entities[key], id=key)))
-            for key in sorted(test_entities)
-        ],
+        "tests": tests,
         "campaigns": campaigns,
+        "roadmaps": roadmaps,
+        "activity": activity,
         "crossDomain": cross_domain,
         "taxonomy": public_tree(),
         "lessons": lessons,
