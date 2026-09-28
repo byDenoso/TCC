@@ -1,0 +1,209 @@
+{
+ "kind": "SEMANTIC_BACKFILL",
+ "source": "CONVERSA",
+ "created_at": "2026-09-28T16:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "id": "DMN26-009-SIDM-VELOCITY-SCALING",
+    "entity_kind": "test",
+    "display_name": "Uma lei de colisão para anãs e aglomerados",
+    "semantic": {
+     "display_name": "Uma lei de colisão para anãs e aglomerados"
+    }
+   },
+   {
+    "id": "GZ01-B03-T03-WINDOW-ROTATION-NULL",
+    "entity_kind": "test",
+    "display_name": "Extremos do mapa 3D contra nulos de janela",
+    "semantic": {
+     "display_name": "Extremos do mapa 3D contra nulos de janela"
+    }
+   },
+   {
+    "id": "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+    "entity_kind": "test",
+    "display_name": "Crescimento do DESI depende do método estatístico?",
+    "semantic": {
+     "display_name": "Crescimento do DESI depende do método estatístico?"
+    }
+   },
+   {
+    "id": "H0X26-010-ANCHOR-VELOCITY-FIELD-ORTHOGONALITY",
+    "entity_kind": "test",
+    "display_name": "Âncoras de H0 e velocidades peculiares",
+    "semantic": {
+     "display_name": "Âncoras de H0 e velocidades peculiares"
+    }
+   },
+   {
+    "id": "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-A67092558F28417C",
+    "entity_kind": "test",
+    "display_name": "Staging no GitHub melhora a gravação agendada?",
+    "semantic": {
+     "display_name": "Staging no GitHub melhora a gravação agendada?"
+    }
+   },
+   {
+    "id": "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-BD1B54BB91B1568C",
+    "entity_kind": "test",
+    "display_name": "H0 e w0-wa reagem diferente ao redshift?",
+    "semantic": {
+     "display_name": "H0 e w0-wa reagem diferente ao redshift?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-38C9231D97D42CC8AC69E1A959D351A6",
+    "entity_kind": "test",
+    "display_name": "Inclinação dos subhalos: lentes versus satélites",
+    "semantic": {
+     "display_name": "Inclinação dos subhalos: lentes versus satélites"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-47CCB7847C38971BAD272F58445B62D0",
+    "entity_kind": "test",
+    "display_name": "w0-wa sobrevive retirando cada traçador do DESI?",
+    "semantic": {
+     "display_name": "w0-wa sobrevive retirando cada traçador do DESI?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-0",
+    "entity_kind": "test",
+    "display_name": "H0 por sirenes padrão, sem escada de distâncias",
+    "semantic": {
+     "display_name": "H0 por sirenes padrão, sem escada de distâncias"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-1",
+    "entity_kind": "test",
+    "display_name": "Crescimento separa energia escura de matéria escura?",
+    "semantic": {
+     "display_name": "Crescimento separa energia escura de matéria escura?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-2",
+    "entity_kind": "test",
+    "display_name": "Encerrar após gravar no staging é seguro?",
+    "semantic": {
+     "display_name": "Encerrar após gravar no staging é seguro?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-0",
+    "entity_kind": "test",
+    "display_name": "O relay preserva o envelope até o inbox",
+    "semantic": {
+     "display_name": "O relay preserva o envelope até o inbox"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-2",
+    "entity_kind": "test",
+    "display_name": "Um só erro de calibração explica H0 e w0-wa?",
+    "semantic": {
+     "display_name": "Um só erro de calibração explica H0 e w0-wa?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-3",
+    "entity_kind": "test",
+    "display_name": "Lentes e correntes estelares concordam no corte?",
+    "semantic": {
+     "display_name": "Lentes e correntes estelares concordam no corte?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-B92E1353752663E6C7ECFE562266361B",
+    "entity_kind": "test",
+    "display_name": "Erros de baixo redshift movem H0 e w0-wa juntos?",
+    "semantic": {
+     "display_name": "Erros de baixo redshift movem H0 e w0-wa juntos?"
+    }
+   },
+   {
+    "id": "HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7",
+    "entity_kind": "test",
+    "display_name": "A nota de prioridade prevê o sucesso?",
+    "semantic": {
+     "display_name": "A nota de prioridade prevê o sucesso?"
+    }
+   },
+   {
+    "id": "META-BATTERY26-001-RUNNER-CANARY",
+    "entity_kind": "test",
+    "display_name": "Baterias rodam sozinhas no GitHub",
+    "semantic": {
+     "display_name": "Baterias rodam sozinhas no GitHub"
+    }
+   },
+   {
+    "id": "META-CAL26-001-CRITERIA-OBSERVABILITY-FIT",
+    "entity_kind": "test",
+    "display_name": "Critérios observáveis dão mais resultados decisivos?",
+    "semantic": {
+     "display_name": "Critérios observáveis dão mais resultados decisivos?"
+    }
+   },
+   {
+    "id": "META-CAMPAIGN26-001-OBJECTIVE-ATTRIBUTION",
+    "entity_kind": "test",
+    "display_name": "Hipóteses dizem qual objetivo servem?",
+    "semantic": {
+     "display_name": "Hipóteses dizem qual objetivo servem?"
+    }
+   },
+   {
+    "id": "META-CKPT26-001-INPUT-BINDING",
+    "entity_kind": "test",
+    "display_name": "Checkpoints travam por falta de dados?",
+    "semantic": {
+     "display_name": "Checkpoints travam por falta de dados?"
+    }
+   },
+   {
+    "id": "META-CKPT26-002-LIVE-ROADMAP-AGING",
+    "entity_kind": "test",
+    "display_name": "Checkpoints antigos ainda são trabalho vivo?",
+    "semantic": {
+     "display_name": "Checkpoints antigos ainda são trabalho vivo?"
+    }
+   },
+   {
+    "id": "META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP",
+    "entity_kind": "test",
+    "display_name": "Cópia antiga do contrato não contamina",
+    "semantic": {
+     "display_name": "Cópia antiga do contrato não contamina"
+    }
+   },
+   {
+    "id": "META-CONTRACT26-002-DYNAMIC-REACHABILITY",
+    "entity_kind": "test",
+    "display_name": "Cópia antiga do contrato é lida em execução?",
+    "semantic": {
+     "display_name": "Cópia antiga do contrato é lida em execução?"
+    }
+   },
+   {
+    "id": "META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE",
+    "entity_kind": "test",
+    "display_name": "Datas faltando enganam o relógio de hipóteses?",
+    "semantic": {
+     "display_name": "Datas faltando enganam o relógio de hipóteses?"
+    }
+   },
+   {
+    "id": "META-EMERG26-003-EVENT-CLOCK-SOURCE",
+    "entity_kind": "test",
+    "display_name": "Relógio de hipóteses pelo evento canônico",
+    "semantic": {
+     "display_name": "Relógio de hipóteses pelo evento canônico"
+    }
+   }
+  ]
+ }
+}
