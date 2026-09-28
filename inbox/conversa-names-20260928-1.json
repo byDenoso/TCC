@@ -1,0 +1,209 @@
+{
+ "kind": "SEMANTIC_BACKFILL",
+ "source": "CONVERSA",
+ "created_at": "2026-09-28T16:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "id": "CONTEST-HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-0-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · O relay preserva o envelope até o inbox",
+    "semantic": {
+     "display_name": "Ataque 1 · O relay preserva o envelope até o inbox"
+    }
+   },
+   {
+    "id": "CONTEST-HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-0-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · O relay preserva o envelope até o inbox",
+    "semantic": {
+     "display_name": "Ataque 2 · O relay preserva o envelope até o inbox"
+    }
+   },
+   {
+    "id": "CONTEST-HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · A nota de prioridade prevê o sucesso?",
+    "semantic": {
+     "display_name": "Ataque 1 · A nota de prioridade prevê o sucesso?"
+    }
+   },
+   {
+    "id": "CONTEST-META-BATTERY26-001-RUNNER-CANARY-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Baterias rodam sozinhas no GitHub",
+    "semantic": {
+     "display_name": "Ataque 1 · Baterias rodam sozinhas no GitHub"
+    }
+   },
+   {
+    "id": "CONTEST-META-BATTERY26-001-RUNNER-CANARY-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Baterias rodam sozinhas no GitHub",
+    "semantic": {
+     "display_name": "Ataque 2 · Baterias rodam sozinhas no GitHub"
+    }
+   },
+   {
+    "id": "CONTEST-META-CAMPAIGN26-001-OBJECTIVE-ATTRIBUTION-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Hipóteses dizem qual objetivo servem?",
+    "semantic": {
+     "display_name": "Ataque 1 · Hipóteses dizem qual objetivo servem?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CAMPAIGN26-001-OBJECTIVE-ATTRIBUTION-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Hipóteses dizem qual objetivo servem?",
+    "semantic": {
+     "display_name": "Ataque 2 · Hipóteses dizem qual objetivo servem?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CKPT26-001-INPUT-BINDING-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Checkpoints travam por falta de dados?",
+    "semantic": {
+     "display_name": "Ataque 1 · Checkpoints travam por falta de dados?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CKPT26-001-INPUT-BINDING-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Checkpoints travam por falta de dados?",
+    "semantic": {
+     "display_name": "Ataque 2 · Checkpoints travam por falta de dados?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Checkpoints antigos ainda são trabalho vivo?",
+    "semantic": {
+     "display_name": "Ataque 1 · Checkpoints antigos ainda são trabalho vivo?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CKPT26-002-LIVE-ROADMAP-AGING-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Checkpoints antigos ainda são trabalho vivo?",
+    "semantic": {
+     "display_name": "Ataque 2 · Checkpoints antigos ainda são trabalho vivo?"
+    }
+   },
+   {
+    "id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Cópia antiga do contrato não contamina",
+    "semantic": {
+     "display_name": "Ataque 1 · Cópia antiga do contrato não contamina"
+    }
+   },
+   {
+    "id": "CONTEST-META-CONTRACT26-001-EMBEDDED-COPY-BOOTSTRAP-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Cópia antiga do contrato não contamina",
+    "semantic": {
+     "display_name": "Ataque 2 · Cópia antiga do contrato não contamina"
+    }
+   },
+   {
+    "id": "CONTEST-META-EMERG26-002-HYPOTHESIS-TIMESTAMP-COVERAGE-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Datas faltando enganam o relógio de hipóteses?",
+    "semantic": {
+     "display_name": "Ataque 1 · Datas faltando enganam o relógio de hipóteses?"
+    }
+   },
+   {
+    "id": "CONTEST-META-EVENT26-001-REPLAY-SIGNATURE-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Resultados registrados em duplicidade?",
+    "semantic": {
+     "display_name": "Ataque 1 · Resultados registrados em duplicidade?"
+    }
+   },
+   {
+    "id": "CONTEST-META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Estatísticas no campo errado dos resultados",
+    "semantic": {
+     "display_name": "Ataque 1 · Estatísticas no campo errado dos resultados"
+    }
+   },
+   {
+    "id": "CONTEST-META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Estatísticas no campo errado dos resultados",
+    "semantic": {
+     "display_name": "Ataque 2 · Estatísticas no campo errado dos resultados"
+    }
+   },
+   {
+    "id": "CONTEST-META-REVIEW26-001-SEMANTIC-COVERAGE-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Resultados chegam ao juiz já explicados?",
+    "semantic": {
+     "display_name": "Ataque 1 · Resultados chegam ao juiz já explicados?"
+    }
+   },
+   {
+    "id": "CONTEST-META-REVIEW26-001-SEMANTIC-COVERAGE-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Resultados chegam ao juiz já explicados?",
+    "semantic": {
+     "display_name": "Ataque 2 · Resultados chegam ao juiz já explicados?"
+    }
+   },
+   {
+    "id": "CONTEST-META-ROADMAP26-001-AUTOATTACH-REPAIR-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Robô liga testes soltos a um roadmap",
+    "semantic": {
+     "display_name": "Ataque 1 · Robô liga testes soltos a um roadmap"
+    }
+   },
+   {
+    "id": "CONTEST-META-SEM26-001-FRONTIER-TOPIC-COVERAGE-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Fronteira perdendo o tema científico",
+    "semantic": {
+     "display_name": "Ataque 1 · Fronteira perdendo o tema científico"
+    }
+   },
+   {
+    "id": "CONTEST-META-SEM26-001-FRONTIER-TOPIC-COVERAGE-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Fronteira perdendo o tema científico",
+    "semantic": {
+     "display_name": "Ataque 2 · Fronteira perdendo o tema científico"
+    }
+   },
+   {
+    "id": "CONTEST-META-SEM26-002-UNMAPPED-WORK-CONCENTRATION-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · Dívida semântica concentrada em tarefas",
+    "semantic": {
+     "display_name": "Ataque 1 · Dívida semântica concentrada em tarefas"
+    }
+   },
+   {
+    "id": "CONTEST-META-SEM26-002-UNMAPPED-WORK-CONCENTRATION-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · Dívida semântica concentrada em tarefas",
+    "semantic": {
+     "display_name": "Ataque 2 · Dívida semântica concentrada em tarefas"
+    }
+   },
+   {
+    "id": "CONTEST-T-DEH26-001-PRIORITY-STATE-OF-ART-1",
+    "entity_kind": "test",
+    "display_name": "Ataque 1 · A literatura já tem esse mecanismo?",
+    "semantic": {
+     "display_name": "Ataque 1 · A literatura já tem esse mecanismo?"
+    }
+   }
+  ]
+ }
+}
