@@ -21,3 +21,11 @@ def test_unknown_active_defaults_to_gpt():
     assert producer_of({"_inbox_name": "scheduled-x"}) == "GPT"
     keep, _ = split_by_producer([{"producer": "GPT"}], "bogus")
     assert keep == [{"producer": "GPT"}]
+
+
+def test_battery_accepts_base64_script():
+    import base64, inspect
+    from runtime.nexo_agent_api import evolution
+    src = inspect.getsource(evolution)
+    assert "script_b64" in src
+    assert base64.b64decode(base64.b64encode(b"print(1)").decode() + "===") == b"print(1)"

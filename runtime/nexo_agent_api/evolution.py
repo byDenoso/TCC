@@ -17,6 +17,7 @@ Referee 1 = GPT Refutador; Referee 2 = Claude (external model). Only CONFIRMED c
 from __future__ import annotations
 
 import hashlib
+import base64
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -398,6 +399,12 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     for spec in (body.get("tests") or [])[:MAX_BATTERY_TESTS]:
         test_id = str(spec.get("test_id") or "")
         current = _entity(root, "test", test_id) if test_id else None
+        if not str(spec.get("script") or "").strip() and spec.get("script_b64"):
+            # Connectors may refuse to write raw code inside JSON; the script can travel base64-encoded.
+            try:
+                spec = {**spec, "script": base64.b64decode(str(spec["script_b64"]) + "===").decode("utf-8")}
+            except (ValueError, UnicodeDecodeError):
+                continue
         if current is None or not str(spec.get("script") or "").strip():
             continue
         if str(current.get("domain") or "").upper() == "OLYMPUS" or current.get("private"):
