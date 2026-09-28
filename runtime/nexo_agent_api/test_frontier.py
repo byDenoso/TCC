@@ -43,6 +43,22 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual([r["test_id"] for r in frontier["ready"]], ["T2", "T4"])
         self.assertEqual(frontier["waiting"][0]["test_id"], "T3")
 
+    def test_retired_tests_never_fill_the_batch(self):
+        # Archived contest chains used to be ranked "contests first" and took every batch slot.
+        self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
+        refs = [f"CONTEST-CONTEST-T{i}-1-1" for i in range(12)] + ["T-READY", "T-ODD"]
+        self._roadmap("RM-A", frontier_refs=refs)
+        for i in range(12):
+            self._test(f"CONTEST-CONTEST-T{i}-1-1", "ARCHIVED", contests_test_id=f"CONTEST-T{i}-1")
+        self._test("T-READY", "READY")
+        self._test("T-ODD", "QUEUED_SOMEWHERE")
+        (self.root / "entities" / "test" / "LOOSE-ARCHIVED.json").write_text(json.dumps({"id": "LOOSE-ARCHIVED", "state": "ARCHIVED"}))
+        frontier = roadmap_frontier(self.root)
+        self.assertEqual(frontier["next"]["test_id"], "T-READY")
+        self.assertEqual([r["test_id"] for r in frontier["ready"]], ["T-READY"])
+        self.assertTrue(all(item["state"] in {"READY", "RUNNING", "CHECKPOINTED"} for item in frontier["batch"]))
+        self.assertIn("T-ODD", [w["test_id"] for w in frontier["waiting"]])
+
     def test_ready_beats_checkpointed_and_bad_roadmaps_are_not_fatal(self):
         self._index(
             {"roadmap_id": "RM-EMPTY", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-EMPTY.json"},

@@ -21,6 +21,8 @@ from .tower_paths import entity_path, fs_path
 
 TERMINAL = {"DONE", "VERIFIED", "RESULT", "REJECTED", "FAILED", "INCONCLUSIVE", "SUPERSEDED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED"}
 RESUMABLE = {"RUNNING", "CHECKPOINTED"}
+# Retired work is never executable and never occupies a batch slot (e.g. contest chains archived at depth > 1).
+RETIRED = {"ARCHIVED", "DISCARDED", "CANCELLED", "CANCELED", "WITHDRAWN"}
 PRIORITY_RANK = {"P0": 0, "CRITICAL": 1, "HIGH": 2, "MEDIUM_HIGH": 3, "MEDIUM": 4, "NORMAL": 5, "P1": 5, "LOW": 6, "P2": 6}
 
 
@@ -93,7 +95,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             entity = test(ref)
             state = _lifecycle(entity)
             base = {"roadmap_id": rid, "test_id": ref, "state": state, "priority": item.get("priority")}
-            if state in TERMINAL:
+            if state in TERMINAL or state in RETIRED:
                 continue
             if entity is None:
                 skipped.append({**base, "reason": "FRONTIER_TEST_NOT_MATERIALIZED"})
@@ -104,6 +106,9 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 # DRAFT = hypothesis still missing frozen criteria; the Learner completes it, the Executor waits.
                 waiting.append({**base, "reason": state})
+                continue
+            if state != "READY":
+                waiting.append({**base, "reason": f"NOT_READY_{state}"})
                 continue
             deps = [str(d) for d in (entity.get("depends_on") or [])]
             unmet = [d for d in deps if not _dependency_met(d, status_of)]
@@ -121,7 +126,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             if not entity or not entity.get("id") or str(entity["id"]) in seen:
                 continue
             state = _lifecycle(entity)
-            if state in TERMINAL or not (entity.get("state") or entity.get("status")):
+            if state in TERMINAL or state in RETIRED or not (entity.get("state") or entity.get("status")):
                 continue
             ref = str(entity["id"])
             seen.add(ref)
@@ -132,6 +137,9 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
                 continue
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 waiting.append({**base, "reason": state})
+                continue
+            if state != "READY":
+                waiting.append({**base, "reason": f"NOT_READY_{state}"})
                 continue
             deps = [str(d) for d in (entity.get("depends_on") or [])]
             unmet = [d for d in deps if not _dependency_met(d, status_of)]
