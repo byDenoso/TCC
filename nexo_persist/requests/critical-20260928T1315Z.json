@@ -4,74 +4,46 @@
     "kind": "BATCH",
     "source": "GUARDIAO",
     "producer": "GPT",
-    "created_at": "2026-09-28T13:15:49Z",
+    "created_at": "2026-09-28T15:54:00Z",
     "payload": {
       "items": [
         {
-          "kind": "VERDICT_REVIEW",
+          "kind": "SEMANTIC_BACKFILL",
           "source": "REFEREE_1",
-          "created_at": "2026-09-28T13:15:49Z",
+          "producer": "GPT",
+          "created_at": "2026-09-28T15:54:00Z",
           "payload": {
-            "test_id": "HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7",
-            "referee": 1,
-            "outcome": "SURVIVED",
-            "contest_test_id": "CONTEST-HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7-1",
-            "evidence": "O ataque terminou inconclusivo porque a coorte posterior tinha só 1 caso elegível, abaixo do mínimo congelado de 8 e sem as duas classes necessárias. O resultado original não foi refutado por este ataque; isso não acrescenta evidência positiva."
-          }
-        },
-        {
-          "kind": "VERDICT_REVIEW",
-          "source": "REFEREE_1",
-          "created_at": "2026-09-28T13:15:49Z",
-          "payload": {
-            "test_id": "META-PERSIST26-004-PRODUCER-ACK-SUFFICIENCY",
-            "referee": 1,
-            "outcome": "SURVIVED",
-            "contest_test_id": "CONTEST-META-PERSIST26-004-PRODUCER-ACK-SUFFICIENCY-1",
-            "evidence": "O ataque observou 3 de 3 entregas exatas no prazo, mas n=3 ficou abaixo do mínimo congelado de 10. O critério de refutação não foi atingido; o positivo original sobrevive a este ataque sem ganhar confirmação adicional."
-          }
-        },
-        {
-          "kind": "VERDICT_REVIEW",
-          "source": "REFEREE_1",
-          "created_at": "2026-09-28T13:15:49Z",
-          "payload": {
-            "test_id": "META-RANK26-002-RANKSCORE-CALIBRATION",
-            "referee": 1,
-            "outcome": "SURVIVED",
-            "contest_test_id": "CONTEST-META-RANK26-002-RANKSCORE-CALIBRATION-1",
-            "evidence": "O ataque não conseguiu materializar holdout temporal de pelo menos 10 casos com rank_score prospectivo e classes comparáveis. Sem coorte válida, não houve critério de refutação; o resultado original sobrevive apenas ao fracasso deste ataque."
-          }
-        },
-        {
-          "kind": "VERDICT_REVIEW",
-          "source": "REFEREE_1",
-          "created_at": "2026-09-28T13:15:49Z",
-          "payload": {
-            "test_id": "META-CKPT26-001-INPUT-BINDING",
-            "referee": 1,
-            "outcome": "SURVIVED",
-            "contest_test_id": "CONTEST-META-CKPT26-001-INPUT-BINDING-2",
-            "evidence": "O segundo ataque terminou inconclusivo com n=0 transições longitudinais classificáveis, abaixo do mínimo congelado de 5. Não houve evidência para acionar o critério de refutação; registrar somente que o original sobreviveu a este ataque."
+            "items": [
+              {
+                "id": "T-DEH26-003-TREE-MATCHING-R1",
+                "semantic": {
+                  "display_name": "Matching clássico preserva R igual a um",
+                  "question_plain": "O matching clássico mantém R igual a um sem introduzir outro parâmetro?",
+                  "why_it_matters": "Se a relação depender da parametrização ou da normalização, ela perde força como previsão estrutural do modelo."
+                }
+              }
+            ]
           }
         },
         {
           "kind": "CONTEST",
           "source": "REFEREE_1",
-          "created_at": "2026-09-28T13:15:49Z",
+          "producer": "GPT",
+          "created_at": "2026-09-28T15:54:00Z",
           "payload": {
             "test_id": "T-DEH26-003-TREE-MATCHING-R1",
-            "reason": "O positivo R=1 foi obtido por uma única eliminação simbólica com uma normalização específica. Como a frente de energia escura continua em tensão e este resultado é apenas microfísica tree-level, o ataque deve verificar se a identidade sobrevive a uma parametrização independente e a uma auditoria dimensional sem reutilizar a mesma substituição algébrica.",
+            "reason": "O resultado positivo obtém R=1 no limite clássico com uma normalização específica. Isso importa porque a frente de energia escura permanece em tensão, enquanto este resultado sustenta apenas um vínculo microfísico tree-level. O ataque rederiva o matching por parametrização independente e auditoria dimensional para verificar se a identidade é estrutural ou depende da representação escolhida.",
             "refs": [
               "T-DEH26-003-TREE-MATCHING-R1",
-              "RM-DARK-ENERGY-NATURE-20260923-V1"
+              "RM-DARK-ENERGY-NATURE-20260923-V1",
+              "HYP-DE-HILBERT-UVIR-MATCHING-V1"
             ],
             "contest_test": {
-              "question": "A identidade R=1 continua exata quando o matching clássico é rederivado por uma parametrização independente do campo radial e por auditoria dimensional separada?",
+              "question": "A identidade R=1 continua exata quando o matching clássico é rederivado por uma parametrização independente do campo radial e por uma auditoria dimensional separada?",
               "null": "A identidade R=1 depende da parametrização ou da normalização usada no cálculo original, exigindo um coeficiente livre ou produzindo R diferente de 1 em uma derivação equivalente.",
               "rival": "Duas derivações clássicas independentes, dimensionalmente consistentes, produzem a mesma P(X) alvo e R=1 sem coeficiente ajustado à mão.",
-              "method": "Refazer o matching a partir da ação escalar local usando uma variável radial reparametrizada e uma segunda derivação por completar quadrados/eliminação algébrica independente. Comparar coeficientes termo a termo, checar dimensões antes de identificar parâmetros e fazer pelo menos três substituições numéricas de M apenas como verificação da identidade simbólica.",
-              "data": "Álgebra simbólica da mesma completion local congelada no teste original; nenhuma informação cosmológica nova.",
+              "method": "Refazer o matching a partir da ação escalar local usando uma variável radial reparametrizada e uma segunda derivação algébrica independente. Comparar os coeficientes termo a termo, checar as dimensões antes de identificar parâmetros e usar substituições numéricas apenas como verificação da identidade simbólica.",
+              "data": "A ação e a completion escalar local congeladas no teste original; nenhuma informação cosmológica nova e nenhum ajuste a dados observacionais.",
               "success_criteria": "SURVIVED se as duas derivações independentes reproduzirem exatamente a P(X) alvo e R=1 para M arbitrário, sem novo coeficiente livre e com dimensões consistentes.",
               "kill_criteria": "REFUTED se qualquer derivação equivalente exigir parâmetro independente adicional, produzir coeficientes incompatíveis com a P(X) alvo ou resultar em R diferente de 1 após a auditoria dimensional."
             }
@@ -80,68 +52,71 @@
         {
           "kind": "INTEGRITY_REPORT",
           "source": "GUARDIAO",
-          "created_at": "2026-09-28T13:15:49Z",
+          "producer": "GPT",
+          "created_at": "2026-09-28T15:54:00Z",
           "payload": {
-            "checked_at": "2026-09-28T13:15:49Z",
-            "status": "WARN",
-            "summary": "A Tower canônica lida está íntegra, mas a projeção pública não pôde ser consultada nesta execução. O contrato ainda descreve cinco papéis legados enquanto o operador consolidou a agenda em três papéis. O desvio de runtime CAMB previamente registrado continua pendente de reexecução no runner científico exigido.",
-            "failing_areas": [
+            "date": "2026-09-28",
+            "status": "RED",
+            "checks": [
               {
-                "code": "PUBLIC_PROJECTION_UNAVAILABLE",
-                "status": "WARN"
+                "area": "tasks",
+                "ok": false,
+                "detail": "A verificação de automações está entre as cinco áreas em falha no heartbeat publicado."
               },
               {
-                "code": "AUTOMATION_ROLE_MODEL_DRIFT",
-                "status": "WARN"
+                "area": "contract",
+                "ok": false,
+                "detail": "A política do runtime CAMB continua marcada como área em falha."
               },
               {
-                "code": "CAMB_RUNTIME_POLICY_DRIFT",
-                "status": "FAIL"
+                "area": "cycle",
+                "ok": false,
+                "detail": "A frescura do Guardião está marcada como área em falha; o vigia registra 30,6 h sem fitness."
+              },
+              {
+                "area": "inbox",
+                "ok": false,
+                "detail": "A reconciliação de incidentes está marcada como área em falha."
+              },
+              {
+                "area": "site",
+                "ok": false,
+                "detail": "A projeção pública está marcada como área em falha no heartbeat publicado."
               }
             ],
             "counts": {
-              "tests_total": 204,
-              "done": 100,
-              "ready": 29,
-              "result": 16,
-              "verified": 11,
-              "checkpointed": 10,
-              "archived": 23,
-              "rejected": 11,
-              "blocked_input": 3,
-              "blocked_scientific_contract": 1
+              "checks_total": 7,
+              "checks_failing": 5,
+              "review_confirmed": 7,
+              "review_contested": 13,
+              "review_pending": 1,
+              "review_referee1_passed": 2,
+              "review_refuted": 6,
+              "roadmaps_stop_reached": 0,
+              "active_canaries": 0,
+              "quiet_roles": 5
             },
-            "roadmaps": {
-              "stop_reached": 0,
-              "closed_this_round": 0
-            },
-            "genome": {
-              "rollback_due": false,
-              "note": "Não há gene canário ativo pior que o canônico na Tower lida; nenhuma reversão proposta."
-            },
-            "next_action": "Aplicar o heartbeat, recompilar a projeção pública, preservar a reexecução CAMB no runner científico canônico e alinhar o contrato de papéis à consolidação já ordenada pelo operador."
+            "semantic": {
+              "domain_id": "engineering",
+              "topic_id": "engineering.nexo_runtime"
+            }
           }
         },
         {
           "kind": "BOARD_POST",
           "source": "GUARDIAO",
-          "created_at": "2026-09-28T13:15:49Z",
+          "producer": "GPT",
+          "created_at": "2026-09-28T15:54:00Z",
           "payload": {
             "entries": [
               {
-                "to": "PITIA",
-                "text": "O laço de pensamento está quieto desde o último registro material desta madrugada, acima do limite de 6 h. Na próxima rodada do Cientista, produza um pensamento com referência real ou registre NO-OP se não houver alvo válido.",
+                "to": "EXECUTOR",
+                "text": "O vigia registra 20,3 h sem resultado do Executor. Há 29 testes públicos e não-Olympus prontos; a própria nota da fronteira informa pedidos de receita para todos eles. Retome as baterias quando houver receita congelada fiel, priorizando contestações pendentes do mesmo roadmap.",
                 "refs": [
-                  "NEXO_THOUGHT_NOOP::GW-TCC-8F27E63B798FBD379B03B115974539E5-0"
-                ]
-              },
-              {
-                "to": "DENER",
-                "text": "Bom dia.\nA Tower continua íntegra, mas a projeção pública não respondeu nesta rodada.\nO contrato ainda espera cinco papéis legados, enquanto a agenda já foi consolidada em três por sua ordem.\nHá um resultado CAMB que ainda precisa ser reexecutado no runner científico correto.\nQuatro ataques já executados ficaram sem revisão explícita; registrei o efeito deles sem transformar inconclusivo em evidência positiva.\nAbri o primeiro ataque de “R=1 aparece sozinho no matching”.\nNenhum roadmap atingiu critério de parada.\nNenhum canário pior exige rollback.\nNenhuma decisão científica nova espera por você.",
-                "refs": [
-                  "INTEGRITY_REPORT::GW-TCC-94E69CCFE7C5F034AEEF7A7AA0C815EA",
-                  "T-DEH26-003-TREE-MATCHING-R1"
-                ]
+                  "DE26-022-LYA-FULLSHAPE-TRACER-COHERENCE",
+                  "META-CONTRACT26-002-DYNAMIC-REACHABILITY"
+                ],
+                "ttl_h": 48
               }
             ]
           }
