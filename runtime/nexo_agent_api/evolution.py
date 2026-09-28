@@ -20,7 +20,7 @@ import hashlib
 import base64
 import json
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +37,8 @@ THOUGHTS_DOC = "evolution/thoughts.json"
 DECOYS_DOC = "evolution/decoys.json"
 BATTERIES_DOC = "evolution/batteries.json"
 WATCHDOG_DOC = "evolution/watchdog.json"
+BOARD_DOC = "evolution/board.json"
+BOARD_ROLES = {"ALL", "PITIA", "LEARNER", "EXECUTOR", "REFUTADOR", "GUARDIAO", "CONVERSA", "DENER"}
 MAX_RUNTIME_FAILURES = 2
 STALE_DRAFT_DAYS = 21
 FDR_Q = 0.10
@@ -544,6 +546,61 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     if not entries and not retire:
         return []
     return [_doc(THOUGHTS_DOC, {"entries": (old + entries)[-300:]}, f"REQ-THOUGHT-{_now(item)[:16]}")]
+
+
+def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """BOARD_POST: a short note from one role to another (or ALL) on the shared board.
+
+    Payload: {to, text, refs[]?, reply_to?, ttl_h? (default 48, max 336), private?} or {entries:[...]}; resolve:[ids] closes posts.
+    Notes are coordination, never evidence: they never change a test or a verdict.
+    """
+    raw = body.get("entries") or ([body] if body.get("text") else [])
+    source = str(item.get("source") or body.get("from") or "").upper() or "UNKNOWN"
+    now = _now(item)
+    try:
+        base = datetime.fromisoformat(now.replace("Z", "+00:00"))
+    except ValueError:
+        base = datetime.now(timezone.utc)
+    posts = []
+    for index, entry in enumerate(raw):
+        if not isinstance(entry, dict) or not str(entry.get("text") or "").strip():
+            continue
+        to = str(entry.get("to") or "ALL").upper().replace("Ã", "A")
+        to = to if to in BOARD_ROLES else "ALL"
+        try:
+            ttl = max(1, min(int(entry.get("ttl_h") or 48), 336))
+        except (TypeError, ValueError):
+            ttl = 48
+        refs = [str(r) for r in entry.get("refs") or []][:12]
+        private = bool(entry.get("private")) or any(r.upper().startswith(("OLY", "OLYMPUS")) for r in refs)
+        posts.append({"id": str(entry.get("id") or f"BP-{now[:16]}-{source}-{index}"), "at": now, "from": source, "to": to,
+                      "text": " ".join(str(entry["text"]).split())[:500], "refs": refs,
+                      "reply_to": entry.get("reply_to"), "expires_at": (base + timedelta(hours=ttl)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                      "private": private})
+    resolve = {str(r) for r in body.get("resolve") or []}
+    if not posts and not resolve:
+        return []
+    old = _read(root, BOARD_DOC).get("posts") or []
+    old = [dict(p, resolved_at=now, resolved_by=source) if p.get("id") in resolve and not p.get("resolved_at") else p for p in old]
+    seen = {(p.get("from"), p.get("to"), " ".join(str(p.get("text") or "").split()).lower()) for p in old}
+    posts = [p for p in posts if (p["from"], p["to"], p["text"].lower()) not in seen]
+    if not posts and not resolve:
+        return []
+    return [_doc(BOARD_DOC, {"posts": (old + posts)[-300:]}, f"REQ-BOARD-{now[:16]}-{source}")]
+
+
+def _board_view(root: Path, now: datetime | None, public: bool) -> list[dict[str, Any]]:
+    posts = _read(root, BOARD_DOC).get("posts") or []
+    keep = []
+    for post in posts:
+        if public and post.get("private"):
+            continue
+        if now is not None:
+            expires = str(post.get("expires_at") or "")
+            if post.get("resolved_at") or (expires and expires < now.strftime("%Y-%m-%dT%H:%M:%SZ")):
+                continue
+        keep.append({k: post.get(k) for k in ("id", "at", "from", "to", "text", "refs", "reply_to", "expires_at", "resolved_at")})
+    return keep[-40:]
 
 
 def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind: str) -> list[dict[str, Any]]:
@@ -1320,6 +1377,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "signal_clusters": _signal_clusters(root, tests),
         "incidents": incidents,
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
+        # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
+        "board": _board_view(root, None if public else now, public),
     }
     if not public:
         status["emergence"] = _emergence(root, tests, genome, now)

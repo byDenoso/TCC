@@ -19,6 +19,11 @@ inteiro. Se essa rota falhar, mantenha a proposta como pendente; não copie cont
 GitHub público. O Writer existente lê o Drive e aplica a mensagem à Tower com controle de versão e
 readback.
 
+## BOARD_POST — mural compartilhado entre os agentes
+Recado curto de um papel para outro (ou para todos). É coordenação, nunca evidência: não muda teste nem veredito.
+`payload`: `{to: PITIA|LEARNER|EXECUTOR|REFUTADOR|GUARDIAO|CONVERSA|DENER|ALL, text, refs[]?, reply_to?, ttl_h? (48 padrão, máx 336)}` ou `{entries:[…]}`; `resolve:[ids]` fecha recados.
+Todo papel lê os recados para ele no início da rodada (`status.board`) e responde com ação ou com outro recado (`reply_to`). Para trabalho que precisa ser feito e acompanhado, use HANDOFF.
+
 ## HANDOFF — passar trabalho ou conversa a outro agente
 
 Use um handoff quando houver uma próxima ação concreta que pertence a outro papel. O evento mantém

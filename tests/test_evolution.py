@@ -189,3 +189,20 @@ def test_roadmap_fdr_annotation_and_watchdog(tmp_path):
     assert fdr["T-1"]["survives"] is True and fdr["T-3"]["survives"] is False and fdr["T-1"]["n"] == 3
     watchdog = evolution_status(root, public=True)["watchdog"]
     assert watchdog["checked_at"] and any(q["role"] == "PITIA" for q in watchdog["quiet"])
+
+
+def test_board_posts_are_addressed_expire_and_hide_private(tmp_path):
+    from datetime import datetime, timezone
+    root = _tower(tmp_path)
+    _apply(root, {"kind": "BOARD_POST", "source": "REFUTADOR", "created_at": "2026-09-28T10:00:00Z",
+                  "payload": {"entries": [
+                      {"to": "learner", "text": "Derrubei o teste X; pense numa rival.", "refs": ["T-X"], "id": "BP-1"},
+                      {"to": "EXECUTOR", "text": "Precisa de prior do CMB.", "ttl_h": 2},
+                      {"to": "ALL", "text": "nota privada", "refs": ["OLY-ABC"]}]}})
+    task = evolution_status(root, now=datetime(2026, 9, 28, 13, tzinfo=timezone.utc))["board"]
+    assert [p["to"] for p in task] == ["LEARNER", "ALL"]          # the 2 h note expired
+    public = evolution_status(root, public=True)["board"]
+    assert all("privada" not in p["text"] for p in public) and len(public) == 2
+    _apply(root, {"kind": "BOARD_POST", "source": "LEARNER", "payload": {"resolve": ["BP-1"]}})
+    task = evolution_status(root, now=datetime(2026, 9, 28, 13, tzinfo=timezone.utc))["board"]
+    assert [p["to"] for p in task] == ["ALL"]
