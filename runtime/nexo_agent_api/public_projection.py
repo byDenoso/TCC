@@ -636,6 +636,13 @@ def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[s
             value = canonical_semantic.get(key)
             if isinstance(value, str) and value.strip():
                 semantic[key] = value.strip()
+        # SEMANTIC_BACKFILL grava display_name/title no topo da entidade; sem isto os nomes somem do site.
+        for key in ("display_name",):
+            value = entity.get(key)
+            if not semantic.get(key) and isinstance(value, str) and value.strip():
+                semantic[key] = value.strip()
+        if not semantic.get("display_name") and isinstance(entity.get("title"), str) and entity["title"].strip() and str(projected.get("entity_kind") or "").upper() == "TEST":
+            semantic["display_name"] = entity["title"].strip()
         if not projected.get("title"):
             title = _short_public_title(semantic.get("display_name") or semantic.get("question_plain"))
             if title:
@@ -1164,7 +1171,37 @@ def _public_activity(
                 item["entity_kind"] = kind.upper()
         activity.append(item)
     activity.sort(key=lambda item: (str(item.get("at") or ""), str(item.get("event_type") or ""), str(item.get("entity_id") or "")))
-    return activity[-limit:], first_seen
+    return _collapse_bulk_activity(activity)[-limit:], first_seen
+
+
+_BULK_ACTIVITY = {"SEMANTIC_BACKFILLED", "LEARNING_SIGNAL_RECORDED", "TEST_DISPATCHED", "ROADMAP_TEST_FROZEN"}
+
+
+def _collapse_bulk_activity(activity: list[dict[str, Any]], window_s: int = 1200) -> list[dict[str, Any]]:
+    """Bulk actions (e.g. 46 names filled in one round) become one item with a count, so they
+    cannot push the real scientific events out of the public feed window."""
+    out: list[dict[str, Any]] = []
+    for item in activity:
+        last = out[-1] if out else None
+        if (last is not None and item["event_type"] in _BULK_ACTIVITY and last["event_type"] == item["event_type"]
+                and last["role"] == item["role"] and _seconds_between(last["at"], item["at"]) <= window_s):
+            last["count"] = int(last.get("count") or 1) + 1
+            last["at"] = item["at"]
+            last.pop("entity_id", None)
+            last.pop("entity_kind", None)
+            continue
+        out.append(dict(item))
+    return out
+
+
+def _seconds_between(a: str, b: str) -> float:
+    try:
+        from datetime import datetime
+        fa = datetime.fromisoformat(a.replace("Z", "+00:00"))
+        fb = datetime.fromisoformat(b.replace("Z", "+00:00"))
+        return abs((fb - fa).total_seconds())
+    except ValueError:
+        return float("inf")
 
 
 def _attach_observation_times(entities: list[dict[str, Any]], first_seen: dict[str, str]) -> None:
