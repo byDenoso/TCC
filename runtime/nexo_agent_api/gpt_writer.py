@@ -121,6 +121,18 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             else:
                 report["reconciled_contests"] = [r.get("document") or r.get("entity_name") for r in contest_receipts]
 
+        # Maintenance is mechanical too: watchdog, repeated-failure stop, stale drafts,
+        # pre-registration audit and roadmap FDR annotations.
+        maintenance_requests = evolution.maintenance_reconcile_requests(root)
+        if maintenance_requests:
+            maintenance_receipts = apply_requests(root, maintenance_requests)
+            maintenance_failed = [r for r in maintenance_receipts if not r.get("accepted", True) or r.get("issue")]
+            report["receipts"].extend(maintenance_receipts)
+            if maintenance_failed:
+                report["rejected"].append({"item": "maintenance-reconcile", "reason": maintenance_failed[0].get("issue")})
+            else:
+                report["maintenance"] = len(maintenance_receipts)
+
         # Incident lifecycle is derived from canonical evidence already present in
         # the materialized Tower. Agents never declare incident state directly.
         incident_requests = evolution.incident_reconcile_requests(root)

@@ -36,6 +36,10 @@ GENOME_DOC = "evolution/genome.json"
 THOUGHTS_DOC = "evolution/thoughts.json"
 DECOYS_DOC = "evolution/decoys.json"
 BATTERIES_DOC = "evolution/batteries.json"
+WATCHDOG_DOC = "evolution/watchdog.json"
+MAX_RUNTIME_FAILURES = 2
+STALE_DRAFT_DAYS = 21
+FDR_Q = 0.10
 INCIDENTS_DOC = "evolution/incidents.json"
 MAX_BATTERY_TESTS = 20
 
@@ -328,6 +332,111 @@ def contest_chain_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
     return requests
 
 
+# ── Maintenance: mechanical rules the robot applies every run ───────────────
+
+def _p_value(test: dict[str, Any]) -> float | None:
+    result = test.get("result") if isinstance(test.get("result"), dict) else {}
+    for holder in (result, test.get("statistics"), result.get("statistics")):
+        if not isinstance(holder, dict):
+            continue
+        for key in ("p_value", "p", "pvalue"):
+            try:
+                value = float(holder[key])
+            except (KeyError, TypeError, ValueError):
+                continue
+            if 0.0 <= value <= 1.0:
+                return value
+    return None
+
+
+def _stamp(value: Any) -> datetime | None:
+    if not value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None) -> list[dict[str, Any]]:
+    """Watchdog, stale-draft cleanup, pre-registration audit and roadmap FDR: annotations, idempotent."""
+    root = Path(root)
+    now = now or datetime.now(timezone.utc)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    tests = _tests(root)
+    requests: list[dict[str, Any]] = []
+
+    # Watchdog: which role owns a quiet loop and for how long (shown in the ATLAS health tab).
+    stale = _emergence(root, tests, _read(root, GENOME_DOC), now)["stale"]
+    roles: dict[str, list[dict[str, Any]]] = {}
+    for entry in stale:
+        for role in str(entry["owner"]).split("/"):
+            roles.setdefault(role, []).append(entry)
+    quiet = []
+    for role, entries in sorted(roles.items()):
+        hours = [e["hours"] for e in entries if e["hours"] is not None]
+        quiet.append({"role": role, "hours": round(max(hours), 1) if hours else None,
+                      "loops": sorted(e["loop"] for e in entries)})
+    previous = _read(root, WATCHDOG_DOC)
+    last = _stamp(previous.get("checked_at"))
+    if [q["role"] for q in quiet] != [q.get("role") for q in previous.get("quiet") or []] \
+            or last is None or (now - last).total_seconds() > 3600:
+        requests.append(_doc(WATCHDOG_DOC, {"checked_at": stamp, "quiet": quiet}, f"REQ-WATCHDOG-{stamp[:13]}"))
+
+    by_roadmap: dict[str, list[dict[str, Any]]] = {}
+    for test in tests:
+        test_id = str(test.get("id") or "")
+        state = str(test.get("state") or test.get("status") or "").upper()
+        # Stale drafts leave the frontier (archived, reversible).
+        created = _stamp(test.get("created_at") or test.get("frozen_at"))
+        if state == "DRAFT" and created and (now - created).days >= STALE_DRAFT_DAYS:
+            update = _test_update(root, test_id, {"status": "ARCHIVED", "state": "ARCHIVED",
+                                                  "archive_reason": "stale_draft", "archived_at": stamp},
+                                  f"REQ-STALE-DRAFT-{test_id}", "TEST_ARCHIVED")
+            if update:
+                requests.append(update)
+            continue
+        # Pre-registration audit: the frozen design must predate the result.
+        executed = _stamp(test.get("executed_at"))
+        prereg = test.get("prereg") if isinstance(test.get("prereg"), dict) else {}
+        frozen = _stamp(test.get("frozen_at") or prereg.get("at"))
+        if executed and "prereg_audit" not in test:
+            if not test.get("prereg_hash"):
+                audit = {"ok": False, "reason": "NO_PREREG_HASH"}
+            elif frozen is None:
+                audit = {"ok": None, "reason": "PREREG_TIME_UNKNOWN"}
+            else:
+                audit = {"ok": frozen <= executed,
+                         "reason": "FROZEN_BEFORE_RESULT" if frozen <= executed else "FROZEN_AFTER_RESULT"}
+            update = _test_update(root, test_id, {"prereg_audit": {**audit, "at": stamp}},
+                                  f"REQ-PREREG-AUDIT-{test_id}", "PREREG_AUDITED")
+            if update:
+                requests.append(update)
+        verdict = str(test.get("verdict") or "").upper()
+        if test.get("roadmap_id") and verdict in POSITIVE_VERDICTS and not test.get("contests_test_id"):
+            by_roadmap.setdefault(str(test["roadmap_id"]), []).append(test)
+
+    # Benjamini-Hochberg over each roadmap's positive results that report a p-value (annotation only).
+    for roadmap_id, group in sorted(by_roadmap.items()):
+        scored = sorted(((p, t) for t in group if (p := _p_value(t)) is not None), key=lambda pt: pt[0])
+        m = len(scored)
+        if m < 2:
+            continue
+        q_values, running = [0.0] * m, 1.0
+        for rank in range(m, 0, -1):
+            running = min(running, scored[rank - 1][0] * m / rank)
+            q_values[rank - 1] = running
+        for (_, test), q in zip(scored, q_values):
+            fdr = {"q_value": round(q, 6), "survives": q <= FDR_Q, "n": m, "q": FDR_Q}
+            if (test.get("fdr") or {}) != fdr:
+                update = _test_update(root, str(test["id"]), {"fdr": fdr},
+                                      f"REQ-FDR-{roadmap_id}-{test['id']}-{m}", "FDR_ANNOTATED")
+                if update:
+                    requests.append(update)
+    return requests
+
+
 # ── Genome: canary mutations, rollback, fitness ─────────────────────────────
 
 def _spine(gene: str) -> bool:
@@ -528,10 +637,18 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                                        "arm": entry.get("arm")}, root)
             else:
                 bad += 1  # a crash is never a scientific result: the test goes back to READY
-                update = _test_update(root, test_id, {"status": "READY", "state": "READY", "execution": None,
-                                                      "last_runtime_failure": {"battery_id": bid, "at": _now(item),
-                                                                               "log_tail": str(entry.get("log_tail") or "")[-800:]}},
-                                      f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
+                current_test = _entity(root, "test", test_id) or {}
+                failures = int(current_test.get("runtime_failure_count") or 0) + 1
+                failure = {"battery_id": bid, "at": _now(item), "log_tail": str(entry.get("log_tail") or "")[-800:]}
+                if failures >= MAX_RUNTIME_FAILURES:
+                    # The same test crashing again will crash again: stop recycling it and say what it needs.
+                    changes = {"status": "BLOCKED_INPUT", "state": "BLOCKED_INPUT", "execution": None,
+                               "runtime_failure_count": failures, "last_runtime_failure": failure,
+                               "blocker": f"Falhou {failures} vezes no runner público: precisa de receita, dado ou dependência nova."}
+                else:
+                    changes = {"status": "READY", "state": "READY", "execution": None,
+                               "runtime_failure_count": failures, "last_runtime_failure": failure}
+                update = _test_update(root, test_id, changes, f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
                 if update:
                     requests.append(update)
         battery.update({"completed_at": _now(item), "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
@@ -1150,8 +1267,8 @@ def _emergence(root: Path, tests: list[dict[str, Any]], genome: dict[str, Any], 
               "new_hypothesis": "LEARNER", "result": "EXECUTOR", "contest": "REFUTADOR", "decoy": "GUARDIAO"}
     stale = [{"loop": k, "hours": v, "owner": owners[k]} for k, v in since.items() if v is None or v > limits[k]]
     return {"hours_since": since, "limits_h": limits, "stale": stale,
-            "rule": "The owner of every stale loop MUST produce at least one item of that loop this run "
-                    "(a thought with refs, a dream, a canary proposal, a fitness report, a hypothesis, a contest or a decoy)."}
+            "rule": "The owner of a stale loop produces one item of it when there is a valid target; "
+                    "with no valid target it reports NO-OP naming the stale loop."}
 
 
 def evolution_status(root: str | Path, now: datetime | None = None, public: bool = False) -> dict[str, Any]:
@@ -1202,6 +1319,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
                    "caught": sum(1 for d in revealed if d.get("caught"))},
         "signal_clusters": _signal_clusters(root, tests),
         "incidents": incidents,
+        "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
     }
     if not public:
         status["emergence"] = _emergence(root, tests, genome, now)

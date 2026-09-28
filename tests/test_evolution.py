@@ -135,3 +135,57 @@ def test_battery_dispatch_and_collect(tmp_path):
     assert _test(root, "T-A")["verdict"] == "PROMOTED" and _test(root, "T-A")["review_state"] == "PENDING_REVIEW"
     assert _test(root, "T-B")["status"] == "READY" and "Traceback" in _test(root, "T-B")["last_runtime_failure"]["log_tail"]
     assert evolution_status(root)["batteries"] == {"QUEUED": 0, "DISPATCHED": 0, "DONE": 1}
+
+
+def _hyp(root, tid, **extra):
+    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": f"Teste {tid}", "domain": "science",
+                                                             "test_id": tid, "question": "q", "success_criteria": "s",
+                                                             "kill_criteria": "k", **extra}})
+
+
+def _maintain(root, now=None):
+    from datetime import datetime, timezone
+    from runtime.nexo_agent_api.evolution import maintenance_reconcile_requests
+    requests = maintenance_reconcile_requests(root, now or datetime(2026, 10, 30, tzinfo=timezone.utc))
+    receipts = apply_requests(root, requests)
+    assert all(r.get("accepted", True) is not False for r in receipts), receipts
+    return requests
+
+
+def test_second_runtime_failure_blocks_instead_of_recycling(tmp_path):
+    root = _tower(tmp_path)
+    _hyp(root, "T-F")
+    for n in (1, 2):
+        _apply(root, {"kind": "TEST_BATTERY", "payload": {"battery_id": f"bat-f{n}", "tests": [{"test_id": "T-F", "recipe": "seed_bounds"}]}})
+        _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": f"bat-f{n}", "status": "DONE",
+                                                            "results": [{"test_id": "T-F", "ok": False, "log_tail": "ImportError"}]}})
+        state = _test(root, "T-F")["status"]
+        assert state == ("READY" if n == 1 else "BLOCKED_INPUT")
+    assert "2 vezes" in _test(root, "T-F")["blocker"]
+
+
+def test_maintenance_archives_stale_drafts_and_audits_prereg(tmp_path):
+    root = _tower(tmp_path)
+    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "created_at": "2026-09-01T00:00:00Z",
+                  "payload": {"display_name": "Rascunho velho", "domain": "science", "test_id": "T-DRAFT", "question": "q"}})
+    assert _test(root, "T-DRAFT")["status"] == "DRAFT"
+    _hyp(root, "T-RUN")
+    _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-10-01T00:00:00Z",
+                  "payload": {"test_id": "T-RUN", "result": {"verdict": "PROMOTED"}}})
+    _maintain(root)
+    assert _test(root, "T-DRAFT")["status"] == "ARCHIVED"
+    assert _test(root, "T-RUN")["prereg_audit"]["reason"] in {"FROZEN_BEFORE_RESULT", "PREREG_TIME_UNKNOWN"}
+    # idempotent: a second run changes nothing about the audit
+    assert not [r for r in _maintain(root) if r.get("entity_name") == "T-RUN"]
+
+
+def test_roadmap_fdr_annotation_and_watchdog(tmp_path):
+    root = _tower(tmp_path)
+    for tid, p in (("T-1", 0.001), ("T-2", 0.04), ("T-3", 0.2)):
+        _hyp(root, tid, roadmap_id="RM-F")
+        _apply(root, {"kind": "MUTATION_PROPOSAL", "payload": {"test_id": tid, "result": {"verdict": "PROMOTED", "p_value": p}}})
+    _maintain(root)
+    fdr = {tid: _test(root, tid).get("fdr") for tid in ("T-1", "T-2", "T-3")}
+    assert fdr["T-1"]["survives"] is True and fdr["T-3"]["survives"] is False and fdr["T-1"]["n"] == 3
+    watchdog = evolution_status(root, public=True)["watchdog"]
+    assert watchdog["checked_at"] and any(q["role"] == "PITIA" for q in watchdog["quiet"])

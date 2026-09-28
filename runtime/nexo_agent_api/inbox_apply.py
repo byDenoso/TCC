@@ -122,7 +122,8 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "verdict": verdict,
         "decision": _first(result, "decision", "decisao", "decisão") or body.get("decision"),
         "result_summary": _first(result, "summary", "resumo") or semantic.get("result_meaning"),
-        "statistics": _first(result, "statistics", "estatísticas", "estatisticas"),
+        "statistics": _first(result, "statistics", "estatísticas", "estatisticas")
+                      or ({"p_value": result["p_value"]} if result.get("p_value") is not None else None),
         "limitations": body.get("limitations"),
         "reproducibility": body.get("reproducibility"),
         "executed_by": "CHATGPT_TASK_EXECUTOR",
@@ -260,6 +261,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     semantic = {**semantic, "domain_id": proposed_domain.lower(), "display_name": proposed_display_name}
     changes = {
         "kind": "TEST", "status": lifecycle, "state": lifecycle,
+        "created_at": item.get("created_at"),
         "draft_reason": None if lifecycle != "DRAFT" else "faltam critérios congelados de sucesso/kill",
         "priority": body.get("priority") or "P1",
         "display_name": proposed_display_name,
