@@ -1092,8 +1092,13 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         status.pop("arm_for_this_run")
         status.pop("signal_clusters", None)  # raw codes/topics remain private; incidents expose reviewed copy only
         status["incidents"] = _public_incidents(root, incidents)
+        # Only allowlisted inner keys: budget/stop dicts may carry private fields.
+        def _pick(d, keys):
+            return {k: d.get(k) for k in keys if isinstance(d, dict) and k in d}
         status["charters"] = [{"roadmap_id": r["roadmap_id"], **{k: (r.get("charter") or {}).get(k) for k in (
-            "status", "question", "budget", "stop", "chartered_at", "closed_at", "close_reason", "rival_of")}}
+            "status", "question", "chartered_at", "closed_at", "close_reason", "rival_of")},
+            "budget": _pick((r.get("charter") or {}).get("budget"), ("max_tests", "max_days")),
+            "stop": _pick((r.get("charter") or {}).get("stop"), ("success_confirmed", "kill_consecutive_refuted"))}
             for r in roadmaps if r.get("charter")]
         shown, texts = [], set()
         for e in _read(root, THOUGHTS_DOC).get("entries") or []:
