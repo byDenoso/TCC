@@ -632,12 +632,12 @@ def _with_semantics(projected: dict[str, Any], entity: dict[str, Any]) -> dict[s
         projected["domain_projection"] = "SEMANTIC_TARGET_DOMAIN"
     canonical_semantic = entity.get("semantic") if isinstance(entity.get("semantic"), dict) else {}
     if not is_private(semantic):
-        for key in ("question_plain", "result_meaning", "why_it_matters", "verdict_plain", "confidence_plain"):
+        for key in ("display_name", "question_plain", "result_meaning", "why_it_matters", "verdict_plain", "confidence_plain"):
             value = canonical_semantic.get(key)
             if isinstance(value, str) and value.strip():
                 semantic[key] = value.strip()
         if not projected.get("title"):
-            title = _short_public_title(semantic.get("question_plain"))
+            title = _short_public_title(semantic.get("display_name") or semantic.get("question_plain"))
             if title:
                 projected["title"] = title
     projected["semantic"] = semantic

@@ -79,6 +79,7 @@ IDs de `SEMANTIC_TAXONOMY_V1` (runtime/nexo_agent_api/contracts/SEMANTIC_TAXONOM
   "domain_id": "science",
   "subdomain_id": "science.cosmology.dark_matter",
   "topic_id": "science.cosmology.dark_matter.nature",
+  "display_name": "Nome curto em português, 3–7 palavras (contestação: \"Ataque N · <nome do atacado>\")",
   "question_plain": "A pergunta em português simples, 1 frase",
   "why_it_matters": "Por que isso importa, 1 frase",
   "result_meaning": "Só em resultados: 2–3 frases simples — o que deu e o que significa",
