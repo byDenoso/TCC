@@ -732,6 +732,54 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
             "checks_total": best[2], "checks_failing": len(failing), "failing_areas": failing[:8]}
 
 
+# Areas the projection can re-check by itself at every build, so the health page never
+# freezes on an old Guardião report. The other areas keep the Guardião's last word.
+_TASK_ROLES = {"CIENTISTA": {"LEARNER", "PITIA"}, "OPERADOR": {"EXECUTOR"}, "CRITICO": {"REFUTADOR", "GUARDIAO", "REFEREE_1"}}
+
+
+def _live_integrity(integrity: dict[str, Any] | None, activity: list[dict[str, Any]], generated_at: str | None) -> dict[str, Any] | None:
+    if not integrity:
+        return integrity
+    from datetime import datetime, timezone
+    def ts(value: Any) -> datetime | None:
+        try:
+            return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    now = ts(generated_at) or datetime.now(timezone.utc)
+    report_at = ts(integrity.get("checked_at"))
+    report_age_h = (now - report_at).total_seconds() / 3600 if report_at else None
+    last_by_role: dict[str, datetime] = {}
+    for item in activity:
+        stamp = ts(item.get("at"))
+        role = str(item.get("role") or "").upper()
+        if stamp and (role not in last_by_role or stamp > last_by_role[role]):
+            last_by_role[role] = stamp
+    quiet_tasks = []
+    for task, roles in _TASK_ROLES.items():
+        seen = [last_by_role[r] for r in roles if r in last_by_role]
+        if not seen or (now - max(seen)).total_seconds() > 3 * 3600:
+            quiet_tasks.append(task)
+    live = {
+        "public_projection": True,  # this projection was just rebuilt from the live Tower
+        "guardian_freshness": report_age_h is not None and report_age_h <= 3,
+    }
+    if last_by_role:  # without any activity the projection cannot judge the tasks
+        live["automations"] = not quiet_tasks
+    failing = [a for a in integrity.get("failing_areas") or [] if a not in live]
+    failing += [a for a, ok in live.items() if not ok]
+    total = max(int(integrity.get("checks_total") or 0), len(set(failing)))
+    out = dict(integrity)
+    out.update({
+        "failing_areas": sorted(set(failing))[:8], "checks_failing": len(set(failing)), "checks_total": total,
+        "status": integrity.get("status") if set(failing) == set(integrity.get("failing_areas") or [])
+                  else ("GREEN" if not failing else ("RED" if len(set(failing)) >= 3 else "YELLOW")),
+        "live_checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "live_areas": sorted(live),
+        "quiet_tasks": quiet_tasks, "report_age_h": round(report_age_h, 1) if report_age_h is not None else None,
+    })
+    return out
+
+
 def _load_evolution(root: Path) -> dict[str, Any] | None:
     """Closed loop for the ATLAS: Dener's gate, charters and stop progress, review ladder, genome, diary, decoys."""
     from .evolution import evolution_status
@@ -1174,7 +1222,7 @@ def _public_activity(
     return _collapse_bulk_activity(activity)[-limit:], first_seen
 
 
-_BULK_ACTIVITY = {"SEMANTIC_BACKFILLED", "LEARNING_SIGNAL_RECORDED", "TEST_DISPATCHED", "ROADMAP_TEST_FROZEN"}
+_BULK_ACTIVITY = {"TEST_ENRICHED", "SEMANTIC_BACKFILLED", "LEARNING_SIGNAL_RECORDED", "TEST_DISPATCHED", "ROADMAP_TEST_FROZEN"}
 
 
 def _collapse_bulk_activity(activity: list[dict[str, Any]], window_s: int = 1200) -> list[dict[str, Any]]:
@@ -1240,7 +1288,7 @@ def build_public_projection(
 
     work_entities = _load_entities(root, "work", WORK_FIELDS)
     human_flags = _load_entities(root, "work", ("human_action_required",))
-    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS, *TEST_DETAIL_INPUT_FIELDS))
+    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS, *TEST_DETAIL_INPUT_FIELDS, "semantic", "display_name"))
     campaigns = _load_campaigns(root)
 
     # Index order is priority. Existence is the entity. An index entry without an
@@ -1291,7 +1339,7 @@ def build_public_projection(
     _attach_observation_times([item for item in tests if not item.get("private")], first_seen)
     _attach_observation_times(hypotheses, first_seen)
     _attach_observation_times(roadmaps, first_seen)
-    integrity = _load_integrity(root)
+    integrity = _live_integrity(_load_integrity(root), activity, generated_at)
 
     capabilities_manifest = _read_json(root / "manifests" / "capabilities.json", {}) or {}
     capabilities = {

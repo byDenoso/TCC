@@ -236,7 +236,7 @@ def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
 
         projection = _build(root)
         integrity = projection["integrity"]
-        assert integrity == {
+        assert _core(integrity) == {
             "status": "YELLOW",
             "checked_at": report["created_at"],
             "checks_total": len(report["payload"]["checks"]),
@@ -266,7 +266,7 @@ def test_guardian_thematic_integrity_report_without_checks_still_advances_heartb
     }), encoding="utf-8")
 
     integrity = _build(root)["integrity"]
-    assert integrity == {
+    assert _core(integrity) == {
         "status": "YELLOW",
         "checked_at": "2026-09-27T22:08:21Z",
         "checks_total": 0,
@@ -916,3 +916,8 @@ def test_public_activity_is_sanitized_and_role_oriented(tmp_path):
     ]
     assert b"SECRET_EVENT" not in projection_bytes(projection)
 
+
+
+def _core(integrity):
+    """Guardião fields only; the live re-check keys are covered in test_projection_drift."""
+    return {k: v for k, v in integrity.items() if k not in {"live_areas", "live_checked_at", "quiet_tasks", "report_age_h"}}
