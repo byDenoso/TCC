@@ -60,7 +60,7 @@ def test_positive_result_needs_two_referees_and_stop_criterion_fires(tmp_path):
     _apply(root, {"kind": "ROADMAP_CHARTER", "payload": {"roadmap_id": "RM-X", "question": "q", "stop": {"success_confirmed": 1}}})
     _apply(root, {"kind": "OPERATOR_INTENT", "source": "DENER", "created_at": "2026-09-25T00:00:00Z",
                   "payload": {"action": "APPROVE_CHARTER", "roadmap_id": "RM-X"}})
-    requests = _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "_inbox_name": "h1.json", "payload": {
+    requests = _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "_inbox_name": "h1.json", "payload": {"display_name": "Teste de exemplo", "domain": "science", 
         "test_id": "T-1", "roadmap_id": "RM-X", "question": "q", "success_criteria": "s", "kill_criteria": "k", "rank_score": 0.8}})
     assert requests[0]["changes"]["prereg_hash"].startswith("sha256:")
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T02:00:00Z",
@@ -104,7 +104,7 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
     _apply(root, {"kind": "NEXO_THOUGHT", "payload": {"entries": [{"text": "sem prova"}, {"text": "H0 falhou 3x em z~0.5", "refs": ["T-1"]}]}})
     thoughts = json.loads((root / "evolution" / "thoughts.json").read_text())["entries"]
     assert [t["text"] for t in thoughts] == ["H0 falhou 3x em z~0.5"]
-    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "T-D", "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
+    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", "test_id": "T-D", "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
     _apply(root, {"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-D", "result": {"verdict": "PROMOTED"}}})
     commitment = hashlib.sha256(b"T-D:segredo").hexdigest()
     _apply(root, {"kind": "DECOY_PLANT", "payload": {"commitment": commitment}})
@@ -119,7 +119,7 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
 def test_battery_dispatch_and_collect(tmp_path):
     root = _tower(tmp_path)
     for tid in ("T-A", "T-B"):
-        _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": tid, "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
+        _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", "test_id": tid, "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
     _apply(root, {"kind": "TEST_BATTERY", "created_at": "2026-09-25T14:00:00Z", "payload": {"battery_id": "bat-1", "tests": [
         {"test_id": "T-A", "recipe": "seed_bounds", "params": {"n": [10]}, "prediction": {"p_promoted": 0.2}},
         {"test_id": "T-B", "recipe": "seed_bounds"}, {"test_id": "MISSING", "recipe": "seed_bounds"},

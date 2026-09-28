@@ -93,7 +93,16 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     created: list[dict[str, Any]] = []
     if current is None:
         # A result for a test that was never registered (e.g. run straight from a chat): register it, then record.
-        created = _hypothesis_requests(item, {**body, "_allow_draft": True, "_status": "RUNNING"}, root)
+        # Internal registration must not strand the result: a provisional name/domain is filled here
+        # (a later SEMANTIC_BACKFILL can rename it); new tests proposed directly still need both.
+        sem = body.get("semantic") if isinstance(body.get("semantic"), dict) else {}
+        words = str(body.get("question") or test_id.replace("-", " ").title()).rstrip("?.! ").split()
+        created = _hypothesis_requests(item, {
+            **body, "_allow_draft": True, "_status": "RUNNING",
+            "display_name": body.get("display_name") or sem.get("display_name") or " ".join(words[:7]),
+            "domain": body.get("domain") or sem.get("domain_id")
+                      or ("engineering" if test_id.upper().startswith("META-") else "science"),
+        }, root)
         current = {"id": test_id, "entity_version": 0}
     result = body.get("result") or {}
     verdict = str(_first(result, "verdict", "veredito") or body.get("verdict") or "").upper() or None

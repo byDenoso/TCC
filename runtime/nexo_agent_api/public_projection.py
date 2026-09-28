@@ -710,6 +710,10 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
             checks_total = 0
         else:
             continue
+        mapped = mapped_statuses.get(raw_status)
+        if mapped and mapped[1] and not any(c.get("area") == mapped[0] and c.get("ok") is False for c in checks):
+            # Named yellow statuses carry their failing area even when the checks block does not.
+            checks = checks + [{"area": mapped[0], "ok": False}]
         stamp = str(payload.get("checked_at") or record.get("created_at") or payload.get("date") or "")
         if best is None or stamp > best[0]:
             best = (stamp, {"status": status, "checks": checks}, checks_total)

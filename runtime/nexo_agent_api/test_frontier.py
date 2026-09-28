@@ -122,7 +122,9 @@ class FrontierTests(unittest.TestCase):
                 "payload": {"signals": signals},
             }), encoding="utf-8")
 
-        status = evolution_status(self.root, public=True)
+        # Raw clusters stay internal; the public status exposes only reviewed incidents.
+        self.assertNotIn("signal_clusters", evolution_status(self.root, public=True))
+        status = evolution_status(self.root)
         clusters = status["signal_clusters"]
         self.assertEqual(len(clusters), 1)
         cluster = clusters[0]
@@ -133,7 +135,7 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual(cluster["test_ids"], ["T-A", "T-B"])
         self.assertEqual((cluster["first_seen"], cluster["last_seen"]),
                          ("2026-09-24T10:00:00Z", "2026-09-25T10:00:00Z"))
-        self.assertEqual(evolution_status(self.root, public=True)["signal_clusters"], clusters)
+        self.assertEqual(evolution_status(self.root)["signal_clusters"], clusters)
         self.assertNotIn("private", json.dumps(clusters).lower())
         self.assertNotIn("T-PRIVATE", json.dumps(clusters))
 

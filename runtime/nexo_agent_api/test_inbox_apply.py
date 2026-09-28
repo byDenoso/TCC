@@ -47,7 +47,7 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual([r["entity_name"] for r in tests], ["NOPE", "NOPE"])
         self.assertEqual(tests[-1]["changes"]["verdict"], "PASS")
         # hypothesis without frozen criteria -> DRAFT, never READY, never dropped
-        requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "H-1", "semantic": {"domain_id": "science"}}}, self.root)
+        requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", "test_id": "H-1", "semantic": {"domain_id": "science"}}}, self.root)
         self.assertEqual(requests[0]["changes"]["status"], "DRAFT")
 
     def test_generic_shapes_are_understood(self):
@@ -586,7 +586,7 @@ class SiteFormatTests(unittest.TestCase):
                                        "semantic": {"topic_id": "science.cosmology.dark_matter.nature"}}))
             (root / "roadmaps").mkdir()
             (root / "roadmaps" / "RM-X.json").write_text(json.dumps({"frontier_refs": ["S-1"]}))
-            requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {
+            requests = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", 
                 "test_id": "H-2", "roadmap_id": "RM-X", "question": "Does X happen?",
                 "success_criteria": "a", "kill_criteria": "b"}}, root)
             test = requests[0]["changes"]

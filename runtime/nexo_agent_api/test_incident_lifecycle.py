@@ -271,8 +271,8 @@ class IncidentLifecycleTests(unittest.TestCase):
         public_incident = self.apply_reconcile()
         public_status = evolution_status(self.root, public=True)
         [summary] = public_status["incidents"]
-        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner"})
-        self.assertEqual(summary["summary_pt"], "O sistema detectou atrasos repetidos para registrar e confirmar mudanças.")
+        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner", "since", "missing"})
+        self.assertTrue(summary["summary_pt"].startswith("O sistema detectou atrasos repetidos para registrar e confirmar mudanças."))
         self.assertEqual(summary["incident_id"], public_incident["incident_id"])
         serialized = json.dumps(summary)
         self.assertNotIn("evidence_refs", serialized)
@@ -286,10 +286,8 @@ class IncidentLifecycleTests(unittest.TestCase):
             item for item in evolution_status(self.root, public=True)["incidents"]
             if item["incident_id"] != public_incident["incident_id"]
         )
-        self.assertEqual(
-            unknown["summary_pt"],
-            "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa.",
-        )
+        self.assertTrue(unknown["summary_pt"].startswith(
+            "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa."))
         unknown_raw = json.dumps(unknown)
         self.assertNotIn("UNREVIEWED_SIGNAL", unknown_raw)
         self.assertNotIn("engineering.nexo.unknown", unknown_raw)

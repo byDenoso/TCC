@@ -1043,8 +1043,9 @@ def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[
         else:
             fact = _INCIDENT_PUBLIC_COPY_PT.get(code)
             if not fact:
-                readable = code.replace("_", " ").lower() if code else "falha operacional sem código estável"
-                fact = f"O sistema detectou recorrência de {readable}."
+                # Unreviewed internal codes never reach public text: neutral copy until a reviewed one exists.
+                fact = ("O sistema detectou o mesmo problema operacional mais de uma vez "
+                        "e abriu uma investigação para entender a causa.")
             missing = "evidência específica que identifique a causa material e a condição objetiva de encerramento"
         when = f" Observado desde {since}." if since else " O início ainda não está registrado."
         summary_pt = f"{fact}{when} Falta {missing}."
