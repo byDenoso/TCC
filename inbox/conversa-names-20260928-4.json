@@ -1,0 +1,209 @@
+{
+ "kind": "SEMANTIC_BACKFILL",
+ "source": "CONVERSA",
+ "created_at": "2026-09-28T16:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "id": "META-EVENT26-001-REPLAY-SIGNATURE",
+    "entity_kind": "test",
+    "display_name": "Resultados registrados em duplicidade?",
+    "semantic": {
+     "display_name": "Resultados registrados em duplicidade?"
+    }
+   },
+   {
+    "id": "META-INBOX26-001-EMPTY-DOC-SYSTEMICITY",
+    "entity_kind": "test",
+    "display_name": "Documento vazio no inbox é falha sistêmica?",
+    "semantic": {
+     "display_name": "Documento vazio no inbox é falha sistêmica?"
+    }
+   },
+   {
+    "id": "META-OBS26-001-TEMPORAL-PROVENANCE-COVERAGE",
+    "entity_kind": "test",
+    "display_name": "Proveniência completa prevê resultado decisivo?",
+    "semantic": {
+     "display_name": "Proveniência completa prevê resultado decisivo?"
+    }
+   },
+   {
+    "id": "META-OBS26-002-PREDICTION-CALIBRATION-BY-COVERAGE",
+    "entity_kind": "test",
+    "display_name": "Apostas pioram quando falta observabilidade?",
+    "semantic": {
+     "display_name": "Apostas pioram quando falta observabilidade?"
+    }
+   },
+   {
+    "id": "META-OBS26-003-OBSERVABILITY-GATE-REPLAY",
+    "entity_kind": "test",
+    "display_name": "Um filtro de observabilidade evitaria indecisões?",
+    "semantic": {
+     "display_name": "Um filtro de observabilidade evitaria indecisões?"
+    }
+   },
+   {
+    "id": "META-OBS26-004-MISSINGNESS-ABLATION",
+    "entity_kind": "test",
+    "display_name": "Qual informação ausente causa as falhas",
+    "semantic": {
+     "display_name": "Qual informação ausente causa as falhas"
+    }
+   },
+   {
+    "id": "META-PERSIST26-003-STABLE-ID-IDEMPOTENCY",
+    "entity_kind": "test",
+    "display_name": "Reenvios não duplicam propostas",
+    "semantic": {
+     "display_name": "Reenvios não duplicam propostas"
+    }
+   },
+   {
+    "id": "META-READINESS26-001-DRAFT-YIELD",
+    "entity_kind": "test",
+    "display_name": "Nota de prontidão prevê testes travados?",
+    "semantic": {
+     "display_name": "Nota de prontidão prevê testes travados?"
+    }
+   },
+   {
+    "id": "META-RELAY26-001-SCHEDULED-PERSISTENCE-YIELD",
+    "entity_kind": "test",
+    "display_name": "Relay sem conector grava mais?",
+    "semantic": {
+     "display_name": "Relay sem conector grava mais?"
+    }
+   },
+   {
+    "id": "META-RESULT26-001-NUMERIC-FIELD-NORMALIZATION",
+    "entity_kind": "test",
+    "display_name": "Estatísticas no campo errado dos resultados",
+    "semantic": {
+     "display_name": "Estatísticas no campo errado dos resultados"
+    }
+   },
+   {
+    "id": "META-REVIEW26-001-SEMANTIC-COVERAGE",
+    "entity_kind": "test",
+    "display_name": "Resultados chegam ao juiz já explicados?",
+    "semantic": {
+     "display_name": "Resultados chegam ao juiz já explicados?"
+    }
+   },
+   {
+    "id": "META-ROADMAP26-001-AUTOATTACH-REPAIR",
+    "entity_kind": "test",
+    "display_name": "Robô liga testes soltos a um roadmap",
+    "semantic": {
+     "display_name": "Robô liga testes soltos a um roadmap"
+    }
+   },
+   {
+    "id": "META-SEM26-001-FRONTIER-TOPIC-COVERAGE",
+    "entity_kind": "test",
+    "display_name": "Fronteira perdendo o tema científico",
+    "semantic": {
+     "display_name": "Fronteira perdendo o tema científico"
+    }
+   },
+   {
+    "id": "META-SEM26-002-UNMAPPED-WORK-CONCENTRATION",
+    "entity_kind": "test",
+    "display_name": "Dívida semântica concentrada em tarefas",
+    "semantic": {
+     "display_name": "Dívida semântica concentrada em tarefas"
+    }
+   },
+   {
+    "id": "META-TRANSPORT26-001-CLEAN-BRIDGE",
+    "entity_kind": "test",
+    "display_name": "Ponte nova da Tower reduz recusas?",
+    "semantic": {
+     "display_name": "Ponte nova da Tower reduz recusas?"
+    }
+   },
+   {
+    "id": "META-UNAPPLIED26-001-STALE-DEADLETTER",
+    "entity_kind": "test",
+    "display_name": "Propostas não aplicadas: resto ou falha viva?",
+    "semantic": {
+     "display_name": "Propostas não aplicadas: resto ou falha viva?"
+    }
+   },
+   {
+    "id": "OLYAUT26-001-TEMPORAL-HOLDOUT",
+    "entity_kind": "test",
+    "display_name": "Mudança de regime persiste fora da janela",
+    "semantic": {
+     "display_name": "Mudança de regime persiste fora da janela"
+    }
+   },
+   {
+    "id": "T-DEH26-001-PRIORITY-STATE-OF-ART",
+    "entity_kind": "test",
+    "display_name": "A literatura já tem esse mecanismo?",
+    "semantic": {
+     "display_name": "A literatura já tem esse mecanismo?"
+    }
+   },
+   {
+    "id": "T-DEH26-002-SCALE-CIRCULARITY",
+    "entity_kind": "test",
+    "display_name": "Escala meV prevista sem circularidade?",
+    "semantic": {
+     "display_name": "Escala meV prevista sem circularidade?"
+    }
+   },
+   {
+    "id": "T-DEH26-003-TREE-MATCHING-R1",
+    "entity_kind": "test",
+    "display_name": "Modelo escalar reproduz R=1 exatamente?",
+    "semantic": {
+     "display_name": "Modelo escalar reproduz R=1 exatamente?"
+    }
+   },
+   {
+    "id": "T-DEH26-004-RADIATIVE-STABILITY-BOSONIC",
+    "entity_kind": "test",
+    "display_name": "R=1 sobrevive a correções quânticas?",
+    "semantic": {
+     "display_name": "R=1 sobrevive a correções quânticas?"
+    }
+   },
+   {
+    "id": "T-DEH26-005-SUSY-PROTECTION",
+    "entity_kind": "test",
+    "display_name": "Supersimetria protege a relação R=1?",
+    "semantic": {
+     "display_name": "Supersimetria protege a relação R=1?"
+    }
+   },
+   {
+    "id": "T-DEH26-006-COSMOLOGY-HOLDOUT",
+    "entity_kind": "test",
+    "display_name": "Previsão holográfica distinta e compatível?",
+    "semantic": {
+     "display_name": "Previsão holográfica distinta e compatível?"
+    }
+   },
+   {
+    "id": "T-H0LSS26-001-ENVIRONMENT-RESIDUAL",
+    "entity_kind": "test",
+    "display_name": "Supernovas sentem o ambiente da estrutura?",
+    "semantic": {
+     "display_name": "Supernovas sentem o ambiente da estrutura?"
+    }
+   },
+   {
+    "id": "T-LEARN26-001",
+    "entity_kind": "test",
+    "display_name": "Toda mudança de versão tem recibo?",
+    "semantic": {
+     "display_name": "Toda mudança de versão tem recibo?"
+    }
+   }
+  ]
+ }
+}
