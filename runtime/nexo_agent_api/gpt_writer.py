@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+from typing import Any
 from pathlib import Path
 
 from . import evolution
@@ -191,6 +192,31 @@ class _GitHubInbox:
         self._req("DELETE", entry["path"], {"message": f"writer robot: applied {entry['name']}", "sha": entry["sha"]})
 
 
+PRODUCERS = ("GPT", "CLAUDE")
+
+
+def producer_of(item: dict[str, Any]) -> str | None:
+    """Declared producer of an automated proposal. Scheduled GPT files (scheduled-*) are GPT by convention."""
+    value = str(item.get("producer") or "").strip().upper()
+    if value in PRODUCERS:
+        return value
+    if str(item.get("_inbox_name") or "").startswith("scheduled-"):
+        return "GPT"
+    return None
+
+
+def split_by_producer(items: list[dict[str, Any]], active: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """(apply, shadow). Items without a producer (Dener, conversations, robot) always apply."""
+    active = str(active or "GPT").strip().upper()
+    if active not in PRODUCERS:
+        active = "GPT"
+    keep, shadow = [], []
+    for item in items:
+        producer = producer_of(item)
+        (shadow if producer and producer != active else keep).append(item)
+    return keep, shadow
+
+
 def main(argv: list[str]) -> int:
     if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
         from . import AgentService
@@ -254,6 +280,22 @@ def main(argv: list[str]) -> int:
                 if isinstance(update, dict):
                     items.append({**update, "_inbox_source": "WRITER_ROBOT",
                                   "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
+        # Producer gate (fallback in shadow): only the active producer's automated proposals reach the Tower;
+        # the other producer's are acknowledged and logged, never applied. Unlabelled items (Dener, conversations,
+        # robot) always pass, so switching GPT <-> CLAUDE never creates a second writer or a second truth.
+        gateway_shadow: list[str] = []
+        items, shadowed = split_by_producer(items, os.environ.get("NEXO_ACTIVE_PRODUCER", "GPT"))
+        if shadowed:
+            print(json.dumps({"shadow": len(shadowed), "active_producer": os.environ.get("NEXO_ACTIVE_PRODUCER", "GPT"),
+                              "names": [str(s.get("_inbox_name")) for s in shadowed][:50]}, ensure_ascii=False))
+            shadow_ids = {str(s.get("_inbox_id")) for s in shadowed}
+            for entry in list(github.seen):
+                if "github:" + entry["path"] in shadow_ids:
+                    github.mark_processed(entry)
+            for entry in pending:
+                if entry.get("id") in shadow_ids:
+                    inbox.mark_processed(entry["id"])
+            gateway_shadow = [g for g in gateway_ids if "gateway:" + g in shadow_ids]
         dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
         dispatched: list[str] = []
         for attempt in range(3):
@@ -283,6 +325,10 @@ def main(argv: list[str]) -> int:
             if packed is None:
                 if not items:
                     print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
+                    out = os.environ.get("GITHUB_OUTPUT")
+                    if out and gateway_shadow:  # shadowed-only run still advances the gateway cursor
+                        with open(out, "a", encoding="utf-8") as handle:
+                            handle.write("gateway_applied=" + ",".join(gateway_shadow) + chr(10))
                     return 0
                 break
             if os.environ.get("NEXO_ROBOT_DRY"):
@@ -313,7 +359,7 @@ def main(argv: list[str]) -> int:
                    "write": report.get("write")}
         print(json.dumps(summary, ensure_ascii=False))
         applied = {str(n) for n in report.get("applied", [])}
-        acked = [g for g in gateway_ids if f"gw-{g}" in applied or any(n.startswith(f"gw-{g}-") for n in applied)]
+        acked = [g for g in gateway_ids if f"gw-{g}" in applied or any(n.startswith(f"gw-{g}-") for n in applied)] + gateway_shadow
         out = os.environ.get("GITHUB_OUTPUT")
         if out and acked and report.get("write"):
             with open(out, "a", encoding="utf-8") as handle:
