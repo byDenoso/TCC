@@ -217,9 +217,14 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         refs=body.get("refs") or [],
     )
     existing_test = _entity(root, "test", test_id)
+    proposed_semantic = body.get("semantic") if isinstance(body.get("semantic"), dict) else {}
+    proposed_display_name = str(body.get("display_name") or proposed_semantic.get("display_name") or "").strip()
+    proposed_domain = str(body.get("domain") or proposed_semantic.get("domain_id") or "").strip()
+    if existing_test is None and (not proposed_display_name or not proposed_domain):
+        raise ProposalError("new TEST requires display_name and domain")
     if existing_test is not None:
         # Same test proposed again: fill what is still empty instead of rejecting (frozen fields are never replaced).
-        fill = {k: v for k, v in body.items() if k in ("method", "null", "rival", "claim_boundary", "priority")
+        fill = {k: v for k, v in body.items() if k in ("method", "null", "rival", "claim_boundary", "priority", "display_name", "domain")
                 and v and not existing_test.get(k)}
         sem = {k: v for k, v in (body.get("semantic") or {}).items() if v and not (existing_test.get("semantic") or {}).get(k)}
         if sem:
@@ -243,15 +248,13 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         {"id": test_id, "roadmap_id": roadmap_id, "campaign_id": body.get("campaign_id") or inherited["campaign_id"], "question": question},
         body.get("semantic") or {}, root,
     )
-    if not semantic.get("domain_id"):
-        # Unknown area: file it under the roadmap's domain, else engineering for META, else science (UNMAPPED topic).
-        fallback = (inherited.get("domain") or ("engineering" if test_id.upper().startswith("META-") else "science"))
-        semantic = {**semantic, "domain_id": str(fallback).lower(), "basis": "WRITER_FALLBACK"}
+    semantic = {**semantic, "domain_id": proposed_domain.lower(), "display_name": proposed_display_name}
     changes = {
         "kind": "TEST", "status": lifecycle, "state": lifecycle,
         "draft_reason": None if lifecycle != "DRAFT" else "faltam critérios congelados de sucesso/kill",
         "priority": body.get("priority") or "P1",
-        "domain": str(semantic.get("domain_id", "science")).upper(),
+        "display_name": proposed_display_name,
+        "domain": str(proposed_domain).upper(),
         "roadmap_id": roadmap_id,
         "roadmap_test_id": test_id,
         "campaign_id": body.get("campaign_id") or inherited["campaign_id"],
@@ -460,6 +463,12 @@ def _backfill_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -
         title = str(entry.get("title") or "").strip()
         if title and (entry.get("overwrite") or not current.get("title")):
             changes["title"] = title
+        display_name = str(entry.get("display_name") or (entry.get("semantic") or {}).get("display_name") or "").strip()
+        if display_name and (entry.get("overwrite") or not current.get("display_name")):
+            changes["display_name"] = display_name
+        domain = str(entry.get("domain") or (entry.get("semantic") or {}).get("domain_id") or "").strip()
+        if domain and (entry.get("overwrite") or not current.get("domain")):
+            changes["domain"] = domain.upper()
         for field in ("subject_code",):
             code = re.sub(r"[^A-Z0-9]", "", str(entry.get(field) or "").upper())
             code = code if len(code) <= 4 else code[:3]
