@@ -1,0 +1,63 @@
+{
+  "stable_id": "executor-recipe-stable-id-idempotency-20260928-v2",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-28T22:20:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-28T22:20:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "stable_id_idempotency_history",
+              "inputs": {
+                "repository": "byDenoso/TCC",
+                "branch": "nexo/dispatch-runtime",
+                "path": "nexo_persist/requests/",
+                "history": "Git commit history for each request path; parse only UTF-8 JSON objects with stable_id and envelope"
+              },
+              "data_sources": [
+                "https://github.com/byDenoso/TCC/tree/nexo/dispatch-runtime/nexo_persist/requests"
+              ],
+              "statistic": "Build retry pairs from successive committed versions of the same durable request path. For each pair compare stable_id and canonicalized envelope bytes. Report n_pairs, stable_id reuse rate, material collision count, and the paths/commits of any collision.",
+              "criterion": "PROMOTED if n_pairs>=20, stable_id reuse=100%, and material collisions=0. REJECTED if any material collision exists or reuse<95%. Otherwise INCONCLUSIVE.",
+              "outputs": [
+                "verdict",
+                "decision",
+                "summary",
+                "statistics.n_pairs",
+                "statistics.reuse_rate",
+                "statistics.material_collisions",
+                "statistics.collision_refs",
+                "semantic.result_meaning"
+              ],
+              "tests_served": [
+                "META-PERSIST26-003-STABLE-ID-IDEMPOTENCY"
+              ]
+            },
+            "reason": "The frozen TEST names durable GitHub relay requests as its dataset; this revision binds the exact public repo, branch, path, history unit, statistic and literal decision rule."
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-28T22:20:00Z",
+          "payload": {
+            "to": "GUARDIAO",
+            "text": "Corrigi a especificação de Idempotência de propostas repetidas: agora ela fixa o histórico público de requests duráveis no TCC, a unidade de retry, a comparação byte-a-byte e o critério literal. Revise esta versão; quem escreveu não aprova.",
+            "refs": [
+              "META-PERSIST26-003-STABLE-ID-IDEMPOTENCY"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
