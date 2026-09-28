@@ -1,0 +1,166 @@
+{
+  "stable_id": "nexo-recipe-review-20260928-c",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-28T19:58:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-READINESS26-001-DRAFT-YIELD",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "T-H0HOM26-009",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Contrato incompleto: faltam método, dados ou critérios suficientes para uma receita auditável; completar o TEST antes da implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "T-MEGA26-LCDM-BIAS-HOD-152",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Contrato incompleto: faltam método, dados ou critérios suficientes para uma receita auditável; completar o TEST antes da implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-001-NUISANCE-FIRST",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar os pelo menos cinco casos e a perturbação de nuisance de cada caso; a receita não pode escolher quais sistemáticos testar durante o run."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-002-SELECTION-BINDING-STABILITY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Faltam bindings públicos concretos para catálogo, seleção, randoms, pesos, janela e covariância; a receita precisa receber esses inputs já fixados."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-003-SN-COVARIANCE-MODES",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar faixas/modos de covariância e produtos de duas compilações; explicitar a estatística de H0 e w0-wa e o nulo de permutação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Contrato incompleto: faltam método, dados ou critérios suficientes para uma receita auditável; completar o TEST antes da implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-005-LATE-TIME-MODEL-TRIAGE",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar datasets/modelos/templates e bins usados no bloco de crescimento; a especificação ainda deixa escolhas científicas para a implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "XAREA26-007-SN-VELOCITY-DENSITY-CROSSCHECK",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar as reconstruções de velocidade e os produtos públicos exatos, com cortes/perturbações declarativos; a receita não pode escolher a fonte durante a execução."
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
