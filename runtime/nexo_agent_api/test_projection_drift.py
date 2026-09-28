@@ -11,3 +11,14 @@ def test_bulk_activity_collapses_with_count():
 def test_top_level_display_name_reaches_semantic():
     projected = _with_semantics({"id": "T-X", "entity_kind": "TEST", "status": "READY"}, {"id": "T-X", "display_name": "Nome curto"})
     assert projected["semantic"].get("display_name") == "Nome curto"
+
+
+def test_invalid_topic_falls_back_to_valid_subdomain():
+    from runtime.nexo_agent_api.semantics import resolve
+    sem = resolve({"semantic": {"topic_id": "science.cosmology.dark_matter.nao_existe", "subdomain_id": "science.cosmology.dark_matter"}})
+    assert sem["subdomain_id"] == "science.cosmology.dark_matter" and sem["basis"] == "EXPLICIT"
+
+
+def test_archived_and_checkpointed_groups():
+    from runtime.nexo_agent_api.semantics import status_group
+    assert status_group("ARCHIVED") == "DONE" and status_group("CHECKPOINTED") == "RUNNING"

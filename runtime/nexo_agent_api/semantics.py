@@ -18,8 +18,8 @@ TAXONOMY_PATH = Path(__file__).with_name("contracts") / "SEMANTIC_TAXONOMY_V1.js
 UNMAPPED = "UNMAPPED"
 
 # Human-facing lifecycle (CONTROL.human_facing_status_model = READY_RUNNING_DONE_BLOCKED).
-_DONE = {"RESULT", "VERIFIED", "DONE", "REJECTED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED", "FALSIFIED", "SUPPORTED"}
-_RUNNING = {"RUNNING", "IN_PROGRESS", "CLAIMED", "DISPATCHED", "EXECUTING", "VERIFY_PENDING"}
+_DONE = {"ARCHIVED", "RETIRED", "SUPERSEDED", "CANCELLED", "RESULT", "VERIFIED", "DONE", "REJECTED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED", "FALSIFIED", "SUPPORTED"}
+_RUNNING = {"CHECKPOINTED", "RUNNING", "IN_PROGRESS", "CLAIMED", "DISPATCHED", "EXECUTING", "VERIFY_PENDING"}
 
 
 @lru_cache(maxsize=1)
@@ -85,8 +85,9 @@ def resolve(entity: dict[str, Any], *, entity_id: str | None = None) -> dict[str
     explicit = entity.get("semantic") if isinstance(entity.get("semantic"), dict) else {}
     backfill = taxonomy()["backfill"]
     resolved: dict[str, Any]
-    node = explicit.get("topic_id") or explicit.get("subdomain_id")
-    if node and node in _index():
+    # Most specific VALID node wins: an invalid topic_id must not hide a valid subdomain_id.
+    node = next((n for n in (explicit.get("topic_id"), explicit.get("subdomain_id")) if n and n in _index()), None)
+    if node:
         resolved = _from_node(node, "EXPLICIT")
     else:
         target = None

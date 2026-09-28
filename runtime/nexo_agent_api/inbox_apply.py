@@ -252,7 +252,8 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     lifecycle = body.get("_status") or ("READY" if success and kill else "DRAFT")
     roadmap_id = body.get("roadmap_id") or _infer_roadmap(root, test_id, body.get("semantic") or {})
     siblings = _siblings(root, roadmap_id)
-    inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "hypothesis_id", "domain")}
+    # Roadmap siblings may share campaign/domain, never the hypothesis: one roadmap holds several hypotheses.
+    inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "domain")}
     question = _first(body, "question", "hypothesis", "hipotese", "hipótese")
     semantic = _complete_semantic(
         {"id": test_id, "roadmap_id": roadmap_id, "campaign_id": body.get("campaign_id") or inherited["campaign_id"], "question": question},
@@ -269,7 +270,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "roadmap_id": roadmap_id,
         "roadmap_test_id": test_id,
         "campaign_id": body.get("campaign_id") or inherited["campaign_id"],
-        "hypothesis_id": body.get("hypothesis_id") or inherited["hypothesis_id"],
+        "hypothesis_id": body.get("hypothesis_id") or None,
         "question": question,
         "method": body.get("method"),
         "null": body.get("null"),

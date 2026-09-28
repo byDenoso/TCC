@@ -390,6 +390,11 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
     for test in tests:
         test_id = str(test.get("id") or "")
         state = str(test.get("state") or test.get("status") or "").upper()
+        # Legacy tests without kind: the Executor and the projection must count the same READY queue.
+        if test_id and not test.get("kind"):
+            update = _test_update(root, test_id, {"kind": "TEST"}, f"REQ-KIND-TEST-{test_id}", "TEST_ENRICHED")
+            if update:
+                requests.append(update)
         # Stale drafts leave the frontier (archived, reversible).
         created = _stamp(test.get("created_at") or test.get("frozen_at"))
         if state == "DRAFT" and created and (now - created).days >= STALE_DRAFT_DAYS:

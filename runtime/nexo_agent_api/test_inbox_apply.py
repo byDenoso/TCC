@@ -577,7 +577,7 @@ if __name__ == "__main__":
 
 
 class SiteFormatTests(unittest.TestCase):
-    def test_new_hypothesis_inherits_roadmap_context_and_semantics(self):
+    def test_new_hypothesis_inherits_roadmap_context_but_not_sibling_hypothesis(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             sib = entity_path(root, "test", "S-1")
@@ -591,14 +591,14 @@ class SiteFormatTests(unittest.TestCase):
                 "success_criteria": "a", "kill_criteria": "b"}}, root)
             test = requests[0]["changes"]
             self.assertEqual(test["campaign_id"], "CAMP-X")
-            self.assertEqual(test["hypothesis_id"], "HYP-X")
+            self.assertEqual(test["hypothesis_id"], "HYP-H-2")  # nunca a hipótese do irmão
             self.assertEqual(test["roadmap_test_id"], "H-2")
             self.assertEqual(test["semantic"]["subdomain_id"], "science.cosmology.dark_matter")
             self.assertEqual(test["semantic"]["question_plain"], "Does X happen?")
             [merge] = [r for r in requests if "document" in r]
             self.assertEqual(merge["merge"]["frontier_refs"], ["S-1", "H-2"])
             [hyp] = [r for r in requests if r.get("entity_kind") == "hypothesis"]
-            self.assertEqual(hyp["entity_name"], "HYP-X")
+            self.assertEqual(hyp["entity_name"], "HYP-H-2")
             self.assertEqual(hyp["changes"]["falsification_criterion"], "b")
 
 
