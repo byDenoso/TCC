@@ -1,0 +1,14 @@
+{"kind": "SEMANTIC_BACKFILL", "source": "CONVERSA", "created_at": "2026-09-28T17:00:00Z", "payload": {"items": [
+ {"id": "CAMP-DARK-ENERGY-NATURE-20260923", "entity_kind": "campaign", "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1", "overwrite": true,
+  "semantic": {"question_plain": "A aceleração recente do universo é compatível com uma constante cosmológica, ou os dados pedem energia escura que muda, gravidade modificada ou interação no setor escuro?"}},
+ {"id": "CAMP-DARK-MATTER-NATURE-20260923", "entity_kind": "campaign", "roadmap_id": "RM-DARK-MATTER-NATURE-20260923-V1", "overwrite": true,
+  "semantic": {"question_plain": "Que propriedades da matéria escura as observações exigem além da matéria escura fria sem colisões, se é que exigem alguma?"}},
+ {"id": "CAMP-DDE-ANOMALIES-MEGA-20260922", "entity_kind": "campaign", "roadmap_id": "RM-DDE-ANOMALIES-MEGA-20260922-V1", "overwrite": true,
+  "semantic": {"question_plain": "A energia escura dinâmica explicaria um conjunto coerente das anomalias atuais do ΛCDM e das supostas megaestruturas cosmológicas?"}},
+ {"id": "CAMP-GPT56-AGENT-SYSTEMS-20260923", "entity_kind": "campaign", "roadmap_id": "RM-GPT56-AGENT-SYSTEMS-20260923-V1", "overwrite": true,
+  "semantic": {"question_plain": "Que padrões de instrução, contexto, AGENTS.md, skills, ferramentas e delegação melhoram de forma mensurável a qualidade, a eficiência e a confiabilidade dos agentes?"}},
+ {"id": "CAMP-GZ-01-GALAXY-REDSHIFT", "entity_kind": "campaign", "roadmap_id": "RM-GZ01-GALAXY-3D-MAP-LIVE-V1", "overwrite": true,
+  "semantic": {"question_plain": "O catálogo do DESI DR1 vira um mapa 3D de densidade corrigido pela seleção, sem confundir a geometria do levantamento com estrutura física?"}},
+ {"id": "CAMP-H0-SYSTEMATICS-VS-PHYSICS-20260923", "entity_kind": "campaign", "roadmap_id": "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1", "overwrite": true,
+  "semantic": {"question_plain": "A tensão de Hubble se explica por erros sistemáticos, física nova, uma mistura dos dois, ou por uma significância instável?"}}
+]}}
