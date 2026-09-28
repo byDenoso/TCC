@@ -1,0 +1,81 @@
+{
+ "kind": "SEMANTIC_BACKFILL",
+ "source": "CONVERSA",
+ "created_at": "2026-09-28T16:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "id": "T-LEARN26-002",
+    "entity_kind": "test",
+    "display_name": "Escritas simultâneas causam falhas de rebase?",
+    "semantic": {
+     "display_name": "Escritas simultâneas causam falhas de rebase?"
+    }
+   },
+   {
+    "id": "T-LEARN26-003",
+    "entity_kind": "test",
+    "display_name": "Abster-se reduz erro de verdade?",
+    "semantic": {
+     "display_name": "Abster-se reduz erro de verdade?"
+    }
+   },
+   {
+    "id": "T-LEARN26-004",
+    "entity_kind": "test",
+    "display_name": "Tamanho do efeito muda as decisões?",
+    "semantic": {
+     "display_name": "Tamanho do efeito muda as decisões?"
+    }
+   },
+   {
+    "id": "XAREA26-001-NUISANCE-FIRST",
+    "entity_kind": "test",
+    "display_name": "Sistemáticos antes de física nova",
+    "semantic": {
+     "display_name": "Sistemáticos antes de física nova"
+    }
+   },
+   {
+    "id": "XAREA26-002-SELECTION-BINDING-STABILITY",
+    "entity_kind": "test",
+    "display_name": "Fixar a seleção antes reduz revisões?",
+    "semantic": {
+     "display_name": "Fixar a seleção antes reduz revisões?"
+    }
+   },
+   {
+    "id": "XAREA26-003-SN-COVARIANCE-MODES",
+    "entity_kind": "test",
+    "display_name": "Modos de erro das supernovas: H0 e w0-wa",
+    "semantic": {
+     "display_name": "Modos de erro das supernovas: H0 e w0-wa"
+    }
+   },
+   {
+    "id": "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY",
+    "entity_kind": "test",
+    "display_name": "Sistemáticos de H0 e de energia escura são independentes?",
+    "semantic": {
+     "display_name": "Sistemáticos de H0 e de energia escura são independentes?"
+    }
+   },
+   {
+    "id": "XAREA26-005-LATE-TIME-MODEL-TRIAGE",
+    "entity_kind": "test",
+    "display_name": "Modelos tardios resolvem H0 e w0-wa juntos?",
+    "semantic": {
+     "display_name": "Modelos tardios resolvem H0 e w0-wa juntos?"
+    }
+   },
+   {
+    "id": "XAREA26-007-SN-VELOCITY-DENSITY-CROSSCHECK",
+    "entity_kind": "test",
+    "display_name": "Velocidades pela densidade explicam as supernovas?",
+    "semantic": {
+     "display_name": "Velocidades pela densidade explicam as supernovas?"
+    }
+   }
+  ]
+ }
+}
