@@ -1,0 +1,21 @@
+name: NEXO inbox wake
+# Any new proposal in inbox/ (relay, conversation or direct write) wakes the Writer robot at once,
+# instead of waiting for GitHub's throttled */5 schedule. The robot stays the only Tower writer.
+on:
+  push:
+    branches: [nexo-inbox]
+    paths: ["inbox/**"]
+permissions: {}
+concurrency:
+  group: nexo-inbox-wake
+  cancel-in-progress: true
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env:
+          GH_TOKEN: ${{ secrets.PANTHEON_WAKE_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then echo "PANTHEON_WAKE_TOKEN not set; robot schedule will pick this up"; exit 0; fi
+          gh workflow run nexo-writer-robot.yml -R byDenoso/Pantheon --ref main && echo "writer robot dispatched"
