@@ -154,6 +154,32 @@ def _manifest_bytes(projection: dict) -> bytes:
     ).encode("utf-8")
 
 
+def _activity_diagnostics(root, projection) -> None:
+    """Log why recent Tower events do or do not reach the public activity feed (no private content)."""
+    try:
+        from collections import Counter
+        from runtime.nexo_agent_api.public_projection import _event_time, _public_event_role
+        events_root = Path(root) / "events"
+        rows = []
+        for path in sorted(events_root.rglob("*.json")) if events_root.is_dir() else []:
+            try:
+                event = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            stamp = _event_time(event.get("event_id") or path.stem)
+            rows.append((stamp or "", str(event.get("event_type") or ""), stamp is not None))
+        rows.sort()
+        recent = rows[-60:]
+        activity = projection.get("activity") or []
+        print(f"activity_items         = {len(activity)} (last {activity[-1]['at'] if activity else '-'})")
+        print(f"events_total           = {len(rows)} (last {rows[-1][0] if rows else '-'})")
+        kinds = Counter((t, _public_event_role(t) or "NO_ROLE", "ok" if ok else "NO_TIME") for _, t, ok in recent)
+        for (t, role, ok), n in kinds.most_common(15):
+            print(f"recent_event           = {n:3d} {t} -> {role} [{ok}]")
+    except Exception as exc:  # diagnostics never fail the build
+        print(f"activity_diagnostics_error = {exc}")
+
+
 def _existing_fingerprint(path: Path) -> str | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -279,6 +305,7 @@ def main() -> int:
         return 1
 
     changed = write_projection_if_changed(args.out, projection)
+    _activity_diagnostics(projection_root, projection)
     if temporary_root is not None:
         temporary_root.cleanup()
 
