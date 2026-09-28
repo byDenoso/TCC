@@ -1,0 +1,183 @@
+{
+  "stable_id": "nexo-recipe-review-20260928-b",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-28T19:58:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-1",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar datasets/modelos/templates e bins usados no bloco de crescimento; a especificação ainda deixa escolhas científicas para a implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-2",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar faixas/modos de covariância e produtos de duas compilações; explicitar a estatística de H0 e w0-wa e o nulo de permutação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-3",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar quais análises/likelihoods públicas entram e as transformações para a parametrização comum; 'resultados públicos' não define a seleção congelada."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-B92E1353752663E6C7ECFE562266361B",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar as reconstruções de velocidade e os produtos públicos exatos, com cortes/perturbações declarativos; a receita não pode escolher a fonte durante a execução."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-CAL26-001-CRITERIA-OBSERVABILITY-FIT",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-8E6AE69DC6C2E127E7713D43C999F19E-2",
+              "test_id": "META-CONTRACT26-002-DYNAMIC-REACHABILITY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-EMERG26-003-EVENT-CLOCK-SOURCE",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-OBS26-002-PREDICTION-CALIBRATION-BY-COVERAGE",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-OBS26-004-MISSINGNESS-ABLATION",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "META-PERSIST26-003-STABLE-ID-IDEMPOTENCY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "A especificação depende de histórico/Tower que o runner público não recebe; declarar uma entrada pública/sanitizada e explicitar estatística, critério e saída por modo."
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
