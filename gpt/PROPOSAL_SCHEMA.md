@@ -230,21 +230,21 @@ Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queu
 | `ROADMAP_CHARTER` | roadmap_id?, `title` (curto, em português), question, `semantic{question_plain,why_it_matters}`, scope, data, budget{max_tests,max_days}, stop{success_confirmed,kill_consecutive_refuted}, rationale, refs, rival_of? | `roadmaps/<id>.json` charter PROPOSED (new roadmap if absent), com leitura pública em português |
 | `OPERATOR_INTENT` `action: APPROVE_CHARTER\|REJECT_CHARTER\|CANONIZE\|REJECT_CANARY`, `source: "DENER"` | roadmap_id / gene | the two gates; any other source is only recorded |
 | `ROADMAP_CLOSE` | roadmap_id, reason SUCCESS\|KILL\|BUDGET, final_report | charter CLOSED, index state CLOSED |
-| `CONTEST` | test_id, reason, refs, source REFEREE_1\|SENTINEL, contest_test{frozen hypothesis} | test `review_state: CONTESTED` (max 2) + contest test P0 |
-| `VERDICT_REVIEW` | test_id, referee 1\|2, outcome SURVIVED\|REFUTED, evidence | ladder → REFEREE1_PASSED → CONFIRMED / REFUTED |
+| `CONTEST` | test_id, reason, refs, source REFEREE_1\|SENTINEL, contest_test{frozen hypothesis} | somente teste original pode ser atacado; profundidade máxima 1; resultado do ataque fecha o original mecanicamente |
+| `VERDICT_REVIEW` | legado; não é necessário para fechar contestação nova | o Writer usa o critério congelado do ataque e fecha CONFIRMED / REFUTED mecanicamente |
 | `GENOME_MUTATION` | gene, value, current_value, rationale, refs, metric (`seed:true` = generation 0) | gene CANARY; spine genes are no-ops |
 | `GENOME_ROLLBACK` | gene, reason, fitness | canary dropped |
 | `FITNESS_REPORT` | measurements[{gene?, arm, value, components}] | `evolution/genome.json` fitness |
 | `NEXO_THOUGHT` | entries[{kind, text, refs[]}] | Pítia's diary (entries without refs dropped) |
 | `DECOY_PLANT` / `DECOY_REVEAL` | commitment sha256("test_id:secret") / test_id, secret | decoy audit |
 
-New optional test fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art`, `prediction`, `contests_test_id`.
+New TESTs require `display_name` (até 8 palavras, português, sem sigla) and `domain`; proposals missing either are rejected before TEST creation. Optional fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art`, `prediction`, `contests_test_id`.
 READY hypotheses get `prereg_hash` automatically. Positive results start at `review_state: PENDING_REVIEW`.
 
 Charters may be semi-permanent: `renewable: true, review_every_days: N, objectives: [...], priority: "P0"` — never closed by budget; `status` reports `review_due` for a course review by Dener.
 
 ## Test batteries (GitHub Actions, public and free)
-`TEST_BATTERY {battery_id?, tests:[{test_id, script, requirements[], timeout_min<=340, prediction}]}` (se o conector recusar código cru no JSON, mande `script_b64` = script em base64 no lugar de `script`). **Preferido:** `recipe` + `params` (JSON puro, sem código): receitas congeladas em `byDenoso/Pantheon nexo-one/executor-runtime/recipes/` (ex.: `seed_bounds` com `seeds[]`, `n`, `max_abs_mean`, `max_abs_sd_minus_1`) — up to 20 registered, non-Olympus tests.
-Each script is self-contained and writes `{verdict, decision, summary, statistics, semantic}` to `os.environ["RESULT_PATH"]`.
+`TEST_BATTERY {battery_id?, tests:[{test_id, recipe, params, timeout_min<=340, prediction}]}`. Código inline (`script`, `script_b64`) é proibido e rejeitado. `recipe` aponta para receita congelada em `byDenoso/Pantheon nexo-one/executor-runtime/recipes/`; se nenhuma receita reproduzir fielmente o contrato do TEST, emitir `LEARNING_SIGNAL` com `gap_type: RECIPE_REQUEST` e dizer exatamente o que a receita deve fazer. Nenhum READY pode ficar >24 h sem bateria ou RECIPE_REQUEST. Até 20 testes públicos e não-Olympus por bateria.
+A recipe escreve `{verdict, decision, summary, statistics, semantic}` em `os.environ["RESULT_PATH"]`. Receita CAMB deve usar o `runtime/portable_camb` versionado do TCC, com commit/proveniência congelados.
 The Writer robot marks them RUNNING, dispatches `NEXO test battery` (byDenoso/Pantheon, isolated runners, no secrets),
 collects results as `BATTERY_STATUS DONE` and records them like any result; a crash sends the test back to READY.
