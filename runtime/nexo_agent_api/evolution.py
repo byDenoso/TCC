@@ -390,6 +390,13 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
     for test in tests:
         test_id = str(test.get("id") or "")
         state = str(test.get("state") or test.get("status") or "").upper()
+        # Results recorded by a battery before executed_at was stamped: borrow the battery's own time.
+        if test.get("verdict") and not test.get("executed_at") and test.get("battery_id"):
+            battery = next((b for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("id") == test.get("battery_id")), {})
+            when = battery.get("done_at") or battery.get("dispatched_at") or battery.get("created_at")
+            update = _test_update(root, test_id, {"executed_at": when}, f"REQ-EXECUTED-AT-{test_id}", "TEST_ENRICHED") if when else None
+            if update:
+                requests.append(update)
         # Legacy tests without kind: the Executor and the projection must count the same READY queue.
         if test_id and not test.get("kind"):
             update = _test_update(root, test_id, {"kind": "TEST"}, f"REQ-KIND-TEST-{test_id}", "TEST_ENRICHED")
@@ -692,7 +699,8 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
             test_id = str(entry.get("test_id") or "")
             if entry.get("ok") and isinstance(entry.get("result"), dict):
                 ok += 1
-                requests += result_fn(dict(item, _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
+                # A battery result must carry its execution time, or the watchdog thinks no result ever arrived.
+                requests += result_fn(dict(item, created_at=item.get("created_at") or _now(item), _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
                                       {"test_id": test_id, "result": entry["result"], "semantic": entry.get("semantic") or {},
                                        "reproducibility": {"runner": "GITHUB_ACTIONS", "battery_id": bid, "run_ref": body.get("run_ref"),
                                                            "log_tail": str(entry.get("log_tail") or "")[-1500:]},
