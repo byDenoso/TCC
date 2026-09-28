@@ -585,3 +585,334 @@ def test_interdomain_relations_are_projected_as_learning_filaments(tmp_path):
         }
     ]
 
+# --- NEXO ONE entity read model -----------------------------------------------
+
+
+def test_public_test_projects_prereg_review_lineage_and_safe_execution(tmp_path):
+    root = _tower(tmp_path)
+    hypothesis_dir = root / "entities" / "hypothesis"
+    hypothesis_dir.mkdir(parents=True, exist_ok=True)
+    (entity_path(root, "hypothesis", "HYP-RICH")).write_text(json.dumps({
+        "id": "HYP-RICH",
+        "title": "A public hypothesis",
+        "status": "OPEN",
+        "domain": "SCIENCE",
+        "created_at": "2026-09-27T11:00:00Z",
+    }), encoding="utf-8")
+
+    parent = {
+        "id": "T-RICH-PARENT",
+        "status": "RESULT",
+        "domain": "SCIENCE",
+        "roadmap_id": "RM-RICH",
+        "hypothesis_id": "HYP-RICH",
+        "question": "Does the signal survive the frozen null?",
+        "prediction": {
+            "expected_effect": "Positive residual after the frozen cut.",
+            "p_promoted": 0.7,
+            "private_note": "SECRET_PREDICTION",
+        },
+        "null": "No residual beyond the baseline.",
+        "rival": "A stable residual remains.",
+        "success_criteria": ["Residual exceeds the frozen threshold."],
+        "kill_criteria": "Residual is consistent with zero.",
+        "prereg_hash": "sha256:" + "a" * 64,
+        "prereg_ref": "TOWER_V06/prereg/T-RICH-PARENT.json",
+        "claim_boundary": "Applies only to the frozen observable and selection.",
+        "limitations": ["One public catalog.", "No claim outside the frozen selection."],
+        "created_at": "2026-09-27T12:01:00Z",
+        "updated_at": "2026-09-27T14:01:00Z",
+        "executed_at": "2026-09-27T12:30:00Z",
+        "reproducibility": {
+            "battery_id": "BAT-RICH",
+            "run_ref": "run-42",
+            "runner": "github-actions",
+            "log_tail": "SECRET_LOG",
+        },
+        "contests": [{
+            "at": "2026-09-27T13:00:00Z",
+            "by": "REFEREE_1",
+            "contest_test_id": "T-RICH-CONTEST",
+            "reason": "Independent window replication.",
+            "refs": ["SECRET_REF"],
+        }],
+        "reviews": [{
+            "at": "2026-09-27T14:00:00Z",
+            "referee": "REFEREE_1",
+            "contest_test_id": "T-RICH-CONTEST",
+            "outcome": "SURVIVED",
+            "evidence": "SECRET_EVIDENCE",
+        }],
+    }
+    child = {
+        "id": "T-RICH-CHILD",
+        "status": "READY",
+        "domain": "SCIENCE",
+        "roadmap_id": "RM-RICH",
+        "hypothesis_id": "HYP-RICH",
+        "parent_test_id": "T-RICH-PARENT",
+    }
+    for record in (parent, child):
+        (entity_path(root, "test", record["id"])).write_text(json.dumps(record), encoding="utf-8")
+
+    event_dir = root / "events" / "2026-09-27"
+    event_dir.mkdir(parents=True)
+    for event_id, entity_name in (
+        ("20260927T120000000000Z-parent", "T-RICH-PARENT"),
+        ("20260927T120200000000Z-child", "T-RICH-CHILD"),
+    ):
+        (event_dir / f"{event_id}.json").write_text(json.dumps({
+            "event_id": event_id,
+            "event_type": "ROADMAP_TEST_FROZEN",
+            "entity_kind": "test",
+            "entity_name": entity_name,
+        }), encoding="utf-8")
+
+    projection = _build(root)
+    tests = {item["id"]: item for item in projection["tests"]}
+    projected = tests["T-RICH-PARENT"]
+
+    assert projected["entity_kind"] == "TEST"
+    assert projected["question"] == parent["question"]
+    assert projected["prereg"] == {
+        "prediction": {
+            "expected_effect": "Positive residual after the frozen cut.",
+            "p_promoted": 0.7,
+        },
+        "null": parent["null"],
+        "rival": parent["rival"],
+        "criterion": {
+            "success": ["Residual exceeds the frozen threshold."],
+            "kill": ["Residual is consistent with zero."],
+        },
+        "hash": parent["prereg_hash"],
+        "ref": parent["prereg_ref"],
+        "at": parent["created_at"],
+    }
+    assert projected["review"] == [
+        {
+            "kind": "CONTEST",
+            "by": "REFEREE_1",
+            "axis": "Independent window replication.",
+            "outcome": "PENDING",
+            "at": "2026-09-27T13:00:00Z",
+            "contest_test_id": "T-RICH-CONTEST",
+        },
+        {
+            "kind": "VERDICT_REVIEW",
+            "by": "REFEREE_1",
+            "axis": "Independent window replication.",
+            "outcome": "SURVIVED",
+            "at": "2026-09-27T14:00:00Z",
+            "contest_test_id": "T-RICH-CONTEST",
+        },
+    ]
+    assert projected["limitations"] == parent["limitations"]
+    assert projected["claim_boundary"] == parent["claim_boundary"]
+    assert projected["execution"] == {
+        "at": parent["executed_at"],
+        "battery_id": "BAT-RICH",
+        "run_ref": "run-42",
+        "runner": "github-actions",
+    }
+    assert projected["parents"] == ["HYP-RICH"]
+    assert projected["children"] == ["T-RICH-CHILD"]
+    assert tests["T-RICH-CHILD"]["parents"] == ["HYP-RICH", "T-RICH-PARENT"]
+    assert tests["T-RICH-CHILD"]["created_at_effective"] == "2026-09-27T12:02:00.000000Z"
+    assert tests["T-RICH-CHILD"]["created_at_source"] == "EVENT_FIRST_OBSERVED"
+    assert projected["created_at_effective"] == parent["created_at"]
+    assert projected["created_at_source"] == "ENTITY"
+
+    hypothesis = next(item for item in projection["hypotheses"] if item["id"] == "HYP-RICH")
+    assert hypothesis["entity_kind"] == "HYPOTHESIS"
+    assert hypothesis["children"] == ["T-RICH-CHILD", "T-RICH-PARENT"]
+    assert hypothesis["parents"] == ["RM-RICH"]
+
+    raw = projection_bytes(projection)
+    for secret in (b"SECRET_PREDICTION", b"SECRET_LOG", b"SECRET_REF", b"SECRET_EVIDENCE"):
+        assert secret not in raw
+
+
+def test_private_test_never_gets_rich_scientific_read_model(tmp_path):
+    root = _tower(tmp_path)
+    record = {
+        "id": "T-OLYCAUSE-PRIVATE",
+        "status": "RESULT",
+        "domain": "SCIENCE",
+        "question": "SECRET_PRIVATE_QUESTION",
+        "prediction": {"expected_effect": "SECRET_PRIVATE_PREDICTION", "p_promoted": 0.9},
+        "null": "SECRET_PRIVATE_NULL",
+        "rival": "SECRET_PRIVATE_RIVAL",
+        "success_criteria": "SECRET_PRIVATE_SUCCESS",
+        "kill_criteria": "SECRET_PRIVATE_KILL",
+        "claim_boundary": "SECRET_PRIVATE_BOUNDARY",
+        "limitations": ["SECRET_PRIVATE_LIMIT"],
+        "contests": [{"reason": "SECRET_PRIVATE_CONTEST", "by": "REFEREE_1"}],
+        "reviews": [{"evidence": "SECRET_PRIVATE_EVIDENCE", "referee": "REFEREE_1"}],
+        "created_at": "2026-09-27T12:00:00Z",
+    }
+    (entity_path(root, "test", record["id"])).write_text(json.dumps(record), encoding="utf-8")
+
+    projection = _build(root)
+    projected = next(item for item in projection["tests"] if item["id"] == record["id"])
+    for field in (
+        "question",
+        "prereg",
+        "review",
+        "limitations",
+        "claim_boundary",
+        "parents",
+        "children",
+        "execution",
+        "created_at_effective",
+        "first_observed_at",
+    ):
+        assert field not in projected
+    raw = projection_bytes(projection)
+    assert b"SECRET_PRIVATE_" not in raw
+
+
+def test_roadmaps_are_first_class_with_progress_and_safe_charter(tmp_path):
+    root = _tower(tmp_path)
+    hypothesis_dir = root / "entities" / "hypothesis"
+    hypothesis_dir.mkdir(parents=True, exist_ok=True)
+    (entity_path(root, "hypothesis", "HYP-ROAD")).write_text(json.dumps({
+        "id": "HYP-ROAD",
+        "title": "Roadmap hypothesis",
+        "status": "OPEN",
+        "domain": "SCIENCE",
+    }), encoding="utf-8")
+
+    records = [
+        {
+            "id": "T-ROAD-1",
+            "status": "RESULT",
+            "domain": "SCIENCE",
+            "roadmap_id": "RM-ROAD",
+            "hypothesis_id": "HYP-ROAD",
+            "review_state": "CONFIRMED",
+        },
+        {
+            "id": "T-ROAD-2",
+            "status": "BLOCKED_INPUT",
+            "domain": "SCIENCE",
+            "roadmap_id": "RM-ROAD",
+            "hypothesis_id": "HYP-ROAD",
+            "review_state": "PENDING_REVIEW",
+        },
+    ]
+    for record in records:
+        (entity_path(root, "test", record["id"])).write_text(json.dumps(record), encoding="utf-8")
+
+    roadmap = {
+        "roadmap_id": "RM-ROAD",
+        "campaign_id": "CAMP-ROAD",
+        "title": "Roadmap demo",
+        "question": "Can the hypothesis survive two independent attacks?",
+        "domain": "SCIENCE",
+        "subdomain": "COSMOLOGY",
+        "priority": "P0",
+        "status": "ACTIVE",
+        "state": "ACTIVE",
+        "claim_boundary": "Only the frozen public tests count.",
+        "created_at": "2026-09-27T10:00:00Z",
+        "hypothesis_refs": ["HYP-ROAD"],
+        "frontier_refs": ["T-ROAD-2"],
+        "charter": {
+            "status": "CHARTERED",
+            "question": "Can the hypothesis survive two independent attacks?",
+            "objectives": ["Resolve the frozen question."],
+            "budget": {"max_tests": 12, "max_days": 14, "secret_budget": 999},
+            "stop": {"success_confirmed": 2, "kill_consecutive_refuted": 3, "secret_stop": 999},
+            "renewable": False,
+            "review_every_days": 7,
+            "chartered_at": "2026-09-27T10:05:00Z",
+            "private_note": "SECRET_CHARTER",
+        },
+        "execution_policy": {"secret": "SECRET_EXECUTION_POLICY"},
+    }
+    (root / "roadmaps" / "RM-ROAD.json").write_text(json.dumps(roadmap), encoding="utf-8")
+
+    projection = _build(root)
+    projected = next(item for item in projection["roadmaps"] if item["id"] == "RM-ROAD")
+    assert projected["entity_kind"] == "ROADMAP"
+    assert projected["test_ids"] == ["T-ROAD-1", "T-ROAD-2"]
+    assert projected["hypothesis_ids"] == ["HYP-ROAD"]
+    assert projected["frontier_test_ids"] == ["T-ROAD-2"]
+    assert projected["children"] == ["HYP-ROAD"]
+    assert projected["progress"] == {
+        "total": 2,
+        "confirmed": 1,
+        "refuted": 0,
+        "in_review": 1,
+        "blocked": 1,
+        "ready": 0,
+        "resumable": 0,
+        "result": 1,
+        "frontier": 1,
+    }
+    assert projected["charter"] == {
+        "status": "CHARTERED",
+        "question": roadmap["charter"]["question"],
+        "objectives": ["Resolve the frozen question."],
+        "budget": {"max_tests": 12, "max_days": 14},
+        "stop": {"success_confirmed": 2, "kill_consecutive_refuted": 3},
+        "renewable": False,
+        "review_every_days": 7,
+        "chartered_at": "2026-09-27T10:05:00Z",
+    }
+    assert projection["counts"]["roadmaps"] >= 1
+    raw = projection_bytes(projection)
+    assert b"SECRET_CHARTER" not in raw
+    assert b"SECRET_EXECUTION_POLICY" not in raw
+    assert b"secret_budget" not in raw
+    assert b"secret_stop" not in raw
+
+
+def test_public_activity_is_sanitized_and_role_oriented(tmp_path):
+    root = _tower(tmp_path)
+    (entity_path(root, "test", "T-ACT")).write_text(json.dumps({
+        "id": "T-ACT",
+        "status": "RESULT",
+        "domain": "SCIENCE",
+    }), encoding="utf-8")
+    event_dir = root / "events" / "2026-09-27"
+    event_dir.mkdir(parents=True)
+    events = [
+        ("20260927T120000000000Z-a", "ROADMAP_TEST_FROZEN", "test", "T-ACT"),
+        ("20260927T121000000000Z-b", "RESULT_CONTESTED", "test", "T-ACT"),
+        ("20260927T122000000000Z-c", "INTEGRITY_REPORT_RECORDED", "artifact", "INTEGRITY_REPORT::PRIVATE"),
+    ]
+    for event_id, event_type, kind, entity_name in events:
+        (event_dir / f"{event_id}.json").write_text(json.dumps({
+            "event_id": event_id,
+            "event_type": event_type,
+            "entity_kind": kind,
+            "entity_name": entity_name,
+            "private_note": "SECRET_EVENT",
+        }), encoding="utf-8")
+
+    projection = _build(root)
+    assert projection["activity"] == [
+        {
+            "event_type": "ROADMAP_TEST_FROZEN",
+            "role": "EXECUTOR",
+            "at": "2026-09-27T12:00:00.000000Z",
+            "entity_id": "T-ACT",
+            "entity_kind": "TEST",
+        },
+        {
+            "event_type": "RESULT_CONTESTED",
+            "role": "REFUTADOR",
+            "at": "2026-09-27T12:10:00.000000Z",
+            "entity_id": "T-ACT",
+            "entity_kind": "TEST",
+        },
+        {
+            "event_type": "INTEGRITY_REPORT_RECORDED",
+            "role": "GUARDIAO",
+            "at": "2026-09-27T12:20:00.000000Z",
+        },
+    ]
+    assert b"SECRET_EVENT" not in projection_bytes(projection)
+
