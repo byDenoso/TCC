@@ -1,0 +1,209 @@
+{
+ "kind": "SEMANTIC_BACKFILL",
+ "source": "CONVERSA",
+ "created_at": "2026-09-28T16:00:00Z",
+ "payload": {
+  "items": [
+   {
+    "id": "CONTEST-T-DEH26-001-PRIORITY-STATE-OF-ART-2",
+    "entity_kind": "test",
+    "display_name": "Ataque 2 · A literatura já tem esse mecanismo?",
+    "semantic": {
+     "display_name": "Ataque 2 · A literatura já tem esse mecanismo?"
+    }
+   },
+   {
+    "id": "DDELEARN26-001-BACKGROUND-GROWTH-DECOUPLING",
+    "entity_kind": "test",
+    "display_name": "Separar expansão de crescimento sem piorar S8",
+    "semantic": {
+     "display_name": "Separar expansão de crescimento sem piorar S8"
+    }
+   },
+   {
+    "id": "DDEMEGA26-001",
+    "entity_kind": "test",
+    "display_name": "Megaestruturas resistem a um nulo ΛCDM?",
+    "semantic": {
+     "display_name": "Megaestruturas resistem a um nulo ΛCDM?"
+    }
+   },
+   {
+    "id": "DDEMEGA26-002",
+    "entity_kind": "test",
+    "display_name": "Região viável de w0-wa após DESI DR2",
+    "semantic": {
+     "display_name": "Região viável de w0-wa após DESI DR2"
+    }
+   },
+   {
+    "id": "DDEMEGA26-003",
+    "entity_kind": "test",
+    "display_name": "Quanto a energia escura dinâmica muda estruturas",
+    "semantic": {
+     "display_name": "Quanto a energia escura dinâmica muda estruturas"
+    }
+   },
+   {
+    "id": "DDEMEGA26-013",
+    "entity_kind": "test",
+    "display_name": "Energia escura dinâmica alivia a tensão de H0?",
+    "semantic": {
+     "display_name": "Energia escura dinâmica alivia a tensão de H0?"
+    }
+   },
+   {
+    "id": "DDEMEGA26-014",
+    "entity_kind": "test",
+    "display_name": "Energia escura dinâmica move S8 no sentido certo?",
+    "semantic": {
+     "display_name": "Energia escura dinâmica move S8 no sentido certo?"
+    }
+   },
+   {
+    "id": "DDEMEGA26-015",
+    "entity_kind": "test",
+    "display_name": "Energia escura dinâmica explica anomalias antigas?",
+    "semantic": {
+     "display_name": "Energia escura dinâmica explica anomalias antigas?"
+    }
+   },
+   {
+    "id": "DDEUDS26-001-EFFECTIVE-WZ",
+    "entity_kind": "test",
+    "display_name": "Modelo UDS cabe na região permitida",
+    "semantic": {
+     "display_name": "Modelo UDS cabe na região permitida"
+    }
+   },
+   {
+    "id": "DDEUDS26-002-LYA-HIGHZ",
+    "entity_kind": "test",
+    "display_name": "Modelo UDS e o Ly-α do DESI",
+    "semantic": {
+     "display_name": "Modelo UDS e o Ly-α do DESI"
+    }
+   },
+   {
+    "id": "DDEUDS26-003-RSD-GROWTH",
+    "entity_kind": "test",
+    "display_name": "Modelo UDS passa no teste de crescimento",
+    "semantic": {
+     "display_name": "Modelo UDS passa no teste de crescimento"
+    }
+   },
+   {
+    "id": "DDEUDS26-004-LENSING-LSS",
+    "entity_kind": "test",
+    "display_name": "Modelo UDS e as lentes gravitacionais",
+    "semantic": {
+     "display_name": "Modelo UDS e as lentes gravitacionais"
+    }
+   },
+   {
+    "id": "DDEUDS26-005-PERTURBATION-STABILITY",
+    "entity_kind": "test",
+    "display_name": "Modelo UDS é estável sob perturbações?",
+    "semantic": {
+     "display_name": "Modelo UDS é estável sob perturbações?"
+    }
+   },
+   {
+    "id": "DDEUDS26-006-JOINT-ATTRIBUTION",
+    "entity_kind": "test",
+    "display_name": "Preferência pelo UDS vem de várias sondas?",
+    "semantic": {
+     "display_name": "Preferência pelo UDS vem de várias sondas?"
+    }
+   },
+   {
+    "id": "DE26-007-GROWTH-GEOMETRY-SPLIT",
+    "entity_kind": "test",
+    "display_name": "Energia escura dinâmica: geometria versus crescimento",
+    "semantic": {
+     "display_name": "Energia escura dinâmica: geometria versus crescimento"
+    }
+   },
+   {
+    "id": "DE26-021-REDSHIFT-LEVERAGE-JACKKNIFE",
+    "entity_kind": "test",
+    "display_name": "w0-wa depende de uma faixa de supernovas?",
+    "semantic": {
+     "display_name": "w0-wa depende de uma faixa de supernovas?"
+    }
+   },
+   {
+    "id": "DE26-022-LYA-FULLSHAPE-TRACER-COHERENCE",
+    "entity_kind": "test",
+    "display_name": "Ly-α completo enfraquece a preferência por w0-wa?",
+    "semantic": {
+     "display_name": "Ly-α completo enfraquece a preferência por w0-wa?"
+    }
+   },
+   {
+    "id": "DM26-012-MULTIPROBE-SCALE-CONSISTENCY",
+    "entity_kind": "test",
+    "display_name": "Uma só escala de corte para três sondas",
+    "semantic": {
+     "display_name": "Uma só escala de corte para três sondas"
+    }
+   },
+   {
+    "id": "DMN26-001-ANOMALY-LEDGER",
+    "entity_kind": "test",
+    "display_name": "Quais anomalias contra a CDM sobrevivem",
+    "semantic": {
+     "display_name": "Quais anomalias contra a CDM sobrevivem"
+    }
+   },
+   {
+    "id": "DMN26-002-S8-SUPPRESSION",
+    "entity_kind": "test",
+    "display_name": "Matéria escura reconcilia S8 de Planck e lentes?",
+    "semantic": {
+     "display_name": "Matéria escura reconcilia S8 de Planck e lentes?"
+    }
+   },
+   {
+    "id": "DMN26-003-LYA-WDM-FDM",
+    "entity_kind": "test",
+    "display_name": "Ly-α e satélites preferem matéria escura morna?",
+    "semantic": {
+     "display_name": "Ly-α e satélites preferem matéria escura morna?"
+    }
+   },
+   {
+    "id": "DMN26-004-SIDM-HALO",
+    "entity_kind": "test",
+    "display_name": "Matéria escura autointeragente explica curvas de rotação?",
+    "semantic": {
+     "display_name": "Matéria escura autointeragente explica curvas de rotação?"
+    }
+   },
+   {
+    "id": "DMN26-005-LATE-GROWTH-TOMOGRAPHY",
+    "entity_kind": "test",
+    "display_name": "Déficit de crescimento surge tarde no universo?",
+    "semantic": {
+     "display_name": "Déficit de crescimento surge tarde no universo?"
+    }
+   },
+   {
+    "id": "DMN26-006-JOINT-SUBSTRUCTURE-HOLDOUT",
+    "entity_kind": "test",
+    "display_name": "Satélites e lentes juntos restringem o corte",
+    "semantic": {
+     "display_name": "Satélites e lentes juntos restringem o corte"
+    }
+   },
+   {
+    "id": "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS",
+    "entity_kind": "test",
+    "display_name": "Sinais não-CDM sobrevivem a dois modelos bariônicos?",
+    "semantic": {
+     "display_name": "Sinais não-CDM sobrevivem a dois modelos bariônicos?"
+    }
+   }
+  ]
+ }
+}
