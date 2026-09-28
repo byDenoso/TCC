@@ -27,7 +27,8 @@ from typing import Any
 from .semantics import is_private, resolve as resolve_semantic
 from .tower_paths import entity_path, fs_path
 
-MAX_CONTESTS = 2
+MAX_CONTESTS = 1
+MAX_CONTEST_DEPTH = 1
 POSITIVE_VERDICTS = {"PROMOTED", "SUPPORTED"}
 # The spine: never a gene, never a canary. Changes here are recommendations to Dener only.
 SPINE_PREFIXES = ("contract", "writer", "frozen", "criteria", "fitness", "spine", "privacy", "gate")
@@ -199,6 +200,9 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
     current = _entity(root, "test", test_id)
     if current is None:
         return []
+    # An attack is evidence about the original test and is never itself attackable.
+    if current.get("contests_test_id"):
+        return []
     contests = list(current.get("contests") or [])
     if len(contests) >= MAX_CONTESTS or current.get("review_state") in {"CONFIRMED", "REFUTED"} and body.get("source") != "SENTINEL":
         return []
@@ -206,11 +210,21 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
     attack = body.get("contest_test") if isinstance(body.get("contest_test"), dict) else None
     attack_id = None
     if attack:
-        attack_id = str(attack.get("test_id") or f"CONTEST-{test_id}-{len(contests) + 1}")
+        attack_no = len(contests) + 1
+        attack_id = str(attack.get("test_id") or f"CONTEST-{test_id}-{attack_no}")
+        parent_semantic = current.get("semantic") if isinstance(current.get("semantic"), dict) else {}
+        attack_semantic = attack.get("semantic") if isinstance(attack.get("semantic"), dict) else {}
+        parent_name = str(current.get("display_name") or parent_semantic.get("display_name") or
+                          parent_semantic.get("question_plain") or current.get("question") or "Teste atacado")
+        natural_name = f"Ataque {attack_no} · {' '.join(parent_name.split()[:5])}"
+        domain = str(attack.get("domain") or current.get("domain") or parent_semantic.get("domain_id") or "").strip()
         requests += hypothesis_fn(item, {**attack, "test_id": attack_id, "contests_test_id": test_id,
                                          "roadmap_id": attack.get("roadmap_id") or current.get("roadmap_id"),
                                          "incident_id": current.get("incident_id"),
-                                         "priority": "P0"}, root)
+                                         "priority": "P0", "display_name": natural_name, "domain": domain,
+                                         "semantic": {**parent_semantic, **attack_semantic,
+                                                      "display_name": natural_name,
+                                                      "domain_id": str(domain).lower()}}, root)
     entry = {"n": len(contests) + 1, "by": str(body.get("source") or body.get("referee") or "REFEREE_1").upper(),
              "reason": body.get("reason"), "contest_test_id": attack_id, "incident_id": current.get("incident_id"),
              "at": _now(item), "refs": body.get("refs")}
@@ -243,6 +257,75 @@ def review_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     update = _test_update(root, test_id, {"review_state": state, "reviews": reviews},
                           f"REQ-REVIEW-{test_id}-R{referee}-{len(reviews)}", f"RESULT_{state}")
     return [update] if update else []
+
+
+def _contest_depth(root: Path, test: dict[str, Any]) -> int:
+    depth, seen, current = 0, set(), test
+    while current.get("contests_test_id"):
+        parent_id = str(current.get("contests_test_id") or "")
+        if not parent_id or parent_id in seen:
+            break
+        seen.add(parent_id)
+        depth += 1
+        parent = _entity(root, "test", parent_id)
+        if parent is None:
+            break
+        current = parent
+    return depth
+
+
+def _attack_outcome(test: dict[str, Any]) -> str | None:
+    """Map the attack test's frozen criterion result onto the attacked test."""
+    verdict = str(test.get("verdict") or "").upper()
+    decision = str(test.get("decision") or "").upper()
+    if verdict in {"REJECTED", "FAILED", "FALSIFIED"} or decision in {"REFUTED", "FAILED", "FALSIFIED"}:
+        return "REFUTED"
+    if verdict in POSITIVE_VERDICTS or decision in {"SURVIVED", "CONFIRMED", "PASS", "PASSED"}:
+        return "CONFIRMED"
+    return None
+
+
+def contest_chain_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
+    """Enforce depth=1 and close originals mechanically from completed attacks."""
+    root = Path(root)
+    tests = _tests(root)
+    by_id = {str(test.get("id")): test for test in tests if test.get("id")}
+    requests: list[dict[str, Any]] = []
+    for test in tests:
+        if _contest_depth(root, test) <= MAX_CONTEST_DEPTH:
+            continue
+        if str(test.get("state") or test.get("status") or "").upper() == "ARCHIVED":
+            continue
+        update = _test_update(root, str(test.get("id") or ""), {
+            "status": "ARCHIVED", "state": "ARCHIVED", "review_state": "ARCHIVED",
+            "archive_reason": "contest_depth_exceeded", "execution": None,
+        }, f"REQ-CONTEST-ARCHIVE-{test.get('id')}", "CONTEST_CHAIN_ARCHIVED")
+        if update:
+            requests.append(update)
+    candidates: dict[str, list[dict[str, Any]]] = {}
+    for attack in tests:
+        parent_id = str(attack.get("contests_test_id") or "")
+        if not parent_id or _contest_depth(root, attack) != 1 or _attack_outcome(attack) is None:
+            continue
+        candidates.setdefault(parent_id, []).append(attack)
+    for parent_id, attacks in sorted(candidates.items()):
+        parent = by_id.get(parent_id)
+        if not parent or parent.get("contests_test_id") or parent.get("review_state") in {"CONFIRMED", "REFUTED"}:
+            continue
+        attacks.sort(key=lambda attack: (str(attack.get("executed_at") or ""), str(attack.get("id") or "")))
+        attack = attacks[0]
+        outcome = _attack_outcome(attack)
+        update = _test_update(root, parent_id, {
+            "review_state": outcome,
+            "mechanical_contest_verdict": {
+                "contest_test_id": attack.get("id"), "outcome": outcome,
+                "rule": "FROZEN_ATTACK_CRITERION_V1",
+                "at": attack.get("executed_at") or attack.get("updated_at"),
+            },
+        }, f"REQ-CONTEST-MECHANICAL-{parent_id}", f"RESULT_{outcome}")
+        if update:
+            requests.append(update)
+    return requests
 
 
 # ── Genome: canary mutations, rollback, fitness ─────────────────────────────
@@ -388,8 +471,7 @@ def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind:
 # ── Test batteries: the Executor dispatches, GitHub Actions computes (public, free, parallel) ──
 
 def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
-    """TEST_BATTERY {battery_id?, tests:[{test_id, script, requirements[], timeout_min, prediction}]} -> QUEUED.
-    Each test must already be registered with frozen criteria; its prediction is recorded before any compute."""
+    """TEST_BATTERY uses only reviewed recipe+params; inline code is forbidden."""
     doc = _read(root, BATTERIES_DOC)
     batteries = list(doc.get("batteries") or [])
     bid = str(body.get("battery_id") or f"bat-{_now(item)[:19].replace(':', '').replace('-', '')}").lower()
@@ -400,23 +482,17 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     for spec in (body.get("tests") or [])[:MAX_BATTERY_TESTS]:
         test_id = str(spec.get("test_id") or "")
         current = _entity(root, "test", test_id) if test_id else None
-        if not str(spec.get("script") or "").strip() and spec.get("script_b64"):
-            # Connectors may refuse to write raw code inside JSON; the script can travel base64-encoded.
-            try:
-                spec = {**spec, "script": base64.b64decode(str(spec["script_b64"]) + "===").decode("utf-8")}
-            except (ValueError, UnicodeDecodeError):
-                continue
         recipe = str(spec.get("recipe") or "").strip()
-        if recipe and not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
-            continue
-        if current is None or not (str(spec.get("script") or "").strip() or recipe):
+        if current is None or spec.get("script") or not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
         if str(current.get("domain") or "").upper() == "OLYMPUS" or current.get("private"):
-            continue  # personal data never leaves for a public runner
-        tests.append({"test_id": test_id, "script": str(spec.get("script") or ""), "recipe": recipe or None,
-                      "params": spec.get("params") if isinstance(spec.get("params"), dict) else {}, "requirements": [str(r) for r in spec.get("requirements") or []][:20],
-                      "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": spec.get("prediction")})
-        changes = {"status": "RUNNING", "state": "RUNNING", "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid}
+            continue
+        params = spec.get("params") if isinstance(spec.get("params"), dict) else {}
+        tests.append({"test_id": test_id, "recipe": recipe, "params": params,
+                      "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)),
+                      "prediction": spec.get("prediction")})
+        changes = {"status": "RUNNING", "state": "RUNNING", "execution": "GITHUB_ACTIONS_BATTERY",
+                   "battery_id": bid, "execution_recipe": recipe}
         if spec.get("prediction") and not current.get("prediction"):
             changes["prediction"] = spec["prediction"]
         update = _test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_DISPATCHED")
@@ -426,7 +502,6 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         return []
     batteries.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"), "tests": tests})
     return [_doc(BATTERIES_DOC, {"batteries": batteries[-200:]}, f"REQ-BATTERY-{bid}")] + requests
-
 
 def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Path, result_fn) -> list[dict[str, Any]]:
     """BATTERY_STATUS {battery_id, status DISPATCHED|DONE, run_id?, results:[{test_id, ok, result, semantic, log_tail}]}."""
@@ -507,6 +582,14 @@ _INCIDENT_PUBLIC_COPY_PT = {
     "EMPTY_FRONTIER_ACTIVE_ROADMAP": "Uma área de trabalho ativa ficou repetidamente sem um próximo teste pronto para executar.",
 }
 _INCIDENT_PUBLIC_FALLBACK_PT = "O sistema detectou o mesmo problema operacional mais de uma vez e abriu uma investigação para entender a causa."
+_INCIDENT_DETAIL_PT = {
+    "INDEPENDENT_EVALUATORS_UNAVAILABLE": ("A verificação exigiu avaliadores independentes, mas o runtime não produziu avaliações independentes elegíveis.", "duas avaliações independentes persistidas sobre a mesma amostra congelada"),
+    "RUNNER_ARTIFACT_EXECUTOR_UNAVAILABLE": ("A execução pública terminou sem um artifact científico utilizável e rastreável pelo Executor.", "um artifact válido do runner com proveniência e read-back"),
+    "PRE_RESULT_TEMPORAL_ORDER_UNRESOLVED": ("A proveniência não demonstra que a condição pré-registrada ocorreu antes do resultado observado.", "evidência temporal canônica que fixe a ordem entre pré-registro e resultado"),
+    "CHECKPOINT_SEQUENCE_OBSERVABILITY_INCOMPLETE": ("A sequência posterior ao checkpoint não está observável por inteiro, então não dá para classificar estagnação com segurança.", "uma sequência posterior completa sem lacunas materiais"),
+    "TEST_CREATION_ORDER_UNRESOLVED": ("A ordem canônica de criação dos testes não pode ser reconstruída com a evidência atual.", "proveniência temporal suficiente para ordenar a criação dos testes"),
+    "CAMB_RUNTIME_POLICY_DRIFT": ("Um resultado que exige CAMB foi produzido fora do runtime portado exigido para ciência de produção.", "reexecução da mesma definição científica no CAMB portado do runner público"),
+}
 
 
 def _signal_clusters(root: Path, tests: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -687,16 +770,25 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
                 stamps.add(observation["timestamp"])
             private = private or observation["private"]
         ordered_stamps = sorted(stamps)
+        what_broke, missing = _INCIDENT_DETAIL_PT.get(code, (
+            f"A verificação operacional {code.replace('_', ' ').lower()} falhou repetidamente.",
+            f"evidência suficiente para encerrar {code.replace('_', ' ').lower()}",
+        ))
+        first_seen = ordered_stamps[0] if ordered_stamps else current.get("first_seen")
         return {
             "incident_id": incident_id,
             "parent_incident_id": parent_incident_id or current.get("parent_incident_id"),
             "signal_code": code,
+            "summary": f"Quebrou: {what_broke} Desde: {first_seen or 'momento inicial não registrado'}. Falta: {missing}.",
+            "what_broke": what_broke,
+            "since_when": first_seen,
+            "what_is_missing": missing,
             "topic_id": topic_id,
             "evidence_count": len(evidence),
             "evidence_refs": sorted(evidence),
             "source_roles": sorted(source_roles),
             "signal_test_ids": sorted(signal_test_ids),
-            "first_seen": ordered_stamps[0] if ordered_stamps else current.get("first_seen"),
+            "first_seen": first_seen,
             "last_seen": ordered_stamps[-1] if ordered_stamps else current.get("last_seen"),
             "private": private,
         }
