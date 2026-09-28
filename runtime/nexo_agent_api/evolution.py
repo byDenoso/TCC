@@ -1030,19 +1030,31 @@ def _public_entity_ids(root: Path, kind: str, ids: list[Any]) -> list[str]:
 
 
 def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Public incidents must say what broke, since when, and what is still missing."""
     out = []
     for incident in incidents:
         if incident.get("private"):
             continue
-        summary_pt = _INCIDENT_PUBLIC_COPY_PT.get(
-            str(incident.get("signal_code") or "").upper(),
-            _INCIDENT_PUBLIC_FALLBACK_PT,
-        )
+        code = str(incident.get("signal_code") or "").upper()
+        since = str(incident.get("first_seen") or "").strip()
+        detail = _INCIDENT_DETAIL_PT.get(code)
+        if detail:
+            fact, missing = detail
+        else:
+            fact = _INCIDENT_PUBLIC_COPY_PT.get(code)
+            if not fact:
+                readable = code.replace("_", " ").lower() if code else "falha operacional sem código estável"
+                fact = f"O sistema detectou recorrência de {readable}."
+            missing = "evidência específica que identifique a causa material e a condição objetiva de encerramento"
+        when = f" Observado desde {since}." if since else " O início ainda não está registrado."
+        summary_pt = f"{fact}{when} Falta {missing}."
         out.append({
             "incident_id": incident.get("incident_id"),
             "state": incident.get("state"),
             "evidence_count": int(incident.get("evidence_count") or 0),
             "summary_pt": summary_pt,
+            "since": since or None,
+            "missing": missing,
             "public_ids": {
                 "tests": _public_entity_ids(root, "test", incident.get("test_ids") or [])
                          + _public_entity_ids(root, "test", incident.get("contest_test_ids") or []),
