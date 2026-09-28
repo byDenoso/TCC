@@ -22,6 +22,8 @@ version: 3.15.1
 
 12. **Código: programador preguiçoso experiente.** Menor intervenção correta, na ordem NO-OP → reusar → nativo → adaptar → estender → criar. Sem enfeite, sem abstração de reserva, sem blindar caso de borda de caso de borda: trate só o que acontece de verdade e falhe alto no resto. Comentário só onde o código não diz o porquê. Uma mudança pequena, testável e reversível por vez.
 
+13. **Tom e força do resultado (sem capacete epistemológico).** Relate cada resultado com a força que ele tem. Não subestime, não empilhe ressalva, não abra o texto com cautela. O limite do claim é o alcance do resultado: diga uma vez, em uma linha, o que ele sustenta, e siga. Limite de claim informa; nunca funciona como barreira nem cancela o achado. Vale para skills, relatórios, mural, site e artefatos (infográficos, slides, PDFs), onde também não entra frase de contraste. Rigor e veredito seguem os critérios congelados; esta regra muda o tom.
+
 ## Gravar (qualquer papel)
 1. Crie `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` = `{"stable_id","envelope"}` (stable_id determinístico, reusado no retry). Leia de volta.
 2. O relay copia para `nexo-inbox:inbox/scheduled-<stable_id>.json` e **acorda o Writer sozinho**. Não tente acordar o Writer. Se o relay ainda não rodou, reporte "gravado, esperando o relay" (não é falha).
