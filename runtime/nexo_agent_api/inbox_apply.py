@@ -220,8 +220,6 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     proposed_semantic = body.get("semantic") if isinstance(body.get("semantic"), dict) else {}
     proposed_display_name = str(body.get("display_name") or proposed_semantic.get("display_name") or "").strip()
     proposed_domain = str(body.get("domain") or proposed_semantic.get("domain_id") or "").strip()
-    if existing_test is None and (not proposed_display_name or not proposed_domain):
-        raise ProposalError("new TEST requires display_name and domain")
     if existing_test is not None:
         # Same test proposed again: fill what is still empty instead of rejecting (frozen fields are never replaced).
         fill = {k: v for k, v in body.items() if k in ("method", "null", "rival", "claim_boundary", "priority", "display_name", "domain")
@@ -248,6 +246,13 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         {"id": test_id, "roadmap_id": roadmap_id, "campaign_id": body.get("campaign_id") or inherited["campaign_id"], "question": question},
         body.get("semantic") or {}, root,
     )
+    # Missing name/domain never blocks (the Writer completes, it does not reject): derive them.
+    if not proposed_domain:
+        proposed_domain = str(semantic.get("domain_id") or inherited.get("domain")
+                              or ("engineering" if test_id.upper().startswith("META-") else "science"))
+    if not proposed_display_name:
+        words = re.sub(r"[?¿!.]+$", "", str(question or test_id)).split()
+        proposed_display_name = " ".join(words[:7]) + ("…" if len(words) > 7 else "")
     semantic = {**semantic, "domain_id": proposed_domain.lower(), "display_name": proposed_display_name}
     changes = {
         "kind": "TEST", "status": lifecycle, "state": lifecycle,

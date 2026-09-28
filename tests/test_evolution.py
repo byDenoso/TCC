@@ -121,8 +121,9 @@ def test_battery_dispatch_and_collect(tmp_path):
     for tid in ("T-A", "T-B"):
         _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": tid, "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
     _apply(root, {"kind": "TEST_BATTERY", "created_at": "2026-09-25T14:00:00Z", "payload": {"battery_id": "bat-1", "tests": [
-        {"test_id": "T-A", "script": "print(1)", "prediction": {"p_promoted": 0.2}},
-        {"test_id": "T-B", "script": "print(2)"}, {"test_id": "MISSING", "script": "x"}]}})
+        {"test_id": "T-A", "recipe": "seed_bounds", "params": {"n": [10]}, "prediction": {"p_promoted": 0.2}},
+        {"test_id": "T-B", "recipe": "seed_bounds"}, {"test_id": "MISSING", "recipe": "seed_bounds"},
+        {"test_id": "T-A", "script": "print(1)"}]}})
     from runtime.nexo_agent_api.evolution import pending_batteries
     assert [b["id"] for b in pending_batteries(root)] == ["bat-1"]
     assert _test(root, "T-A")["status"] == "RUNNING" and _test(root, "T-A")["prediction"] == {"p_promoted": 0.2}

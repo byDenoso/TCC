@@ -23,9 +23,8 @@ def test_unknown_active_defaults_to_gpt():
     assert keep == [{"producer": "GPT"}]
 
 
-def test_battery_accepts_base64_script():
-    import base64, inspect
+def test_battery_is_recipe_only():
+    import inspect
     from runtime.nexo_agent_api import evolution
-    src = inspect.getsource(evolution)
-    assert "script_b64" in src
-    assert base64.b64decode(base64.b64encode(b"print(1)").decode() + "===") == b"print(1)"
+    src = inspect.getsource(evolution.battery_requests)
+    assert "recipe" in src and 'spec.get("script")' in src  # inline code is refused
