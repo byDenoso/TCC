@@ -1086,8 +1086,10 @@ def _public_event_role(event_type: str) -> str | None:
     value = event_type.upper()
     if "NEXO_THOUGHT" in value:
         return "PITIA"
-    if "HYPOTHESIS" in value or "LESSON" in value:
+    if "HYPOTHESIS" in value or "LESSON" in value or "SEMANTIC_BACKFILL" in value:
         return "LEARNER"
+    if "LEARNING_SIGNAL" in value or "RECIPE" in value:
+        return "EXECUTOR"
     if (
         "CONTEST" in value
         or "REFEREE" in value
@@ -1146,7 +1148,8 @@ def _public_activity(
         # Entity-bearing events are shown only when the target is already in the public read model.
         # System-level audit/thought events may be shown without an entity id.
         if entity_name and not is_public_entity:
-            if event_type not in {"INTEGRITY_REPORT_RECORDED", "NEXO_THOUGHT_RECORDED", "NEXO_THOUGHT_NOOP_RECORDED"}:
+            if event_type not in {"INTEGRITY_REPORT_RECORDED", "NEXO_THOUGHT_RECORDED", "NEXO_THOUGHT_NOOP_RECORDED",
+                                  "LEARNING_SIGNAL_RECORDED"}:
                 continue
             entity_name = None
         item: dict[str, Any] = {
