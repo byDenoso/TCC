@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 import base64
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -405,11 +406,15 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
                 spec = {**spec, "script": base64.b64decode(str(spec["script_b64"]) + "===").decode("utf-8")}
             except (ValueError, UnicodeDecodeError):
                 continue
-        if current is None or not str(spec.get("script") or "").strip():
+        recipe = str(spec.get("recipe") or "").strip()
+        if recipe and not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
+            continue
+        if current is None or not (str(spec.get("script") or "").strip() or recipe):
             continue
         if str(current.get("domain") or "").upper() == "OLYMPUS" or current.get("private"):
             continue  # personal data never leaves for a public runner
-        tests.append({"test_id": test_id, "script": str(spec["script"]), "requirements": [str(r) for r in spec.get("requirements") or []][:20],
+        tests.append({"test_id": test_id, "script": str(spec.get("script") or ""), "recipe": recipe or None,
+                      "params": spec.get("params") if isinstance(spec.get("params"), dict) else {}, "requirements": [str(r) for r in spec.get("requirements") or []][:20],
                       "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": spec.get("prediction")})
         changes = {"status": "RUNNING", "state": "RUNNING", "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid}
         if spec.get("prediction") and not current.get("prediction"):
