@@ -1331,7 +1331,7 @@ def _emergence(root: Path, tests: list[dict[str, Any]], genome: dict[str, Any], 
         "contest": _hours_since([c.get("at") for t in tests for c in t.get("contests") or []], now),
         "decoy": _hours_since([d.get("at") for d in _read(root, DECOYS_DOC).get("planted") or []], now),
     }
-    limits = {"thought": 6, "dream": 24, "genome_mutation": 48, "fitness": 12, "new_hypothesis": 6,
+    limits = {"thought": 6, "dream": 24, "genome_mutation": 168, "fitness": 12, "new_hypothesis": 6,
               "result": 3, "contest": 12, "decoy": 168}
     owners = {"thought": "PITIA", "dream": "PITIA", "genome_mutation": "PITIA/LEARNER", "fitness": "GUARDIAO",
               "new_hypothesis": "LEARNER", "result": "EXECUTOR", "contest": "REFUTADOR", "decoy": "GUARDIAO"}
