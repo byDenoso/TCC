@@ -1,0 +1,182 @@
+{
+  "stable_id": "nexo-recipe-review-20260928-a",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-28T19:58:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-203396B660A7149B675FDB37117600FC-1",
+              "verdict": "APPROVED",
+              "reasons": [
+                "A família separa modos declarativos, preserva critérios congelados por TEST e exige falha explícita quando falta input; a implementação ainda deve obedecer aos bindings concretos de cada modo."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "DE26-007-GROWTH-GEOMETRY-SPLIT",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar datasets/modelos/templates e bins usados no bloco de crescimento; a especificação ainda deixa escolhas científicas para a implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-8E6AE69DC6C2E127E7713D43C999F19E-1",
+              "test_id": "DE26-022-LYA-FULLSHAPE-TRACER-COHERENCE",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar a likelihood/covariância full-shape Lyα e a combinação CMB+SNe sem dupla contagem, com versões públicas e regra de residual explícitas."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "DM26-012-MULTIPROBE-SCALE-CONSISTENCY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar quais análises/likelihoods públicas entram e as transformações para a parametrização comum; 'resultados públicos' não define a seleção congelada."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Contrato incompleto: faltam método, dados ou critérios suficientes para uma receita auditável; completar o TEST antes da implementação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "GZ01-B03-T03-WINDOW-ROTATION-NULL",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Faltam bindings públicos concretos para catálogo, seleção, randoms, pesos, janela e covariância; a receita precisa receber esses inputs já fixados."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "H0X26-010-ANCHOR-VELOCITY-FIELD-ORTHOGONALITY",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar as reconstruções de velocidade e os produtos públicos exatos, com cortes/perturbações declarativos; a receita não pode escolher a fonte durante a execução."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-BD1B54BB91B1568C",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar faixas/modos de covariância e produtos de duas compilações; explicitar a estatística de H0 e w0-wa e o nulo de permutação."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-38C9231D97D42CC8AC69E1A959D351A6",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar quais análises/likelihoods públicas entram e as transformações para a parametrização comum; 'resultados públicos' não define a seleção congelada."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-28T19:58:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-B4EA3D6BCCB6B3708DB575C68140C570-1",
+              "test_id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-0",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fixar os posteriors GW e as duas escolhas de catálogo/host; a receita não pode selecionar amostras depois de ver os dados."
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
