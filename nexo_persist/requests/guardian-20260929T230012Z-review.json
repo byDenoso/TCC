@@ -1,0 +1,20 @@
+{
+  "stable_id": "guardian-20260929T230012Z-review",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-29T23:00:12Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "LEARNING_SIGNAL::GW-TCC-368E31A1147E0F8552E99553D9804BEF",
+        "verdict": "CHANGES",
+        "reasons": [
+          "Fidelidade ao contrato: faltam as estatísticas exatas dos cinco contratos atendidos.",
+          "Saída auditável: separar por método ou declarar cada estatística e seus parâmetros."
+        ]
+      }
+    }
+  }
+}
