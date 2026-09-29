@@ -316,15 +316,26 @@ def _reviewable(test: dict[str, Any]) -> bool:
         return False
     if str(test.get("state") or test.get("status") or "").upper() == "ARCHIVED":
         return False
-    return test.get("review_state") not in {"CONFIRMED", "REFUTED", "ARCHIVED"}
+    return str(test.get("review_state") or "") not in {"CONFIRMED", "REFUTED", "ARCHIVED"}
+
+
+def _safe(build, fallback, name: str):
+    """One broken status part must not take the whole status (and the public site) down."""
+    try:
+        return build()
+    except Exception as exc:  # noqa: BLE001 - reported, never fatal
+        import traceback
+        where = " < ".join(f"{f.name}:{f.lineno}" for f in traceback.extract_tb(exc.__traceback__)[-3:])
+        print(f"evolution status: {name} skipped ({type(exc).__name__}: {str(exc)[:120]} at {where})", file=sys.stderr)
+        return fallback
 
 
 def _review_queue(positive: list[dict[str, Any]]) -> dict[str, list[str]]:
     """Referee queues, oldest result first so no original waits behind newer ones."""
-    candidates = sorted((t for t in positive if _reviewable(t)),
+    candidates = sorted((t for t in positive if isinstance(t, dict) and _reviewable(t)),
                         key=lambda t: (_stamp(t.get("executed_at") or t.get("updated_at")), str(t.get("id") or "")))
     return {
-        "referee_1": [t["id"] for t in candidates if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")
+        "referee_1": [t["id"] for t in candidates if str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
                       or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
         "referee_2": [t["id"] for t in candidates if t.get("review_state") == "REFEREE1_PASSED"],
     }
@@ -1709,7 +1720,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
             "canaries_waiting": [{"gene": g.get("id"), "canary": g.get("canary"), "since": g.get("canary_since")}
                                  for g in genome.get("genes") or [] if g.get("status") == "CANARY"],
         },
-        "review_queue": _review_queue(positive),
+        "review_queue": _safe(lambda: _review_queue(positive), {"referee_1": [], "referee_2": []}, "review_queue"),
         # Visibility is not a gate: every non-closed roadmap in the Tower is shown to tasks.
         # charter_status remains explicit so gate semantics stay separate from execution visibility.
         "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps

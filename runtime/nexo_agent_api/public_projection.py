@@ -811,8 +811,8 @@ def _load_evolution(root: Path) -> dict[str, Any] | None:
         import sys
         import traceback
 
-        frame = traceback.extract_tb(exc.__traceback__)[-1]
-        print(f"evolution layer skipped: {type(exc).__name__} at {Path(frame.filename).name}:{frame.lineno}", file=sys.stderr)
+        where = " < ".join(f"{Path(f.filename).name}:{f.lineno}" for f in traceback.extract_tb(exc.__traceback__)[-4:])
+        print(f"evolution layer skipped: {type(exc).__name__}: {str(exc)[:160]} at {where}", file=sys.stderr)
         return None
     empty = not (status["charters"] or status["genome"]["genes"] or status["thoughts"]
                      or status.get("signal_clusters") or status.get("incidents"))
