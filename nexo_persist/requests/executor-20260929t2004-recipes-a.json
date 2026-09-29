@@ -1,0 +1,77 @@
+{
+  "stable_id": "executor-20260929t2004-recipes-a",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-29T23:04:40Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-29T23:04:40Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "erosita_selection_depth_interaction",
+              "inputs": "eRASS1 catalogue, depth products, frozen residual",
+              "data_sources": [
+                "eROSITA DR1"
+              ],
+              "statistic": "Residual interaction with exposure, detection and depth strata controlling redshift and mass proxy.",
+              "criterion": "Apply the frozen SELECTION_COUPLED versus INVARIANT rule.",
+              "outputs": "interaction statistics and decision",
+              "tests_served": [
+                "GZSB-07-EROSITA-SELECTION-DEPTH-INTERACTION"
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-29T23:04:40Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "wl_highz_calibrator_hierarchy",
+              "inputs": "Frozen DES, KiDS and HSC calibrator products with released covariance",
+              "data_sources": [
+                "KiDS-1000 and frozen parent releases"
+              ],
+              "statistic": "Hierarchical normalization plus high-z trend by survey.",
+              "criterion": "Apply the frozen CALIBRATOR_TENSION versus CONSISTENT rule.",
+              "outputs": "offsets, trends and decision",
+              "tests_served": [
+                "GZSB-09-WL-CALIBRATOR-HIGHZ-HIERARCHY"
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-29T23:04:40Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "de_microphysics_stage1_stability",
+              "inputs": "Frozen theory parameter boxes and published constraints; CAMB 1.6.6 where applicable.",
+              "data_sources": [
+                "sources frozen in each test"
+              ],
+              "statistic": "Background and stability diagnostics over the frozen redshift interval.",
+              "criterion": "Apply each test's frozen stability decision rule.",
+              "outputs": "stable region, failed conditions and decision",
+              "tests_served": [
+                "T-DEM26-004",
+                "T-DEM26-005",
+                "T-DEM26-006"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
