@@ -1,0 +1,20 @@
+{
+  "name": "nexo-marketplace",
+  "interface": {
+    "displayName": "NEXO"
+  },
+  "plugins": [
+    {
+      "name": "nexo",
+      "source": {
+        "source": "local",
+        "path": "./plugins/nexo"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
