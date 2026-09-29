@@ -1,0 +1,1 @@
+{"stable_id":"operator-bind-h0x26-010-cf4-min","envelope":{"kind":"DATA_BINDING","source":"EXECUTOR","producer":"GPT","payload":{"test_id":"H0X26-010-ANCHOR-VELOCITY-FIELD-ORTHOGONALITY","inputs":[{"name":"Cosmicflows-4 corrected catalogs and velocity model","url":"https://edd.ifa.hawaii.edu/"}],"status":"BOUND"},"created_at":"2026-09-29T22:03:00Z"}}
