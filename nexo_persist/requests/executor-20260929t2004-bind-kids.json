@@ -1,0 +1,22 @@
+{
+  "stable_id": "executor-20260929t2004-bind-kids",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-29T23:04:40Z",
+    "payload": {
+      "test_id": "GZSB-09-WL-CALIBRATOR-HIGHZ-HIERARCHY",
+      "inputs": [
+        {
+          "name": "KiDS-1000 weak lensing",
+          "url": "https://kids.strw.leidenuniv.nl/DR4/lensing.php",
+          "format": "official DR4 weak-lensing release",
+          "load": "Use released shear/redshift-calibration products and published covariance required by the frozen hierarchy.",
+          "license": "public"
+        }
+      ],
+      "status": "BOUND",
+      "note": "Official KiDS-1000 release bound; preserve frozen DES/HSC parent inputs and covariance rule."
+    }
+  }
+}
