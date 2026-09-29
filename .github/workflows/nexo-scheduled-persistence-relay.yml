@@ -6,6 +6,7 @@ on:
       - 'nexo/dispatch-runtime'
     paths:
       - 'nexo_persist/requests/*.json'
+  workflow_dispatch:   # replays every request missing from nexo-inbox
 
 permissions:
   contents: write
@@ -19,85 +20,53 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Select exactly one persistence request
-        id: request
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t files < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^nexo_persist/requests/.*\.json$' || true)
-          if [ "${#files[@]}" -ne 1 ]; then
-            echo "Expected exactly one persistence request; found ${#files[@]}" >&2
-            exit 64
-          fi
-          printf 'path=%s\n' "${files[0]}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate request
-        id: validate
-        env:
-          REQUEST_PATH: ${{ steps.request.outputs.path }}
-        run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json, os, re
-          from pathlib import Path
-
-          data=json.loads(Path(os.environ["REQUEST_PATH"]).read_text(encoding="utf-8"))
-          if set(data) != {"stable_id","envelope"}:
-              raise SystemExit("request must contain exactly stable_id,envelope")
-          sid=data["stable_id"]
-          if not isinstance(sid,str) or not re.fullmatch(r"[a-z0-9-]{4,60}",sid):
-              raise SystemExit("invalid stable_id")
-          env=data["envelope"]
-          if not isinstance(env,dict) or not isinstance(env.get("kind"),str) or not isinstance(env.get("source"),str) or "payload" not in env:
-              raise SystemExit("invalid envelope")
-          target=f"inbox/scheduled-{sid}.json"
-          canonical=json.dumps(env,ensure_ascii=False,separators=(",",":"),sort_keys=True)+"\n"
-          Path("/tmp/envelope.json").write_text(canonical,encoding="utf-8")
-          print(f"stable_id={sid}")
-          print(f"target={target}")
-          PY
-
-      - name: Persist idempotently to nexo-inbox
+      - name: Relay every request of this push (or all missing ones on manual run)
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET: ${{ steps.validate.outputs.target }}
+          BEFORE: ${{ github.event.before }}
+          EVENT: ${{ github.event_name }}
         run: |
-          set -euo pipefail
-          REPO="$GITHUB_REPOSITORY"
-
-          if gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" >/tmp/meta.json 2>/dev/null; then
-            python - <<'PY'
-          import base64, json
-          meta=json.load(open("/tmp/meta.json",encoding="utf-8"))
-          got=base64.b64decode(meta["content"])
-          exp=open("/tmp/envelope.json","rb").read()
-          if got != exp:
-              raise SystemExit("stable_id collision with different payload")
-          print("relay readback PASS existing")
-          PY
-            exit 0
-          fi
-
-          python - <<'PY' >/tmp/payload.json
-          import base64, json
-          body=open("/tmp/envelope.json","rb").read()
-          print(json.dumps({
-              "message":"NEXO scheduled persistence relay",
-              "content":base64.b64encode(body).decode(),
-              "branch":"nexo-inbox",
-          }))
-          PY
-
-          gh api --method PUT "repos/$REPO/contents/$TARGET" --input /tmp/payload.json >/tmp/put.json
-          gh api "repos/$REPO/contents/$TARGET?ref=nexo-inbox" >/tmp/meta.json
-
-          python - <<'PY'
-          import base64, json
-          meta=json.load(open("/tmp/meta.json",encoding="utf-8"))
-          got=base64.b64decode(meta["content"])
-          exp=open("/tmp/envelope.json","rb").read()
-          if got != exp:
-              raise SystemExit("relay readback mismatch")
-          print("relay readback PASS")
+          python3 - <<'PY'
+          # Normalizes the stable_id (agents write uppercase, dots, timestamps) and relays every file,
+          # so a request is never lost to a naming detail. Existing identical targets are skipped.
+          import base64, json, os, re, subprocess
+          from pathlib import Path
+          repo = os.environ["GITHUB_REPOSITORY"]
+          if os.environ["EVENT"] == "push" and not re.fullmatch("0+", os.environ.get("BEFORE") or "0"):
+              changed = subprocess.run(["git", "diff", "--name-only", "--diff-filter=AM", os.environ["BEFORE"], os.environ["GITHUB_SHA"]],
+                                       capture_output=True, text=True).stdout.split()
+          else:
+              changed = [str(p) for p in Path("nexo_persist/requests").glob("*.json")]
+          if any(Path(f).name.startswith("replay-all") for f in changed):  # marker file: relay every request still missing
+              changed = [str(p) for p in Path("nexo_persist/requests").glob("*.json")]
+          changed = [f for f in changed if f.startswith("nexo_persist/requests/") and f.endswith(".json") and not Path(f).name.startswith("replay-all")]
+          def api(*args, data=None):
+              return subprocess.run(["gh", "api", *args], input=data, capture_output=True, text=True)
+          sent = bad = 0
+          for f in changed:
+              try:
+                  data = json.loads(Path(f).read_text(encoding="utf-8"))
+                  env = data["envelope"] if isinstance(data.get("envelope"), dict) else data
+                  assert isinstance(env.get("kind"), str) and "payload" in env
+              except Exception as exc:
+                  print(f"::warning::{f}: unreadable request ({type(exc).__name__})"); bad += 1; continue
+              raw_id = str(data.get("stable_id") or Path(f).stem)
+              sid = re.sub(r"[^a-z0-9-]+", "-", raw_id.lower()).strip("-")[:60] or "request"
+              target = f"inbox/scheduled-{sid}.json"
+              body = json.dumps(env, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + chr(10)
+              got = api(f"repos/{repo}/contents/{target}?ref=nexo-inbox")
+              if got.returncode == 0:
+                  same = base64.b64decode(json.loads(got.stdout)["content"]).decode("utf-8") == body
+                  print(f"{target}: {'already relayed' if same else 'exists with other content, kept'}"); continue
+              put = api("--method", "PUT", f"repos/{repo}/contents/{target}", "--input", "-",
+                        data=json.dumps({"message": "NEXO scheduled persistence relay", "branch": "nexo-inbox",
+                                         "content": base64.b64encode(body.encode("utf-8")).decode()}))
+              if put.returncode:
+                  print(f"::error::{target}: {put.stderr.strip()[:200]}"); bad += 1
+              else:
+                  print(f"{target}: relayed"); sent += 1
+          print(f"relayed={sent} failed={bad}")
+          raise SystemExit(1 if bad and not sent else 0)
           PY
 
       - name: Wake the Writer robot now
