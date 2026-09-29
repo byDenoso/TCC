@@ -1,0 +1,88 @@
+{
+  "stable_id": "nexo-critic-20260929t0135",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-29T01:35:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "CONTEST",
+          "source": "REFEREE_1",
+          "created_at": "2026-09-29T01:35:00Z",
+          "payload": {
+            "test_id": "T-DEH26-003-TREE-MATCHING-R1",
+            "reason": "Testar se R=1 permanece sob reparametrização angular independente e dimensionalmente consistente.",
+            "refs": [
+              "T-DEH26-003-TREE-MATCHING-R1"
+            ],
+            "contest_test": {
+              "display_name": "Ataque 1 · R=1 aparece sozinho no matching",
+              "question": "R=1 permanece sob reparametrização equivalente?",
+              "null": "R muda ou exige coeficiente livre.",
+              "rival": "R permanece exatamente 1.",
+              "method": "Derivação simbólica independente com normalização angular genérica.",
+              "data": "Álgebra simbólica do completion local.",
+              "success_criteria": "R=1 exatamente sem coeficiente adicional.",
+              "kill_criteria": "R diferente de 1 ou coeficiente adicional."
+            }
+          }
+        },
+        {
+          "kind": "INTEGRITY_REPORT",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-29T01:35:00Z",
+          "payload": {
+            "state": "AMARELO",
+            "counts": {
+              "tests": 207,
+              "ready": 29,
+              "confirmed": 7,
+              "refuted": 8,
+              "pending_review": 1,
+              "referee1_passed": 3
+            },
+            "areas_with_problem": [
+              "fila de execução",
+              "receitas",
+              "fitness"
+            ]
+          }
+        },
+        {
+          "kind": "SEMANTIC_BACKFILL",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-29T01:35:00Z",
+          "payload": {
+            "items": [
+              {
+                "id": "T-LEARN26-004",
+                "overwrite": true,
+                "semantic": {
+                  "confidence_plain": "alta"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-29T01:35:00Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "EXECUTOR",
+                "text": "Laço de resultado quieto há 3,5 h; retome pela contestação prioritária.",
+                "refs": [
+                  "T-DEH26-003-TREE-MATCHING-R1"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
