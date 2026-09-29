@@ -206,3 +206,23 @@ def test_board_posts_are_addressed_expire_and_hide_private(tmp_path):
     _apply(root, {"kind": "BOARD_POST", "source": "LEARNER", "payload": {"resolve": ["BP-1"]}})
     task = evolution_status(root, now=datetime(2026, 9, 28, 13, tzinfo=timezone.utc))["board"]
     assert [p["to"] for p in task] == ["ALL"]
+
+
+def test_referee_queue_holds_only_reviewable_originals_oldest_first(tmp_path):
+    """Attacks are evidence, never attackable: queueing them starved real originals (2026-09-29:
+    17 of 30 referee_1 entries were CONTEST-* attacks, sorted ahead of the originals)."""
+    root = _tower(tmp_path)
+    for test_id, when in (("T-NEW", "2026-09-25T05:00:00Z"), ("T-OLD", "2026-09-25T02:00:00Z")):
+        _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "_inbox_name": f"{test_id}.json", "payload": {
+            "display_name": test_id, "domain": "science", "test_id": test_id, "question": "q",
+            "success_criteria": "s", "kill_criteria": "k", "rank_score": 0.5}})
+        _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": when,
+                      "payload": {"test_id": test_id, "result": {"verdict": "PROMOTED"}}})
+    _apply(root, {"kind": "CONTEST", "payload": {"test_id": "T-OLD", "reason": "r",
+                                                 "contest_test": {"question": "sobrevive?", "success_criteria": "a", "kill_criteria": "b"}}})
+    _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T06:00:00Z",
+                  "payload": {"test_id": "CONTEST-T-OLD-1", "result": {"verdict": "PROMOTED"}}})
+    assert _test(root, "CONTEST-T-OLD-1")["contests_test_id"] == "T-OLD"
+    queue = evolution_status(root)["review_queue"]
+    assert "CONTEST-T-OLD-1" not in queue["referee_1"] + queue["referee_2"]
+    assert [t for t in queue["referee_1"] if t in {"T-OLD", "T-NEW"}] == ["T-OLD", "T-NEW"]

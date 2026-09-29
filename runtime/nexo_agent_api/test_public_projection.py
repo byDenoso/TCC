@@ -236,9 +236,11 @@ def test_new_guardian_status_maps_publish_safe_yellow_summaries(tmp_path):
 
         projection = _build(root)
         integrity = projection["integrity"]
+        assert integrity["report_checked_at"] == report["created_at"]
+        assert integrity["checked_at"] == integrity["live_checked_at"], "health is re-derived at every build"
         assert _core(integrity) == {
             "status": "YELLOW",
-            "checked_at": report["created_at"],
+            "checked_at": integrity["live_checked_at"],
             "checks_total": len(report["payload"]["checks"]),
             "checks_failing": failing,
             "failing_areas": areas,
@@ -266,9 +268,10 @@ def test_guardian_thematic_integrity_report_without_checks_still_advances_heartb
     }), encoding="utf-8")
 
     integrity = _build(root)["integrity"]
+    assert integrity["report_checked_at"] == "2026-09-27T22:08:21Z", "the newest Guardião pulse is still the report"
     assert _core(integrity) == {
         "status": "YELLOW",
-        "checked_at": "2026-09-27T22:08:21Z",
+        "checked_at": integrity["live_checked_at"],
         "checks_total": 0,
         "checks_failing": 0,
         "failing_areas": [],
@@ -920,4 +923,39 @@ def test_public_activity_is_sanitized_and_role_oriented(tmp_path):
 
 def _core(integrity):
     """Guardião fields only; the live re-check keys are covered in test_projection_drift."""
-    return {k: v for k, v in integrity.items() if k not in {"live_areas", "live_checked_at", "quiet_tasks", "report_age_h"}}
+    return {k: v for k, v in integrity.items() if k not in {"live_areas", "live_checked_at", "quiet_tasks", "report_age_h", "report_checked_at"}}
+
+
+def test_silent_guardiao_cannot_freeze_published_health():
+    """2026-09-29: the Guardião task went quiet at 05:45 and the site kept a 04:53 RED report for 8 h."""
+    from runtime.nexo_agent_api.public_projection import _live_integrity
+
+    stale_red = {"status": "RED", "checked_at": "2026-09-29T04:53:39Z", "checks_total": 4,
+                 "failing_areas": ["automations", "cycle", "guardian_freshness"]}
+    activity = [{"role": role, "at": "2026-09-29T11:39:58Z"} for role in ("EXECUTOR", "REFUTADOR", "LEARNER", "PITIA")]
+    activity.append({"role": "GUARDIAO", "at": "2026-09-29T05:45:23Z"})
+    health = _live_integrity(stale_red, activity, "2026-09-29T11:40:31Z")
+    assert health["checked_at"] == "2026-09-29T11:40:31Z", "checked_at is this build, never the old report"
+    assert health["report_checked_at"] == "2026-09-29T04:53:39Z"
+    assert health["quiet_tasks"] == ["GUARDIAO"]
+    # cycle is alive (roles wrote 1 min ago); only the silent Guardião fails, so the stale RED does not pin the status.
+    assert health["failing_areas"] == ["automations", "guardian_freshness"]
+    assert health["status"] == "YELLOW"
+
+
+def test_health_is_published_even_without_any_guardiao_report():
+    from runtime.nexo_agent_api.public_projection import _live_integrity
+
+    health = _live_integrity(None, [{"role": "EXECUTOR", "at": "2026-09-29T11:00:00Z"}], "2026-09-29T11:30:00Z")
+    assert health["checked_at"] == "2026-09-29T11:30:00Z"
+    assert "guardian_freshness" in health["failing_areas"] and "cycle" not in health["failing_areas"]
+    assert _live_integrity(None, [], "2026-09-29T11:30:00Z") is None, "no activity and no report: nothing to judge"
+
+
+def test_a_fresh_guardiao_verdict_still_counts():
+    from runtime.nexo_agent_api.public_projection import _live_integrity
+
+    activity = [{"role": role, "at": "2026-09-29T11:00:00Z"} for role in ("EXECUTOR", "REFUTADOR", "LEARNER", "GUARDIAO")]
+    health = _live_integrity({"status": "YELLOW", "checked_at": "2026-09-29T10:30:00Z", "checks_total": 1, "failing_areas": []},
+                             activity, "2026-09-29T11:30:00Z")
+    assert health["status"] == "YELLOW" and health["failing_areas"] == []
