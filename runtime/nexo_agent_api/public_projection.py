@@ -737,15 +737,30 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
 _TASK_ROLES = {"CIENTISTA": {"LEARNER", "PITIA"}, "OPERADOR": {"EXECUTOR"}, "CRITICO": {"REFUTADOR", "REFEREE_1"}, "GUARDIAO": {"GUARDIAO"}}
 
 
+_STATUS_RANK = {"GREEN": 0, "YELLOW": 1, "RED": 2}
+
+
+def _worst_status(computed: str, reported: Any) -> str:
+    reported = str(reported or "").upper()
+    return reported if _STATUS_RANK.get(reported, -1) > _STATUS_RANK[computed] else computed
+
+
 def _live_integrity(integrity: dict[str, Any] | None, activity: list[dict[str, Any]], generated_at: str | None) -> dict[str, Any] | None:
-    if not integrity:
-        return integrity
+    """Health is re-derived at every build, so it can never freeze on a silent Guardião task.
+
+    The Guardião's report still contributes the areas only it can judge, but the published
+    status and checked_at come from this build: a paused Guardião shows up as a failing
+    `automations`/`guardian_freshness` check instead of silently aging the whole report.
+    """
     from datetime import datetime, timezone
     def ts(value: Any) -> datetime | None:
         try:
             return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
         except ValueError:
             return None
+    if not integrity and not activity:
+        return integrity
+    integrity = dict(integrity or {"status": None, "checked_at": None, "checks_total": 0, "failing_areas": []})
     now = ts(generated_at) or datetime.now(timezone.utc)
     report_at = ts(integrity.get("checked_at"))
     report_age_h = (now - report_at).total_seconds() / 3600 if report_at else None
@@ -760,20 +775,26 @@ def _live_integrity(integrity: dict[str, Any] | None, activity: list[dict[str, A
         seen = [last_by_role[r] for r in roles if r in last_by_role]
         if not seen or (now - max(seen)).total_seconds() > 3 * 3600:
             quiet_tasks.append(task)
+    last_any = max(last_by_role.values()) if last_by_role else None
     live = {
         "public_projection": True,  # this projection was just rebuilt from the live Tower
         "guardian_freshness": report_age_h is not None and report_age_h <= 3,
     }
-    if last_by_role:  # without any activity the projection cannot judge the tasks
+    if last_by_role:  # without any activity the projection cannot judge the tasks or the loop
         live["automations"] = not quiet_tasks
-    failing = [a for a in integrity.get("failing_areas") or [] if a not in live]
-    failing += [a for a, ok in live.items() if not ok]
-    total = max(int(integrity.get("checks_total") or 0), len(set(failing)))
+        # The cycle is alive when some role wrote to the Tower within the last two hours.
+        live["cycle"] = last_any is not None and (now - last_any).total_seconds() <= 2 * 3600
+    failing = sorted({a for a in integrity.get("failing_areas") or [] if a not in live}
+                     | {a for a, ok in live.items() if not ok})
+    total = max(int(integrity.get("checks_total") or 0), len(failing))
     out = dict(integrity)
     out.update({
-        "failing_areas": sorted(set(failing))[:8], "checks_failing": len(set(failing)), "checks_total": total,
-        "status": integrity.get("status") if set(failing) == set(integrity.get("failing_areas") or [])
-                  else ("GREEN" if not failing else ("RED" if len(set(failing)) >= 3 else "YELLOW")),
+        "failing_areas": failing[:8], "checks_failing": len(failing), "checks_total": total,
+        "status": _worst_status("GREEN" if not failing else ("RED" if len(failing) >= 3 else "YELLOW"),
+                                # A fresh report's own verdict still counts; a stale one cannot pin the status.
+                                integrity.get("status") if live["guardian_freshness"] else None),
+        "checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "report_checked_at": integrity.get("checked_at"),
         "live_checked_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "live_areas": sorted(live),
         "quiet_tasks": quiet_tasks, "report_age_h": round(report_age_h, 1) if report_age_h is not None else None,
     })

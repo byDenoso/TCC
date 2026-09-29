@@ -303,6 +303,32 @@ def _attack_outcome(test: dict[str, Any]) -> str | None:
     return None
 
 
+def _stamp(value: Any) -> str:
+    return str((value.get("at") if isinstance(value, dict) else value) or "")
+
+
+def _reviewable(test: dict[str, Any]) -> bool:
+    """Only an original result can be reviewed. An attack (contests_test_id) is evidence about its
+    parent and contest_requests() refuses to attack it, so queueing it only wastes referee turns;
+    archived or already-closed results are never pending."""
+    if test.get("contests_test_id"):
+        return False
+    if str(test.get("state") or test.get("status") or "").upper() == "ARCHIVED":
+        return False
+    return test.get("review_state") not in {"CONFIRMED", "REFUTED", "ARCHIVED"}
+
+
+def _review_queue(positive: list[dict[str, Any]]) -> dict[str, list[str]]:
+    """Referee queues, oldest result first so no original waits behind newer ones."""
+    candidates = sorted((t for t in positive if _reviewable(t)),
+                        key=lambda t: (_stamp(t.get("executed_at") or t.get("updated_at")), str(t.get("id") or "")))
+    return {
+        "referee_1": [t["id"] for t in candidates if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")
+                      or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
+        "referee_2": [t["id"] for t in candidates if t.get("review_state") == "REFEREE1_PASSED"],
+    }
+
+
 def contest_chain_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
     """Enforce depth=1 and close originals mechanically from completed attacks."""
     root = Path(root)
@@ -1663,11 +1689,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
             "canaries_waiting": [{"gene": g.get("id"), "canary": g.get("canary"), "since": g.get("canary_since")}
                                  for g in genome.get("genes") or [] if g.get("status") == "CANARY"],
         },
-        "review_queue": {
-            "referee_1": [t["id"] for t in positive if t.get("review_state") in (None, "PENDING_REVIEW", "CONTESTED")
-                          or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
-            "referee_2": [t["id"] for t in positive if t.get("review_state") == "REFEREE1_PASSED"],
-        },
+        "review_queue": _review_queue(positive),
         # Visibility is not a gate: every non-closed roadmap in the Tower is shown to tasks.
         # charter_status remains explicit so gate semantics stay separate from execution visibility.
         "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps
