@@ -99,3 +99,19 @@ def test_incomplete_contract_becomes_draft(tmp_path):
             "question": "q?", "success_criteria": "s", "kill_criteria": "k"}}
     [req, *_] = proposal_to_requests(item, tmp_path)
     assert req["changes"]["status"] == "DRAFT" and "método" in req["changes"]["draft_reason"]
+
+
+def test_battery_takes_three_quarters_of_the_ready_queue(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_battery_items
+    from runtime.nexo_agent_api.tower_paths import entity_path
+
+    for n, expected in ((20, 15), (8, 6), (4, 4), (40, 20)):
+        root = tmp_path / f"r{n}"
+        (root / "evolution").mkdir(parents=True)
+        for i in range(n):
+            path = entity_path(root, "test", f"T-{i:02d}")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"id": f"T-{i:02d}", "kind": "TEST", "status": "READY", "family_id": "F", "recipe": "rcp_one", "recipe_params": {}}))
+        [battery] = family_battery_items(root)
+        assert len(battery["payload"]["tests"]) == expected, (n, len(battery["payload"]["tests"]))

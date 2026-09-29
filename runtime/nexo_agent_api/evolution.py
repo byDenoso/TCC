@@ -782,7 +782,10 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     for recipe, tests in sorted(by_recipe.items()):
         if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
-        tests = sorted(tests, key=lambda t: str(t.get("id")))[:MAX_BATTERY_TESTS]
+        tests = sorted(tests, key=lambda t: str(t.get("id")))
+        # Batch policy: up to 20 per battery, but with 20 or fewer ready it sends 75% (20 -> 15), always at least 5 when there are 5.
+        take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
+        tests = tests[:take]
         if (health.get(recipe) or {}).get("state") == "OPEN":
             if recipe in running:
                 continue

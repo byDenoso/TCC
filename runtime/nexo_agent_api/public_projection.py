@@ -734,7 +734,7 @@ def _load_integrity(root: Path) -> dict[str, Any] | None:
 
 # Areas the projection can re-check by itself at every build, so the health page never
 # freezes on an old Guardião report. The other areas keep the Guardião's last word.
-_TASK_ROLES = {"CIENTISTA": {"LEARNER", "PITIA"}, "OPERADOR": {"EXECUTOR"}, "CRITICO": {"REFUTADOR", "GUARDIAO", "REFEREE_1"}}
+_TASK_ROLES = {"CIENTISTA": {"LEARNER", "PITIA"}, "OPERADOR": {"EXECUTOR"}, "CRITICO": {"REFUTADOR", "REFEREE_1"}, "GUARDIAO": {"GUARDIAO"}}
 
 
 def _live_integrity(integrity: dict[str, Any] | None, activity: list[dict[str, Any]], generated_at: str | None) -> dict[str, Any] | None:
