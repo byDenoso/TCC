@@ -44,7 +44,7 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 **Ideia → Hipótese → Teste (contrato) → Receita → Bateria → Resultado → Contestação → Veredito → Nova ideia.**
 | Etapa | Quem faz | O que garante que anda |
 |---|---|---|
-| Ideia | Dener (`DENER_DIRECTED`, P0); Cientista (queda gera rival, inconclusivo com causa, sentinela, sonho, lacuna do mapa, autoengenharia ≤ 1 em 3) | fila executável abaixo de 20 = o Cientista gera |
+| Ideia | Dener (`DENER_DIRECTED`, P0); Cientista (queda gera rival, inconclusivo com causa, sentinela, sonho, lacuna do mapa, autoengenharia ≤ 1 em 3, transferência de método com o Lite: `LEARNING_SIGNAL` `METHOD_TRANSFER` origem→destino; dado pessoal dele nunca sobe, só método e agregados) | fila executável abaixo de 20 = o Cientista gera |
 | Hipótese e Teste | Cientista | contrato com método, dado, sucesso e kill; sem isso vira DRAFT e o Cientista completa |
 | Família | Cientista escreve `FAMILY_CHARTER`; o robô expande e despacha | 3 ou mais testes com a mesma receita entram como família (até 40 instâncias, grade declarada antes; fecha com 2 REJECTED, 2 PROMOTED ou roadmap fechado) |
 | Receita | Engenheiro | receita nova traz `recipes/smoke/<nome>.json`; o CI roda com dado real e abre issue se quebrar |
