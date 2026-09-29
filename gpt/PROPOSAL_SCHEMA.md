@@ -1,4 +1,6 @@
-# NEXO · Formato das propostas do GPT (fonte única)
+# NEXO · Formato das propostas do GPT
+
+> Este arquivo define só o **formato** de cada proposta. Fluxo, papéis, horários e regras estão no `nexo-master-router` e no `nexo-closed-loop` (`gpt/skills/`); em conflito, eles vencem.
 
 Todos os agentes do GPT escrevem neste formato. O **NEXO · Writer** aplica as propostas na Tower
 privada e atualiza o ATLAS público apenas com a projeção permitida. O conteúdo deve explicar em
@@ -147,22 +149,11 @@ Fica salvo na Tower como `artifact LEARNING_SIGNAL::*` para o Learner ler.
 ```
 Vira `lesson LESSON::<topic_id>` e aparece no ATLAS (lente Aprendizado), perto dos testes do mesmo tópico.
 
-## Sistema de aprendizado (ciclo)
-1. **Gaps** (GPT) detecta lacunas nas conversas → LEARNING_SIGNAL.
-2. **Writer** grava os sinais na Tower.
-3. **Learner** (GPT, diário) lê os sinais na Tower (artifacts `LEARNING_SIGNAL::*` e o que já existe em `lesson`),
-   agrega por `topic_id` (≥2 sinais ou 1 com confiança ≥0,8), prioriza o que destrava testes ativos e emite
-   LESSON_PROPOSAL (e a mini-aula no chat).
-4. **Writer** grava a lição → ATLAS atualiza sozinho.
-
-## Linha de montagem (papel único por tarefa)
-| Tarefa | Grava só | Lê |
-|---|---|---|
-| Gaps (diária) | LEARNING_SIGNAL `evidence_kind: PARAPHRASE` | conversas |
-| Learner autônomo (diária) | HYPOTHESIS_PROPOSAL (+ teste META-*), MUTATION_PROPOSAL das próprias hipóteses, LESSON_PROPOSAL, LEARNING_SIGNAL `RUNTIME_CHANGE_PROPOSAL` | resultados, sinais, INTEGRITY_REPORT |
-| Executor (horária) | MUTATION_PROPOSAL, LEARNING_SIGNAL `RUNTIME_FAILURE` | `frontier` |
-| Writer (horária) | a Tower (dono único) | inbox |
-| Guardião (diária 06:00) | INTEGRITY_REPORT, LEARNING_SIGNAL `INTEGRITY` | tudo (só audita) |
+## Tipos novos (router 0.4.0)
+- `RECIPE_BIND` `{test_id, recipe, params}`: liga receita congelada a teste existente (DRAFT, READY ou BLOCKED_INPUT); o robô despacha na rodada seguinte.
+- `FAMILY_CHARTER`: grade pré-registrada de instâncias de uma receita (formato no router, "O fluxo único").
+- `LEARNING_SIGNAL` `gap_type: METHOD_TRANSFER` `{origin, destination, analog, breaks_if}`: método de um campo testado em outro.
+- `HYPOTHESIS_PROPOSAL` com `origin_kind: DENER_DIRECTED`, `priority: P0`: Diretriz do Dener (vinda do NEXO Lite).
 
 Consumo: hipóteses e lições citam em `linked_signal_ids` os ids `LEARNING_SIGNAL::*` que consumiram; sinal citado não é reprocessado.
 Testes com id `META-*` (domain_id `engineering`) são hipóteses sobre o próprio sistema; recebem `origin: META`.
