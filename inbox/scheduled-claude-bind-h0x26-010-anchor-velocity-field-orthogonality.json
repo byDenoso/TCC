@@ -1,0 +1,1 @@
+{"created_at":"2026-09-29T23:30:00Z","kind":"RECIPE_BIND","payload":{"params":{"min_effective_groups":30,"min_unique_sn":30,"mode":"anchor_velocity","smoothing_mpc":40,"z_max":0.05,"z_minima":[0.01,0.023]},"recipe":"cf4_velocity","test_id":"H0X26-010-ANCHOR-VELOCITY-FIELD-ORTHOGONALITY"},"producer":"CLAUDE","source":"EXECUTOR"}
