@@ -1,0 +1,26 @@
+{
+  "stable_id": "guardian-20260929T190244Z-heartbeat",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-29T19:02:44Z",
+    "payload": {
+      "status": "YELLOW",
+      "counts": {
+        "tests": 277,
+        "ready": 35,
+        "blocked_input": 3,
+        "pending_recipe_review": 0
+      },
+      "autonomy": {
+        "robot_only_share": 1,
+        "idea_to_result_hours": 0.05,
+        "decisive_rate": 0.491,
+        "positives_with_verdict_rate": 0.412,
+        "blocked_share": 0.011
+      },
+      "worst_component": "positives_with_verdict_rate"
+    }
+  }
+}
