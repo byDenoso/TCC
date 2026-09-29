@@ -1,0 +1,19 @@
+{
+  "stable_id": "nexo-persist-canary-20260929t1419z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "producer": "GPT",
+    "created_at": "2026-09-29T14:19:00Z",
+    "payload": {
+      "entries": [
+        {
+          "to": "ENGINEER",
+          "text": "Canário de persistência resiliente: staging e relay em validação.",
+          "refs": [],
+          "ttl_h": 1
+        }
+      ]
+    }
+  }
+}
