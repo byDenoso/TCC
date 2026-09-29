@@ -161,9 +161,9 @@ def _queued_batteries(raw: bytes) -> list[dict]:
 
 def _family_items(raw: bytes, kind: str) -> list[dict]:
     """Robot-made proposals from pre-registered families: new grid cells as tests, READY instances as batteries."""
-    from .evolution import family_battery_items, family_instance_items
+    from .evolution import family_battery_items, family_contest_items, family_instance_items
 
-    build = family_instance_items if kind == "instances" else family_battery_items
+    build = {"instances": family_instance_items, "contests": family_contest_items}.get(kind, family_battery_items)
     with tempfile.TemporaryDirectory(prefix="nexo-robot-family-") as work:
         root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
         return build(root)
@@ -343,7 +343,7 @@ def main(argv: list[str]) -> int:
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
             # Families: the robot itself turns pre-registered grids into tests and READY instances into batteries.
-            for family_kind in ("instances", "batteries"):
+            for family_kind in ("instances", "contests", "batteries"):
                 family_items = _family_items(packed or raw, family_kind)
                 if family_items:
                     packed, extra = apply_to_tower(packed or raw, family_items)

@@ -131,3 +131,30 @@ def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path):
     path.write_text(json.dumps({"id": "T-BOUND", "kind": "TEST", "status": "READY", "recipe": "rcp_one", "recipe_params": {"a": 1}}))
     [battery] = family_battery_items(tmp_path)
     assert [t["test_id"] for t in battery["payload"]["tests"]] == ["T-BOUND"]
+
+
+def test_robot_contests_positive_family_result_with_union3(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_battery_items, family_contest_items
+    from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+    from runtime.nexo_agent_api.tower_paths import entity_path
+
+    parent = {"id": "FAM-X-A", "kind": "TEST", "status": "DONE", "verdict": "PROMOTED", "review_state": "PENDING_REVIEW",
+              "family_id": "X", "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "question": "q?", "null": "n", "rival": "r",
+              "method": "m", "success_criteria": "s", "kill_criteria": "k",
+              "recipe_params": {"mode": "redshift_jackknife", "compilations": ["pantheon_plus", "des_sn5yr"], "bands": [[0, 0.2]]}}
+    path = entity_path(tmp_path, "test", "FAM-X-A")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(parent))
+    [item] = family_contest_items(tmp_path)
+    assert item["payload"]["contest_test"]["recipe_params"]["compilations"] == ["pantheon_plus", "union3"]
+    reqs = proposal_to_requests(item, tmp_path)
+    attack = next(r for r in reqs if r.get("entity_name", "").startswith("CONTEST-"))
+    assert attack["changes"]["status"] == "READY" and attack["changes"]["recipe"] == "w0wa_bao_sn_multi"
+    assert any(r.get("entity_name") == "FAM-X-A" and r["changes"]["review_state"] == "CONTESTED" for r in reqs)
+    apath = entity_path(tmp_path, "test", attack["entity_name"])
+    apath.write_text(json.dumps({"id": attack["entity_name"], "kind": "TEST", **attack["changes"]}))
+    path.write_text(json.dumps({**parent, "contests": [{"n": 1}]}))
+    assert family_contest_items(tmp_path) == []  # attacked once already
+    [battery] = family_battery_items(tmp_path)
+    assert [t["test_id"] for t in battery["payload"]["tests"]] == [attack["entity_name"]]

@@ -763,6 +763,42 @@ def family_instance_items(root: Path, now: datetime | None = None) -> list[dict[
     return items
 
 
+MAX_ROBOT_CONTESTS_PER_RUN = 5
+SN_COMPILATIONS = ("pantheon_plus", "des_sn5yr", "union3")
+
+
+def family_contest_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
+    """CONTEST envelopes for positive family results nobody attacked yet: an independent replication with another SN compilation.
+    Same recipe and frozen criteria, Union3 in place of DES-SN5YR. Keeps the review ladder moving without a human or a chat."""
+    now = now or datetime.now(timezone.utc)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    items = []
+    for test in _tests(root):
+        if len(items) >= MAX_ROBOT_CONTESTS_PER_RUN:
+            break
+        if (not test.get("family_id") or test.get("contests") or test.get("contests_test_id")
+                or str(test.get("verdict") or "").upper() not in POSITIVE_VERDICTS
+                or test.get("review_state") in {"CONFIRMED", "REFUTED", "ARCHIVED"}
+                or test.get("recipe") != "w0wa_bao_sn_multi" or not isinstance(test.get("recipe_params"), dict)):
+            continue
+        comps = list(test["recipe_params"].get("compilations") or ["pantheon_plus", "des_sn5yr"])
+        if "union3" in comps:
+            continue
+        comps = [("union3" if c == "des_sn5yr" else c) for c in comps]
+        if "union3" not in comps:
+            comps.append("union3")
+        attack = {k: test.get(k) for k in ("question", "null", "rival", "method", "success_criteria", "kill_criteria",
+                                          "prediction", "hypothesis_id", "domain", "roadmap_id") if test.get(k) not in (None, "")}
+        attack.update({"dataset_and_selection": f"Mesma análise com compilações {', '.join(comps)} (Union3 no lugar de DES-SN5YR).",
+                       "recipe": "w0wa_bao_sn_multi", "recipe_params": {**test["recipe_params"], "compilations": comps}})
+        items.append({"kind": "CONTEST", "source": "ROBOT_REPLICATION", "created_at": stamp,
+                      "_inbox_name": f"robot-contest-{test['id']}"[:90],
+                      "payload": {"test_id": test["id"], "source": "ROBOT_REPLICATION",
+                                  "reason": "Replicação independente: o mesmo teste com outra coleção de supernovas.",
+                                  "contest_test": attack}})
+    return items
+
+
 def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
     """TEST_BATTERY envelopes for every READY test that already names a recipe and its params (family cells, Dener's directives, anything an agent finished).
     A recipe with an OPEN circuit gets a single probe test."""
