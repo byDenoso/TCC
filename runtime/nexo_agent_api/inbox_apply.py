@@ -249,7 +249,10 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     success = _first(body, "success_criteria", "criterio_sucesso", "critério_sucesso")
     kill = _first(body, "kill_criteria", "kill_criterion", "criterio_kill")
     # Missing frozen criteria never drop the idea: it is stored as DRAFT (visible, not executable) until completed.
-    lifecycle = body.get("_status") or ("READY" if success and kill else "DRAFT")
+    data_needed = _first(body, "data", "dados_necessarios", "dados_necessários", "dataset_and_selection")
+    missing = [name for name, value in (("critério de sucesso", success), ("critério de kill", kill),
+                                        ("método", body.get("method")), ("dados", data_needed)) if not value]
+    lifecycle = body.get("_status") or ("DRAFT" if missing else "READY")
     roadmap_id = body.get("roadmap_id") or _infer_roadmap(root, test_id, body.get("semantic") or {})
     siblings = _siblings(root, roadmap_id)
     # Roadmap siblings may share campaign/domain, never the hypothesis: one roadmap holds several hypotheses.
@@ -263,7 +266,9 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     changes = {
         "kind": "TEST", "status": lifecycle, "state": lifecycle,
         "created_at": item.get("created_at"),
-        "draft_reason": None if lifecycle != "DRAFT" else "faltam critérios congelados de sucesso/kill",
+        "draft_reason": None if lifecycle != "DRAFT" else "faltam: " + ", ".join(missing or ["contrato"]),
+        "family_id": body.get("family_id"), "family_cell": body.get("family_cell"),
+        "recipe": body.get("recipe"), "recipe_params": body.get("recipe_params"),
         "priority": body.get("priority") or "P1",
         "display_name": proposed_display_name,
         "domain": str(proposed_domain).upper(),
@@ -524,6 +529,7 @@ _KIND_ALIASES = {
     "SEMANTIC_BACKFILL": "SEMANTIC_BACKFILL", "BACKFILL": "SEMANTIC_BACKFILL", "MEANING_BACKFILL": "SEMANTIC_BACKFILL",
     "DATA_BINDING": "DATA_BINDING", "BINDING": "DATA_BINDING",
     "INTEGRITY_REPORT": "INTEGRITY_REPORT", "INTEGRITY": "INTEGRITY_REPORT", "AUDIT": "INTEGRITY_REPORT",
+    "FAMILY_CHARTER": "FAMILY_CHARTER", "FAMILY": "FAMILY_CHARTER",
     "ROADMAP_CHARTER": "ROADMAP_CHARTER", "CHARTER": "ROADMAP_CHARTER", "ROADMAP_CLOSE": "ROADMAP_CLOSE",
     "CONTEST": "CONTEST", "REFUTATION": "CONTEST", "VERDICT_REVIEW": "VERDICT_REVIEW", "REVIEW": "VERDICT_REVIEW",
     "GENOME_MUTATION": "GENOME_MUTATION", "MUTATION_CANARY": "GENOME_MUTATION", "GENOME_ROLLBACK": "GENOME_ROLLBACK",
@@ -535,6 +541,7 @@ _KIND_ALIASES = {
     "HANDOFF_DONE": "HANDOFF_TRANSITION", "HANDOFF_FAILED": "HANDOFF_TRANSITION",
 }
 _EVOLUTION = {
+    "FAMILY_CHARTER": evolution.family_charter_requests,
     "ROADMAP_CHARTER": evolution.charter_requests,
     "ROADMAP_CLOSE": evolution.close_requests,
     "CONTEST": lambda item, body, root: evolution.contest_requests(item, body, root, _hypothesis_requests),

@@ -48,3 +48,54 @@ def test_recipe_bug_keeps_test_chances_opens_circuit_and_success_closes(tmp_path
     assert all(r["changes"]["status"] == "READY" and r["changes"]["runtime_failure_count"] == 0 for r in fails)
     health = next(r for r in reqs if r.get("document") == "evolution/recipe_health.json")["merge"]["recipes"]["rcp"]
     assert health["state"] == "OPEN" and health["consecutive_bugs"] == 2
+
+
+def _family_root(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_charter_requests
+    from runtime.nexo_agent_api.tower_paths import entity_path
+
+    root = tmp_path
+    (root / "roadmaps").mkdir()
+    (root / "roadmaps" / "RM-X.json").write_text(json.dumps({"roadmap_id": "RM-X", "status": "ACTIVE"}))
+    (root / "evolution").mkdir()
+    tpl = {"display_name": "Robustez por faixa", "question": "q?", "null": "n", "rival": "r", "method": "m",
+           "dataset_and_selection": "d", "success_criteria": "s", "kill_criteria": "k", "prediction": {"p_promoted": 0.5}}
+    body = {"family_id": "de-bands", "roadmap_id": "RM-X", "recipe": "rcp_one", "domain": "science",
+            "template": tpl, "instances": [{"label": f"b{i}", "params": {"band": [0, i]}} for i in range(3)]}
+    [req] = family_charter_requests({"source": "TEST"}, body, root)
+    (root / "evolution" / "families.json").write_text(json.dumps(req["merge"]))
+    return root, entity_path
+
+
+def test_family_expands_into_ready_tests_and_dispatches_batteries(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_battery_items, family_instance_items
+    from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+
+    root, entity_path = _family_root(tmp_path)
+    items = family_instance_items(root)
+    assert len(items) == 3 and items[0]["payload"]["recipe_params"] == {"band": [0, 0]}
+    for item in items:  # what the Writer does with each robot proposal
+        reqs = proposal_to_requests(item, root)
+        test = reqs[0]["changes"]
+        assert test["status"] == "READY" and test["family_id"] == "DE-BANDS" and test["recipe_params"]
+        path = entity_path(root, "test", reqs[0]["entity_name"])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"id": reqs[0]["entity_name"], "kind": "TEST", **test}))
+    assert family_instance_items(root) == []  # every cell already has its test
+    [battery] = family_battery_items(root)
+    assert battery["kind"] == "TEST_BATTERY" and len(battery["payload"]["tests"]) == 3
+
+    (root / "evolution" / "recipe_health.json").write_text(json.dumps({"recipes": {"rcp_one": {"state": "OPEN"}}}))
+    [probe] = family_battery_items(root)
+    assert len(probe["payload"]["tests"]) == 1  # half-open circuit: one probe only
+
+
+def test_incomplete_contract_becomes_draft(tmp_path):
+    from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+
+    item = {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"test_id": "T-DRAFT", "display_name": "Sem método", "domain": "science",
+            "question": "q?", "success_criteria": "s", "kill_criteria": "k"}}
+    [req, *_] = proposal_to_requests(item, tmp_path)
+    assert req["changes"]["status"] == "DRAFT" and "método" in req["changes"]["draft_reason"]

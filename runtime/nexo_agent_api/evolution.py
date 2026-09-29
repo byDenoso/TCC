@@ -38,6 +38,12 @@ DECOYS_DOC = "evolution/decoys.json"
 BATTERIES_DOC = "evolution/batteries.json"
 WATCHDOG_DOC = "evolution/watchdog.json"
 RECIPE_HEALTH_DOC = "evolution/recipe_health.json"
+FAMILIES_DOC = "evolution/families.json"
+FAMILY_CONTRACT = ("question", "null", "rival", "method", "dataset_and_selection", "success_criteria", "kill_criteria")
+MAX_FAMILY_INSTANCES = 40  # grid size per family charter
+MAX_FAMILY_OPEN = 10  # instances READY, RUNNING or DRAFT at once, per family
+MAX_FAMILY_NEW_PER_RUN = 10
+MAX_BATTERIES_IN_FLIGHT = 3
 RECIPE_OPEN_AFTER = 2  # consecutive recipe bugs that open a recipe's circuit
 BOARD_DOC = "evolution/board.json"
 BOARD_ROLES = {"ALL", "PITIA", "LEARNER", "EXECUTOR", "REFUTADOR", "GUARDIAO", "CONVERSA", "DENER"}
@@ -450,6 +456,7 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
                                       f"REQ-FDR-{roadmap_id}-{test['id']}-{m}", "FDR_ANNOTATED")
                 if update:
                     requests.append(update)
+    requests += family_state_requests(root)
     return requests
 
 
@@ -682,6 +689,139 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         return []
     batteries.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"), "tests": tests})
     return [_doc(BATTERIES_DOC, {"batteries": batteries[-200:]}, f"REQ-BATTERY-{bid}")] + requests
+
+# ── Test families: a pre-registered grid of instances of ONE frozen recipe. The robot expands and dispatches it. ──
+
+def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """FAMILY_CHARTER {family_id, roadmap_id, recipe, domain, hypothesis_id?, template{...contract...}, instances[{label, params}], stop?}.
+
+    Lives inside an already ACTIVE roadmap (no new Dener gate). The contract must be complete and the grid is frozen here,
+    before any instance runs. Incomplete charters are not stored.
+    """
+    family_id = re.sub(r"[^A-Za-z0-9]+", "-", str(body.get("family_id") or "")).strip("-").upper()[:40]
+    recipe = str(body.get("recipe") or "").strip()
+    template = body.get("template") if isinstance(body.get("template"), dict) else {}
+    instances = [{"label": re.sub(r"[^A-Za-z0-9]+", "-", str(i["label"])).strip("-").upper()[:30], "params": i["params"]}
+                 for i in body.get("instances") or [] if isinstance(i, dict) and i.get("label") and isinstance(i.get("params"), dict)]
+    instances = instances[:MAX_FAMILY_INSTANCES]
+    roadmap_id = str(body.get("roadmap_id") or "")
+    roadmap = _read(root, f"roadmaps/{roadmap_id}.json") if roadmap_id else {}
+    active = str(roadmap.get("status") or roadmap.get("state") or "").upper() == "ACTIVE"
+    missing = [k for k in FAMILY_CONTRACT if not template.get(k)]
+    if not (family_id and re.fullmatch(r"[a-z0-9_]{2,40}", recipe) and instances and active and not missing and body.get("domain")
+            and template.get("display_name")):
+        return []
+    families = dict(_read(root, FAMILIES_DOC).get("families") or {})
+    if family_id in families:
+        return []  # a frozen charter is never replaced
+    stop = body.get("stop") if isinstance(body.get("stop"), dict) else {}
+    families[family_id] = {
+        "family_id": family_id, "roadmap_id": roadmap_id, "recipe": recipe, "domain": str(body["domain"]).upper(),
+        "hypothesis_id": str(body.get("hypothesis_id") or f"HYP-FAM-{family_id}"), "template": template, "instances": instances,
+        "stop": {"kill_rejected": int(stop.get("kill_rejected") or 2), "success_promoted": int(stop.get("success_promoted") or 2)},
+        "state": "ACTIVE", "chartered_at": _now(item), "proposed_by": str(item.get("source") or "UNKNOWN"),
+    }
+    return [_doc(FAMILIES_DOC, {"families": families}, f"REQ-FAMILY-{family_id}")]
+
+
+def _family_tests(tests: list[dict[str, Any]], family_id: str) -> list[dict[str, Any]]:
+    return [t for t in tests if t.get("family_id") == family_id]
+
+
+def family_instance_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
+    """HYPOTHESIS_PROPOSAL envelopes for grid cells that have no test yet, capped so the queue never floods."""
+    now = now or datetime.now(timezone.utc)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    tests = _tests(root)
+    items: list[dict[str, Any]] = []
+    for family in (_read(root, FAMILIES_DOC).get("families") or {}).values():
+        if family.get("state") != "ACTIVE":
+            continue
+        mine = _family_tests(tests, family["family_id"])
+        verdicts = [str(t.get("verdict") or "").upper() for t in mine]
+        if verdicts.count("REJECTED") >= int(family["stop"]["kill_rejected"]):
+            continue  # the hypothesis died; family_state_requests closes the family
+        open_now = sum(1 for t in mine if str(t.get("status") or "").upper() in {"READY", "RUNNING", "DRAFT"})
+        room = min(MAX_FAMILY_NEW_PER_RUN, MAX_FAMILY_OPEN - open_now)
+        have = {t.get("family_cell") for t in mine}
+        for cell in family["instances"]:
+            if room <= 0:
+                break
+            if cell["label"] in have:
+                continue
+            tpl = family["template"]
+            test_id = f"FAM-{family['family_id']}-{cell['label']}"[:64]
+            body = {"test_id": test_id, "display_name": f"{tpl['display_name']} · {cell['label'].lower().replace('-', ' ')}",
+                    "domain": family["domain"], "roadmap_id": family["roadmap_id"], "hypothesis_id": family["hypothesis_id"],
+                    "question": tpl["question"], "null": tpl["null"], "rival": tpl["rival"], "method": tpl["method"],
+                    "dataset_and_selection": tpl["dataset_and_selection"], "success_criteria": tpl["success_criteria"],
+                    "kill_criteria": tpl["kill_criteria"], "prediction": tpl.get("prediction"), "claim_boundary": tpl.get("claim_boundary"),
+                    "family_id": family["family_id"], "family_cell": cell["label"], "recipe": family["recipe"], "recipe_params": cell["params"]}
+            items.append({"kind": "HYPOTHESIS_PROPOSAL", "source": "WRITER_ROBOT", "created_at": stamp,
+                          "_inbox_name": f"robot-family-{test_id}", "payload": {k: v for k, v in body.items() if v not in (None, "")}})
+            room -= 1
+    return items
+
+
+def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
+    """TEST_BATTERY envelopes for READY family instances. A recipe with an OPEN circuit gets a single probe test."""
+    now = now or datetime.now(timezone.utc)
+    stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    in_flight = sum(1 for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") in {"QUEUED", "DISPATCHED"})
+    if in_flight >= MAX_BATTERIES_IN_FLIGHT:
+        return []
+    health = _read(root, RECIPE_HEALTH_DOC).get("recipes") or {}
+    all_tests = _tests(root)
+    by_recipe: dict[str, list[dict[str, Any]]] = {}
+    for test in all_tests:
+        if not test.get("family_id") or str(test.get("status") or "").upper() != "READY" or not isinstance(test.get("recipe_params"), dict):
+            continue
+        by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
+    running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING" and t.get("family_id")}
+    items = []
+    for recipe, tests in sorted(by_recipe.items()):
+        if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
+            continue
+        tests = sorted(tests, key=lambda t: str(t.get("id")))[:MAX_BATTERY_TESTS]
+        if (health.get(recipe) or {}).get("state") == "OPEN":
+            if recipe in running:
+                continue
+            tests = tests[:1]  # half-open: one probe, the first success closes the circuit
+        specs = [{"test_id": t["id"], "recipe": recipe, "params": t["recipe_params"], "prediction": t.get("prediction"), "timeout_min": 120}
+                 for t in tests]
+        items.append({"kind": "TEST_BATTERY", "source": "WRITER_ROBOT", "created_at": stamp,
+                      "_inbox_name": f"robot-battery-{recipe}-{stamp}",
+                      "payload": {"battery_id": f"bat-fam-{recipe}-{stamp[5:16].replace('-', '').replace(':', '')}", "tests": specs}})
+        if in_flight + len(items) >= MAX_BATTERIES_IN_FLIGHT:
+            break
+    return items
+
+
+def family_state_requests(root: Path) -> list[dict[str, Any]]:
+    """Close a family when its hypothesis died (kill_rejected), was sustained (success_promoted) or its roadmap closed."""
+    families = dict(_read(root, FAMILIES_DOC).get("families") or {})
+    tests = _tests(root)
+    changed = False
+    for fid, family in families.items():
+        if family.get("state") != "ACTIVE":
+            continue
+        verdicts = [str(t.get("verdict") or "").upper() for t in _family_tests(tests, fid)]
+        reason = None
+        if verdicts.count("REJECTED") >= int(family["stop"]["kill_rejected"]):
+            reason = "KILL"
+        elif verdicts.count("PROMOTED") >= int(family["stop"]["success_promoted"]):
+            reason = "SUCCESS"
+        else:
+            rm = _read(root, f"roadmaps/{family['roadmap_id']}.json")
+            if str(rm.get("status") or rm.get("state") or "").upper() in {"CLOSED", "ARCHIVED"}:
+                reason = "ROADMAP_CLOSED"
+        if reason:
+            families[fid] = dict(family, state="CLOSED", close_reason=reason)
+            changed = True
+    if not changed:
+        return []
+    return [_doc(FAMILIES_DOC, {"families": families}, "REQ-FAMILY-STATE-" + datetime.now(timezone.utc).strftime("%Y%m%d%H%M"))]
+
 
 _TRANSIENT = re.compile(r"timed? ?out|timeout|connection (reset|aborted|refused)|temporary failure|rate limit|429|50[234]|urlopen error", re.I)
 

@@ -159,6 +159,16 @@ def _queued_batteries(raw: bytes) -> list[dict]:
         return pending_batteries(root)
 
 
+def _family_items(raw: bytes, kind: str) -> list[dict]:
+    """Robot-made proposals from pre-registered families: new grid cells as tests, READY instances as batteries."""
+    from .evolution import family_battery_items, family_instance_items
+
+    build = family_instance_items if kind == "instances" else family_battery_items
+    with tempfile.TemporaryDirectory(prefix="nexo-robot-family-") as work:
+        root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        return build(root)
+
+
 def _stop_closures(raw: bytes) -> list[dict]:
     from datetime import datetime, timezone
 
@@ -332,6 +342,15 @@ def main(argv: list[str]) -> int:
                 report["applied"] = report.get("applied", []) + extra.get("applied", [])
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
+            # Families: the robot itself turns pre-registered grids into tests and READY instances into batteries.
+            for family_kind in ("instances", "batteries"):
+                family_items = _family_items(packed or raw, family_kind)
+                if family_items:
+                    packed, extra = apply_to_tower(packed or raw, family_items)
+                    report["applied"] = report.get("applied", []) + extra.get("applied", [])
+                    report["rejected"] = report.get("rejected", []) + extra.get("rejected", [])
+                    report["after"] = extra.get("after", report.get("after"))
+                    report["status"] = "READY_TO_UPLOAD"
             # Batteries queued by the Executor: hand their specs to the dispatcher step and mark them DISPATCHED.
             queued = _queued_batteries(packed or raw)
             if queued and dispatch_dir:
