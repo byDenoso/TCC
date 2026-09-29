@@ -209,3 +209,12 @@ def test_search_space_and_autonomy_metrics():
     from datetime import datetime, timezone
     m = discovery.autonomy_metrics(tests, now=datetime(2099, 1, 1, 6, tzinfo=timezone.utc))
     assert m["results"] == 6 and m["robot_share"] == 1.0 and m["decisive_rate"] == round(2 / 6, 3)
+
+
+def test_autonomy_metrics_reads_naive_timestamps_as_utc():
+    from datetime import datetime, timezone
+    from runtime.nexo_agent_api import discovery
+
+    tests = [{"id": "N", "verdict": "PROMOTED", "executed_at": "2099-01-01T01:00:00", "created_at_effective": "2099-01-01 00:00:00"}]
+    m = discovery.autonomy_metrics(tests, now=datetime(2099, 1, 1, 2, tzinfo=timezone.utc))
+    assert m["results"] == 1 and m["median_hours_to_result"] == 1.0

@@ -17,6 +17,7 @@ Referee 1 = GPT Refutador; Referee 2 = Claude (external model). Only CONFIRMED c
 from __future__ import annotations
 
 import hashlib
+import sys
 import base64
 import json
 import re
@@ -827,6 +828,25 @@ def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str
                  "payload": {"family_id": child, "roadmap_id": fam["roadmap_id"], "recipe": fam["recipe"], "domain": fam["domain"].lower(),
                              "hypothesis_id": fam.get("hypothesis_id"), "template": tpl, "instances": cells[:12], "stop": fam.get("stop")}}]
     return []
+
+
+def _discovery_view(root: Path, tests: list[dict[str, Any]]) -> dict[str, Any]:
+    """Learning, look-elsewhere and autonomy for the status. A bug here must never take the whole status down."""
+    out: dict[str, Any] = {}
+    parts = {
+        "learning": lambda: {"rules": [{k: r.get(k) for k in ("feature", "value", "state", "inconclusive_rate", "holdout_accuracy", "baseline", "gain", "op")}
+                                       for r in (_read(root, discovery.LEARNING_DOC).get("rules") or [])],
+                             "evaluated": _read(root, discovery.LEARNING_DOC).get("evaluated")},
+        "search_space": lambda: discovery.search_space(tests),
+        "autonomy": lambda: discovery.autonomy_metrics(tests),
+    }
+    for key, build in parts.items():
+        try:
+            out[key] = build()
+        except Exception as exc:  # noqa: BLE001 - reported, never fatal
+            out[key] = None
+            print(f"evolution status: {key} skipped ({type(exc).__name__})", file=sys.stderr)
+    return out
 
 
 def _family_summary(family: dict[str, Any], tests: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1706,11 +1726,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
         "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
         "families": [_family_summary(f, tests) for f in (_read(root, FAMILIES_DOC).get("families") or {}).values()],
-        "learning": {"rules": [{k: r.get(k) for k in ("feature", "value", "state", "inconclusive_rate", "holdout_accuracy", "baseline", "gain", "op")}
-                               for r in (_read(root, "evolution/learning.json").get("rules") or [])],
-                     "evaluated": _read(root, "evolution/learning.json").get("evaluated")},
-        "search_space": discovery.search_space(tests),
-        "autonomy": discovery.autonomy_metrics(tests),
+        **_discovery_view(root, tests),
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }

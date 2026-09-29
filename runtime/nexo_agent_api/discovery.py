@@ -141,9 +141,12 @@ def autonomy_metrics(tests: list[dict[str, Any]], hours: int = 24, now: datetime
 
     def age_h(iso: str) -> float | None:
         try:
-            return (now - datetime.fromisoformat(iso.replace("Z", "+00:00"))).total_seconds() / 3600
-        except ValueError:
+            when = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        except (TypeError, ValueError):
             return None
+        if when.tzinfo is None:  # agents sometimes write naive timestamps: read them as UTC
+            when = when.replace(tzinfo=timezone.utc)
+        return (now - when).total_seconds() / 3600
 
     recent = [t for t in tests if (a := age_h(_when(t))) is not None and a <= hours and not t.get("contests_test_id")]
     done = [t for t in recent if _verdict(t)]

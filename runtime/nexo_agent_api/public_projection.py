@@ -807,7 +807,12 @@ def _load_evolution(root: Path) -> dict[str, Any] | None:
 
     try:
         status = evolution_status(root, public=True)
-    except Exception:  # the projection never fails because of the evolution layer
+    except Exception as exc:  # the projection never fails because of the evolution layer, but says why
+        import sys
+        import traceback
+
+        frame = traceback.extract_tb(exc.__traceback__)[-1]
+        print(f"evolution layer skipped: {type(exc).__name__} at {Path(frame.filename).name}:{frame.lineno}", file=sys.stderr)
         return None
     empty = not (status["charters"] or status["genome"]["genes"] or status["thoughts"]
                      or status.get("signal_clusters") or status.get("incidents"))
