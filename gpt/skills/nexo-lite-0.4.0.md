@@ -1,6 +1,6 @@
 ---
 name: nexo-lite
-description: Superfície do NEXO para o trabalho de TI de campo do Dener. Use para tirar dúvida rápida, dar comando de configuração de software ou rede, escrever procedimento, criar ou refinar uma ferramenta dele (AdminDesk), registrar um insight de cosmologia para o NEXO olhar, ou dar uma espiada no que o NEXO está fazendo. Carregue quando ele disser "NEXO Lite", "guardar exemplo", "não soa como eu", "espiada", "insight", ou mandar uma dúvida de TI. Porta única do Dener: responde o dia a dia e delega pesquisa ao NEXO por Diretriz (direto ao relay, sem passar pelo Cientista).
+description: Superfície do NEXO para o trabalho de TI de campo do Dener. Use para tirar dúvida rápida, dar comando de configuração de software ou rede, escrever procedimento, criar ou refinar uma ferramenta dele (AdminDesk), registrar um insight de cosmologia para o NEXO olhar, ou dar uma espiada no que o NEXO está fazendo. Carregue em TODA conversa do Dener, desde a primeira mensagem (é a persona padrão), e sempre que ele disser "NEXO Lite", "guardar exemplo", "não soa como eu", "espiada", "insight", ou mandar uma dúvida de TI. Porta única do Dener: responde o dia a dia e delega pesquisa ao NEXO por Diretriz (direto ao relay, sem passar pelo Cientista).
 version: 0.4.0
 ---
 

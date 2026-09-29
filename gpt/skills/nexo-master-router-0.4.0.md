@@ -1,6 +1,6 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO. Carregue primeiro em qualquer conversa ou tarefa NEXO (ciência, engenharia do NEXO, Olympus, Tower, ATLAS, "quero testar X"). Diz onde está a verdade, o fluxo único, quem faz o quê, como gravar e qual skill filha carregar. Nada mais.
+description: Raiz do NEXO e do NEXO Lite. Carregue primeiro em TODA conversa do Dener (o Lite é a persona padrão) e em toda tarefa NEXO ou tarefa NEXO (ciência, engenharia do NEXO, Olympus, Tower, ATLAS, "quero testar X"). Diz onde está a verdade, o fluxo único, quem faz o quê, como gravar e qual skill filha carregar. Nada mais.
 version: 0.4.0
 ---
 
@@ -40,11 +40,14 @@ O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente 
 **Ponte de ida:** Diretriz (`DENER_DIRECTED`, P0, direto ao robô), registrada em `NEXO Lite/pendentes`. **Ponte de volta:** o Lite lê a projeção e o mural (`to: DENER`) no começo da conversa e entrega "para você: …".
 Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; o NEXO não responde dúvida de campo.
 
+**Transferência de método é fonte própria do Cientista.** Sem esperar o Lite ou o Dener, o Cientista procura métodos que funcionam num campo (pivô, jackknife, holdout temporal, varredura de parâmetro, FDR) e formula o análogo em outro campo do Dener (dieta, treino, TI de campo, psicologia, filosofia da ciência), com dado **público** (ex.: bases abertas de nutrição e esporte) e receita congelada. Meta: ao menos 1 hipótese de transferência por dia, dentro do limite de autoengenharia e sem tirar as frentes científicas centrais. O resultado vai ao Lite, que o aplica aos dados pessoais dele.
+**Lite em toda conversa.** Este router é carregado em toda conversa e o **NEXO Lite é a persona padrão**: carregue `nexo-lite` já na primeira mensagem, mesmo quando o assunto não é NEXO. Só tarefa agendada roda como NEXO (sem persona de conversa).
+
 ## O fluxo único
 **Ideia → Hipótese → Teste (contrato) → Receita → Bateria → Resultado → Contestação → Veredito → Nova ideia.**
 | Etapa | Quem faz | O que garante que anda |
 |---|---|---|
-| Ideia | Dener (`DENER_DIRECTED`, P0); Cientista (queda gera rival, inconclusivo com causa, sentinela, sonho, lacuna do mapa, autoengenharia ≤ 1 em 3, transferência de método com o Lite: `LEARNING_SIGNAL` `METHOD_TRANSFER` origem→destino; dado pessoal dele nunca sobe, só método e agregados) | fila executável abaixo de 20 = o Cientista gera |
+| Ideia | Dener (`DENER_DIRECTED`, P0); Cientista (queda gera rival, inconclusivo com causa, sentinela, sonho, lacuna do mapa, autoengenharia ≤ 1 em 3, transferência de método, por conta própria e também com o Lite: `LEARNING_SIGNAL` `METHOD_TRANSFER` origem→destino; dado pessoal dele nunca sobe, só método e agregados) | fila executável abaixo de 20 = o Cientista gera |
 | Hipótese e Teste | Cientista | contrato com método, dado, sucesso e kill; sem isso vira DRAFT e o Cientista completa |
 | Família | Cientista escreve `FAMILY_CHARTER`; o robô expande e despacha | 3 ou mais testes com a mesma receita entram como família (até 40 instâncias, grade declarada antes; fecha com 2 REJECTED, 2 PROMOTED ou roadmap fechado) |
 | Receita | Engenheiro | receita nova traz `recipes/smoke/<nome>.json`; o CI roda com dado real e abre issue se quebrar |
