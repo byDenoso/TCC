@@ -1,0 +1,22 @@
+{
+  "stable_id": "executor-20260929t2004-bind-erosita",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-29T23:04:40Z",
+    "payload": {
+      "test_id": "GZSB-07-EROSITA-SELECTION-DEPTH-INTERACTION",
+      "inputs": [
+        {
+          "name": "eRASS1 DR1",
+          "url": "https://erosita.mpe.mpg.de/dr1/AllSkySurveyData_dr1/Catalogues_dr1/",
+          "format": "official release directory",
+          "load": "Use the released cluster catalogue and DR1 depth products required by the frozen test.",
+          "license": "public"
+        }
+      ],
+      "status": "BOUND",
+      "note": "Official release bound; preserve frozen cuts and criterion."
+    }
+  }
+}
