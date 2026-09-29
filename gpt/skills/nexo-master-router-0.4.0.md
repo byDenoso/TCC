@@ -13,7 +13,7 @@ O NEXO é um sistema só: um fluxo, cinco tarefas, um robô, uma Tower. Cada tar
 2. **Ler estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. Baixe a Tower inteira só para executar teste.
 3. **Escrever:** nunca na Tower. Toda mudança é proposta no inbox; só o **NEXO Writer robot** (GitHub Actions, byDenoso/Pantheon) grava a Tower.
 4. **Portões:** só o Dener aprova carta e canoniza gene, e só em conversa (`OPERATOR_INTENT`, source `DENER`).
-5. **Ciência:** só `CONFIRMED` é confirmado (sobreviveu a 2 contestações de eixos diferentes). Nulo é resultado. PASS de software não é claim.
+5. **Ciência:** só `CONFIRMED` é confirmado: o resultado sobreviveu a uma contestação independente (teste novo, critério congelado, outro dado ou método), decidida mecanicamente pelo robô. Nulo é resultado. PASS de software não é claim.
 6. **Olympus:** pessoas reais. Sigla de 3 letras em tudo; nunca imprima nome, data ou saúde.
 7. **Pronto** = resultado existe + gravação lida de volta. Nunca diga "salvo" sem read-back.
 8. **Nunca pause, apague ou edite tarefa agendada.** Falha de gravação não é motivo para parar: registre e termine.
