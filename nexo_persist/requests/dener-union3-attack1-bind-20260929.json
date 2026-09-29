@@ -1,0 +1,64 @@
+{
+  "stable_id": "dener-union3-attack1-bind-20260929",
+  "envelope": {
+    "kind": "RECIPE_BIND",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-29T05:34:00Z",
+    "payload": {
+      "test_id": "CONTEST-HYP-GW-TCC-47CCB7847C38971BAD272F58445B62D0-1",
+      "recipe": "w0wa_bao_sn_multi",
+      "params": {
+        "mode": "bao_tracer_jackknife",
+        "compilations": [
+          "union3"
+        ],
+        "priors": {
+          "omega_m": [
+            0.315,
+            0.007
+          ]
+        },
+        "tracer_groups": [
+          {
+            "label": "BGS",
+            "z": [
+              0.295
+            ]
+          },
+          {
+            "label": "LRG",
+            "z": [
+              0.51,
+              0.706
+            ]
+          },
+          {
+            "label": "LRG+ELG",
+            "z": [
+              0.934
+            ]
+          },
+          {
+            "label": "ELG",
+            "z": [
+              1.321
+            ]
+          },
+          {
+            "label": "QSO",
+            "z": [
+              1.484
+            ]
+          },
+          {
+            "label": "Ly-alpha",
+            "z": [
+              2.33
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
