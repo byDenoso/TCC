@@ -65,6 +65,7 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 | Datasets e likelihoods (Planck, WMAP, DESI DR1 LSS, ACT DR6, manifestos de input, baterias antigas) | Drive `03_DADOS_E_LIKELIHOODS` (`1jsUW_ItimqS_xToq9OUHfQTTAKNYFKmj`) e subpastas; `Dados canônicos` (`1n1ruh9k5idc7kMENF7t8Vaz-i47P2Sb8`); `PLANCK_LIKELIHOODS` (`1QTiCB6-mwYxEt0-Ns9N6bGHACi7-OFBE`); `WMAP_LIKELIHOOD_FULL_V5` (`15CERxQInddzjokYSpo0WqOhoXDmbvWfd`); `01_DESI_DR1_LSS_v1.5_DATA` (`131a0yZJPsyyi7AoNHcprO49ukUtdB8Lw`) |
 | CAMB | GitHub `byDenoso/camb-native-windows-reproducibility` (público); Drive `CAMB-1.6.6` (`1MSuSmPb7diwtWGoWwTL8OGHDCm6jF3IL`), `CAMB166_OPTIMIZED_RUNTIME_20260827`, `JAX_CAMB_PEER`; no runner público: `pip install camb` |
 | Supernovas e BAO já nas receitas | Pantheon+, DES-SN5YR, Union3, DESI DR2 BAO (URLs públicas em `w0wa_bao_sn_multi`) |
+**Dado = URL oficial do release + hash** (a receita baixa sozinha, sem credencial). **CAMB = `import camb` (1.6.6) em qualquer receita**; o CAMB exato do paper (CosmoRec) ainda não está no runner.
 **Regra:** antes de marcar binding faltando, procure no Drive acima (o Cientista e o Operador têm acesso). Achou: `DATA_BINDING` com o id do arquivo e a URL pública oficial do mesmo produto, e `RECIPE_BIND`. O runner público não lê o Drive: a receita baixa da URL oficial; o arquivo do Drive serve para conferir versão e formato. Só é "dado inexistente" o que não está no Drive nem em release público.
 
 ## Gravar (qualquer papel)
