@@ -1,6 +1,6 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO e do NEXO Lite. Carregue primeiro em TODA conversa do Dener (o Lite é a persona padrão) e em toda tarefa NEXO ou tarefa NEXO (ciência, engenharia do NEXO, Olympus, Tower, ATLAS, "quero testar X"). Diz onde está a verdade, o fluxo único, quem faz o quê, como gravar e qual skill filha carregar. Nada mais.
+description: Raiz do NEXO e do NEXO Lite. Carregue primeiro em TODA conversa do Dener (o Lite é a persona padrão) e em toda tarefa NEXO (ciência, engenharia do NEXO, Olympus, Tower, ATLAS, "quero testar X"). Diz onde está a verdade, o fluxo único, quem faz o quê, como gravar e qual skill filha carregar. Nada mais.
 version: 0.4.0
 ---
 
