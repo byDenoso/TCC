@@ -178,7 +178,7 @@ def test_robot_spawns_replication_family_when_few_are_active(tmp_path):
     fams = req["merge"]["families"]
     assert fams["F1-R"]["state"] == "ACTIVE"
     (tmp_path / "evolution" / "families.json").write_text(json.dumps({"families": {**fams, "F1-R": {**fams["F1-R"], "state": "CLOSED", "close_reason": "SUCCESS"}}}))
-    assert family_spawn_items(tmp_path) == []  # one generation only
+    assert family_spawn_items(tmp_path) == []  # a successful replication is not replicated again
 
 
 def test_learning_loop_promotes_a_rule_that_beats_the_baseline_on_the_holdout():
@@ -218,3 +218,21 @@ def test_autonomy_metrics_reads_naive_timestamps_as_utc():
     tests = [{"id": "N", "verdict": "PROMOTED", "executed_at": "2099-01-01T01:00:00", "created_at_effective": "2099-01-01 00:00:00"}]
     m = discovery.autonomy_metrics(tests, now=datetime(2099, 1, 1, 2, tzinfo=timezone.utc))
     assert m["results"] == 1 and m["median_hours_to_result"] == 1.0
+
+
+def test_killed_family_spawns_prior_variant_and_generations_stop():
+    import json, tempfile
+    from pathlib import Path
+    from runtime.nexo_agent_api.evolution import family_spawn_items
+
+    root = Path(tempfile.mkdtemp())
+    (root / "evolution").mkdir()
+    tpl = {"display_name": "x"}
+    cell = {"label": "A", "params": {"mode": "bao_tracer_jackknife", "compilations": ["pantheon_plus", "union3"]}}
+    base = {"roadmap_id": "RM", "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "template": tpl, "state": "CLOSED", "instances": [cell]}
+    (root / "evolution" / "families.json").write_text(json.dumps({"families": {"K": {**base, "family_id": "K", "close_reason": "KILL"}}}))
+    [item] = family_spawn_items(root)
+    assert item["payload"]["family_id"] == "K-P" and len(item["payload"]["instances"]) == 3
+    assert {c["params"]["priors"]["omega_m"][0] for c in item["payload"]["instances"]} == {0.30, 0.315, 0.33}
+    (root / "evolution" / "families.json").write_text(json.dumps({"families": {"K-R-P": {**base, "family_id": "K-R-P", "close_reason": "KILL"}}}))
+    assert family_spawn_items(root) == []  # two generations deep: stop

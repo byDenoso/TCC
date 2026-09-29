@@ -814,26 +814,52 @@ MIN_ACTIVE_FAMILIES = 3
 SN_SETS = (("pantheon_plus", "union3"), ("des_sn5yr", "union3"), ("pantheon_plus", "des_sn5yr", "union3"), ("pantheon_plus", "des_sn5yr"))
 
 
+OMEGA_M_PRIORS = ((0.30, 0.01), (0.315, 0.007), (0.33, 0.01))
+MAX_FAMILY_GENERATIONS = 2
+
+
+def _generation(fid: str) -> int:
+    n = 0
+    while fid.endswith(("-R", "-P")):
+        fid, n = fid[:-2], n + 1
+    return n
+
+
 def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
-    """When fewer than 3 families are ACTIVE, the robot opens one replication family: a family that closed by SUCCESS,
-    re-run on the SN compilation sets it did not use. Same frozen contract and grid, one generation only (no endless chains)."""
+    """When fewer than 3 families are ACTIVE, the robot opens one daughter family on another axis, same frozen contract:
+    - closed by KILL or EXHAUSTED: the same grid under other Omega_m priors (-P), to find where the conclusion flips;
+    - closed by SUCCESS: replication on the SN compilation sets it did not use (-R).
+    At most 2 generations, so the tree stays finite."""
     now = now or datetime.now(timezone.utc)
     families = _read(root, FAMILIES_DOC).get("families") or {}
     if sum(1 for f in families.values() if f.get("state") == "ACTIVE") >= MIN_ACTIVE_FAMILIES:
         return []
-    for fid, fam in sorted(families.items(), key=lambda kv: str(kv[1].get("chartered_at") or "")):
-        child = f"{fid}-R"[:40]
-        if (fam.get("state") != "CLOSED" or fam.get("close_reason") != "SUCCESS" or fid.endswith("-R") or child in families
-                or fam.get("recipe") != "w0wa_bao_sn_multi"):
+    order = {"KILL": 0, "EXHAUSTED": 1, "SUCCESS": 2}
+    closed = sorted(((fid, f) for fid, f in families.items() if f.get("state") == "CLOSED" and f.get("recipe") == "w0wa_bao_sn_multi"
+                     and f.get("close_reason") in order and _generation(fid) < MAX_FAMILY_GENERATIONS),
+                    key=lambda kv: (order[kv[1]["close_reason"]], str(kv[1].get("chartered_at") or "")))
+    for fid, fam in closed:
+        axis = "R" if fam["close_reason"] == "SUCCESS" else "P"
+        child = f"{fid}-{axis}"[:40]
+        if child in families or (axis == "R" and fid.endswith("-R")) or (axis == "P" and fid.endswith("-P")):
             continue
-        cells = []
+        cells, seen = [], set()
         for cell in fam.get("instances") or []:
-            used = tuple(cell["params"].get("compilations") or ("pantheon_plus", "des_sn5yr"))
-            for sn in SN_SETS:
-                if sorted(sn) != sorted(used):
-                    tag = "-".join({"pantheon_plus": "PP", "des_sn5yr": "DES", "union3": "U3"}[c] for c in sn)
-                    cells.append({"label": f"{cell['label']}-{tag}"[:30], "params": {**cell["params"], "compilations": list(sn)}})
-        tpl = dict(fam["template"], display_name=f"{fam['template']['display_name']} · outras coleções de supernovas")
+            if axis == "R":
+                used = tuple(cell["params"].get("compilations") or ("pantheon_plus", "des_sn5yr"))
+                variants = [({"compilations": list(sn)}, "-".join({"pantheon_plus": "PP", "des_sn5yr": "DES", "union3": "U3"}[c] for c in sn))
+                            for sn in SN_SETS if sorted(sn) != sorted(used)]
+            else:
+                variants = [({"priors": {**(cell["params"].get("priors") or {}), "omega_m": [m, sd]}}, f"OM{int(m * 1000)}")
+                            for m, sd in OMEGA_M_PRIORS]
+            for change, tag in variants:
+                params = {**cell["params"], **change}
+                key = json.dumps(params, sort_keys=True)
+                if key not in seen:
+                    seen.add(key)
+                    cells.append({"label": f"{cell['label']}-{tag}"[:30], "params": params})
+        suffix = "outras coleções de supernovas" if axis == "R" else "outros priors de Ω_m"
+        tpl = dict(fam["template"], display_name=f"{fam['template']['display_name']} · {suffix}")
         return [{"kind": "FAMILY_CHARTER", "source": "WRITER_ROBOT", "created_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
                  "_inbox_name": f"robot-spawn-{child}",
                  "payload": {"family_id": child, "roadmap_id": fam["roadmap_id"], "recipe": fam["recipe"], "domain": fam["domain"].lower(),
