@@ -158,3 +158,24 @@ def test_robot_contests_positive_family_result_with_union3(tmp_path):
     assert family_contest_items(tmp_path) == []  # attacked once already
     [battery] = family_battery_items(tmp_path)
     assert [t["test_id"] for t in battery["payload"]["tests"]] == [attack["entity_name"]]
+
+
+def test_robot_spawns_replication_family_when_few_are_active(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_charter_requests, family_spawn_items
+
+    (tmp_path / "evolution").mkdir()
+    (tmp_path / "roadmaps").mkdir()
+    (tmp_path / "roadmaps" / "RM-A.json").write_text(json.dumps({"status": "ACTIVE"}))
+    tpl = {k: "x" for k in ("display_name", "question", "null", "rival", "method", "dataset_and_selection", "success_criteria", "kill_criteria")}
+    fam = {"family_id": "F1", "roadmap_id": "RM-A", "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "template": tpl, "state": "CLOSED",
+           "close_reason": "SUCCESS", "stop": {"kill_rejected": 2, "success_promoted": 2},
+           "instances": [{"label": "A", "params": {"mode": "redshift_jackknife", "compilations": ["pantheon_plus", "des_sn5yr"]}}]}
+    (tmp_path / "evolution" / "families.json").write_text(json.dumps({"families": {"F1": fam}}))
+    [item] = family_spawn_items(tmp_path)
+    assert item["payload"]["family_id"] == "F1-R" and len(item["payload"]["instances"]) == 3
+    [req] = family_charter_requests(item, item["payload"], tmp_path)
+    fams = req["merge"]["families"]
+    assert fams["F1-R"]["state"] == "ACTIVE"
+    (tmp_path / "evolution" / "families.json").write_text(json.dumps({"families": {**fams, "F1-R": {**fams["F1-R"], "state": "CLOSED", "close_reason": "SUCCESS"}}}))
+    assert family_spawn_items(tmp_path) == []  # one generation only

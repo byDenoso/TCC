@@ -770,6 +770,37 @@ MAX_ROBOT_CONTESTS_PER_RUN = 5
 SN_COMPILATIONS = ("pantheon_plus", "des_sn5yr", "union3")
 
 
+MIN_ACTIVE_FAMILIES = 3
+SN_SETS = (("pantheon_plus", "union3"), ("des_sn5yr", "union3"), ("pantheon_plus", "des_sn5yr", "union3"), ("pantheon_plus", "des_sn5yr"))
+
+
+def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
+    """When fewer than 3 families are ACTIVE, the robot opens one replication family: a family that closed by SUCCESS,
+    re-run on the SN compilation sets it did not use. Same frozen contract and grid, one generation only (no endless chains)."""
+    now = now or datetime.now(timezone.utc)
+    families = _read(root, FAMILIES_DOC).get("families") or {}
+    if sum(1 for f in families.values() if f.get("state") == "ACTIVE") >= MIN_ACTIVE_FAMILIES:
+        return []
+    for fid, fam in sorted(families.items(), key=lambda kv: str(kv[1].get("chartered_at") or "")):
+        child = f"{fid}-R"[:40]
+        if (fam.get("state") != "CLOSED" or fam.get("close_reason") != "SUCCESS" or fid.endswith("-R") or child in families
+                or fam.get("recipe") != "w0wa_bao_sn_multi"):
+            continue
+        cells = []
+        for cell in fam.get("instances") or []:
+            used = tuple(cell["params"].get("compilations") or ("pantheon_plus", "des_sn5yr"))
+            for sn in SN_SETS:
+                if sorted(sn) != sorted(used):
+                    tag = "-".join({"pantheon_plus": "PP", "des_sn5yr": "DES", "union3": "U3"}[c] for c in sn)
+                    cells.append({"label": f"{cell['label']}-{tag}"[:30], "params": {**cell["params"], "compilations": list(sn)}})
+        tpl = dict(fam["template"], display_name=f"{fam['template']['display_name']} · outras coleções de supernovas")
+        return [{"kind": "FAMILY_CHARTER", "source": "WRITER_ROBOT", "created_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                 "_inbox_name": f"robot-spawn-{child}",
+                 "payload": {"family_id": child, "roadmap_id": fam["roadmap_id"], "recipe": fam["recipe"], "domain": fam["domain"].lower(),
+                             "hypothesis_id": fam.get("hypothesis_id"), "template": tpl, "instances": cells[:12], "stop": fam.get("stop")}}]
+    return []
+
+
 def _family_summary(family: dict[str, Any], tests: list[dict[str, Any]]) -> dict[str, Any]:
     mine = _family_tests(tests, family.get("family_id"))
     verdicts = [str(t.get("verdict") or "").upper() for t in mine]
