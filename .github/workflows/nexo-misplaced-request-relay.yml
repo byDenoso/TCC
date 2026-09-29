@@ -1,0 +1,47 @@
+name: NEXO misplaced request relay
+
+# Agents sometimes write a persistence request to main (even under a folder named after the staging branch).
+# Relay it to nexo-inbox exactly like the staging relay, so a wrong branch never loses a proposal.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/nexo_persist/requests/*.json'
+
+permissions:
+  contents: write
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Relay requests of this push
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          python3 - <<'PY'
+          import base64, json, os, re, subprocess
+          from pathlib import Path
+          repo = os.environ["GITHUB_REPOSITORY"]
+          changed = subprocess.run(["git", "diff", "--name-only", "--diff-filter=AM", os.environ["BEFORE"], os.environ["GITHUB_SHA"]],
+                                   capture_output=True, text=True).stdout.split()
+          changed = [f for f in changed if re.search(r"(^|/)nexo_persist/requests/[^/]+\.json$", f)]
+          api = lambda *a, data=None: subprocess.run(["gh", "api", *a], input=data, capture_output=True, text=True)
+          for f in changed:
+              data = json.loads(Path(f).read_text(encoding="utf-8"))
+              env = data["envelope"] if isinstance(data.get("envelope"), dict) else data
+              sid = re.sub(r"[^a-z0-9-]+", "-", str(data.get("stable_id") or Path(f).stem).lower()).strip("-")[:60] or "request"
+              target = f"inbox/scheduled-{sid}.json"
+              if api(f"repos/{repo}/contents/{target}?ref=nexo-inbox").returncode == 0:
+                  print(f"{target}: already relayed"); continue
+              body = json.dumps(env, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + chr(10)
+              put = api("--method", "PUT", f"repos/{repo}/contents/{target}", "--input", "-",
+                        data=json.dumps({"message": "NEXO misplaced request relay", "branch": "nexo-inbox",
+                                         "content": base64.b64encode(body.encode("utf-8")).decode()}))
+              print(f"{target}: {'relayed' if put.returncode == 0 else 'FAILED ' + put.stderr[:200]}")
+          PY
