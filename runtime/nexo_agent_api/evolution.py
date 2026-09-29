@@ -801,6 +801,20 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     return items
 
 
+def recipe_bind_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    """RECIPE_BIND {test_id, recipe, params}: ties a frozen recipe to an existing test. One line replaces the review round: the robot dispatches it next."""
+    test_id, recipe, params = str(body.get("test_id") or ""), str(body.get("recipe") or ""), body.get("params")
+    test = _entity(root, "test", test_id)
+    if not test or not re.fullmatch(r"[a-z0-9_]{2,40}", recipe) or not isinstance(params, dict):
+        return []
+    if str(test.get("status") or "").upper() not in {"DRAFT", "READY", "BLOCKED_INPUT"}:
+        return []
+    changes = {"recipe": recipe, "recipe_params": params, "status": "READY", "state": "READY", "draft_reason": None, "blocker": None,
+               "runtime_failure_count": 0}
+    update = _test_update(root, test_id, changes, f"REQ-RECIPE-BIND-{test_id}-{_now(item)[:16]}", "TEST_RECIPE_BOUND")
+    return [update] if update else []
+
+
 def family_state_requests(root: Path) -> list[dict[str, Any]]:
     """Close a family when its hypothesis died (kill_rejected), was sustained (success_promoted) or its roadmap closed."""
     families = dict(_read(root, FAMILIES_DOC).get("families") or {})

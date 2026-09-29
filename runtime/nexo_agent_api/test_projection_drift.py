@@ -115,3 +115,19 @@ def test_battery_takes_three_quarters_of_the_ready_queue(tmp_path):
             path.write_text(json.dumps({"id": f"T-{i:02d}", "kind": "TEST", "status": "READY", "family_id": "F", "recipe": "rcp_one", "recipe_params": {}}))
         [battery] = family_battery_items(root)
         assert len(battery["payload"]["tests"]) == expected, (n, len(battery["payload"]["tests"]))
+
+
+def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path):
+    import json
+    from runtime.nexo_agent_api.evolution import family_battery_items, recipe_bind_requests
+    from runtime.nexo_agent_api.tower_paths import entity_path
+
+    path = entity_path(tmp_path, "test", "T-BOUND")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"id": "T-BOUND", "kind": "TEST", "status": "BLOCKED_INPUT", "origin_kind": "DENER_DIRECTED"}))
+    assert recipe_bind_requests({}, {"test_id": "T-BOUND", "recipe": "Bad Name", "params": {}}, tmp_path) == []
+    [req] = recipe_bind_requests({"created_at": "2026-09-29T05:00:00Z"}, {"test_id": "T-BOUND", "recipe": "rcp_one", "params": {"a": 1}}, tmp_path)
+    assert req["changes"]["status"] == "READY" and req["changes"]["recipe_params"] == {"a": 1}
+    path.write_text(json.dumps({"id": "T-BOUND", "kind": "TEST", "status": "READY", "recipe": "rcp_one", "recipe_params": {"a": 1}}))
+    [battery] = family_battery_items(tmp_path)
+    assert [t["test_id"] for t in battery["payload"]["tests"]] == ["T-BOUND"]
