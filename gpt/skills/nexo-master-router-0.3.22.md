@@ -1,7 +1,7 @@
 ---
 name: nexo-master-router
 description: Raiz do NEXO. Carregue primeiro em qualquer conversa ou tarefa NEXO (ciência, engenharia do NEXO, Olympus, Tower, ATLAS, "quero testar X"). Diz onde está a verdade, como gravar, como consertar gargalos e qual skill filha carregar. Nada mais.
-version: 3.22.0
+version: 0.3.22
 ---
 
 # NEXO — raiz
