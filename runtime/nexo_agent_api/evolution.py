@@ -764,7 +764,8 @@ def family_instance_items(root: Path, now: datetime | None = None) -> list[dict[
 
 
 def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
-    """TEST_BATTERY envelopes for READY family instances. A recipe with an OPEN circuit gets a single probe test."""
+    """TEST_BATTERY envelopes for every READY test that already names a recipe and its params (family cells, Dener's directives, anything an agent finished).
+    A recipe with an OPEN circuit gets a single probe test."""
     now = now or datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     in_flight = sum(1 for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") in {"QUEUED", "DISPATCHED"})
@@ -774,15 +775,15 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     all_tests = _tests(root)
     by_recipe: dict[str, list[dict[str, Any]]] = {}
     for test in all_tests:
-        if not test.get("family_id") or str(test.get("status") or "").upper() != "READY" or not isinstance(test.get("recipe_params"), dict):
+        if str(test.get("status") or "").upper() != "READY" or not isinstance(test.get("recipe_params"), dict):
             continue
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
-    running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING" and t.get("family_id")}
+    running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
     items = []
     for recipe, tests in sorted(by_recipe.items()):
         if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
-        tests = sorted(tests, key=lambda t: str(t.get("id")))
+        tests = sorted(tests, key=lambda t: (t.get("origin_kind") != "DENER_DIRECTED", str(t.get("priority") or "P1"), str(t.get("id"))))
         # Batch policy: up to 20 per battery, but with 20 or fewer ready it sends 75% (20 -> 15), always at least 5 when there are 5.
         take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
         tests = tests[:take]
