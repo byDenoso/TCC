@@ -1,0 +1,18 @@
+{
+  "stable_id": "nexo-recording-resilience-canary-20260929",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "producer": "GPT",
+    "created_at": "2026-09-29T13:08:00Z",
+    "payload": {
+      "entries": [
+        {
+          "to": "ALL",
+          "text": "Canário de gravação resiliente: staging e relay em validação; nenhuma ação científica.",
+          "ttl_h": 1
+        }
+      ]
+    }
+  }
+}
