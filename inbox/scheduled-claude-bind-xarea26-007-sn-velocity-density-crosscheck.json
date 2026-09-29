@@ -1,0 +1,1 @@
+{"created_at":"2026-09-29T23:30:00Z","kind":"RECIPE_BIND","payload":{"params":{"min_effective_groups":30,"min_unique_sn":30,"mode":"sn_crosscheck","smoothing_mpc":40,"z_max":0.05,"z_minima":[0.01,0.023]},"recipe":"cf4_velocity","test_id":"XAREA26-007-SN-VELOCITY-DENSITY-CROSSCHECK"},"producer":"CLAUDE","source":"EXECUTOR"}
