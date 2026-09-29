@@ -914,6 +914,9 @@ def family_state_requests(root: Path) -> list[dict[str, Any]]:
             reason = "KILL"
         elif verdicts.count("PROMOTED") >= int(family["stop"]["success_promoted"]):
             reason = "SUCCESS"
+        elif (len(verdicts) >= len(family.get("instances") or []) and all(verdicts)
+              and not any(str(t.get("status") or "").upper() in {"READY", "RUNNING", "DRAFT"} for t in _family_tests(tests, fid))):
+            reason = "EXHAUSTED"  # every cell ran without reaching either stop: the grid is spent
         else:
             rm = _read(root, f"roadmaps/{family['roadmap_id']}.json")
             if str(rm.get("status") or rm.get("state") or "").upper() in {"CLOSED", "ARCHIVED"}:
