@@ -1,0 +1,22 @@
+{
+  "stable_id": "executor-20260929t2004-bind-dem006",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-29T23:04:40Z",
+    "payload": {
+      "test_id": "T-DEM26-006",
+      "inputs": [
+        {
+          "name": "DHOST theory constraints",
+          "url": "https://arxiv.org/abs/2004.09520",
+          "format": "public theory source",
+          "load": "Stage-1 theory screen; use frozen degeneracy and stability criteria.",
+          "license": "public"
+        }
+      ],
+      "status": "BOUND",
+      "note": "Stage-1 theory input bound; DESI DR2 remains contextual until Stage 3."
+    }
+  }
+}
