@@ -1,0 +1,12 @@
+{
+  "stable_id": "nexo-referee1-noop-20260929",
+  "envelope": {
+    "kind": "CONTEST_NOOP",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-09-29T10:35:00Z",
+    "payload": {
+      "reason": "Nenhum resultado positivo elegível sem contestação na Tower lida nesta rodada."
+    }
+  }
+}
