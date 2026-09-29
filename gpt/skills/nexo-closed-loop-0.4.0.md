@@ -56,6 +56,13 @@ PROMOTED/SUPPORTED → PENDING_REVIEW → uma contestação independente → **C
 **Aptidão (espinha):** `CONFIRMED / testes executados` na janela, menos 0,02 × recusas de runtime, menos 0,05 × iscas não pegas; iscas e testes de contestação saem do denominador. Reporte os componentes, não só o número.
 **Learner:** queda gera rival na mesma rodada (com refs ao teste refutado e ao ataque). Aposta calibrada: antes de fixar `prediction.p_promoted`, olhe a taxa de acerto da faixa (ATLAS "Calibração"); faixa que acerta menos do que promete encolhe para 0,5, com o ajuste dito em `rationale`. Toda hipótese nasce com o `stop` e uma frente do mapa. Autoengenharia ≤ 1 em 3.
 
+## 7b. Engenharia de descoberta (o robô faz; vocês leem)
+Quatro mecanismos do livro do NEXO rodam no robô e aparecem em `status.learning`, `status.search_space` e `status.autonomy`:
+- **Aprendizado procedural.** A cada rodada o robô testa regras candidatas ("testes com o traço X terminam inconclusivos") contra o baseline em um holdout temporal. Regra que vence por 10 pontos ou mais vira ativa (`MERGE` → `EXTEND` → `SUPERSEDE` → `CREATE`, nessa ordem); regra que deixa de vencer é aposentada. A regra só muda a ordem da fila. Nunca muda veredito nem critério. Ao desenhar hipótese, o Cientista lê as regras ativas e evita o traço que dá inconclusivo.
+- **Valor de informação.** O robô ordena o que roda primeiro por incerteza da previsão x chance de decidir / custo. Diretriz do Dener vem antes de tudo.
+- **Look-elsewhere.** `status.search_space` mostra quantas comparações cada família e roadmap abriu e quantos positivos o acaso sozinho daria. Ao relatar um positivo de família, cite o N (por exemplo "1 positivo em 12 comparações; o acaso dá 0,6").
+- **Vetor de autonomia.** `status.autonomy`: parte feita só pelo robô, horas da ideia ao resultado, taxa de testes decisivos, positivos com veredito, parte bloqueada. O Guardião cita esses números no relatório de integridade e age no pior deles.
+
 ## 8. Receitas: quem escreve, quem revisa
 Receitas são código congelado em `byDenoso/Pantheon nexo-one/executor-runtime/recipes/`; proposta nunca leva código.
 1. **Ligar antes de pedir.** Existe receita que mede o que o teste pré-registrou? `RECIPE_BIND` e pronto. Nenhuma serve: o Operador escreve a especificação declarativa (`RECIPE_REQUEST`: nome, parâmetros, fontes públicas, estatística, critério, saídas, testes que serve), agrupando pedidos parecidos numa família reutilizável.
