@@ -37,6 +37,8 @@ THOUGHTS_DOC = "evolution/thoughts.json"
 DECOYS_DOC = "evolution/decoys.json"
 BATTERIES_DOC = "evolution/batteries.json"
 WATCHDOG_DOC = "evolution/watchdog.json"
+RECIPE_HEALTH_DOC = "evolution/recipe_health.json"
+RECIPE_OPEN_AFTER = 2  # consecutive recipe bugs that open a recipe's circuit
 BOARD_DOC = "evolution/board.json"
 BOARD_ROLES = {"ALL", "PITIA", "LEARNER", "EXECUTOR", "REFUTADOR", "GUARDIAO", "CONVERSA", "DENER"}
 MAX_RUNTIME_FAILURES = 2
@@ -681,6 +683,19 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     batteries.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"), "tests": tests})
     return [_doc(BATTERIES_DOC, {"batteries": batteries[-200:]}, f"REQ-BATTERY-{bid}")] + requests
 
+_TRANSIENT = re.compile(r"timed? ?out|timeout|connection (reset|aborted|refused)|temporary failure|rate limit|429|50[234]|urlopen error", re.I)
+
+
+def classify_failure(log_tail: str) -> str:
+    """TRANSIENT (retry, nobody's fault) | RECIPE_BUG (the recipe crashed: the test is innocent) | TEST (blocked-input style failure)."""
+    text = str(log_tail or "")
+    if _TRANSIENT.search(text):
+        return "TRANSIENT"
+    if "Traceback" in text:
+        return "RECIPE_BUG"
+    return "TEST"
+
+
 def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Path, result_fn) -> list[dict[str, Any]]:
     """BATTERY_STATUS {battery_id, status DISPATCHED|DONE, run_id?, results:[{test_id, ok, result, semantic, log_tail}]}."""
     doc = _read(root, BATTERIES_DOC)
@@ -695,10 +710,14 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
         battery.update({"dispatched_at": _now(item), "run_ref": body.get("run_ref")})
     if status == "DONE":
         ok = bad = 0
+        health = dict(_read(root, RECIPE_HEALTH_DOC).get("recipes") or {})
         for entry in body.get("results") or []:
             test_id = str(entry.get("test_id") or "")
             if entry.get("ok") and isinstance(entry.get("result"), dict):
                 ok += 1
+                won = str((_entity(root, "test", test_id) or {}).get("execution_recipe") or "")
+                if won in health:  # first success closes the circuit
+                    health[won] = dict(health[won], consecutive_bugs=0, state="CLOSED", closed_at=_now(item))
                 # A battery result must carry its execution time, or the watchdog thinks no result ever arrived.
                 requests += result_fn(dict(item, created_at=item.get("created_at") or _now(item), _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
                                       {"test_id": test_id, "result": entry["result"], "semantic": entry.get("semantic") or {},
@@ -710,6 +729,17 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 current_test = _entity(root, "test", test_id) or {}
                 failures = int(current_test.get("runtime_failure_count") or 0) + 1
                 failure = {"battery_id": bid, "at": _now(item), "log_tail": str(entry.get("log_tail") or "")[-800:]}
+                kind = classify_failure(entry.get("log_tail"))
+                failure["class"] = kind
+                recipe = str(current_test.get("execution_recipe") or "")
+                if kind == "RECIPE_BUG" and recipe:
+                    h = dict(health.get(recipe) or {})
+                    bugs = int(h.get("consecutive_bugs") or 0) + 1
+                    health[recipe] = {**h, "consecutive_bugs": bugs, "last_bug_at": _now(item), "last_test": test_id,
+                                      "last_error": failure["log_tail"][-300:],
+                                      "state": "OPEN" if bugs >= RECIPE_OPEN_AFTER else h.get("state", "CLOSED")}
+                if kind in {"TRANSIENT", "RECIPE_BUG"}:
+                    failures -= 1  # not the test's fault: it keeps both chances
                 if failures >= MAX_RUNTIME_FAILURES:
                     # The same test crashing again will crash again: stop recycling it and say what it needs.
                     changes = {"status": "BLOCKED_INPUT", "state": "BLOCKED_INPUT", "execution": None,
@@ -722,6 +752,8 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 if update:
                     requests.append(update)
         battery.update({"completed_at": _now(item), "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
+        if health != (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}):
+            requests.append(_doc(RECIPE_HEALTH_DOC, {"recipes": health}, f"REQ-RECIPE-HEALTH-{bid}"))
     batteries[index] = battery
     return [_doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{status}-{bid}")] + requests
 
@@ -1390,6 +1422,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "signal_clusters": _signal_clusters(root, tests),
         "incidents": incidents,
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
+        "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }
