@@ -767,6 +767,16 @@ MAX_ROBOT_CONTESTS_PER_RUN = 5
 SN_COMPILATIONS = ("pantheon_plus", "des_sn5yr", "union3")
 
 
+def _family_summary(family: dict[str, Any], tests: list[dict[str, Any]]) -> dict[str, Any]:
+    mine = _family_tests(tests, family.get("family_id"))
+    verdicts = [str(t.get("verdict") or "").upper() for t in mine]
+    return {"family_id": family.get("family_id"), "state": family.get("state"), "close_reason": family.get("close_reason"),
+            "recipe": family.get("recipe"), "display_name": (family.get("template") or {}).get("display_name"),
+            "cells": len(family.get("instances") or []), "tests": len(mine),
+            "done": sum(1 for t in mine if t.get("verdict")), "promoted": verdicts.count("PROMOTED"),
+            "rejected": verdicts.count("REJECTED"), "inconclusive": verdicts.count("INCONCLUSIVE")}
+
+
 def family_contest_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
     """CONTEST envelopes for positive family results nobody attacked yet: an independent replication with another SN compilation.
     Same recipe and frozen criteria, Union3 in place of DES-SN5YR. Keeps the review ladder moving without a human or a chat."""
@@ -1617,6 +1627,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "incidents": incidents,
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
         "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
+        "families": [_family_summary(f, tests) for f in (_read(root, FAMILIES_DOC).get("families") or {}).values()],
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }
