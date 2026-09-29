@@ -1,0 +1,226 @@
+{
+  "stable_id": "executor-20260929T1355Z-ready-bindings-r3",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-29T13:55:40Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+            "inputs": [
+              {
+                "name": "DESI DR1 BAO cosmology results",
+                "url": "https://data.desi.lbl.gov/public/dr1/vac/dr1/bao-cosmo-params",
+                "format": "release directory",
+                "load": "usar os likelihoods BAO DR1 correspondentes aos mesmos grupos de traçadores do contrato",
+                "license": "CC BY 4.0"
+              }
+            ],
+            "status": "BOUND",
+            "note": "Release anterior oficial ligado para o ataque; a receita atual ainda fixa DR2 e precisa aceitar seleção DR1."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-DES-U3-1",
+            "inputs": [
+              {
+                "name": "DESI DR1 BAO cosmology results",
+                "url": "https://data.desi.lbl.gov/public/dr1/vac/dr1/bao-cosmo-params",
+                "format": "release directory",
+                "load": "usar os likelihoods BAO DR1 correspondentes aos mesmos grupos de traçadores do contrato",
+                "license": "CC BY 4.0"
+              }
+            ],
+            "status": "BOUND",
+            "note": "Release anterior oficial ligado para o ataque; a receita atual ainda fixa DR2 e precisa aceitar seleção DR1."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3-1",
+            "inputs": [
+              {
+                "name": "DESI DR1 BAO cosmology results",
+                "url": "https://data.desi.lbl.gov/public/dr1/vac/dr1/bao-cosmo-params",
+                "format": "release directory",
+                "load": "usar os likelihoods BAO DR1 correspondentes aos mesmos grupos de traçadores do contrato",
+                "license": "CC BY 4.0"
+              }
+            ],
+            "status": "BOUND",
+            "note": "Release anterior oficial ligado para o ataque; a receita atual ainda fixa DR2 e precisa aceitar seleção DR1."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "test_id": "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-BD1B54BB91B1568C",
+            "inputs": [
+              {
+                "name": "Pantheon+ distâncias e covariância",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/",
+                "format": "texto + matriz de covariância",
+                "load": "carregar distâncias e covariância públicas",
+                "license": "public"
+              },
+              {
+                "name": "DES-SN5YR distâncias e covariância",
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/main/4_DISTANCES_COVMAT/",
+                "format": "SNANA + NPZ",
+                "load": "carregar distâncias e precisão/covariância públicas",
+                "license": "public"
+              }
+            ],
+            "status": "PARTIAL",
+            "note": "Duas compilações públicas ligadas; ainda faltam as três faixas congeladas e o binding CMB literal do contrato."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "test_id": "XAREA26-003-SN-COVARIANCE-MODES",
+            "inputs": [
+              {
+                "name": "Pantheon+ distâncias e covariância",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/main/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/",
+                "format": "texto + matriz de covariância",
+                "load": "carregar distâncias e covariância públicas",
+                "license": "public"
+              },
+              {
+                "name": "DES-SN5YR distâncias e covariância",
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/main/4_DISTANCES_COVMAT/",
+                "format": "SNANA + NPZ",
+                "load": "carregar distâncias e precisão/covariância públicas",
+                "license": "public"
+              }
+            ],
+            "status": "PARTIAL",
+            "note": "Dados-base ligados; ainda faltam os modos pré-declarados de calibração, seleção e redshift como response_sets auditáveis."
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "w0wa_bao_sn_multi_dr1_release",
+              "inputs": [
+                "DESI DR1 BAO oficial",
+                "compilações Pantheon+, DES-SN5YR e Union3 já suportadas",
+                "tracer_groups e priors congelados do teste"
+              ],
+              "data_sources": [
+                "https://data.desi.lbl.gov/public/dr1/vac/dr1/bao-cosmo-params"
+              ],
+              "statistic": "repetir o ajuste e o jackknife do resultado original trocando somente DESI DR2 por DESI DR1",
+              "criterion": "aplicar literalmente success/kill do ataque sem redefinir limiar",
+              "outputs": [
+                "verdict",
+                "decision",
+                "summary",
+                "statistics",
+                "semantic"
+              ],
+              "tests_served": [
+                "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+                "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-DES-U3-1",
+                "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3-1"
+              ]
+            },
+            "reason": "A receita w0wa_bao_sn_multi atual fixa DESI DR2; o ataque exige repetir com o release anterior."
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "tree_matching_symbolic_r1",
+              "inputs": [
+                "contrato simbólico congelado do teste"
+              ],
+              "data_sources": [
+                "sem dado cosmológico"
+              ],
+              "statistic": "eliminar simbolicamente o radial com variável angular reescalada e símbolos independentes para massa radial e m² de P(X); comparar coeficientes termo a termo",
+              "criterion": "SURVIVED somente se a forma alvo e R=1 reaparecerem exatamente sem coeficiente livre adicional; REFUTED se surgir coeficiente independente ou R diferir de 1",
+              "outputs": [
+                "verdict",
+                "decision",
+                "summary",
+                "statistics",
+                "semantic"
+              ],
+              "tests_served": [
+                "CONTEST-T-DEH26-003-TREE-MATCHING-R1-1"
+              ]
+            },
+            "reason": "Nenhuma receita congelada atual executa o matching algébrico independente pré-registrado."
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-29T13:55:40Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "ENGINEER",
+                "text": "Liguei os dados públicos de cinco READY. Preciso da extensão DR1 da família w0-wa para três ataques e da receita simbólica de matching; os pedidos declarativos foram gravados nesta rodada.",
+                "refs": [
+                  "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+                  "CONTEST-T-DEH26-003-TREE-MATCHING-R1-1"
+                ],
+                "reply_to": "BP-2026-09-28T22:19-ENGINEER-0",
+                "ttl_h": 48
+              },
+              {
+                "to": "GUARDIAO",
+                "text": "Retomei a fronteira: cinco testes receberam binding público nesta rodada. Os modos tardios continuam aguardando parâmetros congelados específicos, e os três ataques de release aguardam extensão DR1 da receita.",
+                "refs": [
+                  "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-BD1B54BB91B1568C",
+                  "XAREA26-003-SN-COVARIANCE-MODES"
+                ],
+                "reply_to": "BP-2026-09-29T12:58:51-GUARDIAO-0",
+                "ttl_h": 48
+              }
+            ],
+            "resolve": [
+              "BP-2026-09-28T22:19-ENGINEER-0"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
