@@ -179,3 +179,33 @@ def test_robot_spawns_replication_family_when_few_are_active(tmp_path):
     assert fams["F1-R"]["state"] == "ACTIVE"
     (tmp_path / "evolution" / "families.json").write_text(json.dumps({"families": {**fams, "F1-R": {**fams["F1-R"], "state": "CLOSED", "close_reason": "SUCCESS"}}}))
     assert family_spawn_items(tmp_path) == []  # one generation only
+
+
+def test_learning_loop_promotes_a_rule_that_beats_the_baseline_on_the_holdout():
+    from runtime.nexo_agent_api import discovery
+
+    def t(i, units, verdict):
+        return {"id": f"T{i}", "recipe": "r", "recipe_params": {"mode": "m", "compilations": ["a", "b"], "bands": [[0, 1]] * units},
+                "verdict": verdict, "executed_at": f"2026-09-{10 + i // 3:02d}T0{i % 3}:00:00Z"}
+
+    # 3 bands always decide; 5 bands always end inconclusive: a clean, learnable trait
+    tests = [t(i, 3 if i % 2 else 5, "PROMOTED" if i % 2 else "INCONCLUSIVE") for i in range(40)]
+    out = discovery.learning_loop(tests)
+    rule = next(r for r in out["rules"] if r["feature"] == "units" and r["value"] == "5")
+    assert rule["state"] == "ACTIVE" and rule["gain"] >= discovery.MIN_GAIN and rule["op"] == "CREATE"
+    again = discovery.learning_loop(tests, out)
+    assert [r["value"] for r in again["rules"] if r["feature"] == "units"] == ["5"]  # MERGE, no duplicate
+    assert discovery.learning_loop(tests[:10])["evaluated"]["note"]
+    fresh, stale = t(1, 3, None), t(0, 5, None)
+    assert discovery.information_value(fresh, again["rules"]) > discovery.information_value(stale, again["rules"])
+
+
+def test_search_space_and_autonomy_metrics():
+    from runtime.nexo_agent_api import discovery
+
+    tests = [{"id": f"F{i}", "family_id": "FAM", "verdict": "PROMOTED" if i < 2 else "INCONCLUSIVE", "executed_at": "2099-01-01T00:00:00Z"} for i in range(6)]
+    space = discovery.search_space(tests)["FAM"]
+    assert space["comparisons"] == 6 and space["positives"] == 2 and space["expected_by_chance"] == 0.3
+    from datetime import datetime, timezone
+    m = discovery.autonomy_metrics(tests, now=datetime(2099, 1, 1, 6, tzinfo=timezone.utc))
+    assert m["results"] == 6 and m["robot_share"] == 1.0 and m["decisive_rate"] == round(2 / 6, 3)

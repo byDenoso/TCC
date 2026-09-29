@@ -24,6 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+from . import discovery
 from .semantics import is_private, resolve as resolve_semantic
 from .tower_paths import entity_path, fs_path
 
@@ -460,6 +461,7 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
                 if update:
                     requests.append(update)
     requests += family_state_requests(root)
+    requests += learning_loop_requests(root)
     return requests
 
 
@@ -868,7 +870,9 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     for recipe, tests in sorted(by_recipe.items()):
         if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
-        tests = sorted(tests, key=lambda t: (t.get("origin_kind") != "DENER_DIRECTED", str(t.get("priority") or "P1"), str(t.get("id"))))
+        learned = (_read(root, discovery.LEARNING_DOC).get("rules")) or []
+        tests = sorted(tests, key=lambda t: (t.get("origin_kind") != "DENER_DIRECTED", str(t.get("priority") or "P1"),
+                                             -discovery.information_value(t, learned), str(t.get("id"))))
         # Batch policy: up to 20 per battery, but with 20 or fewer ready it sends 75% (20 -> 15), always at least 5 when there are 5.
         take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
         tests = tests[:take]
@@ -898,6 +902,16 @@ def recipe_bind_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
                "runtime_failure_count": 0}
     update = _test_update(root, test_id, changes, f"REQ-RECIPE-BIND-{test_id}-{_now(item)[:16]}", "TEST_RECIPE_BOUND")
     return [update] if update else []
+
+
+def learning_loop_requests(root: Path) -> list[dict[str, Any]]:
+    """Procedural learning (book ch.10): the robot evaluates candidate rules against a temporal holdout and persists what wins."""
+    current = _read(root, discovery.LEARNING_DOC)
+    updated = discovery.learning_loop(_tests(root), current)
+    if updated.get("rules") == (current or {}).get("rules") and updated.get("evaluated") == (current or {}).get("evaluated"):
+        return []
+    return [_doc(discovery.LEARNING_DOC, {"rules": updated["rules"], "evaluated": updated["evaluated"]},
+                 "REQ-LEARNING-" + datetime.now(timezone.utc).strftime("%Y%m%d%H"))]
 
 
 def family_state_requests(root: Path) -> list[dict[str, Any]]:
@@ -1670,6 +1684,11 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
         "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
         "families": [_family_summary(f, tests) for f in (_read(root, FAMILIES_DOC).get("families") or {}).values()],
+        "learning": {"rules": [{k: r.get(k) for k in ("feature", "value", "state", "inconclusive_rate", "holdout_accuracy", "baseline", "gain", "op")}
+                               for r in (_read(root, "evolution/learning.json").get("rules") or [])],
+                     "evaluated": _read(root, "evolution/learning.json").get("evaluated")},
+        "search_space": discovery.search_space(tests),
+        "autonomy": discovery.autonomy_metrics(tests),
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }
