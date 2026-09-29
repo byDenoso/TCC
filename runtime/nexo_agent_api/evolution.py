@@ -218,7 +218,10 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
     if current.get("contests_test_id"):
         return []
     contests = list(current.get("contests") or [])
-    if len(contests) >= MAX_CONTESTS or current.get("review_state") in {"CONFIRMED", "REFUTED"} and body.get("source") != "SENTINEL":
+    # An inconclusive attack decided nothing: it does not use up the contest slot, or the result would stay open forever.
+    decisive = [c for c in contests if str((_entity(root, "test", str(c.get("contest_test_id") or "")) or {}).get("verdict") or "").upper()
+                not in {"INCONCLUSIVE", "INCONCLUSIVO"}]
+    if len(decisive) >= MAX_CONTESTS or current.get("review_state") in {"CONFIRMED", "REFUTED"} and body.get("source") != "SENTINEL":
         return []
     requests: list[dict[str, Any]] = []
     attack = body.get("contest_test") if isinstance(body.get("contest_test"), dict) else None
@@ -786,13 +789,18 @@ def family_contest_items(root: Path, now: datetime | None = None) -> list[dict[s
     for test in _tests(root):
         if len(items) >= MAX_ROBOT_CONTESTS_PER_RUN:
             break
-        if (not test.get("family_id") or test.get("contests") or test.get("contests_test_id")
+        if (not test.get("family_id") or test.get("contests_test_id")
                 or str(test.get("verdict") or "").upper() not in POSITIVE_VERDICTS
                 or test.get("review_state") in {"CONFIRMED", "REFUTED", "ARCHIVED"}
                 or test.get("recipe") != "w0wa_bao_sn_multi" or not isinstance(test.get("recipe_params"), dict)):
             continue
+        tried = [_entity(root, "test", str(c.get("contest_test_id") or "")) or {} for c in test.get("contests") or []]
+        if any(str(t.get("verdict") or "").upper() not in {"INCONCLUSIVE", "INCONCLUSIVO"} for t in tried):
+            continue  # a decisive or still-running attack exists
+        if len(tried) >= 2:
+            continue  # two inconclusive replications: leave it to the Crítico
         comps = list(test["recipe_params"].get("compilations") or ["pantheon_plus", "des_sn5yr"])
-        if "union3" in comps:
+        if "union3" in comps and not tried:
             continue
         comps = [("union3" if c == "des_sn5yr" else c) for c in comps]
         if "union3" not in comps:
