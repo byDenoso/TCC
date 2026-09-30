@@ -325,6 +325,7 @@ class AgentService:
         writer_role: str,
         event_type: str,
         material: bool = True,
+        _execution_assessment_token: object = None,
     ) -> dict[str, Any]:
         path = entity_path(self.root, entity_kind, entity_name)
         try:
@@ -341,6 +342,10 @@ class AgentService:
                 "Entity version changed before mutation.",
                 {"expected_version": expected_version, "current_version": current_version},
             )
+        if "execution_assessment" in changes:
+            from .execution_assessment import WRITE_TOKEN
+            if _execution_assessment_token is not WRITE_TOKEN:
+                raise TowerAgentIssue("EXECUTION_ASSESSMENT_WRITER_OWNED", "Assessment requires verified runner evidence.")
         from .scientific_integrity import guard_transition
         refused = guard_transition(self.root, {"entity_kind":entity_kind, "entity_name":entity_name,
                                                "changes":changes, "event_type":event_type})

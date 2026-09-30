@@ -32,7 +32,7 @@ from .tower_apply import apply_requests
 
 def _is_request(item: dict) -> bool:
     return "document" in item or "entity_kind" in item or item.get("nexo_operation") in {
-        "HANDOFF_CREATE", "HANDOFF_TRANSITION",
+        "HANDOFF_CREATE", "HANDOFF_TRANSITION", "EXECUTION_OBSERVATION_ASSESSMENT",
     }
 
 
@@ -64,6 +64,23 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             receipts = []
             for request in requests:
                 operation = request.get("nexo_operation")
+                if operation == "EXECUTION_OBSERVATION_ASSESSMENT":
+                    from .execution_assessment import AssessmentError, apply_assessment
+                    from .service import TowerAgentIssue
+                    if str(item.get("_inbox_source") or "").upper() != "RUNNER_OBSERVATION":
+                        receipts.append({"accepted": False, "issue": {"code": "VERIFIED_RUNNER_OBSERVATION_REQUIRED"}})
+                        continue
+                    try:
+                        receipt = apply_assessment(root, request.get("assessment"))
+                        receipts.append(receipt)
+                        if receipt.get("status") != "NO_OP":
+                            from .live_tower import publish_live_tower
+                            publish_live_tower(root)
+                    except AssessmentError as exc:
+                        receipts.append({"accepted": False, "issue": {"code": str(exc)}})
+                    except TowerAgentIssue as exc:
+                        receipts.append({"accepted": False, "issue": {"code": exc.code, "details": exc.details}})
+                    continue
                 if operation not in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
                     receipts.extend(apply_requests(root, [request]))
                     continue

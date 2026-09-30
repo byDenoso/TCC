@@ -89,6 +89,9 @@ TEST_DETAIL_INPUT_FIELDS = (
     "question",
     "prediction",
     "prediction_receipt",
+    "execution_assessment",
+    "decision",
+    "result_summary",
     "null",
     "rival",
     "success_criteria",
@@ -454,6 +457,10 @@ def _public_test_parents(entity: dict[str, Any]) -> list[str]:
 def _attach_public_test_details(projected: dict[str, Any], entity: dict[str, Any]) -> dict[str, Any]:
     """Add the bounded read model used by entity pages. Call only after privacy classification."""
     projected["entity_kind"] = "TEST"
+    from .execution_assessment import public_assessment
+    assessment = public_assessment(entity)
+    if assessment:
+        projected["execution_assessment"] = assessment
     question = _public_text(entity.get("question"), limit=1600)
     if question:
         projected["question"] = question
