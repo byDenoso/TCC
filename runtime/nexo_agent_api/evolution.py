@@ -20,12 +20,14 @@ import hashlib
 import sys
 import base64
 import json
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from . import discovery
+from . import scientific_integrity as integrity
 from .semantics import is_private, resolve as resolve_semantic
 from .tower_paths import entity_path, fs_path
 
@@ -238,10 +240,11 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
         natural_name = f"Ataque {attack_no} · {' '.join(parent_name.split()[:5])}"
         domain = str(attack.get("domain") or current.get("domain") or parent_semantic.get("domain_id") or "").strip()
         requests += hypothesis_fn(item, {**attack, "test_id": attack_id, "contests_test_id": test_id,
+                                         "independence": body["contest_test"].get("independence"),
                                          "roadmap_id": attack.get("roadmap_id") or current.get("roadmap_id"),
                                          "incident_id": current.get("incident_id"),
                                          "priority": "P0", "display_name": natural_name, "domain": domain,
-                                         "semantic": {**parent_semantic, **attack_semantic,
+                                         "semantic": {**integrity.clean_result_fields(parent_semantic), **integrity.clean_result_fields(attack_semantic),
                                                       "display_name": natural_name,
                                                       "domain_id": str(domain).lower()}}, root)
     entry = {"n": len(contests) + 1, "by": str(body.get("source") or body.get("referee") or "REFEREE_1").upper(),
@@ -253,30 +256,16 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
 
 
 def review_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    from .inbox_apply import ProposalError
     test_id = str(body.get("test_id") or "")
-    current = _entity(root, "test", test_id)
-    if current is None or current.get("review_state") in {"CONFIRMED", "REFUTED"}:
-        return []
-    referee = "2" if str(body.get("referee") or "1").strip().upper() in {"2", "REFEREE_2", "CLAUDE"} else "1"
-    outcome = str(body.get("outcome") or "").upper()
-    reviews = list(current.get("reviews") or []) + [{"referee": referee, "outcome": outcome, "evidence": body.get("evidence"),
-                                                     "contest_test_id": body.get("contest_test_id"), "at": _now(item)}]
-    passed = {r["referee"] for r in reviews if r.get("outcome") == "SURVIVED"}
-    # Referee 2 (external model) is optional: surviving two independent contest tests from Referee 1 also confirms.
-    survived_contests = {r.get("contest_test_id") for r in reviews
-                         if r.get("referee") == "1" and r.get("outcome") == "SURVIVED" and r.get("contest_test_id")}
-    if outcome == "REFUTED":
-        state = "REFUTED"
-    elif {"1", "2"} <= passed or len(survived_contests) >= 2:
-        state = "CONFIRMED"
-    elif "1" in passed:
-        state = "REFEREE1_PASSED"
-    else:
-        state = current.get("review_state") or "PENDING_REVIEW"
-    update = _test_update(root, test_id, {"review_state": state, "reviews": reviews},
-                          f"REQ-REVIEW-{test_id}-R{referee}-{len(reviews)}", f"RESULT_{state}")
-    return [update] if update else []
-
+    parent = _entity(root, "test", test_id)
+    attack = _entity(root, "test", str(body.get("contest_test_id") or ""))
+    if not parent or not attack or attack.get("contests_test_id") != test_id:
+        raise ProposalError("REVIEW_ATTACK_REFERENCE_INVALID")
+    validation = integrity.independence(parent, attack, root)
+    if _attack_outcome(attack) is None or not validation["eligible"]:
+        raise ProposalError("REVIEW_EVIDENCE_INCOMPLETE:" + ",".join(validation["reasons"]))
+    return [r for r in contest_chain_reconcile_requests(root) if r.get("entity_name") == test_id]
 
 def _contest_depth(root: Path, test: dict[str, Any]) -> int:
     depth, seen, current = 0, set(), test
@@ -371,12 +360,18 @@ def contest_chain_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
             continue
         attacks.sort(key=lambda attack: (str(attack.get("executed_at") or ""), str(attack.get("id") or "")))
         attack = attacks[0]
-        outcome = _attack_outcome(attack)
+        validation = integrity.independence(parent, attack, root)
+        if not validation["eligible"]:
+            if parent.get("review_validation") != validation:
+                requests.append(_test_update(root, parent_id, {"review_validation": validation},
+                                             "REQ-REVIEW-VALIDATION-" + integrity.digest({"id":parent_id, **validation})[:32], "REVIEW_VALIDATION_REQUIRED"))
+            continue
+        outcome = attack["independence"]["on_pass" if _attack_outcome(attack) == "CONFIRMED" else "on_fail"]
         update = _test_update(root, parent_id, {
-            "review_state": outcome,
+            "review_state": outcome, "review_validation": validation,
             "mechanical_contest_verdict": {
                 "contest_test_id": attack.get("id"), "outcome": outcome,
-                "rule": "FROZEN_ATTACK_CRITERION_V1",
+                "rule": "FROZEN_INDEPENDENT_ATTACK_V2",
                 "at": attack.get("executed_at") or attack.get("updated_at"),
             },
         }, f"REQ-CONTEST-MECHANICAL-{parent_id}", f"RESULT_{outcome}")
@@ -444,7 +439,7 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
         # Results recorded by a battery before executed_at was stamped: borrow the battery's own time.
         if test.get("verdict") and not test.get("executed_at") and test.get("battery_id"):
             battery = next((b for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("id") == test.get("battery_id")), {})
-            when = battery.get("done_at") or battery.get("dispatched_at") or battery.get("created_at")
+            when = (battery.get("completed_at") or battery.get("done_at")) if battery.get("status") == "DONE" else None
             update = _test_update(root, test_id, {"executed_at": when}, f"REQ-EXECUTED-AT-{test_id}", "TEST_ENRICHED") if when else None
             if update:
                 requests.append(update)
@@ -482,26 +477,30 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
         if test.get("roadmap_id") and verdict in POSITIVE_VERDICTS and not test.get("contests_test_id"):
             by_roadmap.setdefault(str(test["roadmap_id"]), []).append(test)
 
-    # Benjamini-Hochberg over each roadmap's positive results that report a p-value (annotation only).
-    for roadmap_id, group in sorted(by_roadmap.items()):
-        scored = sorted(((p, t) for t in group if (p := _p_value(t)) is not None), key=lambda pt: pt[0])
-        m = len(scored)
-        if m < 2:
-            continue
-        q_values, running = [0.0] * m, 1.0
-        for rank in range(m, 0, -1):
-            running = min(running, scored[rank - 1][0] * m / rank)
-            q_values[rank - 1] = running
-        for (_, test), q in zip(scored, q_values):
-            fdr = {"q_value": round(q, 6), "survives": q <= FDR_Q, "n": m, "q": FDR_Q}
-            if (test.get("fdr") or {}) != fdr:
-                update = _test_update(root, str(test["id"]), {"fdr": fdr},
-                                      f"REQ-FDR-{roadmap_id}-{test['id']}-{m}", "FDR_ANNOTATED")
-                if update:
-                    requests.append(update)
+    adjusted = integrity.fdr_annotations(tests, FDR_Q)
+    for test in tests:
+        annotation = adjusted.get(str(test.get("id")))
+        if annotation is not None and test.get("fdr") != annotation:
+            update = _test_update(root, str(test["id"]), {"fdr": annotation},
+                                  "REQ-FDR-V2-" + integrity.digest({"id":test["id"], **annotation})[:32], "FDR_ANNOTATED")
+            if update:
+                requests.append(update)
     requests += family_state_requests(root)
     requests += learning_loop_requests(root)
-    return requests
+    # Maintenance annotations for one version must be committed together.
+    grouped, documents = {}, []
+    for request in requests:
+        if request and request.get("entity_kind") == "test":
+            key = (request["entity_name"], request["expected_version"])
+            if key not in grouped:
+                grouped[key] = dict(request, changes=dict(request["changes"]))
+            else:
+                grouped[key]["changes"].update(request["changes"])
+                grouped[key]["request_id"] = "REQ-INTEGRITY-" + integrity.digest({"id":key[0], "version":key[1], "changes":grouped[key]["changes"]})[:32]
+                grouped[key]["event_type"] = "TEST_INTEGRITY_RECONCILED"
+        elif request:
+            documents.append(request)
+    return documents + list(grouped.values())
 
 
 # ── Genome: canary mutations, rollback, fitness ─────────────────────────────
@@ -702,39 +701,56 @@ def decoy_requests(item: dict[str, Any], body: dict[str, Any], root: Path, kind:
 # ── Test batteries: the Executor dispatches, GitHub Actions computes (public, free, parallel) ──
 
 def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
-    """TEST_BATTERY uses only reviewed recipe+params; inline code is forbidden."""
-    doc = _read(root, BATTERIES_DOC)
-    batteries = list(doc.get("batteries") or [])
-    bid = str(body.get("battery_id") or f"bat-{_now(item)[:19].replace(':', '').replace('-', '')}").lower()
-    bid = "".join(c if c.isalnum() or c == "-" else "-" for c in bid)[:48]
-    if any(b.get("id") == bid for b in batteries):
-        return []
-    tests, requests = [], []
-    for spec in (body.get("tests") or [])[:MAX_BATTERY_TESTS]:
+    """Validate and reserve one immutable attempt per eligible test, as one envelope."""
+    from .inbox_apply import ProposalError
+    batteries = list(_read(root, BATTERIES_DOC).get("batteries") or [])
+    bid, specs = str(body.get("battery_id") or ""), body.get("tests")
+    if not re.fullmatch(r"[a-z0-9-]{3,48}", bid) or not isinstance(specs, list) or not 1 <= len(specs) <= MAX_BATTERY_TESTS:
+        raise ProposalError("BATTERY_ID_OR_SIZE_INVALID")
+    submission = integrity.digest(specs)
+    old = next((b for b in batteries if b.get("id") == bid), None)
+    if old:
+        if old.get("submission_fingerprint") == submission:
+            return []
+        raise ProposalError("BATTERY_ID_CONTENT_CONFLICT")
+    if sum(b.get("status") in integrity.ACTIVE for b in batteries) >= MAX_BATTERIES_IN_FLIGHT:
+        raise ProposalError("BATTERY_CAPACITY_FULL")
+    active_fingerprints = {t.get("execution_fingerprint") for b in batteries if b.get("status") in integrity.ACTIVE for t in b.get("tests") or []}
+    tests, requests, seen = [], [], set()
+    for spec in specs:
+        if not isinstance(spec, dict):
+            raise ProposalError("BATTERY_TEST_INVALID")
         test_id = str(spec.get("test_id") or "")
         current = _entity(root, "test", test_id) if test_id else None
-        recipe = str(spec.get("recipe") or "").strip()
-        if current is None or spec.get("script") or not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
-            continue
-        if str(current.get("domain") or "").upper() == "OLYMPUS" or current.get("private"):
-            continue
-        params = spec.get("params") if isinstance(spec.get("params"), dict) else {}
-        tests.append({"test_id": test_id, "recipe": recipe, "params": params,
-                      "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)),
-                      "prediction": spec.get("prediction")})
-        changes = {"status": "RUNNING", "state": "RUNNING", "execution": "GITHUB_ACTIONS_BATTERY",
-                   "battery_id": bid, "execution_recipe": recipe}
-        if spec.get("prediction") and not current.get("prediction"):
-            changes["prediction"] = spec["prediction"]
-        update = _test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_DISPATCHED")
-        if update:
-            requests.append(update)
-    if not tests:
-        return []
-    batteries.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"), "tests": tests})
-    return [_doc(BATTERIES_DOC, {"batteries": batteries[-200:]}, f"REQ-BATTERY-{bid}")] + requests
-
-# ── Test families: a pre-registered grid of instances of ONE frozen recipe. The robot expands and dispatches it. ──
+        if current is None or test_id in seen:
+            raise ProposalError("BATTERY_TEST_MISSING_OR_DUPLICATE")
+        seen.add(test_id)
+        if current.get("private") or is_private(resolve_semantic(current, entity_id=test_id)) or spec.get("script"):
+            raise ProposalError("PUBLIC_RECIPE_ONLY")
+        check = integrity.readiness(root, current)
+        if str(current.get("status") or current.get("state") or "").upper() != "READY" or not check["eligible"]:
+            raise ProposalError("TEST_NOT_EXECUTABLE:" + test_id + ":" + ",".join(check["reasons"]))
+        if spec.get("recipe") != current.get("recipe") or spec.get("params") != current.get("recipe_params"):
+            raise ProposalError("FROZEN_EXECUTION_BINDING_MISMATCH:" + test_id)
+        fingerprint = integrity.execution_fingerprint(current, check["recipe_sha256"])
+        if fingerprint in active_fingerprints:
+            raise ProposalError("EQUIVALENT_EXECUTION_ALREADY_RESERVED")
+        active_fingerprints.add(fingerprint)
+        attempt = "attempt-" + integrity.digest({"battery_id": bid, "test_id": test_id, "execution": fingerprint})[:32]
+        tests.append({"test_id": test_id, "recipe": current["recipe"], "params": current["recipe_params"],
+                      "recipe_sha256": check["recipe_sha256"], "recipe_revision": os.environ.get("NEXO_RECIPE_REVISION"),
+                      "inputs": (current.get("data_binding") or current.get("input_binding"))["inputs"],
+                      "prereg_hash": current["prereg_hash"], "attempt_id": attempt, "execution_fingerprint": fingerprint,
+                      "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": current.get("prediction")})
+        changes = {"status": "QUEUED", "state": "QUEUED", "execution_phase": "QUEUED",
+                   "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid, "attempt_id": attempt,
+                   "execution_recipe": current["recipe"], "execution_recipe_sha256": check["recipe_sha256"], "readiness": check}
+        requests.append(_test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_QUEUED"))
+    retained = [b for b in batteries if b.get("status") in integrity.ACTIVE]
+    retained += [b for b in batteries if b.get("status") not in integrity.ACTIVE][-200:]
+    retained.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"),
+                     "submission_fingerprint": submission, "tests": tests})
+    return [_doc(BATTERIES_DOC, {"batteries": retained}, f"REQ-BATTERY-{bid}")] + requests
 
 def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """FAMILY_CHARTER {family_id, roadmap_id, recipe, domain, hypothesis_id?, template{...contract...}, instances[{label, params}], stop?}.
@@ -785,7 +801,7 @@ def family_instance_items(root: Path, now: datetime | None = None) -> list[dict[
         verdicts = [str(t.get("verdict") or "").upper() for t in mine]
         if verdicts.count("REJECTED") >= int(family["stop"]["kill_rejected"]):
             continue  # the hypothesis died; family_state_requests closes the family
-        open_now = sum(1 for t in mine if str(t.get("status") or "").upper() in {"READY", "RUNNING", "DRAFT"})
+        open_now = sum(1 for t in mine if str(t.get("status") or "").upper() in ({"READY", "DRAFT", "BLOCKED_INPUT"} | integrity.ACTIVE))
         room = min(MAX_FAMILY_NEW_PER_RUN, MAX_FAMILY_OPEN - open_now)
         have = {t.get("family_cell") for t in mine}
         for cell in family["instances"]:
@@ -939,14 +955,14 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     A recipe with an OPEN circuit gets a single probe test."""
     now = now or datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    in_flight = sum(1 for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") in {"QUEUED", "DISPATCHED"})
+    in_flight = sum(1 for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") in integrity.ACTIVE)
     if in_flight >= MAX_BATTERIES_IN_FLIGHT:
         return []
     health = _read(root, RECIPE_HEALTH_DOC).get("recipes") or {}
     all_tests = _tests(root)
     by_recipe: dict[str, list[dict[str, Any]]] = {}
     for test in all_tests:
-        if str(test.get("status") or "").upper() != "READY" or not isinstance(test.get("recipe_params"), dict):
+        if str(test.get("status") or "").upper() != "READY" or not integrity.readiness(root, test)["eligible"]:
             continue
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
@@ -975,18 +991,52 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
 
 
 def recipe_bind_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
-    """RECIPE_BIND {test_id, recipe, params}: ties a frozen recipe to an existing test. One line replaces the review round: the robot dispatches it next."""
+    """Record preparation separately from eligibility; never reopen a finished test."""
+    from .inbox_apply import ProposalError
     test_id, recipe, params = str(body.get("test_id") or ""), str(body.get("recipe") or ""), body.get("params")
     test = _entity(root, "test", test_id)
     if not test or not re.fullmatch(r"[a-z0-9_]{2,40}", recipe) or not isinstance(params, dict):
+        raise ProposalError("RECIPE_BINDING_INVALID")
+    if integrity.terminal(test) or test_id in integrity.active_tests(root) or test.get("status") in integrity.ACTIVE:
+        raise ProposalError("TEST_TERMINAL_OR_RESERVED")
+    if test.get("recipe") and (test["recipe"] != recipe or test.get("recipe_params") != params):
+        raise ProposalError("EXECUTION_BINDING_CHANGE_REQUIRES_NEW_TEST")
+    provisional = dict(test, recipe=recipe, recipe_params=params)
+    if test.get("status") in {"DRAFT", "BLOCKED_INPUT"} and (not test.get("blocker") or test.get("readiness")):
+        provisional["blocker"] = None
+    check = integrity.readiness(root, provisional)
+    state = "READY" if check["eligible"] else "BLOCKED_INPUT"
+    changes = {"recipe": recipe, "recipe_params": params, "status": state, "state": state,
+               "readiness": check, "blocker": None if check["eligible"] else (test.get("blocker") or ",".join(check["reasons"]))}
+    if all(test.get(k) == v for k,v in changes.items()):
         return []
-    if str(test.get("status") or "").upper() not in {"DRAFT", "READY", "BLOCKED_INPUT"}:
-        return []
-    changes = {"recipe": recipe, "recipe_params": params, "status": "READY", "state": "READY", "draft_reason": None, "blocker": None,
-               "runtime_failure_count": 0}
-    update = _test_update(root, test_id, changes, f"REQ-RECIPE-BIND-{test_id}-{_now(item)[:16]}", "TEST_RECIPE_BOUND")
-    return [update] if update else []
+    return [_test_update(root, test_id, changes, "REQ-RECIPE-BIND-" + integrity.digest({"id":test_id, **changes})[:32], "TEST_RECIPE_BOUND")]
 
+
+def data_binding_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    from .inbox_apply import ProposalError
+    test_id = str(body.get("test_id") or "")
+    test = _entity(root, "test", test_id)
+    if not test or integrity.terminal(test) or test_id in integrity.active_tests(root):
+        raise ProposalError("DATA_BINDING_TEST_NOT_EDITABLE")
+    binding = {k: body[k] for k in ("status", "inputs", "note") if k in body}
+    if binding.get("status") not in {"BOUND", "PARTIAL", "UNAVAILABLE"}:
+        raise ProposalError("DATA_BINDING_STATUS_INVALID")
+    if binding["status"] == "BOUND" and not integrity.valid_inputs(binding.get("inputs")):
+        raise ProposalError("DATA_BINDING_REQUIRES_VERSIONED_INPUTS_AND_HASHES")
+    previous = test.get("data_binding") or {}
+    if previous.get("status") == "BOUND" and previous.get("inputs") != binding.get("inputs"):
+        raise ProposalError("INPUT_CHANGE_REQUIRES_NEW_TEST")
+    provisional = dict(test, data_binding=binding)
+    if test.get("readiness"):
+        provisional["blocker"] = None
+    check = integrity.readiness(root, provisional)
+    state = "READY" if check["eligible"] else "BLOCKED_INPUT"
+    changes = {"data_binding": binding, "readiness": check, "status": state, "state": state,
+               "blocker": None if check["eligible"] else (provisional.get("blocker") or ",".join(check["reasons"]))}
+    if all(test.get(k) == v for k,v in changes.items()):
+        return []
+    return [_test_update(root, test_id, changes, "REQ-DATA-BIND-" + integrity.digest({"id":test_id, **changes})[:32], "DATA_BINDING_RECORDED")]
 
 def learning_loop_requests(root: Path) -> list[dict[str, Any]]:
     """Procedural learning (book ch.10): the robot evaluates candidate rules against a temporal holdout and persists what wins."""
@@ -1013,7 +1063,7 @@ def family_state_requests(root: Path) -> list[dict[str, Any]]:
         elif verdicts.count("PROMOTED") >= int(family["stop"]["success_promoted"]):
             reason = "SUCCESS"
         elif (len(verdicts) >= len(family.get("instances") or []) and all(verdicts)
-              and not any(str(t.get("status") or "").upper() in {"READY", "RUNNING", "DRAFT"} for t in _family_tests(tests, fid))):
+              and not any(str(t.get("status") or "").upper() in ({"READY", "DRAFT", "BLOCKED_INPUT"} | integrity.ACTIVE) for t in _family_tests(tests, fid))):
             reason = "EXHAUSTED"  # every cell ran without reaching either stop: the grid is spent
         else:
             rm = _read(root, f"roadmaps/{family['roadmap_id']}.json")
@@ -1027,7 +1077,7 @@ def family_state_requests(root: Path) -> list[dict[str, Any]]:
     return [_doc(FAMILIES_DOC, {"families": families}, "REQ-FAMILY-STATE-" + datetime.now(timezone.utc).strftime("%Y%m%d%H%M"))]
 
 
-_TRANSIENT = re.compile(r"timed? ?out|timeout|connection (reset|aborted|refused)|temporary failure|rate limit|429|50[234]|urlopen error", re.I)
+_TRANSIENT = re.compile(r"timed? ?out|timeout|connection (reset|aborted|refused)|temporary failure|rate limit|\b429\b|\b50[234]\b|urlopen error", re.I)
 
 
 def classify_failure(log_tail: str) -> str:
@@ -1042,16 +1092,83 @@ def classify_failure(log_tail: str) -> str:
 
 def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Path, result_fn) -> list[dict[str, Any]]:
     """BATTERY_STATUS {battery_id, status DISPATCHED|DONE, run_id?, results:[{test_id, ok, result, semantic, log_tail}]}."""
+    from .inbox_apply import ProposalError
     doc = _read(root, BATTERIES_DOC)
     batteries = list(doc.get("batteries") or [])
     bid, status = str(body.get("battery_id") or ""), str(body.get("status") or "").upper()
     index = next((i for i, b in enumerate(batteries) if b.get("id") == bid), None)
-    if index is None or batteries[index].get("status") == "DONE" or status not in {"DISPATCHED", "DONE", "QUEUED"}:
+    if index is None:
+        raise ProposalError("BATTERY_NOT_FOUND")
+    previous = batteries[index]
+    if previous.get("status") == "DONE":
         return []
-    battery = dict(batteries[index], status=status)
+    # A locally written dispatch spec is not an accepted external run.
+    if status == "DISPATCHED" and body.get("run_ref") == "github-actions":
+        status = "DISPATCH_PENDING"
+    if status not in {"DISPATCH_PENDING", "DISPATCHED", "RUNNING", "DONE"}:
+        raise ProposalError("BATTERY_PHASE_INVALID")
+    order = {"QUEUED": 0, "DISPATCH_PENDING": 1, "DISPATCHED": 2, "RUNNING": 3, "DONE": 4}
+    if order[status] < order.get(previous.get("status"), 0):
+        return []
+    run_ref = str(body.get("run_ref") or "")
+    if status != "DISPATCH_PENDING":
+        if item.get("_inbox_source") != "RUNNER_OBSERVATION" or not integrity.RUN_REF.fullmatch(run_ref):
+            raise ProposalError("VERIFIED_RUNNER_OBSERVATION_REQUIRED")
+        if integrity.RUN_REF.fullmatch(str(previous.get("run_ref") or "")) and run_ref != previous["run_ref"]:
+            raise ProposalError("BATTERY_EXTERNAL_RUN_CONFLICT")
+    specs = {str(t["test_id"]): t for t in previous.get("tests") or []}
+    if not specs or any((_entity(root, "test", tid) or {}).get("battery_id") != bid for tid in specs):
+        raise ProposalError("BATTERY_ATTEMPT_NO_LONGER_CURRENT")
+    battery = dict(previous, status=status)
     requests: list[dict[str, Any]] = []
-    if status == "DISPATCHED":
-        battery.update({"dispatched_at": _now(item), "run_ref": body.get("run_ref")})
+    if status != "DONE":
+        started = body.get("started_tests") or {}
+        if not isinstance(started, dict) or set(started) - set(specs):
+            raise ProposalError("RUNNER_STARTED_TESTS_INVALID")
+        if status == "RUNNING" and (not started or any(integrity.timestamp(t) is None for t in started.values())):
+            raise ProposalError("RUNNER_STEP_START_REQUIRED")
+        if status == "DISPATCH_PENDING":
+            battery.setdefault("dispatch_requested_at", _now(item))
+            battery["dispatch_confirmation"] = "PENDING_EXTERNAL_ACK"
+        else:
+            battery.update(run_ref=run_ref, dispatch_confirmation="EXTERNAL_RUN_IDENTIFIED")
+            battery.setdefault("dispatched_at", _now(item))
+        for tid in specs:
+            current = _entity(root, "test", tid) or {}
+            if integrity.terminal(current):
+                continue
+            phase = "RUNNING" if tid in started else ("DISPATCH_PENDING" if status == "DISPATCH_PENDING" else "DISPATCHED")
+            if current.get("execution_phase") == "RUNNING" and phase != "RUNNING":
+                continue
+            changes = {"status": phase, "state": phase, "execution_phase": phase}
+            if status != "DISPATCH_PENDING":
+                changes["run_ref"] = run_ref
+            if tid in started:
+                changes.update(started_at=started[tid], execution_observation="GITHUB_JOB_STEP")
+            if any(current.get(k) != v for k,v in changes.items()):
+                requests.append(_test_update(root, tid, changes, f"REQ-BATTERY-{status}-{bid}-{tid}", "TEST_" + phase))
+        if battery == previous and not requests:
+            return []
+        batteries[index] = battery
+        return [_doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{bid}-{status}")] + requests
+    if integrity.timestamp(body.get("completed_at")) is None:
+        raise ProposalError("RUNNER_COMPLETION_TIME_REQUIRED")
+    entries = body.get("results") or []
+    if body.get("results_missing") and body.get("conclusion") in {"failure", "cancelled", "timed_out", "startup_failure"}:
+        entries = [{"test_id": tid, "ok": False, "log_tail": "Temporary failure: runner ended before a complete scientific receipt was available."} for tid in specs]
+        body = dict(body, results=entries)
+    ids = [str(entry.get("test_id") or "") for entry in entries if isinstance(entry, dict)]
+    if len(ids) != len(entries) or len(ids) != len(set(ids)) or set(ids) != set(specs):
+        raise ProposalError("BATTERY_RESULT_MEMBERSHIP_MISMATCH")
+    for entry in entries:
+        tid = entry["test_id"]
+        if integrity.terminal(_entity(root, "test", tid) or {}):
+            raise ProposalError("TERMINAL_RESULT_CANNOT_BE_OVERWRITTEN")
+        if specs[tid].get("attempt_id") and entry.get("ok"):
+            if entry.get("attempt_id") != specs[tid]["attempt_id"] or entry.get("recipe_sha256") != specs[tid].get("recipe_sha256"):
+                raise ProposalError("RESULT_EXECUTION_SPEC_MISMATCH")
+    battery.update(run_ref=run_ref, completed_at=body["completed_at"], done_at=body["completed_at"],
+                   execution_observation="GITHUB_RUN_AND_ARTIFACT", conclusion=body.get("conclusion"))
     if status == "DONE":
         ok = bad = 0
         health = dict(_read(root, RECIPE_HEALTH_DOC).get("recipes") or {})
@@ -1063,9 +1180,10 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 if won in health:  # first success closes the circuit
                     health[won] = dict(health[won], consecutive_bugs=0, state="CLOSED", closed_at=_now(item))
                 # A battery result must carry its execution time, or the watchdog thinks no result ever arrived.
-                requests += result_fn(dict(item, created_at=item.get("created_at") or _now(item), _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
+                requests += result_fn(dict(item, created_at=entry.get("executed_at") or body["completed_at"], _inbox_name=f"{item.get('_inbox_name') or bid}-{test_id}"),
                                       {"test_id": test_id, "result": entry["result"], "semantic": entry.get("semantic") or {},
                                        "reproducibility": {"runner": "GITHUB_ACTIONS", "battery_id": bid, "run_ref": body.get("run_ref"),
+                                                           "attempt_id": specs[test_id].get("attempt_id"), "recipe_sha256": entry.get("recipe_sha256"),
                                                            "log_tail": str(entry.get("log_tail") or "")[-1500:]},
                                        "arm": entry.get("arm")}, root)
             else:
@@ -1095,7 +1213,7 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 update = _test_update(root, test_id, changes, f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
                 if update:
                     requests.append(update)
-        battery.update({"completed_at": _now(item), "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
+        battery.update({"completed_at": body["completed_at"], "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
         if health != (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}):
             requests.append(_doc(RECIPE_HEALTH_DOC, {"recipes": health}, f"REQ-RECIPE-HEALTH-{bid}"))
     batteries[index] = battery
@@ -1103,23 +1221,8 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
 
 
 def pending_batteries(root: Path, stale_hours: float = 8.0) -> list[dict[str, Any]]:
-    """QUEUED batteries, plus DISPATCHED ones that never reported back (lost dispatch): re-dispatched."""
-    now = datetime.now(timezone.utc)
-    out = []
-    for battery in _read(root, BATTERIES_DOC).get("batteries") or []:
-        if battery.get("status") == "QUEUED":
-            out.append(battery)
-        elif battery.get("status") == "DISPATCHED" and battery.get("dispatched_at"):
-            try:
-                at = datetime.fromisoformat(str(battery["dispatched_at"]).replace("Z", "+00:00"))
-            except ValueError:
-                continue
-            if (now - at).total_seconds() > stale_hours * 3600:
-                out.append(battery)
-    return out
-
-
-# ── Read side: what each task needs to know (writer CLI `status`) ───────────
+    """Never blindly repeat an ambiguous external submission."""
+    return [b for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") == "QUEUED"]
 
 def _tests(root: Path) -> list[dict[str, Any]]:
     folder = root / "entities" / "test"
@@ -1756,7 +1859,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "genome": {"generation": int(genome.get("generation") or 0),
                    "genes": [{k: g.get(k) for k in ("id", "status", "canonical", "canary")} for g in genome.get("genes") or []]},
         "batteries": {s: sum(1 for x in _read(root, BATTERIES_DOC).get("batteries") or [] if x.get("status") == s)
-                      for s in ("QUEUED", "DISPATCHED", "DONE")},
+                      for s in ("QUEUED", "DISPATCH_PENDING", "DISPATCHED", "RUNNING", "DONE")},
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
         "signal_clusters": _signal_clusters(root, tests),
@@ -1768,6 +1871,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }
+    status["execution_integrity"] = integrity.public_execution_summary(root, tests)
     if not public:
         status["emergence"] = _emergence(root, tests, genome, now)
     if public:
