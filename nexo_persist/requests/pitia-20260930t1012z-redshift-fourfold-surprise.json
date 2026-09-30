@@ -1,0 +1,23 @@
+{
+  "stable_id": "pitia-20260930t1012z-redshift-fourfold-surprise",
+  "envelope": {
+    "kind": "NEXO_THOUGHT",
+    "source": "PITIA",
+    "producer": "GPT",
+    "created_at": "2026-09-30T10:12:00Z",
+    "payload": {
+      "entries": [
+        {
+          "kind": "SURPRISE",
+          "text": "Eu dava 48% de chance de promoção a cada ataque de partição em redshift, mas quatro configurações independentes foram promovidas; meu erro de previsão foi 0,52 em todas elas. Agora prevejo aptidão maior para a família se esse padrão sobreviver à troca de release e de receita, sem extrapolar além das partições testadas.",
+          "refs": [
+            "CONTEST-FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM315-1",
+            "CONTEST-FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM330-1",
+            "CONTEST-FAM-DE-REDSHIFT-BANDS-P-P3-DESLOCADA-A-OM330-1",
+            "CONTEST-FAM-DE-REDSHIFT-BANDS-P-P3-DESLOCADA-B-OM330-1"
+          ]
+        }
+      ]
+    }
+  }
+}
