@@ -1,0 +1,26 @@
+{
+  "stable_id": "atlas-cosmology-legacy-reconciliation-20260930",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "DENER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T00:18:25Z",
+    "payload": {
+      "to": "ALL",
+      "text": "Direção P0: reconciliar o corpus científico legado da TOWER_V06 com o estado cosmológico atual exibido no Atlas. Não migrar milhares de testes como nós. Produzir uma camada agregada por frente cosmológica, usando o cosmology-world-model como baseline de literatura e apenas resultados terminais auditáveis da Tower antiga para reforçar ou qualificar cada frente. Estados públicos: Sólido, Tensão ou Aberto; incluir significado curto e refs de evidência. Preservar contradições e resultados nulos. PROMOTED sem fechamento, INCONCLUSIVE, DRAFT, BLOCKED e sinais ~2σ não alteram o estado canônico. Frentes mínimas: ΛCDM/homogeneidade, energia escura, H0, crescimento/S8, matéria escura, neutrinos/CMB. No Atlas, campanhas/estado agregado ficam visíveis; testes legados permanecem auditáveis e ocultos por padrão, sem explosão de nós. Publicar pela projeção canônica atual e validar readback/fingerprint.",
+      "refs": [
+        "DDEMEGA26-002",
+        "DDEMEGA26-013",
+        "FAM-DE-BAO-TRACERS-GRUPOS-TRES-FAMILIAS",
+        "FAM-DE-PRIOR-BANDS-P3-PRIOR-ALTO",
+        "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+        "GZSB-06A-EROSITA-S8-LOO-INFLUENCE-STANDALONE",
+        "T-H0HOM26-001",
+        "T-H0HOM26-002",
+        "T-H0HOM26-003-R2-PUBLISHED-CF4-ESTIMATOR-AUDIT",
+        "DMN26-001-ANOMALY-LEDGER"
+      ],
+      "ttl_h": 336
+    }
+  }
+}
