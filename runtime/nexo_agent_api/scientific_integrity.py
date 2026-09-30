@@ -124,6 +124,12 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     binding = test.get('data_binding') or test.get('input_binding') or {}
     if not isinstance(binding, dict) or binding.get('status') != 'BOUND' or not valid_inputs(binding.get('inputs')):
         reasons.append('INPUT_PROVENANCE_INCOMPLETE')
+    preflight = None
+    if valid_name and isinstance(params, dict) and recipe_root.is_dir():
+        from .parameter_admission import validate
+        preflight = validate(recipe, params, binding.get('inputs') if isinstance(binding, dict) else [], recipe_root)
+        if preflight is not None:
+            reasons.extend(preflight['reasons'])
     dependencies = test.get('depends_on') or []
     if not isinstance(dependencies, list):
         reasons.append('DEPENDENCIES_INVALID')
@@ -138,16 +144,23 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     if not ignore_reservation and (str(test.get('id')) in active_tests(root)
                                   or str(test.get('status') or '').upper() in ACTIVE):
         reasons.append('ACTIVE_ATTEMPT')
-    return {'policy': POLICY, 'eligible': not reasons, 'reasons': sorted(set(reasons)),
+    result = {'policy': POLICY, 'eligible': not reasons, 'reasons': sorted(set(reasons)),
             'recipe_sha256': recipe_hash, 'input_scope': 'RECORDED_BINDING_NOT_NETWORK_ATTESTATION',
-            'recipe_scope': 'SYNTAX_AND_SMOKE_SPEC_PRESENT'}
+            'recipe_scope': 'SYNTAX_AND_SMOKE_SPEC_PRESENT' if preflight is None else 'VERSIONED_PARAMETER_PREFLIGHT'}
+    if preflight is not None:
+        result['param_preflight'] = preflight
+    return result
 
 
-def execution_fingerprint(test: dict, recipe_sha: str) -> str:
+def execution_fingerprint(test: dict, recipe_sha: str, param_preflight: dict | None = None) -> str:
     binding = test.get('data_binding') or test.get('input_binding') or {}
-    return digest({**{key: test.get(key) for key in FROZEN}, 'recipe': test.get('recipe'),
+    value = {**{key: test.get(key) for key in FROZEN}, 'recipe': test.get('recipe'),
                    'params': test.get('recipe_params'), 'recipe_sha256': recipe_sha,
-                   'inputs': binding.get('inputs')})
+                   'inputs': binding.get('inputs')}
+    if param_preflight is not None:
+        from .parameter_admission import commitment
+        value['param_preflight'] = commitment(param_preflight)
+    return digest(value)
 
 
 def p_value(test: dict) -> float | None:
@@ -365,7 +378,9 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
                 check = readiness(root, test)
                 if not check['eligible'] or test.get('status') != 'READY' or spec.get('recipe') != test.get('recipe') or spec.get('params') != test.get('recipe_params') or spec.get('recipe_sha256') != check['recipe_sha256']:
                     problem = 'BATTERY_ADMISSION_FAILED'; break
-                if not spec.get('attempt_id') or spec.get('execution_fingerprint') != execution_fingerprint(test, check['recipe_sha256']):
+                if spec.get('param_preflight') != check.get('param_preflight'):
+                    problem = 'PARAM_PREFLIGHT_RESERVATION_MISMATCH'; break
+                if not spec.get('attempt_id') or spec.get('execution_fingerprint') != execution_fingerprint(test, check['recipe_sha256'], check.get('param_preflight')):
                     problem = 'ATTEMPT_FINGERPRINT_MISMATCH'; break
             if battery.get('status') in ACTIVE:
                 fingerprint = spec.get('execution_fingerprint')

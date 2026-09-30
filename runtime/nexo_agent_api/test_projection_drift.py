@@ -158,7 +158,7 @@ def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path, 
     assert [t["test_id"] for t in battery["payload"]["tests"]] == ["T-BOUND"]
 
 
-def test_robot_contests_positive_family_result_with_union3(tmp_path, monkeypatch):
+def test_robot_contests_positive_family_result_with_union3_and_requires_preflight(tmp_path, monkeypatch):
     import json
     from runtime.nexo_agent_api.evolution import family_battery_items, family_contest_items, data_binding_requests
     from runtime.nexo_agent_api.tower_apply import apply_requests
@@ -186,8 +186,11 @@ def test_robot_contests_positive_family_result_with_union3(tmp_path, monkeypatch
     assert all(row['accepted'] for row in apply_requests(tmp_path, bindings))
     path.write_text(json.dumps({**parent, "contests": [{"n": 1}]}))
     assert family_contest_items(tmp_path) == []  # attacked once already
-    [battery] = family_battery_items(tmp_path)
-    assert [t["test_id"] for t in battery["payload"]["tests"]] == [attack["entity_name"]]
+    # This inert recipe fixture has no scientific parameter manifest. A bound
+    # generated fixture does not prove the real BAO/Union3 inputs are compatible.
+    assert family_battery_items(tmp_path) == []
+    from runtime.nexo_agent_api.scientific_integrity import readiness
+    assert 'PREFLIGHT_CONTRACT_MISSING' in readiness(tmp_path, json.loads(apath.read_text()))['reasons']
 
 
 def test_robot_spawns_replication_family_when_few_are_active(tmp_path):

@@ -756,7 +756,7 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
             raise ProposalError("TEST_NOT_EXECUTABLE:" + test_id + ":" + ",".join(check["reasons"]))
         if spec.get("recipe") != current.get("recipe") or spec.get("params") != current.get("recipe_params"):
             raise ProposalError("FROZEN_EXECUTION_BINDING_MISMATCH:" + test_id)
-        fingerprint = integrity.execution_fingerprint(current, check["recipe_sha256"])
+        fingerprint = integrity.execution_fingerprint(current, check["recipe_sha256"], check.get("param_preflight"))
         if fingerprint in active_fingerprints:
             raise ProposalError("EQUIVALENT_EXECUTION_ALREADY_RESERVED")
         active_fingerprints.add(fingerprint)
@@ -766,6 +766,8 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
                       "inputs": (current.get("data_binding") or current.get("input_binding"))["inputs"],
                       "prereg_hash": current["prereg_hash"], "attempt_id": attempt, "execution_fingerprint": fingerprint,
                       "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": current.get("prediction")})
+        if check.get("param_preflight") is not None:
+            tests[-1]["param_preflight"] = check["param_preflight"]
         changes = {"status": "QUEUED", "state": "QUEUED", "execution_phase": "QUEUED",
                    "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid, "attempt_id": attempt,
                    "execution_recipe": current["recipe"], "execution_recipe_sha256": check["recipe_sha256"], "readiness": check}
@@ -997,7 +999,7 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
         check = integrity.readiness(root, test)
         if not check["eligible"]:
             continue
-        execution_fingerprints[str(test["id"])] = integrity.execution_fingerprint(test, check["recipe_sha256"])
+        execution_fingerprints[str(test["id"])] = integrity.execution_fingerprint(test, check["recipe_sha256"], check.get("param_preflight"))
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
     from .frontier import PRIORITY_RANK
@@ -1228,6 +1230,19 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
         if specs[tid].get("attempt_id") and entry.get("ok"):
             if entry.get("attempt_id") != specs[tid]["attempt_id"] or entry.get("recipe_sha256") != specs[tid].get("recipe_sha256"):
                 raise ProposalError("RESULT_EXECUTION_SPEC_MISMATCH")
+        if entry.get("operational_status") is not None:
+            if (entry.get("operational_status") != "INPUT_UNAVAILABLE" or entry.get("ok") is not False
+                    or entry.get("result") not in (None, {})
+                    or not re.fullmatch(r"[A-Z][A-Z0-9_]{2,79}", str(entry.get("operational_reason") or ""))):
+                raise ProposalError("OPERATIONAL_FAILURE_NOT_SCIENTIFIC_RESULT")
+            if entry.get("attempt_id") != specs[tid].get("attempt_id") or entry.get("recipe_sha256") != specs[tid].get("recipe_sha256"):
+                raise ProposalError("RESULT_EXECUTION_SPEC_MISMATCH")
+        if entry.get("ok") and specs[tid].get("param_preflight") is not None:
+            from .parameter_admission import commitment
+            observed = entry.get("param_preflight")
+            if (not isinstance(observed, dict) or observed.get("eligible") is not True or observed.get("reasons") != []
+                    or commitment(observed) != commitment(specs[tid]["param_preflight"])):
+                raise ProposalError("RESULT_PARAM_PREFLIGHT_MISMATCH")
     battery.update(run_ref=run_ref, completed_at=body["completed_at"], done_at=body["completed_at"],
                    execution_observation="GITHUB_RUN_AND_ARTIFACT", conclusion=body.get("conclusion"))
     if status == "DONE":
@@ -1250,6 +1265,25 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
             else:
                 bad += 1  # a crash is never a scientific result: the test goes back to READY
                 current_test = _entity(root, "test", test_id) or {}
+                if entry.get("operational_status") == "INPUT_UNAVAILABLE":
+                    reason = entry["operational_reason"]
+                    failure = {"battery_id": bid, "attempt_id": specs[test_id].get("attempt_id"),
+                               "run_ref": run_ref, "at": body["completed_at"], "class": "INPUT_UNAVAILABLE",
+                               "reason": reason, "failure_stage": str(entry.get("failure_stage") or "")[:80],
+                               "detail": str(entry.get("operational_detail") or "")[:1200],
+                               "param_preflight": entry.get("param_preflight")}
+                    # A failed preflight/input fetch is operational evidence,
+                    # never a scientific verdict or a completed experiment.
+                    # Leave a non-auto-clearing blocker until the exact input
+                    # or recipe contract is explicitly repaired/revalidated.
+                    update = _test_update(root, test_id, {"status": "BLOCKED_INPUT", "state": "BLOCKED_INPUT",
+                                          "execution_phase": "BLOCKED_INPUT", "execution": None,
+                                          "last_runtime_failure": failure,
+                                          "blocker": "RUNTIME_INPUT_UNAVAILABLE:" + reason},
+                                          f"REQ-BATTERY-INPUT-{bid}-{test_id}", "TEST_INPUT_UNAVAILABLE")
+                    if update:
+                        requests.append(update)
+                    continue
                 failures = int(current_test.get("runtime_failure_count") or 0) + 1
                 failure = {"battery_id": bid, "at": _now(item), "log_tail": str(entry.get("log_tail") or "")[-800:]}
                 kind = classify_failure(entry.get("log_tail"))

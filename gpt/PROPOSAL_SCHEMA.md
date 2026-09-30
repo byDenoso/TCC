@@ -269,4 +269,19 @@ Charters may be semi-permanent: `renewable: true, review_every_days: N, objectiv
 `TEST_BATTERY {battery_id?, tests:[{test_id, recipe, params, timeout_min<=340, prediction}]}`. Código inline (`script`, `script_b64`) é proibido e rejeitado. `recipe` aponta para receita congelada em `byDenoso/Pantheon nexo-one/executor-runtime/recipes/`; se nenhuma receita reproduzir fielmente o contrato do TEST, emitir `LEARNING_SIGNAL` com `gap_type: RECIPE_REQUEST` e dizer exatamente o que a receita deve fazer. Nenhum READY pode ficar >24 h sem bateria ou RECIPE_REQUEST. Até 20 testes públicos e não-Olympus por bateria.
 A recipe escreve `{verdict, decision, summary, statistics, semantic}` em `os.environ["RESULT_PATH"]`. Receita CAMB deve usar o `runtime/portable_camb` versionado do TCC, com commit/proveniência congelados.
 The Writer robot marks them RUNNING, dispatches `NEXO test battery` (byDenoso/Pantheon, isolated runners, no secrets),
-collects results as `BATTERY_STATUS DONE` and records them like any result; a crash sends the test back to READY.
+collects results as `BATTERY_STATUS DONE` and records them like any result; a crash follows the bounded runtime-failure policy.
+
+### Preflight de parâmetros e indisponibilidade operacional
+O catálogo pode publicar `recipes/preflight/<recipe>.json` e `recipe_param_preflight.py` sob
+`RECIPE_PARAM_PREFLIGHT_V1`. O mesmo validador puro é executado pela admissão e pelo runner;
+os hashes exatos do manifesto e do validador entram na reserva e no fingerprint de execução.
+A primeira migração obrigatória é `w0wa_bao_sn_multi`; outras receitas mantêm o escopo explícito
+de sintaxe/smoke até aderirem com um manifesto validado. O preflight verifica semântica dos
+parâmetros e fontes declaradas, não comprova download, ajuste numérico nem resultado científico.
+
+Falha de parâmetros, insumo ou ajuste deve retornar `ok: false`, `result: null`,
+`operational_status: INPUT_UNAVAILABLE`, `operational_reason` estruturado e os mesmos
+`attempt_id`/`recipe_sha256` da reserva. O Writer registra `BLOCKED_INPUT` com causa persistente;
+não cria `executed_at`, estatística ou veredito. O responsável repara a ligação/implementação
+e revalida pelo Writer. Seleção incompatível com o release congelado exige revisão científica;
+nunca trocar release ou redshifts automaticamente. Reservas históricas não recebem preflight retroativo.
