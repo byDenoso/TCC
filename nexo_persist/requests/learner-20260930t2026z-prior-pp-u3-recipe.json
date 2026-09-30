@@ -1,0 +1,41 @@
+{
+  "stable_id": "learner-20260930t2026z-prior-pp-u3-recipe",
+  "envelope": {
+    "kind": "RECIPE_BIND",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T20:26:47Z",
+    "payload": {
+      "test_id": "CONTEST-FAM-DE-PRIOR-BANDS-R-P3-PRIOR-ALTO-PP-U3-1",
+      "recipe": "w0wa_bao_sn_multi",
+      "params": {
+        "bands": [
+          [
+            0.01,
+            0.15
+          ],
+          [
+            0.15,
+            0.5
+          ],
+          [
+            0.5,
+            2.3
+          ]
+        ],
+        "bao_release": "dr1",
+        "compilations": [
+          "pantheon_plus",
+          "union3"
+        ],
+        "mode": "redshift_jackknife",
+        "priors": {
+          "omega_m": [
+            0.33,
+            0.01
+          ]
+        }
+      }
+    }
+  }
+}
