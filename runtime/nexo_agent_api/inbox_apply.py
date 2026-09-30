@@ -98,7 +98,9 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         sem = body.get("semantic") if isinstance(body.get("semantic"), dict) else {}
         words = str(body.get("question") or test_id.replace("-", " ").title()).rstrip("?.! ").split()
         created = _hypothesis_requests(item, {
-            **body, "_allow_draft": True, "_status": "DRAFT",
+            # A result import cannot obtain a prospective receipt by briefly
+            # registering a TEST before the result in the same envelope.
+            **{k: v for k, v in body.items() if k != "prediction"}, "_allow_draft": True, "_status": "DRAFT",
             "display_name": body.get("display_name") or sem.get("display_name") or " ".join(words[:7]),
             "domain": body.get("domain") or sem.get("domain_id")
                       or ("engineering" if test_id.upper().startswith("META-") else "science"),

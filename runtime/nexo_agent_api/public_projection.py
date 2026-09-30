@@ -87,6 +87,7 @@ TEST_INPUT_FIELDS = ("input_contract", "result", "statistics", "scientific_resul
 TEST_DETAIL_INPUT_FIELDS = (
     "question",
     "prediction",
+    "prediction_receipt",
     "null",
     "rival",
     "success_criteria",
@@ -323,6 +324,10 @@ def _public_prereg(entity: dict[str, Any]) -> dict[str, Any] | None:
     prereg: dict[str, Any] = {}
     prediction = _public_prediction(entity.get("prediction"))
     if prediction:
+        from .prediction_receipts import public_receipt
+        receipt = public_receipt(str(entity.get("id") or ""), entity.get("prediction"), entity.get("prediction_receipt"), entity.get("executed_at"))
+        if receipt:
+            prediction.update(receipt)
         prereg["prediction"] = prediction
     for source, target in (("null", "null"), ("rival", "rival")):
         value = _public_text(entity.get(source), limit=1400)
@@ -1514,5 +1519,3 @@ def _pseudonymize_private(content: dict[str, Any], tests: dict[str, dict], campa
         return value
 
     return scrub(content)
-
-
