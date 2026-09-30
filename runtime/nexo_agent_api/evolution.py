@@ -480,7 +480,7 @@ def maintenance_reconcile_requests(root: str | Path, now: datetime | None = None
     adjusted = integrity.fdr_annotations(tests, FDR_Q)
     for test in tests:
         annotation = adjusted.get(str(test.get("id")))
-        if annotation is not None and test.get("fdr") != annotation:
+        if annotation is not None and integrity.p_value(test) is not None and test.get("fdr") != annotation:
             update = _test_update(root, str(test["id"]), {"fdr": annotation},
                                   "REQ-FDR-V2-" + integrity.digest({"id":test["id"], **annotation})[:32], "FDR_ANNOTATED")
             if update:
