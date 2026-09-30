@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: nexo-scheduled-persistence-relay
+  cancel-in-progress: false
+
 jobs:
   relay:
     runs-on: ubuntu-latest
@@ -25,49 +29,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BEFORE: ${{ github.event.before }}
           EVENT: ${{ github.event_name }}
-        run: |
-          python3 - <<'PY'
-          # Normalizes the stable_id (agents write uppercase, dots, timestamps) and relays every file,
-          # so a request is never lost to a naming detail. Existing identical targets are skipped.
-          import base64, json, os, re, subprocess
-          from pathlib import Path
-          repo = os.environ["GITHUB_REPOSITORY"]
-          if os.environ["EVENT"] == "push" and not re.fullmatch("0+", os.environ.get("BEFORE") or "0"):
-              changed = subprocess.run(["git", "diff", "--name-only", "--diff-filter=AM", os.environ["BEFORE"], os.environ["GITHUB_SHA"]],
-                                       capture_output=True, text=True).stdout.split()
-          else:
-              changed = [str(p) for p in Path("nexo_persist/requests").glob("*.json")]
-          if any(Path(f).name.startswith("replay-all") for f in changed):  # marker file: relay every request still missing
-              changed = [str(p) for p in Path("nexo_persist/requests").glob("*.json")]
-          changed = [f for f in changed if f.startswith("nexo_persist/requests/") and f.endswith(".json") and not Path(f).name.startswith("replay-all")]
-          def api(*args, data=None):
-              return subprocess.run(["gh", "api", *args], input=data, capture_output=True, text=True)
-          sent = bad = 0
-          for f in changed:
-              try:
-                  data = json.loads(Path(f).read_text(encoding="utf-8"))
-                  env = data["envelope"] if isinstance(data.get("envelope"), dict) else data
-                  assert isinstance(env.get("kind"), str) and "payload" in env
-              except Exception as exc:
-                  print(f"::warning::{f}: unreadable request ({type(exc).__name__})"); bad += 1; continue
-              raw_id = str(data.get("stable_id") or Path(f).stem)
-              sid = re.sub(r"[^a-z0-9-]+", "-", raw_id.lower()).strip("-")[:60] or "request"
-              target = f"inbox/scheduled-{sid}.json"
-              body = json.dumps(env, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + chr(10)
-              got = api(f"repos/{repo}/contents/{target}?ref=nexo-inbox")
-              if got.returncode == 0:
-                  same = base64.b64decode(json.loads(got.stdout)["content"]).decode("utf-8") == body
-                  print(f"{target}: {'already relayed' if same else 'exists with other content, kept'}"); continue
-              put = api("--method", "PUT", f"repos/{repo}/contents/{target}", "--input", "-",
-                        data=json.dumps({"message": "NEXO scheduled persistence relay", "branch": "nexo-inbox",
-                                         "content": base64.b64encode(body.encode("utf-8")).decode()}))
-              if put.returncode:
-                  print(f"::error::{target}: {put.stderr.strip()[:200]}"); bad += 1
-              else:
-                  print(f"{target}: relayed"); sent += 1
-          print(f"relayed={sent} failed={bad}")
-          raise SystemExit(1 if bad and not sent else 0)
-          PY
+        run: python3 nexo_persist/relay.py
 
       - name: Wake the Writer robot now
         # Without this the proposal waits for GitHub's throttled */5 schedule (measured p50 54 min, p90 3.4 h).
