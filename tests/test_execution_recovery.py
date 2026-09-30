@@ -14,7 +14,7 @@ from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload, read_live_tower_bytes, materialize_live_tower
 from runtime.nexo_agent_api.tower_apply import apply_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
-from test_scientific_integrity import fixture, save, NOW
+from tests.test_scientific_integrity import fixture, save, NOW
 
 
 class RecoveryTests(unittest.TestCase):

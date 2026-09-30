@@ -55,27 +55,35 @@ def test_charter_gate_only_dener_opens_it(tmp_path):
     assert index["items"] == [{"roadmap_id": "RM-X", "state": "ACTIVE", "priority": "NORMAL", "relative_path": "roadmaps/RM-X.json"}]
 
 
-def test_positive_result_needs_two_referees_and_stop_criterion_fires(tmp_path):
+def test_positive_result_needs_independent_attack_and_stop_criterion_fires(tmp_path):
     root = _tower(tmp_path)
     _apply(root, {"kind": "ROADMAP_CHARTER", "payload": {"roadmap_id": "RM-X", "question": "q", "stop": {"success_confirmed": 1}}})
     _apply(root, {"kind": "OPERATOR_INTENT", "source": "DENER", "created_at": "2026-09-25T00:00:00Z",
                   "payload": {"action": "APPROVE_CHARTER", "roadmap_id": "RM-X"}})
     requests = _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "_inbox_name": "h1.json", "payload": {"display_name": "Teste de exemplo", "domain": "science", 
         "test_id": "T-1", "roadmap_id": "RM-X", "question": "q", "method": "frozen method", "data": "fixture dataset",
-        "success_criteria": "s", "kill_criteria": "k", "rank_score": 0.8}})
+        "success_criteria": "s", "kill_criteria": "k", "null": "n", "rival": "r", "rank_score": 0.8}})
     assert requests[0]["changes"]["prereg_hash"].startswith("sha256:")
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T02:00:00Z",
                   "payload": {"test_id": "T-1", "result": {"verdict": "PROMOTED"}, "prediction": {"p_promoted": 0.3}}})
     assert _test(root, "T-1")["review_state"] == "PENDING_REVIEW"
     status = evolution_status(root)
     assert status["review_queue"]["referee_1"] == ["T-1"]
-    _apply(root, {"kind": "CONTEST", "payload": {"test_id": "T-1", "reason": "janela diferente",
-                                                 "contest_test": {"question": "sobrevive?", "success_criteria": "a", "kill_criteria": "b"}}})
+    evidence = root / "entities/evidence/independent-fixture.json"
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    evidence.write_text(json.dumps({"source": "independent fixture B"}))
+    _apply(root, {"kind": "CONTEST", "created_at": "2026-09-25T03:00:00Z", "payload": {"test_id": "T-1", "reason": "janela diferente",
+                 "contest_test": {"question": "sobrevive?", "null": "n", "rival": "r", "method": "frozen method",
+                                  "dataset_and_selection": "independent fixture B", "success_criteria": "a", "kill_criteria": "b",
+                                  "independence": {"axis": "data", "evidence_refs": ["entities/evidence/independent-fixture.json"],
+                                                   "frozen_at": "2026-09-25T03:00:00Z", "on_pass": "CONFIRMED", "on_fail": "REFUTED"}}}})
     assert _test(root, "T-1")["review_state"] == "CONTESTED"
     assert _test(root, "CONTEST-T-1-1")["contests_test_id"] == "T-1"
     _apply(root, {"kind": "VERDICT_REVIEW", "payload": {"test_id": "T-1", "referee": 1, "outcome": "SURVIVED"}})
-    assert evolution_status(root)["review_queue"]["referee_2"] == ["T-1"]
-    _apply(root, {"kind": "VERDICT_REVIEW", "payload": {"test_id": "T-1", "referee": "CLAUDE", "outcome": "SURVIVED"}})
+    assert _test(root, "T-1")["review_state"] == "CONTESTED"  # an unbacked review cannot confirm
+    _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T04:00:00Z",
+                  "payload": {"test_id": "CONTEST-T-1-1", "result": {"verdict": "PROMOTED"}}})
+    _apply(root, {"kind": "VERDICT_REVIEW", "payload": {"test_id": "T-1", "contest_test_id": "CONTEST-T-1-1"}})
     assert _test(root, "T-1")["review_state"] == "CONFIRMED"
     [progress] = evolution_status(root)["roadmaps"]
     assert progress["confirmed"] == 1 and progress["stop_reached"] == "SUCCESS"
@@ -117,25 +125,34 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
     assert evolution_status(root)["decoys"] == {"planted": 1, "revealed": 1, "caught": 0}
 
 
-def test_battery_dispatch_and_collect(tmp_path):
+def test_battery_dispatch_and_collect(tmp_path, monkeypatch):
+    from tests.test_scientific_integrity import install_fixture_catalog, store_fixture_test, NOW, END
+    from runtime.nexo_agent_api import scientific_integrity as integrity
     root = _tower(tmp_path)
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'seed_bounds')
     for tid in ("T-A", "T-B"):
-        _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", "test_id": tid, "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
+        store_fixture_test(root, tid, 'seed_bounds', {'seed': 17})
     _apply(root, {"kind": "TEST_BATTERY", "created_at": "2026-09-25T14:00:00Z", "payload": {"battery_id": "bat-1", "tests": [
         {"test_id": "T-A", "recipe": "seed_bounds", "params": {"n": [10]}, "prediction": {"p_promoted": 0.2}},
         {"test_id": "T-B", "recipe": "seed_bounds"}, {"test_id": "MISSING", "recipe": "seed_bounds"},
         {"test_id": "T-A", "script": "print(1)"}]}})
     from runtime.nexo_agent_api.evolution import pending_batteries
-    assert [b["id"] for b in pending_batteries(root)] == ["bat-1"]
-    assert _test(root, "T-A")["status"] == "RUNNING" and _test(root, "T-A")["prediction"] == {"p_promoted": 0.2}
-    _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": "bat-1", "status": "DISPATCHED"}})
+    assert pending_batteries(root) == []  # invalid/duplicate/inline-code members reject the whole envelope
+    _apply(root, {"kind": "TEST_BATTERY", "created_at": NOW, "payload": {"battery_id": "bat-valid", "tests": [
+        {"test_id": tid, "recipe": "seed_bounds", "params": {"seed": 17}} for tid in ('T-A', 'T-B')]}})
+    assert [b['id'] for b in pending_batteries(root)] == ['bat-valid']
+    assert _test(root, "T-A")["status"] == "QUEUED"
+    specs = {x['test_id']: x for x in integrity.batteries(root)[0]['tests']}
+    _apply(root, {"kind": "BATTERY_STATUS", "_inbox_source": "RUNNER_OBSERVATION", "payload": {
+        "battery_id": "bat-valid", "status": "RUNNING", "run_ref": "actions/runs/123", "started_tests": {'T-A': NOW, 'T-B': NOW}}})
     assert pending_batteries(root) == []
-    _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": "bat-1", "status": "DONE", "results": [
-        {"test_id": "T-A", "ok": True, "result": {"verdict": "PROMOTED", "summary": "x"}},
+    _apply(root, {"kind": "BATTERY_STATUS", "_inbox_source": "RUNNER_OBSERVATION", "payload": {"battery_id": "bat-valid", "status": "DONE",
+        "run_ref": "actions/runs/123", "completed_at": END, "results": [
+        {"test_id": "T-A", "ok": True, "attempt_id": specs['T-A']['attempt_id'], "recipe_sha256": specs['T-A']['recipe_sha256'], "result": {"verdict": "PROMOTED", "summary": "x"}},
         {"test_id": "T-B", "ok": False, "log_tail": "Traceback"}]}})
     assert _test(root, "T-A")["verdict"] == "PROMOTED" and _test(root, "T-A")["review_state"] == "PENDING_REVIEW"
     assert _test(root, "T-B")["status"] == "READY" and "Traceback" in _test(root, "T-B")["last_runtime_failure"]["log_tail"]
-    assert evolution_status(root)["batteries"] == {"QUEUED": 0, "DISPATCHED": 0, "DONE": 1}
+    assert evolution_status(root)["batteries"] == {"QUEUED": 0, "DISPATCH_PENDING": 0, "DISPATCHED": 0, "RUNNING": 0, "DONE": 1}
 
 
 def _hyp(root, tid, **extra):
@@ -154,12 +171,14 @@ def _maintain(root, now=None):
     return requests
 
 
-def test_second_runtime_failure_blocks_instead_of_recycling(tmp_path):
+def test_second_runtime_failure_blocks_instead_of_recycling(tmp_path, monkeypatch):
+    from tests.test_scientific_integrity import install_fixture_catalog, store_fixture_test, END
     root = _tower(tmp_path)
-    _hyp(root, "T-F")
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'seed_bounds')
+    store_fixture_test(root, 'T-F', 'seed_bounds', {'seed': 17})
     for n in (1, 2):
-        _apply(root, {"kind": "TEST_BATTERY", "payload": {"battery_id": f"bat-f{n}", "tests": [{"test_id": "T-F", "recipe": "seed_bounds"}]}})
-        _apply(root, {"kind": "BATTERY_STATUS", "payload": {"battery_id": f"bat-f{n}", "status": "DONE",
+        _apply(root, {"kind": "TEST_BATTERY", "payload": {"battery_id": f"bat-f{n}", "tests": [{"test_id": "T-F", "recipe": "seed_bounds", "params": {'seed': 17}}]}})
+        _apply(root, {"kind": "BATTERY_STATUS", "_inbox_source": "RUNNER_OBSERVATION", "payload": {"battery_id": f"bat-f{n}", "status": "DONE", "run_ref": f"actions/runs/{123+n}", "completed_at": END,
                                                             "results": [{"test_id": "T-F", "ok": False, "log_tail": "ImportError"}]}})
         state = _test(root, "T-F")["status"]
         assert state == ("READY" if n == 1 else "BLOCKED_INPUT")

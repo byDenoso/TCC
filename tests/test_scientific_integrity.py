@@ -38,6 +38,24 @@ def fixture(test_id='TEST-A'):
     return test
 
 
+def install_fixture_catalog(directory, monkeypatch, *names):
+    """Local inert recipes used to exercise admission, never scientific data."""
+    directory.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        save(directory, 'smoke/' + name + '.json', {'fixture': True})
+        (directory / (name + '.py')).write_text('# isolated admission fixture\nresult = 1\n')
+    monkeypatch.setenv('NEXO_RECIPE_ROOT', str(directory))
+
+
+def store_fixture_test(root, test_id, recipe='audit_recipe', params=None, **changes):
+    test = fixture(test_id)
+    test.update(recipe=recipe, recipe_params=params or {'seed': 17}, question='Fixture ' + test_id)
+    test.update(changes)
+    test['prereg_hash'] = e.prereg_hash(test_id, test)
+    save(root, entity_path(root, 'test', test_id).relative_to(root).as_posix(), test)
+    return test
+
+
 class ScientificIntegrityTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

@@ -6,6 +6,7 @@ from typing import Any
 from uuid import uuid4
 
 from .mutations import apply_mutation_request
+from . import scientific_integrity as integrity
 from .tower_paths import entity_path
 
 RUNNABLE_TEST_STATES = {"READY", "RUNNING", "CHECKPOINTED", "QUEUED"}
@@ -27,6 +28,13 @@ def _complete_frozen_test(contract: Any) -> bool:
 
 
 def frozen_contract_from_test(test: dict[str, Any]) -> dict[str, Any] | None:
+    # Preserve the current canonical definition verbatim. A legacy method plus
+    # decision_rule is descriptive metadata, not readiness or an input binding.
+    if all(test.get(key) for key in integrity.FROZEN[:-1]):
+        return {"id": str(test.get("id") or test.get("test_id") or ""),
+                **{key: test.get(key) for key in integrity.FROZEN},
+                "decision_rule": {"success": test["success_criteria"], "kill": test["kill_criteria"]},
+                "outputs": test.get("outputs") or ["scientific_result"]}
     frozen = test.get("frozen_test")
     if _complete_frozen_test(frozen):
         return dict(frozen)
@@ -103,18 +111,51 @@ def ensure_scheduler_visibility(root: str | Path, test: dict[str, Any], *, write
         return {"visible": False, "reason": "TEST_ID_MISSING"}
 
     work_path = entity_path(root, "work", work_id)
-    if work_path.exists():
-        payload = json.loads(work_path.read_text(encoding="utf-8"))
-        return {"visible": True, "outcome": "REUSED", "work_id": work_id, "work": payload}
-
+    existing = json.loads(work_path.read_text(encoding="utf-8")) if work_path.exists() else None
+    check = integrity.readiness(root, test)
+    if not check["eligible"]:
+        # Only withdraw our own unreserved projection. Never steal ownership or
+        # interrupt an admitted execution merely because it is already active.
+        if (existing and existing.get("test_id") == test_id and existing.get("owner_role") == "EXECUTOR"
+                and existing.get("scheduler_visibility_repair")
+                and existing.get("status") in {"READY", "CHECKPOINTED"}
+                and "ACTIVE_ATTEMPT" not in check["reasons"]):
+            receipt = apply_mutation_request(root, {
+                "request_id": f"VISIBILITY-WAIT-{uuid4().hex[:16]}", "entity_kind": "work",
+                "entity_name": work_id, "expected_version": int(existing.get("entity_version", 1)),
+                "changes": {"status": "WAIT_DEPENDENCY", "operational_status": "WAIT_DEPENDENCY",
+                            "scheduler_visibility_blocker": check["reasons"]},
+                "writer_role": writer_role, "event_type": "SCHEDULER_VISIBILITY_WITHDRAWN"})
+            if not receipt.get("accepted") or receipt.get("readback") != "PASS":
+                return {"visible": False, "outcome": "MUTATION_FAILED", "work_id": work_id, "receipt": receipt}
+        return {"visible": False, "outcome": "EXECUTION_PREREQUISITES_MISSING",
+                "work_id": work_id, "blocker_class": "EXECUTION_PREREQUISITES_MISSING",
+                "readiness": check, "recovery_work_id": test.get("recovery_work_id")}
     projection = scheduler_work_projection(test, repair=True)
     if projection is None:
-        return {
-            "visible": False,
-            "outcome": "SCIENTIFIC_DEFINITION_MISSING",
-            "work_id": work_id,
-            "blocker_class": "SCIENTIFIC_DEFINITION_MISSING",
-        }
+        return {"visible": False, "outcome": "TEST_NOT_RUNNABLE", "work_id": work_id,
+                "blocker_class": "TEST_NOT_RUNNABLE", "readiness": check}
+    if existing:
+        payload = existing
+        if (payload.get("test_id") == test_id and payload.get("owner_role") == "EXECUTOR"
+                and str(payload.get("status") or "").upper() in EXECUTOR_WORK_STATES
+                and payload.get("frozen_test") == projection["frozen_test"]):
+            return {"visible": True, "outcome": "REUSED", "work_id": work_id, "work": payload}
+        if (payload.get("test_id") == test_id and payload.get("owner_role") == "EXECUTOR"
+                and payload.get("scheduler_visibility_repair") and payload.get("status") == "WAIT_DEPENDENCY"
+                and payload.get("scheduler_visibility_blocker")):
+            changes = {k: v for k, v in projection.items() if k != "id"}
+            changes["scheduler_visibility_blocker"] = None
+            receipt = apply_mutation_request(root, {
+                "request_id": f"VISIBILITY-RESUME-{uuid4().hex[:16]}", "entity_kind": "work",
+                "entity_name": work_id, "expected_version": int(payload.get("entity_version", 1)),
+                "changes": changes, "writer_role": writer_role, "event_type": "SCHEDULER_VISIBILITY_RESTORED"})
+            if receipt.get("accepted") and receipt.get("readback") == "PASS":
+                return {"visible": True, "outcome": "RESTORED", "work_id": work_id,
+                        "work": json.loads(work_path.read_text(encoding="utf-8")), "receipt": receipt}
+            return {"visible": False, "outcome": "MUTATION_FAILED", "work_id": work_id, "receipt": receipt}
+        return {"visible": False, "outcome": "EXISTING_WORK_NOT_RUNNABLE", "work_id": work_id,
+                "blocker_class": "SCHEDULER_WORK_RECONCILIATION_REQUIRED"}
 
     receipt = apply_mutation_request(root, {
         "request_id": f"VISIBILITY-{uuid4().hex[:16]}",

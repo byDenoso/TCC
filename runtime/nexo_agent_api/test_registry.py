@@ -6,7 +6,8 @@ from pathlib import Path
 from uuid import uuid4
 
 from .mutations import apply_mutation_request
-from .scheduler_visibility import ensure_scheduler_visibility, scheduler_work_id
+from . import scientific_integrity as integrity
+from .scheduler_visibility import ensure_scheduler_visibility
 from .service import TowerAgentIssue
 from .tower_paths import entity_path
 
@@ -93,11 +94,11 @@ def register_test(
     correlation_id: str | None = None,
     provenance: dict | None = None,
 ) -> dict:
-    """Canonicalize a graph-visible TEST and its RUN before dispatch.
+    """Register graph identity and a planned RUN, without reserving execution.
 
-    A complete frozen_test contract also creates the scheduler-visible WORK projection.
-    Legacy callers without a frozen contract remain registrable, but cannot acquire the
-    scheduler-visibility invariant until their scientific execution contract is complete.
+    Legacy frozen_test metadata is not a complete scientific execution contract.
+    Only canonical readiness can expose executor WORK; battery admission owns
+    reservations, QUEUED state and actual dispatch.
     CHECKs must not call this function unless they are explicitly promoted to TEST.
     """
     root = Path(root)
@@ -106,6 +107,12 @@ def register_test(
     clean_objective = " ".join(str(objective).strip().split())
     if not all((str(test_id).strip(), clean_domain, clean_title, clean_objective, str(campaign_id).strip())):
         raise TowerAgentIssue("TEST_REGISTRY_INVALID", "Canonical TEST registration is missing required identity fields.")
+
+    test_existing = _read_entity(root, "test", test_id)
+    if test_existing and (integrity.terminal(test_existing)
+                          or str(test_existing.get("status") or test_existing.get("state") or "").upper() in integrity.ACTIVE
+                          or test_id in integrity.active_tests(root)):
+        raise TowerAgentIssue("TEST_REGISTRY_EXECUTION_PROTECTED", "Registration cannot reopen or replace an existing execution.", {"test_id": test_id})
 
     corr = " ".join(str(correlation_id or f"TESTREG-{uuid4().hex}").strip().split())
     observed_at = _now()
@@ -167,9 +174,9 @@ def register_test(
 
     run_id = _next_run_id(root, test_id)
     test_parent = test_group_id or campaign_id
-    test_existing = _read_entity(root, "test", test_id)
     existing_runs = [str(value) for value in (test_existing or {}).get("run_ids", []) if str(value)]
     run_ids = [*existing_runs, run_id]
+    registration_state = str((test_existing or {}).get("status") or (test_existing or {}).get("state") or "DRAFT").upper()
     test_changes = {
         "domain": clean_domain,
         "project_id": project_id,
@@ -182,8 +189,9 @@ def register_test(
         "title": clean_title,
         "objective": clean_objective,
         "capability_id": capability_id,
-        "status": "QUEUED",
-        "operational_status": "QUEUED",
+        "status": registration_state,
+        "state": registration_state,
+        "operational_status": registration_state,
         "analytical_status": str((test_existing or {}).get("analytical_status") or "UNASSESSED"),
         "current_run_id": run_id,
         "run_ids": run_ids,
@@ -211,7 +219,7 @@ def register_test(
             "expected_version": int(test_existing.get("entity_version", 1)),
             "changes": test_changes,
             "writer_role": writer_role,
-            "event_type": "TEST_RUN_QUEUED",
+            "event_type": "TEST_RUN_PLANNED",
         })
         if not receipt.get("accepted") or receipt.get("readback") != "PASS":
             raise TowerAgentIssue("TEST_REGISTRY_MUTATION_FAILED", "Could not attach canonical RUN to TEST.", {"test_id": test_id})
@@ -231,8 +239,8 @@ def register_test(
             "test_id": test_id,
             "parent_id": test_id,
             "capability_id": capability_id,
-            "status": "QUEUED",
-            "operational_status": "QUEUED",
+            "status": "DRAFT",
+            "operational_status": "DRAFT",
             "analytical_status": "UNASSESSED",
             "correlation_id": corr,
             "created_at": observed_at,
@@ -243,20 +251,12 @@ def register_test(
         event_type="RUN_REGISTERED",
     ))
 
-    scheduler_visibility = None
-    scheduler_id = None
-    if frozen_test is not None:
-        test_after_registration = _read_entity(root, "test", test_id)
-        if test_after_registration is None:
-            raise TowerAgentIssue("READBACK_FAILED", "TEST vanished before scheduler visibility admission.")
-        scheduler_visibility = ensure_scheduler_visibility(root, test_after_registration, writer_role=writer_role)
-        scheduler_id = scheduler_visibility.get("work_id") or scheduler_work_id(test_id)
-        if not scheduler_visibility.get("visible"):
-            raise TowerAgentIssue(
-                str(scheduler_visibility.get("blocker_class") or "SCHEDULER_VISIBILITY_FAILED"),
-                "Dispatch-ready TEST could not be made scheduler-visible.",
-                {"test_id": test_id, "visibility": scheduler_visibility},
-            )
+    test_after_registration = _read_entity(root, "test", test_id)
+    if test_after_registration is None:
+        raise TowerAgentIssue("READBACK_FAILED", "TEST vanished after registration.")
+    readiness = integrity.readiness(root, test_after_registration)
+    scheduler_visibility = ensure_scheduler_visibility(root, test_after_registration, writer_role=writer_role)
+    scheduler_id = scheduler_visibility.get("work_id") if scheduler_visibility.get("visible") else None
 
     required = [
         ("campaign", campaign_id),
@@ -272,8 +272,10 @@ def register_test(
 
     return {
         "registered": True,
-        "dispatch_ready": True,
-        "scheduler_visible": bool(scheduler_visibility and scheduler_visibility.get("visible")) if frozen_test is not None else False,
+        "dispatch_ready": False,
+        "dispatch_reason": "REGISTRATION_IS_NOT_A_RESERVATION",
+        "readiness": readiness,
+        "scheduler_visible": bool(scheduler_visibility.get("visible")),
         "work_id": scheduler_id,
         "domain": clean_domain,
         "project_id": project_id,
@@ -282,7 +284,7 @@ def register_test(
         "test_id": test_id,
         "run_id": run_id,
         "correlation_id": corr,
-        "operational_status": "QUEUED",
+        "operational_status": registration_state,
         "analytical_status": "UNASSESSED",
         "receipts": receipts,
         "scheduler_visibility": scheduler_visibility,

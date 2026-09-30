@@ -1,4 +1,5 @@
 from runtime.nexo_agent_api.public_projection import _collapse_bulk_activity, _with_semantics
+from tests.test_scientific_integrity import fixture, install_fixture_catalog, store_fixture_test, save, NOW, END
 
 
 def test_bulk_activity_collapses_with_count():
@@ -24,9 +25,10 @@ def test_archived_and_checkpointed_groups():
     assert status_group("ARCHIVED") == "DONE" and status_group("CHECKPOINTED") == "RUNNING"
 
 
-def test_recipe_bug_keeps_test_chances_opens_circuit_and_success_closes(tmp_path):
+def test_recipe_bug_keeps_test_chances_opens_circuit_and_success_closes(tmp_path, monkeypatch):
     import json
-    from runtime.nexo_agent_api.evolution import battery_status_requests, classify_failure
+    from runtime.nexo_agent_api.evolution import battery_status_requests, battery_requests, classify_failure
+    from runtime.nexo_agent_api.tower_apply import apply_requests
     from runtime.nexo_agent_api.tower_paths import entity_path
 
     assert classify_failure("Traceback (most recent call last):\nKeyError: 'zHD'") == "RECIPE_BUG"
@@ -34,20 +36,32 @@ def test_recipe_bug_keeps_test_chances_opens_circuit_and_success_closes(tmp_path
     assert classify_failure("input obrigatório ausente") == "TEST"
 
     root = tmp_path
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'rcp')
+    save(root, 'CONTROL.json', {'mode': 'ACTIVE'})
     for tid in ("T-1", "T-2"):
-        path = entity_path(root, "test", tid)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"id": tid, "kind": "TEST", "status": "RUNNING", "execution_recipe": "rcp", "entity_version": 1}))
-    (root / "evolution").mkdir()
-    (root / "evolution" / "batteries.json").write_text(json.dumps({"batteries": [{"id": "b1", "status": "DISPATCHED"}]}))
+        store_fixture_test(root, tid, 'rcp')
+    requests = battery_requests({'created_at': NOW}, {'battery_id': 'bat-fixture-one', 'tests': [
+        {'test_id': tid, 'recipe': 'rcp', 'params': {'seed': 17}} for tid in ('T-1', 'T-2')]}, root)
+    assert all(row['accepted'] for row in apply_requests(root, requests))
 
     bug = "Traceback (most recent call last):\nKeyError: 'zHD'"
-    body = {"battery_id": "b1", "status": "DONE", "results": [{"test_id": t, "ok": False, "log_tail": bug} for t in ("T-1", "T-2")]}
-    reqs = battery_status_requests({"created_at": "2026-09-28T23:00:00Z"}, body, root, lambda *a, **k: [])
+    body = {"battery_id": "bat-fixture-one", "status": "DONE", 'run_ref': 'actions/runs/123', 'completed_at': END,
+            "results": [{"test_id": t, "ok": False, "log_tail": bug} for t in ("T-1", "T-2")]}
+    reqs = battery_status_requests({'_inbox_source': 'RUNNER_OBSERVATION', "created_at": END}, body, root, lambda *a, **k: [])
     fails = [r for r in reqs if r.get("event_type") == "TEST_RUNTIME_FAILURE"]
     assert all(r["changes"]["status"] == "READY" and r["changes"]["runtime_failure_count"] == 0 for r in fails)
     health = next(r for r in reqs if r.get("document") == "evolution/recipe_health.json")["merge"]["recipes"]["rcp"]
     assert health["state"] == "OPEN" and health["consecutive_bugs"] == 2
+    assert all(row['accepted'] for row in apply_requests(root, reqs))
+    retry = battery_requests({'created_at': END}, {'battery_id': 'bat-fixture-two', 'tests': [{'test_id': 'T-1', 'recipe': 'rcp', 'params': {'seed': 17}}]}, root)
+    assert all(row['accepted'] for row in apply_requests(root, retry))
+    spec = json.loads((root / 'evolution/batteries.json').read_text())['batteries'][-1]['tests'][0]
+    body = {'battery_id': 'bat-fixture-two', 'status': 'DONE', 'run_ref': 'actions/runs/124', 'completed_at': END,
+            'results': [{'test_id': 'T-1', 'ok': True, 'attempt_id': spec['attempt_id'], 'recipe_sha256': spec['recipe_sha256'],
+                         'result': {'verdict': 'INCONCLUSIVE', 'summary': 'Isolated fixture'}}]}
+    reqs = battery_status_requests({'_inbox_source': 'RUNNER_OBSERVATION', 'created_at': END}, body, root, lambda *a, **k: [])
+    health = next(row for row in reqs if row.get('document') == 'evolution/recipe_health.json')['merge']['recipes']['rcp']
+    assert health['state'] == 'CLOSED' and health['consecutive_bugs'] == 0
 
 
 def _family_root(tmp_path):
@@ -56,6 +70,7 @@ def _family_root(tmp_path):
     from runtime.nexo_agent_api.tower_paths import entity_path
 
     root = tmp_path
+    save(root, 'CONTROL.json', {'mode': 'ACTIVE'})
     (root / "roadmaps").mkdir()
     (root / "roadmaps" / "RM-X.json").write_text(json.dumps({"roadmap_id": "RM-X", "status": "ACTIVE"}))
     (root / "evolution").mkdir()
@@ -68,21 +83,25 @@ def _family_root(tmp_path):
     return root, entity_path
 
 
-def test_family_expands_into_ready_tests_and_dispatches_batteries(tmp_path):
+def test_family_expands_then_requires_bound_inputs_before_dispatch(tmp_path, monkeypatch):
     import json
-    from runtime.nexo_agent_api.evolution import family_battery_items, family_instance_items
+    from runtime.nexo_agent_api.evolution import family_battery_items, family_instance_items, data_binding_requests
+    from runtime.nexo_agent_api.tower_apply import apply_requests
     from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
 
     root, entity_path = _family_root(tmp_path)
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'rcp_one')
     items = family_instance_items(root)
     assert len(items) == 3 and items[0]["payload"]["recipe_params"] == {"band": [0, 0]}
     for item in items:  # what the Writer does with each robot proposal
         reqs = proposal_to_requests(item, root)
         test = reqs[0]["changes"]
-        assert test["status"] == "READY" and test["family_id"] == "DE-BANDS" and test["recipe_params"]
+        assert test["status"] == "BLOCKED_INPUT" and test["family_id"] == "DE-BANDS" and test["recipe_params"]
         path = entity_path(root, "test", reqs[0]["entity_name"])
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"id": reqs[0]["entity_name"], "kind": "TEST", **test}))
+        path.write_text(json.dumps({"id": reqs[0]["entity_name"], "kind": "TEST", 'entity_version': 1, **test}))
+        bindings = data_binding_requests({}, {'test_id': reqs[0]['entity_name'], **fixture()['data_binding']}, root)
+        assert all(row['accepted'] for row in apply_requests(root, bindings))
     assert family_instance_items(root) == []  # every cell already has its test
     [battery] = family_battery_items(root)
     assert battery["kind"] == "TEST_BATTERY" and len(battery["payload"]["tests"]) == 3
@@ -101,43 +120,52 @@ def test_incomplete_contract_becomes_draft(tmp_path):
     assert req["changes"]["status"] == "DRAFT" and "método" in req["changes"]["draft_reason"]
 
 
-def test_battery_takes_three_quarters_of_the_ready_queue(tmp_path):
+def test_battery_takes_three_quarters_of_the_ready_queue(tmp_path, monkeypatch):
     import json
     from runtime.nexo_agent_api.evolution import family_battery_items
     from runtime.nexo_agent_api.tower_paths import entity_path
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'rcp_one')
 
     for n, expected in ((20, 15), (8, 6), (4, 4), (40, 20)):
         root = tmp_path / f"r{n}"
         (root / "evolution").mkdir(parents=True)
         for i in range(n):
-            path = entity_path(root, "test", f"T-{i:02d}")
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps({"id": f"T-{i:02d}", "kind": "TEST", "status": "READY", "family_id": "F", "recipe": "rcp_one", "recipe_params": {}}))
+            store_fixture_test(root, f'T-{i:02d}', 'rcp_one', family_id='F')
         [battery] = family_battery_items(root)
         assert len(battery["payload"]["tests"]) == expected, (n, len(battery["payload"]["tests"]))
 
 
-def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path):
+def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path, monkeypatch):
     import json
     from runtime.nexo_agent_api.evolution import family_battery_items, recipe_bind_requests
     from runtime.nexo_agent_api.tower_paths import entity_path
+    from runtime.nexo_agent_api.tower_apply import apply_requests
+    from runtime.nexo_agent_api.inbox_apply import ProposalError
+    import pytest
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'rcp_one')
+    save(tmp_path, 'CONTROL.json', {'mode': 'ACTIVE'})
 
     path = entity_path(tmp_path, "test", "T-BOUND")
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"id": "T-BOUND", "kind": "TEST", "status": "BLOCKED_INPUT", "origin_kind": "DENER_DIRECTED"}))
-    assert recipe_bind_requests({}, {"test_id": "T-BOUND", "recipe": "Bad Name", "params": {}}, tmp_path) == []
+    test = store_fixture_test(tmp_path, 'T-BOUND', status='BLOCKED_INPUT', state='BLOCKED_INPUT', origin_kind='DENER_DIRECTED')
+    test.pop('recipe'); test.pop('recipe_params'); path.write_text(json.dumps(test))
+    with pytest.raises(ProposalError, match='RECIPE_BINDING_INVALID'):
+        recipe_bind_requests({}, {"test_id": "T-BOUND", "recipe": "Bad Name", "params": {}}, tmp_path)
     [req] = recipe_bind_requests({"created_at": "2026-09-29T05:00:00Z"}, {"test_id": "T-BOUND", "recipe": "rcp_one", "params": {"a": 1}}, tmp_path)
     assert req["changes"]["status"] == "READY" and req["changes"]["recipe_params"] == {"a": 1}
-    path.write_text(json.dumps({"id": "T-BOUND", "kind": "TEST", "status": "READY", "recipe": "rcp_one", "recipe_params": {"a": 1}}))
+    assert all(row['accepted'] for row in apply_requests(tmp_path, [req]))
     [battery] = family_battery_items(tmp_path)
     assert [t["test_id"] for t in battery["payload"]["tests"]] == ["T-BOUND"]
 
 
-def test_robot_contests_positive_family_result_with_union3(tmp_path):
+def test_robot_contests_positive_family_result_with_union3(tmp_path, monkeypatch):
     import json
-    from runtime.nexo_agent_api.evolution import family_battery_items, family_contest_items
+    from runtime.nexo_agent_api.evolution import family_battery_items, family_contest_items, data_binding_requests
+    from runtime.nexo_agent_api.tower_apply import apply_requests
     from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
     from runtime.nexo_agent_api.tower_paths import entity_path
+    install_fixture_catalog(tmp_path / 'recipes', monkeypatch, 'w0wa_bao_sn_multi')
+    save(tmp_path, 'CONTROL.json', {'mode': 'ACTIVE'})
 
     parent = {"id": "FAM-X-A", "kind": "TEST", "status": "DONE", "verdict": "PROMOTED", "review_state": "PENDING_REVIEW",
               "family_id": "X", "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "question": "q?", "null": "n", "rival": "r",
@@ -150,10 +178,12 @@ def test_robot_contests_positive_family_result_with_union3(tmp_path):
     assert item["payload"]["contest_test"]["recipe_params"]["compilations"] == ["pantheon_plus", "union3"]
     reqs = proposal_to_requests(item, tmp_path)
     attack = next(r for r in reqs if r.get("entity_name", "").startswith("CONTEST-"))
-    assert attack["changes"]["status"] == "READY" and attack["changes"]["recipe"] == "w0wa_bao_sn_multi"
+    assert attack["changes"]["status"] == "BLOCKED_INPUT" and attack["changes"]["recipe"] == "w0wa_bao_sn_multi"
     assert any(r.get("entity_name") == "FAM-X-A" and r["changes"]["review_state"] == "CONTESTED" for r in reqs)
     apath = entity_path(tmp_path, "test", attack["entity_name"])
-    apath.write_text(json.dumps({"id": attack["entity_name"], "kind": "TEST", **attack["changes"]}))
+    apath.write_text(json.dumps({"id": attack["entity_name"], "kind": "TEST", 'entity_version': 1, **attack["changes"]}))
+    bindings = data_binding_requests({}, {'test_id': attack['entity_name'], **fixture()['data_binding']}, tmp_path)
+    assert all(row['accepted'] for row in apply_requests(tmp_path, bindings))
     path.write_text(json.dumps({**parent, "contests": [{"n": 1}]}))
     assert family_contest_items(tmp_path) == []  # attacked once already
     [battery] = family_battery_items(tmp_path)

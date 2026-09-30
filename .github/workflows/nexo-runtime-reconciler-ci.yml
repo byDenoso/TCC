@@ -3,6 +3,10 @@ name: NEXO Runtime Reconciler CI
 on:
   pull_request:
     paths:
+      - 'runtime/nexo_agent_api/**'
+      - 'runtime/nexo_execution/**'
+      - 'tests/**'
+      - 'gpt/tasks/**'
       - 'runtime/nexo_agent_api/evolution.py'
       - 'runtime/nexo_agent_api/execution_recovery.py'
       - 'runtime/nexo_agent_api/handoff.py'
@@ -28,6 +32,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'runtime/nexo_agent_api/**'
+      - 'runtime/nexo_execution/**'
+      - 'tests/**'
+      - 'gpt/tasks/**'
       - 'runtime/nexo_agent_api/evolution.py'
       - 'runtime/nexo_agent_api/execution_recovery.py'
       - 'runtime/nexo_agent_api/handoff.py'
@@ -63,6 +71,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Verify complete runtime regression suite
+        run: |
+          python -m pip install pytest==9.1.1
+          python -m pytest tests runtime/nexo_agent_api runtime/nexo_execution -q
       - name: Verify reconciler and scheduler topology
         run: |
           set -euo pipefail
