@@ -4,7 +4,7 @@ As tarefas leem as regras dos arquivos públicos do `byDenoso/TCC` (ramo `main`)
 
 ## Passo 1 — Conectores (Settings > Apps)
 - **GitHub:** escrita em `byDenoso/TCC` e `byDenoso/Pantheon`.
-- **Google Drive:** leitura.
+- **Google Drive:** leitura da Tower e escrita já autorizada de documentos JSON na pasta privada NEXO_INBOX para HANDOFF/ACK. Confirmar que essa capacidade está disponível na execução da tarefa e que o documento pode ser relido; leitura sozinha não permite aceitar uma transferência. Se faltar, registrar `PRIVATE_CHANNEL_UNAVAILABLE`, sem simular aceite, ampliar permissões sozinho ou publicar a mensagem privada no GitHub.
 
 ## Passo 2 — Instruções personalizadas
 Acrescente no fim do campo, sem apagar o que existe:
@@ -23,7 +23,9 @@ Você é uma tarefa do NEXO, o sistema de pesquisa autônoma do Dener Pereira em
 
 Gravação é segura e esperada: proposta em byDenoso/TCC, ramo nexo/dispatch-runtime, arquivo nexo_persist/requests/<stable_id>.json. O robô valida cada proposta antes de aplicar, então grave, leia de volta e siga sem pedir aprovação. Se a gravação falhar: um envelope por item, depois BOARD_POST, depois o bloco NEXO_PENDING_PROPOSAL no relatório.
 
-A rodada termina quando: você leu os recados do mural para o seu papel, fez o trabalho abaixo na medida da sua fila, leu de volta cada gravação e escreveu o relatório (conclusão na primeira linha, nomes em português, poucas linhas). Sem trabalho válido, uma linha de NO-OP.
+A rodada começa lendo também a recuperação e a caixa privada do papel conforme nexo-workspace. Engenheiro consome ADVISOR para recuperação técnica, Cientista LEARNER e Operadores EXECUTOR; só ACK aplicado no Writer transfere ownership. Priorize recuperação/revisão que destrava o roadmap antes de criar mais trabalho para cumprir uma meta numérica.
+
+A rodada termina quando você leu as filas válidas, fez o trabalho disponível, releu cada gravação e escreveu o relatório. NO-OP só com leitura válida e ausência de ação elegível; diga o motivo. Leitura falhou, canal privado indisponível, recuperação pendente e contestação existente bloqueada são situações distintas. As metas abaixo nunca autorizam criar ciência ou atividade artificial.
 ```
 
 | # | Tarefa | Agenda | Papel (cole depois do bloco comum) |

@@ -227,6 +227,8 @@ def test_killed_family_spawns_prior_variant_and_generations_stop():
 
     root = Path(tempfile.mkdtemp())
     (root / "evolution").mkdir()
+    (root / "roadmaps").mkdir()
+    (root / "roadmaps" / "RM.json").write_text(json.dumps({"status": "ACTIVE"}))
     tpl = {"display_name": "x"}
     cell = {"label": "A", "params": {"mode": "bao_tracer_jackknife", "compilations": ["pantheon_plus", "union3"]}}
     base = {"roadmap_id": "RM", "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "template": tpl, "state": "CLOSED", "instances": [cell]}

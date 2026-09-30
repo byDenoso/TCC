@@ -227,4 +227,7 @@ def test_referee_queue_holds_only_reviewable_originals_oldest_first(tmp_path):
     assert _test(root, "CONTEST-T-OLD-1")["contests_test_id"] == "T-OLD"
     queue = evolution_status(root)["review_queue"]
     assert "CONTEST-T-OLD-1" not in queue["referee_1"] + queue["referee_2"]
-    assert [t for t in queue["referee_1"] if t in {"T-OLD", "T-NEW"}] == ["T-OLD", "T-NEW"]
+    # The older original already has an attack occupying its slot. Preserve it
+    # as pending completion, without offering a duplicate attack to Referee 1.
+    assert [t for t in queue["referee_1"] if t in {"T-OLD", "T-NEW"}] == ["T-NEW"]
+    assert "T-OLD" in queue["waiting_on_existing_contest"]

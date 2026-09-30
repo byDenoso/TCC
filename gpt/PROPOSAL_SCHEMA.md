@@ -23,7 +23,7 @@ readback.
 
 ## BOARD_POST — mural compartilhado entre os agentes
 Recado curto de um papel para outro (ou para todos). É coordenação, nunca evidência: não muda teste nem veredito.
-`payload`: `{to: PITIA|LEARNER|EXECUTOR|REFUTADOR|GUARDIAO|CONVERSA|DENER|ALL, text, refs[]?, reply_to?, ttl_h? (48 padrão, máx 336)}` ou `{entries:[…]}`; `resolve:[ids]` fecha recados.
+`payload`: `{to: PITIA|LEARNER|EXECUTOR|REFUTADOR|REFEREE_1|GUARDIAO|ENGINEER|SENTINEL|ADVISOR|CONVERSA|DENER|ALL, text, refs[]?, reply_to?, ttl_h? (48 padrão, máx 336)}` ou `{entries:[…]}`; `resolve:[ids]` fecha recados. Destinatário desconhecido é recusado, nunca ampliado silenciosamente para ALL.
 Todo papel lê os recados para ele no início da rodada (`status.board`) e responde com ação ou com outro recado (`reply_to`). Para trabalho que precisa ser feito e acompanhado, use HANDOFF.
 
 ## HANDOFF — passar trabalho ou conversa a outro agente
@@ -219,6 +219,10 @@ O Writer materializa a ligação no próprio TEST, revalida readiness e mantém 
 BOUND exige nome, URL HTTPS, versão e SHA256; input gerado exige generator, seed e SHA256.
 Artifacts históricos são fontes candidatas, não substituem a ligação atual. A receita/runner deve
 validar os bytes que realmente consome: manifesto válido sozinho não demonstra fidelidade da execução.
+
+Propostas sem mudança recebem artifact `*_NOOP` com `_noop_reason` explícito. Duplicata legítima e
+ausência de pensamento fundamentado são distintos de contrato inválido (`UNAPPLIED_*`). Uma
+contestação já existente bloqueada deve ser recuperada, sem reenviar ataque para o mesmo slot.
 
 ## Escrita barrada pelo runtime
 Se GitHub e Doc forem recusados, imprima o envelope no relatório entre `NEXO_PENDING_PROPOSAL` e

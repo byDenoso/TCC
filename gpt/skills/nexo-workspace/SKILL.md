@@ -92,6 +92,17 @@ Antes de despachar, confirmar que receita e runner consomem os inputs versionado
 e implementam os parâmetros congelados. URL mutável ou parâmetro ignorado exige reparo, mesmo
 quando o manifesto formal foi aceito.
 
+### Motivo de inatividade e continuidade
+`*_NOOP` é uma resposta de proposta específica, não prova de que a automação inteira não trabalhou.
+O Writer grava `_noop_reason`: mensagem já registrada, pensamento sem entrada fundamentada,
+família já registrada ou contestação existente que precisa terminar. Contrato inválido vira
+`UNAPPLIED` com `_not_applied_reason`; não tratar erro de leitura/transporte como fila vazia.
+`review_queue.waiting_on_existing_contest` aponta originais cuja contestação já ocupa o slot;
+destrave o ataque existente pelo dono, sem reenviar CONTEST que será recusado.
+Sem ferramentas para o canal privado, use `PRIVATE_CHANNEL_UNAVAILABLE` e preserve a oferta
+pendente. NO-OP da rodada exige leitura válida e ausência de ação executável ou recuperação que
+o papel possa realizar; não gere recado, hipótese ou resultado só para eliminar o rótulo.
+
 Enquanto houver READY elegível no segmento de um Operador e capacidade na rodada, NO-OP é inválido. A processa o início/mais antigo, B o fim/mais novo restante e C faz sweep residual após A/B; todos relêem staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
 
 Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
