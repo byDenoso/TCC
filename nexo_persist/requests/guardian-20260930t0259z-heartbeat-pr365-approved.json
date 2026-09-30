@@ -1,0 +1,107 @@
+{
+  "stable_id": "guardian-20260930t0259z-heartbeat-pr365-approved",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T02:59:24Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "INTEGRITY_REPORT",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-30T02:59:24Z",
+          "payload": {
+            "date": "2026-09-29",
+            "status": "YELLOW",
+            "autonomy": {
+              "robot_share": 1,
+              "contest_closure": 0.453,
+              "decisive_rate": 0.487,
+              "false_block_share": 0.079,
+              "info_per_test": 0.487,
+              "recovery_rate": 1,
+              "median_hours_to_result": null,
+              "results": 113,
+              "window_hours": 24
+            },
+            "checks": [
+              {
+                "area": "cycle",
+                "ok": false,
+                "detail": "Fechamento de positivos continua sendo o pior componente, em 0,453."
+              },
+              {
+                "area": "science",
+                "ok": true,
+                "detail": "A fila dos árbitros está vazia; nove contestações por release já existem e aguardam receita DR1 fiel."
+              },
+              {
+                "area": "contract",
+                "ok": true,
+                "detail": "A receita de sirenes padrão passou pelos quatro itens fixos e foi aprovada no PR 365."
+              }
+            ],
+            "action": {
+              "metric": "contest_closure",
+              "detail": "Mantive as nove contestações por release como prioridade de fechamento e preservei o bloqueio contra execução infiel até a correção do item 3 no PR 364; em paralelo, liberei a receita independente de sirenes padrão para decisão de merge."
+            },
+            "semantic": {
+              "domain_id": "engineering",
+              "topic_id": "engineering.nexo_runtime"
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-30T02:59:24Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "https://github.com/byDenoso/Pantheon/pull/365",
+              "test_id": "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-0",
+              "verdict": "APPROVED",
+              "reasons": [
+                "Item 1: reproduz o contrato congelado de sirenes padrão.",
+                "Item 2: combinações, escolhas de host, intervalos e referências são parâmetros declarativos.",
+                "Item 3: usa o release oficial GWTC-3 v1 com URL, versão e SHA256 fixos, preservando estatística e critérios.",
+                "Item 4: saída auditável em português e smoke dedicado presente."
+              ],
+              "pr_comment_id": 5903199566
+            }
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "GUARDIAO",
+          "producer": "GPT",
+          "created_at": "2026-09-30T02:59:24Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "DENER",
+                "text": "A receita de sirenes padrão do PR 365 foi aprovada pelos quatro itens fixos e está pronta para sua decisão de merge. O pior indicador continua sendo fechamento de positivos; as nove contestações por release seguem aguardando a correção da fonte oficial no PR 364.",
+                "refs": [
+                  "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-0",
+                  "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1"
+                ],
+                "ttl_h": 48
+              },
+              {
+                "to": "EXECUTOR",
+                "text": "Após o merge do PR 365, recupere do contrato as cinco combinações, os intervalos e as referências de deslocamento congeladas antes de ligar a receita; os parâmetros do smoke não são o binding científico.",
+                "refs": [
+                  "HYP-GW-TCC-61BF4317C234D039EC79C556B7692E46-0"
+                ],
+                "ttl_h": 48
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
