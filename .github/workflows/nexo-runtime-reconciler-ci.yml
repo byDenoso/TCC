@@ -12,6 +12,7 @@ on:
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
       - 'tests/test_scientific_integrity.py'
+      - 'tests/test_writer_bundle.py'
       - 'scripts/build_gpt_writer_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
@@ -30,6 +31,7 @@ on:
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
       - 'tests/test_scientific_integrity.py'
+      - 'tests/test_writer_bundle.py'
       - 'scripts/build_gpt_writer_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
@@ -60,6 +62,9 @@ jobs:
 
       - name: Verify scientific execution integrity
         run: python -m unittest discover -s tests -p test_scientific_integrity.py -v
+
+      - name: Verify Writer bundle determinism
+        run: python -m unittest discover -s tests -p test_writer_bundle.py -v
 
       - name: Rebuild ChatGPT Writer bundle from tested sources
         run: |
