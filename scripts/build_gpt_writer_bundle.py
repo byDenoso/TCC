@@ -43,24 +43,35 @@ if __name__ == "__main__":
 '''
 
 
+_ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
+
+def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
+    """Write a stable ZIP member: source mtimes must never change the Writer hash."""
+    info = zipfile.ZipInfo(name, date_time=_ZIP_EPOCH)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    archive.writestr(info, data)
+
+
 def build() -> Path:
     buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
-        archive.writestr("runtime/__init__.py", "")
+    with zipfile.ZipFile(buffer, "w") as archive:
+        _write_deterministic(archive, "runtime/__init__.py", b"")
         for package in ("nexo_agent_api", "nexo_execution", "portable_camb"):
             package_root = REPO / "runtime" / package
             for path in sorted(package_root.rglob("*")):
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
-                    archive.write(path, f"runtime/{package}/{rel}")
+                    _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
         for path in sorted((REPO / "contracts").rglob("*.json")):
-            archive.write(path, path.relative_to(REPO).as_posix())
+            _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
     digest = hashlib.sha256(buffer.getvalue()).hexdigest()
     OUT.parent.mkdir(exist_ok=True)
     OUT.write_text(TEMPLATE.format(payload=payload, digest=digest), encoding="utf-8", newline="\n")
     return OUT
-
 
 # User-owned file in Drive NEXO_INBOX/_runtime/ (service accounts cannot own files;
 # they can update the content of a file the owner created).
