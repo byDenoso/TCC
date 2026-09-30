@@ -211,11 +211,14 @@ Nunca marque CHECKPOINTED como READY nem invente o input.
 
 ## DATA_BINDING — dado ligado para destravar teste (skill nexo-data-hydration)
 ```json
-{"test_id": "T-...", "inputs": [{"name": "...", "url": "https://...", "sha256": "...", "format": "...",
+{"test_id": "T-...", "inputs": [{"name": "...", "url": "https://...", "version": "release ou commit imutável", "sha256": "...", "format": "...",
   "load": "como carregar", "checked": "valor conferido contra o paper", "license": "public"}],
  "status": "BOUND|PARTIAL|UNAVAILABLE", "note": "português simples"}
 ```
-Vira `artifact DATA_BINDING::*`. O Executor lê antes de retomar um CHECKPOINTED.
+O Writer materializa a ligação no próprio TEST, revalida readiness e mantém a identidade científica.
+BOUND exige nome, URL HTTPS, versão e SHA256; input gerado exige generator, seed e SHA256.
+Artifacts históricos são fontes candidatas, não substituem a ligação atual. A receita/runner deve
+validar os bytes que realmente consome: manifesto válido sozinho não demonstra fidelidade da execução.
 
 ## Escrita barrada pelo runtime
 Se GitHub e Doc forem recusados, imprima o envelope no relatório entre `NEXO_PENDING_PROPOSAL` e

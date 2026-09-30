@@ -856,6 +856,10 @@ def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str
                      and f.get("close_reason") in order and _generation(fid) < MAX_FAMILY_GENERATIONS),
                     key=lambda kv: (order[kv[1]["close_reason"]], str(kv[1].get("chartered_at") or "")))
     for fid, fam in closed:
+        roadmap = _read(root, f"roadmaps/{fam.get('roadmap_id')}.json")
+        if (str(roadmap.get("status") or roadmap.get("state") or "").upper() != "ACTIVE"
+                or str((roadmap.get("charter") or {}).get("status") or "").upper() == "CLOSED"):
+            continue  # no new family after the roadmap stops; existing contests still run
         axis = "R" if fam["close_reason"] == "SUCCESS" else "P"
         child = f"{fid}-{axis}"[:40]
         if child in families or (axis == "R" and fid.endswith("-R")) or (axis == "P" and fid.endswith("-P")):

@@ -250,6 +250,27 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(items[0]["payload"]["tests"][0]["test_id"], "TEST-Z")
         self.assertEqual(items[1]["payload"]["tests"][0]["test_id"], "TEST-A")
 
+    def test_family_generator_skips_closed_roadmap_but_not_active_successor(self):
+        family = {"family_id": "F-ONE", "roadmap_id": "RM-A", "state": "CLOSED", "close_reason": "SUCCESS",
+                  "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "template": {"display_name": "Exemplo"},
+                  "instances": [{"label": "A", "params": {"compilations": ["pantheon_plus", "des_sn5yr"]}}]}
+        save(self.root, e.FAMILIES_DOC, {"families": {"F-ONE": family}})
+        save(self.root, "roadmaps/RM-A.json", {"state": "CLOSED", "charter": {"status": "CLOSED"}})
+        self.assertEqual(e.family_spawn_items(self.root), [])
+        save(self.root, "roadmaps/RM-A.json", {"state": "ACTIVE", "charter": {"status": "CHARTERED"}})
+        self.assertEqual(e.family_spawn_items(self.root)[0]["payload"]["family_id"], "F-ONE-R")
+
+    def test_agent_contracts_do_not_remove_required_provenance_or_fake_ready(self):
+        repo = Path(__file__).resolve().parents[1]
+        for version in ("0.4.0", "0.5.0"):
+            text = (repo / f"gpt/skills/nexo-closed-loop-{version}.md").read_text()
+            self.assertNotIn("sem `sha256`", text)
+            self.assertNotIn("fica READY (não bloqueado)", text)
+            self.assertIn("inputs[{name, url, version, sha256}]", text)
+        workspace = (repo / "gpt/skills/nexo-workspace/SKILL.md").read_text()
+        for required in ("execution_recovery", "HANDOFF_ACK", "ADVISOR", "LEARNER", "EXECUTOR", "Drive privado NEXO_INBOX"):
+            self.assertIn(required, workspace)
+
 
 if __name__ == "__main__":
     unittest.main()
