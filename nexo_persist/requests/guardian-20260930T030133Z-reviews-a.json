@@ -1,0 +1,61 @@
+{
+  "stable_id": "guardian-20260930T030133Z-reviews-a",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T03:01:33Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T03:01:33Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-BAFC4225B95E05C8B1C6625D88C0A4A3-2",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fidelidade ao contrato: faltam os diagnósticos exatos de cada um dos três contratos atendidos.",
+                "Saída auditável: declarar por contrato observáveis, diagnósticos e regra congelada."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T03:01:33Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-BAFC4225B95E05C8B1C6625D88C0A4A3-0",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fidelidade ao contrato: falta declarar o produto público específico que fornece catálogo, profundidade e seleção.",
+                "Saída auditável: declarar os produtos e versões que preservam os estratos congelados."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T03:01:33Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-BAFC4225B95E05C8B1C6625D88C0A4A3-1",
+              "verdict": "CHANGES",
+              "reasons": [
+                "Fidelidade ao contrato: faltam os produtos congelados de DES, KiDS e HSC usados pelo teste.",
+                "Saída auditável: declarar por survey os produtos, versões e transformação de normalização."
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
