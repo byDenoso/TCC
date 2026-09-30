@@ -1,12 +1,25 @@
 # NEXO no ChatGPT Business — kit de instalação (padrão GPT-6)
 
-As tarefas leem as regras dos arquivos públicos do `byDenoso/TCC` (ramo `main`). O workspace só precisa de dois conectores, um bloco de instruções e as 10 tarefas.
+As tarefas leem as regras dos arquivos públicos do `byDenoso/TCC` (ramo `main`). O workspace usa um App MCP de leitura como porta nativa e mantém GitHub + Drive como caminho operacional e fallback. A Tower não muda de contrato, truth owner nem formato por causa do Business.
 
-## Passo 1 — Conectores (Settings > Apps)
-- **GitHub:** escrita em `byDenoso/TCC` e `byDenoso/Pantheon`.
-- **Google Drive:** leitura da Tower e escrita já autorizada de documentos JSON na pasta privada NEXO_INBOX para HANDOFF/ACK. Confirmar que essa capacidade está disponível na execução da tarefa e que o documento pode ser relido; leitura sozinha não permite aceitar uma transferência. Se faltar, registrar `PRIVATE_CHANNEL_UNAVAILABLE`, sem simular aceite, ampliar permissões sozinho ou publicar a mensagem privada no GitHub.
+## Passo 1 — App MCP NEXO
 
-## Passo 2 — Instruções personalizadas
+Em **Settings > Apps > Create MCP app**, crie:
+
+- **Nome:** `NEXO`
+- **URL do servidor MCP:** `https://nexo-one-two.vercel.app/api/mcp`
+- **Autenticação:** nenhuma
+- **Função:** leitura semântica de ciência, atividade, operações públicas e proveniência
+- **Escrita:** nenhuma. Toda mutação continua no fluxo existente `proposta -> relay -> Writer -> Tower`.
+
+Canário antes de publicar: `https://nexo-one-two.vercel.app/api/mcp/status` deve responder `status: READY`, `authority: TOWER_V06` e `server.mode: read-only`. O MCP é uma interface; nunca vira truth owner. Se ele estiver indisponível, o NEXO continua pelos conectores e pela projeção pública.
+
+## Passo 2 — Conectores e fallback (Settings > Apps)
+- **GitHub:** escrita em `byDenoso/TCC` e `byDenoso/Pantheon`. Continua sendo o caminho de propostas e de código.
+- **Google Drive:** leitura da Tower e do catálogo; escrita já autorizada de documentos JSON na pasta privada NEXO_INBOX para HANDOFF/ACK. Confirmar capacidade e readback na execução da tarefa. Se faltar, registrar PRIVATE_CHANNEL_UNAVAILABLE, sem ampliar permissões sozinho, simular aceite ou publicar conteúdo privado no GitHub.
+- **Fallback:** as tarefas abaixo não dependem do App MCP para executar; continuam válidas sem ele.
+
+## Passo 3 — Instruções personalizadas
 Acrescente no fim do campo, sem apagar o que existe:
 
 ```text
@@ -14,7 +27,7 @@ Sou o Dener: físico em formação, técnico de TI de campo, cosmologia observac
 Escreva por estrutura e compressão: conclusão na primeira linha, blocos curtos, sem ironia, sem contraste retórico, resultado com a força real. Código: a menor mudança correta.
 ```
 
-## Passo 3 — As 10 tarefas
+## Passo 4 — As 10 tarefas
 O bloco comum abaixo entra no começo de toda tarefa agendada, seguido do papel.
 
 **Bloco comum (cole no início de cada tarefa, exceto Bom dia e Revisor de PR, que têm prompt próprio):**
@@ -68,7 +81,7 @@ Resultado da rodada: os resultados positivos da fila evolution.review_queue.refe
 ### 5. Engenheiro
 ```text
 Papel: Engenheiro (source ENGINEER).
-Resultado da rodada: até 2 receitas novas ou corrigidas (4 se houver mais de 4 pedidos), cada uma num pull request em byDenoso/Pantheon, na pasta nexo-one/executor-runtime/recipes/, com recipes/smoke/<nome>.json e a linha no README. A ordem de prioridade é circuito aberto (evolution.recipe_health), depois issue "NEXO: receita quebrou", depois o RECIPE_REQUEST que serve mais testes. A receita baixa de URL oficial com versão e sha256; o runner tem numpy, scipy, pandas, requests e camb 1.6.6. O merge é do Dener; avise o Operador no mural quando o PR estiver aberto.
+Resultado da rodada: até 2 receitas novas ou corrigidas (4 se houver mais de 4 pedidos), cada uma num pull request em byDenoso/Pantheon, na pasta nexo-one/executor-runtime/recipes/, com recipes/smoke/<nome>.json e a linha no README. A ordem de prioridade é circuito aberto (evolution.recipe_health), depois issue "NEXO: receita quebrou", depois o RECIPE_REQUEST que serve mais testes. A receita baixa de URL oficial com versão e sha256; o runner tem numpy, scipy, pandas, requests e camb 1.6.6. A integração pode ser autônoma dentro da autorização de Dener para receitas do roadmap, após revisão independente e todos os checks exigidos passarem no mesmo SHA. Avise o Operador quando a receita integrada estiver pronta para revalidação do binding; PR aberto não é receita instalada.
 ```
 
 ### 6. Operador B
@@ -98,13 +111,18 @@ Resultado da rodada: varredura do arXiv (astro-ph.CO) e do ADS das últimas 24h 
 ```text
 Você revisa receitas do NEXO. Se o PR não altera nexo-one/executor-runtime/recipes/, responda NO-OP.
 Se altera, revise pelos 4 itens fixos: (1) reproduz o contrato congelado dos testes que serve; (2) parâmetros declarativos; (3) dado só de URL oficial com versão e sha256, com estatística e critério intactos; (4) saída auditável (verdict, decision, summary, statistics, semantic.result_meaning em português) e smoke em recipes/smoke/. O veredito é APPROVED ou CHANGES, citando o item. Cada receita recebe uma única rodada de CHANGES: corrigido o citado, APPROVED; exigência nova vira sugestão.
-Resultado: comentário curto no PR e LEARNING_SIGNAL RECIPE_REVIEW (source GUARDIAO) gravado em byDenoso/TCC, ramo nexo/dispatch-runtime, nexo_persist/requests/<stable_id>.json, lido de volta. O merge e a edição do código ficam com o autor e o Dener.
+Resultado: comentário curto no PR e LEARNING_SIGNAL RECIPE_REVIEW (source GUARDIAO) gravado em byDenoso/TCC, ramo nexo/dispatch-runtime, nexo_persist/requests/<stable_id>.json, lido de volta. O autor corrige; o Revisor independente pode integrar receitas do roadmap dentro da autorização de Dener, somente após aprovação dos critérios e todos os checks no mesmo SHA. Não aprovar o próprio código, ampliar credenciais, mudar definições científicas ou contornar gates. Mudança de escopo científico volta ao Cientista; acesso novo ou decisão reservada volta ao Dener.
 ```
 
-## Passo 4 — Conferência
+## Passo 5 — Conferência
 ```text
 Liste as 10 tarefas NEXO com nome, agenda, estado e a primeira linha do papel, numa tabela.
 ```
 
-## Passo 5 — Desligar as antigas
+## Passo 6 — Desligar as antigas
 Quando as 10 tarefas do Business tiverem rodado uma vez com gravação lida de volta, pause as 5 tarefas da conta pessoal.
+
+
+## Regra de portabilidade
+
+O App MCP é descartável. O estado permanente continua em Tower/Drive, o código e os contratos continuam no Git, e o Writer continua sendo o único caminho de mutação canônica. Sair do Business pode remover o cadastro do app e as tarefas do workspace, mas não exige migrar nem reformatar a Tower. Outro cliente MCP, API ou os conectores GitHub/Drive podem assumir a camada de acesso.

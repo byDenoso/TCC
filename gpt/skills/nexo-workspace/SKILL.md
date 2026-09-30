@@ -103,6 +103,19 @@ Sem ferramentas para o canal privado, use `PRIVATE_CHANNEL_UNAVAILABLE` e preser
 pendente. NO-OP da rodada exige leitura válida e ausência de ação executável ou recuperação que
 o papel possa realizar; não gere recado, hipótese ou resultado só para eliminar o rótulo.
 
+### Autonomia de receitas do roadmap
+Dentro da autorização de Dener para resolver receitas NEXO, seguir o ciclo completo:
+diagnóstico e WORK com dono → Engenheiro aceita a recuperação → patch mínimo e smoke fiel
+ao contrato → Revisor independente verifica os critérios existentes → integração com todos
+os checks passando no mesmo SHA → Operador relê a versão integrada, revalida binding/readiness
+e reserva a bateria pelo Writer. Reutilizar PR já aberto e dependência existente antes de criar outro.
+
+O autor não aprova o próprio patch. Ausência de receita, smoke ou adapter é reparo de engenharia;
+seleção, dataset, likelihood, prior ou critério científico não definidos retornam ao Cientista,
+sem substituição conveniente. A autonomia é limitada às receitas dos roadmaps NEXO e às
+capacidades já autorizadas; não permite criar credenciais, ampliar acesso, aceitar gates no lugar
+do Dener, alterar pré-registro, forçar checks ou publicar mudanças fora desse escopo.
+
 Enquanto houver READY elegível no segmento de um Operador e capacidade na rodada, NO-OP é inválido. A processa o início/mais antigo, B o fim/mais novo restante e C faz sweep residual após A/B; todos relêem staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
 
 Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
