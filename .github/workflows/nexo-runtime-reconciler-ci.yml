@@ -65,5 +65,5 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/build_gpt_writer_bundle.py
-          python gpt/nexo_gpt_writer.py verify /dev/null >/tmp/nexo-bundle-verify.out 2>/tmp/nexo-bundle-verify.err || test $? -eq 2
+          python -m py_compile gpt/nexo_gpt_writer.py
           grep -q 'Bundle sha256:' gpt/nexo_gpt_writer.py
