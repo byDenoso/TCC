@@ -915,7 +915,7 @@ def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str
     return []
 
 
-def _discovery_view(root: Path, tests: list[dict[str, Any]]) -> dict[str, Any]:
+def _discovery_view(root: Path, tests: list[dict[str, Any]], now: datetime | None = None) -> dict[str, Any]:
     """Learning, look-elsewhere and autonomy for the status. A bug here must never take the whole status down."""
     out: dict[str, Any] = {}
     parts = {
@@ -923,7 +923,7 @@ def _discovery_view(root: Path, tests: list[dict[str, Any]]) -> dict[str, Any]:
                                        for r in (_read(root, discovery.LEARNING_DOC).get("rules") or [])],
                              "evaluated": _read(root, discovery.LEARNING_DOC).get("evaluated")},
         "search_space": lambda: discovery.search_space(tests),
-        "autonomy": lambda: discovery.autonomy_metrics(tests),
+        "autonomy": lambda: discovery.autonomy_metrics(tests, now=now),
     }
     for key, build in parts.items():
         try:
@@ -1981,7 +1981,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
         "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
         "families": [_family_summary(f, tests) for f in (_read(root, FAMILIES_DOC).get("families") or {}).values()],
-        **_discovery_view(root, tests),
+        **_discovery_view(root, tests, now=now),
         # Task view: open notes only; public view: deterministic (no clock), last notes incl. resolved.
         "board": _board_view(root, None if public else now, public),
     }
