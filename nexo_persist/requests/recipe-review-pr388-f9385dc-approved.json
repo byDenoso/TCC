@@ -1,0 +1,24 @@
+{
+  "stable_id": "recipe-review-pr388-f9385dc-approved",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T22:45:59Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/388",
+        "head_sha": "f9385dcc85bbff5330e0cf1d7c6be9203f22d3af",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: o contrato científico congelado é preservado; somente observações com overlay operacional completo e validado são removidas das amostras, sem alterar vereditos, thresholds ou timestamps históricos.",
+          "Item 2: os modos e mínimos continuam declarativos; a nova classificação é um contrato versionado estrito, não um parâmetro científico implícito.",
+          "Item 3: a receita continua consumindo apenas a projeção oficial, com produção presa a URL oficial por commit, versão e sha256; estatísticas e critérios permanecem intactos.",
+          "Item 4: a saída mantém verdict, decision, summary, statistics e semantic.result_meaning em português, acrescenta excluded_operational_assessments e conserva o smoke em recipes/smoke/tower_native.json."
+        ],
+        "pr_comment_id": 5921033759
+      }
+    }
+  }
+}
