@@ -6,7 +6,7 @@
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
 
-Bundle sha256: 50817ac480cf5354cfb2b0994b99ac0a77f567ca7dfa1530a9320342230f9805
+Bundle sha256: b92c478fc53470426110c368e35bf3506443888c89d2e6a5a0c2f9201cb40c97
 """
 import base64, io, sys, tempfile, zipfile
 from pathlib import Path
