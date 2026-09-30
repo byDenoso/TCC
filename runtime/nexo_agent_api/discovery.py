@@ -69,13 +69,18 @@ def _candidates(rows: list[tuple[dict[str, str], bool]]) -> list[tuple[str, str]
 def learning_loop(tests: list[dict[str, Any]], current: dict[str, Any] | None = None) -> dict[str, Any]:
     """Rule candidate "runs with feature f=v end INCONCLUSIVE": fit on the older half, judge ONCE on the newer half against the
     majority baseline. Promote only if it beats the baseline by MIN_GAIN. Existing rules are merged, extended or superseded before a new one is created."""
+    from .execution_assessment import has_valid_operational_exclusion
+    excluded, included = [], []
+    for test in tests:
+        (excluded if has_valid_operational_exclusion(test) else included).append(test)
+    tests = included
     rows = sorted(((_when(t), features(t), _verdict(t) in INCONCLUSIVE) for t in tests
                    if t.get("recipe") and _verdict(t) and _when(t) and (_verdict(t) in DECISIVE or _verdict(t) in INCONCLUSIVE)),
                   key=lambda r: r[0])
     doc = dict(current or {"rules": []})
     rules = [dict(r) for r in doc.get("rules") or []]
     if len(rows) < MIN_CASES:
-        return {**doc, "rules": rules, "evaluated": {"cases": len(rows), "note": "poucos casos para avaliar"}}
+        return {**doc, "rules": rules, "evaluated": {"cases": len(rows), "excluded_operational": len(excluded), "note": "poucos casos para avaliar"}}
     half = len(rows) // 2
     train, hold = [(f, y) for _, f, y in rows[:half]], [(f, y) for _, f, y in rows[half:]]
     base_rate = statistics.fmean(y for _, y in hold) if hold else 0.0
@@ -112,7 +117,7 @@ def learning_loop(tests: list[dict[str, Any]], current: dict[str, Any] | None = 
     for r in rules:
         if r.get("state") == "ACTIVE" and not any(e["feature"] == r["feature"] and e["value"] == r["value"] and e["gain"] >= MIN_GAIN for e in report):
             r.update(state="RETIRED", retired_at=now)
-    return {"rules": rules, "evaluated": {"cases": len(rows), "holdout": len(hold), "baseline": round(baseline_acc, 3), "candidates": report[:8]}}
+    return {"rules": rules, "evaluated": {"cases": len(rows), "excluded_operational": len(excluded), "holdout": len(hold), "baseline": round(baseline_acc, 3), "candidates": report[:8]}}
 
 
 def search_space(tests: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
