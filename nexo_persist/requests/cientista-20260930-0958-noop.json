@@ -1,0 +1,11 @@
+{
+  "stable_id": "cientista-20260930-0958-noop",
+  "source": "LEARNER",
+  "items": [
+    {
+      "type": "NOOP",
+      "role": "PITIA",
+      "reason": "passada de Pítia sem pensamento científico novo; fila científica não justifica expansão nesta rodada"
+    }
+  ]
+}
