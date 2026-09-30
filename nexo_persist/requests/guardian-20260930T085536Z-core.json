@@ -1,0 +1,64 @@
+{
+  "stable_id": "guardian-20260930T085536Z-core",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T08:55:36Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "FITNESS_REPORT",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T08:55:36Z",
+          "payload": {
+            "measurements": [
+              {
+                "arm": "canonical",
+                "value": 0.1089,
+                "components": {
+                  "confirmed": 7,
+                  "executed": 47,
+                  "runtime_refusals": 2,
+                  "missed_decoys": 0,
+                  "window_h": 24,
+                  "note": "Última janela validada; sem componentes atuais suficientes para recálculo."
+                }
+              }
+            ]
+          }
+        },
+        {
+          "kind": "INTEGRITY_REPORT",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T08:55:36Z",
+          "payload": {
+            "status": "YELLOW",
+            "counts": {
+              "tests": 354,
+              "ready": 36,
+              "running": 18,
+              "blocked_input": 3,
+              "blocked_scientific_contract": 1,
+              "pending_recipe_review": 0
+            },
+            "autonomy": {
+              "robot_only_share": 1,
+              "idea_to_result_hours": null,
+              "decisive_rate": 0.46,
+              "positives_with_verdict_rate": 0.451,
+              "blocked_share": 0.079,
+              "snapshot_at": "2026-09-30T03:01:33Z"
+            },
+            "areas_with_problem": [
+              "fechamento de positivos",
+              "papéis quietos",
+              "quatro bloqueios antigos"
+            ],
+            "worst_component": "positives_with_verdict_rate"
+          }
+        }
+      ]
+    }
+  }
+}
