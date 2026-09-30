@@ -5,8 +5,14 @@ on:
     paths:
       - 'runtime/nexo_agent_api/evolution.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
+      - 'runtime/nexo_agent_api/scientific_integrity.py'
+      - 'runtime/nexo_agent_api/inbox_apply.py'
+      - 'runtime/nexo_agent_api/service.py'
+      - 'runtime/nexo_agent_api/tower_apply.py'
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
+      - 'tests/test_scientific_integrity.py'
+      - 'scripts/build_gpt_writer_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -17,8 +23,14 @@ on:
     paths:
       - 'runtime/nexo_agent_api/evolution.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
+      - 'runtime/nexo_agent_api/scientific_integrity.py'
+      - 'runtime/nexo_agent_api/inbox_apply.py'
+      - 'runtime/nexo_agent_api/service.py'
+      - 'runtime/nexo_agent_api/tower_apply.py'
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
+      - 'tests/test_scientific_integrity.py'
+      - 'scripts/build_gpt_writer_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -45,3 +57,13 @@ jobs:
 
       - name: Verify unattended Writer persistence and review clocks
         run: python -m unittest discover -s tests -p test_robot_persistence.py -v
+
+      - name: Verify scientific execution integrity
+        run: python -m unittest discover -s tests -p test_scientific_integrity.py -v
+
+      - name: Rebuild ChatGPT Writer bundle from tested sources
+        run: |
+          set -euo pipefail
+          python scripts/build_gpt_writer_bundle.py
+          python gpt/nexo_gpt_writer.py verify /dev/null >/tmp/nexo-bundle-verify.out 2>/tmp/nexo-bundle-verify.err || test $? -eq 2
+          grep -q 'Bundle sha256:' gpt/nexo_gpt_writer.py
