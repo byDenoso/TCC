@@ -1,0 +1,30 @@
+{
+  "stable_id": "guardiao-integrity-20260930t2109z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "created_at": "2026-09-30T21:09:00Z",
+    "payload": {
+      "date": "2026-09-30",
+      "status": "RED",
+      "autonomy": {
+        "window_hours": 24,
+        "results": 77,
+        "robot_share": 0.961,
+        "decisive_rate": 0.571,
+        "median_hours_to_result": null,
+        "contest_closure": 0.393,
+        "recovery_rate": 1.0,
+        "false_block_share": 1.0,
+        "info_per_test": 0.571
+      },
+      "checks": [
+        {"area":"tower","ok":true,"detail":"Tower canônica lida com sucesso e atualizada nesta rodada."},
+        {"area":"tasks","ok":true,"detail":"Inventário vivo reconciliado: 10 tarefas NEXO habilitadas, com Operadores A/B/C presentes e Revisor de PR preservado por evento."},
+        {"area":"cycle","ok":false,"detail":"Há 0 READY, 0 RUNNING e 61 BLOCKED_INPUT; 58 têm proveniência de entrada incompleta."}
+      ],
+      "action": "Priorizar bloqueios antigos de maior prioridade com proveniência pública recuperável e só devolver a READY quando eligible=true.",
+      "semantic": {"domain_id":"engineering","topic_id":"engineering.nexo_runtime"}
+    }
+  }
+}
