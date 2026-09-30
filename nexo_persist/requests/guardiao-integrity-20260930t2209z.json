@@ -1,0 +1,55 @@
+{
+  "stable_id": "guardiao-integrity-20260930t2209z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "created_at": "2026-09-30T22:09:52Z",
+    "payload": {
+      "date": "2026-09-30",
+      "status": "RED",
+      "autonomy": {
+        "window_hours": 24,
+        "results": 78,
+        "robot_share": 0.962,
+        "decisive_rate": 0.577,
+        "median_hours_to_result": null,
+        "contest_closure": 0.387,
+        "recovery_rate": 1,
+        "false_block_share": 1,
+        "info_per_test": 0.577
+      },
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Tower canônica lida com sucesso; o heartbeat anterior já está materializado."
+        },
+        {
+          "area": "tasks",
+          "ok": true,
+          "detail": "Inventário vivo reconciliado com 10 tarefas NEXO habilitadas e Revisor de PR por evento."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "Há 0 TEST READY, 2 RUNNING e 61 TESTs em estados bloqueados; 56 têm proveniência de entrada incompleta."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Três WORKs continuam READY apesar de seus TESTs canônicos estarem DONE há mais de duas rodadas."
+        },
+        {
+          "area": "site",
+          "ok": false,
+          "detail": "A projeção pública não pôde ser confirmada; a leitura usou a Tower canônica."
+        }
+      ],
+      "action": "Reduzir primeiro a concentração de bloqueios recuperáveis e só devolver trabalho a READY após o gate canônico de elegibilidade e consistência WORK/TEST.",
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
