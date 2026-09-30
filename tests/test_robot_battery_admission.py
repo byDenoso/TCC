@@ -18,7 +18,7 @@ def setup(root, recipes, monkeypatch, name="audit_recipe"):
 
 def test_generated_battery_passes_real_admission_and_reserves_once(tmp_path, monkeypatch):
     root = tmp_path / "tower"
-    setup(root, tmp_path / "recipes", monkeypatch, "w0wa_bao_sn_multi")
+    setup(root, tmp_path / "recipes", monkeypatch, "fixture_bao_sn_multi")
     item = e.family_battery_items(root, NOW)[0]
     assert re.fullmatch(r"[a-z0-9-]{3,48}", item["payload"]["battery_id"])
     requests = e.battery_requests(item, item["payload"], root)
