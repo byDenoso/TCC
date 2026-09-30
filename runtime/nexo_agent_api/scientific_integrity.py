@@ -282,13 +282,21 @@ def guard_transition(root: Path, request: dict) -> dict | None:
     test_id = str(request.get('entity_name') or '')
     current = entity(root, test_id)
     changes = request.get('changes') or {}
-    issue = 'PROTECTED_FIELD_MUTATION' if isinstance(changes, dict) and {'id', 'entity_id', 'entity_version'}.intersection(changes) else None
+    issue = None
     if not isinstance(changes, dict):
         issue = 'INVALID_TEST_CHANGES'
         changes = {}
+    if current and {'id', 'entity_id', 'entity_version'}.intersection(changes):
+        issue = 'PROTECTED_FIELD_MUTATION'
+    elif not current:
+        if changes.get('id') not in (None, test_id) or changes.get('entity_id') not in (None, test_id) or 'entity_version' in changes:
+            issue = 'IDENTITY_MISMATCH'
     next_test = {**current, **changes, "id": test_id}
     states = {str(next_test[k]).upper() for k in ('status', 'state') if next_test.get(k)}
     next_state = str(next_test.get('status') or next_test.get('state') or '').upper()
+    scientific = str(next_test.get('domain') or current.get('domain') or '').upper() in {'SCIENCE', 'COSMOLOGY', 'COSMOLOGIA'}
+    if not scientific:
+        return {'request_id': request.get('request_id'), 'accepted': False, 'issue': {'code': issue, 'entity_name': test_id}} if issue else None
     if len(states) > 1 and any(k in changes for k in ('status', 'state')):
         issue = 'INCONSISTENT_TEST_STATES'
     result_fields = ('verdict', 'scientific_verdict', 'executed_at', 'result', 'statistics', 'decision', 'result_summary', 'reproducibility')
