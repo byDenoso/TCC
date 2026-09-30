@@ -98,7 +98,7 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         sem = body.get("semantic") if isinstance(body.get("semantic"), dict) else {}
         words = str(body.get("question") or test_id.replace("-", " ").title()).rstrip("?.! ").split()
         created = _hypothesis_requests(item, {
-            **body, "_allow_draft": True, "_status": "RUNNING",
+            **body, "_allow_draft": True, "_status": "DRAFT",
             "display_name": body.get("display_name") or sem.get("display_name") or " ".join(words[:7]),
             "domain": body.get("domain") or sem.get("domain_id")
                       or ("engineering" if test_id.upper().startswith("META-") else "science"),
@@ -269,6 +269,8 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "draft_reason": None if lifecycle != "DRAFT" else "faltam: " + ", ".join(missing or ["contrato"]),
         "family_id": body.get("family_id"), "family_cell": body.get("family_cell"),
         "recipe": body.get("recipe"), "recipe_params": body.get("recipe_params"),
+        "data_binding": body.get("data_binding"), "independence": body.get("independence"),
+        "independence_fingerprint": evolution.integrity.digest(body["independence"]) if isinstance(body.get("independence"), dict) else None,
         "priority": body.get("priority") or "P1",
         "display_name": proposed_display_name,
         "domain": str(proposed_domain).upper(),
@@ -298,9 +300,14 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "semantic": semantic,
     }
     if lifecycle == "READY":
+        changes["frozen_at"] = item.get("created_at") or evolution._now(item)
         # Public pre-registration: the frozen design's hash; the inbox commit that carried it is the timestamp.
         changes["prereg_hash"] = evolution.prereg_hash(test_id, changes)
         changes["prereg_ref"] = item.get("_inbox_name") or item.get("_inbox_id")
+        check = evolution.integrity.readiness(root, dict(changes, id=test_id))
+        changes["readiness"] = check
+        if not check["eligible"]:
+            changes.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT", blocker=",".join(check["reasons"]))
     requests = [{
         "request_id": f"REQ-INBOX-{_slug(str(item.get('_inbox_name') or test_id))}",
         "entity_kind": "test", "entity_name": test_id, "expected_version": 0,
@@ -541,6 +548,7 @@ _KIND_ALIASES = {
     "HANDOFF_DONE": "HANDOFF_TRANSITION", "HANDOFF_FAILED": "HANDOFF_TRANSITION",
 }
 _EVOLUTION = {
+    "DATA_BINDING": evolution.data_binding_requests,
     "FAMILY_CHARTER": evolution.family_charter_requests,
     "RECIPE_BIND": evolution.recipe_bind_requests,
     "ROADMAP_CHARTER": evolution.charter_requests,

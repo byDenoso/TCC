@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
+import shutil
 from typing import Any
 from pathlib import Path
 
@@ -37,7 +38,7 @@ def _is_request(item: dict) -> bool:
 
 def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
-    report: dict = {"before": before, "applied": [], "rejected": [], "receipts": []}
+    report: dict = {"before": before, "applied": [], "rejected": [], "receipts": [], "handled": []}
     with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
         root, _ = materialize_live_tower(tower_raw, Path(work) / "TOWER_V06")
         # A BATCH is applied item by item, so later envelopes see earlier ones (e.g. canary then canonize).
@@ -59,6 +60,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             except ProposalError as exc:
                 report["rejected"].append({"item": label, "reason": str(exc)})
                 continue
+            savepoint = (root / LIVE_TOWER_NAME).read_bytes()
             receipts = []
             for request in requests:
                 operation = request.get("nexo_operation")
@@ -105,9 +107,19 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             failed = [r for r in receipts if not r.get("accepted", True) or r.get("issue")]
             report["receipts"].extend(receipts)
             if failed:
+                shutil.rmtree(root)
+                root, _ = materialize_live_tower(savepoint, root)
+                for receipt in receipts:
+                    receipt["rolled_back"] = True
                 report["rejected"].append({"item": label, "reason": failed[0].get("issue")})
             else:
-                report["applied"].append(label)
+                recorded_refusal = next((request.get("changes", {}).get("payload", {}).get("_not_applied_reason")
+                                         for request in requests if str(request.get("changes", {}).get("kind", "")).startswith("UNAPPLIED_")), None)
+                if recorded_refusal:
+                    report["rejected"].append({"item":label, "reason":recorded_refusal, "recorded":True})
+                else:
+                    report["applied"].append(label)
+                report["handled"].append(label)
 
         # Contest lifecycle is mechanical: attacks cannot be attacked, and a completed
         # depth-1 attack closes the original from its frozen criterion result.
@@ -251,7 +263,7 @@ def split_by_producer(items: list[dict[str, Any]], active: str) -> tuple[list[di
     return keep, shadow
 
 
-def main(argv: list[str]) -> int:
+def _main(argv: list[str]) -> int:
     if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
         from . import AgentService
 
@@ -312,7 +324,7 @@ def main(argv: list[str]) -> int:
                 updates = []
             for index, update in enumerate(updates if isinstance(updates, list) else []):
                 if isinstance(update, dict):
-                    items.append({**update, "_inbox_source": "WRITER_ROBOT",
+                    items.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
                                   "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
         # Producer gate (fallback in shadow): only the active producer's automated proposals reach the Tower;
         # the other producer's are acknowledged and logged, never applied. Unlabelled items (Dener, conversations,
@@ -394,21 +406,19 @@ def main(argv: list[str]) -> int:
                     print(json.dumps({"status": "CONFLICT"}))
                     return 3
         by_name = {e.get("name"): e.get("id") for e in pending}
-        applied_roots = {str(n) for n in report.get("applied", [])}
+        applied_roots = {str(n) for n in report.get("handled", []) + report.get("applied", [])}
         for entry in github.seen:
-            if entry["name"] in applied_roots or any(n.startswith(entry["name"] + "-") for n in applied_roots):
+            if _fully_handled(entry["name"], items, applied_roots):
                 github.mark_processed(entry)
-        for name in report.get("applied", []):
-            base_name = str(name).rsplit("-", 1)[0] if name not in by_name else name
-            file_id = by_name.get(name) or by_name.get(base_name)
-            if file_id:
+        for name, file_id in by_name.items():
+            if file_id and _fully_handled(str(name), items, applied_roots):
                 inbox.mark_processed(file_id)
         summary = {"status": report.get("status"), "before": report.get("before"), "after": report.get("after"),
                    "applied": len(report.get("applied", [])), "rejected": [r.get("item") for r in report.get("rejected", [])],
                    "write": report.get("write")}
         print(json.dumps(summary, ensure_ascii=False))
-        applied = {str(n) for n in report.get("applied", [])}
-        acked = [g for g in gateway_ids if f"gw-{g}" in applied or any(n.startswith(f"gw-{g}-") for n in applied)] + gateway_shadow
+        applied = applied_roots
+        acked = [g for g in gateway_ids if _fully_handled(f"gw-{g}", items, applied)] + gateway_shadow
         out = os.environ.get("GITHUB_OUTPUT")
         if out and acked and report.get("write"):
             with open(out, "a", encoding="utf-8") as handle:
@@ -440,6 +450,23 @@ def main(argv: list[str]) -> int:
         return 0
     print(__doc__)
     return 2
+
+
+
+def _fully_handled(label: str, items: list[dict], handled: set[str]) -> bool:
+    if label in handled:
+        return True
+    item = next((item for item in items if item.get("_inbox_name") == label), {})
+    children = (item.get("payload") or {}).get("items") if item.get("kind") == "BATCH" else None
+    return isinstance(children, list) and bool(children) and all(f"{label}-{index}" in handled for index in range(len(children)))
+
+
+def main(argv: list[str]) -> int:
+    if argv and argv[0] == "robot":
+        from .drive_transport import writer_lock
+        with writer_lock():
+            return _main(argv)
+    return _main(argv)
 
 
 if __name__ == "__main__":

@@ -341,6 +341,11 @@ class AgentService:
                 "Entity version changed before mutation.",
                 {"expected_version": expected_version, "current_version": current_version},
             )
+        from .scientific_integrity import guard_transition
+        refused = guard_transition(self.root, {"entity_kind":entity_kind, "entity_name":entity_name,
+                                               "changes":changes, "event_type":event_type})
+        if refused is not None:
+            raise TowerAgentIssue(refused["issue"]["code"], "Scientific integrity rejected this transition.", {"entity_name":entity_name})
         protected = {"id", "entity_id", "entity_version"}
         if protected.intersection(changes):
             raise TowerAgentIssue("PROTECTED_FIELD_MUTATION", "Mutation cannot replace identity/version fields.")
