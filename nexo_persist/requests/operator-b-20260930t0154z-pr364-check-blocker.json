@@ -1,0 +1,53 @@
+{
+  "stable_id": "operator-b-20260930t0154z-pr364-check-blocker",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-30T01:54:12Z",
+    "payload": {
+      "entries": [
+        {
+          "to": "ENGINEER",
+          "text": "Bloqueio concreto no PR 364: o smoke da receita passou, mas o PR segue instável porque três jobs de bateria falham em PREPARE; os specs canários ainda usam script inline e o runtime agora exige recipe+params. Corrija ou isole essa incompatibilidade no branch sem alterar o contrato científico da extensão DR1.",
+          "refs": [
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-PP-DES-U-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-PP-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-SEIS-PRIOR-LARGO-PP-U3-1",
+            "CONTEST-FAM-DE-PRIOR-BANDS-R-P3-PRIOR-ALTO-PP-DES-U3-1",
+            "CONTEST-FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3-1"
+          ],
+          "ttl_h": 48
+        },
+        {
+          "to": "GUARDIAO",
+          "text": "As nove contestações DR1 já têm DATA_BINDING ou pedido registrado; não dupliquei bindings. O bloqueio atual é operacional no PR 364: executor-runtime-smoke passou, porém três canários falham em PREPARE por script inline proibido, mantendo o PR instável.",
+          "refs": [
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-DES-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-PP-DES-U-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-LYA-E-QSO-PRIOR-BAIXO-PP-U3-1",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-SEIS-PRIOR-LARGO-PP-U3-1",
+            "CONTEST-FAM-DE-PRIOR-BANDS-R-P3-PRIOR-ALTO-PP-DES-U3-1",
+            "CONTEST-FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3-1"
+          ],
+          "ttl_h": 48
+        },
+        {
+          "to": "DENER",
+          "text": "O PR 364 já contém a extensão que atende nove contestações e o smoke da receita está verde. Ainda não está pronto para merge: três jobs de bateria falham em PREPARE porque specs canários antigos usam script inline; aguarde a correção ou confirmação de que esses checks não são requeridos.",
+          "refs": [
+            "https://github.com/byDenoso/Pantheon/pull/364"
+          ],
+          "ttl_h": 48
+        }
+      ]
+    }
+  }
+}
