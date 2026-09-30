@@ -10,6 +10,14 @@ add execution and observation timestamps absent from the canonical source.
 inclusive at both ends. Future, missing and invalid execution times are excluded.
 Naive timestamps are interpreted as UTC. `evolution_status(now=...)` supplies the
 same clock to these metrics.
+Public projections pass their explicit `generated_at` clock to the metrics, so
+rebuilding the same state at the same supplied time yields identical bytes.
+When `generated_at` is omitted, the projection captures UTC once and records that
+clock in its manifest and metrics. Invalid supplied timestamps are rejected;
+naive timestamps are interpreted as UTC.
+The projection fingerprint excludes only the V2 observation timestamps
+`computed_at`, `window_start` and `window_end`. Values, cohort counts, definitions,
+coverage and buckets remain hashed, including changes when results leave the window.
 
 Every metric contains `value`, `numerator`, `denominator`, `scope`, `definition`
 and `unit`. Ratios are rounded to three decimals and are `null` for an empty

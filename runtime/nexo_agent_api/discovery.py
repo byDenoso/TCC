@@ -146,14 +146,18 @@ def autonomy_metrics(tests: list[dict[str, Any]], hours: int = 24, now: datetime
     now = now or datetime.now(timezone.utc)
     now = now.replace(tzinfo=timezone.utc) if now.tzinfo is None else now.astimezone(timezone.utc)
 
-    def age_h(iso: str) -> float | None:
+    def timestamp(iso: str) -> datetime | None:
         try:
             when = datetime.fromisoformat(iso.replace("Z", "+00:00"))
         except (TypeError, ValueError):
             return None
         if when.tzinfo is None:  # agents sometimes write naive timestamps: read them as UTC
             when = when.replace(tzinfo=timezone.utc)
-        return (now - when).total_seconds() / 3600
+        return when
+
+    def age_h(iso: str) -> float | None:
+        when = timestamp(iso)
+        return (now - when).total_seconds() / 3600 if when is not None else None
 
     recent = [t for t in tests if (a := age_h(_when(t))) is not None and 0 <= a <= hours and not t.get("contests_test_id")]
     done = [t for t in recent if _verdict(t)]
@@ -168,20 +172,20 @@ def autonomy_metrics(tests: list[dict[str, Any]], hours: int = 24, now: datetime
         source = next((key for key in ("created_at_effective", "created_at", "first_observed_at") if t.get(key)), None)
         latency_sources[source or "missing"] += 1
         created = str(t.get(source) or "") if source else ""
-        a, b = age_h(created), age_h(_when(t))
+        start, end = timestamp(created), timestamp(_when(t))
         if not created:
             latency_counts["missing_start"] += 1
-        elif a is None:
+        elif start is None:
             latency_counts["invalid_start"] += 1
-        elif a < b:
+        elif start > end:
             latency_counts["start_after_execution"] += 1
         else:
-            waits.append(a - b)
+            waits.append((end - start).total_seconds() / 3600)
             latency_counts["measured"] += 1
         legacy_created = str(t.get("created_at_effective") or t.get("first_observed_at") or "")
-        legacy_age = age_h(legacy_created)
-        if legacy_age is not None and legacy_age >= b:
-            legacy_waits.append(legacy_age - b)
+        legacy_start = timestamp(legacy_created)
+        if legacy_start is not None and legacy_start <= end:
+            legacy_waits.append((end - legacy_start).total_seconds() / 3600)
     positives = [t for t in tests if _verdict(t) in {"PROMOTED", "PROMOVIDO", "SUPPORTED"} and not t.get("contests_test_id")]
     closed = [t for t in positives if t.get("review_state") in {"CONFIRMED", "REFUTED"}]
     failed = [t for t in tests if int(t.get("runtime_failure_count") or 0) > 0]

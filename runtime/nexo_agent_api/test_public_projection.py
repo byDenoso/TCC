@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 from .public_projection import (
     _load_evolution,
@@ -121,6 +122,70 @@ def test_wall_clock_does_not_change_the_fingerprint(tmp_path):
         == later["manifest"]["projection_fingerprint"]
     )
     assert early["manifest"]["generated_at"] != later["manifest"]["generated_at"]
+
+
+def _tower_with_evolution_metrics(tmp_path):
+    root = _tower(tmp_path)
+    (root / "evolution").mkdir()
+    (root / "evolution" / "genome.json").write_text(json.dumps({
+        "genes": [{"id": "DEMO", "status": "ACTIVE"}],
+    }))
+    entity_path(root, "test", "TEST-CLOCK").write_text(json.dumps({
+        "id": "TEST-CLOCK", "domain": "SCIENCE", "status": "RESULT",
+        "verdict": "PROMOTED", "created_at": "2026-09-18T10:00:00Z",
+        "executed_at": "2026-09-18T11:00:00Z",
+    }))
+    return root
+
+
+def test_nonempty_evolution_uses_projection_clock_and_identical_bytes(tmp_path):
+    root = _tower_with_evolution_metrics(tmp_path)
+    first = _build(root, generated_at="2026-09-18T12:00:00Z")
+    second = _build(root, generated_at="2026-09-18T12:00:00Z")
+    assert first["evolution"]["autonomy"]["computed_at"] == "2026-09-18T12:00:00Z"
+    assert first["evolution"]["autonomy"]["metrics"]["results"]["value"] == 1
+    assert first["evolution"]["autonomy"]["metrics"]["median_hours_to_result"]["value"] == 1.0
+    assert projection_bytes(first) == projection_bytes(second)
+    assert verify_projection(first)[0] is True
+
+
+def test_autonomy_clock_metadata_does_not_cause_churn_only_republish(tmp_path):
+    root = _tower_with_evolution_metrics(tmp_path)
+    early = _build(root, generated_at="2026-09-18T12:00:00Z")
+    later = _build(root, generated_at="2026-09-18T13:00:00Z")
+    assert early["evolution"]["autonomy"]["metrics"] == later["evolution"]["autonomy"]["metrics"]
+    assert early["evolution"]["autonomy"]["buckets"] == later["evolution"]["autonomy"]["buckets"]
+    assert early["evolution"]["autonomy"]["computed_at"] != later["evolution"]["autonomy"]["computed_at"]
+    assert early["manifest"]["projection_fingerprint"] == later["manifest"]["projection_fingerprint"]
+    assert verify_projection(early) == verify_projection(later)
+    assert verify_projection(early)[0] is True
+
+
+def test_real_window_cohort_changes_remain_in_projection_fingerprint(tmp_path):
+    root = _tower_with_evolution_metrics(tmp_path)
+    early = _build(root, generated_at="2026-09-18T12:00:00Z")
+    expired = _build(root, generated_at="2026-09-19T11:00:01Z")
+    assert early["evolution"]["autonomy"]["results"] == 1
+    assert expired["evolution"]["autonomy"]["results"] == 0
+    assert early["manifest"]["projection_fingerprint"] != expired["manifest"]["projection_fingerprint"]
+    assert verify_projection(expired)[0] is True
+    expired["evolution"]["autonomy"]["metrics"]["results"]["value"] = 42
+    assert verify_projection(expired)[0] is False
+
+
+def test_projection_clock_fallback_is_explicit_and_invalid_clock_is_rejected(tmp_path):
+    from datetime import datetime, timezone
+    import pytest
+
+    root = _tower_with_evolution_metrics(tmp_path)
+    with patch(f"{build_public_projection.__module__}.datetime", wraps=datetime) as clock:
+        clock.now.return_value = datetime(2026, 9, 18, 12, tzinfo=timezone.utc)
+        projection = _build(root, generated_at=None)
+        clock.now.assert_called_once_with(timezone.utc)
+    assert projection["manifest"]["generated_at"] == "2026-09-18T12:00:00Z"
+    assert projection["evolution"]["autonomy"]["computed_at"] == projection["manifest"]["generated_at"]
+    with pytest.raises(ValueError):
+        _build(root, generated_at="invalid")
 
 
 def test_changed_canonical_state_changes_the_fingerprint(tmp_path):

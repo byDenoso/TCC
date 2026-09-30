@@ -162,6 +162,13 @@ class AutonomyMetricsTests(unittest.TestCase):
         self.assertIn("metrics", out["autonomy"])
         self.assertIn("buckets", out["autonomy"])
 
+    def test_latency_rounding_is_independent_of_observation_clock(self):
+        tests = [result(created_at_effective="2026-09-30T10:00:00Z", executed_at="2026-09-30T10:03:00Z")]
+        early = autonomy_metrics(tests, now=NOW)
+        later = autonomy_metrics(tests, now=NOW + timedelta(hours=1))
+        self.assertEqual(early["metrics"], later["metrics"])
+        self.assertEqual(early["median_hours_to_result"], later["median_hours_to_result"])
+
 
 if __name__ == "__main__":
     unittest.main()

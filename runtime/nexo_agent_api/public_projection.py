@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from .cosmology_state import build_cosmology_state
@@ -192,6 +193,16 @@ def _canonical_blob(payload: Any) -> str:
 
 
 def _fingerprint(payload: Any) -> str:
+    # Observation clocks describe when the metrics were computed, not a change
+    # to their content. Keep actual values, counts and buckets in the digest.
+    if isinstance(payload, dict):
+        evolution = payload.get("evolution")
+        autonomy = evolution.get("autonomy") if isinstance(evolution, dict) else None
+        if isinstance(autonomy, dict) and autonomy.get("schema_version") == "AUTONOMY_METRICS_V2":
+            payload = {**payload, "evolution": {**evolution, "autonomy": {
+                key: value for key, value in autonomy.items()
+                if key not in {"computed_at", "window_start", "window_end"}
+            }}}
     return "sha256:" + hashlib.sha256(_canonical_blob(payload).encode("utf-8")).hexdigest()
 
 
@@ -809,12 +820,13 @@ def _live_integrity(integrity: dict[str, Any] | None, activity: list[dict[str, A
     return out
 
 
-def _load_evolution(root: Path) -> dict[str, Any] | None:
+def _load_evolution(root: Path, generated_at: str) -> dict[str, Any] | None:
     """Closed loop for the ATLAS: Dener's gate, charters and stop progress, review ladder, genome, diary, decoys."""
     from .evolution import evolution_status
 
     try:
-        status = evolution_status(root, public=True)
+        now = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+        status = evolution_status(root, now=now, public=True)
     except Exception as exc:  # the projection never fails because of the evolution layer, but says why
         import sys
         import traceback
@@ -1312,9 +1324,15 @@ def build_public_projection(
 ) -> dict[str, Any]:
     """Compile the public projection from canonical state under `root`.
 
-    `generated_at` is recorded for humans and deliberately excluded from the
-    fingerprint: two runs over identical canonical state must agree.
+    `generated_at` supplies one shared observation clock. When omitted, capture
+    UTC once and record it explicitly; reject invalid supplied timestamps.
+    Clock metadata is excluded from the fingerprint, while changed metrics stay
+    hashed (including results leaving the observation window).
     """
+    observed_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00")) if generated_at is not None else datetime.now(timezone.utc)
+    if observed_at.tzinfo is None:
+        observed_at = observed_at.replace(tzinfo=timezone.utc)
+    generated_at = observed_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
     root = Path(root)
     control = _read_json(root / "CONTROL.json", {}) or {}
     snapshot = _read_json(root / "snapshot" / "latest.json", {}) or {}
@@ -1412,7 +1430,7 @@ def build_public_projection(
         "lessons": lessons,
         "hypotheses": hypotheses,
         "integrity": integrity,
-        "evolution": _load_evolution(root),
+        "evolution": _load_evolution(root, generated_at),
         "cosmology_state": build_cosmology_state(root, tests, campaigns, roadmaps),
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),

@@ -1285,7 +1285,12 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                         requests.append(update)
                     continue
                 failures = int(current_test.get("runtime_failure_count") or 0) + 1
-                failure = {"battery_id": bid, "at": _now(item), "log_tail": str(entry.get("log_tail") or "")[-800:]}
+                failure = {"battery_id": bid, "run_ref": run_ref, "at": body["completed_at"],
+                           "log_tail": str(entry.get("log_tail") or "")[-800:]}
+                if specs[test_id].get("attempt_id"):
+                    failure["attempt_id"] = specs[test_id]["attempt_id"]
+                if entry.get("failure_stage"):
+                    failure["failure_stage"] = str(entry["failure_stage"])[:80]
                 kind = classify_failure(entry.get("log_tail"))
                 failure["class"] = kind
                 recipe = str(current_test.get("execution_recipe") or "")
@@ -1305,6 +1310,15 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 else:
                     changes = {"status": "READY", "state": "READY", "execution": None,
                                "runtime_failure_count": failures, "last_runtime_failure": failure}
+                    # The registry closes this failed reservation in the same
+                    # envelope. Missing preparation must not reject that close
+                    # and strand the old run forever behind READY_INVARIANT.
+                    check = integrity.readiness(root, {**current_test, **changes}, ignore_reservation=True)
+                    changes["readiness"] = check
+                    if not check["eligible"]:
+                        changes.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT",
+                                       blocker=current_test.get("blocker") or ",".join(check["reasons"]))
+                changes["execution_phase"] = changes["status"]
                 update = _test_update(root, test_id, changes, f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
                 if update:
                     requests.append(update)
