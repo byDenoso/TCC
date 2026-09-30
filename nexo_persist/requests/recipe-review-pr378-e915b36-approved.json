@@ -1,0 +1,23 @@
+{
+  "stable_id": "recipe-review-pr378-e915b36-approved",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T18:08:40Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/378",
+        "head_sha": "e915b36f0bb6f73aefd8053fdfa15c6c70ec3092",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 4 permanece corrigido: os três smokes declarativos continuam presentes e válidos.",
+          "O novo commit apenas registra runner_numeric_canary, astropy_dependency_canary e camb_dependency_canary no README.",
+          "Itens 1, 2 e 3 permanecem inalterados; não foi aberta nova rodada de exigências."
+        ],
+        "pr_comment_id": 5916956403
+      }
+    }
+  }
+}
