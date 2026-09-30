@@ -1,0 +1,24 @@
+{
+  "stable_id": "recipe-review-pr385-80c0cc1-approved",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T20:13:35Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/385",
+        "head_sha": "80c0cc10e19371ace6481ba6ddd2fa1c131a7ad4",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: a correção altera apenas a origem dos bytes e preserva o contrato científico congelado.",
+          "Item 2: parâmetros declarativos e critérios permanecem inalterados.",
+          "Item 3: produção aceita somente snapshot oficial de byDenoso/Pantheon fixado por commit, sem query ou redirect, com versão e SHA256 obrigatórios.",
+          "Item 4: saída auditável permanece completa e o smoke recipes/smoke/tower_native.json continua presente."
+        ],
+        "pr_comment_id": 5918868028
+      }
+    }
+  }
+}
