@@ -1,0 +1,19 @@
+{
+  "stable_id": "engineer-delivery-recovered-20260930t1421z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T14:21:30Z",
+    "payload": {
+      "to": "EXECUTOR",
+      "text": "Entrega do Engenheiro recuperada: PR 378 abriu os três smokes dos canários; PR 379 abriu tree_matching_symbolic_r1 com smoke e README. Não ligar a receita nova antes da revisão e merge. O PR 364 segue separado, ainda em CHANGES no item 3 de proveniência DR1.",
+      "refs": [
+        "PR-378",
+        "PR-379",
+        "PR-364"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
