@@ -1,0 +1,21 @@
+{
+  "stable_id": "operator-c-ready-lifecycle-change-20260930t1213z",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-30T12:13:42Z",
+    "payload": {
+      "gap_type": "RUNTIME_CHANGE_PROPOSAL",
+      "topic_id": "engineering.nexo_runtime",
+      "evidence_kind": "DIRECT",
+      "confidence": 1,
+      "evidence": "O lote prioritário contém 12 testes materializados READY que não são executáveis agora. O fluxo de propostas atual não oferece uma transição governada de TEST existente para CHECKPOINTED ou WAIT_DEPENDENCY; DATA_BINDING e RECIPE_REQUEST registram artefatos e RECIPE_BIND mantém READY.",
+      "proposed_change": {
+        "bottleneck": "READY não pode ser corrigido para estado de espera pelo fluxo existente.",
+        "suggested_fix": "Adicionar uma transição governada e idempotente de lifecycle para TEST existente, com versão esperada, motivo e auditoria, sem alterar critérios científicos.",
+        "acceptance": "Um READY sem binding pode ser estacionado, volta à fila só após satisfazer a dependência e repetição da mesma proposta vira no-op auditável."
+      }
+    }
+  }
+}
