@@ -50,18 +50,18 @@ Registrar Diretriz aceita em `NEXO Lite/pendentes`, com ID estável, objetivo, r
 Preservar identidades, papéis, horários, fuso e gatilhos existentes; inventariar antes de alterar. Não criar, pausar ou apagar tarefa para corrigir contagem.
 | Tarefa | Gatilho BRT | Entrada -> saída | Próximo consumidor |
 |---|---|---|---|
-| Cientista | :05, 05h-23h | mapa, quedas, diretrizes -> hipóteses e famílias | Writer e Operadores |
-| Pítia | :12, 05h-23h | resultados e roadmaps -> pensamentos com refs | Cientista e Dener |
-| Operador A | :20, 05h-23h | início da READY -> bindings/pedidos de receita | Writer e Engenheiro |
-| Crítico | :35, 05h-23h | positivos -> contestações independentes | Writer e Operadores |
-| Engenheiro | :45, horas pares 06h-22h | circuitos/pedidos -> PR e smoke | Revisor e Dener; depois Operadores |
-| Operador B | :50, 05h-23h | fim da READY e staging -> bindings sem duplicar A | Writer e Engenheiro |
-| Guardião | :57, 05h-23h | saúde e travas -> integridade e reatribuição | papel responsável e Dener |
+| Cientista | :05, toda hora | mapa, quedas, diretrizes -> hipóteses e famílias | Writer e Operadores |
+| Pítia | :12, toda hora | resultados e roadmaps -> pensamentos com refs | Cientista e Dener |
+| Operador A | :20, toda hora | início da READY -> bindings/pedidos de receita | Writer e Engenheiro |
+| Crítico | :35, toda hora | positivos -> contestações independentes | Writer e Operadores |
+| Engenheiro | :45, horas pares 00h-22h | circuitos/pedidos -> PR e smoke | Revisor e Dener; depois Operadores |
+| Operador B | :50, toda hora | fim da READY e staging -> bindings sem duplicar A | Writer e Engenheiro |
+| Guardião | :57, toda hora | saúde e travas -> integridade e reatribuição | papel responsável e Dener |
 | Bom dia | 07h | resultados, mural e pendentes -> resumo | Dener |
 | Sentinela | 07h30 | literatura/releases -> contestação, dado ou sinal | Cientista e Operadores |
 | Revisor de PR | evento de PR | diff de receita -> revisão e sinal | autor e Dener |
 
-Tratar essa tabela como mapa de integração, não configuração do agendador. Confirmar agenda viva. Cobrança por atraso considera horários ativos. Proteger o Revisor: sem acesso ao conjunto completo de gatilhos, não regravar o prompt nem substituir evento por polling. Não interpretar `next_run_time` ausente como desativação. `last_run_time` não prova aplicação científica.
+Tratar essa tabela como mapa de integração, não configuração do agendador. Confirmar agenda viva. A janela silenciosa suspende notificações, nunca a execução das rodadas. Cobrança por atraso considera a agenda viva. Proteger o Revisor: sem acesso ao conjunto completo de gatilhos, não regravar o prompt nem substituir evento por polling. Não interpretar `next_run_time` ausente como desativação. `last_run_time` não prova aplicação científica.
 
 Ler mural e propostas pendentes para evitar duplicatas. Atraso ou falha de leitura produz diagnóstico; NO-OP somente com leitura válida e ausência de trabalho. Contestações precedem testes novos. Metas de vazão não autorizam inventar testes ou dados.
 
@@ -74,3 +74,4 @@ Reproduzir falhas, fazer a menor mudança, testar e reler. Informar como desfaze
 Para ler a cópia autenticada da Tower, executar `python scripts/status_reader.py TOWER.json nexo_gpt_writer.py`, em processo separado. Obter o script desta skill pelo GitHub conectado se ele não estiver montado. Obter o bundle pelo arquivo Drive usado no workflow do Writer; conferir os bytes antes de executar.
 
 O leitor verifica a integridade e tenta o status nativo. Somente na versão auditada, quando a colisão entre duas funções `_stamp` derruba `review_queue`, isola o formatador original da fila e repete a leitura. Preserva os filtros do Writer, os IDs e o arquivo de entrada. Não altera o bundle implantado nem a Tower. `OK_LOCAL_REVIEW_CLOCK_REPAIR` identifica a correção local; `DEGRADED` e `FAILED` nunca significam fila vazia. Informar qualquer aviso restante e nunca apresentar esta saída como projeção publicada.
+

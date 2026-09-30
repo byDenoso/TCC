@@ -61,7 +61,8 @@ def test_positive_result_needs_two_referees_and_stop_criterion_fires(tmp_path):
     _apply(root, {"kind": "OPERATOR_INTENT", "source": "DENER", "created_at": "2026-09-25T00:00:00Z",
                   "payload": {"action": "APPROVE_CHARTER", "roadmap_id": "RM-X"}})
     requests = _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "_inbox_name": "h1.json", "payload": {"display_name": "Teste de exemplo", "domain": "science", 
-        "test_id": "T-1", "roadmap_id": "RM-X", "question": "q", "success_criteria": "s", "kill_criteria": "k", "rank_score": 0.8}})
+        "test_id": "T-1", "roadmap_id": "RM-X", "question": "q", "method": "frozen method", "data": "fixture dataset",
+        "success_criteria": "s", "kill_criteria": "k", "rank_score": 0.8}})
     assert requests[0]["changes"]["prereg_hash"].startswith("sha256:")
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T02:00:00Z",
                   "payload": {"test_id": "T-1", "result": {"verdict": "PROMOTED"}, "prediction": {"p_promoted": 0.3}}})
@@ -139,7 +140,8 @@ def test_battery_dispatch_and_collect(tmp_path):
 
 def _hyp(root, tid, **extra):
     _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": f"Teste {tid}", "domain": "science",
-                                                             "test_id": tid, "question": "q", "success_criteria": "s",
+                                                             "test_id": tid, "question": "q", "method": "frozen method",
+                                                             "data": "fixture dataset", "success_criteria": "s",
                                                              "kill_criteria": "k", **extra}})
 
 

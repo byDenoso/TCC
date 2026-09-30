@@ -7,7 +7,7 @@ version: 0.5.0
 # NEXO — operação
 
 ## Uma inteligência, dois órgãos
-O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente em qualquer chat. O **NEXO** (pesquisa) é o órgão que ele usa por trás: as 5 tarefas agendadas, o robô e a Tower.
+O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente em qualquer chat. O **NEXO** (pesquisa) é o órgão que ele usa por trás: as 10 tarefas agendadas, o robô e a Tower.
 | | **NEXO Lite** (porta única) | **NEXO** (pesquisa autônoma) |
 |---|---|---|
 | Papel | responde, ensina, decide, escreve, codifica, lembra, antecipa, delega | gera hipótese, testa, contesta, se conserta |
@@ -116,4 +116,5 @@ O histórico da Tower é dataset: recusas, tempos, previsões, vereditos, retrie
 ## Papel de conversa
 **Conversa** (chat com o Dener): qualquer pedido; único lugar dos portões; atualiza o mapa cosmológico; implementa receita aprovada; nunca edita a Tower à mão.
 Contrato de máquina (só ao gravar ou em dúvida de regra): `MCP/MCP_RUNTIME_CONTRACT_V1.json`.
+
 

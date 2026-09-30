@@ -3,6 +3,10 @@ name: NEXO Runtime Reconciler CI
 on:
   pull_request:
     paths:
+      - 'runtime/nexo_agent_api/evolution.py'
+      - 'runtime/nexo_agent_api/gpt_writer.py'
+      - 'gpt/nexo_gpt_writer.py'
+      - 'tests/test_robot_persistence.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -11,6 +15,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'runtime/nexo_agent_api/evolution.py'
+      - 'runtime/nexo_agent_api/gpt_writer.py'
+      - 'gpt/nexo_gpt_writer.py'
+      - 'tests/test_robot_persistence.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -33,3 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m unittest             runtime.nexo_agent_api.test_global_reconciler             runtime.nexo_agent_api.test_scheduler_topology
+
+
+      - name: Verify unattended Writer persistence and review clocks
+        run: python -m unittest discover -s tests -p test_robot_persistence.py -v

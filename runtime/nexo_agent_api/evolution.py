@@ -304,8 +304,9 @@ def _attack_outcome(test: dict[str, Any]) -> str | None:
     return None
 
 
-def _stamp(value: Any) -> str:
-    return str((value.get("at") if isinstance(value, dict) else value) or "")
+def _review_stamp(value: Any) -> datetime:
+    value = value.get("at") if isinstance(value, dict) else value
+    return _stamp(value) or datetime.min.replace(tzinfo=timezone.utc)
 
 
 def _reviewable(test: dict[str, Any]) -> bool:
@@ -333,7 +334,7 @@ def _safe(build, fallback, name: str):
 def _review_queue(positive: list[dict[str, Any]]) -> dict[str, list[str]]:
     """Referee queues, oldest result first so no original waits behind newer ones."""
     candidates = sorted((t for t in positive if isinstance(t, dict) and _reviewable(t)),
-                        key=lambda t: (_stamp(t.get("executed_at") or t.get("updated_at")), str(t.get("id") or "")))
+                        key=lambda t: (_review_stamp(t.get("executed_at") or t.get("updated_at")), str(t.get("id") or "")))
     return {
         "referee_1": [t["id"] for t in candidates if str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
                       or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],

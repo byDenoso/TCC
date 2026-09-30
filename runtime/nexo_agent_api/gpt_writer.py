@@ -338,7 +338,9 @@ def main(argv: list[str]) -> int:
             # Mechanical duties the GPT should not spend a run on: close roadmaps whose stop criterion was met.
             closes = _stop_closures(packed or raw)
             if closes:
-                packed, extra = apply_to_tower(packed or raw, closes)
+                changed, extra = apply_to_tower(packed or raw, closes)
+                if changed is not None:
+                    packed = changed
                 report["applied"] = report.get("applied", []) + extra.get("applied", [])
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
@@ -346,7 +348,9 @@ def main(argv: list[str]) -> int:
             for family_kind in ("spawn", "instances", "contests", "batteries"):
                 family_items = _family_items(packed or raw, family_kind)
                 if family_items:
-                    packed, extra = apply_to_tower(packed or raw, family_items)
+                    changed, extra = apply_to_tower(packed or raw, family_items)
+                    if changed is not None:
+                        packed = changed
                     report["applied"] = report.get("applied", []) + extra.get("applied", [])
                     report["rejected"] = report.get("rejected", []) + extra.get("rejected", [])
                     report["after"] = extra.get("after", report.get("after"))
@@ -360,7 +364,9 @@ def main(argv: list[str]) -> int:
                     Path(dispatch_dir, f"{battery['id']}.json").write_text(json.dumps(battery, ensure_ascii=False), encoding="utf-8")
                     marks.append({"kind": "BATTERY_STATUS", "source": "WRITER_ROBOT", "_inbox_name": f"robot-dispatch-{battery['id']}",
                                   "payload": {"battery_id": battery["id"], "status": "DISPATCHED", "run_ref": "github-actions"}})
-                packed, extra = apply_to_tower(packed or raw, marks)
+                changed, extra = apply_to_tower(packed or raw, marks)
+                if changed is not None:
+                    packed = changed
                 report["applied"] = report.get("applied", []) + extra.get("applied", [])
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
