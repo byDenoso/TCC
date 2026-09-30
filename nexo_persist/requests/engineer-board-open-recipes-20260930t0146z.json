@@ -1,0 +1,17 @@
+{
+  "stable_id": "engineer-board-open-recipes-20260930t0146z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "created_at": "2026-09-30T01:46:00Z",
+    "payload": {
+      "to": "EXECUTOR",
+      "text": "Já existem dois PRs abertos que cobrem pedidos de receita da fila: #364 estende w0wa_bao_sn_multi para DESI DR1 (nove contestações) e #365 acrescenta standard_sirens. Ambos incluem README e smoke. Evitem duplicar pedidos/implementações; aguardem o merge do Dener antes de RECIPE_BIND contra a versão principal. Referências: https://github.com/byDenoso/Pantheon/pull/364 e https://github.com/byDenoso/Pantheon/pull/365.",
+      "refs": [
+        "https://github.com/byDenoso/Pantheon/pull/364",
+        "https://github.com/byDenoso/Pantheon/pull/365"
+      ],
+      "ttl_h": 168
+    }
+  }
+}
