@@ -1,0 +1,22 @@
+{
+  "stable_id": "pitia-20260930t0813z-redshift-selection-question",
+  "envelope": {
+    "kind": "NEXO_THOUGHT",
+    "source": "PITIA",
+    "producer": "GPT",
+    "created_at": "2026-09-30T08:13:00Z",
+    "payload": {
+      "entries": [
+        {
+          "kind": "QUESTION",
+          "text": "Eu quero separar se a robustez das faixas de redshift vem da física comum às três células ou da seleção compartilhada entre compilações. O próximo ganho de informação está em uma coorte independente que preserve Ωm e troque a regra de partição, antes de ampliar o claim da família.",
+          "refs": [
+            "FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM315",
+            "FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM330",
+            "FAM-DE-REDSHIFT-BANDS-P-P3-DESLOCADA-A-OM330"
+          ]
+        }
+      ]
+    }
+  }
+}
