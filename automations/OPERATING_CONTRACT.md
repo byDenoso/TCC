@@ -96,6 +96,35 @@ registrando a limitação no resultado. Depois de duas tentativas equivalentes q
 Se uma lane travar de verdade, registre o blocker na entidade e siga para a próxima lane executável.
 Nunca termine uma execução com "aguardando o Dener" se existe outra lane que pode progredir.
 
+### Recuperação executável e responsabilidade
+
+O Writer mantém `EXECUTION_RECOVERY_V1` sobre os TESTs públicos em preparação: revalida a
+elegibilidade, preserva o desenho científico e cria uma única WORK de recuperação por identidade
+congelada. O estado `BLOCKED_INPUT` informa que a execução ainda não está liberada; a WORK contém
+o que precisa ser recuperado, as fontes candidatas e a próxima ação, para não transformar a fila
+em um conjunto de avisos sem continuidade.
+
+- Consulte `status.execution_recovery` e a caixa privada de handoffs no início da rodada
+- Preserve o responsável já registrado no TEST ou WORK associada. Sem responsável inequívoco,
+  ADVISOR recebe a triagem; isso não representa aceite nem atribuição a Dener
+- A triagem encaminha definição congelada ausente/conflitante a LEARNER, receita/verificação
+  técnica a ADVISOR e recuperação de insumos a EXECUTOR. A engenharia nunca escolhe um novo
+  dataset, estimand, prior ou critério científico para liberar um teste
+- O handoff privado `BLOCKER_RECOVERY` é uma oferta. Até o destinatário enviar ACK, o responsável
+  anterior continua responsável. ACK muda ownership por CAS e registra a origem do aceite
+- Uma mudança de etapa pode abrir nova oferta, mas nunca troca silenciosamente o dono. FAILED
+  deixa o dono registrado e exige uma decisão material antes de repetir a mesma rota
+- DONE requer condições executáveis novamente verificadas. Se o Writer recuperar essas condições
+  antes do aceite, ele encerra a oferta como SUPERSEDED, sem fabricar ACK ou resultado científico
+- Um artifact histórico BOUND não basta. Reuso automático exige inputs com versão/hash, vínculo
+  inequívoco à pré-inscrição congelada e ausência de candidatos incompatíveis; demais fontes são
+  preservadas como candidatas para resolução pelo responsável
+
+Na fila de baterias, a direção explícita de Dener prevalece; depois vêm roadmap ativo, prioridade
+do roadmap e do teste e valor informativo. O nome alfabético da receita não define prioridade.
+Contestações de resultados anteriores podem concluir revisão após o fechamento do roadmap sem
+reabrir a campanha nem criar novas famílias automaticamente.
+
 ## Conclusão de um teste
 
 Só conta com cômputo real + persistência pela Tower + readback. Preflight, download e reparo não são resultado.

@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'runtime/nexo_agent_api/evolution.py'
+      - 'runtime/nexo_agent_api/execution_recovery.py'
+      - 'runtime/nexo_agent_api/handoff.py'
+      - 'runtime/nexo_agent_api/test_handoff.py'
+      - 'tests/test_execution_recovery.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
       - 'runtime/nexo_agent_api/scientific_integrity.py'
       - 'runtime/nexo_agent_api/inbox_apply.py'
@@ -23,6 +27,10 @@ on:
     branches: [main]
     paths:
       - 'runtime/nexo_agent_api/evolution.py'
+      - 'runtime/nexo_agent_api/execution_recovery.py'
+      - 'runtime/nexo_agent_api/handoff.py'
+      - 'runtime/nexo_agent_api/test_handoff.py'
+      - 'tests/test_execution_recovery.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
       - 'runtime/nexo_agent_api/scientific_integrity.py'
       - 'runtime/nexo_agent_api/inbox_apply.py'
@@ -62,6 +70,11 @@ jobs:
 
       - name: Verify scientific execution integrity
         run: python -m unittest discover -s tests -p test_scientific_integrity.py -v
+
+      - name: Verify prerequisite recovery and ownership acceptance
+        run: |
+          python -m unittest discover -s tests -p test_execution_recovery.py -v
+          python -m unittest runtime.nexo_agent_api.test_handoff -v
 
       - name: Verify Writer bundle determinism
         run: python -m unittest discover -s tests -p test_writer_bundle.py -v

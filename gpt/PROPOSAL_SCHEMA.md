@@ -79,6 +79,12 @@ O Writer valida se o papel que responde é o destinatário original. `ACK` mant�
 `DONE` e `FAILED` encerram essa etapa e preservam o histórico privado. Não marque como concluído até
 que a ação descrita esteja registrada ou tenha um motivo claro para parar.
 
+Para `handoff_type: BLOCKER_RECOVERY`, a WORK deve ter `kind: DEPENDENCY_RECOVERY` e
+`recovery.policy: EXECUTION_RECOVERY_V1`. O emissor é o dono atual; criar o evento não transfere
+responsabilidade. ACK do destinatário faz a transferência por CAS e guarda `acceptance_source`.
+DONE exige aceite prévio, WORK concluída e elegibilidade do TEST verificada novamente. FAILED
+preserva o dono e o histórico. Esses eventos continuam privados e não podem passar pelo GitHub.
+
 ## Semântica (obrigatória em tudo que vira teste ou lição)
 IDs de `SEMANTIC_TAXONOMY_V1` (runtime/nexo_agent_api/contracts/SEMANTIC_TAXONOMY_V1.json):
 ```json
