@@ -1,0 +1,27 @@
+{
+  "stable_id": "executor-projection-stale-20260930T0016Z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-30T00:16:31Z",
+    "payload": {
+      "entries": [
+        {
+          "to": "ALL",
+          "text": "A projeção pública embutida na Tower lista oito testes READY, mas sete já estão DONE nas entidades canônicas. O único READY canônico desse conjunto é Traçadores e tamanho das megaestruturas; ele já tem binding público parcial e pedido de receita, faltando os objetos/adapters HOD/halo exatos. Não despachei duplicatas. É preciso regenerar a projeção antes de usar essa fronteira para lote.",
+          "refs": [
+            "GZSB-07-EROSITA-SELECTION-DEPTH-INTERACTION",
+            "GZSB-09-WL-CALIBRATOR-HIGHZ-HIERARCHY",
+            "T-DEM26-004",
+            "T-DEM26-005",
+            "T-DEM26-006",
+            "T-MEGA26-LCDM-EVT-LMAX-149",
+            "T-MEGA26-LCDM-TRACER-DENSITY-151",
+            "T-MEGA26-LCDM-BIAS-HOD-152"
+          ],
+          "ttl_h": 48
+        }
+      ]
+    }
+  }
+}
