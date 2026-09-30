@@ -349,6 +349,12 @@ class AgentService:
         protected = {"id", "entity_id", "entity_version"}
         if protected.intersection(changes):
             raise TowerAgentIssue("PROTECTED_FIELD_MUTATION", "Mutation cannot replace identity/version fields.")
+        if entity_kind == "test":
+            from .prediction_receipts import PredictionReceiptError, prepare_changes
+            try:
+                changes = prepare_changes(self.root, current, changes)
+            except PredictionReceiptError as exc:
+                raise TowerAgentIssue(str(exc), "Prediction receipt admission rejected this mutation.") from exc
         updated = dict(current)
         updated.update(changes)
         updated["entity_version"] = current_version + 1

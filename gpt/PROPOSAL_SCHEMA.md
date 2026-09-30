@@ -250,6 +250,19 @@ Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queu
 New TESTs require `display_name` (até 8 palavras, português, sem sigla) and `domain`; proposals missing either are rejected before TEST creation. Optional fields: `rank_score`, `rank_rubric`, `origin_kind`, `prior_art`, `prediction`, `contests_test_id`.
 READY hypotheses get `prereg_hash` automatically. Positive results start at `review_state: PENDING_REVIEW`.
 
+### Recibo prospectivo da previsão
+Ao receber `prediction` em uma mutação de TEST, o Writer cria `prediction_receipt` sob o contrato
+`NEXO_PREDICTION_RECEIPT_V1`: hash de TEST + previsão exata, horário real de recebimento e classe
+prospectiva ou posterior à reserva/resultado. Esse namespace é independente de `prereg_hash`;
+não muda a identidade científica. O remetente não pode fornecer ou corrigir o recibo.
+
+O primeiro recibo e a previsão vinculada são imutáveis; replay idêntico preserva o horário.
+Previsão que chega com um resultado importado ou depois da reserva não é prospectiva. Nenhuma
+rotina preenche datas dos registros antigos. O resultado público só recebe
+`prereg.prediction.recorded_at`, `receipt_contract` e `prediction_hash` quando o hash confere
+e, havendo execução datada, o recebimento a antecede. Ausência permanece ausência.
+O recibo prova observação canônica pelo Writer, não independência científica nem pré-registro externo.
+
 Charters may be semi-permanent: `renewable: true, review_every_days: N, objectives: [...], priority: "P0"` — never closed by budget; `status` reports `review_due` for a course review by Dener.
 
 ## Test batteries (GitHub Actions, public and free)
