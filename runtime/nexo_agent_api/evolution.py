@@ -1711,7 +1711,20 @@ def _emergence(root: Path, tests: list[dict[str, Any]], genome: dict[str, Any], 
               "result": 3, "contest": 12, "decoy": 168}
     owners = {"thought": "PITIA", "dream": "PITIA", "genome_mutation": "PITIA/LEARNER", "fitness": "GUARDIAO",
               "new_hypothesis": "LEARNER", "result": "EXECUTOR", "contest": "REFUTADOR", "decoy": "GUARDIAO"}
-    stale = [{"loop": k, "hours": v, "owner": owners[k]} for k, v in since.items() if v is None or v > limits[k]]
+    ready_reserve_low = sum(1 for t in tests if str(t.get("state") or t.get("status") or "").upper() == "READY") < 30
+    contest_target = any(
+        str(t.get("verdict") or "").upper() in POSITIVE_VERDICTS
+        and not t.get("decoy")
+        and _reviewable(t)
+        and (
+            str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
+            or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)
+        )
+        for t in tests
+    )
+    actionable = {"new_hypothesis": ready_reserve_low, "contest": contest_target}
+    stale = [{"loop": k, "hours": v, "owner": owners[k]} for k, v in since.items()
+             if (v is None or v > limits[k]) and actionable.get(k, True)]
     return {"hours_since": since, "limits_h": limits, "stale": stale,
             "rule": "The owner of a stale loop produces one item of it when there is a valid target; "
                     "with no valid target it reports NO-OP naming the stale loop."}
