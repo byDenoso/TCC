@@ -990,9 +990,14 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     health = _read(root, RECIPE_HEALTH_DOC).get("recipes") or {}
     all_tests = _tests(root)
     by_recipe: dict[str, list[dict[str, Any]]] = {}
+    execution_fingerprints: dict[str, str] = {}
     for test in all_tests:
-        if str(test.get("status") or "").upper() != "READY" or not integrity.readiness(root, test)["eligible"]:
+        if str(test.get("status") or "").upper() != "READY":
             continue
+        check = integrity.readiness(root, test)
+        if not check["eligible"]:
+            continue
+        execution_fingerprints[str(test["id"])] = integrity.execution_fingerprint(test, check["recipe_sha256"])
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
     from .frontier import PRIORITY_RANK
@@ -1029,9 +1034,18 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
             tests = tests[:1]  # half-open: one probe, the first success closes the circuit
         specs = [{"test_id": t["id"], "recipe": recipe, "params": t["recipe_params"], "prediction": t.get("prediction"), "timeout_min": 120}
                  for t in tests]
+        # Admission and the public runner accept only bounded lowercase slugs.
+        # A recipe name may contain underscores; a clock fragment contains T.
+        # Commit the proposal instead: repeated pulses keep one ID, while a
+        # completed failed attempt can legitimately acquire a new reservation.
+        identity = {"specs": specs, "attempts": [
+            {"test_id": t["id"], "execution_fingerprint": execution_fingerprints[str(t["id"])],
+             "previous_attempt_id": t.get("attempt_id"), "previous_battery_id": t.get("battery_id")}
+            for t in tests]}
+        battery_id = "bat-fam-" + integrity.digest(identity)[:32]
         items.append({"kind": "TEST_BATTERY", "source": "WRITER_ROBOT", "created_at": stamp,
                       "_inbox_name": f"robot-battery-{recipe}-{stamp}",
-                      "payload": {"battery_id": f"bat-fam-{recipe}-{stamp[5:16].replace('-', '').replace(':', '')}", "tests": specs}})
+                      "payload": {"battery_id": battery_id, "tests": specs}})
         if in_flight + len(items) >= MAX_BATTERIES_IN_FLIGHT:
             break
     return items
