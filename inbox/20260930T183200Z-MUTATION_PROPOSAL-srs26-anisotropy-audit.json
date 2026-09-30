@@ -1,0 +1,116 @@
+{
+  "kind": "MUTATION_PROPOSAL",
+  "source": "CHATGPT",
+  "created_at": "2026-09-30T18:32:00Z",
+  "payload": {
+    "tests": [
+      {
+        "test_id": "T-DE-ANISO-SRS26-001",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+        "result": {
+          "verdict": "REJECTED",
+          "decision": "NO_ROBUST_SN_CMB_DIPOLE_IN_INTERNAL_AUDIT",
+          "summary": "A auditoria angular SN–CMB já existente no pacote Calibration-Audited Hubble Relief não encontra dipolo SN significativo após look-elsewhere correction: p_dipole≈0.22. A correlação direta HR–ΔT_CMB é r≈0.041 com permutation p≈0.10 e R²≈0.0016; nenhum modo low-l sobrevive Bonferroni. Isso não sustenta a leitura forte de que a aceleração inferida é dominada por alinhamento com o dipolo CMB.",
+          "statistics": {
+            "p_dipole": 0.22,
+            "pearson_r_hr_cmb": 0.041,
+            "permutation_p": 0.1,
+            "R2": 0.0016
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.anisotropy",
+          "question_plain": "A aceleração inferida de SN Ia é dominada por um dipolo alinhado com nosso movimento local/CMB?",
+          "why_it_matters": "Se robusto, um dipolo local forte enfraqueceria a interpretação isotrópica simples da aceleração SN.",
+          "result_meaning": "No teste angular interno já executado, o alinhamento não é significativo depois das correções de múltiplos testes.",
+          "verdict_plain": "Não suportado pelo teste angular interno",
+          "confidence_plain": "moderada"
+        },
+        "limitations": [
+          "O teste interno usa resíduos de Hubble/angular nulls e não é idêntico ao ajuste cosmográfico q0 dipolar de Sah–Rameez–Sarkar.",
+          "Uma replicação completa do likelihood q0(qm,qd,S) com a mesma seleção e covariância permanece desejável."
+        ],
+        "reproducibility": {
+          "data_sources": [
+            "Calibration_Audited_Hubble_Relief_FINAL.pdf",
+            "Pantheon+ public data",
+            "CMB angular directions"
+          ]
+        }
+      },
+      {
+        "test_id": "T-DE-ANISO-SRS26-002",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+        "result": {
+          "verdict": "CONTESTED",
+          "decision": "AGE_CORRECTION_MONOPOLE_SIGN_NOT_ROBUST_ACROSS_REANALYSES",
+          "summary": "Sah, Rameez & Sarkar (MNRAS 549, stag844, 2026) report that the progenitor-age correction shifts qm positive in all four frames while leaving qd nearly unchanged. A later revised Pantheon+ analysis (Ray et al., arXiv:2607.20570v2) instead finds qm=-0.490 without correction and qm=-0.267 with correction, both accelerating, and CMB/anti-CMB hemispheres consistent. Therefore the statement that the correction turns the isotropic component into deceleration is analysis-pipeline dependent rather than established.",
+          "statistics": {
+            "SRS26_qm_corrected": {
+              "Hel": 0.35,
+              "LG": 0.31,
+              "CMB": 0.32,
+              "HD": 0.21
+            },
+            "Ray26_qm_uncorrected": -0.49,
+            "Ray26_qm_corrected": -0.267,
+            "Ray26_qm_CMB_hemisphere": -0.527,
+            "Ray26_qm_anti_CMB_hemisphere": -0.464
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.anisotropy",
+          "question_plain": "A correção por idade do progenitor transforma robustamente o monopolo de aceleração em desaceleração?",
+          "why_it_matters": "Esse é o segundo pilar da alegação de ausência de energia escura em SRS26.",
+          "result_meaning": "O sinal do monopolo corrigido não é estável entre reanálises publicadas do Pantheon+.",
+          "verdict_plain": "Contestado",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "A reanálise Ray et al. usa escolhas metodológicas diferentes; divergência exige same-pipeline replication para localizar a causa."
+        ],
+        "reproducibility": {
+          "data_sources": [
+            "MNRAS 549 stag844 (2026)",
+            "arXiv:2607.20570v2"
+          ]
+        }
+      },
+      {
+        "test_id": "T-DE-ANISO-SRS26-003",
+        "roadmap_id": "RM-DARK-ENERGY-NATURE-20260923-V1",
+        "result": {
+          "verdict": "INCONCLUSIVE",
+          "decision": "RADIAL_DECAY_NEEDS_MODEL_COMPARISON",
+          "summary": "O likelihood de SRS26 parametriza explicitamente q0=qm+qd·n exp(-z/S), portanto a frase 'dies away with distance' não é por si só um teste independente: o decaimento radial está embutido no ansatz. O valor ajustado S~0.01 é informativo, mas a evidência para um dipolo que realmente decai exige comparação contra dipolo de amplitude constante (S→∞) e contra isotropia com penalização de complexidade/LEE.",
+          "statistics": {
+            "reported_S_approx": 0.01
+          }
+        },
+        "semantic": {
+          "domain_id": "science",
+          "subdomain_id": "science.cosmology.dark_energy",
+          "topic_id": "science.cosmology.dark_energy.anisotropy",
+          "question_plain": "O desaparecimento do dipolo com distância é demonstrado pelos dados ou parcialmente imposto pelo modelo?",
+          "why_it_matters": "Distingue assinatura física radial de comportamento assumido pela parametrização.",
+          "result_meaning": "A escala radial foi ajustada, mas a alegação forte requer comparação explícita com alternativas sem decaimento.",
+          "verdict_plain": "Inconclusivo sem comparador radial",
+          "confidence_plain": "alta"
+        },
+        "limitations": [
+          "Não reexecuta aqui o likelihood completo do repositório público."
+        ],
+        "reproducibility": {
+          "data_sources": [
+            "Sah et al. 2026 Eq. 5",
+            "public repository Shin107/Anisotropy-in-Pantheon-Plus"
+          ]
+        }
+      }
+    ]
+  }
+}
