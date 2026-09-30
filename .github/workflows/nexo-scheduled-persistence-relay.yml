@@ -32,6 +32,7 @@ jobs:
         run: python3 nexo_persist/relay.py
 
       - name: Wake the Writer robot now
+        if: always()
         # Without this the proposal waits for GitHub's throttled */5 schedule (measured p50 54 min, p90 3.4 h).
         # Needs repo secret PANTHEON_WAKE_TOKEN (fine-grained PAT: byDenoso/Pantheon, Actions read+write). Absent = skip.
         env:
