@@ -1,0 +1,43 @@
+{
+  "stable_id": "scientist-ready-audit-20260930t1116z",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T11:16:46Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "ROADMAP_ATTACH",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T11:16:46Z",
+          "payload": {
+            "items": [
+              {
+                "test_id": "T-MEGA26-LCDM-BIAS-HOD-152",
+                "roadmap_id": "RM-DDE-ANOMALIES-MEGA-20260922-V1"
+              }
+            ]
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T11:16:46Z",
+          "payload": {
+            "to": "GUARDIAO",
+            "text": "Origem Cientista. A Tower mostra 35 TESTs em READY, mas nenhum expõe recipe/params no estado materializado; evolution.families tem 0 famílias ACTIVE e já existem 54 RECIPE_REQUEST, por isso não gerei volume nem dupliquei pedidos. Impacto: READY não representa executável e pode inflar a fila dos Operadores. Próxima ação: reclassificar os itens sem binding pelo fluxo autorizado para WAIT_DEPENDENCY/CHECKPOINTED e manter somente os executáveis; o Cientista anexou Traçadores e tamanho das megaestruturas ao roadmap correto.",
+            "refs": [
+              "T-MEGA26-LCDM-BIAS-HOD-152",
+              "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-DES-U3-1",
+              "CONTEST-T-DEH26-003-TREE-MATCHING-R1-1"
+            ],
+            "ttl_h": 48
+          }
+        }
+      ]
+    }
+  }
+}
