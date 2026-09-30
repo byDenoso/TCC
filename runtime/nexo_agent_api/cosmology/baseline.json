@@ -1,0 +1,144 @@
+{
+  "model": "COSMOLOGY_BASELINE_V1",
+  "source": {
+    "name": "cosmology-world-model",
+    "version": "1.0.0",
+    "updated_at": "2026-09-28",
+    "url": "https://drive.google.com/file/d/172MDkuLNniN6vzi69s-WfmTw-vBP7fkb/view",
+    "role": "LITERATURE_ORIENTATION_NOT_TOWER_VERDICT"
+  },
+  "frontiers": [
+    {
+      "id": "lcdm-geometria",
+      "title": "ΛCDM, geometria e homogeneidade",
+      "state": "SOLID",
+      "summary": "ΛCDM continua uma excelente descrição efetiva do Universo em larga escala. Anomalias locais ou dependentes de estimador não estabelecem violação de homogeneidade ou isotropia.",
+      "literature_baseline": "ΛCDM continua uma excelente descrição efetiva do Universo em larga escala. Anomalias locais ou dependentes de estimador não estabelecem violação de homogeneidade ou isotropia.",
+      "confidence": "alta no escopo indicado",
+      "qualification": "",
+      "open_questions": [
+        "Alguma discrepância sobrevive à seleção, aos mocks e a dados independentes?"
+      ],
+      "next_discriminants": [
+        "Testes de geometria e isotropia com seleção e volume realistas."
+      ],
+      "match_pattern": "homogene|isotrop|curvature|curvatura|principle"
+    },
+    {
+      "id": "energia-escura",
+      "title": "Energia escura",
+      "state": "TENSION",
+      "summary": "ΛCDM permanece compatível com partes importantes dos dados; combinações DESI, CMB e supernovas mantêm preferência por evolução temporal, dependente da combinação.",
+      "literature_baseline": "ΛCDM permanece compatível com partes importantes dos dados; combinações DESI, CMB e supernovas mantêm preferência por evolução temporal, dependente da combinação.",
+      "confidence": "moderada",
+      "qualification": "",
+      "open_questions": [
+        "É evolução física, sistemático das supernovas, estrutura BAO ou dependência de priors?"
+      ],
+      "next_discriminants": [
+        "Confrontar supernovas independentes e BAO por redshift e traçador, com covariância e priors controlados."
+      ],
+      "match_pattern": "dark.energy|energia.escura|pantheon|desi|quintess|w0wa|cpl|w0.wa",
+      "material_test_pattern": "^(?:CONTEST-)?(?:FAM-DE-BAO-TRACERS-GRUPOS-TRES-FAMILIAS|FAM-DE-PRIOR-BANDS-P3-PRIOR-ALTO|FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM315)(?:-[0-9]+)?$",
+      "context_test_ids": [
+        "DE26-021-REDSHIFT-LEVERAGE-JACKKNIFE"
+      ]
+    },
+    {
+      "id": "h0",
+      "title": "H0",
+      "state": "TENSION",
+      "summary": "A discrepância entre inferências locais e cosmológicas da expansão permanece; sua interpretação depende das âncoras e do modelo.",
+      "literature_baseline": "A discrepância entre inferências locais e cosmológicas da expansão permanece; sua interpretação depende das âncoras e do modelo.",
+      "confidence": "moderada",
+      "qualification": "",
+      "open_questions": [
+        "Uma explicação preserva simultaneamente as âncoras, a geometria e o crescimento?"
+      ],
+      "next_discriminants": [
+        "Distâncias e velocidades locais independentes; sirenes padrão e comparação de âncoras."
+      ],
+      "match_pattern": "\\bh0\\b|hubble|local.void|distance.ladder"
+    },
+    {
+      "id": "crescimento-s8",
+      "title": "Crescimento e S8",
+      "state": "TENSION",
+      "summary": "As diferenças históricas entre lentes fracas e CMB diminuíram em análises recentes. Calibração, feedback bariônico e seleção ainda importam.",
+      "literature_baseline": "As diferenças históricas entre lentes fracas e CMB diminuíram em análises recentes. Calibração, feedback bariônico e seleção ainda importam.",
+      "confidence": "moderada",
+      "qualification": "discrepância enfraquecendo",
+      "open_questions": [
+        "O sinal de crescimento sobrevive à relação massa-observável e à retirada do bin de maior redshift?"
+      ],
+      "next_discriminants": [
+        "Likelihood nativa eRASS1 com seleção e calibração de massa; comparação independente com lentes fracas."
+      ],
+      "match_pattern": "s8|growth|crescimento|erosita|erass|mass.observable"
+    },
+    {
+      "id": "materia-escura",
+      "title": "Matéria escura",
+      "state": "OPEN",
+      "summary": "A existência de matéria escura é sólida; sua natureza permanece aberta. Modelos não-CDM são hipóteses discrimináveis, não detecções.",
+      "literature_baseline": "A existência de matéria escura é sólida; sua natureza permanece aberta. Modelos não-CDM são hipóteses discrimináveis, não detecções.",
+      "confidence": "moderada",
+      "qualification": "",
+      "open_questions": [
+        "Quais propriedades distinguem a matéria escura fria das alternativas?"
+      ],
+      "next_discriminants": [
+        "Supressão de potência e estrutura em pequenas escalas com controles bariônicos e sondas independentes."
+      ],
+      "match_pattern": "dark.matter|matéria.escura|materia.escura|non.cdm|warm.dark|self.interact"
+    },
+    {
+      "id": "neutrinos",
+      "title": "Neutrinos",
+      "state": "OPEN",
+      "summary": "O mínimo de massa exigido pelas oscilações se aproxima de limites cosmológicos em algumas combinações. A interpretação depende do modelo, especialmente da energia escura.",
+      "literature_baseline": "O mínimo de massa exigido pelas oscilações se aproxima de limites cosmológicos em algumas combinações. A interpretação depende do modelo, especialmente da energia escura.",
+      "confidence": "moderada",
+      "qualification": "tensão emergente",
+      "open_questions": [
+        "Os limites permanecem ao relaxar as hipóteses sobre energia escura?"
+      ],
+      "next_discriminants": [
+        "Inferência conjunta de massa de neutrinos, energia escura e crescimento em modelos comparáveis."
+      ],
+      "match_pattern": "neutrino|\\bmnu\\b|massa.*neutr"
+    },
+    {
+      "id": "cmb-primordial",
+      "title": "CMB e física primordial",
+      "state": "OPEN",
+      "summary": "Anomalias de grande escala do CMB continuam interessantes, mas fracas e sensíveis ao efeito look-elsewhere. Não constituem evidência de nova física.",
+      "literature_baseline": "Anomalias de grande escala do CMB continuam interessantes, mas fracas e sensíveis ao efeito look-elsewhere. Não constituem evidência de nova física.",
+      "confidence": "moderada",
+      "qualification": "",
+      "open_questions": [
+        "O sinal é globalmente significativo e se reproduz em temperatura e polarização?"
+      ],
+      "next_discriminants": [
+        "Estatísticas congeladas, correção pelo espaço de busca e confirmação em polarização independente."
+      ],
+      "match_pattern": "primordial|inflation|cmb|large.scale.*anomal|low.power"
+    },
+    {
+      "id": "estrutura-grande-escala",
+      "title": "Estrutura em grande escala",
+      "state": "SOLID",
+      "summary": "A formação de estrutura em ΛCDM continua amplamente bem-sucedida. Megastruturas e padrões extremos exigem controles de volume, seleção, bias, finder e mocks.",
+      "literature_baseline": "A formação de estrutura em ΛCDM continua amplamente bem-sucedida. Megastruturas e padrões extremos exigem controles de volume, seleção, bias, finder e mocks.",
+      "confidence": "alta no escopo indicado",
+      "qualification": "subquestões abertas",
+      "open_questions": [
+        "Algum padrão extremo é incompatível com mocks realistas após considerar a busca completa?"
+      ],
+      "next_discriminants": [
+        "Calibração de todo o pipeline de descoberta em mocks com a seleção observacional."
+      ],
+      "match_pattern": "megastruct|megastrut|giant.ring|big.ring|large.scale.structure|galaxy.*distribution"
+    }
+  ]
+}

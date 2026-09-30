@@ -25,6 +25,7 @@ import json
 import re
 from pathlib import Path
 from typing import Any, Iterable
+from .cosmology_state import build_cosmology_state
 from .live_tower import LIVE_TOWER_FILE_ID
 from .semantics import is_private, public_tree, resolve as resolve_semantic, status_group
 from .tower_paths import json_file
@@ -50,6 +51,8 @@ WORK_FIELDS = (
     "dependency_class",
 )
 TEST_FIELDS = (
+    "cosmology_frontier_ids",
+    "cosmology_material",
     "id",
     "status",
     "state",
@@ -1314,7 +1317,7 @@ def build_public_projection(
 
     work_entities = _load_entities(root, "work", WORK_FIELDS)
     human_flags = _load_entities(root, "work", ("human_action_required",))
-    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS, *TEST_DETAIL_INPUT_FIELDS, "semantic", "display_name"))
+    test_entities = _load_entities(root, "test", (*TEST_FIELDS, *TEST_INPUT_FIELDS, *TEST_DETAIL_INPUT_FIELDS, "semantic", "display_name", "cosmology_frontier_ids", "cosmology_material"))
     campaigns = _load_campaigns(root)
 
     # Index order is priority. Existence is the entity. An index entry without an
@@ -1405,6 +1408,7 @@ def build_public_projection(
         "hypotheses": hypotheses,
         "integrity": integrity,
         "evolution": _load_evolution(root),
+        "cosmology_state": build_cosmology_state(root, tests, campaigns, roadmaps),
         "capabilities": capabilities,
         "index_only_dropped": sorted(dropped),
     }
@@ -1510,4 +1514,5 @@ def _pseudonymize_private(content: dict[str, Any], tests: dict[str, dict], campa
         return value
 
     return scrub(content)
+
 

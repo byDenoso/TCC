@@ -1,0 +1,432 @@
+{
+  "model": "COSMOLOGY_HISTORICAL_RESERVOIR_V1",
+  "archive_sha256": "6d9dd5cef2987ada908c0fabb854bac7aadde2a746a722c21dcfefb81a961ccd",
+  "evidence": [
+    {
+      "id": "T-UCP26-001",
+      "frontier_ids": [
+        "energia-escura"
+      ],
+      "title": "A feição Pantheon+ é robusta?",
+      "question": "Does Pantheon+ require a physical z~0.43 transition after covariance and survey calibration stress?",
+      "verdict": "REFUTED",
+      "meaning": "A feição residual Pantheon+ em z ≈ 0,4 não exigiu uma transição física após covariância e nulls estruturados. Não é uma detecção; efeitos look-elsewhere não autorizam promover o sinal.",
+      "limitations": "No new Pantheon refit; uses uploaded paper's frozen result.",
+      "dataset": "Uploaded MNRAS draft Pantheon+ full-covariance step/injection analysis",
+      "next_gate": "Use survey/covariance calibration operator in unified pipeline.",
+      "source_url": "https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "7276580085d5ebd115e8974b85300e85c326e89fec18943a9e4a9a3660e25075",
+        "audit": {
+          "question": "Does Pantheon+ require a physical z~0.43 transition after covariance and survey calibration stress?",
+          "dataset_stack": "Uploaded MNRAS draft Pantheon+ full-covariance step/injection analysis",
+          "key_metrics": "localized step DeltaChi2=1.597; Gaussian covariance null p=.788; survey-offset null p=.855",
+          "provenance": "campaign=PEER-MOND-UCP-20260816-1455-BRT; qhash=5aa888eb44e4635815360bff7df9fe6bcded28febb19c13ed12a1a5994e7887b; output=252e5bf73168fd7cd4e0214b7e89db3967f864928a1ff034a016d15fe0a2063d; payload=8c0ad9c4a85453679dfbdde7ab5362513264a00d5e5cd412a4b44f880672dfa5",
+          "evidence_class": "SOURCE_GROUNDED_IDENTIFIABILITY",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-UCP26-001",
+            "fields": {
+              "terminal_bundle": "Pantheon step DeltaChi2=1.597; p=.788/.855; output=252e5bf73168fd7cd4e0214b7e89db3967f864928a1ff034a016d15fe0a2063d; artifact=https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+              "terminal_status": "HYPOTHESIS_KILLED"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Physical transition is not independently required.",
+          "notes": "No new Pantheon refit; uses uploaded paper's frozen result.",
+          "last_verified": "2026-08-16 15:04 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-UCP26-002",
+      "frontier_ids": [
+        "energia-escura"
+      ],
+      "title": "Evolução ou calibração acústica?",
+      "question": "Does DESI DR2 require wa!=0 after exposing the acoustic-ruler calibration coordinate?",
+      "verdict": "REFUTED",
+      "meaning": "A necessidade independente de wa ≠ 0 não sobreviveu à exposição da calibração da régua acústica neste diagnóstico; não refuta energia escura dinâmica globalmente.",
+      "limitations": "Calibration here is acoustic-model calibration, not measurement pipeline error.",
+      "dataset": "Uploaded MNRAS draft acoustic non-identifiability analysis",
+      "next_gate": "Treat rd as inference/model calibration, not DESI hardware systematic.",
+      "source_url": "https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "8c0b408268174452d052a219129072b2acc77a83fb3eaddde9eea0d7a05230c8",
+        "audit": {
+          "question": "Does DESI DR2 require wa!=0 after exposing the acoustic-ruler calibration coordinate?",
+          "dataset_stack": "Uploaded MNRAS draft acoustic non-identifiability analysis",
+          "key_metrics": "rd 147.09→142.924721 Mpc (-2.832%); |wa| reduced 66.711%; wa=0 cost=0.787119",
+          "provenance": "campaign=PEER-MOND-UCP-20260816-1455-BRT; qhash=018c7131ab805ff1772c549a965fe6672fe179a27b890c6282c5264da997421a; output=b067f1fad51d3c14fef498aa98c4bafc5484ce627a2aeee3738412268c5b272e; payload=8c0ad9c4a85453679dfbdde7ab5362513264a00d5e5cd412a4b44f880672dfa5",
+          "evidence_class": "SOURCE_GROUNDED_IDENTIFIABILITY",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-UCP26-002",
+            "fields": {
+              "terminal_bundle": "rd=-2.832%; |wa| reduction=66.711%; wa0 cost=.787119; output=b067f1fad51d3c14fef498aa98c4bafc5484ce627a2aeee3738412268c5b272e; artifact=https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+              "terminal_status": "HYPOTHESIS_KILLED"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Time-varying wa is not independently required once ruler calibration is exposed.",
+          "notes": "Calibration here is acoustic-model calibration, not measurement pipeline error.",
+          "last_verified": "2026-08-16 15:04 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-DISC26-DG-002",
+      "frontier_ids": [
+        "energia-escura"
+      ],
+      "title": "A alavanca DESI vem de um único traçador?",
+      "question": "Tracer-family transport of DESI ShapeFit discriminator",
+      "verdict": "CONFIRMED",
+      "meaning": "O discriminante DESI comprimido não é exclusivamente LRG; a evidência é heterogênea entre traçadores. Não equivale a uma detecção em likelihood nativa.",
+      "limitations": "Compressed likelihood only",
+      "dataset": "DESI DR1 ShapeFit BGS/LRG/ELG/QSO",
+      "next_gate": "Per-tracer native full modelling",
+      "source_url": null,
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "5f6d5874587c9c0c77111d09af27e9cedbcba271462a61332afd245368c6b025",
+        "audit": {
+          "question": "Tracer-family transport of DESI ShapeFit discriminator",
+          "dataset_stack": "DESI DR1 ShapeFit BGS/LRG/ELG/QSO",
+          "key_metrics": "drop LRG123 Δχ²=-6.5573; LRG123-only=-1.5395; nonLRG-only=-6.5573",
+          "provenance": "fresh deterministic derivation",
+          "evidence_class": "CONFIRMED_DERIVED_FROM_PUBLISHED_COMPRESSION",
+          "latest_result_envelope": null,
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Not an LRG-only artifact; evidence is heterogeneously distributed",
+          "notes": "Compressed likelihood only",
+          "last_verified": "2026-08-24 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-DISC26-DG4-013",
+      "frontier_ids": [
+        "energia-escura"
+      ],
+      "title": "O discriminante é robusto aos holdouts?",
+      "question": "After profiling growth plus common shape, does residual DESI ordering survive all single-bin holdouts?",
+      "verdict": "REFUTED",
+      "meaning": "A preferência escalar residual comprimida falha na robustez de holdouts após perfilar crescimento e forma comum. Preserva a contradição com o transporte entre traçadores.",
+      "limitations": "Compressed likelihood only; ELG2 holdout sign flip is controlling robustness failure.",
+      "dataset": "DESI DR1 ShapeFit+BAO after global growth+common-shape profile",
+      "next_gate": "Native full modelling with per-tracer nuisance posteriors.",
+      "source_url": null,
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "d3a75a189948b7f4ca626e1b702d3c0f8360663e30c7a8e6a5ec373bf65f76a3",
+        "audit": {
+          "question": "After profiling growth plus common shape, does residual DESI ordering survive all single-bin holdouts?",
+          "dataset_stack": "DESI DR1 ShapeFit+BAO after global growth+common-shape profile",
+          "key_metrics": "all bins Δ=-1.685811; LOO ELG2 Δ=+5.031806; other LOO range=-3.972 to -1.662",
+          "provenance": "Fresh adversarial LOO derivation; verification=25/25 PASS",
+          "evidence_class": "DERIVED_PUBLISHED_COMPRESSION_ADVERSARIAL_LOO",
+          "latest_result_envelope": null,
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Kills robustness of the remaining compressed scalar preference after nuisance rescue.",
+          "notes": "Compressed likelihood only; ELG2 holdout sign flip is controlling robustness failure.",
+          "last_verified": "2026-08-25 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-H0-LOCALVOID-CF4-CLOSURE-001",
+      "frontier_ids": [
+        "h0"
+      ],
+      "title": "Um vazio local resolve integralmente H0?",
+      "question": "Do direct CosmicFlows-4 distance tracers support the Gpc-scale KBC local-supervoid configuration as a complete Planck-background solution of the Hubble tension?",
+      "verdict": "REFUTED",
+      "meaning": "Distâncias CosmicFlows-4 desfavorecem o vazio KBC de escala Gpc como solução completa genérica de H0. Correções ambientais menores permanecem possíveis.",
+      "limitations": "TEST_CLASS=DECISIVE; EXPECTED_INFORMATION_GAIN=HIGH; DECISION_IMPACT=HIGH. Local-environment rival closure; not new global H0 likelihood. NO_CLAIM_PROMOTION.",
+      "dataset": "MNRAS 543,1556 (2025) field-level CosmicFlows-4 Tully-Fisher direct-distance test; canonical latest ladder context T-H0-JWST-RESIDUAL-001.",
+      "next_gate": "Do not repeat broad H0 residual arithmetic. Reopen only with materially improved direct-distance/velocity mapping or a field-level joint local-environment likelihood.",
+      "source_url": "https://docs.google.com/document/d/1NJK5lnV4FF4r7FSJlg77fPrhtEiz_dKnXotrer3HyvY",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-H0-RULER-ANCHOR/tests.jsonl",
+        "row_sha256": "8cfa30b99cb5348e0bd4276aec9d4004c35c3e24ca195c9f72a693c978e84c0b",
+        "audit": {
+          "question": "Do direct CosmicFlows-4 distance tracers support the Gpc-scale KBC local-supervoid configuration as a complete Planck-background solution of the Hubble tension?",
+          "dataset_stack": "MNRAS 543,1556 (2025) field-level CosmicFlows-4 Tully-Fisher direct-distance test; canonical latest ladder context T-H0-JWST-RESIDUAL-001.",
+          "key_metrics": "Preferred size <=70 Mpc. Predicted H0 exp=72.1 +0.9/-0.8, Gaussian=70.4±0.4, MB=70.2 +0.5/-0.4. Versus canonical latest ladder 73.49±0.93: residual 1.10σ, 3.05σ, 3.18σ.",
+          "provenance": "question 2a18f00036751693a2199100946dde32c8d8bd6cafec564a40b3664b37b4d64c; config 5c6939a22e892864536aa08a31f65d00556e2e2841177e2fa4a482b1313a50a2; code c28631016f1b32c88e59ca54485ae834aafa1557b0eba6cce475456e65d6c782; output 24cc79ecb1545bcb18772f50368ea6ef03bbb25da42caef6c8c09311ab39699a.",
+          "evidence_class": "PRIMARY_COSMICFLOWS4_FIELDLEVEL_LOCALVOID_H0_CLOSURE__DECISIVE",
+          "latest_result_envelope": null,
+          "status": "COMPLETE_VALIDATED__DIRECT_DISTANCE_FIELDS_DISFAVOR_GPC_KBC_VOID_SCALE__LOCAL_ENVIRONMENT_CAN_AMELIORATE_BUT_NOT_GENERICALLY_ERASE_H0_TENSION",
+          "claim_impact": "MORTA for Gpc-scale KBC void as a complete generic Planck-background H0 solution under current direct-distance evidence; smaller environmental corrections remain viable.",
+          "notes": "TEST_CLASS=DECISIVE; EXPECTED_INFORMATION_GAIN=HIGH; DECISION_IMPACT=HIGH. Local-environment rival closure; not new global H0 likelihood. NO_CLAIM_PROMOTION.",
+          "last_verified": "2026-08-12 17:22 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-H0-PANTHEON-FULL1701-BAO-CC-MBFREE-MATCHED-002",
+      "frontier_ids": [
+        "h0",
+        "energia-escura"
+      ],
+      "title": "Geometria tardia seleciona H0 elevado?",
+      "question": "Does the exact requested stack using all 1701 Pantheon+ rows with the full 1701x1701 STAT+SYS covariance, free M_B, DESI DR2 full-cov BAO and canonical CC select a nonzero PEER amplitude and move H0 to >=70.8 without a local-ladder anchor?",
+      "verdict": "REFUTED",
+      "meaning": "O ajuste Pantheon+ completo, BAO e cronômetros com M_B livre não seleciona amplitude PEER não nula nem gera a solução de H0 elevado. A conclusão é específica deste stack.",
+      "limitations": "Conditional background profile, not a full global PEER MCMC. ombh2/ns/As/tau and PEER zc/theta_i are fixed. CC local surface is certified only through H0=70.867186; H0>70.867 is not promoted. No formal PEER upper limit, posterior probability or Bayes factor is claimed.",
+      "dataset": "Pantheon+ all 1701 rows with full 1701x1701 STAT+SYS covariance, M_B analytically profiled/free; DESI DR2 ALL_GCcomb 13-vector full covariance; canonical CC local quadratic surface trained on 12 exact CCHzDiag evaluations; portable CAMB 1.6.6; PEER n=3, log10(zc)=3.81, theta_i=2.89155, model-consistent rdrag; no Cepheid/TRGB/JAGB/SH0ES anchor.",
+      "next_gate": "Add the matched CMB acoustic likelihood to this exact full-1701 contract, allow CMB-relevant parameters to vary, preserve free M_B and keep the local ladder strictly as holdout. Test whether posterior mass moves from f=0 to the f~0.06-0.08 / H0~70.4-70.8 basin.",
+      "source_url": null,
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-DDE-ROBUSTNESS/tests.jsonl",
+        "row_sha256": "42016a28819672e4724f337946d3da898a648c8de41a82b27073b02538ab052a",
+        "audit": {
+          "question": "Does the exact requested stack using all 1701 Pantheon+ rows with the full 1701x1701 STAT+SYS covariance, free M_B, DESI DR2 full-cov BAO and canonical CC select a nonzero PEER amplitude and move H0 to >=70.8 without a local-ladder anchor?",
+          "dataset_stack": "Pantheon+ all 1701 rows with full 1701x1701 STAT+SYS covariance, M_B analytically profiled/free; DESI DR2 ALL_GCcomb 13-vector full covariance; canonical CC local quadratic surface trained on 12 exact CCHzDiag evaluations; portable CAMB 1.6.6; PEER n=3, log10(zc)=3.81, theta_i=2.89155, model-consistent rdrag; no Cepheid/TRGB/JAGB/SH0ES anchor.",
+          "key_metrics": "Nested/LCDM H0=68.8254, Omega_m=0.31031, rdrag=146.064 Mpc, chi2=1788.60141; conditional H0 Delta chi2=1 profile [68.4378,70.6178]. At H0=70.8: f_PEER=0.08314, Omega_m=0.31026, rdrag=142.005 Mpc, Delta chi2=+1.19496, Delta AIC=+3.19496. Fixed-f: f=0.06 -> H0=70.151, Delta chi2=0.606; f=0.08 -> H0=70.628, Delta chi2=1.057.",
+          "provenance": "config_hash d50d861e8afab346d54d922b1463304ceec7fb0148808611891f92c98d3be88e; calculation_payload_sha256 1c8979afcf1e613be0834558bc0a958c0b272e2b5c7ab46657146ec8a0744df2; Pantheon table 1cb0fc379ef066afdc2ffd1857681cc478024570d8a3eba284fb645775198cf8; full cov abf806d966485e64afdb359c87bffc0ecc00d05eff0a31ced66f247385df0fdc; DESI mean 9ac154ab583ce759c0f7eef3c978c7c70a6ead2d18774caceadf1a350a640585; DESI cov 252a143274c8a07c78694c119617d36594f6d7965d00319ca611c6ffb886e509; CC feb7d17df8794f018ff48c337181b9b41c8b62b52aad077819c7d5350cda5a98.",
+          "evidence_class": "EXACT_CAMB_FULL1701_PANTHEON_DESI_PLUS_VALIDATED_CC_PROFILE",
+          "latest_result_envelope": null,
+          "status": "COMPLETE_VALIDATED__NESTED_BEST_AT_LCDM__H0_70P8_MILDLY_DISFAVORED",
+          "claim_impact": "Weakens the hypothesis that low-z SN+BAO+CC itself selects the high-H0 PEER basin. The stack tolerates H0 around 70.8 but neither generates nor prefers it; maximum likelihood remains LambdaCDM-like at f_PEER=0.",
+          "notes": "Conditional background profile, not a full global PEER MCMC. ombh2/ns/As/tau and PEER zc/theta_i are fixed. CC local surface is certified only through H0=70.867186; H0>70.867 is not promoted. No formal PEER upper limit, posterior probability or Bayes factor is claimed.",
+          "last_verified": "2026-08-11 17:22 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-KILL26-D2-1201",
+      "frontier_ids": [
+        "crescimento-s8"
+      ],
+      "title": "O crescimento anômalo persiste sem o bin alto?",
+      "question": "eROSITA first four redshift bins still differ from DES Y6 S8 by >3σ.",
+      "verdict": "REFUTED",
+      "meaning": "Retirar o bin eROSITA de maior redshift derruba a alegação de discrepância de amplitude acima de 3σ.",
+      "limitations": "DETERMINISTIC_DERIVATION; prior first-four subrun promoted to preregistered cross-probe kill; PEER_NOT_RELEVANT",
+      "dataset": "Focused eROSITA bin summary + DES Y6 3x2pt",
+      "next_gate": "High-z eRASS1 selection/mass-calibration stress battery.",
+      "source_url": "https://docs.google.com/document/d/1KdYzsOhAmpjJQnwWf1xPqzd64PA_N7tBev12yM0mW74",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "60553cf17a695885c0d2224341e66b42c50cda57c3809bd5c0e77d5840dc1547",
+        "audit": {
+          "question": "eROSITA first four redshift bins still differ from DES Y6 S8 by >3σ.",
+          "dataset_stack": "Focused eROSITA bin summary + DES Y6 3x2pt",
+          "key_metrics": "S8 first4=0.83575±0.01563 vs DESY6=0.789±0.012; z=2.372σ",
+          "provenance": "campaign=PEER-KILL-BATTERY-20260816-0124-BRT; qhash=c35bf813257065bd8c39c8f079ade17e42cb2b9a7eb9514b6209ff80b43919dd; output=3c5f849cf88bab6e179d454e2dfbecf565e06da99031027705d1944a3be823ac; payload=fc50972a3e10a279be9b4d10388c6142c874152664a56b14ddb3f812641e4c9d",
+          "evidence_class": "CANONICAL_DERIVED_TEST",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-KILL26-D2-1201-6H",
+            "fields": {
+              "terminal_json": "{\"status\":\"HYPOTHESIS_KILLED\",\"z_sigma\":2.3724641225,\"output\":\"3c5f849cf88bab6e179d454e2dfbecf565e06da99031027705d1944a3be823ac\",\"artifact\":\"1KdYzsOhAmpjJQnwWf1xPqzd64PA_N7tBev12yM0mW74\"}"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Removing the highest-z eROSITA bin collapses the >3σ amplitude claim.",
+          "notes": "DETERMINISTIC_DERIVATION; prior first-four subrun promoted to preregistered cross-probe kill; PEER_NOT_RELEVANT",
+          "last_verified": "2026-08-16 01:39 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-KILL26-D2-2501",
+      "frontier_ids": [
+        "crescimento-s8"
+      ],
+      "title": "O degrau sobrevive ao espaço de busca?",
+      "question": "The 2.428sigma high-z eROSITA S8 step remains >=2 sigma after a conservative five-bin Sidak look-elsewhere correction.",
+      "verdict": "REFUTED",
+      "meaning": "O degrau isolado de S8 cai abaixo de 2σ após correção conservadora por cinco bins. Não sustenta nova física.",
+      "limitations": "CLAIM_BOUNDARY=Summary-level five-bin trial correction; bins treated as independent trials for this conservative diagnostic.; PEER_NOT_RELEVANT",
+      "dataset": "eROSITA five-bin S8/sigma_X canonical summaries",
+      "next_gate": "Native eRASS1 high-z population/selection/WL likelihood.",
+      "source_url": "https://docs.google.com/document/d/1wamBfXN2g0GnVkGOIvMiuDJec7-Wl3XhgdSL_Qu_1Ps/edit",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "1cf078e7758e2548a815d84c3820122f2646954fc854186dfcf77ef21aa66fea",
+        "audit": {
+          "question": "The 2.428sigma high-z eROSITA S8 step remains >=2 sigma after a conservative five-bin Sidak look-elsewhere correction.",
+          "dataset_stack": "eROSITA five-bin S8/sigma_X canonical summaries",
+          "key_metrics": "local=2.428σ; Sidak5=1.789σ; p_global=.07364",
+          "provenance": "campaign=PEER-KILL-BATTERY-20260816-1940-BRT-7H;qhash=a50121dc5b97d51063658364587fdb59585f4074a40bcb00abbcac8f714dbae8;config=5e12e2411d3d609cf76b23ed52b198037ec8aa5fdf4f074c2442e85b6e0b72db;input=20d8d7170e2684728a449c5521d76b2f084ce69deb40830ef16714bcd16b9b60;output=c12ecb50f68e773ff2fdf57b23a5c28552ce332c7e5320da39ec5e7c2e917fc1;aggregate=73163412a9dc7e72f5448509a36babf9eecf5802131326de2296e455f0379f55",
+          "evidence_class": "CANONICAL_DERIVED_TEST",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-KILL26-D2-2501",
+            "fields": {
+              "terminal_bundle": "local=2.428σ; Sidak5=1.789σ; p_global=.07364; The isolated high-z S8 step falls below 2σ after the preregistered conservative five-bin trial correction.; output=c12ecb50f68e773ff2fdf57b23a5c28552ce332c7e5320da39ec5e7c2e917fc1; artifact=1wamBfXN2g0GnVkGOIvMiuDJec7-Wl3XhgdSL_Qu_1Ps; aggregate=73163412a9dc7e72f5448509a36babf9eecf5802131326de2296e455f0379f55",
+              "terminal_status": "HYPOTHESIS_KILLED"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "The isolated high-z S8 step falls below 2σ after the preregistered conservative five-bin trial correction.",
+          "notes": "CLAIM_BOUNDARY=Summary-level five-bin trial correction; bins treated as independent trials for this conservative diagnostic.; PEER_NOT_RELEVANT",
+          "last_verified": "2026-08-16 19:45 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-KILL26-D2-2502",
+      "frontier_ids": [
+        "crescimento-s8"
+      ],
+      "title": "A calibração de massa compete com S8?",
+      "question": "The 3.503sigma high-z eROSITA sigma_X excess remains >=3 sigma after the same conservative five-bin Sidak correction.",
+      "verdict": "CONFIRMED",
+      "meaning": "A direção nuisance de dispersão massa-observável permanece mais resistente que o degrau cosmológico de S8 na mesma correção.",
+      "limitations": "CLAIM_BOUNDARY=Summary-level five-bin trial correction; no native eRASS1 covariance.; PEER_NOT_RELEVANT",
+      "dataset": "eROSITA five-bin S8/sigma_X canonical summaries",
+      "next_gate": "Native eRASS1 high-z population/selection/WL likelihood.",
+      "source_url": "https://docs.google.com/document/d/1wamBfXN2g0GnVkGOIvMiuDJec7-Wl3XhgdSL_Qu_1Ps/edit",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "31bd9d89e90ec3d020835a2c3db02cd0af1c3fd2e1072cb8d6612c263db69d71",
+        "audit": {
+          "question": "The 3.503sigma high-z eROSITA sigma_X excess remains >=3 sigma after the same conservative five-bin Sidak correction.",
+          "dataset_stack": "eROSITA five-bin S8/sigma_X canonical summaries",
+          "key_metrics": "local=3.503σ; Sidak5=3.049σ; p_global=.002298",
+          "provenance": "campaign=PEER-KILL-BATTERY-20260816-1940-BRT-7H;qhash=29c4ef39edacd860a0483d4336ba3046dc43be9508f286ab1e3e066d0462e439;config=de47f1a7694d71035622b9ff76b887ce8637c4089b9fe93d4658ac8b93b9b8ca;input=ec983d713afcc76823d4e25346b5c961193df25ced00ec47fd22c234c3a7f3f2;output=6ef7b10c418f1c5a0a10f4557595627ca7ceba73e856eee4471a1c15803c74d9;aggregate=73163412a9dc7e72f5448509a36babf9eecf5802131326de2296e455f0379f55",
+          "evidence_class": "CANONICAL_DERIVED_TEST",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-KILL26-D2-2502",
+            "fields": {
+              "terminal_bundle": "local=3.503σ; Sidak5=3.049σ; p_global=.002298; The high-z sigma_X nuisance shift remains just above 3σ under the same conservative five-bin correction, outlasting the cosmological S8 step.; output=6ef7b10c418f1c5a0a10f4557595627ca7ceba73e856eee4471a1c15803c74d9; artifact=1wamBfXN2g0GnVkGOIvMiuDJec7-Wl3XhgdSL_Qu_1Ps; aggregate=73163412a9dc7e72f5448509a36babf9eecf5802131326de2296e455f0379f55",
+              "terminal_status": "HYPOTHESIS_SURVIVES"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "The high-z sigma_X nuisance shift remains just above 3σ under the same conservative five-bin correction, outlasting the cosmological S8 step.",
+          "notes": "CLAIM_BOUNDARY=Summary-level five-bin trial correction; no native eRASS1 covariance.; PEER_NOT_RELEVANT",
+          "last_verified": "2026-08-16 19:45 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-UCP26-003",
+      "frontier_ids": [
+        "crescimento-s8"
+      ],
+      "title": "eRASS1 exige evolução física independente?",
+      "question": "Does eROSITA require a distinct physical redshift-growth coordinate after nuisance uncertainty?",
+      "verdict": "REFUTED",
+      "meaning": "A hierarquia comprimida não exige uma coordenada física independente de evolução do crescimento após nuisance. A likelihood nativa permanece necessária.",
+      "limitations": "No full native eRASS1 likelihood claim.",
+      "dataset": "Terminal LTCT v0.2 compressed hierarchy",
+      "next_gate": "Exact native eRASS1 likelihood remains decisive.",
+      "source_url": "https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-GROWTH-LSS/tests.jsonl",
+        "row_sha256": "1f42b731a4459aa7b74245d890a1133ad60711ee4c10776285aa3442ffb5c56d",
+        "audit": {
+          "question": "Does eROSITA require a distinct physical redshift-growth coordinate after nuisance uncertainty?",
+          "dataset_stack": "Terminal LTCT v0.2 compressed hierarchy",
+          "key_metrics": "LTCT v0.2: AIC_z=5.945458 vs AIC_BX=4.305749; median I_joint=.270914; P(I<.5)=.715205; composite killed",
+          "provenance": "campaign=PEER-MOND-UCP-20260816-1455-BRT; qhash=6936a253d1b477c6b4c5f0df53f32b1988f716399c393f56b2d449d609116a56; output=ca58186a82ff73d8077a25bbdafe1820fe5adc215deefbe4ce3b3bdcef6fc517; payload=8c0ad9c4a85453679dfbdde7ab5362513264a00d5e5cd412a4b44f880672dfa5",
+          "evidence_class": "CANONICAL_DERIVED_TEST",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-UCP26-003",
+            "fields": {
+              "terminal_bundle": "LTCTv02 AICz=5.945458 AICBX=4.305749 I=.270914 P(I<.5)=.715205; output=ca58186a82ff73d8077a25bbdafe1820fe5adc215deefbe4ce3b3bdcef6fc517; artifact=https://docs.google.com/document/d/1ZKU1Yb94_VZM74nFN2fqGy59BQC6_0c5fOiF-FOgTL0",
+              "terminal_status": "HYPOTHESIS_KILLED"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Physical z-growth coordinate is not independently required at summary level.",
+          "notes": "No full native eRASS1 likelihood claim.",
+          "last_verified": "2026-08-16 15:04 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-MEGA26-HCB-SKYSCALE-LEE-053",
+      "frontier_ids": [
+        "lcdm-geometria",
+        "estrutura-grande-escala"
+      ],
+      "title": "O padrão HCB sobrevive à busca global?",
+      "question": "Does HCB survive free sky-center and angular-scale look-elsewhere?",
+      "verdict": "REFUTED",
+      "meaning": "A busca livre por centro e escala angular remove a significância global do padrão HCB. Um padrão local não viola o princípio cosmológico.",
+      "limitations": "Backfilled.",
+      "dataset": "Official 542-GRB catalogue",
+      "next_gate": "Physical dense-tracer connectivity only if local enrichment is studied.",
+      "source_url": null,
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-MEGASTRUCTURES/tests.jsonl",
+        "row_sha256": "21b1bc77f8863268bc83337aeab299959d70e6b55e4e6edd17f7c8e41dc38b41",
+        "audit": {
+          "question": "Does HCB survive free sky-center and angular-scale look-elsewhere?",
+          "dataset_stack": "Official 542-GRB catalogue",
+          "key_metrics": "542 centers; radii 20–65° step 5°; best r=40°; 100,000 nulls; p_global=0.2203178",
+          "provenance": "Fresh 100k footprint-preserving nulls.",
+          "evidence_class": "FRESH_FOOTPRINT_PRESERVING_NULL",
+          "latest_result_envelope": null,
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "GLOBAL_FAIL for free HCB discovery.",
+          "notes": "Backfilled.",
+          "last_verified": "2026-08-25 BRT"
+        }
+      }
+    },
+    {
+      "id": "T-KILL26-D7-801",
+      "frontier_ids": [
+        "cmb-primordial"
+      ],
+      "title": "A anomalia se reproduz em polarização?",
+      "question": "Planck PR4 HPA independently >2σ in T and E",
+      "verdict": "REFUTED",
+      "meaning": "A anomalia de temperatura HPA não aparece de forma independente acima de 2σ na polarização E.",
+      "limitations": "DETERMINISTIC_DERIVATION; PEER_NOT_RELEVANT; no global LEE",
+      "dataset": "Sanyal et al. arXiv:2411.15786 + Gimeno-Amo et al. arXiv:2306.14880",
+      "next_gate": "Matched masks/statistic and full look-elsewhere treatment.",
+      "source_url": "https://docs.google.com/document/d/1v9ogAhW-mvDhQ2cfGFEBAb5FVxXsBn6z8SQqSeXKP14/edit",
+      "provenance": {
+        "origin": "TOWER_V06",
+        "archive_file_id": "1wRf616_lGjFzPE3fGK7AjFSASHwt51sP",
+        "path": "campaigns/CAMP-CMB-ANOMALIES/tests.jsonl",
+        "row_sha256": "e426ec97cb6c4e4389be544a4954e8d4a30b0223d18e7d2ea3f73479de528cc7",
+        "audit": {
+          "question": "Planck PR4 HPA independently >2σ in T and E",
+          "dataset_stack": "Sanyal et al. arXiv:2411.15786 + Gimeno-Amo et al. arXiv:2306.14880",
+          "key_metrics": "T add-one p=0.001664→2.94σ; E p=0.028→1.91σ",
+          "provenance": "qhash=3a6b686158465419b990941448e44691335528a509436780f1e52cbb43972840; output=867a47edb7a9ce344ba482df6008257d6e74b47593cbfd7f4d36dacf34128796",
+          "evidence_class": "CANONICAL_DERIVED_TEST",
+          "latest_result_envelope": {
+            "envelope_id": "ENV-T-KILL26-D7-801-1615",
+            "fields": {
+              "terminal_json": "{\"status\":\"HYPOTHESIS_KILLED\",\"T_Z\":2.93572,\"E_Z\":1.91104,\"output\":\"867a47edb7a9ce344ba482df6008257d6e74b47593cbfd7f4d36dacf34128796\"}"
+            }
+          },
+          "status": "COMPLETE_VALIDATED",
+          "claim_impact": "Temperature anomaly is not independently >2σ in E polarization.",
+          "notes": "DETERMINISTIC_DERIVATION; PEER_NOT_RELEVANT; no global LEE",
+          "last_verified": "2026-08-15 16:30 BRT"
+        }
+      }
+    }
+  ]
+}
