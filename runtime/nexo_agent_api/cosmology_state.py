@@ -73,7 +73,7 @@ def build_cosmology_state(root: Path, tests: list[dict], campaigns: list[dict], 
     overrides = {f['id']: f for f in canonical if f.get('id')}
     campaign_ids = {str(c.get('campaign_id') or c.get('id')) for c in campaigns}
     for source in baseline.get('frontiers', []):
-        front = {k: source[k] for k in ('id', 'title', 'state', 'summary', 'literature_baseline', 'confidence', 'qualification', 'open_questions', 'next_discriminants') if k in source}
+        front = {k: source[k] for k in ('id', 'title', 'state', 'summary', 'short_summary', 'literature_baseline', 'confidence', 'qualification', 'open_questions', 'next_discriminants') if k in source}
         pattern = re.compile(source.get('match_pattern', r'(?!)'), re.I)
         material_pattern = re.compile(source.get('material_test_pattern', r'(?!)'))
         historical_ids = {e['id'] for e in history if front['id'] in e['frontier_ids']}
@@ -114,6 +114,7 @@ def build_cosmology_state(root: Path, tests: list[dict], campaigns: list[dict], 
                           and override.get('state') in LABELS and len(signatures) >= 2
                           and set(refs).issubset(eligible) and bool(override.get('summary')))
         if valid_override:
+            front['short_summary'] = override.get('short_summary') or override['summary']
             for key in ('state', 'summary', 'why', 'qualification', 'confidence'):
                 if key in override:
                     front[key] = override[key]

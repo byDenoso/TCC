@@ -22,7 +22,8 @@
       "next_discriminants": [
         "Testes de geometria e isotropia com seleção e volume realistas."
       ],
-      "match_pattern": "homogene|isotrop|curvature|curvatura|principle"
+      "match_pattern": "homogene|isotrop|curvature|curvatura|principle",
+      "short_summary": "ΛCDM descreve bem o Universo em larga escala; anomalias locais não estabelecem violações globais."
     },
     {
       "id": "energia-escura",
@@ -42,7 +43,8 @@
       "material_test_pattern": "^(?:CONTEST-)?(?:FAM-DE-BAO-TRACERS-GRUPOS-TRES-FAMILIAS|FAM-DE-PRIOR-BANDS-P3-PRIOR-ALTO|FAM-DE-REDSHIFT-BANDS-P-P2-CORTE-03-OM315)(?:-[0-9]+)?$",
       "context_test_ids": [
         "DE26-021-REDSHIFT-LEVERAGE-JACKKNIFE"
-      ]
+      ],
+      "short_summary": "Os dados permitem ΛCDM, mas combinações DESI+CMB+supernovas mantêm preferência por evolução temporal."
     },
     {
       "id": "h0",
@@ -58,7 +60,8 @@
       "next_discriminants": [
         "Distâncias e velocidades locais independentes; sirenes padrão e comparação de âncoras."
       ],
-      "match_pattern": "\\bh0\\b|hubble|local.void|distance.ladder"
+      "match_pattern": "\\bh0\\b|hubble|local.void|distance.ladder",
+      "short_summary": "Inferências locais e cosmológicas da expansão continuam discrepantes."
     },
     {
       "id": "crescimento-s8",
@@ -74,7 +77,8 @@
       "next_discriminants": [
         "Likelihood nativa eRASS1 com seleção e calibração de massa; comparação independente com lentes fracas."
       ],
-      "match_pattern": "s8|growth|crescimento|erosita|erass|mass.observable"
+      "match_pattern": "s8|growth|crescimento|erosita|erass|mass.observable",
+      "short_summary": "A discrepância histórica entre lentes fracas e CMB está enfraquecendo; seleção e calibração ainda importam."
     },
     {
       "id": "materia-escura",
@@ -90,7 +94,8 @@
       "next_discriminants": [
         "Supressão de potência e estrutura em pequenas escalas com controles bariônicos e sondas independentes."
       ],
-      "match_pattern": "dark.matter|matéria.escura|materia.escura|non.cdm|warm.dark|self.interact"
+      "match_pattern": "dark.matter|matéria.escura|materia.escura|non.cdm|warm.dark|self.interact",
+      "short_summary": "A existência de matéria escura é sólida; sua natureza permanece aberta."
     },
     {
       "id": "neutrinos",
@@ -106,7 +111,8 @@
       "next_discriminants": [
         "Inferência conjunta de massa de neutrinos, energia escura e crescimento em modelos comparáveis."
       ],
-      "match_pattern": "neutrino|\\bmnu\\b|massa.*neutr"
+      "match_pattern": "neutrino|\\bmnu\\b|massa.*neutr",
+      "short_summary": "Limites cosmológicos se aproximam do mínimo das oscilações, com forte dependência do modelo."
     },
     {
       "id": "cmb-primordial",
@@ -122,7 +128,8 @@
       "next_discriminants": [
         "Estatísticas congeladas, correção pelo espaço de busca e confirmação em polarização independente."
       ],
-      "match_pattern": "primordial|inflation|cmb|large.scale.*anomal|low.power"
+      "match_pattern": "primordial|inflation|cmb|large.scale.*anomal|low.power",
+      "short_summary": "Anomalias de grande escala são fracas e sensíveis ao espaço de busca; não estabelecem nova física."
     },
     {
       "id": "estrutura-grande-escala",
@@ -138,7 +145,8 @@
       "next_discriminants": [
         "Calibração de todo o pipeline de descoberta em mocks com a seleção observacional."
       ],
-      "match_pattern": "megastruct|megastrut|giant.ring|big.ring|large.scale.structure|galaxy.*distribution"
+      "match_pattern": "megastruct|megastrut|giant.ring|big.ring|large.scale.structure|galaxy.*distribution",
+      "short_summary": "A formação de estrutura em ΛCDM é bem-sucedida; padrões extremos exigem seleção e mocks realistas."
     }
   ]
 }
