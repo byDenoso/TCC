@@ -966,13 +966,31 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
             continue
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
+    from .frontier import PRIORITY_RANK
+    learned = (_read(root, discovery.LEARNING_DOC).get("rules")) or []
+    roadmap_rows = _read(root, "indexes/active-roadmaps.json").get("items") or []
+    roadmaps = {str(r.get("roadmap_id")): r for r in roadmap_rows if isinstance(r, dict)}
+
+    def rank(test):
+        roadmap = roadmaps.get(str(test.get("roadmap_id"))) or {}
+        # Closed-roadmap contests legitimately finish verification of old
+        # results. Retain them, but prioritize explicit direction and active
+        # objectives before ordinary work on closed/unknown objectives.
+        return (test.get("origin_kind") != "DENER_DIRECTED",
+                str(roadmap.get("state") or "").upper() != "ACTIVE",
+                PRIORITY_RANK.get(str(roadmap.get("priority") or test.get("priority") or "P1").upper(), 9),
+                PRIORITY_RANK.get(str(test.get("priority") or "P1").upper(), 9),
+                not bool(test.get("contests_test_id")),
+                -discovery.information_value(test, learned), str(test.get("created_at") or ""), str(test.get("id")))
+
+    # Rank globally before the bounded recipe groups: alphabetical recipe names
+    # must never consume every slot ahead of a higher-priority objective.
+    groups = [(recipe, sorted(tests, key=rank)) for recipe, tests in by_recipe.items()]
+    groups.sort(key=lambda group: (rank(group[1][0]), group[0]))
     items = []
-    for recipe, tests in sorted(by_recipe.items()):
+    for recipe, tests in groups:
         if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
-        learned = (_read(root, discovery.LEARNING_DOC).get("rules")) or []
-        tests = sorted(tests, key=lambda t: (t.get("origin_kind") != "DENER_DIRECTED", str(t.get("priority") or "P1"),
-                                             -discovery.information_value(t, learned), str(t.get("id"))))
         # Batch policy: up to 20 per battery, but with 20 or fewer ready it sends 75% (20 -> 15), always at least 5 when there are 5.
         take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
         tests = tests[:take]
@@ -1886,6 +1904,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
     }
     status["execution_integrity"] = integrity.public_execution_summary(root, tests)
     if not public:
+        from .execution_recovery import status as recovery_status
+        status["execution_recovery"] = recovery_status(root)
         status["emergence"] = _emergence(root, tests, genome, now)
     if public:
         status.pop("arm_for_this_run")

@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from . import AgentService, TowerAgentIssue, materialize_role_views
 from runtime.nexo_agent_api.tower_paths import entity_path
@@ -250,6 +251,219 @@ class HandoffProtocolTests(unittest.TestCase):
         path.write_text(json.dumps(work_v5))
 
         self.assertEqual(service.inbox_for("LEARNER"), [])
+
+
+class RecoveryOwnershipTests(unittest.TestCase):
+    def setUp(self):
+        HandoffProtocolTests.setUp(self)
+        self.service = AgentService(self.root)
+        self.work = {"id": "WORK::RECOVERY", "entity_version": 1, "kind": "DEPENDENCY_RECOVERY",
+                     "status": "BLOCKED", "owner_role": "ADVISOR", "test_id": "TEST::RECOVERY",
+                     "recovery": {"policy": "EXECUTION_RECOVERY_V1", "fingerprint": "frozen-inputs",
+                                  "target_role": "EXECUTOR", "ownership_state": "ASSIGNED_UNACCEPTED",
+                                  "reasons": ["RECIPE_BINDING_MISSING"], "validation": {"eligible": False}}}
+        self.work_path = entity_path(self.root, "work", self.work["id"])
+        self.work_path.write_text(json.dumps(self.work))
+        self.envelope = {"request_id": "REQ-RECOVERY-1", "from_role": "ADVISOR", "to_role": "EXECUTOR",
+                         "handoff_type": "BLOCKER_RECOVERY", "entity_ref": self.work["id"], "thread_id": "THR-RECOVERY",
+                         "summary_plain": "O dado público necessário ainda precisa ser vinculado.",
+                         "why_it_matters": "A recuperação permite executar o desenho já congelado.",
+                         "next_action": "Validar a recuperação sem alterar a definição científica."}
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def create(self):
+        return self.service.emit_handoff(**self.envelope)
+
+    def current_work(self):
+        return json.loads(self.work_path.read_text())
+
+    def change_work(self, **changes):
+        work = self.current_work()
+        self.service.mutate("work", work["id"], expected_version=work["entity_version"], changes=changes,
+                            writer_role="EXECUTOR", event_type="RECOVERY_TEST_CHANGE")
+
+    def complete_work(self):
+        self.change_work(status="DONE")
+
+    def prepare_ready_test(self, status="READY"):
+        from .evolution import prereg_hash
+        from .scientific_integrity import FROZEN
+
+        recipes = self.root / "recipes"
+        (recipes / "smoke").mkdir(parents=True)
+        (recipes / "recovery_test.py").write_text("value = 1\n")
+        (recipes / "smoke/recovery_test.json").write_text("{}")
+        test = {key: "frozen " + key for key in FROZEN}
+        test.update(id=self.work["test_id"], entity_version=3, status=status, recipe="recovery_test", recipe_params={},
+                    frozen_at="2026-09-29T00:00:00Z", data_binding={"status": "BOUND", "inputs": [
+                        {"name": "data", "kind": "generated", "generator": "fixture", "seed": 1, "sha256": "a" * 64}]})
+        test["prereg_hash"] = prereg_hash(test["id"], test)
+        path = entity_path(self.root, "test", test["id"])
+        path.parent.mkdir(parents=True)
+        path.write_text(json.dumps(test))
+        self.addCleanup(patch.stopall)
+        patch.dict("os.environ", {"NEXO_RECIPE_ROOT": str(recipes)}).start()
+        return path
+
+    def test_create_keeps_owner_and_only_owner_can_offer(self):
+        created = self.create()
+        self.assertEqual(self.current_work(), self.work)
+        self.assertEqual(created["recovery_fingerprint"], "frozen-inputs")
+        self.envelope.update(request_id="REQ-NONOWNER", from_role="LEARNER")
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.create()
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_SENDER_NOT_OWNER")
+
+    def test_creation_requires_current_recovery_contract_and_target(self):
+        self.envelope["to_role"] = "LEARNER"
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.create()
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_TARGET_MISMATCH")
+        self.work_path.unlink()
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.create()
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_WORK_REQUIRED")
+
+    def test_ack_changes_owner_once_with_canonical_acceptance(self):
+        created = self.create()
+        ack = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        work = self.current_work()
+        self.assertEqual(work["owner_role"], "EXECUTOR")
+        self.assertEqual(work["entity_version"], 2)
+        self.assertEqual(work["recovery"]["ownership_state"], "ACCEPTED")
+        self.assertEqual(work["recovery"]["acceptance_source"], ack["acceptance_source"])
+        self.assertEqual(ack["acceptance_source"]["source_entity_version"], 1)
+        self.assertEqual(ack["acceptance_source"]["handoff_id"], created["handoff_id"])
+        self.assertEqual(ack["work_envelope"], work)
+        replay = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(replay["event_id"], ack["event_id"])
+        self.assertEqual(self.current_work()["entity_version"], 2)
+        self.assertEqual(self.create()["event_id"], ack["event_id"])
+
+    def test_ack_requires_recipient_but_accepts_refreshed_diagnostics(self):
+        created = self.create()
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="LEARNER")
+        self.assertEqual(exc.exception.code, "HANDOFF_WRITER_MISMATCH")
+        self.change_work(recovery={**self.work["recovery"], "validation": {"eligible": False, "checked_at": "later"}})
+        self.assertEqual(self.service.inbox_for("EXECUTOR")[0]["state"], "PENDING")
+        ack = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(self.current_work()["owner_role"], "EXECUTOR")
+        self.assertEqual(ack["acceptance_source"]["source_entity_version"], 2)
+        self.assertEqual(self.current_work()["recovery"]["validation"]["checked_at"], "later")
+
+    def test_ack_uses_existing_entity_compare_and_swap(self):
+        created = self.create()
+        with patch.object(self.service, "mutate", side_effect=TowerAgentIssue("WRITE_CONFLICT_RETRY_REQUIRED", "race")) as mutate:
+            with self.assertRaises(TowerAgentIssue):
+                self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(mutate.call_args.kwargs["expected_version"], 1)
+        self.assertEqual(self.current_work(), self.work)
+        self.assertEqual(self.service.inbox_for("EXECUTOR")[0]["state"], "PENDING")
+
+    def test_actual_concurrent_change_is_rejected_by_entity_cas(self):
+        created = self.create()
+        mutate = self.service.mutate
+
+        def concurrent_change(*args, **kwargs):
+            mutate("work", self.work["id"], expected_version=1, changes={"owner_role": "LEARNER"},
+                   writer_role="ADVISOR", event_type="CONCURRENT_TRANSFER")
+            return mutate(*args, **kwargs)
+
+        with patch.object(self.service, "mutate", side_effect=concurrent_change):
+            with self.assertRaises(TowerAgentIssue) as exc:
+                self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "WRITE_CONFLICT_RETRY_REQUIRED")
+        self.assertEqual(self.current_work()["owner_role"], "LEARNER")
+        self.assertEqual(self.current_work()["recovery"]["ownership_state"], "ASSIGNED_UNACCEPTED")
+
+    def test_ack_retry_recovers_event_failure_without_second_owner_mutation(self):
+        from . import handoff
+
+        created = self.create()
+        with patch.object(handoff, "_write_event", side_effect=OSError("event write failed")):
+            with self.assertRaises(OSError):
+                self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(self.current_work()["entity_version"], 2)
+        recovered = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(recovered["state"], "ACK")
+        self.assertEqual(self.current_work()["entity_version"], 2)
+
+    def test_done_requires_ack_terminal_work_and_live_evidence(self):
+        created = self.create()
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_ACK_REQUIRED")
+        self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_WORK_NOT_COMPLETE")
+        self.complete_work()
+        # A bare terminal label and cached validation never constitute evidence.
+        work = self.current_work()
+        self.change_work(recovery={**work["recovery"], "validation": {"eligible": True}})
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_EVIDENCE_REQUIRED")
+        self.assertEqual(self.service.inbox_for("EXECUTOR")[0]["state"], "ACK")
+        self.prepare_ready_test()
+        done = self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertTrue(done["completion_evidence"]["validation"]["eligible"])
+        self.assertEqual(done["completion_evidence"]["test_version"], 3)
+        self.assertEqual(self.service.inbox_for("EXECUTOR"), [])
+
+    def test_done_ignores_reservation_but_never_frozen_science_validation(self):
+        created = self.create()
+        self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.complete_work()
+        path = self.prepare_ready_test(status="QUEUED")
+        original = path.read_bytes()
+        test = json.loads(original)
+        test["question"] = "changed after freezing"
+        path.write_text(json.dumps(test))
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertIn("FROZEN_DESIGN_CHANGED", exc.exception.details["validation"]["reasons"])
+        path.write_bytes(original)
+        self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(path.read_bytes(), original)
+
+    def test_failed_preserves_owner_before_and_after_acceptance(self):
+        created = self.create()
+        failed = self.service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")
+        self.assertFalse(failed["route_failure"]["accepted"])
+        self.assertEqual(self.current_work(), self.work)
+        self.envelope["request_id"] = "REQ-RECOVERY-RETRY"
+        created = self.create()
+        self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        before = self.current_work()
+        failed = self.service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")
+        self.assertTrue(failed["route_failure"]["accepted"])
+        self.assertEqual(failed["route_failure"]["owner_role"], "EXECUTOR")
+        self.assertEqual(self.current_work(), before)
+
+    def test_changed_owner_or_recovery_contract_cannot_be_masked_by_transition(self):
+        created = self.create()
+        self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.change_work(owner_role="LEARNER")
+        for state in ("ACK", "DONE", "FAILED"):
+            with self.subTest(state=state), self.assertRaises(TowerAgentIssue) as exc:
+                self.service.transition_handoff(created["handoff_id"], state=state, writer_role="EXECUTOR")
+            self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_OWNER_CHANGED")
+        self.change_work(owner_role="EXECUTOR", recovery={**self.current_work()["recovery"], "fingerprint": "new-scope"})
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_CONTRACT_CHANGED")
+
+    def test_pending_route_rejects_changed_target_test_even_if_fingerprint_was_not_updated(self):
+        created = self.create()
+        self.change_work(test_id="TEST::OTHER")
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_CONTRACT_CHANGED")
+        self.assertEqual(self.current_work()["owner_role"], "ADVISOR")
 
 
 if __name__ == "__main__":

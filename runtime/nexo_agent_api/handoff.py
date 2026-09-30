@@ -17,6 +17,9 @@ ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
 TERMINAL_WORK_STATES = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED"}
 INBOX_LIMIT = 5
+RECOVERY_HANDOFF = "BLOCKER_RECOVERY"
+RECOVERY_POLICY = "EXECUTION_RECOVERY_V1"
+RECOVERY_COMPLETE_STATES = {"DONE", "VERIFIED", "COMPLETED", "CLOSED_VERIFIED"}
 
 _SOURCE_LINK_FIELDS = {
     "label",
@@ -207,7 +210,74 @@ def _work_envelope(self, entity_ref: str) -> dict | None:
     return None
 
 
+def _recovery_work(self, entity_ref: str) -> dict:
+    """Recovery ownership is bound to an existing canonical WORK, never an index."""
+    if not re.fullmatch(r"[A-Za-z0-9_.:-]+", entity_ref):
+        raise TowerAgentIssue("HANDOFF_RECOVERY_WORK_REQUIRED", "A canonical recovery WORK is required.")
+    path = entity_path(self.root, "work", entity_ref)
+    try:
+        work = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_WORK_REQUIRED", "A canonical recovery WORK is required.") from exc
+    recovery = work.get("recovery") if isinstance(work, dict) else None
+    if (not isinstance(work, dict) or work.get("id") != entity_ref
+            or work.get("kind") != "DEPENDENCY_RECOVERY" or not work.get("test_id")
+            or not isinstance(recovery, dict) or recovery.get("policy") != RECOVERY_POLICY
+            or not recovery.get("fingerprint")):
+        raise TowerAgentIssue("HANDOFF_RECOVERY_CONTRACT_INVALID", "The recovery WORK has no current recovery contract.")
+    return work
+
+
+def _recovery_context(self, event: dict) -> tuple[dict, dict | None]:
+    work = _recovery_work(self, str(event.get("entity_ref") or ""))
+    recovery = work["recovery"]
+    if (recovery.get("fingerprint") != event.get("recovery_fingerprint")
+            or recovery.get("target_role") != event.get("to_role")
+            or recovery.get("route_generation") != ((event.get("work_envelope") or {}).get("recovery") or {}).get("route_generation")
+            or work.get("test_id") != (event.get("work_envelope") or {}).get("test_id")):
+        raise TowerAgentIssue("HANDOFF_RECOVERY_CONTRACT_CHANGED", "The recovery route changed after this handoff.")
+    source = recovery.get("acceptance_source")
+    accepted = (isinstance(source, dict) and source.get("handoff_id") == event.get("handoff_id")
+                and source.get("request_id") == event.get("request_id")
+                and source.get("from_role") == event.get("from_role")
+                and source.get("to_role") == event.get("to_role")
+                and recovery.get("ownership_state") == "ACCEPTED")
+    expected_owner = event.get("to_role") if accepted else event.get("from_role")
+    if str(work.get("owner_role") or "").upper() != expected_owner:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_OWNER_CHANGED", "The canonical owner no longer matches this recovery route.")
+    if event.get("state") in {"ACK", "DONE"} and not accepted:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_ACCEPTANCE_MISSING", "The canonical recovery acceptance is missing.")
+    return work, source if accepted else None
+
+
+def _recovery_completion(self, work: dict) -> dict:
+    if str(work.get("status") or "").upper() not in RECOVERY_COMPLETE_STATES:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_WORK_NOT_COMPLETE", "The recovery WORK is not complete.")
+    test_id = str(work.get("test_id") or "")
+    if not re.fullmatch(r"[A-Za-z0-9_.:-]+", test_id):
+        raise TowerAgentIssue("HANDOFF_RECOVERY_EVIDENCE_REQUIRED", "The recovery TEST reference is invalid.")
+    from . import scientific_integrity as integrity
+
+    try:
+        test = integrity.entity(self.root, test_id)
+        validation = integrity.readiness(self.root, test, ignore_reservation=True) if test else {}
+    except (OSError, ValueError, TypeError) as exc:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_EVIDENCE_REQUIRED", "Recovery evidence could not be validated.") from exc
+    if validation.get("eligible") is not True:
+        raise TowerAgentIssue("HANDOFF_RECOVERY_EVIDENCE_REQUIRED", "The recovery TEST is not currently eligible.",
+                              {"test_id": test_id, "validation": validation})
+    return {"test_id": test_id, "test_version": test.get("entity_version"), "validation": validation}
+
+
 def _handoff_is_stale(self, event: dict) -> bool:
+    if event.get("handoff_type") == RECOVERY_HANDOFF:
+        try:
+            _recovery_context(self, event)
+        except TowerAgentIssue:
+            return True
+        # A completed recovery still needs its accepted recipient to close the
+        # handoff after checking the current TEST evidence.
+        return False
     entity_ref = event.get("entity_ref")
     if not entity_ref:
         return False
@@ -293,6 +363,14 @@ def emit_handoff(
 
     handoff_id = "HO-" + hashlib.sha256(request_id.encode("utf-8")).hexdigest()[:32]
     envelope = _work_envelope(self, immutable["entity_ref"])
+    if immutable["handoff_type"] == RECOVERY_HANDOFF:
+        envelope = _recovery_work(self, immutable["entity_ref"])
+        if str(envelope.get("owner_role") or "").upper() != sender:
+            raise TowerAgentIssue("HANDOFF_RECOVERY_SENDER_NOT_OWNER", "Only the canonical owner may offer recovery ownership.")
+        if envelope["recovery"].get("target_role") != recipient:
+            raise TowerAgentIssue("HANDOFF_RECOVERY_TARGET_MISMATCH", "The recipient must match the current recovery route.")
+        if str(envelope.get("status") or "").upper() in TERMINAL_WORK_STATES | RECOVERY_COMPLETE_STATES:
+            raise TowerAgentIssue("HANDOFF_RECOVERY_WORK_TERMINAL", "Terminal recovery WORK cannot be reassigned.")
     payload = {
         **immutable,
         "handoff_id": handoff_id,
@@ -308,6 +386,8 @@ def emit_handoff(
         "material": True,
         "opened_at": _now(),
     }
+    if immutable["handoff_type"] == RECOVERY_HANDOFF:
+        payload["recovery_fingerprint"] = envelope["recovery"]["fingerprint"]
     return _write_event(self.root, payload)
 
 
@@ -337,6 +417,9 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     if writer != current.get("to_role"):
         raise TowerAgentIssue("HANDOFF_WRITER_MISMATCH", "Only the recipient can transition a handoff.", {"writer_role": writer})
     current_state = str(current.get("state", ""))
+    recovery_work, acceptance = (None, None)
+    if current.get("handoff_type") == RECOVERY_HANDOFF:
+        recovery_work, acceptance = _recovery_context(self, current)
     if current_state == target:
         return current
     allowed = {"PENDING": {"ACK", "DONE", "FAILED"}, "ACK": {"DONE", "FAILED"}}
@@ -349,6 +432,33 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
         "summary_plain", "why_it_matters", "next_action", "confidence_plain", "evidence_refs",
         "source_links", "opened_at",
     )}
+    if recovery_work is not None:
+        if target == "DONE" and (current_state != "ACK" or acceptance is None):
+            raise TowerAgentIssue("HANDOFF_RECOVERY_ACK_REQUIRED", "Recovery ownership must be accepted before completion.")
+        if target == "ACK" and acceptance is None:
+            if str(recovery_work.get("status") or "").upper() in TERMINAL_WORK_STATES | RECOVERY_COMPLETE_STATES:
+                raise TowerAgentIssue("HANDOFF_RECOVERY_WORK_TERMINAL", "Terminal recovery WORK cannot be accepted.")
+            acceptance = {"handoff_id": handoff_id, "request_id": current["request_id"],
+                          "from_role": current["from_role"], "to_role": writer,
+                          "accepted_at": _now(), "source_entity_version": recovery_work["entity_version"]}
+            changes = {"owner_role": writer, "recovery": {**recovery_work["recovery"],
+                       "ownership_state": "ACCEPTED", "acceptance_source": acceptance}}
+            receipt = self.mutate("work", current["entity_ref"], expected_version=recovery_work["entity_version"],
+                                  changes=changes, writer_role=writer, event_type="BLOCKER_RECOVERY_ACCEPTED")
+            if not receipt.get("accepted") or receipt.get("readback") != "PASS":
+                raise TowerAgentIssue("READBACK_FAILED", "Recovery acceptance mutation was not confirmed.")
+            recovery_work, recorded_acceptance = _recovery_context(self, current)
+            if recorded_acceptance != acceptance:
+                raise TowerAgentIssue("READBACK_FAILED", "Recovery acceptance readback did not match.")
+        if target == "DONE":
+            payload["completion_evidence"] = _recovery_completion(self, recovery_work)
+        if target == "FAILED":
+            payload["route_failure"] = {"owner_role": recovery_work["owner_role"],
+                                        "failed_by": writer, "failed_at": _now(),
+                                        "accepted": acceptance is not None}
+        payload.update({"recovery_fingerprint": current["recovery_fingerprint"],
+                        "acceptance_source": acceptance, "entity_version": recovery_work["entity_version"],
+                        "work_envelope": recovery_work, "hydration_required": False})
     payload.update({"state": target, "event_type": f"HANDOFF_{target}", "writer_role": writer, "material": True})
     return _write_event(self.root, payload)
 

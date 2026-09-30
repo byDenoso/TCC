@@ -156,6 +156,34 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
                 report["rejected"].append({"item": "incident-reconcile", "reason": incident_failed[0].get("issue")})
             else:
                 report["reconciled"] = [r.get("document") or r.get("entity_name") for r in incident_receipts]
+        # Readiness is an ongoing invariant, including tests created before the
+        # admission gate. Commit its repair WORK and private route together.
+        from . import execution_recovery
+        recovery_savepoint = (root / LIVE_TOWER_NAME).read_bytes()
+        recovery_receipts = []
+        routed = 0
+        try:
+            recovery_requests = execution_recovery.reconcile_requests(root)
+            recovery_receipts = apply_requests(root, recovery_requests)
+            if not any(not r.get("accepted", True) or r.get("issue") for r in recovery_receipts):
+                routed = execution_recovery.ensure_handoffs(root)
+        except (ValueError, TypeError, OSError, RuntimeError) as exc:
+            # One malformed legacy repair must not discard independently
+            # accepted proposals or acknowledge an uncommitted repair.
+            recovery_receipts.append({"accepted": False, "issue": {"code": "EXECUTION_RECOVERY_FAILED", "error_type": type(exc).__name__}})
+        recovery_failed = [r for r in recovery_receipts if not r.get("accepted", True) or r.get("issue")]
+        report["receipts"].extend(recovery_receipts)
+        if recovery_failed:
+            shutil.rmtree(root)
+            root, _ = materialize_live_tower(recovery_savepoint, root)
+            for receipt in recovery_receipts:
+                receipt["rolled_back"] = True
+            report["rejected"].append({"item": "execution-recovery", "reason": recovery_failed[0].get("issue")})
+        else:
+            if routed:
+                from .live_tower import publish_live_tower
+                publish_live_tower(root)
+            report["execution_recovery"] = {"mutations": len(recovery_receipts), "handoffs_created": routed}
         packed = (root / LIVE_TOWER_NAME).read_bytes()
     after = verify_live_tower(read_live_tower_bytes(packed))
     report["after"] = after
