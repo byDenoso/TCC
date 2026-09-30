@@ -3,11 +3,12 @@ import json
 import os
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 from runtime.nexo_agent_api import gpt_writer
-from runtime.nexo_agent_api.evolution import _review_queue
+from runtime.nexo_agent_api.evolution import _emergence, _review_queue
 
 
 class ReviewClockTest(unittest.TestCase):
@@ -22,6 +23,28 @@ class ReviewClockTest(unittest.TestCase):
             {"id": "archived", "state": "ARCHIVED"},
         ]
         self.assertEqual(_review_queue(rows)["referee_1"], ["bad", "missing", "old", "new"])
+
+
+class WatchdogActionabilityTest(unittest.TestCase):
+    def test_quiet_science_is_only_flagged_when_the_owner_has_work(self):
+        now = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
+        genome = {"genes": [], "fitness": [], "lineage": []}
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            full_reserve = [{"id": f"ready-{i}", "status": "READY"} for i in range(30)]
+            stale = {row["loop"] for row in _emergence(root, full_reserve, genome, now)["stale"]}
+            self.assertNotIn("new_hypothesis", stale)
+            self.assertNotIn("contest", stale)
+
+            low_reserve = full_reserve[:-1]
+            stale = {row["loop"] for row in _emergence(root, low_reserve, genome, now)["stale"]}
+            self.assertIn("new_hypothesis", stale)
+
+            reviewable_positive = full_reserve + [{
+                "id": "positive", "status": "RESULT", "verdict": "SUPPORTED", "review_state": "PENDING_REVIEW",
+            }]
+            stale = {row["loop"] for row in _emergence(root, reviewable_positive, genome, now)["stale"]}
+            self.assertIn("contest", stale)
 
 
 class RobotPersistenceTest(unittest.TestCase):
