@@ -1,0 +1,4 @@
+{
+  "reason": "repeat canonical delivery to verify idempotency after relay recovery",
+  "stable_id_under_test": "learner-20260930t2026z-prior-pp-u3-recipe"
+}
