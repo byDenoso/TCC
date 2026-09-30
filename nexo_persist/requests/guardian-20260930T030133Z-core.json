@@ -1,0 +1,58 @@
+{
+  "stable_id": "guardian-20260930T030133Z-core",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T03:01:33Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T03:01:33Z",
+          "payload": {
+            "gap_type": "RECIPE_REVIEW",
+            "review": {
+              "spec_ref": "LEARNING_SIGNAL::GW-TCC-DCD555EA3FAD0DDF164243580C4032E0-4",
+              "verdict": "APPROVED",
+              "reasons": [
+                "Os quatro itens da revisão estão atendidos."
+              ]
+            }
+          }
+        },
+        {
+          "kind": "INTEGRITY_REPORT",
+          "source": "GUARDIAO",
+          "created_at": "2026-09-30T03:01:33Z",
+          "payload": {
+            "status": "YELLOW",
+            "counts": {
+              "tests": 327,
+              "ready": 36,
+              "running": 17,
+              "blocked_input": 3,
+              "pending_recipe_review": 4,
+              "original_positives_pending": 24,
+              "ready_dr1_attacks": 9
+            },
+            "autonomy": {
+              "robot_only_share": 1,
+              "idea_to_result_hours": null,
+              "decisive_rate": 0.46,
+              "positives_with_verdict_rate": 0.451,
+              "blocked_share": 0.079
+            },
+            "areas_with_problem": [
+              "fechamento de positivos",
+              "suporte DR1 integrado"
+            ],
+            "worst_component": "positives_with_verdict_rate",
+            "note": "Tempo ideia ao resultado indisponível no estado mais recente."
+          }
+        }
+      ]
+    }
+  }
+}
