@@ -50,12 +50,20 @@ MAX_FAMILY_NEW_PER_RUN = 10
 MAX_BATTERIES_IN_FLIGHT = 3
 RECIPE_OPEN_AFTER = 2  # consecutive recipe bugs that open a recipe's circuit
 BOARD_DOC = "evolution/board.json"
-BOARD_ROLES = {"ALL", "PITIA", "LEARNER", "EXECUTOR", "REFUTADOR", "GUARDIAO", "CONVERSA", "DENER"}
+BOARD_ROLES = {"ALL", "PITIA", "LEARNER", "EXECUTOR", "REFUTADOR", "REFEREE_1", "GUARDIAO",
+               "CONVERSA", "DENER", "ENGINEER", "SENTINEL", "ADVISOR"}
 MAX_RUNTIME_FAILURES = 2
 STALE_DRAFT_DAYS = 21
 FDR_Q = 0.10
 INCIDENTS_DOC = "evolution/incidents.json"
 MAX_BATTERY_TESTS = 20
+
+
+class NoOpRequests(list):
+    """An empty, backwards-compatible request list with an honest bounded reason."""
+    def __init__(self, reason: str):
+        super().__init__()
+        self.reason = reason
 
 
 def _read(root: Path, relative: str) -> dict[str, Any]:
@@ -213,20 +221,31 @@ def close_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
 
 # ── Refutation (Referee 1 = GPT, Referee 2 = Claude, Sentinel = world) ──────
 
-def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hypothesis_fn) -> list[dict[str, Any]]:
-    test_id = str(body.get("test_id") or "")
-    current = _entity(root, "test", test_id)
-    if current is None:
-        return []
+def contest_admission_reason(root: Path, current: dict[str, Any], source: str = "REFEREE_1") -> str | None:
     # An attack is evidence about the original test and is never itself attackable.
     if current.get("contests_test_id"):
-        return []
+        return "ATTACK_IS_NOT_REVIEW_TARGET"
     contests = list(current.get("contests") or [])
     # An inconclusive attack decided nothing: it does not use up the contest slot, or the result would stay open forever.
     decisive = [c for c in contests if str((_entity(root, "test", str(c.get("contest_test_id") or "")) or {}).get("verdict") or "").upper()
                 not in {"INCONCLUSIVE", "INCONCLUSIVO"}]
-    if len(decisive) >= MAX_CONTESTS or current.get("review_state") in {"CONFIRMED", "REFUTED"} and body.get("source") != "SENTINEL":
-        return []
+    if len(decisive) >= MAX_CONTESTS:
+        return "EXISTING_CONTEST_REQUIRES_COMPLETION"
+    if current.get("review_state") in {"CONFIRMED", "REFUTED"} and source != "SENTINEL":
+        return "REVIEW_ALREADY_CLOSED"
+    return None
+
+
+def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hypothesis_fn) -> list[dict[str, Any]]:
+    from .inbox_apply import ProposalError
+    test_id = str(body.get("test_id") or "")
+    current = _entity(root, "test", test_id)
+    if current is None:
+        raise ProposalError("CONTEST_TEST_NOT_FOUND")
+    reason = contest_admission_reason(root, current, str(body.get("source") or item.get("source") or "REFEREE_1").upper())
+    if reason:
+        return NoOpRequests(reason)
+    contests = list(current.get("contests") or [])
     requests: list[dict[str, Any]] = []
     attack = body.get("contest_test") if isinstance(body.get("contest_test"), dict) else None
     attack_id = None
@@ -320,14 +339,17 @@ def _safe(build, fallback, name: str):
         return fallback
 
 
-def _review_queue(positive: list[dict[str, Any]]) -> dict[str, list[str]]:
+def _review_queue(positive: list[dict[str, Any]], root: Path | None = None) -> dict[str, list[str]]:
     """Referee queues, oldest result first so no original waits behind newer ones."""
     candidates = sorted((t for t in positive if isinstance(t, dict) and _reviewable(t)),
                         key=lambda t: (_review_stamp(t.get("executed_at") or t.get("updated_at")), str(t.get("id") or "")))
+    first = [t for t in candidates if str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
+             or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)]
+    waiting = [t["id"] for t in first if root is not None and contest_admission_reason(root, t)]
     return {
-        "referee_1": [t["id"] for t in candidates if str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
-                      or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)],
+        "referee_1": [t["id"] for t in first if t["id"] not in waiting],
         "referee_2": [t["id"] for t in candidates if t.get("review_state") == "REFEREE1_PASSED"],
+        "waiting_on_existing_contest": waiting,
     }
 
 
@@ -601,14 +623,14 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
                         "refs": [str(r) for r in entry["refs"]][:12]})
     retire = {str(r) for r in body.get("retire") or []}
     if not entries and not retire:
-        return []
+        return NoOpRequests("NO_GROUNDED_THOUGHT_ENTRIES")
     old = _read(root, THOUGHTS_DOC).get("entries") or []
     # Retired thoughts stay in the history (nothing is deleted) but leave the public diary.
     old = [dict(e, retired=True) if e.get("id") in retire else e for e in old]
     seen = {" ".join(str(e.get("text") or "").split()).lower() for e in old}
     entries = [e for e in entries if " ".join(e["text"].split()).lower() not in seen]  # a re-sent thought is not a new one
     if not entries and not retire:
-        return []
+        return NoOpRequests("THOUGHT_ALREADY_RECORDED")
     return [_doc(THOUGHTS_DOC, {"entries": (old + entries)[-300:]}, f"REQ-THOUGHT-{_now(item)[:16]}")]
 
 
@@ -630,7 +652,9 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
         if not isinstance(entry, dict) or not str(entry.get("text") or "").strip():
             continue
         to = str(entry.get("to") or "ALL").upper().replace("Ã", "A")
-        to = to if to in BOARD_ROLES else "ALL"
+        if to not in BOARD_ROLES:
+            from .inbox_apply import ProposalError
+            raise ProposalError("BOARD_RECIPIENT_UNSUPPORTED")
         try:
             ttl = max(1, min(int(entry.get("ttl_h") or 48), 336))
         except (TypeError, ValueError):
@@ -643,13 +667,13 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
                       "private": private})
     resolve = {str(r) for r in body.get("resolve") or []}
     if not posts and not resolve:
-        return []
+        return NoOpRequests("NO_ACTIONABLE_BOARD_CONTENT")
     old = _read(root, BOARD_DOC).get("posts") or []
     old = [dict(p, resolved_at=now, resolved_by=source) if p.get("id") in resolve and not p.get("resolved_at") else p for p in old]
     seen = {(p.get("from"), p.get("to"), " ".join(str(p.get("text") or "").split()).lower()) for p in old}
     posts = [p for p in posts if (p["from"], p["to"], p["text"].lower()) not in seen]
     if not posts and not resolve:
-        return []
+        return NoOpRequests("BOARD_MESSAGE_ALREADY_RECORDED")
     return [_doc(BOARD_DOC, {"posts": (old + posts)[-300:]}, f"REQ-BOARD-{now[:16]}-{source}")]
 
 
@@ -758,6 +782,7 @@ def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
     Lives inside an already ACTIVE roadmap (no new Dener gate). The contract must be complete and the grid is frozen here,
     before any instance runs. Incomplete charters are not stored.
     """
+    from .inbox_apply import ProposalError
     family_id = re.sub(r"[^A-Za-z0-9]+", "-", str(body.get("family_id") or "")).strip("-").upper()[:40]
     recipe = str(body.get("recipe") or "").strip()
     template = body.get("template") if isinstance(body.get("template"), dict) else {}
@@ -770,10 +795,10 @@ def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
     missing = [k for k in FAMILY_CONTRACT if not template.get(k)]
     if not (family_id and re.fullmatch(r"[a-z0-9_]{2,40}", recipe) and instances and active and not missing and body.get("domain")
             and template.get("display_name")):
-        return []
+        raise ProposalError("FAMILY_ROADMAP_NOT_ACTIVE" if not active else "FAMILY_CHARTER_INCOMPLETE")
     families = dict(_read(root, FAMILIES_DOC).get("families") or {})
     if family_id in families:
-        return []  # a frozen charter is never replaced
+        return NoOpRequests("FAMILY_ALREADY_REGISTERED")  # a frozen charter is never replaced
     stop = body.get("stop") if isinstance(body.get("stop"), dict) else {}
     families[family_id] = {
         "family_id": family_id, "roadmap_id": roadmap_id, "recipe": recipe, "domain": str(body["domain"]).upper(),
@@ -856,6 +881,10 @@ def family_spawn_items(root: Path, now: datetime | None = None) -> list[dict[str
                      and f.get("close_reason") in order and _generation(fid) < MAX_FAMILY_GENERATIONS),
                     key=lambda kv: (order[kv[1]["close_reason"]], str(kv[1].get("chartered_at") or "")))
     for fid, fam in closed:
+        roadmap = _read(root, f"roadmaps/{fam.get('roadmap_id')}.json")
+        if (str(roadmap.get("status") or roadmap.get("state") or "").upper() != "ACTIVE"
+                or str((roadmap.get("charter") or {}).get("status") or "").upper() == "CLOSED"):
+            continue  # no new family after the roadmap stops; existing contests still run
         axis = "R" if fam["close_reason"] == "SUCCESS" else "P"
         child = f"{fid}-{axis}"[:40]
         if child in families or (axis == "R" and fid.endswith("-R")) or (axis == "P" and fid.endswith("-P")):
@@ -1833,16 +1862,8 @@ def _emergence(root: Path, tests: list[dict[str, Any]], genome: dict[str, Any], 
     owners = {"thought": "PITIA", "dream": "PITIA", "genome_mutation": "PITIA/LEARNER", "fitness": "GUARDIAO",
               "new_hypothesis": "LEARNER", "result": "EXECUTOR", "contest": "REFUTADOR", "decoy": "GUARDIAO"}
     ready_reserve_low = sum(1 for t in tests if str(t.get("state") or t.get("status") or "").upper() == "READY") < 30
-    contest_target = any(
-        str(t.get("verdict") or "").upper() in POSITIVE_VERDICTS
-        and not t.get("decoy")
-        and _reviewable(t)
-        and (
-            str(t.get("review_state") or "PENDING_REVIEW") in ("PENDING_REVIEW", "CONTESTED")
-            or (t.get("review_state") == "REFEREE1_PASSED" and len(t.get("contests") or []) < MAX_CONTESTS)
-        )
-        for t in tests
-    )
+    contest_target = bool(_review_queue([t for t in tests if str(t.get("verdict") or "").upper() in POSITIVE_VERDICTS
+                                        and not t.get("decoy")], root)["referee_1"])
     actionable = {"new_hypothesis": ready_reserve_low, "contest": contest_target}
     stale = [{"loop": k, "hours": v, "owner": owners[k]} for k, v in since.items()
              if (v is None or v > limits[k]) and actionable.get(k, True)]
@@ -1881,7 +1902,7 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
             "canaries_waiting": [{"gene": g.get("id"), "canary": g.get("canary"), "since": g.get("canary_since")}
                                  for g in genome.get("genes") or [] if g.get("status") == "CANARY"],
         },
-        "review_queue": _safe(lambda: _review_queue(positive), {"referee_1": [], "referee_2": []}, "review_queue"),
+        "review_queue": _safe(lambda: _review_queue(positive, root), {"referee_1": [], "referee_2": [], "waiting_on_existing_contest": []}, "review_queue"),
         # Visibility is not a gate: every non-closed roadmap in the Tower is shown to tasks.
         # charter_status remains explicit so gate semantics stay separate from execution visibility.
         "roadmaps": [roadmap_progress(root, r, tests, clock=not public) for r in roadmaps

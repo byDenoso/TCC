@@ -67,6 +67,55 @@ O Writer externo pulsa a cada 15 minutos em BRT: `:04`, `:19`, `:34`, `:49`. Pos
 ### Invariante READY
 `READY` significa executável agora, não “quase pronto”. Exigir definição científica congelada e suficiente, dados/entradas canônicos disponíveis e vinculados, recipe/capability executável, ausência de blocker ou `WAIT_DEPENDENCY`, identidade estável e nenhuma execução equivalente staged/RUNNING/terminal. Se faltar qualquer requisito, corrigir pelo fluxo autorizado para `CHECKPOINTED` ou `WAIT_DEPENDENCY` e criar o binding/reparo; não contar como despacho.
 
+### Consumir recuperação e aceite privado
+
+No início da rodada, carregar o `status` da Tower privada e ler `execution_recovery`, além do
+mural. A projeção pública não publica ofertas/aceites. Com o bundle atual, consultar
+`python nexo_gpt_writer.py handoff TOWER.json list PAPEL`; use o papel canônico abaixo apenas
+para essa caixa privada, mantendo o `source` normal nas demais propostas:
+
+- Engenheiro: `ADVISOR`, triagem e receita/verificação técnica
+- Cientista: `LEARNER`, definição congelada e conflitos de linhagem
+- Operadores A/B/C: `EXECUTOR`, insumos/proveniência e execução; reler antes de aceitar para não duplicar
+- Guardião: verifica oferta pendente, idade, responsável e readback; não aceita em nome de outro papel
+
+Ao assumir uma WORK, enviar `HANDOFF_ACK` com `writer_role` igual ao destinatário canônico pelo
+Drive privado NEXO_INBOX conforme PROPOSAL_SCHEMA. Reler a aplicação: só o aceite aplicado muda
+ownership. Proposta gravada, comentário no mural e atribuição ADVISOR não são aceite. Se faltarem
+ferramentas para ler ou escrever o canal privado, registrar a capacidade ausente sem publicar o
+handoff no GitHub, simular ACK ou retirar a responsabilidade anterior.
+
+Tratar primeiro recuperações e revisões que destravam o roadmap ativo, respeitando direção
+explícita de Dener. Não criar novos testes para contornar dependência existente. A WORK termina
+quando o Writer revalida elegibilidade; sucesso de software não altera resultado científico.
+Antes de despachar, confirmar que receita e runner consomem os inputs versionados/hash do binding
+e implementam os parâmetros congelados. URL mutável ou parâmetro ignorado exige reparo, mesmo
+quando o manifesto formal foi aceito.
+
+### Motivo de inatividade e continuidade
+`*_NOOP` é uma resposta de proposta específica, não prova de que a automação inteira não trabalhou.
+O Writer grava `_noop_reason`: mensagem já registrada, pensamento sem entrada fundamentada,
+família já registrada ou contestação existente que precisa terminar. Contrato inválido vira
+`UNAPPLIED` com `_not_applied_reason`; não tratar erro de leitura/transporte como fila vazia.
+`review_queue.waiting_on_existing_contest` aponta originais cuja contestação já ocupa o slot;
+destrave o ataque existente pelo dono, sem reenviar CONTEST que será recusado.
+Sem ferramentas para o canal privado, use `PRIVATE_CHANNEL_UNAVAILABLE` e preserve a oferta
+pendente. NO-OP da rodada exige leitura válida e ausência de ação executável ou recuperação que
+o papel possa realizar; não gere recado, hipótese ou resultado só para eliminar o rótulo.
+
+### Autonomia de receitas do roadmap
+Dentro da autorização de Dener para resolver receitas NEXO, seguir o ciclo completo:
+diagnóstico e WORK com dono → Engenheiro aceita a recuperação → patch mínimo e smoke fiel
+ao contrato → Revisor independente verifica os critérios existentes → integração com todos
+os checks passando no mesmo SHA → Operador relê a versão integrada, revalida binding/readiness
+e reserva a bateria pelo Writer. Reutilizar PR já aberto e dependência existente antes de criar outro.
+
+O autor não aprova o próprio patch. Ausência de receita, smoke ou adapter é reparo de engenharia;
+seleção, dataset, likelihood, prior ou critério científico não definidos retornam ao Cientista,
+sem substituição conveniente. A autonomia é limitada às receitas dos roadmaps NEXO e às
+capacidades já autorizadas; não permite criar credenciais, ampliar acesso, aceitar gates no lugar
+do Dener, alterar pré-registro, forçar checks ou publicar mudanças fora desse escopo.
+
 Enquanto houver READY elegível no segmento de um Operador e capacidade na rodada, NO-OP é inválido. A processa o início/mais antigo, B o fim/mais novo restante e C faz sweep residual após A/B; todos relêem staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
 
 Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
@@ -82,4 +131,3 @@ Reproduzir falhas, fazer a menor mudança, testar e reler. Informar como desfaze
 Para ler a cópia autenticada da Tower, executar `python scripts/status_reader.py TOWER.json nexo_gpt_writer.py`, em processo separado. Obter o script desta skill pelo GitHub conectado se ele não estiver montado. Obter o bundle pelo arquivo Drive usado no workflow do Writer; conferir os bytes antes de executar.
 
 O leitor verifica a integridade e tenta o status nativo. Somente na versão auditada, quando a colisão entre duas funções `_stamp` derruba `review_queue`, isola o formatador original da fila e repete a leitura. Preserva os filtros do Writer, os IDs e o arquivo de entrada. Não altera o bundle implantado nem a Tower. `OK_LOCAL_REVIEW_CLOCK_REPAIR` identifica a correção local; `DEGRADED` e `FAILED` nunca significam fila vazia. Informar qualquer aviso restante e nunca apresentar esta saída como projeção publicada.
-

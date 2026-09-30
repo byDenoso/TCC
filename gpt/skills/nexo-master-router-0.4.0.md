@@ -6,11 +6,17 @@ version: 0.4.0
 
 # NEXO — raiz
 
+## Recuperação operacional vigente
+Em toda rodada NEXO, carregar também o contrato atual de consumidores em
+https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-workspace/SKILL.md,
+seção “Consumir recuperação e aceite privado”. Ele define a caixa privada por papel,
+o aceite aplicado e a revalidação; projeção pública e recado no mural não substituem esse ciclo.
+
 O NEXO é um sistema só: um fluxo, cinco tarefas, um robô, uma Tower. Cada tarefa faz ciência; o robô faz a papelada.
 
 ## Regras fixas (valem sempre)
 1. **Verdade = Tower** (Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`). Memória, chats antigos, Neon, snapshots e ledgers não valem.
-2. **Ler estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. Baixe a Tower inteira só para executar teste.
+2. **Ler estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. Leia a Tower privada também para consultar ofertas de recuperação e aceite do seu papel; a projeção pública não contém essas mensagens.
 3. **Escrever:** nunca na Tower. Toda mudança é proposta no inbox; só o **NEXO Writer robot** (GitHub Actions, byDenoso/Pantheon) grava a Tower.
 4. **Portões:** só o Dener aprova carta e canoniza gene, e só em conversa (`OPERATOR_INTENT`, source `DENER`).
 5. **Ciência:** só `CONFIRMED` é confirmado: o resultado sobreviveu a uma contestação independente (teste novo, critério congelado, outro dado ou método), decidida mecanicamente pelo robô. Nulo é resultado. PASS de software não é claim.
@@ -53,7 +59,7 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 | Família | Cientista escreve `FAMILY_CHARTER`; o robô expande e despacha | 3 ou mais testes com a mesma receita entram como família (até 40 instâncias, grade declarada antes; fecha com 2 REJECTED, 2 PROMOTED ou roadmap fechado) |
 | Receita | Engenheiro | receita nova traz `recipes/smoke/<nome>.json`; o CI roda com dado real e abre issue se quebrar |
 | Ligar receita | quem tiver o teste na mão (Operador, Cientista, Engenheiro): `RECIPE_BIND {test_id, recipe, params}` | uma linha; o robô despacha na rodada seguinte |
-| Bateria | robô (até 20 por bateria; com 20 ou menos prontos envia 75%, mínimo 5) e Operador nas avulsas | READY com `recipe` + `recipe_params` roda, sem revisão por teste |
+| Bateria | robô (até 20 por bateria; com 20 ou menos prontos envia 75%, mínimo 5) e Operador nas avulsas | somente readiness elegível com inputs versionados e hashes; receita deve consumir os inputs e respeitar os parâmetros congelados |
 | Resultado | robô grava; o Operador registra o que sai fora do robô | falha transitória ou receita quebrada não gasta as 2 chances do teste; receita quebrada 2 vezes abre o circuito, e o primeiro sucesso o fecha |
 | Contestação e veredito | Crítico | positivo sem contestação há 2 rodadas é a prioridade da rodada |
 | Nova ideia | volta ao começo | refutação vira rival na mesma rodada |
@@ -73,14 +79,14 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 1. Crie `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` = `{"stable_id","envelope"}` (stable_id determinístico, reusado no retry). Leia de volta.
 2. O relay copia para `nexo-inbox:inbox/scheduled-<stable_id>.json` e **acorda o Writer sozinho**. Não tente acordar o Writer. Se o relay ainda não rodou, reporte "gravado, esperando o relay" (não é falha).
 3. Reserva, nesta ordem: arquivo direto em `nexo-inbox/inbox/` (também acorda o Writer sozinho) → `/api/inbox-drop` → Doc JSON no NEXO_INBOX do Drive. Se tudo falhar: bloco `NEXO_PENDING_PROPOSAL … END_NEXO_PENDING_PROPOSAL` e reenvie na próxima vez.
-4. **Proposta não leva código** (o filtro do ChatGPT bloqueia). Em `TEST_BATTERY`, cada teste chama uma **receita congelada**: `{"test_id", "recipe": "<nome>", "params": {…}, "prediction", "timeout_min"}`. Receitas, parâmetros e exemplos: `byDenoso/Pantheon nexo-one/executor-runtime/recipes/README.md` — escolha a receita pelo que o teste mede. Se nenhuma receita servir, o teste fica pronto para rodar e o Operador escreve a especificação (`LEARNING_SIGNAL` `RECIPE_REQUEST`), que o Crítico revisa (`nexo-closed-loop` §12).
-5. **Envelope enxuto** (o filtro do ChatGPT também recusa conteúdo com cara de segredo): não inclua hashes/fingerprints longos (`sha256:…`, revisão da Tower, commitments), tokens, trechos de log nem JSON técnico colado — o Writer já sabe a revisão da Tower e calcula os hashes. Use IDs de entidade, contagens, estados e frases curtas. **No máximo 10 itens por envelope** (lotes grandes são recusados); divida em vários. Se a gravação for recusada mesmo assim, tente uma vez a **versão mínima** do mesmo envelope (só `kind`, `source`, `created_at` e o essencial do `payload`) antes de desistir.
+4. **Proposta não leva código** (o filtro do ChatGPT bloqueia). Em `TEST_BATTERY`, cada teste chama uma **receita congelada**: `{"test_id", "recipe": "<nome>", "params": {…}, "prediction", "timeout_min"}`. Receitas, parâmetros e exemplos: `byDenoso/Pantheon nexo-one/executor-runtime/recipes/README.md` — escolha a receita pelo que o teste mede. Se nenhuma receita servir, o teste fica BLOCKED_INPUT com WORK de recuperação e o Operador escreve a especificação (`LEARNING_SIGNAL` `RECIPE_REQUEST`), que o Crítico revisa (`nexo-closed-loop` §12).
+5. **Envelope enxuto:** nunca inclua credenciais, tokens ou logs privados. Preserve a proveniência obrigatória: SHA256 de input público é checksum, não credencial; `DATA_BINDING` exige versão e hash obtidos dos bytes exatos, sem inventar nem retirar esses campos para passar um gate. O Writer não calcula automaticamente o hash de uma URL remota. Recusa de ferramenta exige diagnóstico e rota permitida, nunca contorno de acesso. Use IDs de entidade, contagens, estados e frases curtas. **No máximo 10 itens por envelope** (lotes grandes são recusados); divida em vários. Se a gravação for recusada mesmo assim, tente uma vez a **versão mínima** do mesmo envelope (só `kind`, `source`, `created_at` e o essencial do `payload`) antes de desistir.
 Formatos: `byDenoso/TCC gpt/PROPOSAL_SCHEMA.md`. Envelope: `{kind, source, producer:"GPT", payload, created_at}`.
 
 ## Vínculos, áreas e estados (o que o site entende)
 - **Hipótese é sempre explícita.** Todo teste novo leva o `hypothesis_id` da hipótese que ele discrimina. Estar no mesmo roadmap **não** é testar a mesma hipótese (um roadmap tem várias). Sem `hypothesis_id`, o Writer cria uma hipótese própria para o teste (`HYP-<teste>`); ele nunca copia a do teste vizinho.
 - **Área só de nó existente.** `subdomain_id`/`topic_id` têm de existir na taxonomia; tópico inventado é ignorado e o teste cai no subdomínio. Na dúvida, mande só o `subdomain_id`. Teste sobre o próprio NEXO (persistência, relay, bateria, nomes) é `domain: ENGINEERING`, nunca SCIENCE.
-- **Estado não é veredito.** `READY` = na fila; `CHECKPOINTED` = execução salva no meio (operacional); `ARCHIVED` = histórico encerrado; `BLOCKED_*` = parado por causa declarada. Só a escada de revisão produz veredito (`CONFIRMED`/`REFUTED`).
+- **Estado não é veredito.** `READY` = elegibilidade executável validada pelo Writer; `CHECKPOINTED` = execução salva no meio (operacional); `ARCHIVED` = histórico encerrado; `BLOCKED_*` = parado por causa declarada. Só a escada de revisão produz veredito (`CONFIRMED`/`REFUTED`).
 - **Corrigir vínculo errado:** `SEMANTIC_BACKFILL` com `overwrite:true` e o `hypothesis_id` certo, lendo pergunta, nula e rival de cada teste — nunca por padrão de nome. Na dúvida, deixe sem hipótese e avise no mural.
 
 ## Consertar (quem vê, age)

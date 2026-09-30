@@ -14,7 +14,7 @@ from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload, read_live_tower_bytes, materialize_live_tower
 from runtime.nexo_agent_api.tower_apply import apply_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
-from test_scientific_integrity import fixture, save, NOW
+from tests.test_scientific_integrity import fixture, save, NOW
 
 
 class RecoveryTests(unittest.TestCase):
@@ -249,6 +249,72 @@ class RecoveryTests(unittest.TestCase):
         items = e.family_battery_items(self.root)
         self.assertEqual(items[0]["payload"]["tests"][0]["test_id"], "TEST-Z")
         self.assertEqual(items[1]["payload"]["tests"][0]["test_id"], "TEST-A")
+
+    def test_family_generator_skips_closed_roadmap_but_not_active_successor(self):
+        family = {"family_id": "F-ONE", "roadmap_id": "RM-A", "state": "CLOSED", "close_reason": "SUCCESS",
+                  "recipe": "w0wa_bao_sn_multi", "domain": "SCIENCE", "template": {"display_name": "Exemplo"},
+                  "instances": [{"label": "A", "params": {"compilations": ["pantheon_plus", "des_sn5yr"]}}]}
+        save(self.root, e.FAMILIES_DOC, {"families": {"F-ONE": family}})
+        save(self.root, "roadmaps/RM-A.json", {"state": "CLOSED", "charter": {"status": "CLOSED"}})
+        self.assertEqual(e.family_spawn_items(self.root), [])
+        save(self.root, "roadmaps/RM-A.json", {"state": "ACTIVE", "charter": {"status": "CHARTERED"}})
+        self.assertEqual(e.family_spawn_items(self.root)[0]["payload"]["family_id"], "F-ONE-R")
+
+    def test_agent_contracts_do_not_remove_required_provenance_or_fake_ready(self):
+        repo = Path(__file__).resolve().parents[1]
+        for version in ("0.4.0", "0.5.0"):
+            text = (repo / f"gpt/skills/nexo-closed-loop-{version}.md").read_text()
+            self.assertNotIn("sem `sha256`", text)
+            self.assertNotIn("fica READY (não bloqueado)", text)
+            self.assertIn("inputs[{name, url, version, sha256}]", text)
+        workspace = (repo / "gpt/skills/nexo-workspace/SKILL.md").read_text()
+        for required in ("execution_recovery", "HANDOFF_ACK", "ADVISOR", "LEARNER", "EXECUTOR", "Drive privado NEXO_INBOX"):
+            self.assertIn(required, workspace)
+
+    def test_board_preserves_engineer_and_rejects_unknown_recipient(self):
+        from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+        item = {"kind": "BOARD_POST", "source": "EXECUTOR", "payload": {"to": "ENGINEER", "text": "Verificar a receita."}}
+        requests = proposal_to_requests(item, self.root)
+        self.assertEqual(requests[0]["merge"]["posts"][0]["to"], "ENGINEER")
+        item["payload"]["to"] = "TYPO_RECIPIENT"
+        requests = proposal_to_requests(item, self.root)
+        self.assertEqual(requests[0]["changes"]["kind"], "UNAPPLIED_BOARD_POST")
+        self.assertEqual(requests[0]["changes"]["payload"]["_not_applied_reason"], "BOARD_RECIPIENT_UNSUPPORTED")
+
+    def test_empty_thought_and_duplicate_board_have_explicit_noop_reason(self):
+        from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+        thought = proposal_to_requests({"kind": "NEXO_THOUGHT", "payload": {"entries": []}}, self.root)
+        self.assertEqual(thought[0]["changes"]["payload"]["_noop_reason"], "NO_GROUNDED_THOUGHT_ENTRIES")
+        save(self.root, e.BOARD_DOC, {"posts": [{"from": "EXECUTOR", "to": "ENGINEER", "text": "Verificar a receita."}]})
+        board = proposal_to_requests({"kind": "BOARD_POST", "source": "EXECUTOR", "payload": {"to": "ENGINEER", "text": "Verificar a receita."}}, self.root)
+        self.assertEqual(board[0]["changes"]["payload"]["_noop_reason"], "BOARD_MESSAGE_ALREADY_RECORDED")
+
+    def test_invalid_family_is_rejected_instead_of_silent_noop(self):
+        from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+        requests = proposal_to_requests({"kind": "FAMILY_CHARTER", "payload": {"roadmap_id": "missing"}}, self.root)
+        self.assertEqual(requests[0]["changes"]["kind"], "UNAPPLIED_FAMILY_CHARTER")
+        self.assertEqual(requests[0]["changes"]["payload"]["_not_applied_reason"], "FAMILY_ROADMAP_NOT_ACTIVE")
+
+    def test_review_queue_and_admission_share_existing_contest_eligibility(self):
+        parent = fixture("PARENT"); parent.update(verdict="PROMOTED", status="DONE", state="DONE", review_state="CONTESTED", contests=[{"contest_test_id": "ATTACK"}])
+        child = fixture("ATTACK"); child.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT", contests_test_id="PARENT")
+        self.put(parent); self.put(child)
+        queue = e._review_queue([parent], self.root)
+        self.assertEqual(queue["referee_1"], [])
+        self.assertEqual(queue["waiting_on_existing_contest"], ["PARENT"])
+        requests = e.contest_requests({}, {"test_id": "PARENT"}, self.root, lambda *args: [])
+        self.assertEqual(requests.reason, "EXISTING_CONTEST_REQUIRES_COMPLETION")
+        child["verdict"] = "INCONCLUSIVE"; self.put(child)
+        self.assertEqual(e._review_queue([parent], self.root)["referee_1"], ["PARENT"])
+        self.assertIsNone(e.contest_admission_reason(self.root, parent))
+
+    def test_emergence_does_not_demand_duplicate_contest_for_blocked_child(self):
+        from datetime import datetime, timezone
+        parent = fixture("PARENT"); parent.update(verdict="PROMOTED", status="DONE", state="DONE", review_state="CONTESTED", contests=[{"contest_test_id": "ATTACK"}])
+        child = fixture("ATTACK"); child.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT", contests_test_id="PARENT")
+        self.put(parent); self.put(child)
+        status = e._emergence(self.root, [parent, child], {}, datetime(2026, 9, 30, 20, tzinfo=timezone.utc))
+        self.assertNotIn("contest", [row["loop"] for row in status["stale"]])
 
 
 if __name__ == "__main__":
