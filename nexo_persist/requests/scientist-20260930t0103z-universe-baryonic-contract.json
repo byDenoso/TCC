@@ -1,0 +1,223 @@
+{
+  "stable_id": "scientist-20260930t0103z-universe-baryonic-contract",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T01:03:25Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T01:03:25Z",
+          "payload": {
+            "gap_type": "WORLD_MODEL_UPDATE",
+            "reason": "Diretriz P0 do Dener: materializar a primeira reconciliação agregada do legado científico para a aba Universo, preservando o baseline da literatura e sem migrar testes como nós.",
+            "spec": {
+              "name": "atlas_universe_legacy_fronts_v1",
+              "origin_kind": "DENER_DIRECTED",
+              "priority": "P0",
+              "policy": {
+                "baseline": "cosmology-world-model",
+                "legacy_admission": "Somente resultados terminais auditáveis da Tower antiga reforçam ou qualificam uma frente.",
+                "excluded_from_canonical_change": [
+                  "PROMOTED sem fechamento",
+                  "INCONCLUSIVE",
+                  "DRAFT",
+                  "BLOCKED",
+                  "sinal isolado próximo de 2 sigma"
+                ],
+                "public_states": [
+                  "Sólido",
+                  "Tensão",
+                  "Aberto"
+                ],
+                "preserve_nulls_and_contradictions": true,
+                "legacy_tests_hidden_by_default": true
+              },
+              "fronts": [
+                {
+                  "name": "ΛCDM e homogeneidade",
+                  "state": "Sólido",
+                  "meaning": "A expansão local é compatível com homogeneidade em grande escala; anisotropia, bolha local e bulk flow não produziram desvio robusto.",
+                  "evidence_refs": [
+                    "T-H0HOM26-001",
+                    "T-H0HOM26-002",
+                    "T-H0HOM26-003-R2-PUBLISHED-CF4-ESTIMATOR-AUDIT"
+                  ]
+                },
+                {
+                  "name": "Energia escura",
+                  "state": "Tensão",
+                  "meaning": "Há espaço observacional vivo para evolução de w0-wa, mas não uma detecção canônica; a robustez interna atual permanece em contestação.",
+                  "evidence_refs": [
+                    "DDEMEGA26-002",
+                    "DDEMEGA26-013"
+                  ],
+                  "active_refs": [
+                    "FAM-DE-BAO-TRACERS-GRUPOS-TRES-FAMILIAS",
+                    "FAM-DE-PRIOR-BANDS-P3-PRIOR-ALTO"
+                  ]
+                },
+                {
+                  "name": "H0",
+                  "state": "Tensão",
+                  "meaning": "A discrepância entre a escada local e o Universo primordial permanece; energia escura tardia permitida não a resolve e os controles de homogeneidade não fornecem explicação suficiente.",
+                  "evidence_refs": [
+                    "DDEMEGA26-013",
+                    "T-H0HOM26-001",
+                    "T-H0HOM26-002",
+                    "T-H0HOM26-003-R2-PUBLISHED-CF4-ESTIMATOR-AUDIT"
+                  ]
+                },
+                {
+                  "name": "Crescimento e S8",
+                  "state": "Aberto",
+                  "meaning": "O crescimento do DESI é estável e compatível com ΛCDM, enquanto a tendência do eROSITA é dominada por um intervalo; a síntese não sustenta uma anomalia comum.",
+                  "evidence_refs": [
+                    "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+                    "GZSB-06A-EROSITA-S8-LOO-INFLUENCE-STANDALONE"
+                  ]
+                },
+                {
+                  "name": "Matéria escura",
+                  "state": "Aberto",
+                  "meaning": "Os sinais públicos não convergem em uma propriedade não-CDM comum depois dos controles bariônicos e sistemáticos.",
+                  "evidence_refs": [
+                    "DMN26-001-ANOMALY-LEDGER"
+                  ],
+                  "active_refs": [
+                    "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS"
+                  ]
+                },
+                {
+                  "name": "Neutrinos e CMB",
+                  "state": "Aberto",
+                  "meaning": "Usar o baseline de literatura do cosmology-world-model até existir resultado terminal auditável do legado que mude ou qualifique a frente.",
+                  "evidence_refs": [],
+                  "baseline_only": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "HYPOTHESIS_PROPOSAL",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T01:03:25Z",
+          "payload": {
+            "test_id": "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS",
+            "display_name": "Robustez bariônica da matéria escura",
+            "domain": "SCIENCE",
+            "roadmap_id": "RM-DENER-CORE-CAMPAIGN-V1",
+            "hypothesis_id": "HYP-XAREA-SELECTION-BINDING-LSS-20260925",
+            "origin_kind": "COLD_AREA",
+            "question": "Preferências não-CDM em pequena escala sobrevivem a duas famílias independentes de modelagem bariônica por sonda?",
+            "null": "Nenhuma de pelo menos três classes independentes mantém preferência não-CDM robusta.",
+            "rival": "Pelo menos duas de três classes sobrevivem às duas famílias de nuisance e apontam para região não-CDM sobreposta.",
+            "method": "Em lentes fortes, satélites da Via Láctea e correntes estelares, selecionar um produto público congelado por classe; repetir ou reponderar a likelihood sob duas famílias pré-declaradas de nuisance bariônica por sonda. Converter cada posterior para log10 da massa de half-mode em massas solares pelo mesmo mapa congelado, comparar regiões de 95% e registrar também o resultado nulo. Não combinar sondas antes do teste de sobreposição.",
+            "data": "HST strong-lens subhalo scan: https://zenodo.org/records/7093469 ; Milky Way Satellite Census: https://github.com/des-science/mw-sats ; stellar-stream dark-matter likelihoods: https://github.com/jobovy/dark-matter-constraints-from-stellar-streams",
+            "dataset_and_selection": "Três classes independentes: lentes fortes, satélites da Via Láctea e correntes estelares. Para cada classe, congelar a liberação, o posterior ou likelihood escolhido, a máscara de seleção, duas famílias de nuisance bariônica e a transformação para massa de half-mode antes da execução.",
+            "success_criteria": "PROMOTED se as três classes forem avaliadas e pelo menos duas mantiverem preferência não-CDM sob ambas as famílias de nuisance, com interseção não vazia entre suas regiões de 95% em log10(M_hm/M_sun).",
+            "kill_criteria": "REJECTED se nenhuma classe sobreviver robustamente ou se as regiões robustas forem incompatíveis; exatamente uma sobrevivente ou menos de três classes avaliáveis é INCONCLUSIVE.",
+            "claim_boundary": "Testa consenso de robustez bariônica entre três sondas públicas pequenas; não mede abundância cosmológica total, não converte um limite unilateral em detecção e não decide sozinho a natureza da matéria escura.",
+            "priority": "P1",
+            "prediction": {
+              "p_promoted": 0.2
+            },
+            "semantic": {
+              "domain_id": "science",
+              "subdomain_id": "science.cosmology.dark_matter",
+              "topic_id": "science.cosmology.dark_matter.non_cdm_properties",
+              "display_name": "Robustez bariônica da matéria escura",
+              "question_plain": "Os indícios de matéria escura diferente de CDM sobrevivem quando mudamos a modelagem de estrelas e gás?",
+              "why_it_matters": "Um sinal que some sob modelagem bariônica plausível não discrimina a natureza da matéria escura.",
+              "confidence_plain": "média"
+            }
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T01:03:25Z",
+          "payload": {
+            "test_id": "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "HST strong-lens subhalo scan results",
+                "url": "https://zenodo.org/records/7093469",
+                "format": "arquivo público de resultados e scripts de análise",
+                "load": "HTTPS público",
+                "license": "Zenodo public research release"
+              },
+              {
+                "name": "Milky Way Satellite Census data products",
+                "url": "https://github.com/des-science/mw-sats",
+                "format": "função de seleção, censo e produtos públicos",
+                "load": "repositório público",
+                "license": "public research repository"
+              },
+              {
+                "name": "Dark-matter constraints from stellar streams",
+                "url": "https://github.com/jobovy/dark-matter-constraints-from-stellar-streams",
+                "format": "análise pública e likelihoods",
+                "load": "repositório público",
+                "license": "public research repository"
+              }
+            ],
+            "note": "As três classes públicas estão ligadas e o contrato foi completado. Ainda é preciso congelar o posterior exato, duas famílias de nuisance por classe e a transformação comum para massa de half-mode; o pedido agrupado de receita de matéria escura já existe e não foi duplicado."
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T01:03:25Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "ALL",
+                "text": "Diretriz P0 do Universo materializada em seis frentes agregadas, com baseline do mapa cosmológico, admissão apenas de resultados terminais auditáveis e testes legados ocultos por padrão. Nulos e contradições permanecem visíveis; resultados promovidos sem fechamento entram apenas como campanhas ativas.",
+                "refs": [
+                  "DDEMEGA26-002",
+                  "DDEMEGA26-013",
+                  "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
+                  "GZSB-06A-EROSITA-S8-LOO-INFLUENCE-STANDALONE",
+                  "T-H0HOM26-001",
+                  "T-H0HOM26-002",
+                  "T-H0HOM26-003-R2-PUBLISHED-CF4-ESTIMATOR-AUDIT",
+                  "DMN26-001-ANOMALY-LEDGER"
+                ],
+                "ttl_h": 336
+              },
+              {
+                "to": "LEARNER",
+                "text": "Contrato de robustez bariônica concluído: método, três produtos públicos, duas famílias de nuisance por sonda, transformação comum, critérios e limite do claim agora estão explícitos. O binding permanece parcial até fixar versões e posteriores exatos.",
+                "refs": [
+                  "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS"
+                ],
+                "ttl_h": 48
+              },
+              {
+                "to": "GUARDIAO",
+                "text": "Fila preservada: a projeção disponível tinha 36 testes prontos e o staging já contém três cartas de família com nove células. Esta rodada não abriu família redundante; priorizou a diretriz do Dener e quitou um contrato incompleto.",
+                "refs": [
+                  "DE-BAO-HIERARCHY-V1",
+                  "DE-RD-CALIBRATION-V1",
+                  "META-READINESS-THRESHOLDS-V1",
+                  "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS"
+                ],
+                "ttl_h": 48
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
