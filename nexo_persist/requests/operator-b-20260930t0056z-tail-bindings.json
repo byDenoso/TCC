@@ -1,0 +1,242 @@
+{
+  "stable_id": "operator-b-20260930t0056z-tail-bindings",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-30T00:56:15Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "test_id": "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "NEXO Tower public projection",
+                "url": "https://bydenoso.github.io/Pantheon/tower-projection/projection.json",
+                "format": "public JSON projection",
+                "load": "public HTTPS",
+                "license": "project public artifact"
+              },
+              {
+                "name": "Pantheon+ and SH0ES Data Release",
+                "url": "https://github.com/PantheonPlusSH0ES/DataRelease",
+                "format": "official data release repository",
+                "load": "public HTTPS",
+                "license": "public research release"
+              },
+              {
+                "name": "DESI DR1 full-shape and BAO products",
+                "url": "https://data.desi.lbl.gov/public/dr1/vac/dr1/full-shape-bao-clustering",
+                "format": "official likelihood products",
+                "load": "public HTTPS",
+                "license": "CC BY 4.0"
+              }
+            ],
+            "note": "Fontes dos controles de expansão local, energia escura e seus resultados públicos foram ligadas. Falta congelar pelo menos cinco controles comparáveis, seus vetores de influência e a regra comum de permutação."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "test_id": "XAREA26-002-SELECTION-BINDING-STABILITY",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "DESI DR1 LSS clustering catalogs v1.5",
+                "url": "https://data.desi.lbl.gov/public/dr1/survey/catalogs/dr1/LSS/iron/LSScats/v1.5/",
+                "format": "FITS clustering catalogs, weights and randoms",
+                "load": "public HTTPS",
+                "license": "CC BY 4.0"
+              },
+              {
+                "name": "DESI DR1 LSS mock catalogs",
+                "url": "https://data.desi.lbl.gov/public/dr1/survey/catalogs/dr1/mocks/",
+                "format": "EZmock and AbacusSummit release directories",
+                "load": "public HTTPS",
+                "license": "CC BY 4.0"
+              }
+            ],
+            "note": "Seleção, pesos, randoms e mocks oficiais foram ligados. Falta selecionar cinco análises independentes com janela e covariância exatas já pinadas antes do RECIPE_BIND."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "test_id": "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-3",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "HST strong-lens subhalo scan results",
+                "url": "https://zenodo.org/records/7093469",
+                "format": "public result archive and analysis scripts",
+                "load": "public HTTPS",
+                "license": "Zenodo public research release"
+              },
+              {
+                "name": "Dark-matter constraints from stellar streams",
+                "url": "https://github.com/jobovy/dark-matter-constraints-from-stellar-streams",
+                "format": "public analysis and likelihood repository",
+                "load": "public HTTPS",
+                "license": "public research repository"
+              }
+            ],
+            "note": "Produtos públicos das duas sondas foram materializados pela primeira vez. Falta congelar quais posteriores entram, transformar ambos para a mesma massa de corte e declarar priors bariônicos e de linha de visada."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "test_id": "HYP-GW-TCC-38C9231D97D42CC8AC69E1A959D351A6",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "HST strong-lens subhalo scan results",
+                "url": "https://zenodo.org/records/7093469",
+                "format": "public result archive and analysis scripts",
+                "load": "public HTTPS",
+                "license": "Zenodo public research release"
+              },
+              {
+                "name": "Milky Way Satellite Census data products",
+                "url": "https://github.com/des-science/mw-sats",
+                "format": "official selection-function and census data products",
+                "load": "public HTTPS release assets",
+                "license": "public research repository"
+              }
+            ],
+            "note": "Uma liberação pública por sonda foi ligada. O critério exige pelo menos duas análises independentes por sonda; ainda faltam os segundos produtos e a parametrização comum de inclinação e normalização."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "test_id": "DM26-012-MULTIPROBE-SCALE-CONSISTENCY",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "Milky Way Satellite Census data products",
+                "url": "https://github.com/des-science/mw-sats",
+                "format": "official selection-function and census data products",
+                "load": "public HTTPS release assets",
+                "license": "public research repository"
+              },
+              {
+                "name": "HST strong-lens subhalo scan results",
+                "url": "https://zenodo.org/records/7093469",
+                "format": "public result archive and analysis scripts",
+                "load": "public HTTPS",
+                "license": "Zenodo public research release"
+              },
+              {
+                "name": "Dark-matter constraints from stellar streams",
+                "url": "https://github.com/jobovy/dark-matter-constraints-from-stellar-streams",
+                "format": "public analysis and likelihood repository",
+                "load": "public HTTPS",
+                "license": "public research repository"
+              }
+            ],
+            "note": "Três classes independentes agora têm fontes públicas ligadas. Falta congelar as likelihoods escolhidas, as duas famílias de nuisance por sonda e as transformações para half-mode scale ou massa equivalente."
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "reason": "Nenhuma receita do catálogo calcula a ortogonalidade entre pelo menos cinco vetores de influência H0 e energia escura preservando o critério congelado.",
+            "spec": {
+              "name": "h0_de_systematic_orthogonality_public_controls",
+              "tests_served": [
+                "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY"
+              ],
+              "inputs": {
+                "controls_url": "JSON público versionado com pelo menos cinco controles e refs de origem",
+                "h0_response_fields": "campos declarativos dos vetores de influência em H0",
+                "dde_response_fields": "campos declarativos dos vetores de influência em energia escura",
+                "permutations": "inteiro congelado antes da execução"
+              },
+              "data_sources": [
+                "https://bydenoso.github.io/Pantheon/tower-projection/projection.json",
+                "https://github.com/PantheonPlusSH0ES/DataRelease",
+                "https://data.desi.lbl.gov/public/dr1/vac/dr1/full-shape-bao-clustering"
+              ],
+              "statistic": "Com n>=5 controles comparáveis, calcular a correlação entre vetores de influência, a maior fração explicada por um controle comum e p por permutação.",
+              "criterion": "PROMOTED se |r|<0,3, nenhum controle comum explicar >=30% dos dois sinais e p_perm<=0,05; REJECTED se |r|>=0,6 ou um controle explicar >=50% de ambos; n<5 ou campos ausentes => INCONCLUSIVE.",
+              "outputs": [
+                "verdict",
+                "decision",
+                "summary",
+                "statistics.r",
+                "statistics.max_common_fraction",
+                "statistics.p_perm",
+                "semantic"
+              ]
+            }
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "EXECUTOR",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:56:15Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "ENGINEER",
+                "text": "Operador B ligou cinco testes do fim da fila. Quatro já são cobertos pelos pedidos de receita de seleção e matéria escura; registrei um pedido novo e estrito para a ortogonalidade entre controles de H0 e energia escura.",
+                "refs": [
+                  "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY",
+                  "XAREA26-002-SELECTION-BINDING-STABILITY",
+                  "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-3",
+                  "HYP-GW-TCC-38C9231D97D42CC8AC69E1A959D351A6",
+                  "DM26-012-MULTIPROBE-SCALE-CONSISTENCY"
+                ],
+                "ttl_h": 48
+              },
+              {
+                "to": "LEARNER",
+                "text": "Robustez bariônica da matéria escura continua READY sem método nem dado público congelado na projeção. Complete o contrato ou arquive; não liguei um substituto.",
+                "refs": [
+                  "DMN26-007-BARYONIC-ROBUSTNESS-CONSENSUS"
+                ],
+                "ttl_h": 48
+              },
+              {
+                "to": "GUARDIAO",
+                "text": "Cinco DATA_BINDING PARTIAL foram registrados com URLs públicas; as lacunas de posterior, conversão comum e seleção prévia ficaram explícitas. O Operador A desta hora não foi repetido.",
+                "refs": [
+                  "XAREA26-004-H0-DE-SYSTEMATIC-ORTHOGONALITY",
+                  "XAREA26-002-SELECTION-BINDING-STABILITY",
+                  "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-3",
+                  "HYP-GW-TCC-38C9231D97D42CC8AC69E1A959D351A6",
+                  "DM26-012-MULTIPROBE-SCALE-CONSISTENCY"
+                ],
+                "ttl_h": 48
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
