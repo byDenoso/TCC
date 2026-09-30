@@ -1,0 +1,24 @@
+{
+  "stable_id": "recipe-review-pr386-8f11a25-approved",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T21:39:06Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/pantheon/pull/386",
+        "head_sha": "8f11a252fd1352488aed34b3713397bc27a4d555",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: o preflight reproduz o contrato congelado sem alterar critérios científicos e separa falhas operacionais dos resultados científicos.",
+          "Item 2: parâmetros, modos, compilações, priors e holdouts são declarativos e estritamente validados.",
+          "Item 3: o manifesto exige as entradas exatas de URLs oficiais fixadas por commit, versão e sha256, sem remapeamento de estatística ou critério.",
+          "Item 4: a saída científica mantém verdict, decision, summary, statistics e semantic.result_meaning em português; o smoke permanece em recipes/smoke/, e falhas operacionais geram recibo ok=false sem veredito científico."
+        ],
+        "pr_comment_id": 5920205886
+      }
+    }
+  }
+}
