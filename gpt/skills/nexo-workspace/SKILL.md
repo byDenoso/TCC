@@ -69,3 +69,8 @@ Ler mural e propostas pendentes para evitar duplicatas. Atraso ou falha de leitu
 Distinguir: configurado, proposto, entregue ao inbox, aplicado, executado, revisado e confirmado. Nulo científico exige execução válida. PASS de software permanece operacional. Preservar critérios congelados, multiplicidade, independência da contestação e limites do claim.
 
 Reproduzir falhas, fazer a menor mudança, testar e reler. Informar como desfazer mudanças relevantes. Não criar tickets ou documentos intermediários por padrão. Uma instrução no Git alcança os consumidores que a carregam; não afirmar instalação de plugin, alteração administrativa global ou memória nativa sem confirmação da ferramenta.
+
+## Leitor de status verificável
+Para ler a cópia autenticada da Tower, executar `python scripts/status_reader.py TOWER.json nexo_gpt_writer.py`, em processo separado. Obter o script desta skill pelo GitHub conectado se ele não estiver montado. Obter o bundle pelo arquivo Drive usado no workflow do Writer; conferir os bytes antes de executar.
+
+O leitor verifica a integridade e tenta o status nativo. Somente na versão auditada, quando a colisão entre duas funções `_stamp` derruba `review_queue`, isola o formatador original da fila e repete a leitura. Preserva os filtros do Writer, os IDs e o arquivo de entrada. Não altera o bundle implantado nem a Tower. `OK_LOCAL_REVIEW_CLOCK_REPAIR` identifica a correção local; `DEGRADED` e `FAILED` nunca significam fila vazia. Informar qualquer aviso restante e nunca apresentar esta saída como projeção publicada.
