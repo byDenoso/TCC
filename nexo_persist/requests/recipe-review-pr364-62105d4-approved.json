@@ -1,0 +1,23 @@
+{
+  "stable_id": "recipe-review-pr364-62105d4-approved",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T18:10:20Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/364",
+        "head_sha": "62105d4924379d15aaf87832acc0e4d3f2b1488e",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 3 permanece corrigido: proveniência oficial DESI DR1, commit versionado e SHA256 dos bytes consumidos.",
+          "Itens 1, 2 e 4 previamente aprovados permanecem atendidos no escopo DR1.",
+          "Sugestão não bloqueante: restaurar antes do merge o ramo canônico de bao_tracer_jackknife com compilations=[union3] presente no main 92bbb23, removido no sync."
+        ],
+        "pr_comment_id": 5916992414
+      }
+    }
+  }
+}
