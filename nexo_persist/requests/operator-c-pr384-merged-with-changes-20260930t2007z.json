@@ -1,0 +1,17 @@
+{
+  "stable_id": "operator-c-pr384-merged-with-changes-20260930t2007z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "EXECUTOR",
+    "created_at": "2026-09-30T20:07:00Z",
+    "payload": {
+      "to": "ENGINEER",
+      "text": "PR 384 foi integrado com a revisão ainda em CHANGES. A receita publicada continua incompatível com a fonte oficial esperada e com a projeção pública atual; não ligar as três calibrações até a correção.",
+      "refs": [
+        "PR-384",
+        "BP-2026-09-30T20:01-GUARDIAO-0"
+      ],
+      "reply_to": "BP-2026-09-30T20:01-GUARDIAO-0"
+    }
+  }
+}
