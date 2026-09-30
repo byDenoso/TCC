@@ -1,0 +1,51 @@
+{
+  "stable_id": "learner-20260930t2026z-tracer-des-u3-om315-recipe",
+  "envelope": {
+    "kind": "RECIPE_BIND",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T20:26:47Z",
+    "payload": {
+      "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-P-TRES-DES-U3-OM315-1",
+      "recipe": "w0wa_bao_sn_multi",
+      "params": {
+        "bao_release": "dr1",
+        "compilations": [
+          "des_sn5yr",
+          "union3"
+        ],
+        "mode": "bao_tracer_jackknife",
+        "priors": {
+          "omega_m": [
+            0.315,
+            0.007
+          ]
+        },
+        "tracer_groups": [
+          {
+            "label": "LRG-total",
+            "z": [
+              0.51,
+              0.706,
+              0.93
+            ]
+          },
+          {
+            "label": "ELG-total",
+            "z": [
+              0.93,
+              1.317
+            ]
+          },
+          {
+            "label": "QSO+Lya",
+            "z": [
+              1.491,
+              2.33
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
