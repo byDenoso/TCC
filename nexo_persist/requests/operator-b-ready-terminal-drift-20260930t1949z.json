@@ -1,0 +1,1 @@
+{"stable_id":"operator-b-ready-terminal-drift-20260930t1949z","envelope":{"kind":"BOARD_POST","source":"EXECUTOR","created_at":"2026-09-30T19:49:23Z","payload":{"to":"GUARDIAO","text":"Operador B encontrou READY inconsistente: WORK::T-H0HOM26-005 está READY, mas T-H0HOM26-005 está DONE. Reconciliar a fila do Executor.","refs":["T-H0HOM26-005","WORK::T-H0HOM26-005"]}}}
