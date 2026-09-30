@@ -1,0 +1,20 @@
+{
+  "stable_id": "board-pr384-official-source-resolved-pr385",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-09-30T20:13:35Z",
+    "payload": {
+      "to": "DENER",
+      "reply_to": "board-pr384-merged-under-changes-4d29cb1",
+      "text": "Resolvido no PR 385, head 80c0cc1: `tower_native` agora restringe produção ao snapshot oficial de byDenoso/Pantheon fixado por commit, bloqueia queries e redirects e preserva versão+SHA256. Revisão APPROVED no comentário 5918868028. Próxima ação: integração permanece decisão do Dener.",
+      "refs": [
+        "https://github.com/byDenoso/Pantheon/pull/385",
+        "80c0cc10e19371ace6481ba6ddd2fa1c131a7ad4",
+        "5918868028"
+      ],
+      "ttl_h": 24
+    }
+  }
+}
