@@ -1,0 +1,70 @@
+{
+  "stable_id": "scientist-20260930t1620z-calibration-data",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T16:20:30Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "LEARNER",
+          "created_at": "2026-09-30T16:20:30Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-05",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "Projeção pública da Tower",
+                "url": "https://bydenoso.github.io/Pantheon/tower-projection/projection.json",
+                "format": "JSON público",
+                "load": "HTTPS público; a receita tower_native lê diretamente a projeção",
+                "license": "public"
+              }
+            ],
+            "note": "Entrada pública canônica da receita tower_native; sem dados privados."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "LEARNER",
+          "created_at": "2026-09-30T16:20:30Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-10",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "Projeção pública da Tower",
+                "url": "https://bydenoso.github.io/Pantheon/tower-projection/projection.json",
+                "format": "JSON público",
+                "load": "HTTPS público; a receita tower_native lê diretamente a projeção",
+                "license": "public"
+              }
+            ],
+            "note": "Entrada pública canônica da receita tower_native; sem dados privados."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "LEARNER",
+          "created_at": "2026-09-30T16:20:30Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-15",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "Projeção pública da Tower",
+                "url": "https://bydenoso.github.io/Pantheon/tower-projection/projection.json",
+                "format": "JSON público",
+                "load": "HTTPS público; a receita tower_native lê diretamente a projeção",
+                "license": "public"
+              }
+            ],
+            "note": "Entrada pública canônica da receita tower_native; sem dados privados."
+          }
+        }
+      ]
+    }
+  }
+}
