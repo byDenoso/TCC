@@ -1,0 +1,158 @@
+{
+  "stable_id": "battery-roadmap-dr1-20260930-01",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-09-30T20:23:35Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-30T20:23:35Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-TRES-DES-U3-1",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "url": "https://raw.githubusercontent.com/CobayaSampler/bao_data/bb0c1c9009dc76d1391300e169e8df38fd1096db/desi_2024_gaussian_bao_ALL_GCcomb_mean.txt",
+                "sha256": "dd2873a0b88459a491af3c0c0307ba059f62df9211d5b976760f310565a1be68",
+                "name": "desi_2024_gaussian_bao_ALL_GCcomb_mean.txt",
+                "version": "bb0c1c9009dc76d1391300e169e8df38fd1096db",
+                "format": "text",
+                "license": "public",
+                "checked": "SHA256 dos bytes consumidos verificado em smoke real da receita DR1."
+              },
+              {
+                "url": "https://raw.githubusercontent.com/CobayaSampler/bao_data/bb0c1c9009dc76d1391300e169e8df38fd1096db/desi_2024_gaussian_bao_ALL_GCcomb_cov.txt",
+                "sha256": "bbafa9074b51cf1a45e0d10e4f37db8c0e80a5d1d1788857abb7fc49fb21abcc",
+                "name": "desi_2024_gaussian_bao_ALL_GCcomb_cov.txt",
+                "version": "bb0c1c9009dc76d1391300e169e8df38fd1096db",
+                "format": "text",
+                "license": "public",
+                "checked": "SHA256 dos bytes consumidos verificado em smoke real da receita DR1."
+              },
+              {
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/c9a4fcafc4cbd19bd750dee47fc76194a45c181f/4_DISTANCES_COVMAT/DES-Dovekie_HD.csv",
+                "sha256": "2f57019d783eaa976df80a41b0054171a2d994ee9808d715ce850c2df5720aaf",
+                "name": "DES-Dovekie_HD.csv",
+                "version": "c9a4fcafc4cbd19bd750dee47fc76194a45c181f",
+                "format": "text",
+                "license": "public",
+                "checked": "SHA256 dos bytes consumidos verificado em smoke real da receita DR1."
+              },
+              {
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/c9a4fcafc4cbd19bd750dee47fc76194a45c181f/4_DISTANCES_COVMAT/STAT%2BSYS.npz",
+                "sha256": "ffd3124b32148b1372bd95fda9299269f0352a9f8eee02d416c610e38495463b",
+                "name": "STAT%2BSYS.npz",
+                "version": "c9a4fcafc4cbd19bd750dee47fc76194a45c181f",
+                "format": "NumPyNPZ",
+                "license": "public",
+                "checked": "SHA256 dos bytes consumidos verificado em smoke real da receita DR1."
+              },
+              {
+                "url": "https://raw.githubusercontent.com/rubind/union3_release/f5c387349b68f3535fdabf0fbc4f45cd407f9084/mu_mat_union3_cosmo=2_mu.fits",
+                "sha256": "ef98b7dde1025ee7134f3242aaea3f1f0ed3f2b29a718458c550a8e4e24d0349",
+                "name": "mu_mat_union3_cosmo=2_mu.fits",
+                "version": "f5c387349b68f3535fdabf0fbc4f45cd407f9084",
+                "format": "FITS",
+                "license": "public",
+                "checked": "SHA256 dos bytes consumidos verificado em smoke real da receita DR1."
+              }
+            ],
+            "note": "Inputs públicos já previstos no teste congelado: DR1 BAO, DES-SN5YR e Union3; versões fixas e hashes conferidos. Nenhuma seleção ou critério alterado."
+          }
+        },
+        {
+          "kind": "RECIPE_BIND",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-30T20:23:35Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-TRES-DES-U3-1",
+            "recipe": "w0wa_bao_sn_multi",
+            "params": {
+              "bao_release": "dr1",
+              "compilations": [
+                "des_sn5yr",
+                "union3"
+              ],
+              "mode": "bao_tracer_jackknife",
+              "tracer_groups": [
+                {
+                  "label": "LRG-total",
+                  "z": [
+                    0.51,
+                    0.706,
+                    0.93
+                  ]
+                },
+                {
+                  "label": "ELG-total",
+                  "z": [
+                    0.93,
+                    1.317
+                  ]
+                },
+                {
+                  "label": "QSO+Lya",
+                  "z": [
+                    1.491,
+                    2.33
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "TEST_BATTERY",
+          "source": "EXECUTOR",
+          "created_at": "2026-09-30T20:23:35Z",
+          "payload": {
+            "battery_id": "bat-dr1-roadmap-20260930-01",
+            "tests": [
+              {
+                "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-TRES-DES-U3-1",
+                "recipe": "w0wa_bao_sn_multi",
+                "params": {
+                  "bao_release": "dr1",
+                  "compilations": [
+                    "des_sn5yr",
+                    "union3"
+                  ],
+                  "mode": "bao_tracer_jackknife",
+                  "tracer_groups": [
+                    {
+                      "label": "LRG-total",
+                      "z": [
+                        0.51,
+                        0.706,
+                        0.93
+                      ]
+                    },
+                    {
+                      "label": "ELG-total",
+                      "z": [
+                        0.93,
+                        1.317
+                      ]
+                    },
+                    {
+                      "label": "QSO+Lya",
+                      "z": [
+                        1.491,
+                        2.33
+                      ]
+                    }
+                  ]
+                },
+                "timeout_min": 120
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
