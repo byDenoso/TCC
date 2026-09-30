@@ -1,0 +1,57 @@
+{
+  "stable_id": "scientist-20260930t1516z-calibration-family",
+  "envelope": {
+    "kind": "FAMILY_CHARTER",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T15:16:30Z",
+    "payload": {
+      "family_id": "META-PREDICTION-CALIBRATION-STRATA-V1",
+      "roadmap_id": "RM-NEXO-OBSERVABILITY-CALIBRATION-RIVAL-V1",
+      "recipe": "tower_native",
+      "domain": "ENGINEERING",
+      "hypothesis_id": "HYP-META-PREDICTION-CALIBRATION-STRATA-V1",
+      "template": {
+        "display_name": "Calibração por cobertura observacional",
+        "question": "A pior calibração das previsões com baixa observabilidade permanece quando o mínimo de casos por estrato é variado antes da análise?",
+        "null": "A diferença de calibração entre observabilidade baixa e alta desaparece ou muda de direção em pelo menos duas escolhas pré-declaradas do mínimo por estrato.",
+        "rival": "A calibração com baixa observabilidade permanece pelo menos 25% pior nas duas janelas temporais em pelo menos duas escolhas pré-declaradas do mínimo por estrato.",
+        "method": "Ordenar testes decididos pelo tempo público, dividir em duas janelas temporais e, em cada célula, comparar o Brier score entre cobertura observacional alta e baixa com o mesmo corte mediano; variar apenas o mínimo exigido por estrato.",
+        "dataset_and_selection": "Projeção pública da Tower; apenas testes decididos com previsão p_promoted registrada antes do resultado e relógio público de execução.",
+        "success_criteria": "PROMOTED pela receita quando, nas duas janelas, o Brier score do estrato de baixa observabilidade for pelo menos 25% pior e todos os estratos atingirem o mínimo congelado.",
+        "kill_criteria": "REJECTED pela receita quando a diferença não ocorrer nas duas janelas; INCONCLUSIVE quando algum estrato não atingir o mínimo congelado.",
+        "prediction": {
+          "p_promoted": 0.55
+        },
+        "claim_boundary": "Avalia calibração prospectiva no histórico público do NEXO; não mede qualidade científica dos testes nem autoriza mudança automática de prioridade."
+      },
+      "instances": [
+        {
+          "label": "ESTRATO-05",
+          "params": {
+            "mode": "prediction_calibration",
+            "min_per_stratum": 5
+          }
+        },
+        {
+          "label": "ESTRATO-10",
+          "params": {
+            "mode": "prediction_calibration",
+            "min_per_stratum": 10
+          }
+        },
+        {
+          "label": "ESTRATO-15",
+          "params": {
+            "mode": "prediction_calibration",
+            "min_per_stratum": 15
+          }
+        }
+      ],
+      "stop": {
+        "kill_rejected": 2,
+        "success_promoted": 2
+      }
+    }
+  }
+}
