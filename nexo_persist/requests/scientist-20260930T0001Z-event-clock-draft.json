@@ -1,0 +1,71 @@
+{
+  "stable_id": "scientist-20260930T0001Z-event-clock-draft",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-09-30T00:01:17Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "HYPOTHESIS_PROPOSAL",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:01:17Z",
+          "payload": {
+            "test_id": "HYP-GW-TCC-7160754E48EC38CD59714432EF3333D3-1",
+            "hypothesis_id": "HYP-META-EMERG-EVENT-SOURCE-20260929",
+            "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+            "display_name": "Relógio vem dos eventos",
+            "question": "O relógio de emergência deve usar o evento canônico de criação ou aplicação da hipótese?",
+            "null": "Usar eventos canônicos não torna o tempo numérico e coerente.",
+            "rival": "Usar eventos canônicos torna o tempo numérico e coerente.",
+            "method": "Na mesma revisão da Tower, selecionar pelo menos 10 hipóteses com evento canônico de criação ou aplicação; calcular em cópia isolada o relógio por evento e verificar cobertura numérica, monotonicidade e ordem temporal, sem alterar limiares.",
+            "data": "Tower canônica e eventos canônicos de criação ou aplicação de hipóteses; somente dados operacionais públicos da projeção.",
+            "success_criteria": "PROMOTED se n>=10, o relógio por evento for numérico em 100% dos casos elegíveis, preservar 100% da ordem temporal entre eventos distintos e eliminar o null de new_hypothesis no cálculo isolado.",
+            "kill_criteria": "REJECTED se n>=10 e houver qualquer inversão temporal, cobertura numérica <95% ou new_hypothesis continuar nulo usando a fonte por evento; n<10 = INCONCLUSIVE.",
+            "claim_boundary": "Testa somente se eventos canônicos fornecem uma fonte temporal observável e coerente para o relógio de emergência.",
+            "priority": "P1",
+            "recipe": "tower_native",
+            "recipe_params": {
+              "mode": "event_clock",
+              "min_hypotheses": 10
+            },
+            "semantic": {
+              "domain_id": "engineering",
+              "subdomain_id": "engineering.nexo_runtime",
+              "topic_id": "engineering.nexo_runtime.state_integrity",
+              "display_name": "Relógio vem dos eventos",
+              "question_plain": "Eventos canônicos fornecem um relógio coerente para a chegada das hipóteses?",
+              "why_it_matters": "Um relógio observável evita falsos alertas de inatividade e separa ausência de timestamp de erro na fonte temporal.",
+              "confidence_plain": "média"
+            }
+          }
+        },
+        {
+          "kind": "RECIPE_BIND",
+          "source": "LEARNER",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:01:17Z",
+          "payload": {
+            "test_id": "HYP-GW-TCC-7160754E48EC38CD59714432EF3333D3-1",
+            "recipe": "tower_native",
+            "params": {
+              "mode": "event_clock",
+              "min_hypotheses": 10
+            }
+          }
+        },
+        {
+          "kind": "NEXO_THOUGHT",
+          "source": "PITIA",
+          "producer": "GPT",
+          "created_at": "2026-09-30T00:01:17Z",
+          "payload": {
+            "entries": []
+          }
+        }
+      ]
+    }
+  }
+}
