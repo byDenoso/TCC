@@ -3,7 +3,11 @@ import json
 import tempfile
 import yaml
 
-from peer_n31p_spt3g_20260729.campaign import prepare_resume_config, write_configs
+from peer_n31p_spt3g_20260729.campaign import (
+    prepare_resume_config,
+    quick_evaluate_ref,
+    write_configs,
+)
 
 
 SPT_TEMPLATE = """
@@ -55,10 +59,14 @@ def test_model(model: str) -> None:
         assert info["params"]["ombh2"]["prior"] == {"min": 0.017, "max": 0.027}
         assert info["params"]["peer_zc"]["value"] == 3.81
         assert info["params"]["peer_thetai"]["value"] == 2.89155
-        assert "prior" in info["params"]["peer_fede"]
-        if model == "N31P":
+        if model == "LCDM":
+            assert info["params"]["peer_fede"]["value"] == 0.0
+            assert info["params"]["Alens"]["value"] == 1.0
+        elif model == "N31P":
+            assert "prior" in info["params"]["peer_fede"]
             assert info["params"]["Alens"]["value"] == 1.0
         else:
+            assert "prior" in info["params"]["peer_fede"]
             assert "prior" in info["params"]["Alens"]
         assert "A_act" not in info["params"]
         assert "P_act" not in info["params"]
@@ -84,8 +92,34 @@ def test_model(model: str) -> None:
         assert "D1" in manifest["stack"]
         assert "2018" not in manifest["stack"]
 
+        quick_root = td_path / f"quick_{model}"
+        write_configs(
+            model,
+            "/tmp/packages",
+            quick_root,
+            spt_template=template,
+            spt_data_ref="test-spt-d1-ref",
+            quick_evaluate_only=True,
+        )
+        assert not (quick_root / "configs" / "mcmc.yaml").exists()
+        quick_info = yaml.safe_load((quick_root / "configs" / "evaluate.yaml").read_text())
+        quick_manifest = json.loads((quick_root / "manifest.json").read_text())
+        expected_refs = quick_evaluate_ref(model)
+        for name, value in expected_refs.items():
+            spec = quick_info["params"].get(name)
+            if isinstance(spec, dict) and "prior" in spec:
+                assert spec["ref"] == value
+        if model != "LCDM":
+            assert quick_info["params"]["peer_fede"]["ref"] == expected_refs["peer_fede"]
+        if model == "N31P_ALENS":
+            assert quick_info["params"]["Alens"]["ref"] == expected_refs["Alens"]
+        assert quick_manifest["coverage"] == "evaluate_N1_only_no_MCMC_no_global_evidence"
+        assert quick_info["sampler"]["evaluate"]["override"] == quick_manifest["evaluation_reference"]["values"]
+        assert quick_info["sampler"]["evaluate"]["override"]["Tcal_ext150"] == 1.0
+
 
 def main() -> None:
+    test_model("LCDM")
     test_model("N31P")
     test_model("N31P_ALENS")
     print("SPT D1 campaign structural tests: PASS")

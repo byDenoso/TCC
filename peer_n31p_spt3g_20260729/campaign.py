@@ -11,15 +11,35 @@ from typing import Any
 
 import yaml
 
-from act_dr6_mcmc_20260729.campaign import base_info, jittered_ref, apply_ref
+from act_dr6_mcmc_20260729.campaign import REFS, base_info, jittered_ref, apply_ref
 
 MODELS = {
+    "LCDM": "M0",
     "N31P": "M2",
     "N31P_ALENS": "M3",
 }
 
 SPT_D1_DATASET = "spt_candl_data.SPT3G_D1_TnE"
 SPT_D1_CLASS = "candl.interface.CandlCobayaLikelihood"
+
+def quick_evaluate_ref(model: str) -> dict[str, float]:
+    """Return the existing frozen reference profile without any jitter."""
+    if model not in MODELS:
+        raise ValueError(f"Unknown model: {model}")
+    return {name: float(value) for name, value in REFS[MODELS[model]].items()}
+
+
+def _scalar_evaluate_point(info: dict[str, Any]) -> dict[str, float]:
+    """Freeze every sampled coordinate, including official SPT nuisances."""
+    point: dict[str, float] = {}
+    for name, spec in info["params"].items():
+        if not isinstance(spec, dict) or "prior" not in spec:
+            continue
+        ref = spec.get("ref")
+        if not isinstance(ref, (int, float)):
+            raise ValueError(f"Quick evaluate requires a scalar reference for {name!r}; got {ref!r}")
+        point[name] = float(ref)
+    return point
 
 # Parameters owned by the PEER/base cosmology contract. The official SPT
 # template is authoritative for SPT nuisance parameters and their priors, but
@@ -142,6 +162,7 @@ def write_configs(
     *,
     spt_template: Path,
     spt_data_ref: str,
+    quick_evaluate_only: bool = False,
 ) -> None:
     root.mkdir(parents=True, exist_ok=True)
     (root / "configs").mkdir(exist_ok=True)
@@ -156,43 +177,55 @@ def write_configs(
         str((root / "evaluate" / "chain").resolve()),
         spt_template=spt_template,
     )
-    apply_ref(evaluate, jittered_ref(source_model, 2026072950 + (0 if model == "N31P" else 100)))
-    evaluate["sampler"] = {"evaluate": {"N": 1, "override": {}}}
+    model_seed_offset = {"N31P": 0, "N31P_ALENS": 100, "LCDM": 200}[model]
+    evaluation_refs = (
+        quick_evaluate_ref(model)
+        if quick_evaluate_only
+        else jittered_ref(source_model, 2026072950 + model_seed_offset)
+    )
+    apply_ref(evaluate, evaluation_refs)
+    evaluation_point = _scalar_evaluate_point(evaluate) if quick_evaluate_only else {}
+    evaluate["sampler"] = {"evaluate": {"N": 1, "override": evaluation_point}}
     (root / "configs" / "evaluate.yaml").write_text(
         yaml.safe_dump(evaluate, sort_keys=False), encoding="utf-8"
     )
 
-    mcmc = build_spt_info(
-        model,
-        packages_path,
-        str((root / "mcmc" / "chain").resolve()),
-        spt_template=spt_template,
-    )
-    apply_ref(mcmc, jittered_ref(source_model, 2026072990 + (0 if model == "N31P" else 100)))
-    mcmc["resume"] = False
-    mcmc["sampler"] = {
-        "mcmc": {
-            "Rminus1_stop": 0.01,
-            "Rminus1_cl_stop": 0.05,
-            # The real SPT D1 likelihood is slow enough that 300 warmup samples
-            # consumed an entire 150-minute segment before any chain rows were
-            # persisted. Fifty keeps adaptation while allowing the resumable
-            # campaign to emit samples well before the segment boundary.
-            "burn_in": 50,
-            "learn_proposal": True,
-            "learn_proposal_Rminus1_max": 30.0,
-            "max_samples": 50000,
-            "proposal_scale": 1.2,
-            "seed": 2026072991 + (0 if model == "N31P" else 100),
-            "output_every": 60,
+    if not quick_evaluate_only:
+        mcmc = build_spt_info(
+            model,
+            packages_path,
+            str((root / "mcmc" / "chain").resolve()),
+            spt_template=spt_template,
+        )
+        apply_ref(mcmc, jittered_ref(source_model, 2026072990 + model_seed_offset))
+        mcmc["resume"] = False
+        mcmc["sampler"] = {
+            "mcmc": {
+                "Rminus1_stop": 0.01,
+                "Rminus1_cl_stop": 0.05,
+                # The real SPT D1 likelihood is slow enough that 300 warmup samples
+                # consumed an entire 150-minute segment before any chain rows were
+                # persisted. Fifty keeps adaptation while allowing the resumable
+                # campaign to emit samples well before the segment boundary.
+                "burn_in": 50,
+                "learn_proposal": True,
+                "learn_proposal_Rminus1_max": 30.0,
+                "max_samples": 50000,
+                "proposal_scale": 1.2,
+                "seed": 2026072991 + model_seed_offset,
+                "output_every": 60,
+            }
         }
-    }
-    (root / "configs" / "mcmc.yaml").write_text(
-        yaml.safe_dump(mcmc, sort_keys=False), encoding="utf-8"
-    )
+        (root / "configs" / "mcmc.yaml").write_text(
+            yaml.safe_dump(mcmc, sort_keys=False), encoding="utf-8"
+        )
 
     manifest = {
-        "campaign": "PEER-N3-1P SPT-3G D1 matched posterior",
+        "campaign": (
+            "LCDM SPT-3G D1 matched baseline"
+            if model == "LCDM"
+            else "PEER-N3-1P SPT-3G D1 matched posterior"
+        ),
         "model": model,
         "source_model": source_model,
         "stack": (
@@ -203,11 +236,19 @@ def write_configs(
         "spt_dataset": "SPT3G_D1_TnE",
         "spt_data_ref": spt_data_ref,
         "spt_template_sha256": spt_template_sha256,
+        "spt_nuisance_contract": "official_template_reference_point_and_priors",
+        "coverage": (
+            "evaluate_N1_only_no_MCMC_no_global_evidence"
+            if quick_evaluate_only
+            else "posterior_contract"
+        ),
         "peer_n": 3,
+        "peer_active": model != "LCDM",
         "peer_log10_zc": 3.81,
         "peer_theta_i": 2.89155,
         "peer_prior": [0.0, 0.18],
-        "alens": "fixed_1" if model == "N31P" else "uniform_0.5_1.5",
+        "peer_fede_contract": "fixed_0" if model == "LCDM" else "uniform_0_0.18",
+        "alens": "uniform_0.5_1.5" if model == "N31P_ALENS" else "fixed_1",
         "shoes": [73.04, 1.04],
         "convergence_gate": {
             "rank_rhat_minus_1_max": 0.01,
@@ -223,6 +264,13 @@ def write_configs(
             "python": "3.11",
         },
     }
+    if quick_evaluate_only:
+        manifest.pop("convergence_gate")
+        manifest["evaluation_reference"] = {
+            "strategy": "frozen_per_model_REFS_plus_official_SPT_nuisance_refs_no_jitter",
+            "values": evaluation_point,
+            "interpretation": "numerical_viability_probe_not_model_ranking",
+        }
     (root / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
@@ -233,6 +281,7 @@ def main() -> int:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--spt-template", required=True, type=Path)
     parser.add_argument("--spt-data-ref", required=True)
+    parser.add_argument("--quick-evaluate-only", action="store_true")
     args = parser.parse_args()
     write_configs(
         args.model,
@@ -240,6 +289,7 @@ def main() -> int:
         args.root.resolve(),
         spt_template=args.spt_template.resolve(),
         spt_data_ref=args.spt_data_ref,
+        quick_evaluate_only=args.quick_evaluate_only,
     )
     return 0
 
