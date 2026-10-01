@@ -1,0 +1,72 @@
+{
+  "stable_id": "bind-tower-native-strata-20261001-v1",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "CHATGPT",
+    "created_at": "2026-10-01T13:42:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "CHATGPT",
+          "created_at": "2026-10-01T13:42:00Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-05",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "public-projection-20260930-194720.json.gz",
+                "url": "https://raw.githubusercontent.com/byDenoso/Pantheon/7516454072ad3572633c32956a6eba47c922d815/nexo-one/executor-runtime/snapshots/public-projection-20260930-194720.json.gz",
+                "version": "sha256:d4090f469df7eafe9a776b04c8ea363c22b7fa65d13ebf7181464389a65abf05",
+                "sha256": "8b4c0da9ddb63b07f1043c53a1dab3cfd7d88cf3ec6c372ee63d00a2b1888b",
+                "format": "json.gz",
+                "license": "public"
+              }
+            ],
+            "note": "Snapshot público imutável da projeção, gerado em 2026-09-30T19:47:20Z e publicado em commit fixo. A receita tower_native verifica URL commit-pinned e SHA256 antes da leitura."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "CHATGPT",
+          "created_at": "2026-10-01T13:42:00Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-10",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "public-projection-20260930-194720.json.gz",
+                "url": "https://raw.githubusercontent.com/byDenoso/Pantheon/7516454072ad3572633c32956a6eba47c922d815/nexo-one/executor-runtime/snapshots/public-projection-20260930-194720.json.gz",
+                "version": "sha256:d4090f469df7eafe9a776b04c8ea363c22b7fa65d13ebf7181464389a65abf05",
+                "sha256": "8b4c0da9ddb63b07f1043c53a1dab3cfd7d88cf3ec6c372ee63d00a2b1888b",
+                "format": "json.gz",
+                "license": "public"
+              }
+            ],
+            "note": "Snapshot público imutável da projeção, gerado em 2026-09-30T19:47:20Z e publicado em commit fixo. A receita tower_native verifica URL commit-pinned e SHA256 antes da leitura."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "CHATGPT",
+          "created_at": "2026-10-01T13:42:00Z",
+          "payload": {
+            "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-15",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "name": "public-projection-20260930-194720.json.gz",
+                "url": "https://raw.githubusercontent.com/byDenoso/Pantheon/7516454072ad3572633c32956a6eba47c922d815/nexo-one/executor-runtime/snapshots/public-projection-20260930-194720.json.gz",
+                "version": "sha256:d4090f469df7eafe9a776b04c8ea363c22b7fa65d13ebf7181464389a65abf05",
+                "sha256": "8b4c0da9ddb63b07f1043c53a1dab3cfd7d88cf3ec6c372ee63d00a2b1888b",
+                "format": "json.gz",
+                "license": "public"
+              }
+            ],
+            "note": "Snapshot público imutável da projeção, gerado em 2026-09-30T19:47:20Z e publicado em commit fixo. A receita tower_native verifica URL commit-pinned e SHA256 antes da leitura."
+          }
+        }
+      ]
+    }
+  }
+}
