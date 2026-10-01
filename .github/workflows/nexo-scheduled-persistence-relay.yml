@@ -14,6 +14,8 @@ permissions:
 concurrency:
   group: nexo-scheduled-persistence-relay
   cancel-in-progress: false
+  # Preserve up to 100 pending pushes instead of replacing the previous pending run.
+  queue: max
 
 jobs:
   relay:
@@ -23,6 +25,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Queued pushes must read their own files, never the later branch tip.
+          ref: ${{ github.sha }}
 
       - name: Relay every request of this push (or all missing ones on manual run)
         env:
