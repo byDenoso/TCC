@@ -1,0 +1,14 @@
+{
+  "stable_id": "board-resolve-pr388-writer-receipt-20261001",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-01T10:09:11Z",
+    "payload": {
+      "resolve": [
+        "BP-2026-09-30T23:28-GUARDIAO-0"
+      ]
+    }
+  }
+}
