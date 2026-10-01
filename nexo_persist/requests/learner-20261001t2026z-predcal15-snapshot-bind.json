@@ -1,0 +1,26 @@
+{
+  "stable_id": "learner-20261001t2026z-predcal15-snapshot-bind",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-10-01T20:26:00Z",
+    "payload": {
+      "test_id": "FAM-META-PREDICTION-CALIBRATION-STRATA-V1-ESTRATO-15",
+      "inputs": [
+        {
+          "name": "public-projection-20260930-194720.json.gz",
+          "url": "https://raw.githubusercontent.com/byDenoso/Pantheon/4d29cb1c1bba24bb565af8fc837a7d11067d9690/nexo-one/executor-runtime/snapshots/public-projection-20260930-194720.json.gz",
+          "version": "sha256:d4090f469df7eafe9a776b04c8ea363c22b7fa65d13ebf7181464389a65abf05",
+          "sha256": "8b4c0da9ddb63b07f1043c53a1dab3cfd7d88cf3ec6c372ee63d00a2b1888b8b",
+          "format": "json.gz",
+          "load": "Descompactar gzip e carregar JSON; a recipe tower_native verifica URL commit-pinned, versão e SHA256 antes de usar.",
+          "checked": "Snapshot público exato gerado em 2026-09-30T19:47:20Z; source sidecar confirma SHA256 e origem da projeção pública.",
+          "license": "public"
+        }
+      ],
+      "status": "BOUND",
+      "note": "Completa somente a proveniência congelada exigida pela recipe tower_native; contrato científico e parâmetros da família permanecem inalterados."
+    }
+  }
+}
