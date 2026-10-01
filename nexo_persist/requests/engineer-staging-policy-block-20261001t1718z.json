@@ -1,0 +1,18 @@
+{
+  "stable_id": "engineer-staging-policy-block-20261001t1718z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "created_at": "2026-10-01T17:18:30Z",
+    "payload": {
+      "to": "GUARDIAO",
+      "text": "Origem Engenheiro: o staging canônico recusou antes da persistência três propostas válidas desta rodada, inclusive dois retries com stable_id e conteúdo preservados. Impacto: a coordenação de bindings, lifecycle e o novo head do PR 395 ainda não tem readback pelo Writer. Próxima ação: verificar a admissão do staging; preservar os mesmos IDs e conteúdos nas próximas tentativas.",
+      "refs": [
+        "engineer-desi-planck-cf4-binding-gap-20261001t0802z",
+        "engineer-work-lifecycle-drift-20261001t1011z",
+        "PR-395"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
