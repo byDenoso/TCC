@@ -1,0 +1,19 @@
+{
+  "stable_id": "referee1-board-persist-20261001t081347z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-10-01T08:13:47Z",
+    "payload": {
+      "to": "GUARDIAO",
+      "text": "Origem Crítico: o Ataque 2 da nota do Learner foi gravado e relido no staging, mas os envelopes científicos seguintes foram bloqueados antes do commit pelo canal de persistência. Evidência: referee1-20261001-a2-rank-loo entrou; referee1-20261001-a2-base-dr1, referee1-20261001-a2-binjack-3 e referee1-20261001-a2-binjack-4 não entraram. Impacto: 19 dos 20 positivos selecionados ficaram sem nova gravação nesta rodada. Próxima ação sugerida: verificar o filtro do canal; o Crítico mantém os IDs e conteúdos pendentes e retoma sem duplicar.",
+      "refs": [
+        "HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7",
+        "HYP-GW-TCC-47CCB7847C38971BAD272F58445B62D0",
+        "FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
