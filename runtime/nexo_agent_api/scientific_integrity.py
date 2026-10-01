@@ -59,9 +59,17 @@ def timestamp(value: Any) -> datetime | None:
 
 
 def terminal(test: dict) -> bool:
+    """Scientific terminal state, excluding legacy operational blocker labels.
+
+    Older runtime paths wrote BLOCKED_* into `verdict`, which accidentally made
+    recoverable preparation failures immutable/terminal.  BLOCKED_* is an
+    operational condition, not a scientific conclusion.
+    """
+    verdict = str(test.get('verdict') or '').upper()
+    scientific_verdict = bool(verdict and not verdict.startswith('BLOCKED'))
     return (str(test.get('status') or test.get('state') or '').upper() in TERMINAL
             or test.get('review_state') in {'CONFIRMED', 'REFUTED', 'ARCHIVED'}
-            or bool(test.get('verdict')) or bool(test.get('executed_at')))
+            or scientific_verdict or bool(test.get('executed_at')))
 
 
 def batteries(root: Path) -> list[dict]:
