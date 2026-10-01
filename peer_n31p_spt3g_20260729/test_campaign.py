@@ -116,6 +116,14 @@ def test_model(model: str) -> None:
         assert quick_manifest["coverage"] == "evaluate_N1_only_no_MCMC_no_global_evidence"
         assert quick_info["sampler"]["evaluate"]["override"] == quick_manifest["evaluation_reference"]["values"]
         assert quick_info["sampler"]["evaluate"]["override"]["Tcal_ext150"] == 1.0
+        assert quick_info["sampler"]["evaluate"]["override"]["A_planck"] == 1.0
+        assert quick_info["params"]["A_planck"] == {
+            "prior": {"dist": "norm", "loc": 1.0, "scale": 0.0025},
+            "ref": 1.0,
+            "proposal": 0.0005,
+            "latex": "y_\\mathrm{cal}",
+            "renames": "calPlanck",
+        }
 
 
 def main() -> None:

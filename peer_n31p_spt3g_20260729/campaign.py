@@ -22,6 +22,26 @@ MODELS = {
 SPT_D1_DATASET = "spt_candl_data.SPT3G_D1_TnE"
 SPT_D1_CLASS = "candl.interface.CandlCobayaLikelihood"
 
+# Cobaya injects this Planck likelihood default only after resolving the full
+# model. The quick lane must declare it early so Evaluate cannot draw a
+# different calibration for each model.
+PLANCK_CALIBRATION_DEFAULT = {
+    "prior": {"dist": "norm", "loc": 1.0, "scale": 0.0025},
+    "ref": 1.0,
+    "proposal": 0.0005,
+    "latex": "y_\\mathrm{cal}",
+    "renames": "calPlanck",
+}
+
+
+def _freeze_planck_calibration(info: dict[str, Any]) -> None:
+    if "A_planck" in info["params"]:
+        raise ValueError(
+            "Quick evaluate expected Planck calibration to be supplied by the likelihood"
+        )
+    info["params"]["A_planck"] = copy.deepcopy(PLANCK_CALIBRATION_DEFAULT)
+
+
 def quick_evaluate_ref(model: str) -> dict[str, float]:
     """Return the existing frozen reference profile without any jitter."""
     if model not in MODELS:
@@ -184,6 +204,8 @@ def write_configs(
         else jittered_ref(source_model, 2026072950 + model_seed_offset)
     )
     apply_ref(evaluate, evaluation_refs)
+    if quick_evaluate_only:
+        _freeze_planck_calibration(evaluate)
     evaluation_point = _scalar_evaluate_point(evaluate) if quick_evaluate_only else {}
     evaluate["sampler"] = {"evaluate": {"N": 1, "override": evaluation_point}}
     (root / "configs" / "evaluate.yaml").write_text(

@@ -262,6 +262,14 @@ jobs:
               name for name, spec in info['params'].items()
               if isinstance(spec, dict) and 'prior' in spec
           }
+          assert info['params']['A_planck'] == {
+              'prior': {'dist': 'norm', 'loc': 1.0, 'scale': 0.0025},
+              'ref': 1.0,
+              'proposal': 0.0005,
+              'latex': r'y_\mathrm{cal}',
+              'renames': 'calPlanck',
+          }
+          assert override['A_planck'] == 1.0
           assert not (root / 'configs/mcmc.yaml').exists()
           assert info['likelihood']['candl_like']['data_set_file'] == 'spt_candl_data.SPT3G_D1_TnE'
           assert likes == {
@@ -314,7 +322,7 @@ jobs:
           ROOT="$GITHUB_WORKSPACE/quick_${MODEL}"
           export ROOT
           python - <<'PY'
-          import hashlib, importlib.metadata, json, math, os, subprocess, sys
+          import hashlib, importlib.metadata, json, math, os, subprocess, sys, yaml
           from pathlib import Path
           import spt_candl_data
 
@@ -330,6 +338,25 @@ jobs:
           values = [float(value) for value in lines[0].split()]
           assert len(columns) == len(values)
           row = dict(zip(columns, values))
+          updated_path = root / 'evaluate/chain.updated.yaml'
+          updated = yaml.safe_load(updated_path.read_text(encoding='utf-8'))
+          resolved_sampled = {
+              name for name, spec in updated['params'].items()
+              if isinstance(spec, dict) and 'prior' in spec
+          }
+          override = updated['sampler']['evaluate']['override']
+          assert set(override) == resolved_sampled, {
+              'missing_from_override': sorted(resolved_sampled - set(override)),
+              'not_resolved_as_sampled': sorted(set(override) - resolved_sampled),
+          }
+          assert resolved_sampled <= set(row), sorted(resolved_sampled - set(row))
+          for name in sorted(resolved_sampled):
+              assert math.isfinite(row[name])
+              assert math.isclose(
+                  row[name], float(override[name]), rel_tol=1e-7, abs_tol=1e-9
+              ), (name, row[name], override[name])
+          assert override['A_planck'] == 1.0
+          assert row['A_planck'] == 1.0
           expected_chi2 = {
               'chi2__planck_2018_lowl.TT',
               'chi2__planck_2018_lowl.EE_sroll2',
@@ -357,6 +384,8 @@ jobs:
               root / 'logs/evaluate.stdout.log',
               root / 'logs/evaluate.stderr.log',
               root / 'evaluation_pip_freeze.txt',
+              root / 'evaluate/chain.input.yaml',
+              updated_path,
           ]
           receipt = {
               'campaign': 'PEER SPT D1 quick full-likelihood evaluation',
@@ -379,6 +408,8 @@ jobs:
                   'spt-candl-data': spt_candl_data.__version__,
               },
               'evaluate_rows': len(lines),
+              'resolved_sampled_parameters': sorted(resolved_sampled),
+              'resolved_evaluation_point': override,
               'sha256': {
                   str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest()
                   for path in files
