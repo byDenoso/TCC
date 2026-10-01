@@ -108,6 +108,10 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
                             state=transition.get("state", ""),
                             writer_role=transition.get("writer_role", ""),
                         ))
+                        if (root / "bootstrap").is_dir():
+                            from .views import materialize_role_views
+
+                            materialize_role_views(root)
                 except TowerAgentIssue as exc:
                     receipts.append({
                         "accepted": False,

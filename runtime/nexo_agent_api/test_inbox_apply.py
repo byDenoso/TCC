@@ -448,6 +448,139 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
 
 
 class HandoffCLIPersistenceTests(unittest.TestCase):
+    def recovery_tower(self):
+        from runtime.nexo_agent_api import AgentService, materialize_role_views
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower
+
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        root = Path(tmp.name) / "source"
+        for relative in ("entities/work", "manifests", "snapshot"):
+            (root / relative).mkdir(parents=True, exist_ok=True)
+        (root / "CONTROL.json").write_text(json.dumps({
+            "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+        }), encoding="utf-8")
+        (root / "snapshot/latest.json").write_text(json.dumps({"event_cursor": None}), encoding="utf-8")
+        (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}), encoding="utf-8")
+        (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}), encoding="utf-8")
+        work = {
+            "id": "WORK::RECOVERY-VIEW",
+            "entity_version": 4,
+            "kind": "DEPENDENCY_RECOVERY",
+            "status": "BLOCKED",
+            "owner_role": "ADVISOR",
+            "test_id": "TEST::RECOVERY-VIEW",
+            "thread_id": "THR::RECOVERY-VIEW",
+            "recovery": {
+                "policy": "EXECUTION_RECOVERY_V1",
+                "fingerprint": "frozen-view-inputs",
+                "target_role": "EXECUTOR",
+                "ownership_state": "ASSIGNED_UNACCEPTED",
+                "reasons": ["RECIPE_BINDING_MISSING"],
+                "validation": {"eligible": False},
+            },
+        }
+        entity_path(root, "work", work["id"]).write_text(json.dumps(work), encoding="utf-8")
+        created = AgentService(root).emit_handoff(
+            request_id="REQ-RECOVERY-VIEW-1",
+            from_role="ADVISOR",
+            to_role="EXECUTOR",
+            handoff_type="BLOCKER_RECOVERY",
+            entity_ref=work["id"],
+            thread_id=work["thread_id"],
+            summary_plain="O insumo verificável ainda precisa ser preparado.",
+            why_it_matters="A preparação permite executar o desenho já congelado.",
+            next_action="Validar a recuperação sem alterar a definição científica.",
+        )
+        materialize_role_views(root)
+        publish_live_tower(root)
+        return (root / LIVE_TOWER_NAME).read_bytes(), created, work
+
+    def apply_handoff(self, raw, *, state, writer_role="EXECUTOR"):
+        from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+
+        with patch("runtime.nexo_agent_api.evolution.contest_chain_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.evolution.maintenance_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.evolution.incident_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.execution_recovery.reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0):
+            return apply_to_tower(raw, [{
+                "kind": "HANDOFF_TRANSITION",
+                "_inbox_source": "DRIVE",
+                "payload": {
+                    "handoff_id": self.created["handoff_id"],
+                    "state": state,
+                    "writer_role": writer_role,
+                },
+            }])
+
+    @staticmethod
+    def tower_values(raw):
+        from runtime.nexo_agent_api.live_tower import read_live_tower_bytes
+
+        files = read_live_tower_bytes(raw)["files"]
+        events = [entry["value"] for name, entry in files.items() if name.startswith("events/")]
+        return {
+            "work": files["entities/work/WORK::RECOVERY-VIEW.json"]["value"],
+            "bootstrap": files["bootstrap/executor.json"]["value"],
+            "events": events,
+        }
+
+    def test_recovery_ack_refreshes_work_inbox_and_event_cursor_before_pack(self):
+        raw, self.created, original_work = self.recovery_tower()
+
+        packed, report = self.apply_handoff(raw, state="ACK")
+
+        self.assertIsNotNone(packed)
+        self.assertEqual(report["rejected"], [])
+        values = self.tower_values(packed)
+        ack = next(event for event in values["events"] if event.get("state") == "ACK")
+        self.assertEqual(values["work"]["owner_role"], "EXECUTOR")
+        self.assertEqual(values["work"]["entity_version"], original_work["entity_version"] + 1)
+        self.assertEqual(ack["entity_version"], values["work"]["entity_version"])
+        self.assertEqual(ack["work_envelope"], values["work"])
+        self.assertEqual(values["bootstrap"]["event_cursor"], ack["event_id"])
+        self.assertEqual(values["bootstrap"]["inbox"], [ack])
+
+    def test_recovery_ack_replay_is_idempotent_and_keeps_bootstrap_coherent(self):
+        raw, self.created, _ = self.recovery_tower()
+        packed, _ = self.apply_handoff(raw, state="ACK")
+        before = self.tower_values(packed)
+
+        replay, report = self.apply_handoff(packed, state="ACK")
+
+        self.assertIsNone(replay)
+        self.assertEqual(report["status"], "NO_OP")
+        self.assertEqual(report["rejected"], [])
+        self.assertEqual(len(before["events"]), 3)
+        self.assertEqual(before["work"]["entity_version"], 5)
+        ack = next(event for event in before["events"] if event.get("state") == "ACK")
+        self.assertEqual(before["bootstrap"]["event_cursor"], ack["event_id"])
+        self.assertEqual(before["bootstrap"]["inbox"][0]["state"], "ACK")
+
+    def test_rejected_recovery_transitions_do_not_change_work_events_or_bootstrap(self):
+        raw, self.created, _ = self.recovery_tower()
+        initial = self.tower_values(raw)
+
+        mismatch, report = self.apply_handoff(raw, state="ACK", writer_role="LEARNER")
+        self.assertIsNone(mismatch)
+        self.assertEqual(report["status"], "NO_OP")
+        self.assertEqual(report["before"], report["after"])
+        self.assertEqual(report["receipts"][0]["issue"]["code"], "HANDOFF_WRITER_MISMATCH")
+        self.assertEqual(self.tower_values(raw), initial)
+
+        failed, report = self.apply_handoff(raw, state="FAILED")
+        self.assertIsNotNone(failed)
+        self.assertEqual(report["rejected"], [])
+        before_illegal = self.tower_values(failed)
+        illegal, report = self.apply_handoff(failed, state="ACK")
+        self.assertIsNone(illegal)
+        self.assertEqual(report["status"], "NO_OP")
+        self.assertEqual(report["before"], report["after"])
+        self.assertEqual(report["receipts"][0]["issue"]["code"], "HANDOFF_ILLEGAL_TRANSITION")
+        self.assertEqual(self.tower_values(failed), before_illegal)
+
     def test_unattended_writer_applies_private_handoff_acknowledgement(self):
         from runtime.nexo_agent_api import AgentService
         from runtime.nexo_agent_api.gpt_writer import apply_to_tower
