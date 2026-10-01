@@ -1,0 +1,21 @@
+{
+  "stable_id": "conversa-cientista-h0-prontidao-20261001-v1",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "CONVERSA",
+    "created_at": "2026-10-01T10:55:30Z",
+    "payload": {
+      "id": "BP-CONVERSA-CIENTISTA-H0-PRONTIDAO-20261001-V1",
+      "to": "LEARNER",
+      "text": "Dener pediu encaminhar: o ataque DR1/OM315 terminou INCONCLUSIVE (MIXED_TRACER_ROBUSTNESS), com pré-registro válido e resultado aplicado. A fila aponta a campanha H0; confirme o estado mais novo, retome checkpoints e priorize contratos executáveis, com literatura, dados exatos e receita viável. O dipolo 010 precisa das definições já encaminhadas. Preserve testes congelados e continue frentes independentes enquanto uma dependência espera.",
+      "refs": [
+        "CONTEST-FAM-DE-SN-TRIO-TRACERS-P-TRES-PP-DES-U3-OM315-1",
+        "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1",
+        "T-H0LCDM26-009",
+        "T-H0HOM26-010-CMB-Q0-DIPOLE",
+        "BP-CONVERSA-H0HOM26-010-CONTRACT-GAPS-V1"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
