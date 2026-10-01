@@ -117,7 +117,8 @@ class ScientificIntegrityTest(unittest.TestCase):
         self.put(self.test)
         output, report = self.apply([{'kind':'RECIPE_BIND','created_at':NOW,'payload':{'test_id':self.test['id'],'recipe':'missing_recipe','params':{}}}])
         test = next(v['value'] for v in output['files'].values() if v.get('value',{}).get('id') == self.test['id'])
-        self.assertEqual(test['status'], 'BLOCKED_INPUT')
+        self.assertEqual(test['status'], 'CHECKPOINTED')
+        self.assertTrue(test['recovery_required'])
         self.assertFalse(test['readiness']['eligible'])
 
     def test_terminal_cannot_be_reserved(self):

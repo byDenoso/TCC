@@ -98,8 +98,8 @@ def _owner(test: dict, work: list[dict]) -> tuple[str, str, list[str]]:
 
 
 def _route(reasons: list[str]) -> tuple[str, str]:
-    if "DATA_RELEASE_PARAM_MISMATCH" in reasons:
-        return "LEARNER", "Preservar os parâmetros congelados e comparar a seleção ao contrato de dados; registrar a incompatibilidade e propor uma nova identidade científica se a seleção precisar mudar."
+    if any(reason in {"DATA_RELEASE_PARAM_MISMATCH", "UNSUPPORTED_COMPILATIONS"} for reason in reasons):
+        return "LEARNER", "Preservar o desenho congelado, localizar a seleção válida na linhagem e criar uma nova identidade científica se qualquer dataset/compilação precisar mudar; nunca corrigir o teste congelado em silêncio."
     if any(reason.startswith(("MISSING_", "FROZEN_", "CONFLICTING_")) for reason in reasons):
         return "LEARNER", "Recuperar a definição já congelada na linhagem e identificar a referência inequívoca; se houver conflito, registrar a decisão científica que falta."
     if any(reason.startswith(("RECIPE_", "PREFLIGHT_")) for reason in reasons):
@@ -127,7 +127,8 @@ def reconcile_requests(root: str | Path) -> list[dict]:
         if not tid or test.get("private") or is_private(resolve(test, entity_id=tid)):
             continue
         state = str(test.get("status") or test.get("state") or "").upper()
-        if integrity.terminal(test) or tid in active or state not in {"READY", "BLOCKED_INPUT"}:
+        recoverable_lifecycle = state in {"READY", "CHECKPOINTED"} or state.startswith("BLOCKED")
+        if integrity.terminal(test) or tid in active or not recoverable_lifecycle:
             continue
         recovered, refs, conflicts = _binding_recovery(test, artifacts)
         provisional = {**test, **recovered}
@@ -140,10 +141,19 @@ def reconcile_requests(root: str | Path) -> list[dict]:
         check["reasons"] = sorted(set(check["reasons"] + conflicts))
         check["eligible"] = not check["reasons"]
         changes = {**recovered, "readiness": check}
+        # BLOCKED_* written as a historical verdict was an operational receipt,
+        # never a scientific conclusion.  Remove that legacy label while the
+        # unchanged test enters recoverable preparation.
+        if str(test.get("verdict") or "").upper().startswith("BLOCKED"):
+            changes["verdict"] = None
         if check["eligible"]:
-            changes.update(status="READY", state="READY", blocker=None)
+            changes.update(status="READY", state="READY", blocker=None, recovery_required=False)
         else:
-            changes.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT")
+            # Under the lean runtime contract, missing recipe/provenance/definition
+            # is work for the recovery loop, not a terminal queue blocker.  A
+            # CHECKPOINTED test stays visible/resumable to the Executor while its
+            # dedicated recovery WORK routes the exact prerequisite to the right role.
+            changes.update(status="CHECKPOINTED", state="CHECKPOINTED", recovery_required=True)
             if not test.get("blocker") or managed:
                 changes["blocker"] = ",".join(check["reasons"])
         fp = fingerprint(test)
