@@ -63,7 +63,8 @@ class RecoveryTests(unittest.TestCase):
         self.assertFalse(report["rejected"], report)
         test = output["files"][entity_path(self.root, "test", "TEST-A").relative_to(self.root).as_posix()]["value"]
         work = next(v["value"] for p, v in output["files"].items() if p.startswith("entities/work/"))
-        self.assertEqual(test["status"], "BLOCKED_INPUT")
+        self.assertEqual(test["status"], "CHECKPOINTED")
+        self.assertTrue(test["recovery_required"])
         self.assertFalse(test["readiness"]["eligible"])
         self.assertEqual({k: test.get(k) for k in s.FROZEN}, before)
         self.assertEqual(work["owner_role"], "ADVISOR")
@@ -72,6 +73,27 @@ class RecoveryTests(unittest.TestCase):
         events = [v["value"] for p, v in output["files"].items() if p.startswith("events/") and v.get("value", {}).get("handoff_type") == "BLOCKER_RECOVERY"]
         self.assertEqual(len(events), 1)
         self.assertEqual(events[0]["state"], "PENDING")
+
+    def test_legacy_blocked_verdict_is_operational_and_recoverable(self):
+        self.test.pop("data_binding")
+        self.test.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT", verdict="BLOCKED_INPUT")
+        self.put(self.test)
+        self.reconcile()
+        current = s.entity(self.root, "TEST-A")
+        self.assertEqual(current["status"], "CHECKPOINTED")
+        self.assertTrue(current["recovery_required"])
+        self.assertIsNone(current.get("verdict"))
+        self.assertTrue(self.works())
+
+    def test_nonstandard_blocked_state_enters_recovery(self):
+        self.test.pop("data_binding")
+        self.test.update(status=None, state="BLOCKED_SCIENTIFIC_CONTRACT")
+        self.put(self.test)
+        self.reconcile()
+        current = s.entity(self.root, "TEST-A")
+        self.assertEqual(current["status"], "CHECKPOINTED")
+        self.assertTrue(current["recovery_required"])
+        self.assertTrue(self.works())
 
     def test_replay_reuses_same_fingerprint_owner_and_route(self):
         self.test.pop("data_binding"); self.put(self.test)
