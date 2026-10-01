@@ -1,0 +1,33 @@
+{
+  "stable_id": "guardiao-integrity-20261001t0205z-min",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "created_at": "2026-10-01T02:05:15Z",
+    "payload": {
+      "date": "2026-09-30",
+      "status": "RED",
+      "autonomy": {
+        "schema_version": "AUTONOMY_METRICS_V2",
+        "window_hours": 24,
+        "results": 28,
+        "execution_record_share": 0.893,
+        "decisive_rate": 0.571,
+        "non_inconclusive_rate": 0.607,
+        "median_hours_to_result": 9.4,
+        "positive_review_closure": 0.364,
+        "failure_result_coverage": 0.5,
+        "blocked_share": 1.0
+      },
+      "checks": [
+        {"area":"tower","ok":true,"detail":"Tower canônica lida com sucesso."},
+        {"area":"site","ok":false,"detail":"Projeção pública indisponível para leitura nesta rodada; usada a Tower canônica."},
+        {"area":"tasks","ok":false,"detail":"Inventário vivo tem 9 de 10 tarefas NEXO habilitadas; Crítico está desabilitado."},
+        {"area":"science","ok":false,"detail":"0 READY, 0 RUNNING, 63 BLOCKED e 7 CHECKPOINTED."},
+        {"area":"cycle","ok":false,"detail":"61 recuperações em espera seguem sem aceite; 2 P0 já estão na segunda rota; 7 WORKs READY apontam para TESTs terminais."}
+      ],
+      "action":"Priorizar aceite das recuperações P0 já roteadas e reconciliar WORKs READY com TESTs terminais; só retornar a READY com elegibilidade canônica.",
+      "semantic":{"domain_id":"engineering","topic_id":"engineering.nexo_runtime"}
+    }
+  }
+}
