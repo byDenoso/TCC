@@ -1,0 +1,46 @@
+{
+  "stable_id": "referee1-6638057a1f2d-a2-point-v1",
+  "envelope": {
+    "kind": "CONTEST",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-10-01T05:08:42Z",
+    "payload": {
+      "test_id": "FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3",
+      "source": "REFEREE_1",
+      "reason": "Ataque 2 · método: influência ponto a ponto no BAO.",
+      "refs": [
+        "FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3",
+        "entities/artifact/LEARNING_SIGNAL::ROBOT-CONTEST-BLOCKED-40BC89CD903A6716FD350A99.json"
+      ],
+      "contest_test": {
+        "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3-2",
+        "display_name": "Ataque 2 · método ponto a ponto",
+        "roadmap_id": "RM-DENER-CORE-CAMPAIGN-V1",
+        "hypothesis_id": "HYP-XAREA-SELECTION-BINDING-LSS-20260925",
+        "domain": "SCIENCE",
+        "question": "A conclusão positiva do jackknife agrupado permanece quando a unidade de perturbação é cada ponto de redshift efetivo do BAO, um por vez?",
+        "null": "A robustez agrupada é um artefato da partição: um ponto BAO individual remove >=70% do ganho ou gira materialmente a direção w0-wa em pelo menos duas compilações.",
+        "rival": "Nenhum ponto BAO individual domina o ganho; a direção e a força permanecem estáveis em pelo menos duas compilações.",
+        "method": "Manter DESI DR2, as mesmas supernovas, covariâncias, priors, estimador e limiares; substituir o leave-one-family-out por leave-one-effective-redshift-point-out, removendo um único ponto BAO por ajuste e medindo a fração de Delta-chi2 removida e o cosseno da direção w0-wa.",
+        "data": "Exatamente os mesmos dados e cortes do teste-alvo em DESI DR2 e nas compilações de supernovas congeladas; muda somente a unidade de reamostragem do método.",
+        "success_criteria": "PROMOTED se, em pelo menos duas compilações, nenhuma remoção individual retirar >50% do Delta-chi2 e o vetor w0-wa mantiver cosseno >=0,8 em todas as remoções.",
+        "kill_criteria": "REJECTED se o mesmo ponto de redshift efetivo retirar >=70% do Delta-chi2 em pelo menos duas compilações ou produzir cosseno <0,5 nelas; demais INCONCLUSIVE.",
+        "claim_boundary": "Ataque de robustez ao resultado positivo; não amplia o claim do teste-alvo.",
+        "independence": {
+          "axis": "method",
+          "evidence_refs": [
+            "entities/artifact/LEARNING_SIGNAL::ROBOT-CONTEST-BLOCKED-40BC89CD903A6716FD350A99.json"
+          ],
+          "on_pass": "CONFIRMED",
+          "on_fail": "REFUTED",
+          "frozen_at": "2026-10-01T05:08:42Z"
+        },
+        "semantic": {
+          "question_plain": "A conclusão positiva do jackknife agrupado permanece quando a unidade de perturbação é cada ponto de redshift efetivo do BAO, um por vez?",
+          "why_it_matters": "Um resultado positivo só é robusto se sobreviver a uma perturbação independente pré-declarada."
+        }
+      }
+    }
+  }
+}
