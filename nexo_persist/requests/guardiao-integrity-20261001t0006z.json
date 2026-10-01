@@ -1,0 +1,62 @@
+{
+  "stable_id": "guardiao-integrity-20261001t0006z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-01T00:06:00Z",
+    "payload": {
+      "date": "2026-09-30",
+      "status": "RED",
+      "autonomy": {
+        "schema_version": "AUTONOMY_METRICS_V2",
+        "window_hours": 24,
+        "results": 54,
+        "execution_record_share": 0.944,
+        "decisive_rate": 0.574,
+        "non_inconclusive_rate": 0.593,
+        "median_hours_to_result": 0.9,
+        "positive_review_closure": 0.364,
+        "failure_result_coverage": 0.5,
+        "blocked_share": 1
+      },
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Tower canônica lida em modo somente leitura com status nativo íntegro."
+        },
+        {
+          "area": "tasks",
+          "ok": true,
+          "detail": "Inventário vivo reconciliado: dez tarefas NEXO habilitadas e Revisor de PR preservado por evento."
+        },
+        {
+          "area": "inbox",
+          "ok": true,
+          "detail": "O heartbeat anterior foi confirmado em staging, relay, recibo do Writer e Tower; a cadeia canônica voltou a fechar."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "Fila de TESTs: 0 READY, 0 RUNNING e 63 BLOCKED; há 7 CHECKPOINTED."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Há 61 recuperações abertas, todas ainda sem aceite de ownership; duas P0 destinadas ao Executor já chegaram à segunda rota."
+        },
+        {
+          "area": "site",
+          "ok": false,
+          "detail": "O readback da projeção pública falhou nesta rodada; a Tower privada permaneceu legível e íntegra, sem inferir falha do site."
+        }
+      ],
+      "action": "A pior métrica é blocked_share=1,000. Priorizar o aceite e a recuperação dos bloqueios P0 antigos, começando pelos dois itens do Executor na segunda rota; reconciliar também três WORKs READY cujos TESTs canônicos já estão terminais. Só devolver a READY após elegibilidade canônica.",
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
