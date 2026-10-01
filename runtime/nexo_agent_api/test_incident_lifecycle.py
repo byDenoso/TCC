@@ -271,7 +271,7 @@ class IncidentLifecycleTests(unittest.TestCase):
         public_incident = self.apply_reconcile()
         public_status = evolution_status(self.root, public=True)
         [summary] = public_status["incidents"]
-        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner", "since", "missing"})
+        self.assertEqual(set(summary), {"incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner", "since", "missing", "learning_state", "learning_next_owner", "operational"})
         self.assertTrue(summary["summary_pt"].startswith("O sistema detectou atrasos repetidos para registrar e confirmar mudanças."))
         self.assertEqual(summary["incident_id"], public_incident["incident_id"])
         serialized = json.dumps(summary)

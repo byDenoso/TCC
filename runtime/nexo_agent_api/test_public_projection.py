@@ -426,7 +426,7 @@ def test_public_incident_summaries_use_reviewed_copy_or_neutral_fallback_without
     )
     for incident in incidents.values():
         assert set(incident) == {
-            "incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner", "since", "missing"
+            "incident_id", "state", "evidence_count", "summary_pt", "public_ids", "next_owner", "since", "missing", "learning_state", "learning_next_owner", "operational"
         }
 
     raw = projection_bytes(projection)

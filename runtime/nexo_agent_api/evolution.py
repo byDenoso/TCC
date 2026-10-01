@@ -946,12 +946,15 @@ def _family_summary(family: dict[str, Any], tests: list[dict[str, Any]]) -> dict
 
 def family_contest_items(root: Path, now: datetime | None = None) -> list[dict[str, Any]]:
     """CONTEST envelopes for positive family results nobody attacked yet: an independent replication with another SN compilation.
-    Same recipe and frozen criteria, Union3 in place of DES-SN5YR. Keeps the review ladder moving without a human or a chat."""
+    Only the existing DES-SN5YR -> Union3 substitution is authorized here.
+    If it cannot preserve a distinct, same-size compilation set, record a bounded
+    review signal instead of changing the question or emitting an invalid attack."""
     now = now or datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     items = []
+    contest_count = signal_count = 0
     for test in _tests(root):
-        if len(items) >= MAX_ROBOT_CONTESTS_PER_RUN:
+        if contest_count >= MAX_ROBOT_CONTESTS_PER_RUN:
             break
         if (not test.get("family_id") or test.get("contests_test_id")
                 or str(test.get("verdict") or "").upper() not in POSITIVE_VERDICTS
@@ -963,16 +966,33 @@ def family_contest_items(root: Path, now: datetime | None = None) -> list[dict[s
             continue  # a decisive or still-running attack exists
         if len(tried) >= 2:
             continue  # two inconclusive replications: leave it to the Crítico
-        comps = list(test["recipe_params"].get("compilations") or ["pantheon_plus", "des_sn5yr"])
-        if "union3" in comps and not tried:
+        comps = test["recipe_params"].get("compilations", ["pantheon_plus", "des_sn5yr"])
+        # Do not deduplicate after substitution: that silently reduces a
+        # two/three-compilation design, and Union3 already in the parent cannot
+        # provide the intended new data axis. Do not invent a different swap.
+        if not (isinstance(comps, list) and len(comps) == 2
+                and all(isinstance(c, str) for c in comps)
+                and set(comps) == {"pantheon_plus", "des_sn5yr"}):
+            name = "ROBOT-CONTEST-BLOCKED-" + integrity.digest({
+                "test_id": test["id"], "compilations": comps})[:24].upper()
+            if (signal_count < MAX_ROBOT_CONTESTS_PER_RUN
+                    and _entity(root, "artifact", "LEARNING_SIGNAL::" + name) is None):
+                signal_count += 1
+                items.append({"kind": "LEARNING_SIGNAL", "source": "ROBOT_REPLICATION",
+                              "created_at": stamp, "_inbox_name": name,
+                              "payload": {"signals": [{
+                                  "code": "ROBOT_CONTEST_NO_DISTINCT_COMPILATION",
+                                  "test_id": test["id"], "compilations": comps,
+                                  "summary_plain": "A substituição automática por Union3 não preserva uma coleção nova e o número de compilações do desenho.",
+                                  "next_action": "Encaminhar ao Crítico um novo desenho de contestação independente, sem alterar o teste ou pré-registro existente."
+                              }]}})
             continue
         comps = [("union3" if c == "des_sn5yr" else c) for c in comps]
-        if "union3" not in comps:
-            comps.append("union3")
         attack = {k: test.get(k) for k in ("question", "null", "rival", "method", "success_criteria", "kill_criteria",
                                           "prediction", "hypothesis_id", "domain", "roadmap_id") if test.get(k) not in (None, "")}
         attack.update({"dataset_and_selection": f"Mesma análise com compilações {', '.join(comps)} (Union3 no lugar de DES-SN5YR).",
                        "recipe": "w0wa_bao_sn_multi", "recipe_params": {**test["recipe_params"], "compilations": comps}})
+        contest_count += 1
         items.append({"kind": "CONTEST", "source": "ROBOT_REPLICATION", "created_at": stamp,
                       "_inbox_name": f"robot-contest-{test['id']}"[:90],
                       "payload": {"test_id": test["id"], "source": "ROBOT_REPLICATION",
@@ -1519,12 +1539,16 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
                 test_ids.add(str(signal["test_id"]))
             if isinstance(signal.get("test_ids"), list):
                 test_ids.update(str(test_id) for test_id in signal["test_ids"] if test_id)
+            work_ids = {str(signal["work_id"])} if signal.get("work_id") else set()
+            if isinstance(signal.get("work_ids"), list):
+                work_ids.update(str(work_id) for work_id in signal["work_ids"] if work_id)
             resolved = resolve_semantic({"semantic": {**semantic, "topic_id": raw_topic}}, entity_id=artifact_id)
             groups.setdefault(key, {})[artifact_id] = {
                 "artifact_id": artifact_id,
                 "source": source,
                 "timestamp": stamp,
                 "test_ids": test_ids,
+                "work_ids": work_ids,
                 "private": bool(record.get("private") or signal.get("private")
                                 or is_private(semantic) or is_private(resolved)),
             }
@@ -1535,12 +1559,14 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
         evidence = set(str(ref) for ref in current.get("evidence_refs") or [])
         source_roles = set(str(role) for role in current.get("source_roles") or [])
         signal_test_ids = set(str(test_id) for test_id in current.get("signal_test_ids") or [])
+        signal_work_ids = set(str(work_id) for work_id in current.get("signal_work_ids") or [])
         stamps = {str(stamp) for stamp in (current.get("first_seen"), current.get("last_seen")) if stamp}
         private = bool(current.get("private"))
         for observation in observations:
             evidence.add(observation["artifact_id"])
             source_roles.add(observation["source"])
             signal_test_ids.update(observation["test_ids"])
+            signal_work_ids.update(observation["work_ids"])
             if observation["timestamp"]:
                 stamps.add(observation["timestamp"])
             private = private or observation["private"]
@@ -1563,6 +1589,7 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
             "evidence_refs": sorted(evidence),
             "source_roles": sorted(source_roles),
             "signal_test_ids": sorted(signal_test_ids),
+            "signal_work_ids": sorted(signal_work_ids),
             "first_seen": first_seen,
             "last_seen": ordered_stamps[-1] if ordered_stamps else current.get("last_seen"),
             "private": private,
@@ -1591,7 +1618,11 @@ def _incident_candidates(root: Path, tests: list[dict[str, Any]] | None = None) 
 
         if open_items:
             active = open_items[-1]
-            candidates.append(compose(code, topic_id, str(active["incident_id"]), unassociated, current=active))
+            # Enrich legacy incidents from their own canonical observations too;
+            # this adds exact WORK references without reopening closed evidence.
+            current_refs = set(active.get("evidence_refs") or [])
+            linked = [obs for ref, obs in observations.items() if ref in current_refs]
+            candidates.append(compose(code, topic_id, str(active["incident_id"]), linked + unassociated, current=active))
             continue
 
         if not existing:
@@ -1761,6 +1792,8 @@ def _derived_incident(root: Path, candidate: dict[str, Any], tests: list[dict[st
         **candidate,
         "state": state,
         "next_owner": next_owner,
+        "learning_state": state,
+        "learning_next_owner": next_owner,
         "hypothesis_ids": sorted(hypothesis_ids),
         "test_ids": test_ids,
         "contest_test_ids": contest_ids,
@@ -1804,6 +1837,11 @@ def _public_entity_ids(root: Path, kind: str, ids: list[Any]) -> list[str]:
     return sorted(set(safe))
 
 
+def _incident_operations(root: Path, incident: dict[str, Any], *, public: bool = False) -> dict[str, Any]:
+    from .incident_operations import project
+    return project(root, incident, public=public)
+
+
 def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Public incidents must say what broke, since when, and what is still missing."""
     out = []
@@ -1838,6 +1876,9 @@ def _public_incidents(root: Path, incidents: list[dict[str, Any]]) -> list[dict[
                 "lessons": _public_entity_ids(root, "lesson", incident.get("lesson_ids") or []),
             },
             "next_owner": incident.get("next_owner"),
+            "learning_state": incident.get("state"),
+            "learning_next_owner": incident.get("next_owner"),
+            "operational": _incident_operations(root, incident, public=True),
         })
     return sorted(out, key=lambda item: str(item.get("incident_id") or ""))
 
@@ -1977,7 +2018,8 @@ def evolution_status(root: str | Path, now: datetime | None = None, public: bool
         "decoys": {"planted": len(decoys.get("planted") or []), "revealed": len(revealed),
                    "caught": sum(1 for d in revealed if d.get("caught"))},
         "signal_clusters": _signal_clusters(root, tests),
-        "incidents": incidents,
+        "incidents": [{**i, "learning_state": i.get("state"), "learning_next_owner": i.get("next_owner"),
+                       "operational": _incident_operations(root, i)} for i in incidents] if not public else incidents,
         "watchdog": {k: _read(root, WATCHDOG_DOC).get(k) for k in ("checked_at", "quiet")},
         "recipe_health": {name: h for name, h in (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}).items() if h.get("state") == "OPEN"},
         "families": [_family_summary(f, tests) for f in (_read(root, FAMILIES_DOC).get("families") or {}).values()],
