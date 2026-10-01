@@ -36,6 +36,110 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual(request["changes"]["semantic"]["topic_id"], "x")
         self.assertEqual(request["changes"]["semantic"]["result_meaning"], "Nada robusto.")
 
+    def test_duplicate_gateway_result_is_handled_without_repacking_or_event(self):
+        from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower
+
+        item = {
+            "kind": "MUTATION_PROPOSAL",
+            "created_at": "2026-09-26T12:10:01Z",
+            "_inbox_source": "GATEWAY",
+            "_inbox_name": "gw-tcc-first",
+            "_inbox_id": "gateway:tcc-first",
+            "payload": {
+                "test_id": "T-1",
+                "result": {"verdict": "INCONCLUSIVE", "summary": "Resultado congelado.",
+                           "statistics": {"n": 5}},
+                "semantic": {"result_meaning": "O resultado continuou inconclusivo."},
+                "limitations": ["Amostra congelada."],
+                "reproducibility": {"attempts": [{"attempt": 1, "status": "DONE"}]},
+            },
+        }
+        [first_request] = proposal_to_requests(item, self.root)
+        current = json.loads(entity_path(self.root, "test", "T-1").read_text())
+        current.update(first_request["changes"])
+        current["entity_version"] = 9
+        entity_path(self.root, "test", "T-1").write_text(json.dumps(current))
+        (self.root / "CONTROL.json").write_text(json.dumps({
+            "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+        }))
+        publish_live_tower(self.root)
+        tower_raw = (self.root / LIVE_TOWER_NAME).read_bytes()
+        duplicate = {**item, "created_at": "2026-09-26T12:24:00Z",
+                     "_inbox_name": "gw-tcc-duplicate", "_inbox_id": "gateway:tcc-duplicate"}
+
+        with patch("runtime.nexo_agent_api.evolution.contest_chain_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.evolution.maintenance_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.evolution.incident_reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.execution_recovery.reconcile_requests", return_value=[]), \
+             patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0):
+            packed, report = apply_to_tower(tower_raw, [duplicate])
+
+        self.assertIsNone(packed)
+        self.assertEqual(report["status"], "NO_OP")
+        self.assertEqual(report["handled"], ["gw-tcc-duplicate"])
+        self.assertEqual(report["applied"], ["gw-tcc-duplicate"])
+        self.assertEqual(report["receipts"], [])
+
+    def test_conflicting_result_identity_is_recorded_once_and_retry_is_handled(self):
+        from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+        from runtime.nexo_agent_api.live_tower import LIVE_TOWER_NAME, publish_live_tower, read_live_tower_bytes
+
+        current_path = entity_path(self.root, "test", "T-1")
+        current = json.loads(current_path.read_text())
+        current.update({
+            "entity_version": 8,
+            "status": "DONE", "state": "DONE", "verdict": "PROMOTED",
+            "result_summary": "Resultado original.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+            "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-stable",
+        })
+        current_path.write_text(json.dumps(current))
+        (self.root / "CONTROL.json").write_text(json.dumps({
+            "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            "write_model": "IN_PLACE_FILE_REVISION_CAS_READBACK",
+        }))
+        publish_live_tower(self.root)
+        raw = (self.root / LIVE_TOWER_NAME).read_bytes()
+        conflict = {
+            "kind": "MUTATION_PROPOSAL", "created_at": "2026-09-26T12:10:01Z",
+            "_inbox_source": "GATEWAY", "_inbox_name": "gw-tcc-stable",
+            "_inbox_id": "gateway:tcc-stable",
+            "payload": {"test_id": "T-1", "result": {
+                "verdict": "REJECTED", "summary": "Conteúdo conflitante."}},
+        }
+
+        patches = (
+            patch("runtime.nexo_agent_api.evolution.contest_chain_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.evolution.maintenance_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.evolution.incident_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.execution_recovery.reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0),
+        )
+        with patches[0], patches[1], patches[2], patches[3], patches[4]:
+            packed, first = apply_to_tower(raw, [conflict])
+        self.assertIsNotNone(packed)
+        self.assertEqual(first["handled"], ["gw-tcc-stable"])
+        self.assertEqual(first["rejected"][0]["reason"], "INBOX_RESULT_IDENTITY_CONFLICT")
+        stored = read_live_tower_bytes(packed)
+        artifacts = [entry["value"] for name, entry in stored["files"].items()
+                     if name.startswith("entities/artifact/")]
+        self.assertEqual(len(artifacts), 1)
+        self.assertEqual(artifacts[0]["kind"], "UNAPPLIED_MUTATION_PROPOSAL")
+
+        patches = (
+            patch("runtime.nexo_agent_api.evolution.contest_chain_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.evolution.maintenance_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.evolution.incident_reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.execution_recovery.reconcile_requests", return_value=[]),
+            patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0),
+        )
+        with patches[0], patches[1], patches[2], patches[3], patches[4]:
+            replay, second = apply_to_tower(packed, [conflict])
+        self.assertIsNone(replay)
+        self.assertEqual(second["handled"], ["gw-tcc-stable"])
+        self.assertEqual(second["receipts"][0]["status"], "NO_OP")
+
     def test_incomplete_proposals_are_completed_not_rejected(self):
         # result without a plain reading -> provisional reading, still recorded on the test
         [request] = proposal_to_requests({"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-1", "result": {}}}, self.root)
@@ -66,6 +170,109 @@ class InboxApplyTests(unittest.TestCase):
         [request] = proposal_to_requests({"kind": "LEARNING_SIGNAL", "payload": {"signals": []}, "_inbox_name": "a b"}, self.root)
         self.assertEqual(request["entity_kind"], "artifact")
         self.assertEqual(request["entity_name"], "LEARNING_SIGNAL::A-B")
+
+    def _active_scientist_root(self):
+        (self.root / "indexes").mkdir(exist_ok=True)
+        (self.root / "roadmaps").mkdir(exist_ok=True)
+        (self.root / "indexes" / "active-roadmaps.json").write_text(json.dumps({"items": [
+            {"roadmap_id": "RM-A", "state": "ACTIVE", "relative_path": "roadmaps/RM-A.json"},
+        ]}))
+        (self.root / "roadmaps" / "RM-A.json").write_text(json.dumps({"roadmap_id": "RM-A", "frontier_refs": []}))
+
+    @staticmethod
+    def _scientist_proposal(**payload):
+        base = {
+            "display_name": "Teste preparado", "domain": "science", "test_id": "T-NEW", "roadmap_id": "RM-A",
+            "preparation_evidence": {"literature_refs": ["doi:10/example"],
+                                     "internal_test_search": {"checked": True, "query": "same estimator",
+                                                              "matched_test_ids": []}},
+        }
+        base.update(payload)
+        return {"kind": "HYPOTHESIS_PROPOSAL", "source": "LEARNER", "_inbox_name": "scientist-new",
+                "payload": base}
+
+    def test_scientist_new_hypothesis_requires_active_roadmap_and_search_evidence(self):
+        self._active_scientist_root()
+        requests = proposal_to_requests(self._scientist_proposal(), self.root)
+        test = next(request for request in requests if request.get("entity_kind") == "test")
+        self.assertEqual(test["changes"]["roadmap_id"], "RM-A")
+        self.assertEqual(test["changes"]["preparation_evidence"]["internal_test_search"]["matched_test_ids"], [])
+
+        proposal = self._scientist_proposal()
+        proposal["payload"]["preparation_evidence"]["private_note"] = "must not enter the TEST"
+        requests = proposal_to_requests(proposal, self.root)
+        test = next(request for request in requests if request.get("entity_kind") == "test")
+        self.assertNotIn("private_note", test["changes"]["preparation_evidence"])
+
+        missing = self._scientist_proposal(preparation_evidence={})
+        [record] = proposal_to_requests(missing, self.root)
+        self.assertEqual(record["changes"]["kind"], "UNAPPLIED_HYPOTHESIS_PROPOSAL")
+        self.assertEqual(record["changes"]["payload"]["_not_applied_reason"],
+                         "SCIENTIST_LITERATURE_AND_INTERNAL_SEARCH_REQUIRED")
+
+        inactive = self._scientist_proposal(roadmap_id="RM-OTHER")
+        [record] = proposal_to_requests(inactive, self.root)
+        self.assertEqual(record["changes"]["payload"]["_not_applied_reason"], "SCIENTIST_ROADMAP_NOT_ACTIVE")
+
+    def test_scientist_duplicate_requires_purposeful_replication(self):
+        self._active_scientist_root()
+        entity_path(self.root, "test", "T-OLD").write_text(json.dumps({"id": "T-OLD", "entity_version": 1}))
+        evidence = {"literature_refs": ["doi:10/example"],
+                    "internal_test_search": {"checked": True, "query": "same estimator",
+                                             "matched_test_ids": ["T-OLD"]}}
+        [record] = proposal_to_requests(self._scientist_proposal(preparation_evidence=evidence), self.root)
+        self.assertEqual(record["changes"]["payload"]["_not_applied_reason"],
+                         "SCIENTIST_DUPLICATE_WITHOUT_REPLICATION_PURPOSE")
+        evidence["replication"] = {"justified": True, "purpose": "independent catalogue",
+                                   "independence_axis": "DATA", "compares_to_test_ids": ["T-OLD"]}
+        requests = proposal_to_requests(self._scientist_proposal(preparation_evidence=evidence), self.root)
+        self.assertTrue(any(request.get("entity_kind") == "test" for request in requests))
+
+        invalid = dict(evidence)
+        invalid["replication"] = {"justified": True, "purpose": ["not", "text"],
+                                  "independence_axis": "DATA", "compares_to_test_ids": ["T-OLD"]}
+        [record] = proposal_to_requests(self._scientist_proposal(test_id="T-BAD-SHAPE",
+                                                                  preparation_evidence=invalid), self.root)
+        self.assertEqual(record["changes"]["payload"]["_not_applied_reason"],
+                         "SCIENTIST_DUPLICATE_WITHOUT_REPLICATION_PURPOSE")
+
+        unknown = dict(evidence)
+        unknown["replication"] = {"justified": True, "purpose": "independent catalogue",
+                                  "independence_axis": "DATA",
+                                  "compares_to_test_ids": ["T-OLD", "T-UNKNOWN"]}
+        [record] = proposal_to_requests(self._scientist_proposal(test_id="T-BAD-REF",
+                                                                  preparation_evidence=unknown), self.root)
+        self.assertEqual(record["changes"]["payload"]["_not_applied_reason"],
+                         "SCIENTIST_REPLICATION_REFERENCE_INVALID")
+
+    def test_legacy_and_non_scientist_producers_need_no_new_preparation_fields(self):
+        self._active_scientist_root()
+        for index, source in enumerate((None, "WRITER_ROBOT", "CONVERSA", "EXECUTOR")):
+            proposal = self._scientist_proposal(test_id=f"T-COMPAT-{index}")
+            proposal.pop("source", None)
+            if source:
+                proposal["source"] = source
+            proposal["payload"].pop("preparation_evidence")
+            requests = proposal_to_requests(proposal, self.root)
+            self.assertTrue(any(request.get("entity_name") == f"T-COMPAT-{index}" for request in requests), source)
+
+    def test_waiting_recovery_does_not_create_a_global_hypothesis_barrier(self):
+        self._active_scientist_root()
+        path = entity_path(self.root, "work", "WORK::RECOVERY")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"id": "WORK::RECOVERY", "status": "WAIT_DEPENDENCY",
+                                    "next_action": "WAIT_FOR_EXTERNAL_RELEASE",
+                                    "recovery": {"policy": "EXECUTION_RECOVERY_V1", "target_role": "LEARNER",
+                                                 "ownership_state": "ACCEPTED"}}))
+        requests = proposal_to_requests(self._scientist_proposal(), self.root)
+        self.assertTrue(any(request.get("entity_kind") == "test" for request in requests))
+
+    def test_scientist_gate_does_not_reopen_or_refreeze_existing_test(self):
+        # Existing-test enrichment returns before the new-science admission gate.
+        [request] = proposal_to_requests({"kind": "HYPOTHESIS_PROPOSAL", "source": "LEARNER",
+                                          "payload": {"test_id": "T-1", "method": "existing correction"}}, self.root)
+        self.assertEqual(request["event_type"], "TEST_ENRICHED")
+        self.assertEqual(request["entity_name"], "T-1")
 
     def test_private_drive_handoff_becomes_a_canonical_handoff_operation(self):
         handoff = {

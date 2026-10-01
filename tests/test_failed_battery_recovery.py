@@ -9,7 +9,8 @@ def prepared(tmp_path,monkeypatch):
     root=tmp_path/'tower'
     install_fixture_catalog(tmp_path/'recipes',monkeypatch,'audit_recipe')
     save(root,'CONTROL.json',{'mode':'ACTIVE'})
-    test=store_fixture_test(root,'TEST-RETRY')
+    save(root,'indexes/active-roadmaps.json',{'items':[{'roadmap_id':'RM-A','state':'ACTIVE'}]})
+    test=store_fixture_test(root,'TEST-RETRY',roadmap_id='RM-A')
     body={'battery_id':'bat-retry','tests':[{'test_id':test['id'],'recipe':test['recipe'],'params':test['recipe_params']}]}
     assert all(r['accepted'] for r in apply_requests(root,e.battery_requests({},body,root)))
     return root,test

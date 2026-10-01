@@ -72,6 +72,10 @@ def _family_root(tmp_path):
     root = tmp_path
     save(root, 'CONTROL.json', {'mode': 'ACTIVE'})
     (root / "roadmaps").mkdir()
+    (root / "indexes").mkdir()
+    (root / "indexes" / "active-roadmaps.json").write_text(json.dumps({"items": [
+        {"roadmap_id": "RM-X", "state": "ACTIVE", "relative_path": "roadmaps/RM-X.json"}
+    ]}))
     (root / "roadmaps" / "RM-X.json").write_text(json.dumps({"roadmap_id": "RM-X", "status": "ACTIVE"}))
     (root / "evolution").mkdir()
     tpl = {"display_name": "Robustez por faixa", "question": "q?", "null": "n", "rival": "r", "method": "m",
@@ -129,8 +133,12 @@ def test_battery_takes_three_quarters_of_the_ready_queue(tmp_path, monkeypatch):
     for n, expected in ((20, 15), (8, 6), (4, 4), (40, 20)):
         root = tmp_path / f"r{n}"
         (root / "evolution").mkdir(parents=True)
+        (root / "indexes").mkdir()
+        (root / "indexes" / "active-roadmaps.json").write_text(json.dumps({"items": [
+            {"roadmap_id": "RM-A", "state": "ACTIVE"}
+        ]}))
         for i in range(n):
-            store_fixture_test(root, f'T-{i:02d}', 'rcp_one', family_id='F')
+            store_fixture_test(root, f'T-{i:02d}', 'rcp_one', family_id='F', roadmap_id='RM-A')
         [battery] = family_battery_items(root)
         assert len(battery["payload"]["tests"]) == expected, (n, len(battery["payload"]["tests"]))
 
@@ -148,6 +156,11 @@ def test_recipe_bind_makes_a_blocked_test_dispatchable_without_family(tmp_path, 
     path = entity_path(tmp_path, "test", "T-BOUND")
     path.parent.mkdir(parents=True, exist_ok=True)
     test = store_fixture_test(tmp_path, 'T-BOUND', status='BLOCKED_INPUT', state='BLOCKED_INPUT', origin_kind='DENER_DIRECTED')
+    (tmp_path / "indexes").mkdir(exist_ok=True)
+    (tmp_path / "indexes" / "active-roadmaps.json").write_text(json.dumps({"items": [
+        {"roadmap_id": "RM-A", "state": "ACTIVE"}
+    ]}))
+    test['roadmap_id'] = 'RM-A'
     test.pop('recipe'); test.pop('recipe_params'); path.write_text(json.dumps(test))
     with pytest.raises(ProposalError, match='RECIPE_BINDING_INVALID'):
         recipe_bind_requests({}, {"test_id": "T-BOUND", "recipe": "Bad Name", "params": {}}, tmp_path)

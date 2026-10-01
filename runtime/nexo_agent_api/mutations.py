@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +23,7 @@ _CREATABLE_ENTITY_KINDS = {
     "artifact",
     "lesson",
 }
+_RESULT_TRANSPORT_FIELDS = {"executed_at", "inbox_ref"}
 
 
 def _integer_version(value: Any) -> int:
@@ -40,6 +42,74 @@ def _invalid(request_id: str, message: str) -> dict[str, Any]:
         "accepted": False,
         "issue": {"code": "INVALID_MUTATION_REQUEST", "message": message, "details": {}},
     }
+
+
+def _json_equal(left: Any, right: Any) -> bool:
+    """Type-sensitive equality for canonical JSON (``1``, ``1.0`` and ``true`` differ)."""
+    return json.dumps(left, ensure_ascii=False, sort_keys=True, separators=(",", ":")) == json.dumps(
+        right, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _result_replay_receipt(current: dict[str, Any], changes: dict[str, Any], *,
+                           request_id: str, expected_version: int,
+                           governance_meta: dict[str, Any]) -> dict[str, Any] | None:
+    """Classify immutable result replays before they can bump version or emit an event.
+
+    Transport time/reference do not make an otherwise byte-equivalent scientific
+    payload a new result.  Reusing the same inbox identity with different result
+    content is a conflict; it must never rewrite the first canonical result.
+    """
+    if int(current.get("entity_version") or 0) != expected_version:
+        return None
+    if not any(current.get(key) not in (None, "", [], {})
+               for key in ("verdict", "decision", "result_summary", "statistics", "reproducibility")):
+        return None
+    comparable = {key: value for key, value in changes.items() if key not in _RESULT_TRANSPORT_FIELDS}
+    different = sorted(key for key, value in comparable.items() if not _json_equal(current.get(key), value))
+    if not different:
+        return {
+            "request_id": request_id,
+            "accepted": True,
+            **governance_meta,
+            "status": "NO_OP",
+            "reason": "RESULT_PAYLOAD_ALREADY_CANONICAL",
+            "entity_version": expected_version,
+            "readback": "PASS",
+        }
+    incoming_ref = str(changes.get("inbox_ref") or "")
+    if incoming_ref and incoming_ref == str(current.get("inbox_ref") or ""):
+        return {
+            "request_id": request_id,
+            "accepted": False,
+            **governance_meta,
+            "issue": {
+                "code": "INBOX_RESULT_IDENTITY_CONFLICT",
+                "message": "The same result source identity has different canonical content.",
+                "details": {"different_fields": different},
+            },
+        }
+    def instant(value: Any) -> datetime | None:
+        try:
+            stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (TypeError, ValueError):
+            return None
+        return stamp if stamp.tzinfo is not None else None
+
+    incoming_raw, current_raw = changes.get("executed_at"), current.get("executed_at")
+    incoming_at, current_at = instant(incoming_raw), instant(current_raw)
+    if (incoming_at is None or (current_raw not in (None, "") and current_at is None)
+            or (current_at is not None and incoming_at <= current_at)):
+        return {
+            "request_id": request_id,
+            "accepted": False,
+            **governance_meta,
+            "issue": {
+                "code": "INBOX_RESULT_ORDER_CONFLICT",
+                "message": "A different result cannot replace canonical content without a later execution time.",
+                "details": {"different_fields": different},
+            },
+        }
+    return None
 
 
 def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[str, Any]:
@@ -122,6 +192,36 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
         except ValueError:
             return _invalid(request_id, "hydrated entity_version is invalid")
         path.write_text(json.dumps(hydrated, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+
+    if path.exists():
+        try:
+            current = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            current = None
+        durable_record_replay = (
+            entity_kind == "artifact" and expected_version == 0
+            and set(changes) == {"kind", "status", "source", "created_at", "payload"}
+            and changes.get("status") == "RECORDED"
+            and event_type == f"{changes.get('kind')}_RECORDED"
+        )
+        if (isinstance(current, dict) and durable_record_replay
+                and all(_json_equal(current.get(key), value) for key, value in changes.items())):
+            return {
+                "request_id": request_id,
+                "accepted": True,
+                **governance_meta,
+                "status": "NO_OP",
+                "reason": "MUTATION_ALREADY_CANONICAL",
+                "entity_version": int(current.get("entity_version") or 0),
+                "readback": "PASS",
+            }
+        if (isinstance(current, dict) and entity_kind == "test"
+                and event_type == "TEST_RESULT_RECORDED"):
+            replay = _result_replay_receipt(
+                current, changes, request_id=request_id, expected_version=expected_version,
+                governance_meta=governance_meta)
+            if replay is not None:
+                return replay
 
     try:
         result = service.mutate(

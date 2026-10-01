@@ -122,10 +122,21 @@ Nunca promova além do que o teste sustenta. Resultado nulo é resultado.
   "null": "...", "rival": "...", "method": "...", "data": "...",
   "success_criteria": "...", "kill_criteria": "...",
   "claim_boundary": "...", "depends_on": ["..."], "priority": "P0|P1|P2",
+  "preparation_evidence": {
+    "literature_refs": ["fonte primária"],
+    "internal_test_search": {"checked": true, "query": "...", "matched_test_ids": []}
+  },
   "semantic": {...}
 }
 ```
 Com `roadmap_id`, o writer herda campanha/hipótese do roadmap e põe o teste na fronteira.
+Para propostas do Cientista (`source: LEARNER`), o roadmap deve estar `ACTIVE` e
+`preparation_evidence` é obrigatório. Havendo `matched_test_ids`, acrescentar
+`replication:{justified:true,purpose,independence_axis,compares_to_test_ids}` dentro de
+`preparation_evidence`; todos os IDs encontrados entram em `compares_to_test_ids`.
+Recuperação acionável dirigida a LEARNER é priorizada; espera externa/por outro papel não bloqueia
+toda a preparação. Este gate vale para TEST novo do Cientista, não para replay ou enriquecimento de
+TEST existente.
 Opcional (recomendado quando é uma hipótese nova), aparece em Ciência > Hipóteses:
 ```json
 "hypothesis": {"id": "HYP-...", "statement": "enunciado", "model": "modelo rival",

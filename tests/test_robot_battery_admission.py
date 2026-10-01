@@ -13,7 +13,10 @@ NOW = datetime(2026, 9, 30, 20, 53, 10, tzinfo=timezone.utc)
 def setup(root, recipes, monkeypatch, name="audit_recipe"):
     install_fixture_catalog(recipes, monkeypatch, name)
     save(root, "CONTROL.json", {"mode": "ACTIVE", "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE"})
-    return store_fixture_test(root, "TEST-ROBOT", name)
+    save(root, "indexes/active-roadmaps.json", {"items": [
+        {"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0"},
+    ]})
+    return store_fixture_test(root, "TEST-ROBOT", name, roadmap_id="RM-A")
 
 
 def test_generated_battery_passes_real_admission_and_reserves_once(tmp_path, monkeypatch):

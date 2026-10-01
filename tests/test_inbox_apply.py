@@ -9,7 +9,7 @@ def test_integrity_report_and_signal_links(tmp_path):
     assert req["entity_name"].startswith("INTEGRITY_REPORT::")
 
 
-def test_frontier_includes_entity_ready_tests_outside_active_roadmaps(tmp_path):
+def test_frontier_holds_entity_ready_tests_outside_active_roadmaps(tmp_path):
     import json
     from runtime.nexo_agent_api.frontier import roadmap_frontier
     (tmp_path / "indexes").mkdir()
@@ -17,5 +17,6 @@ def test_frontier_includes_entity_ready_tests_outside_active_roadmaps(tmp_path):
     (tmp_path / "entities" / "test").mkdir(parents=True)
     (tmp_path / "entities" / "test" / "T-X.json").write_text(json.dumps({"id": "T-X", "status": "READY"}), encoding="utf-8")
     result = roadmap_frontier(tmp_path)
-    assert [t["test_id"] for t in result["ready"]] == ["T-X"]
-    assert result["batch"][0]["test_id"] == "T-X"
+    assert result["ready"] == []
+    assert result["batch"] == []
+    assert [(row["test_id"], row["reason"]) for row in result["waiting"]] == [("T-X", "ROADMAP_NOT_ACTIVE")]

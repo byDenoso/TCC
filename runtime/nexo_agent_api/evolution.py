@@ -1011,10 +1011,18 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
         return []
     health = _read(root, RECIPE_HEALTH_DOC).get("recipes") or {}
     all_tests = _tests(root)
+    roadmap_rows = _read(root, "indexes/active-roadmaps.json").get("items") or []
+    roadmaps = {str(r.get("roadmap_id")): r for r in roadmap_rows if isinstance(r, dict)}
     by_recipe: dict[str, list[dict[str, Any]]] = {}
     execution_fingerprints: dict[str, str] = {}
     for test in all_tests:
         if str(test.get("status") or "").upper() != "READY":
+            continue
+        # A new ordinary dispatch must belong to an ACTIVE roadmap. A pending
+        # contest may finish review of an already-produced result.
+        roadmap = roadmaps.get(str(test.get("roadmap_id") or "")) or {}
+        if (not test.get("contests_test_id")
+                and str(roadmap.get("state") or "").upper() != "ACTIVE"):
             continue
         check = integrity.readiness(root, test)
         if not check["eligible"]:
@@ -1024,8 +1032,6 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}
     from .frontier import PRIORITY_RANK
     learned = (_read(root, discovery.LEARNING_DOC).get("rules")) or []
-    roadmap_rows = _read(root, "indexes/active-roadmaps.json").get("items") or []
-    roadmaps = {str(r.get("roadmap_id")): r for r in roadmap_rows if isinstance(r, dict)}
 
     def rank(test):
         roadmap = roadmaps.get(str(test.get("roadmap_id"))) or {}
