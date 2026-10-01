@@ -234,8 +234,13 @@ class RecoveryTests(unittest.TestCase):
 
     def test_global_priority_beats_recipe_alphabet_and_dener_overrides(self):
         self.install("zz_recipe")
+        save(self.root, "indexes/active-roadmaps.json", {"items": [
+            {"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0"},
+        ]})
+        self.test["roadmap_id"] = "RM-A"
         self.test.update(recipe="audit_recipe", priority="LOW"); self.put(self.test)
-        other = fixture("TEST-Z"); other.update(recipe="zz_recipe", priority="P0", origin_kind="DENER_DIRECTED"); self.put(other)
+        other = fixture("TEST-Z"); other.update(recipe="zz_recipe", priority="P0", origin_kind="DENER_DIRECTED",
+                                                roadmap_id="RM-A"); self.put(other)
         save(self.root, e.BATTERIES_DOC, {"batteries": [{"id": "occupied1", "status": "RUNNING"}, {"id": "occupied2", "status": "RUNNING"}]})
         items = e.family_battery_items(self.root)
         self.assertEqual(len(items), 1)

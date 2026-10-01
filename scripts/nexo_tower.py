@@ -579,9 +579,43 @@ def cmd_inbox(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_portable(args: argparse.Namespace) -> int:
+    from runtime.nexo_agent_api.portability import export_tower, verify_export, restore_export
+    if args.command == "export":
+        if args.source:
+            raw, revision = Path(args.source).read_bytes(), None
+        else:
+            raw, head = DriveTower().download()
+            revision = head.head_revision_id
+        attachments = json.loads(Path(args.attachments).read_text()) if args.attachments else None
+        result = export_tower(raw, args.out, attachments=attachments, source_revision=revision)
+    elif args.command == "verify-export":
+        manifest = verify_export(args.bundle, expected_manifest_sha256=args.manifest_sha256)
+        result = {"status": "VERIFIED", "completeness": manifest["completeness"],
+                  "file_count": len(manifest["inventory"]["files"])}
+    else:
+        result = restore_export(args.bundle, args.dest, allow_incomplete=args.allow_incomplete,
+                                expected_manifest_sha256=args.manifest_sha256)
+    _print(result)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
+    p = sub.add_parser("export", help="private verified portable snapshot; no writes to Drive")
+    p.add_argument("--source", help="local live Tower bytes; omit to download Drive head")
+    p.add_argument("--out", required=True)
+    p.add_argument("--attachments", help="JSON mapping dependency IDs to authorized local files")
+    p.set_defaults(func=cmd_portable)
+    for command in ("verify-export", "restore"):
+        p = sub.add_parser(command)
+        p.add_argument("bundle")
+        p.add_argument("--manifest-sha256", help="trusted digest retained outside the export")
+        if command == "restore":
+            p.add_argument("--dest", required=True)
+            p.add_argument("--allow-incomplete", action="store_true")
+        p.set_defaults(func=cmd_portable)
     sub.add_parser("status").set_defaults(func=cmd_status)
     p = sub.add_parser("download"); p.add_argument("--out", required=True); p.set_defaults(func=cmd_download)
     p = sub.add_parser("pull"); p.add_argument("--dest"); p.set_defaults(func=cmd_pull)

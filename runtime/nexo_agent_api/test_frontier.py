@@ -4,8 +4,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from runtime.nexo_agent_api.evolution import evolution_status
+from runtime.nexo_agent_api.evolution import evolution_status, family_battery_items
 from runtime.nexo_agent_api.frontier import roadmap_frontier
 from runtime.nexo_agent_api.tower_paths import entity_path
 
@@ -197,6 +198,39 @@ class FrontierTests(unittest.TestCase):
         self._test("T-ORPHAN-CKPT", "CHECKPOINTED", roadmap_id="RM-A")
         frontier = roadmap_frontier(self.root)
         self.assertIn("T-ORPHAN-CKPT", [r["test_id"] for r in frontier["resumable"]])
+
+    def test_materialized_ready_outside_active_roadmap_waits(self):
+        self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
+        self._roadmap("RM-A", frontier_refs=["T-ACTIVE"])
+        self._test("T-ACTIVE", "READY", roadmap_id="RM-A")
+        self._test("T-OTHER", "READY", roadmap_id="RM-PROPOSED")
+        self._test("T-UNATTACHED", "READY")
+        frontier = roadmap_frontier(self.root)
+        self.assertEqual([row["test_id"] for row in frontier["ready"]], ["T-ACTIVE"])
+        waiting = {row["test_id"]: row.get("reason") for row in frontier["waiting"]}
+        self.assertEqual(waiting["T-OTHER"], "ROADMAP_NOT_ACTIVE")
+        self.assertEqual(waiting["T-UNATTACHED"], "ROADMAP_NOT_ACTIVE")
+
+    def test_robot_battery_dispatches_ordinary_test_only_from_active_roadmap(self):
+        self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0",
+                     "relative_path": "roadmaps/RM-A.json"})
+        self._roadmap("RM-A", frontier_refs=["T-ACTIVE"])
+        self._test("T-ACTIVE", "READY", status="READY", roadmap_id="RM-A", recipe="rcp_one", recipe_params={})
+        self._test("T-OTHER", "READY", status="READY", roadmap_id="RM-OTHER", recipe="rcp_one", recipe_params={})
+        with patch("runtime.nexo_agent_api.evolution.integrity.readiness",
+                   return_value={"eligible": True, "recipe_sha256": "a" * 64, "param_preflight": None}), \
+             patch("runtime.nexo_agent_api.evolution.integrity.execution_fingerprint", return_value="fingerprint"):
+            [battery] = family_battery_items(self.root)
+        self.assertEqual([test["test_id"] for test in battery["payload"]["tests"]], ["T-ACTIVE"])
+
+    def test_contest_from_closed_roadmap_remains_ready_for_review(self):
+        self._index({"roadmap_id": "RM-CLOSED", "state": "CLOSED", "priority": "P0",
+                     "relative_path": "roadmaps/RM-CLOSED.json"})
+        self._roadmap("RM-CLOSED", frontier_refs=["T-CONTEST"])
+        self._test("T-CONTEST", "READY", roadmap_id="RM-CLOSED", contests_test_id="T-RESULT")
+        frontier = roadmap_frontier(self.root)
+        self.assertIn("T-CONTEST", [row["test_id"] for row in frontier["ready"]])
+        self.assertNotIn("T-CONTEST", [row["test_id"] for row in frontier["waiting"]])
 
 
 if __name__ == "__main__":

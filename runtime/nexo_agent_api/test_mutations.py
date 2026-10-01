@@ -50,6 +50,192 @@ class MutationInboxTests(unittest.TestCase):
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "WRITE_CONFLICT_RETRY_REQUIRED")
 
+    def test_identical_test_result_payload_is_no_op_even_from_duplicate_gateway_envelope(self) -> None:
+        changes = {
+            "status": "DONE", "state": "DONE", "verdict": "PROMOTED",
+            "decision": "FROZEN_DECISION", "result_summary": "Mesmo resultado congelado.",
+            "statistics": {"n": 5, "rate": 1.0},
+            "limitations": ["Amostra congelada."],
+            "reproducibility": {"attempts": [{"attempt": 1, "status": "DONE"}]},
+            "executed_by": "CHATGPT_TASK_EXECUTOR",
+            "executed_at": "2026-09-26T12:10:01Z",
+            "inbox_ref": "gateway:tcc-first-envelope",
+            "semantic": {"result_meaning": "O sinal sobreviveu."},
+        }
+        path = entity_path(self.root, "test", "T-RESULT-REPLAY")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"id": "T-RESULT-REPLAY", "entity_version": 7, **changes}))
+        before = path.read_bytes()
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-INBOX-RESULT-DUPLICATE",
+            "entity_kind": "test", "entity_name": "T-RESULT-REPLAY", "expected_version": 7,
+            "changes": {**changes, "executed_at": "2026-09-26T12:24:00Z",
+                        "inbox_ref": "gateway:tcc-duplicate-envelope"},
+            "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertEqual(receipt["status"], "NO_OP")
+        self.assertEqual(receipt["reason"], "RESULT_PAYLOAD_ALREADY_CANONICAL")
+        self.assertEqual(receipt["entity_version"], 7)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(list((self.root / "events").rglob("*.json")), [])
+        self.assertFalse((self.root / "NEXO_TOWER_LIVE.json").exists())
+
+    def test_same_result_source_identity_with_changed_payload_is_conflict(self) -> None:
+        path = entity_path(self.root, "test", "T-RESULT-CONFLICT")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "T-RESULT-CONFLICT", "entity_version": 4,
+            "status": "DONE", "state": "DONE", "verdict": "PROMOTED",
+            "result_summary": "Resultado original.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+            "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-stable",
+        }))
+        before = path.read_bytes()
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-INBOX-RESULT-STABLE",
+            "entity_kind": "test", "entity_name": "T-RESULT-CONFLICT", "expected_version": 4,
+            "changes": {
+                "status": "DONE", "state": "DONE", "verdict": "REJECTED",
+                "result_summary": "Conteúdo diferente.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+                "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-stable",
+            },
+            "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "INBOX_RESULT_IDENTITY_CONFLICT")
+        self.assertEqual(receipt["issue"]["details"]["different_fields"],
+                         ["result_summary", "verdict"])
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(list((self.root / "events").rglob("*.json")), [])
+
+    def test_different_result_source_cannot_replay_older_or_undated_content(self) -> None:
+        path = entity_path(self.root, "test", "T-RESULT-ORDER")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "T-RESULT-ORDER", "entity_version": 6,
+            "status": "DONE", "state": "DONE", "verdict": "PROMOTED",
+            "result_summary": "Resultado canônico.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+            "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-newer",
+        }))
+        before = path.read_bytes()
+        for request_id, executed_at in (("REQ-OLDER", "2026-09-26T00:28:00Z"),
+                                        ("REQ-UNDATED", None),
+                                        ("REQ-SAME-TIME", "2026-09-26T12:10:01Z")):
+            changes = {
+                "status": "DONE", "state": "DONE", "verdict": "REJECTED",
+                "result_summary": "Payload divergente.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+                "inbox_ref": "gateway:tcc-other",
+            }
+            if executed_at:
+                changes["executed_at"] = executed_at
+            receipt = apply_mutation_request(self.root, {
+                "request_id": request_id, "entity_kind": "test", "entity_name": "T-RESULT-ORDER",
+                "expected_version": 6, "changes": changes,
+                "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+            })
+            self.assertFalse(receipt["accepted"])
+            self.assertEqual(receipt["issue"]["code"], "INBOX_RESULT_ORDER_CONFLICT")
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(list((self.root / "events").rglob("*.json")), [])
+
+    def test_invalid_result_datetime_cannot_establish_replacement_order(self) -> None:
+        path = entity_path(self.root, "test", "T-RESULT-BAD-CLOCK")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        base = {
+            "id": "T-RESULT-BAD-CLOCK", "entity_version": 3,
+            "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+            "result_summary": "Resultado canônico.", "inbox_ref": "gateway:tcc-old",
+        }
+        cases = (
+            ("2026-09-26T12:10:01Z", {"at": "2026-09-26T12:20:01Z"}),
+            ("2026-09-26T12:10:01Z", True),
+            ({"at": "2026-09-26T12:10:01Z"}, "2026-09-26T12:20:01Z"),
+        )
+        for index, (current_at, incoming_at) in enumerate(cases):
+            with self.subTest(index=index):
+                path.write_text(json.dumps({**base, "executed_at": current_at}))
+                receipt = apply_mutation_request(self.root, {
+                    "request_id": f"REQ-BAD-CLOCK-{index}",
+                    "entity_kind": "test", "entity_name": "T-RESULT-BAD-CLOCK",
+                    "expected_version": 3,
+                    "changes": {
+                        "status": "DONE", "state": "DONE", "verdict": "REJECTED",
+                        "result_summary": "Payload divergente.", "inbox_ref": "gateway:tcc-new",
+                        "executed_at": incoming_at,
+                    },
+                    "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+                })
+                self.assertFalse(receipt["accepted"])
+                self.assertEqual(receipt["issue"]["code"], "INBOX_RESULT_ORDER_CONFLICT")
+
+    def test_prepared_test_with_executor_metadata_accepts_its_first_result(self) -> None:
+        path = entity_path(self.root, "test", "T-PREPARED-FIRST-RESULT")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "T-PREPARED-FIRST-RESULT", "entity_version": 2,
+            "status": "READY", "state": "READY",
+            "executed_by": "ASSIGNED_EXECUTOR", "inbox_ref": "preparation:receipt-1",
+        }))
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-FIRST-RESULT",
+            "entity_kind": "test", "entity_name": "T-PREPARED-FIRST-RESULT",
+            "expected_version": 2,
+            "changes": {
+                "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+                "result_summary": "Primeiro resultado real.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+                "executed_at": "2026-09-26T12:20:01Z", "inbox_ref": "gateway:tcc-result",
+            },
+            "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertNotEqual(receipt.get("status"), "NO_OP")
+        self.assertEqual(receipt["entity_version"], 3)
+        self.assertEqual(json.loads(path.read_text())["result_summary"], "Primeiro resultado real.")
+
+    def test_later_different_result_source_remains_a_real_mutation(self) -> None:
+        path = entity_path(self.root, "test", "T-RESULT-LATER")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "T-RESULT-LATER", "entity_version": 2,
+            "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+            "result_summary": "Resultado antigo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+            "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-old",
+        }))
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-LATER", "entity_kind": "test", "entity_name": "T-RESULT-LATER",
+            "expected_version": 2,
+            "changes": {
+                "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+                "result_summary": "Resultado novo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
+                "executed_at": "2026-09-26T12:20:01Z", "inbox_ref": "gateway:tcc-new",
+            },
+            "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+        })
+        self.assertTrue(receipt["accepted"])
+        self.assertNotEqual(receipt.get("status"), "NO_OP")
+        self.assertEqual(receipt["entity_version"], 3)
+        current = json.loads(path.read_text())
+        self.assertEqual(current["result_summary"], "Resultado novo.")
+        self.assertEqual(current["inbox_ref"], "gateway:tcc-new")
+
+    def test_stale_identical_result_still_returns_version_conflict(self) -> None:
+        path = entity_path(self.root, "test", "T-RESULT-STALE")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "T-RESULT-STALE", "entity_version": 5,
+            "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+            "inbox_ref": "gateway:tcc-stale",
+        }))
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-INBOX-RESULT-STALE",
+            "entity_kind": "test", "entity_name": "T-RESULT-STALE", "expected_version": 4,
+            "changes": {"status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+                        "inbox_ref": "gateway:tcc-stale"},
+            "writer_role": "EXECUTOR", "event_type": "TEST_RESULT_RECORDED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WRITE_CONFLICT_RETRY_REQUIRED")
+
     def test_zero_version_creates_new_work_with_matching_identity(self) -> None:
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({"work": []}), encoding="utf-8")
         receipt = apply_mutation_request(self.root, {
@@ -172,6 +358,49 @@ class MutationInboxTests(unittest.TestCase):
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "INVALID_MUTATION_REQUEST")
         self.assertFalse((entity_path(self.root, "test_group", "TEST_GROUP::CAMP-GROWTH-LSS::A")).exists())
+
+    def test_existing_entity_never_accepts_partial_creation_as_generic_no_op(self) -> None:
+        path = entity_path(self.root, "artifact", "ARTIFACT::EXISTING")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": "ARTIFACT::EXISTING", "entity_version": 1,
+            "kind": "EVIDENCE", "status": "RECORDED", "payload": {"value": 1},
+        }))
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-ARTIFACT-DIFFERENT",
+            "entity_kind": "artifact", "entity_name": "ARTIFACT::EXISTING",
+            "expected_version": 0,
+            "changes": {"kind": "EVIDENCE", "status": "RECORDED"},
+            "writer_role": "LEARNER", "event_type": "ARTIFACT_RECORDED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WRITE_CONFLICT_RETRY_REQUIRED")
+        self.assertEqual(json.loads(path.read_text())["payload"], {"value": 1})
+
+    def test_exact_durable_artifact_record_replay_is_no_op_but_changed_payload_conflicts(self) -> None:
+        path = entity_path(self.root, "artifact", "LEARNING_SIGNAL::STABLE")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        changes = {
+            "kind": "LEARNING_SIGNAL", "status": "RECORDED", "source": "CHATGPT",
+            "created_at": "2026-09-26T12:10:01Z", "payload": {"signal": "stable"},
+        }
+        path.write_text(json.dumps({"id": "LEARNING_SIGNAL::STABLE", "entity_version": 1, **changes}))
+        base = {
+            "request_id": "REQ-INBOX-STABLE", "entity_kind": "artifact",
+            "entity_name": "LEARNING_SIGNAL::STABLE", "expected_version": 0,
+            "writer_role": "LEARNER", "event_type": "LEARNING_SIGNAL_RECORDED",
+        }
+        replay = apply_mutation_request(self.root, {**base, "changes": changes})
+        self.assertTrue(replay["accepted"])
+        self.assertEqual(replay["status"], "NO_OP")
+        self.assertEqual(replay["entity_version"], 1)
+
+        conflict = apply_mutation_request(self.root, {
+            **base, "changes": {**changes, "payload": {"signal": "changed"}},
+        })
+        self.assertFalse(conflict["accepted"])
+        self.assertEqual(conflict["issue"]["code"], "WRITE_CONFLICT_RETRY_REQUIRED")
+        self.assertEqual(json.loads(path.read_text())["payload"], {"signal": "stable"})
 
     def test_work_terminal_mutation_refreshes_active_projection(self) -> None:
         (self.root / "indexes" / "active-work.json").write_text(json.dumps({

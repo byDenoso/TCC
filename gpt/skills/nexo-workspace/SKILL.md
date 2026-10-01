@@ -116,6 +116,23 @@ sem substituição conveniente. A autonomia é limitada às receitas dos roadmap
 capacidades já autorizadas; não permite criar credenciais, ampliar acesso, aceitar gates no lugar
 do Dener, alterar pré-registro, forçar checks ou publicar mudanças fora desse escopo.
 
+### Preparação do Cientista e prioridade do roadmap
+
+Recuperação acionável dirigida a `LEARNER` vem antes de hipótese nova dentro do orçamento da
+rodada. `WAIT_DEPENDENCY` que aguarda outro papel ou dado externo não cria barreira global; registre
+dono, dependência e encaminhamento. Trabalho já elegível continua sem esperar uma nova passada do
+Cientista. Toda nova `HYPOTHESIS_PROPOSAL` do Cientista usa um roadmap
+`ACTIVE` e inclui `preparation_evidence` com `literature_refs` e
+`internal_test_search:{checked:true,query,matched_test_ids}`. Se a busca encontrar teste anterior,
+somente uma replicação com propósito explícito segue: acrescentar
+`replication:{justified:true,purpose,independence_axis,compares_to_test_ids}` cobrindo os IDs
+encontrados. Duplicata sem propósito fica registrada como não aplicada. Abrir outra frente exige
+carta aprovada pelo Dener e ativação canônica antes da hipótese.
+
+O Executor despacha READY ordinário somente de roadmap `ACTIVE`; contestação pendente pode terminar
+a revisão do resultado que atacou. Avançar fase depende de readiness e recibos, não do minuto da
+agenda. Sem inventário vivo, não alterar horários nem afirmar mudança nos prompts salvos.
+
 Enquanto houver READY elegível no segmento de um Operador e capacidade na rodada, NO-OP é inválido. A processa o início/mais antigo, B o fim/mais novo restante e C faz sweep residual após A/B; todos relêem staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
 
 Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.

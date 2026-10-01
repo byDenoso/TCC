@@ -138,8 +138,20 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
     if verdict in evolution.POSITIVE_VERDICTS and not current.get("review_state"):
         changes["review_state"] = "PENDING_REVIEW"  # a positive result must survive two referees to count
     version = 1 if created else int(current.get("entity_version") or 0)
+    request_id = f"REQ-INBOX-RESULT-{_slug(str(item.get('_inbox_name') or test_id))}"
+    if not created:
+        from .mutations import _result_replay_receipt
+
+        replay = _result_replay_receipt(
+            current, {k: v for k, v in changes.items() if v not in (None, "", [], {})},
+            request_id=request_id, expected_version=version, governance_meta={})
+        if replay is not None:
+            issue = replay.get("issue") if isinstance(replay.get("issue"), dict) else None
+            if issue:
+                raise ProposalError(str(issue.get("code") or "INBOX_RESULT_CONFLICT"))
+            return []
     return created + [{
-        "request_id": f"REQ-INBOX-RESULT-{_slug(str(item.get('_inbox_name') or test_id))}",
+        "request_id": request_id,
         "entity_kind": "test",
         "entity_name": test_id,
         "expected_version": version,
@@ -256,6 +268,53 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
                                         ("método", body.get("method")), ("dados", data_needed)) if not value]
     lifecycle = body.get("_status") or ("DRAFT" if missing else "READY")
     roadmap_id = body.get("roadmap_id") or _infer_roadmap(root, test_id, body.get("semantic") or {})
+    source = str(item.get("source") or body.get("source") or "").upper()
+    preparation_record = None
+    if source in {"LEARNER", "SCIENTIST"}:
+        active = {str(row.get("roadmap_id") or "") for row in _roadmap_index(root)
+                  if str(row.get("state") or "").upper() == "ACTIVE"}
+        if str(roadmap_id or "") not in active:
+            raise ProposalError("SCIENTIST_ROADMAP_NOT_ACTIVE")
+        preparation = body.get("preparation_evidence") if isinstance(body.get("preparation_evidence"), dict) else {}
+        literature_refs = preparation.get("literature_refs")
+        internal = preparation.get("internal_test_search") if isinstance(preparation.get("internal_test_search"), dict) else {}
+        matches = internal.get("matched_test_ids")
+        if not (isinstance(literature_refs, list) and literature_refs
+                and all(isinstance(ref, str) and ref.strip() for ref in literature_refs)
+                and isinstance(internal.get("query"), str) and internal["query"].strip()
+                and internal.get("checked") is True and isinstance(matches, list)
+                and all(isinstance(match, str) and match.strip() for match in matches)):
+            raise ProposalError("SCIENTIST_LITERATURE_AND_INTERNAL_SEARCH_REQUIRED")
+        if any(_entity(root, "test", str(match)) is None for match in matches):
+            raise ProposalError("SCIENTIST_INTERNAL_SEARCH_REFERENCE_INVALID")
+        if matches:
+            replication = preparation.get("replication") if isinstance(preparation.get("replication"), dict) else {}
+            compared_values = replication.get("compares_to_test_ids")
+            purpose = replication.get("purpose")
+            independence_axis = replication.get("independence_axis")
+            if not (replication.get("justified") is True
+                    and isinstance(purpose, str) and purpose.strip()
+                    and isinstance(independence_axis, str) and independence_axis.strip()
+                    and isinstance(compared_values, list)
+                    and all(isinstance(value, str) and value.strip() for value in compared_values)):
+                raise ProposalError("SCIENTIST_DUPLICATE_WITHOUT_REPLICATION_PURPOSE")
+            compared = {value.strip() for value in compared_values}
+            if not set(map(str, matches)).issubset(compared):
+                raise ProposalError("SCIENTIST_DUPLICATE_WITHOUT_REPLICATION_PURPOSE")
+            if any(_entity(root, "test", value) is None for value in compared):
+                raise ProposalError("SCIENTIST_REPLICATION_REFERENCE_INVALID")
+        preparation_record = {
+            "literature_refs": list(literature_refs),
+            "internal_test_search": {"checked": True, "query": internal["query"],
+                                     "matched_test_ids": list(matches)},
+        }
+        if matches:
+            preparation_record["replication"] = {
+                "justified": True,
+                "purpose": purpose.strip(),
+                "independence_axis": independence_axis.strip(),
+                "compares_to_test_ids": sorted(compared),
+            }
     siblings = _siblings(root, roadmap_id)
     # Roadmap siblings may share campaign/domain, never the hypothesis: one roadmap holds several hypotheses.
     inherited = {k: next((e[k] for e in siblings if e.get(k)), None) for k in ("campaign_id", "domain")}
@@ -299,6 +358,7 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "prior_art": body.get("prior_art"),
         "prediction": body.get("prediction"),
         "contests_test_id": body.get("contests_test_id"),
+        "preparation_evidence": preparation_record,
         "semantic": semantic,
     }
     if lifecycle == "READY":

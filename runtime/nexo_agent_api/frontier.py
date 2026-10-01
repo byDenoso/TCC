@@ -67,6 +67,8 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     seen: set[str] = set()  # a test shared by two roadmaps is listed once, under the higher-priority one
 
     items = [item for item in index.get("items", []) if isinstance(item, dict)]
+    active_roadmaps = {str(item.get("roadmap_id") or "") for item in items
+                       if str(item.get("state") or "").upper() == "ACTIVE"}
     items.sort(key=lambda item: (PRIORITY_RANK.get(str(item.get("priority") or "NORMAL").upper(), 9), str(item.get("roadmap_id"))))
     for item in items:
         rid = str(item.get("roadmap_id") or "")
@@ -141,6 +143,13 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             if state != "READY":
                 waiting.append({**base, "reason": f"NOT_READY_{state}"})
                 continue
+            # A contest is follow-up review of an already-produced result.  It
+            # remains resumable even when its source roadmap has closed; this
+            # is the same exception enforced by ``family_battery_items``.
+            if (not entity.get("contests_test_id")
+                    and str(entity.get("roadmap_id") or "") not in active_roadmaps):
+                waiting.append({**base, "reason": "ROADMAP_NOT_ACTIVE"})
+                continue
             deps = [str(d) for d in (entity.get("depends_on") or [])]
             unmet = [d for d in deps if not _dependency_met(d, status_of)]
             (waiting if unmet else ready).append({**base, "waiting_on": unmet} if unmet else base)
@@ -213,5 +222,5 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
-        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; CONTESTS_FIRST; READY_ROADMAP_ROUND_ROBIN; CHECKPOINT_REVIEW_QUOTA_FROM_GENOME; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; ENTITY_READY_TESTS_OUTSIDE_ACTIVE_ROADMAPS_ARE_READY",
+        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; CONTESTS_FIRST; READY_ROADMAP_ROUND_ROBIN; CHECKPOINT_REVIEW_QUOTA_FROM_GENOME; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; MATERIALIZED_READY_REQUIRES_ACTIVE_ROADMAP",
     }
