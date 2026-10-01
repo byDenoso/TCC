@@ -1,0 +1,40 @@
+{
+  "stable_id": "referee1-meta-permutation-20260930t220501z",
+  "envelope": {
+    "kind": "CONTEST",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-09-30T22:05:01Z",
+    "payload": {
+      "test_id": "META-RANK26-002-RANKSCORE-CALIBRATION",
+      "source": "REFEREE_1",
+      "reason": "Ataque 2 · método: testar se a AUC observada supera um nulo de permutação na mesma coorte congelada, sem depender do holdout temporal inconclusivo.",
+      "refs": [
+        "META-RANK26-002-RANKSCORE-CALIBRATION",
+        "CONTEST-META-RANK26-002-RANKSCORE-CALIBRATION-1"
+      ],
+      "contest_test": {
+        "test_id": "CONTEST-META-RANK26-002-RANKSCORE-CALIBRATION-2",
+        "roadmap_id": "RM-NEXO-SELF-ENGINEERING-V1",
+        "hypothesis_id": "HYP-META-UNAPPLIED-STALENESS-20260925",
+        "domain": "ENGINEERING",
+        "question": "A discriminação do rank_score continua improvável sob permutação dos rótulos na coorte original congelada?",
+        "null": "A AUC observada é compatível com acaso: pelo menos 20% das permutações produzem AUC igual ou maior.",
+        "rival": "A AUC observada é rara sob acaso: no máximo 5% das permutações produzem AUC igual ou maior.",
+        "method": "Congelar os rank_scores e desfechos da coorte original; permutar apenas os rótulos 10000 vezes, sem recalibrar pesos, seleção ou limiar; comparar a AUC observada à distribuição nula.",
+        "data": "Mesma coorte canônica usada no resultado original, com rank_score pré-resultado e rótulo PROMOTED versus não-PROMOTED; nenhuma observação nova é incorporada.",
+        "success_criteria": "PROMOTED se AUC observada >=0,70 e p de permutação <=0,05.",
+        "kill_criteria": "REJECTED se AUC observada <=0,55 ou p de permutação >=0,20; demais INCONCLUSIVE.",
+        "claim_boundary": "Testa significância interna da ordenação na coorte original; não demonstra generalização temporal nem utilidade em outros domínios.",
+        "independence": {
+          "axis": "method",
+          "evidence_refs": [
+            "META-RANK26-002-RANKSCORE-CALIBRATION",
+            "CONTEST-META-RANK26-002-RANKSCORE-CALIBRATION-1"
+          ],
+          "frozen_at": "2026-09-30T22:05:01Z"
+        }
+      }
+    }
+  }
+}
