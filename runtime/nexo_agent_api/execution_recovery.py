@@ -19,6 +19,17 @@ TERMINAL_WORK = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED", "CANCEL
                  "ARCHIVED", "COMPLETED", "CLOSED_VERIFIED", "DISCARDED", "WITHDRAWN"}
 
 
+def _entity_version(value: Any) -> int | None:
+    """Return a canonical CAS version without coercing malformed legacy data."""
+    return value if type(value) is int and value > 0 else None
+
+
+def _public(entity: dict) -> bool:
+    entity_id = str(entity.get("id") or "")
+    return bool(entity_id and not entity.get("private")
+                and not is_private(resolve(entity, entity_id=entity_id)))
+
+
 def _entities(root: Path, kind: str) -> list[dict]:
     return [integrity.read(root, p.relative_to(root).as_posix())
             for p in sorted((root / "entities" / kind).glob("*.json"))]
@@ -127,7 +138,50 @@ def reconcile_requests(root: str | Path) -> list[dict]:
         if not tid or test.get("private") or is_private(resolve(test, entity_id=tid)):
             continue
         state = str(test.get("status") or test.get("state") or "").upper()
-        if integrity.terminal(test) or tid in active or state not in {"READY", "BLOCKED_INPUT"}:
+        # Never close execution work while an attempt/reservation is active,
+        # even if a legacy TEST simultaneously carries a terminal-looking state.
+        if tid in active:
+            continue
+        if integrity.terminal(test):
+            # A legacy one-to-one execution WORK can outlive the TEST it was
+            # created to execute. Close only that exact public EXECUTOR twin.
+            # This reconciles lifecycle state; it does not dispatch or mutate
+            # the TEST, result, verdict, review, binding, or scientific fields.
+            current_work = work_by_id.get("WORK::" + tid)
+            test_version = _entity_version(test.get("entity_version"))
+            work_version = _entity_version((current_work or {}).get("entity_version"))
+            if (current_work and test_version is not None and work_version is not None
+                    and _public(current_work) and current_work.get("test_id") == tid
+                    and str(current_work.get("owner_role") or "").upper() == "EXECUTOR"
+                    and str(current_work.get("status") or "").upper() == "READY"):
+                changes = {
+                    "status": "DONE",
+                    "operational_status": "DONE",
+                    "closure_reason": "TEST_ENTITY_ALREADY_TERMINAL",
+                    "completion_evidence": {
+                        "kind": "TERMINAL_TEST_STATE_OBSERVED",
+                        "test_id": tid,
+                        "test_entity_version": test_version,
+                        "test_status": state,
+                        "test_verdict": test.get("verdict"),
+                    },
+                }
+                requests.append({
+                    "request_id": "REQ-WORK-CLOSE-" + integrity.digest({
+                        "work_id": current_work["id"],
+                        "work_version": work_version,
+                        "test_id": tid,
+                        "test_version": test_version,
+                    })[:32],
+                    "entity_kind": "work",
+                    "entity_name": current_work["id"],
+                    "expected_version": work_version,
+                    "writer_role": "EXECUTOR",
+                    "event_type": "WORK_RECONCILED_TERMINAL_TEST",
+                    "changes": changes,
+                })
+            continue
+        if state not in {"READY", "BLOCKED_INPUT"}:
             continue
         recovered, refs, conflicts = _binding_recovery(test, artifacts)
         provisional = {**test, **recovered}

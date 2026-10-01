@@ -193,6 +193,182 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(inbox[0]["work_envelope"]["recovery"]["route_generation"], 3)
         self.assertEqual(self.works()[0]["owner_role"], "ADVISOR")
 
+    def exact_execution_work(self, *, work_id="WORK::TEST-A", owner="EXECUTOR",
+                             private=False, semantic=None, entity_version=1):
+        work = {
+            "id": work_id, "entity_version": 1, "kind": "WORK",
+            "test_id": "TEST-A", "owner_role": owner,
+            "status": "READY", "operational_status": "READY",
+            "next_action": "Execute the frozen TEST-A contract",
+        }
+        work["entity_version"] = entity_version
+        if private:
+            work["private"] = True
+        if semantic is not None:
+            work["semantic"] = semantic
+        save(self.root, "entities/work/" + work_id + ".json", work)
+
+    def terminal_test(self, *, private=False):
+        terminal = copy.deepcopy(self.test)
+        terminal.update(status="DONE", state="DONE", verdict="DRAFT",
+                        decision="DRAFT_INPUT_OR_WEIGHT")
+        if private:
+            terminal["private"] = True
+        self.put(terminal)
+        return terminal
+
+    def test_terminal_test_closes_exact_executor_work_without_changing_science(self):
+        terminal = self.terminal_test()
+        self.exact_execution_work()
+        before = copy.deepcopy(s.entity(self.root, "TEST-A"))
+        receipts = self.reconcile()
+        self.assertEqual(len(receipts), 1)
+        work = self.works()[0]
+        self.assertEqual(work["status"], "DONE")
+        self.assertEqual(work["operational_status"], "DONE")
+        self.assertEqual(work["closure_reason"], "TEST_ENTITY_ALREADY_TERMINAL")
+        self.assertEqual(work["completion_evidence"], {
+            "kind": "TERMINAL_TEST_STATE_OBSERVED", "test_id": "TEST-A",
+            "test_entity_version": terminal["entity_version"],
+            "test_status": "DONE", "test_verdict": "DRAFT",
+        })
+        self.assertEqual(s.entity(self.root, "TEST-A"), before)
+
+    def test_terminal_work_reconcile_is_idempotent(self):
+        self.terminal_test(); self.exact_execution_work()
+        self.assertEqual(len(self.reconcile()), 1)
+        version = self.works()[0]["entity_version"]
+        self.assertEqual(self.reconcile(), [])
+        self.assertEqual(self.works()[0]["entity_version"], version)
+
+    def test_active_reservation_prevents_terminal_work_close(self):
+        self.terminal_test(); self.exact_execution_work()
+        save(self.root, "evolution/batteries.json", {"batteries": [{
+            "id": "BAT-A", "status": "RUNNING", "tests": [{"test_id": "TEST-A"}],
+        }]})
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+    def test_application_guard_rechecks_test_and_active_reservation(self):
+        terminal = self.terminal_test(); self.exact_execution_work()
+        [request] = r.reconcile_requests(self.root)
+        terminal.update(status="READY", state="READY", entity_version=terminal["entity_version"] + 1)
+        self.put(terminal)
+        [receipt] = apply_requests(self.root, [request])
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+        terminal.update(status="DONE", state="DONE", entity_version=terminal["entity_version"] + 1)
+        self.put(terminal)
+        [fresh] = r.reconcile_requests(self.root)
+        save(self.root, "evolution/batteries.json", {"batteries": [{
+            "id": "BAT-A", "status": "RUNNING", "tests": [{"test_id": "TEST-A"}],
+        }]})
+        [receipt] = apply_requests(self.root, [fresh])
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+    def test_integrity_terminal_semantics_close_work_without_declaring_draft_success(self):
+        terminal = self.terminal_test()
+        terminal.update(status="READY", state="READY", verdict="DRAFT")
+        self.put(terminal)
+        self.exact_execution_work()
+        before = copy.deepcopy(s.entity(self.root, "TEST-A"))
+        self.assertEqual(len(self.reconcile()), 1)
+        work = self.works()[0]
+        self.assertEqual(work["status"], "DONE")
+        self.assertEqual(work["completion_evidence"]["test_status"], "READY")
+        self.assertEqual(work["completion_evidence"]["test_verdict"], "DRAFT")
+        self.assertNotIn("scientific_verdict", work)
+        self.assertNotIn("result", work)
+        self.assertEqual(s.entity(self.root, "TEST-A"), before)
+
+    def test_private_work_is_not_closed_and_privacy_is_rechecked_at_apply(self):
+        self.terminal_test(); self.exact_execution_work(private=True)
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+        self.exact_execution_work(semantic={"subdomain_id": "olympus.training"})
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+        self.exact_execution_work()
+        [request] = r.reconcile_requests(self.root)
+        work = self.works()[0]; work["private"] = True
+        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        [receipt] = apply_requests(self.root, [request])
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
+        self.assertEqual(self.works()[0]["status"], "READY")
+
+    def test_malformed_versions_and_evidence_fail_closed_without_crashing(self):
+        terminal = self.terminal_test(); self.exact_execution_work(entity_version="1")
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.exact_execution_work(); terminal["entity_version"] = "1"; self.put(terminal)
+        self.assertEqual(r.reconcile_requests(self.root), [])
+
+        terminal["entity_version"] = 1; self.put(terminal)
+        [request] = r.reconcile_requests(self.root)
+        for corrupt in (
+            {**request, "changes": "not-an-object"},
+            {**request, "changes": {**request["changes"], "completion_evidence": "bad"}},
+            {**request, "expected_version": "1"},
+        ):
+            [receipt] = apply_requests(self.root, [corrupt])
+            self.assertFalse(receipt["accepted"])
+            self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
+            self.assertEqual(self.works()[0]["status"], "READY")
+
+        work = self.works()[0]; work["entity_version"] = "1"
+        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        [receipt] = apply_requests(self.root, [request])
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
+
+    def test_malformed_terminal_twin_does_not_take_down_writer(self):
+        self.terminal_test(); self.exact_execution_work(entity_version="malformed")
+        raw = json.dumps(build_live_tower_payload(self.root)).encode()
+        proposal = {"kind": "BOARD_POST", "source": "EXECUTOR",
+                    "payload": {"to": "ALL", "text": "Ação independente preservada."}}
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            result, report = apply_to_tower(raw, [proposal])
+        output = read_live_tower_bytes(result)
+        self.assertFalse(report["rejected"], report)
+        self.assertEqual(report["execution_recovery"], {"mutations": 0, "handoffs_created": 0})
+        self.assertTrue(output["files"][e.BOARD_DOC]["value"]["posts"])
+        work = output["files"]["entities/work/WORK::TEST-A.json"]["value"]
+        self.assertEqual(work["status"], "READY")
+        self.assertEqual(work["entity_version"], "malformed")
+
+    def test_other_work_identity_or_role_is_not_closed(self):
+        terminal = self.terminal_test()
+        self.exact_execution_work(owner="ADVISOR")
+        self.exact_execution_work(work_id="WORK::OTHER", owner="EXECUTOR")
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.assertTrue(all(work["status"] == "READY" for work in self.works()))
+        self.assertEqual(s.entity(self.root, "TEST-A"), terminal)
+
+    def test_nonready_execution_work_is_not_reclassified(self):
+        self.terminal_test(); self.exact_execution_work()
+        work = self.works()[0]; work["status"] = work["operational_status"] = "CHECKPOINTED"
+        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        self.assertEqual(self.works()[0]["status"], "CHECKPOINTED")
+
+    def test_nonterminal_or_private_test_is_not_closed(self):
+        self.exact_execution_work()
+        requests = r.reconcile_requests(self.root)
+        self.assertFalse(any(item.get("event_type") == "WORK_RECONCILED_TERMINAL_TEST"
+                             for item in requests))
+        self.reconcile()
+        self.assertEqual(self.works()[0]["status"], "READY")
+        self.terminal_test(private=True)
+        self.assertFalse(any(item.get("event_type") == "WORK_RECONCILED_TERMINAL_TEST"
+                             for item in r.reconcile_requests(self.root)))
+        self.assertEqual(self.works()[0]["status"], "READY")
+
     def test_reserved_terminal_and_private_tests_are_not_reclassified(self):
         for name, changes in [("terminal", {"status": "DONE", "verdict": "INCONCLUSIVE"}), ("private", {"private": True}), ("queued", {"status": "QUEUED"})]:
             test = fixture(name); test.update(changes); test.pop("data_binding"); self.put(test)

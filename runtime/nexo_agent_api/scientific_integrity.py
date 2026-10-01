@@ -289,7 +289,79 @@ def public_execution_summary(root: Path, tests: list[dict]) -> dict:
             'independence_scope': 'DECLARATION_AND_PROVENANCE_NOT_SCIENTIFIC_PROOF'}
 
 
+def _guard_terminal_work_reconcile(root: Path, request: dict) -> dict | None:
+    """Revalidate the linked TEST at mutation time, not only at proposal time."""
+    work_name = str(request.get('entity_name') or '')
+    work_path = entity_path(root, 'work', work_name)
+    try:
+        work = json.loads(work_path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        work = {}
+    if not isinstance(work, dict):
+        work = {}
+    changes = request.get('changes')
+    evidence = changes.get('completion_evidence') if isinstance(changes, dict) else None
+    raw_test_id = work.get('test_id')
+    test_id = raw_test_id if isinstance(raw_test_id, str) else ''
+    try:
+        test = entity(root, test_id) if test_id else {}
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        test = {}
+    if not isinstance(test, dict):
+        test = {}
+    state = str(test.get('status') or test.get('state') or '').upper()
+    from .semantics import is_private, resolve
+    test_private = bool(test.get('private')) or (bool(test_id) and is_private(resolve(test, entity_id=test_id)))
+    work_private = bool(work.get('private')) or (bool(work_name) and is_private(resolve(work, entity_id=work_name)))
+    test_version = test.get('entity_version')
+    work_version = work.get('entity_version')
+    versions_valid = (type(test_version) is int and test_version > 0
+                      and type(work_version) is int and work_version > 0)
+    expected_evidence = {
+        'kind': 'TERMINAL_TEST_STATE_OBSERVED',
+        'test_id': test_id,
+        'test_entity_version': test_version,
+        'test_status': state,
+        'test_verdict': test.get('verdict'),
+    }
+    expected_changes = {
+        'status': 'DONE',
+        'operational_status': 'DONE',
+        'closure_reason': 'TEST_ENTITY_ALREADY_TERMINAL',
+        'completion_evidence': expected_evidence,
+    }
+    valid = (
+        bool(test_id)
+        and isinstance(changes, dict)
+        and isinstance(evidence, dict)
+        and versions_valid
+        # tower_apply supplies expected_version; AgentService calls this guard
+        # again only after its own CAS check and intentionally omits it.
+        and ('expected_version' not in request or request.get('expected_version') == work_version)
+        and work_name == 'WORK::' + test_id
+        and work.get('id') == work_name
+        and str(work.get('owner_role') or '').upper() == 'EXECUTOR'
+        and str(work.get('status') or '').upper() == 'READY'
+        and terminal(test)
+        and test_id not in active_tests(root)
+        and not test_private
+        and not work_private
+        and evidence == expected_evidence
+        and changes == expected_changes
+    )
+    if valid:
+        return None
+    return {
+        'request_id': request.get('request_id'),
+        'accepted': False,
+        'issue': {'code': 'WORK_TERMINAL_TEST_EVIDENCE_INVALID', 'entity_name': work_name},
+    }
+
+
 def guard_transition(root: Path, request: dict) -> dict | None:
+    if (request.get('entity_kind') == 'work'
+            and request.get('event_type') == 'WORK_RECONCILED_TERMINAL_TEST'):
+        return _guard_terminal_work_reconcile(root, request)
     if request.get('entity_kind') != 'test':
         return None
     test_id = str(request.get('entity_name') or '')
