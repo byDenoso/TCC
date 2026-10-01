@@ -1,0 +1,67 @@
+{
+  "stable_id": "guardiao-integrity-20261001t1509z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-01T15:09:00Z",
+    "payload": {
+      "date": "2026-10-01",
+      "status": "RED",
+      "autonomy": {
+        "schema_version": "AUTONOMY_METRICS_V2",
+        "window_hours": 24,
+        "results": 15,
+        "execution_record_share": 0.8,
+        "decisive_rate": 0.467,
+        "non_inconclusive_rate": 0.533,
+        "median_hours_to_result": 2.8,
+        "positive_review_closure": 0.373,
+        "failure_result_coverage": 1,
+        "blocked_share": 1
+      },
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Tower canônica lida com sucesso. Estado atual de TESTs: 0 READY, 0 RUNNING, 7 CHECKPOINTED e 56 bloqueados."
+        },
+        {
+          "area": "tasks",
+          "ok": true,
+          "detail": "Inventário vivo reconciliado com 10 tarefas NEXO habilitadas; Revisor de PR permanece por evento."
+        },
+        {
+          "area": "inbox",
+          "ok": true,
+          "detail": "Três contestações recuperadas pelo Crítico foram confirmadas no staging, no relay e materializadas na Tower pelo Writer."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "A fila executável está vazia; 56 TESTs seguem bloqueados. As três contestações recém-aplicadas já têm recuperação P0 por proveniência/receita."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Persistem três WORKs READY cujos TESTs canônicos já estão terminais; o recado anterior permanece aberto e não foi duplicado."
+        },
+        {
+          "area": "site",
+          "ok": true,
+          "detail": "A projeção pública está legível e válida, porém ainda reflete estado anterior à revisão mais recente da Tower; acompanhar o próximo publish."
+        },
+        {
+          "area": "contract",
+          "ok": false,
+          "detail": "O laço de aptidão está atrasado; a proposta anterior falhou antes do staging e o conteúdo imutável original não está recuperável nesta sessão, portanto não foi regravado com conteúdo diferente."
+        }
+      ],
+      "action": "A pior métrica é blocked_share=1,000. Priorizar recuperações P0 de proveniência e compatibilidade receita-manifesto e reconciliar WORKs órfãos; só devolver trabalho a READY após elegibilidade canônica.",
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
