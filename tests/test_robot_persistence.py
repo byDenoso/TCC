@@ -76,7 +76,7 @@ class RobotPersistenceTest(unittest.TestCase):
                 "kind": "BOARD_POST", "source": "ENGINEER", "payload": {"domain": "ENGINEERING"}
             }}]}))
             output = Path(work, "outputs")
-            with patch.dict(os.environ, {"NEXO_GATEWAY_ITEMS": str(gateway), "GITHUB_OUTPUT": str(output)}, clear=True), \
+            with patch.dict(os.environ, {"NEXO_GATEWAY_ITEMS": str(gateway), "GITHUB_OUTPUT": str(output), "NEXO_HOME": str(Path(work) / "nexo-home")}, clear=True), \
                  patch("runtime.nexo_agent_api.drive_transport.DriveTower", return_value=tower), \
                  patch("runtime.nexo_agent_api.drive_transport.DriveInbox", return_value=inbox), \
                  patch.object(gpt_writer, "_GitHubInbox", return_value=github), \

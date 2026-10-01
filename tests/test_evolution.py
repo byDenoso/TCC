@@ -155,8 +155,8 @@ def test_battery_dispatch_and_collect(tmp_path, monkeypatch):
     assert evolution_status(root)["batteries"] == {"QUEUED": 0, "DISPATCH_PENDING": 0, "DISPATCHED": 0, "RUNNING": 0, "DONE": 1}
 
 
-def _hyp(root, tid, **extra):
-    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": f"Teste {tid}", "domain": "science",
+def _hyp(root, tid, *, created_at=None, **extra):
+    _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "created_at": created_at, "payload": {"display_name": f"Teste {tid}", "domain": "science",
                                                              "test_id": tid, "question": "q", "method": "frozen method",
                                                              "data": "fixture dataset", "success_criteria": "s",
                                                              "kill_criteria": "k", **extra}})
@@ -190,7 +190,7 @@ def test_maintenance_archives_stale_drafts_and_audits_prereg(tmp_path):
     _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "created_at": "2026-09-01T00:00:00Z",
                   "payload": {"display_name": "Rascunho velho", "domain": "science", "test_id": "T-DRAFT", "question": "q"}})
     assert _test(root, "T-DRAFT")["status"] == "DRAFT"
-    _hyp(root, "T-RUN")
+    _hyp(root, "T-RUN", created_at="2026-09-30T00:00:00Z")
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-10-01T00:00:00Z",
                   "payload": {"test_id": "T-RUN", "result": {"verdict": "PROMOTED"}}})
     _maintain(root)
