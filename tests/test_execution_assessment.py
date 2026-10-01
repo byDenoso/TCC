@@ -3,6 +3,7 @@ import copy
 import hashlib
 import io
 import json
+from datetime import datetime, timezone
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest.mock import patch
@@ -175,7 +176,10 @@ def test_learning_excludes_only_validated_technical_observations(context):
     a.apply_assessment(root,body)
     evaluated=discovery.learning_loop([current(root),legitimate,unknown])['evaluated']
     assert evaluated['cases']==2 and evaluated['excluded_operational']==1
-    assert discovery.autonomy_metrics([current(root),legitimate,unknown])['metrics']['results']['numerator']==3
+    # This assertion is about the 24-hour cohort, so pin its observation clock
+    # relative to the fixed 2026-09-30 fixture instead of wall-clock test time.
+    now=datetime(2026,9,30,11,0,tzinfo=timezone.utc)
+    assert discovery.autonomy_metrics([current(root),legitimate,unknown],now=now)['metrics']['results']['numerator']==3
 
 
 def test_unknown_existing_overlay_is_not_silently_replaced(context):
