@@ -1,0 +1,125 @@
+{
+  "stable_id": "bind-pointwise-bao-contest-20261001-v1",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "CHATGPT",
+    "created_at": "2026-10-01T13:38:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "RECIPE_BIND",
+          "source": "CHATGPT",
+          "created_at": "2026-10-01T13:38:00Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3-2",
+            "recipe": "w0wa_bao_sn_multi",
+            "params": {
+              "mode": "bao_tracer_jackknife",
+              "bao_release": "dr2",
+              "compilations": [
+                "des_sn5yr",
+                "union3"
+              ],
+              "tracer_groups": [
+                {
+                  "label": "z0.295",
+                  "z": [
+                    0.295
+                  ]
+                },
+                {
+                  "label": "z0.510",
+                  "z": [
+                    0.51
+                  ]
+                },
+                {
+                  "label": "z0.706",
+                  "z": [
+                    0.706
+                  ]
+                },
+                {
+                  "label": "z0.934",
+                  "z": [
+                    0.934
+                  ]
+                },
+                {
+                  "label": "z1.321",
+                  "z": [
+                    1.321
+                  ]
+                },
+                {
+                  "label": "z1.484",
+                  "z": [
+                    1.484
+                  ]
+                },
+                {
+                  "label": "z2.330",
+                  "z": [
+                    2.33
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "CHATGPT",
+          "created_at": "2026-10-01T13:38:00Z",
+          "payload": {
+            "test_id": "CONTEST-FAM-DE-SN-TRIO-TRACERS-CORTE-DES-U3-2",
+            "status": "BOUND",
+            "inputs": [
+              {
+                "format": "text",
+                "license": "public",
+                "name": "desi_gaussian_bao_ALL_GCcomb_mean.txt",
+                "sha256": "9ac154ab583ce759c0f7eef3c978c7c70a6ead2d18774caceadf1a350a640585",
+                "url": "https://raw.githubusercontent.com/CobayaSampler/bao_data/bb0c1c9009dc76d1391300e169e8df38fd1096db/desi_bao_dr2/desi_gaussian_bao_ALL_GCcomb_mean.txt",
+                "version": "bb0c1c9009dc76d1391300e169e8df38fd1096db"
+              },
+              {
+                "format": "text",
+                "license": "public",
+                "name": "desi_gaussian_bao_ALL_GCcomb_cov.txt",
+                "sha256": "252a143274c8a07c78694c119617d36594f6d7965d00319ca611c6ffb886e509",
+                "url": "https://raw.githubusercontent.com/CobayaSampler/bao_data/bb0c1c9009dc76d1391300e169e8df38fd1096db/desi_bao_dr2/desi_gaussian_bao_ALL_GCcomb_cov.txt",
+                "version": "bb0c1c9009dc76d1391300e169e8df38fd1096db"
+              },
+              {
+                "format": "text",
+                "license": "public",
+                "name": "DES-Dovekie_HD.csv",
+                "sha256": "2f57019d783eaa976df80a41b0054171a2d994ee9808d715ce850c2df5720aaf",
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/c9a4fcafc4cbd19bd750dee47fc76194a45c181f/4_DISTANCES_COVMAT/DES-Dovekie_HD.csv",
+                "version": "c9a4fcafc4cbd19bd750dee47fc76194a45c181f"
+              },
+              {
+                "format": "NumPyNPZ",
+                "license": "public",
+                "name": "STAT%2BSYS.npz",
+                "sha256": "ffd3124b32148b1372bd95fda9299269f0352a9f8eee02d416c610e38495463b",
+                "url": "https://raw.githubusercontent.com/des-science/DES-SN5YR/c9a4fcafc4cbd19bd750dee47fc76194a45c181f/4_DISTANCES_COVMAT/STAT%2BSYS.npz",
+                "version": "c9a4fcafc4cbd19bd750dee47fc76194a45c181f"
+              },
+              {
+                "format": "FITS",
+                "license": "public",
+                "name": "mu_mat_union3_cosmo=2_mu.fits",
+                "sha256": "ef98b7dde1025ee7134f3242aaea3f1f0ed3f2b29a718458c550a8e4e24d0349",
+                "url": "https://raw.githubusercontent.com/rubind/union3_release/f5c387349b68f3535fdabf0fbc4f45cd407f9084/mu_mat_union3_cosmo=2_mu.fits",
+                "version": "f5c387349b68f3535fdabf0fbc4f45cd407f9084"
+              }
+            ],
+            "note": "DESI DR2 + DES-SN5YR + Union3 congelados. Os sete holdouts removem um redshift efetivo por vez, exatamente como o ataque preregistrado; nenhum criterio cientifico foi alterado."
+          }
+        }
+      ]
+    }
+  }
+}
