@@ -7,6 +7,7 @@ transition guards, receipts, and the public projection use the real runtime.
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import io
 import json
@@ -18,6 +19,7 @@ from unittest import mock
 
 from nexo_persist import _relay_shared as relay
 from runtime.nexo_agent_api import operation_receipts, scientific_integrity
+from runtime.nexo_agent_api import evolution
 from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
 from runtime.nexo_agent_api.live_tower import (
@@ -60,6 +62,155 @@ class _FakeGitHubContents:
 
 
 class NexoOperationalPipelineTests(unittest.TestCase):
+    def test_frozen_criterion_fixture_closes_operational_cycle_and_replays(self) -> None:
+        self._exercise_contest_cycle(attack_positive=True)
+
+    def test_successful_transport_with_inconclusive_attack_cannot_confirm(self) -> None:
+        self._exercise_contest_cycle(attack_positive=False)
+
+    def _exercise_contest_cycle(self, *, attack_positive: bool) -> None:
+        """Exercise Writer mechanics, not scientific validation of data or independence.
+
+        Positive observations below satisfy the unchanged fixture criterion. The
+        transport-only control has ok=True but no conclusive scientific result.
+        Neither branch runs a real campaign or establishes a scientific claim.
+        """
+        fixture = phase_fixture.ExecutionPhaseReconciliationTests()
+        fixture.setUp()
+        try:
+            transport = _FakeGitHubContents()
+            observations = [0.1, -0.3]
+            self.assertEqual(fixture.test["success_criteria"], "abs(mean) < 1")
+            self.assertEqual(fixture.test["kill_criteria"], "abs(mean) >= 1")
+
+            def criterion_result(values):
+                mean = sum(values) / len(values)
+                passed = abs(mean) < 1
+                return {"verdict": "PROMOTED" if passed else "REJECTED",
+                        "decision": "PASS" if passed else "FAIL",
+                        "statistics": {"mean": mean, "sample_size": len(values)},
+                        "summary": "Isolated fixture criterion; no real scientific claim."}
+
+            phase_fixture._save(fixture.root, "entities/evidence/cycle-sample-b.json",
+                                {"id": "cycle-sample-b", "source": "synthetic-fixture-only",
+                                 "seed": 23, "observations": observations})
+            raw = fixture._initial_bundle()
+
+            def deliver(stable_id, item, source):
+                nonlocal raw
+                _, delivered = self._stage(transport, fixture.temp_root, stable_id, item, source)
+                raw, report = self._apply_writer_item(raw, delivered, "APPLIED")
+                self.assertFalse(report["rejected"], report)
+                return delivered, report
+
+            deliver("cycle-reserve", fixture._battery_items(), "WRITER_ROBOT")
+            deliver("cycle-running", fixture._running_item(), "RUNNER_OBSERVATION")
+            with tempfile.TemporaryDirectory() as temp:
+                root, _ = materialize_live_tower(raw, Path(temp) / "parent")
+                completed = fixture._completed_item(root)
+            completed["payload"]["results"][0]["result"] = criterion_result([0.2, 0.4])
+            deliver("cycle-result", completed, "RUNNER_OBSERVATION")
+            parent = phase_fixture._entity_from_bundle(raw)
+            self.assertNotEqual(parent.get("review_state"), "CONFIRMED")
+
+            # Provenance is an explicit isolated input, present before the attack freezes.
+            attack_id = "CYCLE-INDEPENDENT-ATTACK"
+            declaration = {"axis": "data", "evidence_refs": ["entities/evidence/cycle-sample-b.json"],
+                           "frozen_at": END, "on_pass": "CONFIRMED", "on_fail": "REFUTED"}
+            attack = {key: copy.deepcopy(value) for key, value in fixture.test.items()
+                      if key not in {"id", "entity_version", "status", "state", "prereg_hash"}}
+            attack.update(test_id=attack_id, frozen_at=END, dataset_and_selection="Independent generated sample B",
+                          recipe_params={"seed": 23}, independence=declaration,
+                          data_binding={"status": "BOUND", "inputs": [{"name": "sample", "kind": "generated",
+                          "generator": "fixture-v1", "seed": 23, "sha256": "b" * 64}]})
+            contest = {"kind": "CONTEST", "source": "REFEREE_1", "created_at": END,
+                       "payload": {"test_id": TEST_ID, "reason": "Independent synthetic control", "contest_test": attack}}
+            deliver("cycle-contest", contest, "GATEWAY")
+            frozen_attack = phase_fixture._entity_from_bundle(raw, attack_id)
+            self.assertEqual(frozen_attack["independence"], declaration)
+            self.assertEqual(frozen_attack["prereg_hash"], evolution.prereg_hash(attack_id, frozen_attack))
+
+            reserve = {"kind": "TEST_BATTERY", "created_at": END,
+                       "payload": {"battery_id": "bat-cycle-attack", "tests": [
+                           {"test_id": attack_id, "recipe": "audit_recipe", "params": {"seed": 23}}]}}
+            deliver("cycle-attack-reserve", reserve, "WRITER_ROBOT")
+            running = {"kind": "BATTERY_STATUS", "created_at": END,
+                       "payload": {"battery_id": "bat-cycle-attack", "status": "RUNNING",
+                                   "run_ref": "actions/runs/124", "started_tests": {attack_id: END}}}
+            deliver("cycle-attack-running", running, "RUNNER_OBSERVATION")
+            with tempfile.TemporaryDirectory() as temp:
+                root, _ = materialize_live_tower(raw, Path(temp) / "attack")
+                battery = next(b for b in scientific_integrity.batteries(root) if b["id"] == "bat-cycle-attack")
+                spec = battery["tests"][0]
+                self.assertTrue(scientific_integrity.independence(parent, frozen_attack, root)["eligible"])
+            attack_end = "2026-09-30T10:02:00Z"
+            attack_result = criterion_result(observations) if attack_positive else {
+                "verdict": "INCONCLUSIVE", "decision": "SYNTHETIC_ONLY",
+                "summary": "Operational success only; criterion outcome is unavailable."}
+            result = {"kind": "BATTERY_STATUS", "created_at": attack_end,
+                      "payload": {"battery_id": "bat-cycle-attack", "status": "DONE", "run_ref": "actions/runs/124",
+                                  "completed_at": attack_end, "conclusion": "success", "results": [{
+                                      "test_id": attack_id, "attempt_id": spec["attempt_id"],
+                                      "recipe_sha256": spec["recipe_sha256"], "executed_at": attack_end, "ok": True,
+                                      "result": attack_result}]}}
+            result_item, result_report = deliver("cycle-attack-result", result, "RUNNER_OBSERVATION")
+            final_parent = phase_fixture._entity_from_bundle(raw)
+            final_attack = phase_fixture._entity_from_bundle(raw, attack_id)
+            expected_review = "CONFIRMED" if attack_positive else "CONTESTED"
+            self.assertEqual(final_parent["review_state"], expected_review)
+            if attack_positive:
+                self.assertEqual(final_parent["mechanical_contest_verdict"]["contest_test_id"], attack_id)
+                self.assertTrue(final_parent["review_validation"]["eligible"])
+                self.assertEqual(final_parent["review_validation"]["scope"],
+                                 "FROZEN_DECLARATION_AND_RESOLVED_PROVENANCE_NOT_SCIENTIFIC_PROOF")
+            else:
+                self.assertEqual(final_attack["verdict"], "INCONCLUSIVE")
+                self.assertEqual(final_attack["decision"], "SYNTHETIC_ONLY")
+                self.assertNotIn("mechanical_contest_verdict", final_parent)
+                self.assertNotEqual(final_parent.get("review_state"), "CONFIRMED")
+
+            # Replay exactly the delivered result after a lost ACK, including its
+            # stable intent and payload. A matching persisted receipt must be used:
+            # no new Tower revision, semantic effect, or duplicate contest.
+            _, replay_item = self._stage(
+                transport, fixture.temp_root, "cycle-attack-result", result,
+                "RUNNER_OBSERVATION", expected_relay_result="redelivered_missing_writer_receipt")
+            self.assertEqual(replay_item, result_item)
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                replay_packed, replay_report = apply_to_tower(raw, [replay_item])
+            self.assertIsNone(replay_packed, replay_report)
+            revision = verify_live_tower(read_live_tower_bytes(raw))
+            self.assertEqual(replay_report["before"], revision)
+            self.assertEqual(replay_report["after"], revision)
+            self.assertEqual(replay_report["handled"], ["cycle-attack-result"])
+            self.assertEqual(replay_report["public_operation_receipts"], [])
+            effect_id = operation_receipts.envelope_effect_id(result_item["_inbox_id"])
+            original_receipt = next(r for r in result_report["operation_receipts"]
+                                    if r["effect_id"] == effect_id)
+            replay_receipt = next(r for r in replay_report["operation_receipts"]
+                                  if r["effect_id"] == effect_id)
+            self.assertEqual(replay_receipt["outcome"], "ALREADY_APPLIED")
+            for field in ("effect_id", "intent_id", "payload_sha256", "occurred_at"):
+                self.assertEqual(replay_receipt[field], original_receipt[field], field)
+            self.assertEqual(len(final_parent["contests"]), 1)
+            for before, after in [(fixture.test, final_parent), (frozen_attack, final_attack)]:
+                for field in scientific_integrity.FROZEN:
+                    self.assertEqual(before.get(field), after.get(field), field)
+                self.assertEqual(before["prereg_hash"], after["prereg_hash"])
+                self.assertEqual(after["execution_phase"], "COMPLETED")
+            with tempfile.TemporaryDirectory() as temp:
+                root, _ = materialize_live_tower(raw, Path(temp) / "consolidated")
+                self.assertEqual(evolution.contest_chain_reconcile_requests(root), [])
+                if attack_positive:
+                    self.assertFalse(evolution.contest_requests(contest, contest["payload"], root, proposal_to_requests))
+                projection = build_public_projection(root, tower_revision=verify_live_tower(read_live_tower_bytes(raw)), generated_at=attack_end)
+                self.assertTrue(verify_projection(projection)[0])
+                published = next(t for t in projection["tests"] if t["id"] == TEST_ID)
+                self.assertEqual(published["review_state"], expected_review)
+                self.assertEqual(published["claim_boundary"], fixture.test["claim_boundary"])
+        finally:
+            fixture.tearDown()
+
     def _stage(self, transport: _FakeGitHubContents, staging_root: Path,
                stable_id: str, item: dict, source: str,
                expected_relay_result: str = "relayed") -> tuple[bytes, dict]:
