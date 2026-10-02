@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr410-d75d7132",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T19:21:01Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/410",
+        "head_sha": "d75d7132b5c19fc03607da6d4848e8db151f7bad",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: o contrato congelado de GZ01-B03-T03-WINDOW-ROTATION-NULL permanece reproduzido; o preflight fixa o manifesto integral e o conjunto exato de 160 arquivos, e executor-runtime-smoke passou.",
+          "Item 2: os parâmetros científicos continuam declarativos e prospectivamente congelados; o utilitário novo é apenas operacional e não introduz defaults científicos.",
+          "Item 3: os dados permanecem restritos às URLs oficiais DESI DR1/iron/LSScats v1.5, com versão e SHA-256 fixos; estatísticas, nulo, multiplicidade e critérios permanecem intactos.",
+          "Item 4: a receita mantém verdict, decision, summary, statistics e semantic.result_meaning em português, com smoke versionado em recipes/smoke/; os commits novos apenas endurecem verificação e testes."
+        ]
+      }
+    }
+  }
+}
