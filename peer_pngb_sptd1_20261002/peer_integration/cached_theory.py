@@ -10,6 +10,9 @@ from cobaya.theory import Theory
 
 class CachedPoint(Theory):
     cache_file: str = ''
+    # Cobaya requires every theory component to depend on at least one input.
+    # This fixed identity coordinate is neither sampled nor cosmological.
+    params={'cache_point_id':{'value':0}}
 
     def initialize(self):
         with np.load(self.cache_file,allow_pickle=False) as data:
@@ -18,7 +21,7 @@ class CachedPoint(Theory):
         if self.meta['schema']!='peer-single-point-v1':
             raise ValueError('Unknown cache schema')
 
-    def get_can_support_params(self): return []
+    def get_can_support_params(self): return ['cache_point_id']
     def get_allow_agnostic(self): return False
     def get_can_provide_params(self): return ['H0','rdrag','rs_drag','Omega_m']
 
@@ -34,7 +37,8 @@ class CachedPoint(Theory):
                 raise ValueError(f'Unsupported cache requirement: {key}')
 
     def calculate(self,state,want_derived=True,**params_values_dict):
-        if params_values_dict: raise ValueError('CachedPoint cannot vary cosmology')
+        if params_values_dict not in ({},{'cache_point_id':0}):
+            raise ValueError('CachedPoint cannot vary cosmology or its fixed cache identity')
         state['derived']={k:self.meta['derived'][k] for k in self.get_can_provide_params()}
 
     def _at_redshift(self,key,z):
@@ -44,7 +48,10 @@ class CachedPoint(Theory):
         if np.any(delta[np.arange(len(zz)),indices]>1e-10):
             raise ValueError('Requested redshift was not saved; no interpolation allowed')
         result=self.cache[key][indices]
-        return float(result[0]) if np.ndim(z)==0 else result
+        # Match BoltzmannBase: even one scalar z returns a length-one array.
+        # Cobaya BAO assembles these arrays and transposes before taking row 0.
+        # Returning a scalar would silently keep only the first BAO prediction.
+        return result
 
     def get_Hubble(self,z,units='km/s/Mpc'):
         value=self._at_redshift('H_km_s_Mpc',z)

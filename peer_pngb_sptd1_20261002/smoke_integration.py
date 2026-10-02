@@ -25,6 +25,7 @@ from peer_integration.class_backend import make_class_probe, scalar_args
 
 ROOT=Path(__file__).resolve().parent
 BAO_Z=[.295,.510,.706,.934,1.321,1.484,2.33]
+CACHE_DERIVED=('H0','Omega_m','rs_drag')
 BASE={'omega_b':.02279246091553037,'omega_cdm':.1314030233540993,
       'A_s':2.133190566796063e-9,'n_s':.9928140365018976,'tau_reio':.0566,
       'N_ncdm':1,'m_ncdm':.06,'T_ncdm':.71611,
@@ -67,6 +68,50 @@ def calibration_check(Class,point):
             'seconds':time.perf_counter()-start,'base_args':base}
 
 
+def spectrum_requirements(lmax,export_cache=False):
+    """Register consumers explicitly, including metadata for standalone export.
+
+    Declaring params as derived outputs does not register provider consumers in
+    Cobaya. A dummy likelihood requests no H0, so cache export must do so itself.
+    """
+    requests={'Cl':{'tt':lmax,'te':lmax,'ee':lmax,'pp':lmax},'peer_diagnostics':None}
+    if export_cache:
+        requests.update({name:None for name in CACHE_DERIVED})
+        requests.update(Hubble={'z':BAO_Z},angular_diameter_distance={'z':BAO_Z})
+    return requests
+
+
+def validated_cache_payload(cl,raw,bao_z,hubble,distances,metadata):
+    """Validate every exported numeric product before writing any cache file."""
+    ell=np.asarray(cl['ell'])
+    if ell.ndim!=1 or len(ell)<3 or not np.array_equal(ell,np.arange(len(ell))):
+        raise ValueError('Cache ell must be contiguous integers beginning at zero')
+    if not np.array_equal(np.asarray(raw['ell']),ell):
+        raise ValueError('Raw and lensed-Dl ell grids differ')
+    for spectra,label in ((cl,'Dl'),(raw,'raw Cl')):
+        if not {'tt','te','ee','pp'}.issubset(spectra):
+            raise ValueError(f'Missing required spectra in {label}')
+        for key,value in spectra.items():
+            values=np.asarray(value)
+            if values.shape!=ell.shape or not np.isfinite(values).all():
+                raise ValueError(f'Invalid shape or non-finite {label} {key}')
+    zz=np.asarray(bao_z,dtype=float)
+    if zz.ndim!=1 or not np.isfinite(zz).all() or np.any(np.diff(zz)<=0):
+        raise ValueError('Invalid BAO redshift grid')
+    for name,value in (('Hubble',hubble),('angular diameter distance',distances)):
+        values=np.asarray(value)
+        if values.shape!=zz.shape or not np.isfinite(values).all() or np.any(values<=0):
+            raise ValueError(f'Invalid cached {name}')
+    for name in ('H0','Omega_m','rs_drag','rdrag'):
+        value=float(metadata['derived'][name])
+        if not math.isfinite(value) or value<=0:
+            raise ValueError(f'Invalid derived cache metadata: {name}')
+    metadata_json=json.dumps(metadata,allow_nan=False)
+    return {**cl,**{'raw_'+k:v for k,v in raw.items() if k!='ell'},
+            'bao_z':zz,'H_km_s_Mpc':np.asarray(hubble),'DA_Mpc':np.asarray(distances),
+            'metadata_json':metadata_json}
+
+
 def cobaya_check(identity_data, fede, lmax=100, spt=False, main_stack=False, packages=None, spectra_path=None):
     from cobaya.model import get_model
     from build_review import template_contract, make_review
@@ -101,10 +146,7 @@ def cobaya_check(identity_data, fede, lmax=100, spt=False, main_stack=False, pac
     print('STAGE cobaya_model_initialization',resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,flush=True)
     with get_model(info) as model:
         print('STAGE cobaya_model_loaded',resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,flush=True)
-        requests={'Cl':{'tt':lmax,'te':lmax,'ee':lmax,'pp':lmax},'peer_diagnostics':None}
-        if spectra_path is not None:
-            requests.update(Hubble={'z':BAO_Z},angular_diameter_distance={'z':BAO_Z})
-        model.add_requirements(requests)
+        model.add_requirements(spectrum_requirements(lmax,export_cache=spectra_path is not None))
         posterior=model.logposterior({})
         cl=model.provider.get_Cl(ell_factor=True,units='muK2')
         if spectra_path is not None:
@@ -118,10 +160,12 @@ def cobaya_check(identity_data, fede, lmax=100, spt=False, main_stack=False, pac
                                  'Omega_m':float(model.provider.get_param('Omega_m'))},
                       'input_cosmology':{k:v for k,v in params.items() if not isinstance(v,dict)},
                       'bao_redshift_source':'DESI DR2 official desi_gaussian_bao_ALL_GCcomb_mean.txt'}
-            np.savez(spectra_path,**cl,**{'raw_'+k:v for k,v in raw.items() if k!='ell'},
-                     bao_z=np.array(BAO_Z),H_km_s_Mpc=model.provider.get_Hubble(BAO_Z,units='km/s/Mpc'),
-                     DA_Mpc=model.provider.get_angular_diameter_distance(BAO_Z),
-                     metadata_json=json.dumps(metadata))
+            payload=validated_cache_payload(cl,raw,BAO_Z,
+                model.provider.get_Hubble(BAO_Z,units='km/s/Mpc'),
+                model.provider.get_angular_diameter_distance(BAO_Z),metadata)
+            temporary=spectra_path.with_suffix('.partial.npz')
+            np.savez(temporary,**payload)
+            temporary.replace(spectra_path)
         report={'fede':fede,'logpost':float(posterior.logpost),
                 'theory_extra_args':extra,
                 'loglikes':[float(v) for v in posterior.loglikes],
@@ -191,6 +235,9 @@ def block_file_check(path,block,packages):
     else:
         params={'A_planck':1.0} if block in ('lowtt','lensing') else {}
         priors={}
+    # Explicit even when this block has no nuisance parameters. An empty params
+    # mapping can be normalized to None by Cobaya before component defaults merge.
+    params['cache_point_id']=0
     info={'theory':{'peer_integration.cached_theory.CachedPoint':{'cache_file':str(path)}},
           'likelihood':{name:like},'params':params,'packages_path':packages,'prior':priors}
     print('STAGE cached_block_initialization',block,resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,flush=True)

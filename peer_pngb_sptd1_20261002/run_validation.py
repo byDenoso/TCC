@@ -72,12 +72,13 @@ def main():
             name=f'{model}_{nonlinear}'
             spectrum=OUT/f'{name}_spectra.npz'
             args=['--fede',fede,'--nonlinear',nonlinear]
-            if not check(name+'_spectra',['spectra',*args,'--spectra',str(spectrum)]):
-                continue
-            check(name+'_spt_separate',['candl-file','--spectra',str(spectrum)])
-            for block in ('lowtt','sroll2','lensing','desi','shoes','spt'):
-                check(name+'_'+block+'_cached',['block-file','--spectra',str(spectrum),
-                      '--block',block,'--packages',packages])
+            exported=check(name+'_spectra',['spectra',*args,'--spectra',str(spectrum)])
+            if exported:
+                check(name+'_spt_separate',['candl-file','--spectra',str(spectrum)])
+                for block in ('lowtt','sroll2','lensing','desi','shoes','spt'):
+                    check(name+'_'+block+'_cached',['block-file','--spectra',str(spectrum),
+                          '--block',block,'--packages',packages])
+            # Joint evaluation is independent of the cache/export diagnostic.
             check(name+'_main',['main',*args,'--packages',packages])
 
     # HMcode is only a supported LCDM reference; never bypass its scalar guard.
