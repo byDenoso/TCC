@@ -88,3 +88,56 @@ def test_cache_hit_is_detached_and_scope_and_authorization_are_separate(real_rea
     assert cache.get(public_context)["eligible"]
     assert cache.get(context(fixture, scope="PRIVATE")) is None
     assert cache.get(context(fixture, authorization="changed-auth-policy")) is None
+
+
+def install_parameter_contract(fixture):
+    """Pure local fixture, never a scientific recipe or operational mandate."""
+    (fixture.recipes / "preflight").mkdir(exist_ok=True)
+    manifest = fixture.recipes / "preflight" / (fixture.test["recipe"] + ".json")
+    manifest.write_text('{"eligible": true}', encoding="utf-8")
+    validator = fixture.recipes / "recipe_param_preflight.py"
+    validator.write_text(
+        'import hashlib, json\n'
+        'from pathlib import Path\n'
+        'def validate_params(recipe, params, inputs, root):\n'
+        '    path = Path(root) / "preflight" / (recipe + ".json")\n'
+        '    raw = path.read_bytes()\n'
+        '    eligible = json.loads(raw)["eligible"]\n'
+        '    return {"contract": "RECIPE_PARAM_PREFLIGHT_V1", "eligible": eligible,\n'
+        '            "reasons": [] if eligible else ["CONTROL_REJECTED"],\n'
+        '            "manifest_sha256": hashlib.sha256(raw).hexdigest(),\n'
+        '            "validator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}\n',
+        encoding="utf-8")
+    return manifest, validator
+
+
+@pytest.mark.parametrize("changed_file", ["manifest", "validator", "missing_validator"])
+def test_parameter_admission_change_never_reuses_cached_ready(real_readiness, changed_file):
+    fixture = real_readiness
+    manifest, validator = install_parameter_contract(fixture)
+    cache = ReadinessCache()
+    baseline = lambda: integrity.readiness(fixture.root, fixture.test)
+    original = context(fixture)
+    assert evaluate_with_readiness_cache(baseline, original, cache, enabled=True)["eligible"]
+    if changed_file == "manifest":
+        manifest.write_text('{"eligible": false}', encoding="utf-8")
+    elif changed_file == "validator":
+        validator.write_text(validator.read_text(encoding="utf-8").replace(
+            'eligible = json.loads(raw)["eligible"]', 'eligible = False'), encoding="utf-8")
+    else:
+        validator.unlink()
+    changed = context(fixture)
+    assert changed.key != original.key
+    actual = evaluate_with_readiness_cache(baseline, changed, cache, enabled=True)
+    assert actual == baseline()
+    assert not actual["eligible"]
+
+
+def test_installing_or_removing_parameter_contract_invalidates_context(real_readiness):
+    fixture = real_readiness
+    original = context(fixture)
+    manifest, _ = install_parameter_contract(fixture)
+    installed = context(fixture)
+    assert installed.key != original.key
+    manifest.unlink()
+    assert context(fixture).key != installed.key
