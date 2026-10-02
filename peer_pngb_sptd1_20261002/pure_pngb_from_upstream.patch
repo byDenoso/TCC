@@ -1,0 +1,495 @@
+--- a/include/background.h
++++ b/include/background.h
+@@ -12,7 +12,7 @@
+ 
+ /** list of possible parametrisations of the DE equation of state */
+ 
+-enum equation_of_state {CLP,EDE};
++enum equation_of_state {CLP,EDE,KPEER};
+ 
+ 
+ /** list of possible parametrizations of the varying fundamental constants */
+@@ -112,6 +112,16 @@
+   double cs2_fld;  /**< \f$ c^2_{s~DE} \f$: sound speed of the fluid in the frame comoving with the fluid (so, this is
+                       not [delta p/delta rho] in the synchronous or newtonian gauge!) */
+   double Omega_EDE;        /**< \f$ wa_{DE} \f$: Early Dark Energy density parameter */
++  double kpeer_zc;                 /**< transition redshift of the averaged K-PEER parent */
++  double kpeer_transition_width;   /**< transition width in ln(a) */
++  double kpeer_w_pre;              /**< pre-onset equation of state, close to -1 */
++  double kpeer_w_post;             /**< post-onset averaged equation of state, 1/2 for n=3 */
++  double kpeer_decay_fraction;     /**< integrated parent-to-dark-radiation conversion fraction */
++  double kpeer_decay_z;            /**< centre of the decay kernel */
++  double kpeer_decay_width;        /**< Gaussian width in ln(a) */
++  short kpeer_dr_fluid;            /**< 0: free streaming hierarchy, 1: perfect radiation fluid */
++  short kpeer_exact_scf;           /**< exact axion/pNGB Klein-Gordon parent */
++  double kpeer_pngb_eta;          /**< analytic deformation eta in u^3(1+eta u) */
+   double * scf_parameters; /**< list of parameters describing the scalar field potential */
+   short attractor_ic_scf;  /**< whether the scalar field has attractor initial conditions */
+   int scf_tuning_index;    /**< index in scf_parameters used for tuning */
+@@ -420,6 +430,11 @@
+                        double * dw_over_da_fld,
+                        double * integral_fld);
+ 
++  double kpeer_decay_gamma_over_h(
++                                    struct background * pba,
++                                    double a
++                                    );
++
+   int background_varconst_of_z(
+                                struct background* pba,
+                                double z,
+--- a/source/background.c
++++ b/source/background.c
+@@ -552,7 +552,8 @@
+ 
+     rho_tot += pvecback[pba->index_bg_rho_fld];
+     p_tot += w_fld * pvecback[pba->index_bg_rho_fld];
+-    dp_dloga += (a*dw_over_da-3*(1+w_fld)*w_fld)*pvecback[pba->index_bg_rho_fld];
++    dp_dloga += (a*dw_over_da-3*(1+w_fld)*w_fld
++                  -w_fld*kpeer_decay_gamma_over_h(pba,a))*pvecback[pba->index_bg_rho_fld];
+   }
+ 
+   /* relativistic neutrinos (and all relativistic relics) */
+@@ -661,6 +662,32 @@
+  * @return the error status
+  */
+ 
++
++/* KPEER averaged-parent helpers.  The parent is frozen-like before z_c,
++   approaches w_post after activation, and transfers a finite fraction to
++   dark radiation through Q^mu = Gamma(a) rho_fld u_fld^mu. */
++static double kpeer_logistic(double x) {
++  if (x >= 0.) return 1./(1.+exp(-x));
++  return exp(x)/(1.+exp(x));
++}
++
++static double kpeer_softplus(double x) {
++  if (x > 40.) return x;
++  if (x < -40.) return exp(x);
++  return log1p(exp(x));
++}
++
++double kpeer_decay_gamma_over_h(struct background *pba, double a) {
++  double center, x, tau;
++  if ((((pba->fluid_equation_of_state != KPEER) || (pba->has_fld == _FALSE_))
++       && ((pba->kpeer_exact_scf == _FALSE_) || (pba->has_scf == _FALSE_)))
++      || (pba->kpeer_decay_fraction <= 0.)) return 0.;
++  center = -log1p(pba->kpeer_decay_z);
++  x = (log(a)-center)/pba->kpeer_decay_width;
++  tau = -log1p(-pba->kpeer_decay_fraction);
++  return tau/sqrt(2.*_PI_)/pba->kpeer_decay_width*exp(-0.5*x*x);
++}
++
+ int background_w_fld(
+                      struct background * pba,
+                      double a,
+@@ -673,11 +700,17 @@
+   double dOmega_ede_over_da = 0.;
+   double d2Omega_ede_over_da2 = 0.;
+   double a_eq, Omega_r, Omega_m;
++  double kpeer_x, kpeer_s, kpeer_x_today;
+ 
+   /** - first, define the function w(a) */
+   switch (pba->fluid_equation_of_state) {
+   case CLP:
+     *w_fld = pba->w0_fld + pba->wa_fld * (1. - a);
++    break;
++  case KPEER:
++    kpeer_x = (log(a)+log1p(pba->kpeer_zc))/pba->kpeer_transition_width;
++    kpeer_s = kpeer_logistic(kpeer_x);
++    *w_fld = pba->kpeer_w_pre + (pba->kpeer_w_post-pba->kpeer_w_pre)*kpeer_s;
+     break;
+   case EDE:
+     // Omega_ede(a) taken from eq. (10) in 1706.00730
+@@ -713,6 +746,11 @@
+   switch (pba->fluid_equation_of_state) {
+   case CLP:
+     *dw_over_da_fld = - pba->wa_fld;
++    break;
++  case KPEER:
++    kpeer_x = (log(a)+log1p(pba->kpeer_zc))/pba->kpeer_transition_width;
++    kpeer_s = kpeer_logistic(kpeer_x);
++    *dw_over_da_fld = (pba->kpeer_w_post-pba->kpeer_w_pre)*kpeer_s*(1.-kpeer_s)/pba->kpeer_transition_width/a;
+     break;
+   case EDE:
+     d2Omega_ede_over_da2 = 0.;
+@@ -736,6 +774,13 @@
+   switch (pba->fluid_equation_of_state) {
+   case CLP:
+     *integral_fld = 3.*((1.+pba->w0_fld+pba->wa_fld)*log(1./a) + pba->wa_fld*(a-1.));
++    break;
++  case KPEER:
++    kpeer_x = (log(a)+log1p(pba->kpeer_zc))/pba->kpeer_transition_width;
++    kpeer_x_today = log1p(pba->kpeer_zc)/pba->kpeer_transition_width;
++    *integral_fld = 3.*(1.+pba->kpeer_w_pre)*log(1./a)
++      +3.*(pba->kpeer_w_post-pba->kpeer_w_pre)*pba->kpeer_transition_width
++      *(kpeer_softplus(kpeer_x_today)-kpeer_softplus(kpeer_x));
+     break;
+   case EDE:
+     class_stop(pba->error_message,"EDE implementation not finished: to finish it, read the comments in background.c just before this line\n");
+@@ -1003,14 +1048,20 @@
+       pba->has_dr = _TRUE_;
+   }
+ 
+-  if (pba->Omega0_scf != 0.)
++  if (pba->Omega0_scf != 0.) {
+     pba->has_scf = _TRUE_;
++    if ((pba->kpeer_exact_scf == _TRUE_) && (pba->kpeer_decay_fraction > 0.))
++      pba->has_dr = _TRUE_;
++  }
+ 
+   if (pba->Omega0_lambda != 0.)
+     pba->has_lambda = _TRUE_;
+ 
+-  if (pba->Omega0_fld != 0.)
++  if (pba->Omega0_fld != 0.) {
+     pba->has_fld = _TRUE_;
++    if ((pba->fluid_equation_of_state == KPEER) && (pba->kpeer_decay_fraction > 0.))
++      pba->has_dr = _TRUE_;
++  }
+ 
+   if (pba->Omega0_ur != 0.)
+     pba->has_ur = _TRUE_;
+@@ -2252,6 +2303,8 @@
+        calling background_w_fld */
+ 
+     /* rho_fld at initial time */
++    if ((pba->fluid_equation_of_state == KPEER) && (pba->kpeer_decay_fraction > 0.))
++      integral_fld += -log1p(-pba->kpeer_decay_fraction);
+     pvecback_integration[pba->index_bi_rho_fld] = rho_fld_today * exp(integral_fld);
+ 
+   }
+@@ -2650,21 +2703,31 @@
+     dy[pba->index_bi_rho_dcdm] = -3.*y[pba->index_bi_rho_dcdm] - pba->Gamma_dcdm/H*y[pba->index_bi_rho_dcdm];
+   }
+ 
+-  if ((pba->has_dcdm == _TRUE_) && (pba->has_dr == _TRUE_)) {
+-    /** - Compute dr density \f$ d\rho/dloga = -4\rho - \Gamma/H \rho \f$ */
+-    dy[pba->index_bi_rho_dr] = -4.*y[pba->index_bi_rho_dr]+pba->Gamma_dcdm/H*y[pba->index_bi_rho_dcdm];
++  if (pba->has_dr == _TRUE_) {
++    /** - Compute dark-radiation density, including the KPEER covariant source. */
++    dy[pba->index_bi_rho_dr] = -4.*y[pba->index_bi_rho_dr];
++    if (pba->has_dcdm == _TRUE_)
++      dy[pba->index_bi_rho_dr] += pba->Gamma_dcdm/H*y[pba->index_bi_rho_dcdm];
++    if ((pba->has_fld == _TRUE_) && (pba->fluid_equation_of_state == KPEER))
++      dy[pba->index_bi_rho_dr] += kpeer_decay_gamma_over_h(pba,a)*y[pba->index_bi_rho_fld];
++    if ((pba->has_scf == _TRUE_) && (pba->kpeer_exact_scf == _TRUE_))
++      dy[pba->index_bi_rho_dr] += kpeer_decay_gamma_over_h(pba,a)
++        *(pvecback[pba->index_bg_rho_scf]+pvecback[pba->index_bg_p_scf]); /* KPEER_EXACT_KINETIC_DECAY */
+   }
+ 
+   if (pba->has_fld == _TRUE_) {
+-    /** - Compute fld density \f$ d\rho/dloga = -3 (1+w_{fld}(a)) \rho \f$ */
+-    dy[pba->index_bi_rho_fld] = -3.*(1.+pvecback[pba->index_bg_w_fld])*y[pba->index_bi_rho_fld];
++    /** - Compute fld density with optional finite KPEER conversion. */
++    dy[pba->index_bi_rho_fld] = (-3.*(1.+pvecback[pba->index_bg_w_fld])
++                                      -kpeer_decay_gamma_over_h(pba,a))*y[pba->index_bi_rho_fld];
+   }
+ 
+   if (pba->has_scf == _TRUE_) {
+     /** - Scalar field equation: \f$ \phi'' + 2 a H \phi' + a^2 dV = 0 \f$  (note H is wrt cosmological time)
+         written as \f$ d\phi/dlna = phi' / (aH) \f$ and \f$ d\phi'/dlna = -2*phi' - (a/H) dV \f$ */
+     dy[pba->index_bi_phi_scf] = y[pba->index_bi_phi_prime_scf]/a/H;
+-    dy[pba->index_bi_phi_prime_scf] = - 2*y[pba->index_bi_phi_prime_scf] - a*dV_scf(pba,y[pba->index_bi_phi_scf])/H ;
++    dy[pba->index_bi_phi_prime_scf] = -(2.
++      +((pba->kpeer_exact_scf == _TRUE_)?kpeer_decay_gamma_over_h(pba,a):0.))
++      *y[pba->index_bi_phi_prime_scf] - a*dV_scf(pba,y[pba->index_bi_phi_scf])/H ; /* KPEER_EXACT_KINETIC_DECAY */
+   }
+ 
+   return _SUCCESS_;
+@@ -2988,20 +3051,40 @@
+ /** Fianlly we can obtain the overall potential \f$ V = V_p*V_e \f$
+  */
+ 
++/* KPEER_EXACT_N3_POTENTIAL: A [1-cos((phi-phi0)/f)]^3. */
+ double V_scf(
+              struct background *pba,
+              double phi) {
+-  return  V_e_scf(pba,phi)*V_p_scf(pba,phi);
++  double A=pba->scf_parameters[0], f=pba->scf_parameters[1], phi0=pba->scf_parameters[2];
++  double x=(phi-phi0)/f, u=1.-cos(x);
++  if (pba->kpeer_exact_scf == _TRUE_) {
++    if (pba->kpeer_pngb_eta == 0.) return A*u*u*u;
++    return A*u*u*u*(1.+pba->kpeer_pngb_eta*u);
++  }
++  return V_e_scf(pba,phi)*V_p_scf(pba,phi);
+ }
+ 
+ double dV_scf(
+               struct background *pba,
+               double phi) {
++  double A=pba->scf_parameters[0], f=pba->scf_parameters[1], phi0=pba->scf_parameters[2];
++  double x=(phi-phi0)/f, u=1.-cos(x);
++  if (pba->kpeer_exact_scf == _TRUE_) {
++    if (pba->kpeer_pngb_eta == 0.) return 3.*A*u*u*sin(x)/f;
++    return A*sin(x)*u*u*(3.+4.*pba->kpeer_pngb_eta*u)/f;
++  }
+   return dV_e_scf(pba,phi)*V_p_scf(pba,phi) + V_e_scf(pba,phi)*dV_p_scf(pba,phi);
+ }
+ 
+ double ddV_scf(
+                struct background *pba,
+                double phi) {
++  double A=pba->scf_parameters[0], f=pba->scf_parameters[1], phi0=pba->scf_parameters[2];
++  double x=(phi-phi0)/f, u=1.-cos(x);
++  if (pba->kpeer_exact_scf == _TRUE_) {
++    if (pba->kpeer_pngb_eta == 0.) return 3.*A/f/f*(2.*u*sin(x)*sin(x)+u*u*cos(x));
++    return A/f/f*(cos(x)*u*u*(3.+4.*pba->kpeer_pngb_eta*u)
++      +sin(x)*sin(x)*(6.*u+12.*pba->kpeer_pngb_eta*u*u));
++  }
+   return ddV_e_scf(pba,phi)*V_p_scf(pba,phi) + 2*dV_e_scf(pba,phi)*dV_p_scf(pba,phi) + V_e_scf(pba,phi)*ddV_p_scf(pba,phi);
+ }
+--- a/source/input.c
++++ b/source/input.c
+@@ -3197,9 +3197,14 @@
+   class_call(parser_read_double(pfc,"Omega_fld",&param2,&flag2,errmsg),
+              errmsg,
+              errmsg);
+-  class_call(parser_read_double(pfc,"Omega_scf",&param3,&flag3,errmsg),
+-             errmsg,
+-             errmsg);
++  class_call(parser_read_double(pfc,"Omega_scf_direct",&param3,&flag3,errmsg),
++             errmsg,
++             errmsg);
++  if (flag3 == _FALSE_) {
++    class_call(parser_read_double(pfc,"Omega_scf",&param3,&flag3,errmsg),
++               errmsg,
++               errmsg);
++  }
+   /* Test */
+   class_test((flag1 == _TRUE_) && (flag2 == _TRUE_) && ((flag3 == _FALSE_) || (param3 >= 0.)),
+              errmsg,
+@@ -3294,6 +3299,9 @@
+       else if ((strstr(string1,"EDE") != NULL) || (strstr(string1,"ede") != NULL)) {
+         pba->fluid_equation_of_state = EDE;
+       }
++      else if ((strstr(string1,"KPEER") != NULL) || (strstr(string1,"kpeer") != NULL)) {
++        pba->fluid_equation_of_state = KPEER;
++      }
+       else {
+         class_stop(errmsg,"incomprehensible input '%s' for the field 'fluid_equation_of_state'",string1);
+       }
+@@ -3313,10 +3321,63 @@
+       class_read_double("Omega_EDE",pba->Omega_EDE);
+       class_read_double("cs2_fld",pba->cs2_fld);
+     }
++    if (pba->fluid_equation_of_state == KPEER) {
++      /** Oscillation-averaged n=3 K-PEER parent with localized covariant radiation transfer. */
++      class_read_double("kpeer_zc",pba->kpeer_zc);
++      class_read_double("kpeer_transition_width",pba->kpeer_transition_width);
++      class_read_double("kpeer_w_pre",pba->kpeer_w_pre);
++      class_read_double("kpeer_w_post",pba->kpeer_w_post);
++      class_read_double("kpeer_decay_fraction",pba->kpeer_decay_fraction);
++      class_read_double("kpeer_decay_z",pba->kpeer_decay_z);
++      class_read_double("kpeer_decay_width",pba->kpeer_decay_width);
++      class_read_double("cs2_fld",pba->cs2_fld);
++      class_call(parser_read_string(pfc,"kpeer_dr_closure",&string1,&flag1,errmsg),errmsg,errmsg);
++      if (flag1 == _TRUE_) {
++        if ((strstr(string1,"fluid") != NULL) || (strstr(string1,"perfect") != NULL))
++          pba->kpeer_dr_fluid = _TRUE_;
++        else if ((strstr(string1,"free") != NULL) || (strstr(string1,"stream") != NULL))
++          pba->kpeer_dr_fluid = _FALSE_;
++        else
++          class_stop(errmsg,"incomprehensible kpeer_dr_closure '%s'",string1);
++      }
++      class_test(pba->kpeer_zc <= 0.,errmsg,"kpeer_zc must be positive");
++      class_test(pba->kpeer_transition_width <= 0.,errmsg,"kpeer_transition_width must be positive");
++      class_test(pba->kpeer_w_pre <= -1. || pba->kpeer_w_pre >= 1.,errmsg,"kpeer_w_pre must satisfy -1 < w < 1");
++      class_test(pba->kpeer_w_post <= -1. || pba->kpeer_w_post > 1.,errmsg,"kpeer_w_post must satisfy -1 < w <= 1");
++      class_test(pba->kpeer_decay_fraction < 0. || pba->kpeer_decay_fraction >= 1.,errmsg,"kpeer_decay_fraction must satisfy 0 <= B < 1");
++      class_test(pba->kpeer_decay_z <= 0.,errmsg,"kpeer_decay_z must be positive");
++      class_test(pba->kpeer_decay_width <= 0.,errmsg,"kpeer_decay_width must be positive");
++      class_test(pba->use_ppf == _TRUE_,errmsg,"KPEER covariant transfer requires use_ppf = no");
++      class_test(ppt->gauge != synchronous,errmsg,"KPEER covariant transfer is currently implemented only in synchronous gauge");
++    }
+   }
+ 
+   /** 8.b) If Omega scalar field (SCF) is different from 0 */
+   if (pba->Omega0_scf != 0.){
++
++    class_call(parser_read_string(pfc,"kpeer_exact_scf",&string1,&flag1,errmsg),errmsg,errmsg);
++    if (flag1 == _TRUE_) {
++      if (string_begins_with(string1,'y') || string_begins_with(string1,'Y'))
++        pba->kpeer_exact_scf = _TRUE_;
++      else
++        pba->kpeer_exact_scf = _FALSE_;
++    }
++    if (pba->kpeer_exact_scf == _TRUE_) {
++      class_read_double("kpeer_pngb_eta",pba->kpeer_pngb_eta);
++      class_read_double("kpeer_decay_fraction",pba->kpeer_decay_fraction);
++      class_read_double("kpeer_decay_z",pba->kpeer_decay_z);
++      class_read_double("kpeer_decay_width",pba->kpeer_decay_width);
++      class_call(parser_read_string(pfc,"kpeer_dr_closure",&string1,&flag1,errmsg),errmsg,errmsg);
++      if (flag1 == _TRUE_) {
++        if ((strstr(string1,"fluid") != NULL) || (strstr(string1,"perfect") != NULL)) pba->kpeer_dr_fluid = _TRUE_;
++        else if ((strstr(string1,"free") != NULL) || (strstr(string1,"stream") != NULL)) pba->kpeer_dr_fluid = _FALSE_;
++        else class_stop(errmsg,"incomprehensible kpeer_dr_closure '%s'",string1);
++      }
++      class_test(pba->kpeer_decay_fraction < 0. || pba->kpeer_decay_fraction >= 1.,errmsg,"kpeer_decay_fraction must satisfy 0 <= B < 1");
++      class_test(pba->kpeer_decay_z <= 0.,errmsg,"kpeer_decay_z must be positive");
++      class_test(pba->kpeer_decay_width <= 0.,errmsg,"kpeer_decay_width must be positive");
++      class_test(ppt->gauge != synchronous,errmsg,"exact KPEER transfer requires synchronous gauge");
++    }
+ 
+     /** 8.b.1) Additional SCF parameters */
+     /* Read */
+@@ -5918,6 +5979,16 @@
+   pba->wa_fld = 0.;
+   /** 9.a.2.2) 'EDE' case */
+   pba->Omega_EDE = 0.;
++  pba->kpeer_zc = 6500.;
++  pba->kpeer_transition_width = 0.25;
++  pba->kpeer_w_pre = -0.99;
++  pba->kpeer_w_post = 0.5;
++  pba->kpeer_decay_fraction = 0.;
++  pba->kpeer_decay_z = 6500.;
++  pba->kpeer_decay_width = 0.25;
++  pba->kpeer_dr_fluid = _FALSE_;
++  pba->kpeer_exact_scf = _FALSE_;
++  pba->kpeer_pngb_eta = 0.;
+   /** 9.b) Omega scalar field */
+   /** 9.b.1) Potential parameters and initial conditions */
+   pba->scf_parameters = NULL;
+--- a/source/perturbations.c
++++ b/source/perturbations.c
+@@ -8788,8 +8788,10 @@
+   double cotKgen, sqrt_absK;
+   double s2_squared, ssqrt3;
+ 
+-  /* for use with dcdm and dr */
++  /* for use with dcdm, KPEER and dr */
+   double f_dr, fprime_dr;
++  double gamma_kpeer_over_h=0., delta_parent_dr=0., theta_parent_dr=0.;
++  double source_energy_dr=0., source_momentum_dr=0., rho_plus_p_scf=0., delta_rho_plus_p_scf=0.;
+ 
+   /** - rename the fields of the input structure (just to avoid heavy notations) */
+ 
+@@ -9316,42 +9318,70 @@
+ 
+     /** - ---> dr */
+ 
+-    if ((pba->has_dcdm == _TRUE_)&&(pba->has_dr == _TRUE_)) {
+-
+-
+-      /* f = rho_dr*a^4/rho_crit_today. In CLASS density units
+-         rho_crit_today = H0^2.
+-      */
+-
++    if (pba->has_dr == _TRUE_) {
++
++      /* KPEER_COVARIANT_DR_SOURCE: f = rho_dr*a^4/rho_crit_today. */
+       f_dr = pow(pow(a,2)/pba->H0,2)*pvecback[pba->index_bg_rho_dr];
+-      fprime_dr = pba->Gamma_dcdm*pvecback[pba->index_bg_rho_dcdm]*pow(a,5)/pow(pba->H0,2);
++      fprime_dr = 0.;
++      delta_parent_dr = 0.;
++      theta_parent_dr = 0.;
++      source_energy_dr = 0.;
++      source_momentum_dr = 0.;
++
++      if (pba->has_dcdm == _TRUE_) {
++        fprime_dr = pba->Gamma_dcdm*pvecback[pba->index_bg_rho_dcdm]*pow(a,5)/pow(pba->H0,2);
++        source_energy_dr += fprime_dr*(y[pv->index_pt_delta_dcdm]+metric_euler/k2);
++        source_momentum_dr += fprime_dr/k*y[pv->index_pt_theta_dcdm];
++      }
++      if ((pba->has_fld == _TRUE_) && (pba->fluid_equation_of_state == KPEER)) {
++        gamma_kpeer_over_h = kpeer_decay_gamma_over_h(pba,a);
++        fprime_dr = gamma_kpeer_over_h*pvecback[pba->index_bg_H]*pvecback[pba->index_bg_rho_fld]*pow(a,5)/pow(pba->H0,2);
++        source_energy_dr += fprime_dr*(y[pv->index_pt_delta_fld]+metric_euler/k2);
++        source_momentum_dr += fprime_dr/k*y[pv->index_pt_theta_fld];
++      }
++      if ((pba->has_scf == _TRUE_) && (pba->kpeer_exact_scf == _TRUE_)) {
++        gamma_kpeer_over_h = kpeer_decay_gamma_over_h(pba,a);
++        rho_plus_p_scf = pvecback[pba->index_bg_rho_scf]+pvecback[pba->index_bg_p_scf];
++        delta_rho_plus_p_scf = 2./3./a2*pvecback[pba->index_bg_phi_prime_scf]*y[pv->index_pt_phi_prime_scf];
++        fprime_dr = gamma_kpeer_over_h*pvecback[pba->index_bg_H]*pow(a,5)/pow(pba->H0,2);
++        source_energy_dr += fprime_dr*(delta_rho_plus_p_scf+rho_plus_p_scf*metric_euler/k2);
++        source_momentum_dr += gamma_kpeer_over_h*pvecback[pba->index_bg_H]*pow(a,3)/pow(pba->H0,2)
++          *pvecback[pba->index_bg_phi_prime_scf]*k*y[pv->index_pt_phi_scf]/3.; /* KPEER_EXACT_DR_SOURCE */
++      }
+ 
+       /** - ----> dr F0 */
+-      dy[pv->index_pt_F0_dr] = -k*y[pv->index_pt_F0_dr+1]-4./3.*metric_continuity*f_dr+
+-        fprime_dr*(y[pv->index_pt_delta_dcdm]+metric_euler/k2);
++      dy[pv->index_pt_F0_dr] = -k*y[pv->index_pt_F0_dr+1]-4./3.*metric_continuity*f_dr+source_energy_dr;
+ 
+       /** - ----> dr F1 */
+-      dy[pv->index_pt_F0_dr+1] = k/3.*y[pv->index_pt_F0_dr]-2./3.*k*y[pv->index_pt_F0_dr+2]*s2_squared +
+-        4*metric_euler/(3.*k)*f_dr + fprime_dr/k*y[pv->index_pt_theta_dcdm];
+-
+-      /** - ----> exact dr F2 */
+-      dy[pv->index_pt_F0_dr+2] = 8./15.*(3./4.*k*y[pv->index_pt_F0_dr+1]+metric_shear*f_dr) -3./5.*k*s_l[3]/s_l[2]*y[pv->index_pt_F0_dr+3];
+-
+-      /** - ----> exact dr l=3 */
+-      l = 3;
+-      dy[pv->index_pt_F0_dr+3] = k/(2.*l+1.)*
+-        (l*s_l[l]*s_l[2]*y[pv->index_pt_F0_dr+2]-(l+1.)*s_l[l+1]*y[pv->index_pt_F0_dr+4]);
+-
+-      /** - ----> exact dr l>3 */
+-      for (l = 4; l < pv->l_max_dr; l++) {
+-        dy[pv->index_pt_F0_dr+l] = k/(2.*l+1)*
+-          (l*s_l[l]*y[pv->index_pt_F0_dr+l-1]-(l+1.)*s_l[l+1]*y[pv->index_pt_F0_dr+l+1]);
+-      }
+-
+-      /** - ----> exact dr lmax_dr */
+-      l = pv->l_max_dr;
+-      dy[pv->index_pt_F0_dr+l] =
+-        k*(s_l[l]*y[pv->index_pt_F0_dr+l-1]-(1.+l)*cotKgen*y[pv->index_pt_F0_dr+l]);
++      dy[pv->index_pt_F0_dr+1] = k/3.*y[pv->index_pt_F0_dr]
++        +4*metric_euler/(3.*k)*f_dr + source_momentum_dr;
++      if (pba->kpeer_dr_fluid == _FALSE_)
++        dy[pv->index_pt_F0_dr+1] -= 2./3.*k*y[pv->index_pt_F0_dr+2]*s2_squared;
++
++      if (pba->kpeer_dr_fluid == _TRUE_) {
++        for (l = 2; l <= pv->l_max_dr; l++)
++          dy[pv->index_pt_F0_dr+l] = 0.;
++      }
++      else {
++        /** - ----> exact dr F2 */
++        dy[pv->index_pt_F0_dr+2] = 8./15.*(3./4.*k*y[pv->index_pt_F0_dr+1]+metric_shear*f_dr) -3./5.*k*s_l[3]/s_l[2]*y[pv->index_pt_F0_dr+3];
++
++        /** - ----> exact dr l=3 */
++        l = 3;
++        dy[pv->index_pt_F0_dr+3] = k/(2.*l+1.)*
++          (l*s_l[l]*s_l[2]*y[pv->index_pt_F0_dr+2]-(l+1.)*s_l[l+1]*y[pv->index_pt_F0_dr+4]);
++
++        /** - ----> exact dr l>3 */
++        for (l = 4; l < pv->l_max_dr; l++) {
++          dy[pv->index_pt_F0_dr+l] = k/(2.*l+1)*
++            (l*s_l[l]*y[pv->index_pt_F0_dr+l-1]-(l+1.)*s_l[l+1]*y[pv->index_pt_F0_dr+l+1]);
++        }
++
++        /** - ----> exact dr lmax_dr */
++        l = pv->l_max_dr;
++        dy[pv->index_pt_F0_dr+l] =
++          k*(s_l[l]*y[pv->index_pt_F0_dr+l-1]-(1.+l)*cotKgen*y[pv->index_pt_F0_dr+l]);
++      }
+ 
+     }
+ 
+@@ -9367,7 +9397,10 @@
+         class_call(background_w_fld(pba,a,&w_fld,&dw_over_da_fld,&integral_fld), pba->error_message, ppt->error_message);
+         w_prime_fld = dw_over_da_fld * a_prime_over_a * a;
+ 
+-        ca2 = w_fld - w_prime_fld / 3. / (1.+w_fld) / a_prime_over_a;
++        gamma_kpeer_over_h = 0.;
++        if (pba->fluid_equation_of_state == KPEER)
++          gamma_kpeer_over_h = kpeer_decay_gamma_over_h(pba,a);
++        ca2 = w_fld - w_prime_fld / (3.*(1.+w_fld)+gamma_kpeer_over_h) / a_prime_over_a;
+         cs2 = pba->cs2_fld;
+ 
+         /** - ----> fluid density */
+@@ -9400,9 +9433,11 @@
+ 
+       /** - ----> Klein Gordon equation */
+ 
+-      dy[pv->index_pt_phi_prime_scf] =  - 2.*a_prime_over_a*y[pv->index_pt_phi_prime_scf]
+-        - metric_continuity*pvecback[pba->index_bg_phi_prime_scf] //  metric_continuity = h'/2
+-        - (k2 + a2*pvecback[pba->index_bg_ddV_scf])*y[pv->index_pt_phi_scf]; //checked
++      dy[pv->index_pt_phi_prime_scf] =  -(2.*a_prime_over_a
++        +((pba->kpeer_exact_scf == _TRUE_)?a*pvecback[pba->index_bg_H]*kpeer_decay_gamma_over_h(pba,a):0.))
++        *y[pv->index_pt_phi_prime_scf]
++        - metric_continuity*pvecback[pba->index_bg_phi_prime_scf]
++        - (k2 + a2*pvecback[pba->index_bg_ddV_scf])*y[pv->index_pt_phi_scf]; /* KPEER_EXACT_KG_PERTURBATION */
+ 
+     }
+ 

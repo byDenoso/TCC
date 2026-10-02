@@ -1,0 +1,62 @@
+name: PEER pNGB SPT D1 validation
+
+on:
+  push:
+    branches: [run-peer-pngb-sptd1-mcmc-20261002]
+    paths:
+      - '.github/workflows/peer-pngb-sptd1-validation.yml'
+      - 'peer_pngb_sptd1_20261002/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: peer-pngb-sptd1-validation
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      NUMEXPR_NUM_THREADS: '1'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Record runner resources
+        run: |
+          set -euo pipefail
+          mkdir -p peer_pngb_sptd1_20261002/validation
+          { date -u; uname -a; nproc; free -h; df -h .; } | tee peer_pngb_sptd1_20261002/validation/runner_resources.txt
+          # This validation uses one process at a time. No MCMC ranks are launched.
+          test "$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)" -gt 3500000
+      - name: Build exact public-source runtime and install official likelihoods
+        run: bash peer_pngb_sptd1_20261002/bootstrap.sh
+      - name: Run contract tests and finite integration checks
+        run: |
+          set -euo pipefail
+          ROOT="$GITHUB_WORKSPACE/peer_pngb_sptd1_20261002"
+          export PEER_RUNTIME_ROOT="$ROOT/runtime"
+          export XDG_CONFIG_HOME="$PEER_RUNTIME_ROOT/config"
+          export XDG_CACHE_HOME="$PEER_RUNTIME_ROOT/cache"
+          export MPLCONFIGDIR="$PEER_RUNTIME_ROOT/matplotlib"
+          export COBAYA_PACKAGES_PATH="$PEER_RUNTIME_ROOT/packages"
+          PY="$PEER_RUNTIME_ROOT/venv/bin/python"
+          cd "$ROOT"
+          "$PY" -m unittest discover -s tests -v
+          "$PY" run_validation.py
+      - name: Upload finite validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: peer-pngb-sptd1-validation-${{ github.run_id }}
+          path: peer_pngb_sptd1_20261002/validation
+          if-no-files-found: error
+          retention-days: 30
