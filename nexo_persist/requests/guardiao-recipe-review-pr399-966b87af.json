@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr399-966b87af",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T02:32:44Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/399",
+        "head_sha": "966b87af7667125bb1ba7fdb251e4cfd6d4e9a71",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: os blobs da receita e da regressão são idênticos aos do head 0a917b56 já aprovado no PR 396; o mínimo estrutural de dois pontos reproduz o contrato congelado dos holdouts Union3.",
+          "Item 2: faixas, compilações, priors, modo e demais parâmetros declarativos permanecem inalterados.",
+          "Item 3: URLs versionadas, SHA256, estatística e critérios permanecem intactos.",
+          "Item 4: verdict, decision, summary, statistics, semantic.result_meaning e o smoke versionado permanecem íntegros; executor-runtime-smoke passou no head revisado."
+        ]
+      }
+    }
+  }
+}
