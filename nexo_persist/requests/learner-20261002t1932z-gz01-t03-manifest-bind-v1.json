@@ -1,0 +1,26 @@
+{
+  "stable_id": "learner-20261002t1932z-gz01-t03-manifest-bind-v1",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-10-02T19:32:00Z",
+    "payload": {
+      "test_id": "GZ01-B03-T03-WINDOW-ROTATION-NULL",
+      "inputs": [
+        {
+          "name": "desi_dr1_lss_selection_manifest",
+          "url": "https://raw.githubusercontent.com/byDenoso/Pantheon/5472cc7986929f33ca4bd19faeb227b3eb85280d/nexo-one/executor-runtime/recipes/manifests/desi_dr1_lss_iron_lsscats_v1.5_t01_selection.json",
+          "version": "byDenoso/Pantheon@5472cc7986929f33ca4bd19faeb227b3eb85280d",
+          "sha256": "6ce284a355085679eb528517746b247fa2c48902c6158ca556ae9c197b34c65a",
+          "format": "application/json",
+          "load": "json",
+          "checked": "Manifesto de 160 arquivos validado pela receita e pelos testes aprovados do PR 406; seleção DESI DR1 iron LSScats v1.5 congelada.",
+          "license": "DESI public DR1"
+        }
+      ],
+      "status": "PARTIAL",
+      "note": "Manifesto de seleção agora está ligado por commit e SHA256 imutáveis. T03 permanece BLOCKED_INPUT até o produto desi_dr1_lss_3d_map_product existir com URL HTTPS, versão, SHA256 e provenance_bindings completos."
+    }
+  }
+}
