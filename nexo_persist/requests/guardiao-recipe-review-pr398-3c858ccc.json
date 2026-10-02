@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr398-3c858ccc",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T05:13:40Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/398",
+        "head_sha": "3c858ccc91645e8474ad4de0e187511d712efff8",
+        "verdict": "CHANGES",
+        "reasons": [
+          "Item 1: as duas receitas preservam os contratos congelados: rank_score_robustness mede a coorte fixa sem recalibrar pesos e stable_id_idempotency compara pares de retry sem mudar o critério.",
+          "Item 2: parâmetros e modos são declarativos; a permutação exige exatamente 10000 iterações e fica INCONCLUSIVE sem seed congelada; produção de idempotência exige INPUTS_PATH.",
+          "Item 3 — CHANGES: stable_id_idempotency aceita qualquer URL HTTPS com version e SHA256. O TEST congela requests duráveis públicos de byDenoso/TCC; restrinja o manifesto à origem oficial/allowlist canônica para que o hash prove imutabilidade sem permitir troca pós-hoc da população.",
+          "Item 4: verdict, decision, summary, statistics e semantic.result_meaning estão presentes; smokes e regressões existem, e NEXO ONE PR CI + battery canary passaram no head revisado."
+        ]
+      }
+    }
+  }
+}
