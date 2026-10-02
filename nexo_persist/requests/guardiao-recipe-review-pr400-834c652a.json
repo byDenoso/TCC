@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr400-834c652a",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T02:37:28Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/400",
+        "head_sha": "834c652aa34eb7cdfc140e5c211468c99ebe7283",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: reproduz o contrato congelado T-DEH26-003-TREE-MATCHING-R1: coeficientes formais f^-4, -2*mu2*f^-2 e 0 fecham termo a termo, inferem lambda=f^4, m2=mu2*f^2 e v0=mu2^2, e reduzem R exatamente a 1 sem coeficiente livre.",
+          "Item 2: o teste não fixa valores numéricos; a receita agora não aceita parâmetros científicos e o smoke declara {}.",
+          "Item 3: não há dado externo; a estatística algébrica exata e os critérios SURVIVED/REFUTED permanecem intactos.",
+          "Item 4: a saída preserva verdict, decision, summary, statistics e semantic.result_meaning em português; o smoke versionado e a regressão específica estão presentes, e executor-runtime-smoke passou."
+        ]
+      }
+    }
+  }
+}
