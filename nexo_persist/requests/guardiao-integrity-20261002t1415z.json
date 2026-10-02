@@ -1,0 +1,67 @@
+{
+  "stable_id": "guardiao-integrity-20261002t1415z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T14:15:01Z",
+    "payload": {
+      "date": "2026-10-02",
+      "status": "RED",
+      "autonomy": {
+        "schema_version": "AUTONOMY_METRICS_V2",
+        "window_hours": 24,
+        "results": 12,
+        "execution_record_share": 1,
+        "decisive_rate": 0.5,
+        "non_inconclusive_rate": 0.5,
+        "median_hours_to_result": 2.8,
+        "positive_review_closure": 0.373,
+        "failure_result_coverage": 1,
+        "blocked_share": 1
+      },
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Tower canônica relida na revisão sha256:4443f05f0b1af18e76d9a7e83e86d1a51c479feb28b185622a1b0215987df271, atualizada em 2026-10-02T13:52:03.889891Z. Fila TEST: 0 READY, 0 com status RUNNING, 65 BLOCKED_INPUT, 1 BLOCKED_SCIENTIFIC_CONTRACT e 7 CHECKPOINTED."
+        },
+        {
+          "area": "tasks",
+          "ok": true,
+          "detail": "Inventário vivo reconciliado: 10 de 10 tarefas NEXO habilitadas; Operadores A/B/C mantêm as agendas canônicas e o Revisor de PR permanece condition_watch por evento."
+        },
+        {
+          "area": "inbox",
+          "ok": true,
+          "detail": "O heartbeat anterior de 2026-10-02T13:12:56Z fechou staging→relay→Writer→Tower com recibo público APPLIED OR-3bff3950e8be7ed55f262b4b15f81a94. Não há evidência de quebra do transporte público nesta leitura."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "Não há READY elegível nem RUNNING científico por status. Há 63 recuperações em WAIT_DEPENDENCY, 35 P0; 41 estão ACCEPTED e 22 ASSIGNED_UNACCEPTED. blocked_share=1,000 é a métrica observada de bloqueio, não classificação independente de bloqueio incorreto."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Persistem 47 TESTs terminais DONE com execution_phase=RUNNING por mais de duas rodadas; o recado BP-2026-10-02T10:43-EXECUTOR-0 continua sem efeito canônico e será reatribuído ao Engenheiro sem reabrir testes."
+        },
+        {
+          "area": "contract",
+          "ok": false,
+          "detail": "Na frente priorizada pelo Dener, GZ01-B03-T03-WINDOW-ROTATION-NULL está BLOCKED_INPUT com INPUT_PROVENANCE_INCOMPLETE e RECIPE_BINDING_MISSING. O contrato científico permanece congelado e não foi alterado."
+        },
+        {
+          "area": "site",
+          "ok": false,
+          "detail": "A URL pública indicada não pôde ser validada por este adapter. O artefato versionado nexo-one/data/tower-public/projection.json em main está legível, porém seu manifest traz tower_revision zerada e event_cursor de 2026-09-25; não serve como readback atual da Tower."
+        }
+      ],
+      "action": "Atacar blocked_share=1,000 respeitando a prioridade explícita do Dener: primeiro destravar por fluxo autorizado a proveniência e o binding de receita do teste de rotação da janela do mapa 3D DESI DR1; em paralelo, o Engenheiro deve reconciliar os 47 DONE com execution_phase=RUNNING. Só devolver TEST a READY após o gate canônico.",
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
