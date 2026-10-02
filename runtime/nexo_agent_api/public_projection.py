@@ -76,6 +76,7 @@ TEST_FIELDS = (
     "claim_level",
     "publication_status",
     "review_state",
+    "execution_phase",
     "rank_score",
     "origin_kind",
     "prereg_hash",
@@ -516,6 +517,14 @@ def _attach_test_children(tests: list[dict[str, Any]]) -> None:
 def _public_test_entity(entity: dict[str, Any]) -> dict[str, Any]:
     """Project only the scientific fields consumed by ScienceProjectionV1."""
     projected = _pick(entity, TEST_FIELDS)
+    # Attempt lifecycle is independent of TEST status and scientific review.
+    # Publish only known labels; never expose an arbitrary diagnostic object.
+    if not isinstance(projected.get("execution_phase"), str) or projected["execution_phase"] not in {
+        "IDLE", "PENDING", "READY", "QUEUED", "RESERVED", "DISPATCH_PENDING",
+        "DISPATCHED", "RUNNING", "EXECUTING",
+        "COMPLETED", "FAILED", "CANCELLED", "ABORTED", "BLOCKED_INPUT", "CLOSED",
+    }:
+        projected.pop("execution_phase", None)
     input_contract = entity.get("input_contract")
     dataset_value = projected.get("datasets", projected.get("dataset"))
     if dataset_value is None and isinstance(input_contract, dict):

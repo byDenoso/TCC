@@ -58,13 +58,21 @@ def _now() -> str:
 
 
 def _write_event(root: Path, payload: dict) -> dict:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    event_id = f"{stamp}-{uuid4().hex[:8]}"
+    now = datetime.now(timezone.utc)
+    stamp = now.strftime("%Y%m%dT%H%M%S%fZ")
+    event_dir = root / "events" / now.strftime("%Y-%m-%d")
+    event_dir.mkdir(parents=True, exist_ok=True)
+    sequence = 1
+    for path in event_dir.glob(f"{stamp}-z*-*.json"):
+        match = re.match(re.escape(stamp) + r"-z(\d{8})-", path.name)
+        if match:
+            sequence = max(sequence, int(match.group(1)) + 1)
+    # Legacy IDs use a random lower-case hex suffix. The z marker sorts after those IDs,
+    # while the fixed-width sequence preserves causal order under a frozen clock.
+    event_id = f"{stamp}-z{sequence:08d}-{uuid4().hex[:8]}"
     event = dict(payload)
     event["event_id"] = event_id
-    event["created_at"] = _now()
-    event_dir = root / "events" / datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    event_dir.mkdir(parents=True, exist_ok=True)
+    event["created_at"] = now.isoformat().replace("+00:00", "Z")
     json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     return event
 
@@ -257,10 +265,11 @@ def _recovery_completion(self, work: dict) -> dict:
     if not re.fullmatch(r"[A-Za-z0-9_.:-]+", test_id):
         raise TowerAgentIssue("HANDOFF_RECOVERY_EVIDENCE_REQUIRED", "The recovery TEST reference is invalid.")
     from . import scientific_integrity as integrity
+    from .execution_recovery import evaluate_readiness
 
     try:
         test = integrity.entity(self.root, test_id)
-        validation = integrity.readiness(self.root, test, ignore_reservation=True) if test else {}
+        validation = evaluate_readiness(self.root, test, ignore_reservation=True) if test else {}
     except (OSError, ValueError, TypeError) as exc:
         raise TowerAgentIssue("HANDOFF_RECOVERY_EVIDENCE_REQUIRED", "Recovery evidence could not be validated.") from exc
     if validation.get("eligible") is not True:

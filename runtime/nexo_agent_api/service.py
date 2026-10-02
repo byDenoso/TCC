@@ -348,7 +348,8 @@ class AgentService:
                 raise TowerAgentIssue("EXECUTION_ASSESSMENT_WRITER_OWNED", "Assessment requires verified runner evidence.")
         from .scientific_integrity import guard_transition
         refused = guard_transition(self.root, {"entity_kind":entity_kind, "entity_name":entity_name,
-                                               "changes":changes, "event_type":event_type})
+                                               "changes":changes, "event_type":event_type,
+                                               "writer_role":writer_role, "expected_version":expected_version})
         if refused is not None:
             raise TowerAgentIssue(refused["issue"]["code"], "Scientific integrity rejected this transition.", {"entity_name":entity_name})
         protected = {"id", "entity_id", "entity_version"}

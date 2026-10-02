@@ -141,7 +141,8 @@ def test_raw_serialized_mutation_cannot_write_or_remove_overlay(context):
 def test_only_internal_collector_can_submit_operation(context,source):
     root,_,body=context
     output,report=apply(root,body,source)
-    assert report['rejected'][0]['reason']['code']=='VERIFIED_RUNNER_OBSERVATION_REQUIRED'
+    assert report['rejected'][0]['reason']=='VERIFIED_RUNNER_OBSERVATION_REQUIRED'
+    assert report['rejected'][0]['outcome']=='REJECTED_TERMINAL'
     assert 'execution_assessment' not in output['files']['entities/test/TEST-AUDIT.json']['value']
 
 

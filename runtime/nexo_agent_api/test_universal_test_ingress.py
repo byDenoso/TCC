@@ -233,7 +233,17 @@ class UniversalTestIngressContractTests(unittest.TestCase):
 
     def test_terminal_registration_does_not_reopen_or_create_partial_graph(self):
         test_id = "FINISHED"
-        self.assertTrue(self._create("test", test_id, {"domain": "COSMOLOGY", "status": "DONE"})["accepted"])
+        # Seed a legacy terminal record directly: creating a new terminal TEST
+        # without a result proof is intentionally rejected by the mutation API.
+        path = entity_path(self.root, "test", test_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({
+            "id": test_id,
+            "entity_version": 1,
+            "domain": "COSMOLOGY",
+            "status": "DONE",
+            "state": "DONE",
+        }), encoding="utf-8")
         before = self._read("test", test_id)
         with self.assertRaises(TowerAgentIssue):
             register_test(self.root, test_id=test_id, domain="COSMOLOGY", title="Existing", objective="Existing",

@@ -15,13 +15,13 @@ from runtime.nexo_agent_api.gpt_writer import apply_to_tower, _fully_handled
 from runtime.nexo_agent_api.inbox_apply import ProposalError, _result_request
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload, read_live_tower_bytes
 from runtime.nexo_agent_api.tower_apply import apply_requests
-from runtime.nexo_agent_api.tower_paths import entity_path
+from runtime.nexo_agent_api.tower_paths import entity_path, fs_path
 
 NOW, END = '2026-09-30T10:00:00Z', '2026-09-30T10:01:00Z'
 
 
 def save(root, relative, value):
-    file = root / relative
+    file = fs_path(root, relative)
     file.parent.mkdir(parents=True, exist_ok=True)
     file.write_text(json.dumps(value), encoding='utf-8')
 
@@ -158,9 +158,26 @@ class ScientificIntegrityTest(unittest.TestCase):
 
     def test_ambiguous_dispatch_is_not_running(self):
         self.reserve()
-        requests=e.battery_status_requests({'created_at':NOW},{'battery_id':'bat-audit-one','status':'DISPATCHED','run_ref':'github-actions'},self.root,_result_request)
+        requests=e.battery_status_requests(
+            {'created_at': NOW, '_writer_dispatch_token': s.WRITER_DISPATCH_TOKEN},
+            {'battery_id': 'bat-audit-one', 'status': 'DISPATCHED', 'run_ref': 'github-actions'},
+            self.root,
+            _result_request,
+        )
         self.assertEqual(requests[0]['merge']['batteries'][0]['status'],'DISPATCH_PENDING')
         self.assertEqual(requests[1]['changes']['status'],'DISPATCH_PENDING')
+
+    def test_external_writer_label_cannot_forge_internal_dispatch_pending(self):
+        self.reserve()
+        with self.assertRaisesRegex(ProposalError, 'WRITER_DISPATCH_CONTEXT_REQUIRED'):
+            e.battery_status_requests(
+                {'source': 'WRITER_ROBOT', '_inbox_name': 'robot-dispatch-bat-audit-one', 'created_at': NOW},
+                {'battery_id': 'bat-audit-one', 'status': 'DISPATCHED', 'run_ref': 'github-actions'},
+                self.root,
+                _result_request,
+            )
+        self.assertEqual(s.batteries(self.root)[0]['status'], 'QUEUED')
+        self.assertEqual(s.entity(self.root, 'TEST-A')['execution_phase'], 'QUEUED')
 
     def test_untrusted_runner_label_is_rejected(self):
         self.reserve()
@@ -186,8 +203,96 @@ class ScientificIntegrityTest(unittest.TestCase):
         with redirect_stderr(io.StringIO()):
             receipts=apply_requests(self.root,e.battery_status_requests(item,completed,self.root,_result_request))
         self.assertTrue(all(r['accepted'] for r in receipts),receipts)
-        self.assertEqual(s.entity(self.root,'TEST-A')['verdict'],'INCONCLUSIVE')
-        self.assertEqual(s.entity(self.root,'TEST-A')['executed_at'],END)
+        completed_test = s.entity(self.root,'TEST-A')
+        self.assertEqual(completed_test['verdict'],'INCONCLUSIVE')
+        self.assertEqual(completed_test['executed_at'],END)
+        self.assertEqual(completed_test['execution_phase'],'COMPLETED')
+        readiness = s.readiness(self.root, completed_test)
+        self.assertFalse(readiness['eligible'])
+        self.assertIn('TERMINAL_TEST', readiness['reasons'])
+
+    def test_advisor_cannot_close_execution_phase_without_a_result_proof(self):
+        before = s.entity(self.root, 'TEST-A')
+        receipt = apply_requests(self.root, [{
+            'request_id': 'REQ-UNPROVEN-PHASE-CLOSE', 'entity_kind': 'test',
+            'entity_name': 'TEST-A', 'expected_version': before['entity_version'],
+            'writer_role': 'ADVISOR', 'event_type': 'TEST_PHASE_SET',
+            'changes': {'execution_phase': 'COMPLETED'},
+        }])[0]
+        self.assertFalse(receipt['accepted'])
+        self.assertEqual(receipt['issue']['code'], 'EXECUTION_PHASE_CLOSURE_REQUIRES_VERIFIED_RESULT')
+        after = s.entity(self.root, 'TEST-A')
+        self.assertEqual(after['status'], before['status'])
+        self.assertEqual(after.get('execution_phase'), before.get('execution_phase'))
+        self.assertNotIn('verdict', after)
+
+    def test_ready_test_cannot_claim_running_phase_without_runner_observation(self):
+        before = s.entity(self.root, 'TEST-A')
+        requests = [
+            {'request_id': 'REQ-UNPROVEN-PHASE-RUNNING', 'entity_kind': 'test',
+             'entity_name': 'TEST-A', 'expected_version': before['entity_version'],
+             'writer_role': 'ADVISOR', 'event_type': 'TEST_PHASE_SET',
+             'changes': {'execution_phase': 'RUNNING'}},
+            {'request_id': 'REQ-UNPROVEN-TEST-RUNNING', 'entity_kind': 'test',
+             'entity_name': 'TEST-A', 'expected_version': before['entity_version'],
+             'writer_role': 'EXECUTOR', 'event_type': 'TEST_RUNNING',
+             'changes': {'status': 'RUNNING', 'state': 'RUNNING', 'execution_phase': 'RUNNING'}},
+        ]
+        receipts = apply_requests(self.root, requests)
+        self.assertTrue(all(not receipt['accepted'] for receipt in receipts), receipts)
+        after = s.entity(self.root, 'TEST-A')
+        self.assertEqual(after['status'], before['status'])
+        self.assertEqual(after.get('execution_phase'), before.get('execution_phase'))
+        self.assertNotIn('started_at', after)
+
+    def test_ready_test_cannot_accept_forged_terminal_result_or_phase_closure(self):
+        before = s.entity(self.root, 'TEST-A')
+        receipt = apply_requests(self.root, [{
+            'request_id': 'REQ-FORGED-TERMINAL-RESULT', 'entity_kind': 'test',
+            'entity_name': 'TEST-A', 'expected_version': before['entity_version'],
+            'writer_role': 'EXECUTOR', 'event_type': 'TEST_RESULT_RECORDED',
+            'changes': {'status': 'DONE', 'state': 'DONE', 'execution_phase': 'COMPLETED',
+                        'verdict': 'INCONCLUSIVE', 'executed_at': END,
+                        'run_ref': 'actions/runs/123'},
+        }])[0]
+        self.assertFalse(receipt['accepted'])
+        self.assertEqual(receipt['issue']['code'], 'EXECUTION_PHASE_RESULT_PROOF_REQUIRED')
+        after = s.entity(self.root, 'TEST-A')
+        self.assertEqual(after['status'], before['status'])
+        self.assertEqual(after.get('execution_phase'), before.get('execution_phase'))
+        self.assertNotIn('verdict', after)
+        self.assertNotIn('executed_at', after)
+
+    def test_terminal_import_cannot_overwrite_queued_active_reservation(self):
+        self.reserve()
+        before = s.entity(self.root, 'TEST-A')
+        receipt = apply_requests(self.root, [{
+            'request_id': 'REQ-ACTIVE-MANUAL-RESULT', 'entity_kind': 'test',
+            'entity_name': 'TEST-A', 'expected_version': before['entity_version'],
+            'writer_role': 'EXECUTOR', 'event_type': 'TEST_RESULT_RECORDED',
+            'changes': {'status': 'DONE', 'state': 'DONE', 'verdict': 'INCONCLUSIVE',
+                        'executed_at': END},
+        }])[0]
+        self.assertFalse(receipt['accepted'])
+        self.assertEqual(receipt['issue']['code'], 'EXECUTION_PHASE_RESULT_PROOF_REQUIRED')
+        after = s.entity(self.root, 'TEST-A')
+        self.assertEqual(after['status'], 'QUEUED')
+        self.assertEqual(after.get('execution_phase'), 'QUEUED')
+        self.assertNotIn('verdict', after)
+
+    def test_raw_battery_document_cannot_forge_runner_completion_proof(self):
+        battery = self.reserve()
+        forged = dict(battery, status='DONE', run_ref='actions/runs/123',
+                      completed_at=END, done_at=END,
+                      execution_observation='GITHUB_RUN_AND_ARTIFACT',
+                      conclusion='success', ok=1, failed=0)
+        receipt = apply_requests(self.root, [{
+            'request_id': 'REQ-RAW-BATTERY-DONE', 'document': 'evolution/batteries.json',
+            'merge': {'batteries': [forged]}, 'list_merge': {'batteries': 'id'},
+        }])[0]
+        self.assertFalse(receipt['accepted'])
+        self.assertEqual(receipt['issue']['code'], 'BATTERY_STATUS_WRITER_PROOF_REQUIRED')
+        self.assertEqual(s.batteries(self.root)[0]['status'], 'QUEUED')
 
     def test_foreign_result_members_rejected(self):
         self.reserve()
@@ -301,7 +406,13 @@ class ScientificIntegrityTest(unittest.TestCase):
     def test_late_collection_preserves_actual_completion_time(self):
         battery = self.reserve(); spec = battery['tests'][0]
         item = {'_inbox_source':'RUNNER_OBSERVATION', 'created_at':'2026-09-30T12:00:00Z'}
+        started = {'battery_id':battery['id'], 'status':'RUNNING', 'run_ref':'actions/runs/123',
+                   'started_tests':{'TEST-A':NOW}}
+        with redirect_stderr(io.StringIO()):
+            start_receipts = apply_requests(self.root, e.battery_status_requests(item, started, self.root, _result_request))
+        self.assertTrue(all(r['accepted'] for r in start_receipts), start_receipts)
         payload = {'battery_id':battery['id'], 'status':'DONE', 'run_ref':'actions/runs/123', 'completed_at':END,
+            'conclusion':'success',
             'results':[{'test_id':'TEST-A', 'attempt_id':spec['attempt_id'], 'recipe_sha256':spec['recipe_sha256'],
                 'ok':True, 'result':{'verdict':'INCONCLUSIVE','summary':'Fixture'}}]}
         with redirect_stderr(io.StringIO()):

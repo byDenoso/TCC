@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from runtime.nexo_agent_api import operation_receipts
 from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
 
@@ -76,10 +77,16 @@ class InboxApplyTests(unittest.TestCase):
              patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0):
             packed, report = apply_to_tower(tower_raw, [duplicate])
 
-        self.assertIsNone(packed)
-        self.assertEqual(report["status"], "NO_OP")
-        self.assertEqual(report["handled"], ["gw-tcc-duplicate"])
-        self.assertEqual(report["applied"], ["gw-tcc-duplicate"])
+        # This fixture wrote the terminal result by hand, before the Writer
+        # had a durable effect receipt. A different gateway identity cannot
+        # claim that legacy state as an already-applied effect.
+        self.assertIsNotNone(packed)
+        self.assertEqual(report["status"], "READY_TO_UPLOAD")
+        self.assertEqual(report["handled"], [])
+        self.assertEqual(report["applied"], [])
+        self.assertEqual(report["deferred"][0]["outcome"], "DEFERRED_DEPENDENCY")
+        self.assertEqual({row["outcome"] for row in report["public_operation_receipts"]},
+                         {"DEFERRED_DEPENDENCY"})
         self.assertEqual(report["receipts"], [])
 
     def test_conflicting_result_identity_is_recorded_once_and_retry_is_handled(self):
@@ -138,7 +145,9 @@ class InboxApplyTests(unittest.TestCase):
             replay, second = apply_to_tower(packed, [conflict])
         self.assertIsNone(replay)
         self.assertEqual(second["handled"], ["gw-tcc-stable"])
-        self.assertEqual(second["receipts"][0]["status"], "NO_OP")
+        [summary] = second["public_operation_receipts"]
+        self.assertEqual(summary["effect_id"], operation_receipts.envelope_effect_id("gateway:tcc-stable"))
+        self.assertEqual(summary["outcome"], "REJECTED_TERMINAL")
 
     def test_incomplete_proposals_are_completed_not_rejected(self):
         # result without a plain reading -> provisional reading, still recorded on the test
@@ -497,23 +506,26 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
         publish_live_tower(root)
         return (root / LIVE_TOWER_NAME).read_bytes(), created, work
 
-    def apply_handoff(self, raw, *, state, writer_role="EXECUTOR"):
+    def apply_handoff(self, raw, *, state, writer_role="EXECUTOR", inbox_id=None):
         from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 
+        item = {
+            "kind": "HANDOFF_TRANSITION",
+            "_inbox_source": "DRIVE",
+            "payload": {
+                "handoff_id": self.created["handoff_id"],
+                "state": state,
+                "writer_role": writer_role,
+            },
+        }
+        if inbox_id is not None:
+            item["_inbox_id"] = inbox_id
         with patch("runtime.nexo_agent_api.evolution.contest_chain_reconcile_requests", return_value=[]), \
              patch("runtime.nexo_agent_api.evolution.maintenance_reconcile_requests", return_value=[]), \
              patch("runtime.nexo_agent_api.evolution.incident_reconcile_requests", return_value=[]), \
              patch("runtime.nexo_agent_api.execution_recovery.reconcile_requests", return_value=[]), \
              patch("runtime.nexo_agent_api.execution_recovery.ensure_handoffs", return_value=0):
-            return apply_to_tower(raw, [{
-                "kind": "HANDOFF_TRANSITION",
-                "_inbox_source": "DRIVE",
-                "payload": {
-                    "handoff_id": self.created["handoff_id"],
-                    "state": state,
-                    "writer_role": writer_role,
-                },
-            }])
+            return apply_to_tower(raw, [item])
 
     @staticmethod
     def tower_values(raw):
@@ -564,22 +576,26 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
         initial = self.tower_values(raw)
 
         mismatch, report = self.apply_handoff(raw, state="ACK", writer_role="LEARNER")
-        self.assertIsNone(mismatch)
-        self.assertEqual(report["status"], "NO_OP")
-        self.assertEqual(report["before"], report["after"])
+        self.assertIsNotNone(mismatch)  # The terminal rejection itself is durable Tower state.
+        self.assertEqual(report["status"], "READY_TO_UPLOAD")
+        self.assertNotEqual(report["before"], report["after"])
         self.assertEqual(report["receipts"][0]["issue"]["code"], "HANDOFF_WRITER_MISMATCH")
-        self.assertEqual(self.tower_values(raw), initial)
+        self.assertEqual(self.tower_values(mismatch), initial)
 
         failed, report = self.apply_handoff(raw, state="FAILED")
         self.assertIsNotNone(failed)
         self.assertEqual(report["rejected"], [])
         before_illegal = self.tower_values(failed)
-        illegal, report = self.apply_handoff(failed, state="ACK")
-        self.assertIsNone(illegal)
-        self.assertEqual(report["status"], "NO_OP")
-        self.assertEqual(report["before"], report["after"])
-        self.assertEqual(report["receipts"][0]["issue"]["code"], "HANDOFF_ILLEGAL_TRANSITION")
-        self.assertEqual(self.tower_values(failed), before_illegal)
+        illegal, report = self.apply_handoff(
+            failed, state="ACK", inbox_id="handoff-ack-after-failed-new-intent")
+        self.assertIsNotNone(illegal)  # Again, only the durable operation receipt ledger changes.
+        self.assertEqual(report["status"], "READY_TO_UPLOAD")
+        self.assertNotEqual(report["before"], report["after"])
+        self.assertEqual(report["rejected"][0]["reason"], "HANDOFF_ILLEGAL_TRANSITION")
+        self.assertEqual(report["public_operation_receipts"], [])
+        self.assertTrue(any(row["outcome"] == "REJECTED_TERMINAL" and row["visibility"] == "PRIVATE"
+                            for row in report["operation_receipts"]))
+        self.assertEqual(self.tower_values(illegal), before_illegal)
 
     def test_unattended_writer_applies_private_handoff_acknowledgement(self):
         from runtime.nexo_agent_api import AgentService

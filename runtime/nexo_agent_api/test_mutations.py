@@ -168,7 +168,7 @@ class MutationInboxTests(unittest.TestCase):
                 self.assertFalse(receipt["accepted"])
                 self.assertEqual(receipt["issue"]["code"], "INBOX_RESULT_ORDER_CONFLICT")
 
-    def test_prepared_test_with_executor_metadata_accepts_its_first_result(self) -> None:
+    def test_prepared_test_accepts_manual_result_without_closing_execution_phase(self) -> None:
         path = entity_path(self.root, "test", "T-PREPARED-FIRST-RESULT")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({
@@ -190,14 +190,16 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertNotEqual(receipt.get("status"), "NO_OP")
         self.assertEqual(receipt["entity_version"], 3)
-        self.assertEqual(json.loads(path.read_text())["result_summary"], "Primeiro resultado real.")
+        current = json.loads(path.read_text())
+        self.assertEqual(current["result_summary"], "Primeiro resultado real.")
+        self.assertNotIn("execution_phase", current)
 
     def test_later_different_result_source_remains_a_real_mutation(self) -> None:
         path = entity_path(self.root, "test", "T-RESULT-LATER")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({
             "id": "T-RESULT-LATER", "entity_version": 2,
-            "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+            "status": "DONE", "state": "DONE", "execution_phase": "COMPLETED", "verdict": "INCONCLUSIVE",
             "result_summary": "Resultado antigo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
             "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-old",
         }))
@@ -205,7 +207,7 @@ class MutationInboxTests(unittest.TestCase):
             "request_id": "REQ-LATER", "entity_kind": "test", "entity_name": "T-RESULT-LATER",
             "expected_version": 2,
             "changes": {
-                "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+                "status": "DONE", "state": "DONE", "execution_phase": "COMPLETED", "verdict": "INCONCLUSIVE",
                 "result_summary": "Resultado novo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
                 "executed_at": "2026-09-26T12:20:01Z", "inbox_ref": "gateway:tcc-new",
             },
@@ -263,11 +265,11 @@ class MutationInboxTests(unittest.TestCase):
                 "id": "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
                 "test_group_id": "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY",
                 "campaign_id": "CAMP-GROWTH-LSS",
-                "status": "VERIFIED",
+                "status": "DRAFT",
                 "evidence_class": "FROZEN_BATTERY_CHILD",
             },
             "writer_role": "EXECUTOR",
-            "event_type": "TEST_VERIFIED",
+            "event_type": "TEST_CREATED",
         })
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
@@ -277,6 +279,22 @@ class MutationInboxTests(unittest.TestCase):
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["campaign_id"], "CAMP-GROWTH-LSS")
         self.assertEqual(entity["test_group_id"], "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY")
+        self.assertEqual(entity["status"], "DRAFT")
+
+    def test_zero_version_cannot_create_terminal_test_without_result_proof(self) -> None:
+        test_id = "GZSB-01-UNPROVEN-TERMINAL-CREATE"
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-TERMINAL-TEST-1",
+            "entity_kind": "test",
+            "entity_name": test_id,
+            "expected_version": 0,
+            "changes": {"id": test_id, "domain": "SCIENCE", "status": "VERIFIED", "state": "VERIFIED"},
+            "writer_role": "EXECUTOR",
+            "event_type": "TEST_VERIFIED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "TERMINAL_STATUS_REQUIRES_RESULT_EVENT")
+        self.assertFalse(entity_path(self.root, "test", test_id).exists())
 
     def test_zero_version_creates_new_test_group_with_exact_readback(self) -> None:
         group_id = "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY"

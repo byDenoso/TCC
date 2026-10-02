@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import tempfile
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from runtime.nexo_agent_api.drive_transport import DriveTower, TowerConflict, TowerReadbackMismatch
+from runtime.nexo_agent_api.drive_transport import (DriveHead, DriveTower, TowerConflict,
+                                                    TowerReadbackMismatch, TowerTransportError)
 from runtime.nexo_agent_api.live_tower import (
     LIVE_TOWER_NAME,
     build_live_tower_payload,
@@ -105,6 +108,123 @@ class DriveTransportTests(unittest.TestCase):
         fake.corrupt_readback = True
         with self.assertRaises(TowerReadbackMismatch):
             tower.compare_and_swap(head, _raw(self._changed()))
+
+    def test_http_409_is_a_recoverable_tower_conflict(self):
+        class ConflictUpload(FakeDrive):
+            def patch(self, url, params=None, data=None, headers=None, timeout=None):
+                return _Response(409, b"head moved")
+
+        fake = ConflictUpload(_raw(self.base))
+        tower = DriveTower("FILE", session=fake)
+        base = DriveHead.from_meta(fake._meta())
+        with self.assertRaises(TowerConflict):
+            tower.compare_and_swap(base, _raw(self._changed()))
+
+    def test_timeout_before_upload_is_retryable_transport(self):
+        class TimeoutRead:
+            def get(self, *args, **kwargs):
+                raise TimeoutError("private transport detail")
+
+        with self.assertRaises(TowerTransportError) as caught:
+            DriveTower("FILE", session=TimeoutRead()).download(cache=False)
+        self.assertEqual(caught.exception.retry_condition, "AFTER_TRANSPORT_RECOVERY")
+        self.assertNotIn("private transport detail", str(caught.exception))
+
+    def test_timeout_after_upload_requires_fresh_readback_reconciliation(self):
+        class TimeoutAfterWrite(FakeDrive):
+            def patch(self, url, params=None, data=None, headers=None, timeout=None):
+                super().patch(url, params=params, data=data, headers=headers, timeout=timeout)
+                raise TimeoutError("server response lost")
+
+        fake = TimeoutAfterWrite(_raw(self.base))
+        tower = DriveTower("FILE", session=fake)
+        base = DriveHead.from_meta(fake._meta())
+        changed = _raw(self._changed())
+        with self.assertRaises(TowerTransportError) as caught:
+            tower.compare_and_swap(base, changed)
+        self.assertEqual(caught.exception.retry_condition, "AFTER_TRANSPORT_RECOVERY")
+        observed, _ = DriveTower("FILE", session=fake).download(cache=False)
+        self.assertEqual(read_live_tower_bytes(observed)["state_fingerprint"],
+                         read_live_tower_bytes(changed)["state_fingerprint"])
+
+    def test_401_and_403_require_operator_reauthorization_without_escalation(self):
+        class BlockedRead:
+            def __init__(self, status):
+                self.status = status
+
+            def get(self, *args, **kwargs):
+                return _Response(self.status, b"private permission response")
+
+        for status in (401, 403):
+            with self.subTest(status=status), self.assertRaises(TowerTransportError) as caught:
+                DriveTower("FILE", session=BlockedRead(status)).download(cache=False)
+            self.assertEqual(caught.exception.status_code, status)
+            self.assertEqual(caught.exception.retry_condition, "OPERATOR_REAUTHORIZATION")
+            self.assertNotIn("private permission response", str(caught.exception))
+
+    def test_two_independent_writers_can_both_pass_precheck_before_unconditional_patch(self):
+        class RacingDrive:
+            def __init__(self, raw):
+                import hashlib
+                self.raw = raw
+                self.revision = 1
+                self.lock = threading.Lock()
+                self.barrier = threading.Barrier(2)
+                self.initial_reads = 0
+                self.uploads = []
+
+            def _meta(self):
+                import hashlib
+                return {"headRevisionId": str(self.revision), "md5Checksum": hashlib.md5(self.raw).hexdigest(),
+                        "size": str(len(self.raw))}
+
+            def get(self, url, params=None, timeout=None):
+                if (params or {}).get("alt") == "media":
+                    with self.lock:
+                        return _Response(200, self.raw)
+                with self.lock:
+                    first_pair = self.initial_reads < 2
+                    payload = self._meta()
+                    if first_pair:
+                        self.initial_reads += 1
+                if first_pair:
+                    self.barrier.wait(timeout=5)
+                return _Response(200, payload=payload)
+
+            def patch(self, url, params=None, data=None, headers=None, timeout=None):
+                with self.lock:
+                    self.raw = data
+                    self.revision += 1
+                    self.uploads.append({"headers": dict(headers or {}), "params": dict(params or {})})
+                    payload = self._meta()
+                return _Response(200, payload=payload)
+
+        drive = RacingDrive(_raw(self.base))
+        base = DriveHead.from_meta(drive._meta())
+        second_root, _ = materialize_live_tower(_raw(self.base), Path(self.tmp.name) / "racer-two")
+        entity_path(second_root, "test", "TEST::A").write_text(json.dumps({"id": "TEST::A", "status": "BLOCKED"}))
+        publish_live_tower(second_root)
+        updates = [read_live_tower_bytes(_raw(self._changed())),
+                   read_live_tower_bytes((second_root / LIVE_TOWER_NAME).read_bytes())]
+        raw_updates = [_raw(row) for row in updates]
+        self.assertEqual(len({row["state_fingerprint"] for row in updates}), 2)
+
+        def write(raw):
+            try:
+                return DriveTower("FILE", session=drive).compare_and_swap(base, raw)["status"]
+            except (TowerConflict, TowerReadbackMismatch) as exc:
+                return type(exc).__name__
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(write, raw_updates))
+        self.assertEqual(drive.initial_reads, 2)
+        self.assertEqual(len(drive.uploads), 2)
+        self.assertTrue(all("If-Match" not in write["headers"] for write in drive.uploads))
+        self.assertIn(read_live_tower_bytes(drive.raw)["state_fingerprint"],
+                      {row["state_fingerprint"] for row in updates})
+        # The fake explicitly schedules both base checks before either PATCH;
+        # local compare+readback is observability, not a remote atomic CAS.
+        self.assertEqual(len(outcomes), 2)
 
     def test_repack_preserves_files_outside_scanned_surfaces(self):
         base = dict(self.base)

@@ -49,19 +49,19 @@ Registrar Diretriz aceita em `NEXO Lite/pendentes`, com ID estável, objetivo, r
 ## Dez automações ativas: pipeline horário
 O plano permite dez automações ativas. Preservar função antes de preservar cartões separados: o resumo `Bom dia` foi incorporado ao Guardião na rodada das 07:07, e o cartão antigo permanece pausado. O slot liberado pertence ao Operador C.
 
-O Writer externo pulsa a cada 15 minutos em BRT: `:04`, `:19`, `:34`, `:49`. Posicionar produtores e consumidores ao redor desses pulsos para reduzir latência.
+O Writer externo usa o cron `7,22,37,52 * * * *` (UTC). Os minutos coincidem em BRT. Esta descrição não altera as agendas existentes.
 
 | Tarefa | Gatilho BRT | Entrada -> saída | Próximo consumidor |
 |---|---|---|---|
-| Operador C | :00, toda hora | READY residual após A/B -> despacho/bindings | Writer :04 |
+| Operador C | :00, toda hora | READY residual após A/B -> despacho/bindings | Writer :07 |
 | Engenheiro | :05, toda hora | RECIPE_REQUEST/circuitos -> PR e smoke | Revisor e Operadores |
 | Guardião | :07, toda hora | saúde, SLA A/B/C, Writer e travas -> integridade/reatribuição | papéis; às 07:07 também resumo diário ao Dener |
-| Crítico | :09, toda hora | positivos novos -> até 20 contestações independentes | Writer :19 e Operadores |
-| Cientista | :12, toda hora | quedas, diretrizes e lacunas -> READY realmente executável | Writer :19 |
-| Pítia | :15, toda hora | resultados e roadmaps -> pensamentos com refs | Writer :19, Cientista e Dener |
-| Operador A | :30, toda hora | primeiro segmento READY elegível -> até 12 despachos | Writer :34 |
-| Operador B | :45, toda hora | segmento restante READY elegível -> até 12 despachos | Writer :49 |
-| Sentinela | 06:40 diário | literatura/releases -> contestação, dado ou sinal | Writer :49; Cientista/Operadores |
+| Crítico | :09, toda hora | positivos novos -> até 20 contestações independentes | Writer :22 e Operadores |
+| Cientista | :12, toda hora | quedas, diretrizes e lacunas -> READY realmente executável | Writer :22 |
+| Pítia | :15, toda hora | resultados e roadmaps -> pensamentos com refs | Writer :22, Cientista e Dener |
+| Operador A | :30, toda hora | primeiro segmento READY elegível -> até 12 despachos | Writer :37 |
+| Operador B | :45, toda hora | segmento restante READY elegível -> até 12 despachos | Writer :52 |
+| Sentinela | 06:40 diário | literatura/releases -> contestação, dado ou sinal | Writer :52; Cientista/Operadores |
 | Revisor de PR | evento de PR | diff de receita -> revisão e sinal | autor e Dener |
 
 ### Invariante READY
@@ -140,6 +140,19 @@ Tratar essa tabela como mapa de integração, não como substituto do inventári
 Ler mural e propostas pendentes para evitar duplicatas. Atraso ou falha de leitura produz diagnóstico; NO-OP somente com leitura válida e ausência de trabalho. Contestações precedem testes novos. Metas de vazão não autorizam inventar testes ou dados.
 
 ## Critério de entrega
+Preserve stable_id e hash exato; consulte acked e receipts duráveis. Rejeição terminal,
+leitura falha, ausência e conflito são distintos. Não reenviar os 14 HANDOFF ACK inválidos
+de ADVISOR de 02/10/2026 nem aceitar por outro destinatário. Resultado, encerramento de
+tentativa e revisão científica são dimensões separadas. Reconciliação histórica exige
+prova compatível, versão e dry-run.
+
+O mandato C01 é exclusivo do cache de readiness em contexto imutável: atribuição de 10%,
+100 avaliações candidatas únicas por dia, 7–28 dias e máximo 2800 avaliações.
+600 unidades efetivamente avaliadas pela candidata, com independência/estratos justificados,
+são necessárias para o gate de qualidade; os 90% de controles não entram no denominador.
+Falta de amostra, observabilidade ou readback retorna à baseline sem promoção.
+Não amplia autorização a prompt packs, tarefas, ciência, ACL ou CAMB/MCMC.
+
 Distinguir: configurado, proposto, entregue ao inbox, aplicado, executado, revisado e confirmado. Nulo científico exige execução válida. PASS de software permanece operacional. Preservar critérios congelados, multiplicidade, independência da contestação e limites do claim.
 
 Reproduzir falhas, fazer a menor mudança, testar e reler. Informar como desfazer mudanças relevantes. Não criar tickets ou documentos intermediários por padrão. Uma instrução no Git alcança os consumidores que a carregam; não afirmar instalação de plugin, alteração administrativa global ou memória nativa sem confirmação da ferramenta.

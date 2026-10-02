@@ -6,10 +6,10 @@ This is the only code path that writes operational truth. The loop is:
     -> refuse if head moved -> upload same file id -> download readback
     -> compare state_fingerprint
 
-Drive v3 has no revision precondition on ``files.update``, so the compare-and-
-swap is emulated: a process-wide lock serialises local writers and the head
-re-read right before upload catches any foreign writer. With a single writer
-role the remaining window is the upload itself.
+Drive v3 has no revision precondition on ``files.update``. This client checks
+the head immediately before PATCH and verifies readback, while a process-local
+lock serialises this runner. The check/PATCH window is not an atomic CAS and
+cannot protect against an independent writer that races from another process.
 """
 
 from __future__ import annotations
@@ -38,6 +38,16 @@ class TowerConflict(RuntimeError):
 
 class TowerReadbackMismatch(RuntimeError):
     """Drive returned different state than what was written."""
+
+
+class TowerTransportError(RuntimeError):
+    """Transport/auth failure with an explicit safe retry condition."""
+
+    def __init__(self, action: str, status_code: int | None, retry_condition: str):
+        self.action = action
+        self.status_code = status_code
+        self.retry_condition = retry_condition
+        super().__init__(f"DRIVE_{action}_FAILED:{status_code or 'TRANSPORT'}:{retry_condition}")
 
 
 def _tower_cache_path(md5: str) -> Path:
@@ -123,16 +133,32 @@ class DriveTower:
             session = AuthorizedSession(load_credentials(write=write))
         self.session = session
 
-    def _check(self, response: Any, action: str) -> Any:
+    @staticmethod
+    def _check(response: Any, action: str) -> Any:
         if response.status_code >= 400:
+            if response.status_code == 409:
+                raise TowerConflict(f"DRIVE_{action}_CONFLICT:409")
+            if response.status_code in {401, 403}:
+                raise TowerTransportError(action, response.status_code, "OPERATOR_REAUTHORIZATION")
+            if response.status_code in {408, 425, 429} or response.status_code >= 500:
+                raise TowerTransportError(action, response.status_code, "AFTER_TRANSPORT_RECOVERY")
             raise RuntimeError(f"DRIVE_{action}_FAILED:{response.status_code}:{response.text[:300]}")
         return response
 
+    @staticmethod
+    def _call(action: str, callback):
+        try:
+            return callback()
+        except (TowerConflict, TowerTransportError, TowerReadbackMismatch):
+            raise
+        except Exception as exc:
+            # The exception is raised by the HTTP transport call itself. Do not
+            # expose its message, which may contain URLs, headers, or payloads.
+            raise TowerTransportError(action, None, "AFTER_TRANSPORT_RECOVERY") from exc
+
     def head(self) -> DriveHead:
-        response = self._check(
-            self.session.get(f"{_API}/{self.file_id}", params={"fields": _META_FIELDS, "supportsAllDrives": "true"}, timeout=60),
-            "HEAD",
-        )
+        response = self._check(self._call("HEAD", lambda: self.session.get(
+            f"{_API}/{self.file_id}", params={"fields": _META_FIELDS, "supportsAllDrives": "true"}, timeout=60)), "HEAD")
         return DriveHead.from_meta(response.json())
 
     def download(self, *, cache: bool | None = None) -> tuple[bytes, DriveHead]:
@@ -148,10 +174,8 @@ class DriveTower:
             raw = cached.read_bytes()
             if hashlib.md5(raw).hexdigest() == head.md5:
                 return raw, head
-        response = self._check(
-            self.session.get(f"{_API}/{self.file_id}", params={"alt": "media", "supportsAllDrives": "true"}, timeout=300),
-            "DOWNLOAD",
-        )
+        response = self._check(self._call("DOWNLOAD", lambda: self.session.get(
+            f"{_API}/{self.file_id}", params={"alt": "media", "supportsAllDrives": "true"}, timeout=300)), "DOWNLOAD")
         raw = response.content
         if cached and hashlib.md5(raw).hexdigest() == head.md5:
             try:
@@ -168,20 +192,17 @@ class DriveTower:
         return read_live_tower_bytes(raw), head
 
     def upload(self, raw: bytes) -> DriveHead:
-        response = self._check(
-            self.session.patch(
+        response = self._check(self._call("UPLOAD", lambda: self.session.patch(
                 f"{_UPLOAD}/{self.file_id}",
                 params={"uploadType": "media", "fields": _META_FIELDS, "supportsAllDrives": "true"},
                 data=raw,
                 headers={"Content-Type": "application/json"},
                 timeout=300,
-            ),
-            "UPLOAD",
-        )
+            )), "UPLOAD")
         return DriveHead.from_meta(response.json())
 
     def compare_and_swap(self, base: DriveHead, raw: bytes) -> dict[str, Any]:
-        """Upload ``raw`` only if Drive still holds ``base``; then read back."""
+        """Check base, PATCH, and read back; Drive does not make this atomic."""
         expected = json.loads(raw.decode("utf-8"))["state_fingerprint"]
         current = self.head()
         if not current.same_content(base):
@@ -196,6 +217,7 @@ class DriveTower:
             )
         return {
             "status": "PASS",
+            "write_model": "HEAD_CHECK_PATCH_READBACK_NOT_ATOMIC",
             "file_id": self.file_id,
             "state_fingerprint": expected,
             "head_revision_id": head.head_revision_id or written.head_revision_id,
@@ -237,14 +259,12 @@ class DriveInbox:
         self.name = name
 
     def _query(self, q: str) -> list[dict[str, Any]]:
-        response = self.session.get(
+        response = DriveTower._check(DriveTower._call("INBOX_LIST", lambda: self.session.get(
             _API,
             params={"q": q, "fields": "files(id,name,createdTime,parents,mimeType)", "orderBy": "createdTime", "pageSize": 200,
                     "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"},
             timeout=60,
-        )
-        if response.status_code >= 400:
-            raise RuntimeError(f"DRIVE_LIST_FAILED:{response.status_code}:{response.text[:300]}")
+        )), "INBOX_LIST")
         return response.json().get("files", [])
 
     def _folder(self, name: str, parent: str | None = None) -> str | None:
@@ -267,22 +287,24 @@ class DriveInbox:
         # ChatGPT's Drive connector cannot upload raw .json files, but it can create
         # Google Docs: a Doc whose body is the JSON is exported as plain text.
         if str(item.get("mimeType", "")).startswith("application/vnd.google-apps."):
-            response = self.session.get(f"{_API}/{item['id']}/export", params={"mimeType": "text/plain"}, timeout=60)
+            response = DriveTower._check(DriveTower._call("INBOX_READ", lambda: self.session.get(
+                f"{_API}/{item['id']}/export", params={"mimeType": "text/plain"}, timeout=60)), "INBOX_READ")
         else:
-            response = self.session.get(f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)
+            response = DriveTower._check(DriveTower._call("INBOX_READ", lambda: self.session.get(
+                f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)), "INBOX_READ")
         return response.content
 
     def mark_processed(self, file_id: str) -> None:
         inbox = self._folder(self.name)
         processed = self._folder("processed", inbox)
         if not processed:
-            created = self.session.post(
+            created = DriveTower._check(DriveTower._call("INBOX_MARK_PROCESSED", lambda: self.session.post(
                 _API, json={"name": "processed", "mimeType": self.FOLDER, "parents": [inbox]}, timeout=60
-            )
+            )), "INBOX_MARK_PROCESSED")
             processed = created.json()["id"]
-        self.session.patch(
+        DriveTower._check(DriveTower._call("INBOX_MARK_PROCESSED", lambda: self.session.patch(
             f"{_API}/{file_id}", params={"addParents": processed, "removeParents": inbox}, json={}, timeout=60
-        )
+        )), "INBOX_MARK_PROCESSED")
 
 
 @contextmanager

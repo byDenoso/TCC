@@ -135,6 +135,33 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "arm": body.get("arm"),
         "semantic": semantic,
     }
+    # A legacy/manual result may still be recorded scientifically, but it may
+    # close an execution attempt only when it names the current observed
+    # runner attempt. The mutation guard revalidates the completed battery and
+    # every binding at apply time; these converter checks only decide whether
+    # to request closure or leave the execution phase untouched.
+    from . import scientific_integrity as integrity
+    active_execution = (
+        str(current.get("status") or current.get("state") or "").upper() == "RUNNING"
+        or str(current.get("execution_phase") or "").upper() == "RUNNING"
+        or test_id in integrity.active_tests(root)
+    )
+    if active_execution:
+        reproducibility = changes.get("reproducibility")
+        if not isinstance(reproducibility, dict):
+            raise ProposalError("ACTIVE_EXECUTION_RESULT_PROOF_REQUIRED")
+        expected = {
+            "battery_id": current.get("battery_id"),
+            "attempt_id": current.get("attempt_id"),
+            "run_ref": current.get("run_ref"),
+            "recipe_sha256": current.get("execution_recipe_sha256"),
+        }
+        if (str(current.get("status") or current.get("state") or "").upper() != "RUNNING"
+                or str(current.get("execution_phase") or "").upper() != "RUNNING"
+                or reproducibility.get("runner") != "GITHUB_ACTIONS"
+                or not all(expected[key] and reproducibility.get(key) == expected[key] for key in expected)):
+            raise ProposalError("ACTIVE_EXECUTION_RESULT_PROOF_REQUIRED")
+        changes["execution_phase"] = "COMPLETED"
     if verdict in evolution.POSITIVE_VERDICTS and not current.get("review_state"):
         changes["review_state"] = "PENDING_REVIEW"  # a positive result must survive two referees to count
     version = 1 if created else int(current.get("entity_version") or 0)
@@ -608,6 +635,7 @@ _KIND_ALIASES = {
     "HANDOFF": "HANDOFF", "NEXO_HANDOFF": "HANDOFF", "AGENT_HANDOFF": "HANDOFF",
     "HANDOFF_TRANSITION": "HANDOFF_TRANSITION", "HANDOFF_ACK": "HANDOFF_TRANSITION",
     "HANDOFF_DONE": "HANDOFF_TRANSITION", "HANDOFF_FAILED": "HANDOFF_TRANSITION",
+    "C01_CANARY": "OPERATIONAL_CANARY", "OPERATIONAL_CANARY": "OPERATIONAL_CANARY",
 }
 _EVOLUTION = {
     "DATA_BINDING": evolution.data_binding_requests,
@@ -726,6 +754,32 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         return [{"nexo_operation": "HANDOFF_TRANSITION", "_inbox_source": "DRIVE",
                  "transition": {"handoff_id": transition["handoff_id"], "state": state,
                                 "writer_role": transition["writer_role"]}}]
+
+    if kind == "OPERATIONAL_CANARY":
+        # C01 is a single scoped Tower operation. The inbox envelope's source,
+        # author, and timestamp are deliberately not copied into the Writer
+        # request and never authenticate the approval.
+        action = str(body.get("action") or "").strip().upper()
+        action_fields = {
+            "INSTALL_CONFIG": {"config"},
+            "START_SHADOW": {"offline_corpus_report"},
+            "ACTIVATE_CANARY": {"shadow_report"},
+            "PROMOTE": set(),
+            "ROLLBACK": set(),
+            "INTERRUPT": set(),
+        }
+        if action not in action_fields:
+            raise ProposalError("OPERATIONAL_CANARY_ACTION_INVALID")
+        allowed = {"action"} | action_fields[action]
+        unknown = sorted(set(body) - allowed - {"kind"})
+        if unknown:
+            raise ProposalError("OPERATIONAL_CANARY_FIELDS_UNSUPPORTED:" + ",".join(unknown))
+        missing = [key for key in action_fields[action]
+                   if not isinstance(body.get(key), dict)]
+        if missing:
+            raise ProposalError("OPERATIONAL_CANARY_FIELDS_REQUIRED:" + ",".join(missing))
+        return [{"nexo_operation": "OPERATIONAL_CANARY", "action": action,
+                 **{key: dict(body[key]) for key in action_fields[action]}}]
     if batch is not None and kind in {"MUTATION_PROPOSAL", "HYPOTHESIS_PROPOSAL", "LESSON_PROPOSAL"}:
         requests: list[dict[str, Any]] = []
         for index, entry in enumerate(batch):

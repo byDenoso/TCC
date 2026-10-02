@@ -83,8 +83,14 @@ def test_positive_result_needs_independent_attack_and_stop_criterion_fires(tmp_p
     assert _test(root, "T-1")["review_state"] == "CONTESTED"  # an unbacked review cannot confirm
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-09-25T04:00:00Z",
                   "payload": {"test_id": "CONTEST-T-1-1", "result": {"verdict": "PROMOTED"}}})
+    # A legacy terminal result can retain RUNNING as its historical phase.
+    # A later evidence-backed review must not be mistaken for a new terminal write.
+    parent = _test(root, "T-1")
+    parent["execution_phase"] = "RUNNING"
+    entity_path(root, "test", "T-1").write_text(json.dumps(parent, ensure_ascii=False, sort_keys=True), encoding="utf-8")
     _apply(root, {"kind": "VERDICT_REVIEW", "payload": {"test_id": "T-1", "contest_test_id": "CONTEST-T-1-1"}})
     assert _test(root, "T-1")["review_state"] == "CONFIRMED"
+    assert _test(root, "T-1")["execution_phase"] == "RUNNING"
     [progress] = evolution_status(root)["roadmaps"]
     assert progress["confirmed"] == 1 and progress["stop_reached"] == "SUCCESS"
     _apply(root, {"kind": "ROADMAP_CLOSE", "payload": {"roadmap_id": "RM-X", "reason": "SUCCESS"}})
@@ -147,7 +153,7 @@ def test_battery_dispatch_and_collect(tmp_path, monkeypatch):
         "battery_id": "bat-valid", "status": "RUNNING", "run_ref": "actions/runs/123", "started_tests": {'T-A': NOW, 'T-B': NOW}}})
     assert pending_batteries(root) == []
     _apply(root, {"kind": "BATTERY_STATUS", "_inbox_source": "RUNNER_OBSERVATION", "payload": {"battery_id": "bat-valid", "status": "DONE",
-        "run_ref": "actions/runs/123", "completed_at": END, "results": [
+        "run_ref": "actions/runs/123", "completed_at": END, "conclusion": "success", "results": [
         {"test_id": "T-A", "ok": True, "attempt_id": specs['T-A']['attempt_id'], "recipe_sha256": specs['T-A']['recipe_sha256'], "result": {"verdict": "PROMOTED", "summary": "x"}},
         {"test_id": "T-B", "ok": False, "log_tail": "Traceback"}]}})
     assert _test(root, "T-A")["verdict"] == "PROMOTED" and _test(root, "T-A")["review_state"] == "PENDING_REVIEW"
@@ -186,6 +192,7 @@ def test_second_runtime_failure_blocks_instead_of_recycling(tmp_path, monkeypatc
 
 
 def test_maintenance_archives_stale_drafts_and_audits_prereg(tmp_path):
+    from datetime import datetime, timezone
     root = _tower(tmp_path)
     _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "created_at": "2026-09-01T00:00:00Z",
                   "payload": {"display_name": "Rascunho velho", "domain": "science", "test_id": "T-DRAFT", "question": "q"}})
@@ -193,11 +200,47 @@ def test_maintenance_archives_stale_drafts_and_audits_prereg(tmp_path):
     _hyp(root, "T-RUN", created_at="2026-09-30T00:00:00Z")
     _apply(root, {"kind": "MUTATION_PROPOSAL", "created_at": "2026-10-01T00:00:00Z",
                   "payload": {"test_id": "T-RUN", "result": {"verdict": "PROMOTED"}}})
-    _maintain(root)
+    now = datetime.now(timezone.utc)
+    _maintain(root, now)
     assert _test(root, "T-DRAFT")["status"] == "ARCHIVED"
     assert _test(root, "T-RUN")["prereg_audit"]["reason"] in {"FROZEN_BEFORE_RESULT", "PREREG_TIME_UNKNOWN"}
     # idempotent: a second run changes nothing about the audit
-    assert not [r for r in _maintain(root) if r.get("entity_name") == "T-RUN"]
+    assert not [r for r in _maintain(root, now) if r.get("entity_name") == "T-RUN"]
+
+
+def test_stale_draft_archive_cannot_claim_a_future_writer_time(tmp_path):
+    from datetime import datetime, timedelta, timezone
+    root = _tower(tmp_path)
+    now = datetime.now(timezone.utc)
+    _apply(root, {
+        "kind": "HYPOTHESIS_PROPOSAL",
+        "created_at": (now - timedelta(days=30)).isoformat(),
+        "payload": {
+            "display_name": "Stale draft fixture",
+            "domain": "science",
+            "test_id": "T-FUTURE-ARCHIVE",
+            "question": "q",
+        },
+    })
+    current = _test(root, "T-FUTURE-ARCHIVE")
+    assert current["status"] == "DRAFT"
+    receipt = apply_requests(root, [{
+        "request_id": "REQ-FUTURE-STALE-DRAFT-ARCHIVE",
+        "entity_kind": "test",
+        "entity_name": "T-FUTURE-ARCHIVE",
+        "expected_version": current["entity_version"],
+        "writer_role": "ADVISOR",
+        "event_type": "TEST_ARCHIVED",
+        "changes": {
+            "status": "ARCHIVED",
+            "state": "ARCHIVED",
+            "archive_reason": "stale_draft",
+            "archived_at": (now + timedelta(days=1)).isoformat(),
+        },
+    }])[0]
+    assert not receipt["accepted"]
+    assert receipt["issue"]["code"] == "TERMINAL_STATUS_REQUIRES_RESULT_EVENT"
+    assert _test(root, "T-FUTURE-ARCHIVE") == current
 
 
 def test_roadmap_fdr_annotation_and_watchdog(tmp_path):

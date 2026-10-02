@@ -13,6 +13,7 @@ from runtime.nexo_agent_api import prediction_receipts as receipts
 from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload, read_live_tower_bytes
 from runtime.nexo_agent_api.public_projection import _public_prereg, build_public_projection
+from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
 from runtime.nexo_agent_api.tower_apply import apply_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
 from tests.test_scientific_integrity import fixture, save
@@ -96,11 +97,30 @@ class PredictionReceiptTests(unittest.TestCase):
         self.assertNotIn('recorded_at', _public_prereg(self.current())['prediction'])
 
     def test_prediction_supplied_with_result_is_retrospective(self):
-        self.assertTrue(self.mutate({'prediction': self.prediction(), 'status': 'DONE', 'state': 'DONE',
-                                    'verdict': 'INCONCLUSIVE', 'executed_at': '2026-10-01T11:00:00Z'})['accepted'])
-        test = self.current()
-        self.assertEqual(test['prediction_receipt']['classification'], 'AFTER_EXECUTION_OR_RESERVATION')
-        self.assertNotIn('recorded_at', _public_prereg(test)['prediction'])
+        for status in ('DRAFT', 'READY'):
+            with self.subTest(status=status):
+                self.put({**self.test, 'status': status, 'state': status})
+                item = {
+                    'kind': 'MUTATION_PROPOSAL',
+                    'created_at': '2026-10-01T11:00:00Z',
+                    '_inbox_name': f'prediction-with-result-{status}.json',
+                    'payload': {
+                        'test_id': 'TEST-PRED',
+                        'prediction': self.prediction(),
+                        'result': {'verdict': 'INCONCLUSIVE', 'summary': 'Retrospective fixture result.'},
+                    },
+                }
+                requests = proposal_to_requests(item, self.root)
+                self.assertEqual(requests[0]['event_type'], 'TEST_RESULT_RECORDED')
+                with patch.object(receipts, 'datetime') as clock, redirect_stderr(io.StringIO()):
+                    clock.now.return_value = OBSERVED
+                    applied = apply_requests(self.root, requests)[0]
+                self.assertTrue(applied['accepted'], applied)
+                test = self.current()
+                self.assertEqual(test['executed_at'], '2026-10-01T11:00:00Z')
+                self.assertEqual(test['verdict'], 'INCONCLUSIVE')
+                self.assertEqual(test['prediction_receipt']['classification'], 'AFTER_EXECUTION_OR_RESERVATION')
+                self.assertNotIn('recorded_at', _public_prereg(test)['prediction'])
 
     def test_prediction_after_reservation_is_not_prospective(self):
         self.test.update(status='QUEUED', state='QUEUED'); self.put(self.test)
@@ -110,11 +130,31 @@ class PredictionReceiptTests(unittest.TestCase):
 
     def test_same_mutation_cannot_hide_previous_reservation_or_legacy_state(self):
         self.test.update(status='QUEUED', state='QUEUED'); self.put(self.test)
-        self.assertTrue(self.mutate({'status': 'DRAFT', 'state': 'DRAFT', 'prediction': self.prediction()})['accepted'])
-        self.assertEqual(self.current()['prediction_receipt']['classification'], 'AFTER_EXECUTION_OR_RESERVATION')
-        self.test.update(status='DRAFT', state='RUNNING'); self.put(self.test)
+        refused = self.mutate({'status': 'DRAFT', 'state': 'DRAFT', 'prediction': self.prediction()})
+        self.assertFalse(refused['accepted'])
+        self.assertEqual(refused['issue']['code'], 'EXECUTION_PHASE_TRANSITION_REQUIRED')
+        self.assertEqual(self.current()['status'], 'QUEUED')
+        self.assertNotIn('prediction', self.current())
         self.assertTrue(self.mutate({'prediction': self.prediction()})['accepted'])
         self.assertEqual(self.current()['prediction_receipt']['classification'], 'AFTER_EXECUTION_OR_RESERVATION')
+        legacy = fixture('TEST-PRED-LEGACY-RUNNING')
+        legacy.update(status='DRAFT', state='RUNNING')
+        self.put(legacy)
+        request = {
+            'request_id': 'REQ-PRED-LEGACY-RUNNING',
+            'entity_kind': 'test',
+            'entity_name': legacy['id'],
+            'expected_version': legacy['entity_version'],
+            'writer_role': 'ADVISOR',
+            'event_type': 'TEST_ENRICHED',
+            'changes': {'prediction': self.prediction()},
+        }
+        with patch.object(receipts, 'datetime') as clock, redirect_stderr(io.StringIO()):
+            clock.now.return_value = OBSERVED
+            applied = apply_requests(self.root, [request])[0]
+        self.assertTrue(applied['accepted'], applied)
+        legacy_after = json.loads(entity_path(self.root, 'test', legacy['id']).read_text())
+        self.assertEqual(legacy_after['prediction_receipt']['classification'], 'AFTER_EXECUTION_OR_RESERVATION')
 
     def test_ready_retry_with_prior_attempt_is_not_a_new_prospective_observation(self):
         self.test.update(attempt_id='earlier-attempt', battery_id='finished-battery')

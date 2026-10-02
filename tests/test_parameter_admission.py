@@ -45,7 +45,14 @@ def reserve(context):
 
 
 def completion(context,entry):
-    root,_,_=context
+    root,_,test=context
+    current=s.entity(root,test['id'])
+    if current.get('status') != 'RUNNING' or current.get('execution_phase') != 'RUNNING':
+        start=e.battery_status_requests({'_inbox_source':'RUNNER_OBSERVATION','created_at':NOW},
+            {'battery_id':'bat-param','status':'RUNNING','run_ref':'actions/runs/123',
+             'started_tests':{test['id']:NOW}},root,_result_request)
+        receipts=apply_requests(root,start)
+        assert all(r.get('accepted',True) for r in receipts),receipts
     return e.battery_status_requests({'_inbox_source':'RUNNER_OBSERVATION'},
         {'battery_id':'bat-param','status':'DONE','run_ref':'actions/runs/123','completed_at':END,
          'conclusion':'success','results':[entry]},root,_result_request)

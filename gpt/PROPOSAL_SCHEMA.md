@@ -13,7 +13,13 @@ Envelope (um arquivo ou documento por proposta):
 ```
 Nome: `<utc>-<kind>-<slug>`.
 
-**Privacidade e destino:** GitHub `byDenoso/TCC@nexo-inbox` é público e aceita somente propostas
+**Transporte público vigente:** grave propostas sanitizadas em
+`byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json`.
+O relay entrega ao ramo público `nexo-inbox`; esse destino comprova transporte, não aplicação.
+Preserve stable_id e bytes no retry. Recibo exige hash exato. Recibo ausente, erro de leitura,
+conflito e rejeição terminal são resultados distintos. O MCP hospedado é somente leitura.
+
+**Privacidade e destino:** GitHub é público e aceita somente propostas
 sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de
 handoff. Handoffs entre agentes e outras mensagens privadas devem ser um Google Doc com JSON no corpo,
 criado em `NEXO_INBOX` no Drive privado. Depois de criar, releia o documento e confirme que o JSON está
@@ -147,7 +153,7 @@ Sem esse bloco o writer deriva a hipótese do próprio teste (rival, null, kill)
 ## "Quero testar X" (qualquer conversa)
 1. Monte na hora a HYPOTHESIS_PROPOSAL completa (com bloco `hypothesis`, semantic, critérios congelados, método e dados); escolha o `roadmap_id` mais próximo.
 2. Se dá para executar agora com dados públicos: rode no Python e gere a MUTATION_PROPOSAL do resultado.
-3. Rode o NEXO_WRITER_PROCEDURE (contrato MCP) na mesma conversa → aparece no ATLAS em minutos.
+3. Entregue pelo staging/relay vigente e confirme recibo do Writer e projeção; uma leitura MCP não aplica a proposta.
 4. Se não dá para executar agora: grave só a hipótese; o Executor pega na fronteira.
 
 ## LEARNING_SIGNAL — lacuna de conhecimento do Dener (tarefa Gaps)
@@ -181,7 +187,7 @@ Testes com id `META-*` (domain_id `engineering`) são hipóteses sobre o própri
  "checks": [{"area": "tower|site|inbox|tasks|science|cycle|contract", "ok": true, "detail": "..."}],
  "semantic": {"domain_id": "engineering", "topic_id": "engineering.nexo_runtime"}}
 ```
-Vira `artifact INTEGRITY_REPORT::*`. O Guardião nunca corrige nada.
+Vira `artifact INTEGRITY_REPORT::*`. O Guardião executa somente reparos operacionais e rollback dentro de um mandato verificado; fora desse escopo registra o diagnóstico e conserva os gates.
 
 ## SEMANTIC_BACKFILL — completar leitura simples de entidades existentes
 Preenche só o que está vazio (use `"overwrite": true` para corrigir). Serve para testes, hipóteses, lições e campanhas públicas. Para campanhas, use `entity_kind: "campaign"` mais o `roadmap_id`; o Writer atualiza o documento da campanha sem substituir a pergunta científica original. `title` recebe o nome curto em português mostrado ao público.
@@ -296,3 +302,25 @@ Falha de parâmetros, insumo ou ajuste deve retornar `ok: false`, `result: null`
 não cria `executed_at`, estatística ou veredito. O responsável repara a ligação/implementação
 e revalida pelo Writer. Seleção incompatível com o release congelado exige revisão científica;
 nunca trocar release ou redshifts automaticamente. Reservas históricas não recebem preflight retroativo.
+
+## Contratos operacionais compatíveis (2026-10-02)
+
+A Tower privada permanece autoridade e o Writer existente permanece o único aplicador.
+ENGINEER é o papel público equivalente ao ADVISOR privado; isso não autoriza ACK de outro destinatário.
+`OPERATION_RECEIPT_V1` registra cada efeito e distingue APPLIED, ALREADY_APPLIED,
+REJECTED_TERMINAL, DEFERRED_DEPENDENCY e RETRYABLE_TRANSPORT. Leia recibos legados
+junto dos novos; um envelope parcial não prova que todos os efeitos foram aplicados.
+Rejeição terminal exige proposta corrigida com nova identidade relacionada. Dependência
+só reavalia após mudança do contexto; erro de transporte não significa fila vazia.
+
+Resultado terminal encerra a tentativa no mesmo envelope sem alterar revisão científica,
+preregistro ou executed_at. Reconciliação histórica começa em dry-run e exige prova
+compatível de tentativa encerrada; status terminal sozinho não basta.
+
+C01 autoriza somente cache de readiness no contexto imutável do runtime corrigido.
+Não altera contratos científicos nem CANONIZE global. A amostra conta unidades únicas
+efetivamente avaliadas pela candidata; controles não são exposições. Limites: 10%,
+100 por dia, 7–28 dias, no máximo 2800 exposições, mínimo 600 unidades candidatas
+independentes/estratificadas justificadas. Estimador e amostra são congelados antes do
+resultado; insuficiência ou perda do monitor encerra sem promoção e retorna à baseline.
+Prompts no Git não configuram tarefas do ChatGPT.
