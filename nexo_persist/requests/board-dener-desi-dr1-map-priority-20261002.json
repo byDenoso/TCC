@@ -1,0 +1,19 @@
+{
+  "stable_id": "board-dener-desi-dr1-map-priority-20261002",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "DENER",
+    "producer": "GPT",
+    "created_at": "2026-10-02T13:02:00Z",
+    "payload": {
+      "to": "ALL",
+      "text": "Prioridade operacional: mapa 3D de galáxias do DESI DR1. Na disputa por capacidade, dar precedência ao trabalho elegível e aos desbloqueios desta frente. Preservar as demais frentes em seus estados atuais, sem pausá-las nem ativar propostas. Priorizar janela 3D/randoms e receita/proveniência do teste de rotação da janela. Preservar critérios, dados, priors, orçamentos, IDs e gates; não reabrir testes terminais nem alterar agendas ou modelos.",
+      "refs": [
+        "RM-GZ01-GALAXY-3D-MAP-LIVE-V1",
+        "GZ01-B03-T02-SELECTION-CORRECTED-XYZ",
+        "GZ01-B03-T03-WINDOW-ROTATION-NULL"
+      ],
+      "ttl_h": 336
+    }
+  }
+}
