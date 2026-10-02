@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr396-0a917b56",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T02:21:16Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/396",
+        "head_sha": "0a917b5676b467f6108395a5d309e2f12b5057ba",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: o mínimo interno de dez pontos não consta dos contratos congelados; manter dois pontos remove apenas o bloqueio operacional e preserva faixas, compilações, priors, estimador e limiares.",
+          "Item 2: os parâmetros declarativos e o preflight permanecem inalterados.",
+          "Item 3: URLs versionadas, SHA256, estatística e critérios permanecem intactos.",
+          "Item 4: verdict, decision, summary, statistics, semantic.result_meaning e o smoke versionado permanecem íntegros; a regressão específica e executor-runtime-smoke passaram no head revisado."
+        ]
+      }
+    }
+  }
+}
