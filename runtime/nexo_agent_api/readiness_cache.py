@@ -22,7 +22,7 @@ from .tower_paths import entity_path
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _ACCESS_SCOPES = {"PUBLIC", "PRIVATE"}
-_CONTEXT_VERSION = "READINESS_CACHE_CONTEXT_V1"
+_CONTEXT_VERSION = "READINESS_CACHE_CONTEXT_V2"
 
 
 class ReadinessContextUnavailable(ValueError):
@@ -101,6 +101,7 @@ class ReadinessCacheContext:
     access_scope: str
     authorization_revision: str
     reservation_sha256: str
+    parameter_contract_sha256: str = _sha256_bytes(b"NO_PARAMETER_CONTRACT")
     context_version: str = _CONTEXT_VERSION
 
     def __post_init__(self) -> None:
@@ -111,7 +112,8 @@ class ReadinessCacheContext:
         if not self.authorization_revision:
             raise ReadinessContextUnavailable("AUTHORIZATION_REVISION_UNVERIFIED")
         for name in ("test_contract_sha256", "recipe_sha256", "smoke_sha256",
-                     "manifest_sha256", "validator_sha256", "reservation_sha256"):
+                     "manifest_sha256", "validator_sha256", "reservation_sha256",
+                     "parameter_contract_sha256"):
             if not _SHA256.fullmatch(getattr(self, name)):
                 raise ReadinessContextUnavailable("CONTEXT_HASH_INVALID:" + name)
         if not self.validator_version:
@@ -194,11 +196,11 @@ class ReadinessCacheContext:
 
         reservation_file = Path(root) / "evolution" / "batteries.json"
         if reservation_file.is_file():
-            reservation_sha256 = _read_digest(reservation_file, read_metrics)
             try:
                 reservation_raw = reservation_file.read_bytes()
                 read_metrics["context_read_calls"] += 1
                 read_metrics["context_bytes_read"] += len(reservation_raw)
+                reservation_sha256 = _sha256_bytes(reservation_raw)
                 reservation_doc = json.loads(reservation_raw.decode("utf-8"))
                 if not isinstance(reservation_doc, dict):
                     raise ValueError("not an object")
@@ -210,13 +212,24 @@ class ReadinessCacheContext:
             # The canonical readiness reader treats a missing ledger as empty.
             reservation_sha256 = _sha256_bytes(b"MISSING:evolution/batteries.json")
 
+        # Parameter admission reads these catalog files independently of the
+        # recipe and smoke spec. Include absence as well as content: installing,
+        # removing, or changing a preflight contract must invalidate cached READY.
+        parameter_files = {}
+        for relative in ("preflight/" + recipe_id + ".json", "recipe_param_preflight.py"):
+            path = recipe_root / relative
+            parameter_files[relative] = (
+                _read_digest(path, read_metrics) if path.is_file()
+                else _sha256_bytes(("MISSING:" + relative).encode("utf-8"))
+            )
+
         context = cls(
             test_id=test_id,
             test_contract_sha256=_sha256_json(dict(test)),
             dependency_revisions=tuple(dependencies),
             recipe_id=recipe_id,
             recipe_sha256=_read_digest(code, read_metrics),
-            smoke_sha256=_read_digest(smoke, read_metrics),
+            smoke_sha256=_sha256_bytes(smoke_raw),
             manifest_revision=str(manifest_revision or ""),
             manifest_sha256=str(manifest_sha256),
             validator_version=str(validator_version or ""),
@@ -224,6 +237,7 @@ class ReadinessCacheContext:
             access_scope=str(access_scope or "").upper(),
             authorization_revision=str(authorization_revision or ""),
             reservation_sha256=reservation_sha256,
+            parameter_contract_sha256=_sha256_json(parameter_files),
         )
         if metrics_out is not None:
             metrics_out.update(read_metrics)
