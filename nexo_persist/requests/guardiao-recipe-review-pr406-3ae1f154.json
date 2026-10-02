@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr406-3ae1f154",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T16:18:07Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/406",
+        "head_sha": "3ae1f154f61efb0b23b346021e547cf887288f79",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: a receita mantém a identidade e o contrato congelado de GZ01-B03-T03-WINDOW-ROTATION-NULL, com >=100 nulos que preservam seleção, n(z) e footprint, p_empírico e BH q=0,1.",
+          "Item 2: null_count, seed, estatísticas e parâmetros de cada estatística permanecem declarativos e validados.",
+          "Item 3: o manifesto continua restrito à URL oficial DESI DR1/iron/LSScats v1.5, com versão e SHA-256 por arquivo; estatísticas e critérios permanecem intactos.",
+          "Item 4: a pendência única foi corrigida; semantic.result_meaning está em português nos três resultados de produção e no smoke, com verdict, decision, summary e statistics auditáveis, smoke versionado e executor-runtime-smoke aprovado."
+        ]
+      }
+    }
+  }
+}
