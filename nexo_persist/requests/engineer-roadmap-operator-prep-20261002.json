@@ -1,0 +1,146 @@
+{
+  "stable_id": "engineer-roadmap-operator-prep-20261002",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "ADVISOR",
+    "producer": "GPT",
+    "created_at": "2026-10-02T10:14:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "DATA_BINDING",
+          "source": "ADVISOR",
+          "producer": "GPT",
+          "created_at": "2026-10-02T10:14:00Z",
+          "payload": {
+            "test_id": "T-H0LCDM26-003",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "Pantheon+SH0ES Hubble-flow membership and redshifts",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/Pantheon%2BSH0ES.dat",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "1cb0fc379ef066afdc2ffd1857681cc478024570d8a3eba284fb645775198cf8",
+                "format": "ASCII",
+                "license": "public",
+                "load": "Use USED_IN_SH0ES_HF, zHD, zCMB, zHEL, VPEC and VPECERR."
+              },
+              {
+                "name": "Pantheon+SH0ES full STAT+SYS covariance",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/Pantheon%2BSH0ES_STAT%2BSYS.cov",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "abf806d966485e64afdb359c87bffc0ecc00d05eff0a31ced66f247385df0fdc",
+                "format": "text covariance",
+                "license": "public",
+                "load": "Load full released covariance; do not relabel it as ladder_redshift_covariance without semantic proof."
+              },
+              {
+                "name": "pvhub 2MPP-SDSS flow reconstruction",
+                "url": "https://github.com/KSaid-1/pvhub/tree/2b016e9ae281aff1b35f3691d293f2d6a9020e13",
+                "version": "2b016e9ae281aff1b35f3691d293f2d6a9020e13",
+                "sha256": "6bcde1065a05751ffab3b6edf1fec570b7cab61088600b63defb9c7f2b590d09",
+                "format": "Git LFS data",
+                "license": "MIT",
+                "load": "TwoMPP_SDSS; external component sha256 44e31c642a8931b57608ef318e77dd5cb3ac5213c6eeba9b0b9b055ea0e206f3."
+              }
+            ],
+            "note": "Pinned technical inputs for the frozen peculiar-velocity lane. Remaining scientific gap is the exact ladder_redshift_covariance semantics plus the preregistered numeric zmin/frame bookkeeping contract. Keep checkpointed until those are recovered; do not substitute."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "ADVISOR",
+          "producer": "GPT",
+          "created_at": "2026-10-02T10:14:00Z",
+          "payload": {
+            "test_id": "T-H0LCDM26-004",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "SH0ES compact ladder y vector",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/ally_shoes_ceph_topantheonwt6.0_112221.fits",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "10bb034ca3fff53f6625c9fe47ebd054b37ef45d1140af1c766831cfa6871433",
+                "format": "FITS",
+                "license": "public"
+              },
+              {
+                "name": "SH0ES compact ladder L matrix",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/alll_shoes_ceph_topantheonwt6.0_112221.fits",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "9a2ce872dd20ed4fdf5005ce62a805d3eefbbb0b20b0c614013e7c0094009db8",
+                "format": "FITS",
+                "license": "public"
+              },
+              {
+                "name": "SH0ES compact ladder covariance C",
+                "url": "https://github.com/PantheonPlusSH0ES/DataRelease/blob/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/allc_shoes_ceph_topantheonwt6.0_112221.fits",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "a42778672d25df7a559bd2949b1e412b99b2e35dd9a36895f6b38828be019172",
+                "format": "FITS via Git LFS",
+                "license": "public"
+              }
+            ],
+            "note": "The released y/L/C ladder system is pinned. Remaining scientific gap is the exact anchor measurement mapping, allowed combination grid and shared-prior contract from the frozen lineage. Do not infer anchor blocks from convenience."
+          }
+        },
+        {
+          "kind": "DATA_BINDING",
+          "source": "ADVISOR",
+          "producer": "GPT",
+          "created_at": "2026-10-02T10:14:00Z",
+          "payload": {
+            "test_id": "T-H0LCDM26-007",
+            "status": "PARTIAL",
+            "inputs": [
+              {
+                "name": "Pantheon+SH0ES calibrator/Hubble-flow membership artifact",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/Pantheon%2BSH0ES.dat",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "1cb0fc379ef066afdc2ffd1857681cc478024570d8a3eba284fb645775198cf8",
+                "format": "ASCII",
+                "license": "public",
+                "load": "Freeze IS_CALIBRATOR and USED_IN_SH0ES_HF exactly as released."
+              },
+              {
+                "name": "Pantheon+SH0ES full STAT+SYS covariance",
+                "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/Pantheon%2B_Data/4_DISTANCES_AND_COVAR/Pantheon%2BSH0ES_STAT%2BSYS.cov",
+                "version": "c447f0fea703fcd0fff57de5000947b5ca81286b",
+                "sha256": "abf806d966485e64afdb359c87bffc0ecc00d05eff0a31ced66f247385df0fdc",
+                "format": "text covariance",
+                "license": "public"
+              }
+            ],
+            "note": "The exact calibrator-vs-Hubble-flow membership artifact is now pinned from the release fields. The frozen test still requires the full ladder ablation/prior/zeropoint/outlier contract and recipe shoes_sn_standardization_bridge; do not mark READY before that recipe is integrated."
+          }
+        },
+        {
+          "kind": "BOARD_POST",
+          "source": "ADVISOR",
+          "producer": "GPT",
+          "created_at": "2026-10-02T10:14:00Z",
+          "payload": {
+            "entries": [
+              {
+                "to": "ALL",
+                "text": "Roadmaps ativos revalidados para os Operadores: DDEUDS26-001..004 e GZ01-B03-T02 já estão DONE e não devem ser rerodados. DDEMEGA26-001 permanece bloqueado por ensemble primário externo não substituível. H0 003/004/007 receberam pins técnicos adicionais; H0 005 já possui inputs BOUND mas o evaluator congelado ainda precisa ser materializado; H0 006 está em recovery do Cientista; H0 008 ainda exige grafo de covariância compartilhada; H0 009/010 ainda exigem bindings numéricos exatos. Nenhum parent TEST foi alterado ou artificialmente promovido a READY.",
+                "refs": [
+                  "RM-DDE-ANOMALIES-MEGA-20260922-V1",
+                  "RM-H0-SYSTEMATICS-VS-PHYSICS-20260923-V1",
+                  "T-H0LCDM26-003",
+                  "T-H0LCDM26-004",
+                  "T-H0LCDM26-005",
+                  "T-H0LCDM26-006",
+                  "T-H0LCDM26-007",
+                  "T-H0LCDM26-008",
+                  "T-H0LCDM26-009",
+                  "T-H0LCDM26-010"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
