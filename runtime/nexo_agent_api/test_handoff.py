@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -389,6 +390,26 @@ class RecoveryOwnershipTests(unittest.TestCase):
         self.assertEqual(self.current_work()["entity_version"], 2)
         recovered = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
         self.assertEqual(recovered["state"], "ACK")
+        self.assertEqual(self.current_work()["entity_version"], 2)
+
+    def test_frozen_clock_orders_ack_after_acceptance_mutation_without_changing_time(self):
+        from . import handoff, service as service_module
+        from .views import _latest_runtime_event_id
+
+        frozen = datetime(2026, 10, 2, 12, 0, 0, 123456, tzinfo=timezone.utc)
+
+        class FrozenDatetime:
+            @classmethod
+            def now(cls, tz=None):
+                return frozen if tz else frozen.replace(tzinfo=None)
+
+        with patch.object(handoff, "datetime", FrozenDatetime), patch.object(service_module, "datetime", FrozenDatetime):
+            created = self.create()
+            ack = self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+
+        self.assertEqual(created["created_at"], ack["created_at"])
+        self.assertGreater(ack["event_id"], created["event_id"])
+        self.assertEqual(_latest_runtime_event_id(self.root), ack["event_id"])
         self.assertEqual(self.current_work()["entity_version"], 2)
 
     def test_done_requires_ack_terminal_work_and_live_evidence(self):

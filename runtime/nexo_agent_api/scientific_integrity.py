@@ -10,6 +10,7 @@ import json
 import math
 import os
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,25 @@ from .tower_paths import entity_path
 POLICY = 'SCIENTIFIC_INTEGRITY_V1'
 ACTIVE = {'QUEUED', 'DISPATCH_PENDING', 'DISPATCHED', 'RUNNING'}
 TERMINAL = {'DONE', 'RESULT', 'VERIFIED', 'COMPLETED', 'REJECTED', 'ARCHIVED', 'CANCELLED', 'CANCELED'}
+EXECUTION_PHASE_RECONCILIATION_POLICY = 'EXECUTION_PHASE_RECONCILIATION_V1'
+EXECUTION_PHASE_SOURCE_PROOF_CONTRACT = 'EXECUTION_PHASE_SOURCE_PROOF_V1'
+EXECUTION_PHASE_CLOSED = 'COMPLETED'
+EXECUTION_PHASE_EVENT_TARGETS = {
+    'TEST_QUEUED': {'QUEUED'},
+    'TEST_DISPATCH_PENDING': {'DISPATCH_PENDING'},
+    'TEST_DISPATCHED': {'DISPATCHED'},
+    'TEST_RUNNING': {'RUNNING'},
+    'TEST_RUNTIME_FAILURE': {'READY', 'BLOCKED_INPUT'},
+    'TEST_INPUT_UNAVAILABLE': {'BLOCKED_INPUT'},
+    'TEST_RESULT_RECORDED': {EXECUTION_PHASE_CLOSED},
+}
+class _RunnerBatteryStatusToken:
+    def __deepcopy__(self, memo):
+        return self
+
+
+RUNNER_BATTERY_STATUS_TOKEN = _RunnerBatteryStatusToken()
+WRITER_DISPATCH_TOKEN = _RunnerBatteryStatusToken()
 FROZEN = ('question', 'null', 'rival', 'method', 'dataset_and_selection', 'success_criteria', 'kill_criteria', 'claim_boundary')
 RESULT_FIELDS = {'result_meaning', 'result_meaning_source', 'verdict_plain', 'summary_plain', 'result',
                  'scientific_result', 'statistics', 'verdict', 'decision', 'executed_at',
@@ -66,6 +86,616 @@ def terminal(test: dict) -> bool:
 
 def batteries(root: Path) -> list[dict]:
     return read(root, 'evolution/batteries.json').get('batteries') or []
+
+
+def _phase_reconciliation_protected(test: dict) -> bool:
+    """Keep CAMB/MCMC and cosmology test records outside this repair."""
+    identity_fields = ('id', 'domain', 'target_domain', 'roadmap_id', 'campaign_id',
+                       'test_group_id', 'recipe', 'execution_recipe')
+    values = [str(test.get(key) or '').upper() for key in identity_fields]
+    if any(value in {'COSMOLOGY', 'COSMOLOGIA'} for value in values[1:3]):
+        return True
+    return any(re.search(r'(^|[^A-Z0-9])(?:CAMB|MCMC)([^A-Z0-9]|$)', value) for value in values)
+
+
+def _trusted_source_git_root() -> Path:
+    """Return this package's checkout for read-only source-proof verification."""
+    return Path(__file__).resolve().parents[2]
+
+
+def _source_battery_envelopes(value: Any):
+    if isinstance(value, dict):
+        kind = str(value.get('kind') or value.get('type') or value.get('event_type') or '').upper().replace('-', '_')
+        payload = value.get('payload') if isinstance(value.get('payload'), dict) else value
+        if kind in {'TEST_BATTERY', 'BATTERY'} and isinstance(payload, dict) and isinstance(payload.get('tests'), list):
+            yield payload
+        for child in value.values():
+            yield from _source_battery_envelopes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _source_battery_envelopes(child)
+
+
+def _verified_original_submission(battery_id: str, submission_fingerprint: Any,
+                                  proof: Any) -> tuple[dict | None, str | None]:
+    """Re-read one immutable inbox Git blob and bind it to the stored hash.
+
+    A caller-supplied proof is only a locator. The Writer rechecks the remote
+    inbox ref, commit ancestry, blob bytes, full envelope hash, battery ID,
+    exact test payload, and the canonical source submission fingerprint.
+    """
+    if not isinstance(proof, dict) or proof.get('contract') != EXECUTION_PHASE_SOURCE_PROOF_CONTRACT:
+        return None, 'BATTERY_ORIGINAL_SUBMISSION_PROOF_REQUIRED'
+    submitted_specs = proof.get('submitted_specs')
+    if proof.get('battery_id') != battery_id or not isinstance(submitted_specs, list):
+        return None, 'BATTERY_SOURCE_PROOF_IDENTITY_INVALID'
+    try:
+        submitted_fingerprint = digest(submitted_specs)
+    except (TypeError, ValueError):
+        return None, 'BATTERY_SOURCE_PROOF_PAYLOAD_INVALID'
+    if (submitted_fingerprint != submission_fingerprint
+            or proof.get('submission_fingerprint') != submission_fingerprint):
+        return None, 'BATTERY_SOURCE_PROOF_FINGERPRINT_MISMATCH'
+
+    artifacts = proof.get('source_artifacts')
+    # A source proof must identify one unambiguous immutable request artifact.
+    if not isinstance(artifacts, list) or len(artifacts) != 1 or not isinstance(artifacts[0], dict):
+        return None, 'BATTERY_SOURCE_PROOF_AMBIGUOUS'
+    artifact = artifacts[0]
+    repository = artifact.get('repository')
+    git_ref = artifact.get('git_ref')
+    commit = artifact.get('commit')
+    object_id = artifact.get('object_id')
+    source_path = artifact.get('path')
+    source_sha256 = artifact.get('source_sha256')
+    if (repository != 'TCC' or git_ref != 'refs/remotes/origin/nexo-inbox'
+            or not isinstance(commit, str) or not re.fullmatch(r'(?:[0-9a-f]{40}|[0-9a-f]{64})', commit)
+            or not isinstance(object_id, str) or not re.fullmatch(r'(?:[0-9a-f]{40}|[0-9a-f]{64})', object_id)
+            or not isinstance(source_sha256, str) or not re.fullmatch(r'[0-9a-f]{64}', source_sha256)
+            or not isinstance(source_path, str)
+            or not (source_path.startswith('inbox/')
+                    or source_path.startswith('nexo-inbox/')
+                    or source_path.startswith('nexo_persist/requests/'))
+            or '\\' in source_path or any(part in {'', '.', '..'} for part in source_path.split('/'))):
+        return None, 'BATTERY_SOURCE_PROOF_REFERENCE_INVALID'
+
+    repo_root = _trusted_source_git_root()
+    try:
+        reachable = subprocess.run(
+            ['git', '-C', str(repo_root), 'merge-base', '--is-ancestor', commit, git_ref],
+            capture_output=True, check=False, timeout=10)
+        if reachable.returncode != 0:
+            return None, 'BATTERY_SOURCE_PROOF_COMMIT_NOT_REACHABLE'
+        blob = subprocess.run(
+            ['git', '-C', str(repo_root), 'cat-file', 'blob', object_id],
+            capture_output=True, check=False, timeout=10)
+        if blob.returncode != 0 or hashlib.sha256(blob.stdout).hexdigest() != source_sha256:
+            return None, 'BATTERY_SOURCE_PROOF_BLOB_HASH_MISMATCH'
+        committed = subprocess.run(
+            ['git', '-C', str(repo_root), 'show', f'{commit}:{source_path}'],
+            capture_output=True, check=False, timeout=10)
+        if (committed.returncode != 0 or committed.stdout != blob.stdout
+                or hashlib.sha256(committed.stdout).hexdigest() != source_sha256):
+            return None, 'BATTERY_SOURCE_PROOF_COMMIT_READBACK_MISMATCH'
+        source_document = json.loads(committed.stdout.decode('utf-8'))
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError, ValueError):
+        return None, 'BATTERY_SOURCE_PROOF_UNAVAILABLE'
+
+    matches = [payload for payload in _source_battery_envelopes(source_document)
+               if payload.get('battery_id') == battery_id
+               and payload.get('tests') == submitted_specs]
+    if len(matches) != 1:
+        return None, 'BATTERY_SOURCE_PROOF_ENVELOPE_NOT_UNIQUE'
+    normalized = {
+        'contract': EXECUTION_PHASE_SOURCE_PROOF_CONTRACT,
+        'battery_id': battery_id,
+        'submission_fingerprint': submitted_fingerprint,
+        'submitted_specs': submitted_specs,
+        'source_artifacts': [{
+            'repository': repository, 'git_ref': git_ref, 'commit': commit,
+            'object_id': object_id, 'path': source_path, 'source_sha256': source_sha256,
+        }],
+    }
+    return normalized, None
+
+
+def execution_phase_reconciliation_evidence(
+        root: Path, test: dict, *, source_submission_proof: dict | None = None
+) -> tuple[dict | None, list[str]]:
+    """Return exact, revalidatable proof for closing one legacy RUNNING phase.
+
+    A terminal status by itself is deliberately insufficient. The reservation,
+    frozen experiment, runner observation, result, and completed battery must
+    all identify the same attempt.
+    """
+    reasons: list[str] = []
+    test_id = str(test.get('id') or '')
+    status = str(test.get('status') or test.get('state') or '').upper()
+    if status not in TERMINAL or not terminal(test) or not test.get('verdict'):
+        reasons.append('TERMINAL_RESULT_REQUIRED')
+    if str(test.get('execution_phase') or '').upper() != 'RUNNING':
+        reasons.append('LEGACY_RUNNING_PHASE_REQUIRED')
+    if test.get('execution_phase_reconciliation'):
+        reasons.append('RECONCILIATION_METADATA_ALREADY_PRESENT')
+    if _phase_reconciliation_protected(test):
+        reasons.append('PROTECTED_CAMB_MCMC_SCOPE')
+    version = test.get('entity_version')
+    if type(version) is not int or version < 1:
+        reasons.append('SOURCE_ENTITY_VERSION_REQUIRED')
+    if not test_id:
+        reasons.append('TEST_ID_REQUIRED')
+
+    battery_id = str(test.get('battery_id') or '')
+    attempt_id = str(test.get('attempt_id') or '')
+    run_ref = str(test.get('run_ref') or '')
+    execution_recipe_sha = str(test.get('execution_recipe_sha256') or '')
+    reproducibility = test.get('reproducibility') if isinstance(test.get('reproducibility'), dict) else {}
+    if not battery_id:
+        reasons.append('BATTERY_ID_REQUIRED')
+    if not re.fullmatch(r'attempt-[0-9a-f]{32}', attempt_id):
+        reasons.append('ATTEMPT_ID_INVALID')
+    if not RUN_REF.fullmatch(run_ref):
+        reasons.append('RUN_REF_INVALID')
+    if not re.fullmatch(r'[0-9a-f]{64}', execution_recipe_sha):
+        reasons.append('EXECUTION_RECIPE_HASH_INVALID')
+    if test.get('execution_observation') != 'GITHUB_JOB_STEP':
+        reasons.append('RUNNER_STEP_OBSERVATION_REQUIRED')
+    started_at = timestamp(test.get('started_at'))
+    executed_at = timestamp(test.get('executed_at'))
+    if started_at is None:
+        reasons.append('RUNNER_STEP_START_REQUIRED')
+    if executed_at is None:
+        reasons.append('RESULT_EXECUTION_TIME_REQUIRED')
+    if any(reproducibility.get(key) != value for key, value in (
+            ('battery_id', battery_id), ('attempt_id', attempt_id), ('run_ref', run_ref),
+            ('recipe_sha256', execution_recipe_sha))):
+        reasons.append('RESULT_ATTEMPT_PROVENANCE_MISMATCH')
+
+    try:
+        registry = batteries(root)
+    except (OSError, ValueError, TypeError):
+        registry = []
+        reasons.append('BATTERY_REGISTRY_UNAVAILABLE')
+    matches = [battery for battery in registry if isinstance(battery, dict) and battery.get('id') == battery_id]
+    battery = matches[0] if len(matches) == 1 else {}
+    if len(matches) != 1:
+        reasons.append('BATTERY_MATCH_NOT_UNIQUE')
+
+    spec = None
+    completed_at = None
+    verified_external_submission = None
+    if battery:
+        if str(battery.get('status') or '').upper() != 'DONE':
+            reasons.append('BATTERY_NOT_TERMINAL')
+        if battery.get('execution_observation') != 'GITHUB_RUN_AND_ARTIFACT':
+            reasons.append('RUNNER_COMPLETION_OBSERVATION_REQUIRED')
+        if str(battery.get('conclusion') or '').lower() != 'success':
+            reasons.append('RUNNER_SUCCESS_CONCLUSION_REQUIRED')
+        if type(battery.get('ok')) is not int or battery.get('ok') < 1:
+            reasons.append('BATTERY_SUCCESS_COUNT_REQUIRED')
+        submitted_specs = battery.get('submitted_specs')
+        if submitted_specs is None:
+            verified_external_submission, source_error = _verified_original_submission(
+                battery_id, battery.get('submission_fingerprint'), source_submission_proof)
+            if source_error:
+                reasons.append(source_error)
+            else:
+                submitted_specs = verified_external_submission.get('submitted_specs')
+        else:
+            try:
+                submission_fingerprint = digest(submitted_specs) if isinstance(submitted_specs, list) else None
+            except (TypeError, ValueError):
+                submission_fingerprint = None
+            if battery.get('submission_fingerprint') != submission_fingerprint:
+                reasons.append('BATTERY_SUBMISSION_FINGERPRINT_MISMATCH')
+        if battery.get('run_ref') != run_ref or not RUN_REF.fullmatch(str(battery.get('run_ref') or '')):
+            reasons.append('BATTERY_RUN_REF_MISMATCH')
+        completed_at = timestamp(battery.get('completed_at'))
+        done_at = timestamp(battery.get('done_at'))
+        if completed_at is None or done_at is None or completed_at != done_at:
+            reasons.append('BATTERY_COMPLETION_TIME_INVALID')
+        battery_tests = battery.get('tests') or []
+        specs = [entry for entry in battery_tests
+                 if isinstance(entry, dict) and entry.get('test_id') == test_id]
+        spec = specs[0] if len(specs) == 1 else None
+        if len(specs) != 1:
+            reasons.append('BATTERY_ATTEMPT_SPEC_NOT_UNIQUE')
+        if isinstance(submitted_specs, list) and isinstance(battery_tests, list):
+            source_ids = [entry.get('test_id') for entry in submitted_specs if isinstance(entry, dict)]
+            if (len(source_ids) != len(submitted_specs) or len(source_ids) != len(battery_tests)
+                    or len(set(source_ids)) != len(source_ids)):
+                reasons.append('BATTERY_SUBMISSION_MEMBERSHIP_MISMATCH')
+            else:
+                for source_spec, attempt_spec in zip(submitted_specs, battery_tests):
+                    try:
+                        timeout_min = max(1, min(int(source_spec.get('timeout_min') or 30), 340))
+                    except (TypeError, ValueError, OverflowError):
+                        reasons.append('BATTERY_SUBMISSION_TIMEOUT_INVALID')
+                        break
+                    if (source_spec.get('test_id') != attempt_spec.get('test_id')
+                            or source_spec.get('recipe') != attempt_spec.get('recipe')
+                            or source_spec.get('params') != attempt_spec.get('params')
+                            or attempt_spec.get('timeout_min') != timeout_min):
+                        reasons.append('BATTERY_SUBMISSION_ATTEMPT_BINDING_MISMATCH')
+                        break
+    if spec:
+        binding = test.get('data_binding') or test.get('input_binding') or {}
+        inputs = binding.get('inputs') if isinstance(binding, dict) else None
+        if spec.get('attempt_id') != attempt_id:
+            reasons.append('BATTERY_ATTEMPT_ID_MISMATCH')
+        if spec.get('prereg_hash') != test.get('prereg_hash') or not test.get('prereg_hash'):
+            reasons.append('BATTERY_PREREG_HASH_MISMATCH')
+        if spec.get('recipe') != test.get('recipe') or spec.get('params') != test.get('recipe_params'):
+            reasons.append('BATTERY_RECIPE_BINDING_MISMATCH')
+        if spec.get('recipe_sha256') != execution_recipe_sha or spec.get('inputs') != inputs:
+            reasons.append('BATTERY_EXECUTION_HASH_OR_INPUT_MISMATCH')
+        if test.get('prereg_hash'):
+            from .evolution import prereg_hash
+            if test.get('prereg_hash') != prereg_hash(test_id, test):
+                reasons.append('FROZEN_PREREG_HASH_MISMATCH')
+        expected_fingerprint = execution_fingerprint(test, str(spec.get('recipe_sha256') or ''),
+                                                     spec.get('param_preflight'))
+        if spec.get('execution_fingerprint') != expected_fingerprint:
+            reasons.append('ATTEMPT_FINGERPRINT_MISMATCH')
+        readiness = test.get('readiness') if isinstance(test.get('readiness'), dict) else {}
+        if readiness.get('param_preflight') != spec.get('param_preflight'):
+            reasons.append('ATTEMPT_PREFLIGHT_MISMATCH')
+
+    if started_at and executed_at and executed_at < started_at:
+        reasons.append('RESULT_PRECEDES_ATTEMPT_START')
+    if executed_at and completed_at and executed_at > completed_at:
+        reasons.append('RESULT_FOLLOWS_RUNNER_COMPLETION')
+    if reasons:
+        return None, sorted(set(reasons))
+
+    try:
+        battery_fingerprint = digest(battery)
+    except (TypeError, ValueError):
+        return None, ['BATTERY_RECORD_NOT_CANONICAL']
+    evidence = {
+        'battery_id': battery_id,
+        'attempt_id': attempt_id,
+        'run_ref': run_ref,
+        'recipe_sha256': execution_recipe_sha,
+        'prereg_hash': str(test.get('prereg_hash')),
+        'execution_fingerprint': str(spec.get('execution_fingerprint')),
+        'battery_fingerprint': battery_fingerprint,
+        'started_at': str(test.get('started_at')),
+        'executed_at': str(test.get('executed_at')),
+        'completed_at': str(battery.get('completed_at')),
+    }
+    if verified_external_submission is not None:
+        evidence['source_submission_proof'] = verified_external_submission
+    return evidence, []
+
+
+def _terminal_result_attempt_evidence(root: Path, current: dict, request: dict) -> tuple[dict | None, list[str]]:
+    """Revalidate a new terminal result against its already recorded runner attempt.
+
+    The result mutation is applied after the canonical battery DONE update.  We
+    therefore combine the existing RUNNING entity with the proposed result,
+    while asking the same strict attempt validator used by historical phase
+    reconciliation to verify the current battery, attempt, runner receipt,
+    frozen input binding, and result timestamps.
+    """
+    if str(current.get('execution_phase') or '').upper() != 'RUNNING':
+        return None, ['CURRENT_ATTEMPT_NOT_RUNNING']
+    if str(current.get('status') or current.get('state') or '').upper() != 'RUNNING':
+        return None, ['CURRENT_TEST_NOT_RUNNING']
+    expected_version = request.get('expected_version')
+    if type(expected_version) is not int or expected_version != current.get('entity_version'):
+        return None, ['CURRENT_ENTITY_VERSION_MISMATCH']
+    changes = request.get('changes')
+    if not isinstance(changes, dict) or changes.get('execution_phase') != EXECUTION_PHASE_CLOSED:
+        return None, ['TERMINAL_RESULT_MUST_CLOSE_EXECUTION_PHASE']
+    merged = {**current, **changes, 'execution_phase': 'RUNNING'}
+    return execution_phase_reconciliation_evidence(root, merged)
+
+
+def _reservation_attempt(root: Path, test: dict) -> tuple[dict | None, dict | None]:
+    """Resolve exactly one canonical battery/spec matching a test attempt."""
+    battery_id = str(test.get('battery_id') or '')
+    test_id = str(test.get('id') or '')
+    attempt_id = str(test.get('attempt_id') or '')
+    if not battery_id or not test_id or not attempt_id:
+        return None, None
+    try:
+        matches = [battery for battery in batteries(root)
+                   if isinstance(battery, dict) and battery.get('id') == battery_id]
+    except (OSError, ValueError, TypeError):
+        return None, None
+    if len(matches) != 1:
+        return None, None
+    battery = matches[0]
+    specs = [spec for spec in battery.get('tests') or []
+             if isinstance(spec, dict) and spec.get('test_id') == test_id]
+    if len(specs) != 1:
+        return None, None
+    spec = specs[0]
+    binding = test.get('data_binding') or test.get('input_binding') or {}
+    inputs = binding.get('inputs') if isinstance(binding, dict) else None
+    if (spec.get('attempt_id') != attempt_id
+            or spec.get('prereg_hash') != test.get('prereg_hash')
+            or spec.get('recipe') != test.get('recipe')
+            or spec.get('params') != test.get('recipe_params')
+            or spec.get('recipe_sha256') != test.get('execution_recipe_sha256')
+            or spec.get('inputs') != inputs):
+        return None, None
+    try:
+        fingerprint = execution_fingerprint(test, str(spec.get('recipe_sha256') or ''),
+                                            spec.get('param_preflight'))
+    except (KeyError, TypeError, ValueError):
+        return None, None
+    if spec.get('execution_fingerprint') != fingerprint:
+        return None, None
+    return battery, spec
+
+
+def _failure_phase_attempt_proof(root: Path, request: dict, current: dict,
+                                 next_test: dict, event: str,
+                                 target: str) -> bool:
+    """Verify a runner-backed operational failure without inventing science.
+
+    Unlike successful result closure, this path may preserve a legacy
+    reservation with no attempt fingerprint or a current test whose input
+    binding disappeared after dispatch. The private battery receipt binds the
+    exact DONE runner event, one immutable battery spec, and the exact failed
+    result entry. Missing current provenance is tolerated only here; any
+    present provenance must still match the retained spec.
+    """
+    changes = request.get('changes')
+    failure = next_test.get('last_runtime_failure')
+    if not isinstance(changes, dict) or not isinstance(failure, dict):
+        return False
+    allowed_changes = {
+        'status', 'state', 'execution_phase', 'execution',
+        'runtime_failure_count', 'last_runtime_failure', 'blocker', 'readiness',
+    }
+    if set(changes) - allowed_changes:
+        return False
+    allowed_failure_fields = {
+        'battery_id', 'attempt_id', 'recipe_sha256', 'run_ref', 'at', 'class',
+        'reason', 'failure_stage', 'detail', 'param_preflight', 'log_tail',
+        'runner_result_sha256', 'runner_spec_sha256', 'runner_result_kind',
+    }
+    if set(failure) - allowed_failure_fields:
+        return False
+    if target not in {'READY', 'BLOCKED_INPUT'}:
+        return False
+    if event == 'TEST_INPUT_UNAVAILABLE':
+        if target != 'BLOCKED_INPUT' or failure.get('class') != 'INPUT_UNAVAILABLE':
+            return False
+    elif event == 'TEST_RUNTIME_FAILURE':
+        if failure.get('class') == 'INPUT_UNAVAILABLE':
+            return False
+    else:
+        return False
+
+    battery_id = str(current.get('battery_id') or '')
+    test_id = str(current.get('id') or '')
+    current_status = str(current.get('status') or current.get('state') or '').upper()
+    current_phase = str(current.get('execution_phase') or '').upper()
+    if (not battery_id or not test_id or failure.get('battery_id') != battery_id
+            or (current_status not in ACTIVE and current_phase not in ACTIVE)):
+        return False
+    try:
+        matches = [battery for battery in batteries(root)
+                   if isinstance(battery, dict) and battery.get('id') == battery_id]
+    except (OSError, ValueError, TypeError):
+        return False
+    if len(matches) != 1:
+        return False
+    battery = matches[0]
+    specs = [spec for spec in battery.get('tests') or []
+             if isinstance(spec, dict) and spec.get('test_id') == test_id]
+    if len(specs) != 1:
+        return False
+    spec = specs[0]
+
+    run_ref = str(battery.get('run_ref') or '')
+    completed = timestamp(battery.get('completed_at'))
+    failed_count = battery.get('failed')
+    if (str(battery.get('status') or '').upper() != 'DONE'
+            or battery.get('execution_observation') != 'GITHUB_RUN_AND_ARTIFACT'
+            or not RUN_REF.fullmatch(run_ref)
+            or completed is None
+            or completed != timestamp(battery.get('done_at'))
+            or type(failed_count) is not int or failed_count < 1
+            or battery.get('run_ref') != failure.get('run_ref')
+            or timestamp(failure.get('at')) != completed):
+        return False
+
+    prereg_hash = str(current.get('prereg_hash') or '')
+    recipe = str(current.get('recipe') or '')
+    params = current.get('recipe_params')
+    if (not prereg_hash or spec.get('prereg_hash') != prereg_hash
+            or not recipe or spec.get('recipe') != recipe
+            or not isinstance(params, dict) or spec.get('params') != params):
+        return False
+    spec_attempt = spec.get('attempt_id')
+    current_attempt = current.get('attempt_id')
+    if (bool(spec_attempt) != bool(current_attempt)
+            or (spec_attempt and spec_attempt != current_attempt)
+            or failure.get('attempt_id') != spec_attempt):
+        return False
+    spec_recipe_sha = spec.get('recipe_sha256')
+    current_recipe_sha = current.get('execution_recipe_sha256')
+    if (bool(spec_recipe_sha) != bool(current_recipe_sha)
+            or (spec_recipe_sha and spec_recipe_sha != current_recipe_sha)
+            or failure.get('recipe_sha256') != spec_recipe_sha):
+        return False
+
+    binding = current.get('data_binding') or current.get('input_binding')
+    current_inputs = binding.get('inputs') if isinstance(binding, dict) else None
+    if current_inputs is not None and spec.get('inputs') != current_inputs:
+        return False
+    spec_fingerprint = spec.get('execution_fingerprint')
+    if spec_fingerprint:
+        if current_inputs is not None:
+            try:
+                recomputed = execution_fingerprint(current, str(spec_recipe_sha or ''),
+                                                   spec.get('param_preflight'))
+            except (KeyError, TypeError, ValueError):
+                return False
+            if recomputed != spec_fingerprint:
+                return False
+    elif spec_attempt or spec_recipe_sha:
+        # New reservations carry the fingerprint. Its absence is accepted
+        # only for the explicitly legacy, no-attempt/no-recipe-hash case.
+        return False
+
+    receipts = battery.get('phase_failure_receipts')
+    if not isinstance(receipts, list):
+        return False
+    receipt_matches = [row for row in receipts
+                       if isinstance(row, dict) and row.get('test_id') == test_id]
+    if len(receipt_matches) != 1:
+        return False
+    receipt = receipt_matches[0]
+    spec_sha = 'sha256:' + digest(spec)
+    result_sha = str(receipt.get('result_sha256') or '')
+    if not re.fullmatch(r'sha256:[0-9a-f]{64}', result_sha):
+        return False
+    if (receipt.get('battery_id') != battery_id
+            or receipt.get('spec_sha256') != spec_sha
+            or receipt.get('result_sha256') != failure.get('runner_result_sha256')
+            or receipt.get('spec_sha256') != failure.get('runner_spec_sha256')
+            or receipt.get('receipt_kind') != failure.get('runner_result_kind')
+            or receipt.get('run_ref') != run_ref
+            or receipt.get('completed_at') != battery.get('completed_at')
+            or receipt.get('done_at') != battery.get('done_at')
+            or receipt.get('attempt_id') != spec_attempt
+            or receipt.get('recipe_sha256') != spec_recipe_sha
+            or receipt.get('prereg_hash') != prereg_hash
+            or receipt.get('recipe') != recipe
+            or receipt.get('params_sha256') != 'sha256:' + digest(spec.get('params'))
+            or receipt.get('failure_class') != failure.get('class')
+            or receipt.get('failure_stage') != failure.get('failure_stage')
+            or receipt.get('event_type') != event
+            or receipt.get('phase_target') != target):
+        return False
+    if receipt.get('receipt_kind') not in {'RUNNER_FAILURE_ENTRY', 'RUNNER_RESULTS_MISSING'}:
+        return False
+    return True
+
+
+def _phase_transition_proof(root: Path, request: dict, current: dict, next_test: dict,
+                            current_phase: str, next_state: str) -> str | None:
+    """Fail closed unless a phase change matches its one supported event and evidence."""
+    changes = request.get('changes')
+    if not isinstance(changes, dict):
+        return 'EXECUTION_PHASE_CHANGES_INVALID'
+    target = str(changes.get('execution_phase') or '').upper()
+    event = str(request.get('event_type') or '')
+    if target == EXECUTION_PHASE_CLOSED and event != 'TEST_RESULT_RECORDED':
+        return 'EXECUTION_PHASE_CLOSURE_REQUIRES_VERIFIED_RESULT'
+    allowed = EXECUTION_PHASE_EVENT_TARGETS.get(event)
+    if allowed is None or target not in allowed:
+        return 'EXECUTION_PHASE_EVENT_TARGET_INVALID'
+    if request.get('writer_role') != 'EXECUTOR':
+        return 'EXECUTION_PHASE_EXECUTOR_REQUIRED'
+    expected_version = request.get('expected_version')
+    if type(expected_version) is not int or expected_version != current.get('entity_version'):
+        return 'EXECUTION_PHASE_SOURCE_VERSION_INVALID'
+    if event != 'TEST_RESULT_RECORDED' and next_state != target:
+        return 'EXECUTION_PHASE_STATUS_MISMATCH'
+    if event == 'TEST_RESULT_RECORDED':
+        proof, _reasons = _terminal_result_attempt_evidence(root, current, request)
+        return None if proof is not None else 'EXECUTION_PHASE_RESULT_PROOF_REQUIRED'
+    if event in {'TEST_RUNTIME_FAILURE', 'TEST_INPUT_UNAVAILABLE'}:
+        return (None if _failure_phase_attempt_proof(root, request, current,
+                                                     next_test, event, target)
+                else 'EXECUTION_PHASE_FAILURE_PROOF_REQUIRED')
+
+    phase_sources = {
+        'TEST_QUEUED': {'', 'READY'},
+        'TEST_DISPATCH_PENDING': {'QUEUED', 'DISPATCH_PENDING'},
+        'TEST_DISPATCHED': {'QUEUED', 'DISPATCH_PENDING', 'DISPATCHED'},
+        'TEST_RUNNING': {'QUEUED', 'DISPATCH_PENDING', 'DISPATCHED', 'RUNNING'},
+        'TEST_RUNTIME_FAILURE': ACTIVE,
+        'TEST_INPUT_UNAVAILABLE': ACTIVE,
+    }
+    source_status = str(current.get('status') or current.get('state') or '').upper()
+    if (event in phase_sources and current_phase not in phase_sources[event]
+            and source_status not in phase_sources[event]):
+        return 'EXECUTION_PHASE_SOURCE_STATE_INVALID'
+
+    battery, spec = _reservation_attempt(root, next_test)
+    if battery is None or spec is None:
+        return 'EXECUTION_PHASE_RESERVATION_PROOF_REQUIRED'
+    battery_status = str(battery.get('status') or '').upper()
+    if event == 'TEST_QUEUED' and battery_status != 'QUEUED':
+        return 'EXECUTION_PHASE_QUEUED_RESERVATION_REQUIRED'
+    if event == 'TEST_DISPATCH_PENDING':
+        if battery_status != 'DISPATCH_PENDING' or battery.get('dispatch_confirmation') != 'PENDING_EXTERNAL_ACK':
+            return 'EXECUTION_PHASE_DISPATCH_PENDING_PROOF_REQUIRED'
+    if event == 'TEST_DISPATCHED':
+        if (battery_status != 'DISPATCHED'
+                or battery.get('dispatch_confirmation') != 'EXTERNAL_RUN_IDENTIFIED'
+                or battery.get('run_ref') != next_test.get('run_ref')
+                or not RUN_REF.fullmatch(str(next_test.get('run_ref') or ''))):
+            return 'EXECUTION_PHASE_DISPATCH_PROOF_REQUIRED'
+    if event == 'TEST_RUNNING':
+        if (battery_status != 'RUNNING'
+                or battery.get('run_ref') != next_test.get('run_ref')
+                or not RUN_REF.fullmatch(str(next_test.get('run_ref') or ''))
+                or next_test.get('execution_observation') != 'GITHUB_JOB_STEP'
+                or timestamp(next_test.get('started_at')) is None):
+            return 'RUNNER_STEP_EVIDENCE_REQUIRED'
+    return None
+
+
+def _guard_execution_phase_reconciliation(root: Path, request: dict) -> dict | None:
+    test_id = str(request.get('entity_name') or '')
+    current = entity(root, test_id)
+    changes = request.get('changes')
+    expected_version = request.get('expected_version')
+    if (isinstance(changes, dict)
+            and request.get('writer_role') == 'EXECUTOR'
+            and type(expected_version) is int
+            and set(changes) == {'execution_phase', 'execution_phase_reconciliation'}
+            and changes.get('execution_phase') == EXECUTION_PHASE_CLOSED
+            and current.get('execution_phase') == EXECUTION_PHASE_CLOSED
+            and current.get('execution_phase_reconciliation') == changes.get('execution_phase_reconciliation')):
+        record = changes.get('execution_phase_reconciliation') or {}
+        evidence = record.get('evidence') if isinstance(record, dict) else None
+        identity = {'test_id': test_id, 'source_entity_version': expected_version, 'evidence': evidence}
+        replay_id = 'REQ-EXEC-PHASE-' + digest(identity)[:32]
+        if (isinstance(record, dict)
+                and record.get('policy') == EXECUTION_PHASE_RECONCILIATION_POLICY
+                and record.get('source_entity_version') == expected_version
+                and request.get('request_id') == replay_id
+                and str(current.get('status') or current.get('state') or '').upper() in TERMINAL):
+            return {'request_id': request.get('request_id'), 'accepted': True, 'status': 'NO_OP',
+                    'reason': 'EXECUTION_PHASE_RECONCILIATION_ALREADY_APPLIED',
+                    'entity_version': current.get('entity_version'), 'readback': 'PASS'}
+    valid_shape = (
+        request.get('writer_role') == 'EXECUTOR'
+        and type(expected_version) is int
+        and isinstance(changes, dict)
+        and set(changes) == {'execution_phase', 'execution_phase_reconciliation'}
+        and (changes or {}).get('execution_phase') == EXECUTION_PHASE_CLOSED
+    )
+    source_proof = None
+    if isinstance(changes, dict):
+        reconciliation = changes.get('execution_phase_reconciliation')
+        recorded_evidence = reconciliation.get('evidence') if isinstance(reconciliation, dict) else None
+        source_proof = recorded_evidence.get('source_submission_proof') if isinstance(recorded_evidence, dict) else None
+    proof, reasons = execution_phase_reconciliation_evidence(
+        root, current, source_submission_proof=source_proof)
+    expected_record = {
+        'policy': EXECUTION_PHASE_RECONCILIATION_POLICY,
+        'justification': 'MATCHED_TERMINAL_RUNNER_ATTEMPT',
+        'source_entity_version': expected_version,
+        'evidence': proof,
+    }
+    if (not valid_shape or expected_version != current.get('entity_version') or proof is None
+            or (changes or {}).get('execution_phase_reconciliation') != expected_record):
+        details = reasons or ['RECONCILIATION_REQUEST_OR_SOURCE_VERSION_INVALID']
+        return {'request_id': request.get('request_id'), 'accepted': False,
+                'issue': {'code': 'EXECUTION_PHASE_RECONCILIATION_INVALID',
+                          'entity_name': test_id, 'details': details}}
+    return None
 
 
 def active_tests(root: Path) -> set[str]:
@@ -359,6 +989,11 @@ def _guard_terminal_work_reconcile(root: Path, request: dict) -> dict | None:
 
 
 def guard_transition(root: Path, request: dict) -> dict | None:
+    if request.get('event_type') == 'TEST_EXECUTION_PHASE_RECONCILED':
+        if request.get('entity_kind') == 'test':
+            return _guard_execution_phase_reconciliation(root, request)
+        return {'request_id': request.get('request_id'), 'accepted': False,
+                'issue': {'code': 'EXECUTION_PHASE_RECONCILIATION_TARGET_INVALID'}}
     if (request.get('entity_kind') == 'work'
             and request.get('event_type') == 'WORK_RECONCILED_TERMINAL_TEST'):
         return _guard_terminal_work_reconcile(root, request)
@@ -379,6 +1014,29 @@ def guard_transition(root: Path, request: dict) -> dict | None:
     next_test = {**current, **changes, "id": test_id}
     states = {str(next_test[k]).upper() for k in ('status', 'state') if next_test.get(k)}
     next_state = str(next_test.get('status') or next_test.get('state') or '').upper()
+    current_phase = str(current.get('execution_phase') or '').upper()
+    terminal_result_payload = (next_state in TERMINAL or bool(changes.get('verdict'))
+                               or bool(changes.get('executed_at')))
+    phase_changed = ('execution_phase' in changes
+                     and changes.get('execution_phase') != current.get('execution_phase'))
+    if phase_changed:
+        phase_issue = _phase_transition_proof(
+            root, request, current, next_test, current_phase, next_state)
+        if phase_issue:
+            issue = phase_issue
+    elif request.get('event_type') == 'TEST_RESULT_RECORDED' and terminal_result_payload:
+        # Imported results remain supported for genuinely unattempted records.
+        # A reservation/runner attempt cannot be bypassed by omitting the phase
+        # field from a terminal-looking result mutation.
+        try:
+            active_attempt = test_id in active_tests(root)
+        except (OSError, ValueError, TypeError):
+            active_attempt = True
+        if current_phase == 'RUNNING' or active_attempt:
+            issue = 'EXECUTION_PHASE_RESULT_PROOF_REQUIRED'
+    if (current and terminal(current) and 'execution_phase' in changes
+            and changes['execution_phase'] != current.get('execution_phase')):
+        issue = 'TERMINAL_ATTEMPT_PHASE_IMMUTABLE'
     scientific = str(next_test.get('domain') or current.get('domain') or '').upper() in {'SCIENCE', 'COSMOLOGY', 'COSMOLOGIA'}
     if not scientific:
         return {'request_id': request.get('request_id'), 'accepted': False, 'issue': {'code': issue, 'entity_name': test_id}} if issue else None
@@ -430,6 +1088,11 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
     if not isinstance(proposed, list):
         proposed = []
         problem = 'BATTERY_REGISTRY_INVALID'
+    runner_status_authorized = request.get('_runner_battery_status_token') is RUNNER_BATTERY_STATUS_TOKEN
+    runner_fields = ('status', 'dispatch_requested_at', 'dispatch_confirmation', 'dispatched_at',
+                     'run_ref', 'completed_at', 'done_at', 'execution_observation',
+                     'conclusion', 'ok', 'failed', 'phase_failure_receipts')
+    phase_order = {'QUEUED': 0, 'DISPATCH_PENDING': 1, 'DISPATCHED': 2, 'RUNNING': 3, 'DONE': 4}
     seen, attempts, fingerprints = set(), set(), set()
     for battery in proposed:
         if not isinstance(battery, dict) or not battery.get('id') or battery['id'] in seen:
@@ -438,11 +1101,72 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
         old = existing.get(battery['id'])
         if old and old.get('tests') != battery.get('tests'):
             problem = 'FROZEN_BATTERY_SPEC_IMMUTABLE'; break
+        if old and any(old.get(key) != battery.get(key) for key in runner_fields):
+            old_status = str(old.get('status') or '').upper()
+            new_status = str(battery.get('status') or '').upper()
+            if old_status == 'DONE' and old.get('phase_failure_receipts') != battery.get('phase_failure_receipts'):
+                problem = 'BATTERY_FAILURE_RECEIPTS_IMMUTABLE'; break
+            if not runner_status_authorized:
+                problem = 'BATTERY_STATUS_WRITER_PROOF_REQUIRED'; break
+            if (old_status not in phase_order or new_status not in phase_order
+                    or phase_order[new_status] < phase_order[old_status]):
+                problem = 'BATTERY_STATUS_TRANSITION_INVALID'; break
         if not old and battery.get('status') != 'QUEUED':
             problem = 'NEW_BATTERY_MUST_BE_QUEUED'; break
         specs = battery.get('tests')
         if not isinstance(specs, list) or not specs or not all(isinstance(t, dict) for t in specs):
             problem = 'BATTERY_TESTS_INVALID'; break
+        newly_done = str(battery.get('status') or '').upper() == 'DONE' and (
+            old is None or str(old.get('status') or '').upper() != 'DONE')
+        if newly_done:
+            failure_receipts = battery.get('phase_failure_receipts', [])
+            failed_count = battery.get('failed', 0)
+            if (not runner_status_authorized or type(failed_count) is not int or failed_count < 0
+                    or not isinstance(failure_receipts, list)
+                    or len(failure_receipts) != failed_count):
+                problem = 'BATTERY_FAILURE_RECEIPTS_REQUIRED'; break
+            receipt_commitment = request.get('_runner_phase_failure_receipt_sha256')
+            if failure_receipts and receipt_commitment != 'sha256:' + digest(failure_receipts):
+                problem = 'BATTERY_FAILURE_RECEIPT_COMMITMENT_INVALID'; break
+            if not failure_receipts and receipt_commitment is not None:
+                problem = 'BATTERY_FAILURE_RECEIPT_COMMITMENT_INVALID'; break
+            spec_by_id = {str(spec.get('test_id') or ''): spec for spec in specs}
+            receipt_ids = set()
+            for receipt in failure_receipts:
+                if not isinstance(receipt, dict):
+                    problem = 'BATTERY_FAILURE_RECEIPT_INVALID'; break
+                test_id = str(receipt.get('test_id') or '')
+                spec = spec_by_id.get(test_id)
+                if not test_id or spec is None or test_id in receipt_ids:
+                    problem = 'BATTERY_FAILURE_RECEIPT_MEMBERSHIP_INVALID'; break
+                receipt_ids.add(test_id)
+                if (receipt.get('receipt_kind') not in {'RUNNER_FAILURE_ENTRY', 'RUNNER_RESULTS_MISSING'}
+                        or receipt.get('battery_id') != battery.get('id')
+                        or receipt.get('spec_sha256') != 'sha256:' + digest(spec)
+                        or not re.fullmatch(r'sha256:[0-9a-f]{64}', str(receipt.get('result_sha256') or ''))
+                        or receipt.get('attempt_id') != spec.get('attempt_id')
+                        or receipt.get('recipe_sha256') != spec.get('recipe_sha256')
+                        or receipt.get('prereg_hash') != spec.get('prereg_hash')
+                        or receipt.get('recipe') != spec.get('recipe')
+                        or receipt.get('params_sha256') != 'sha256:' + digest(spec.get('params'))
+                        or receipt.get('run_ref') != battery.get('run_ref')
+                        or receipt.get('completed_at') != battery.get('completed_at')
+                        or receipt.get('done_at') != battery.get('done_at')
+                        or receipt.get('event_type') not in {'TEST_RUNTIME_FAILURE', 'TEST_INPUT_UNAVAILABLE'}
+                        or receipt.get('phase_target') not in {'READY', 'BLOCKED_INPUT'}
+                        or (receipt.get('event_type') == 'TEST_INPUT_UNAVAILABLE'
+                            and (receipt.get('failure_class') != 'INPUT_UNAVAILABLE'
+                                 or receipt.get('phase_target') != 'BLOCKED_INPUT'))
+                        or (receipt.get('event_type') == 'TEST_RUNTIME_FAILURE'
+                            and receipt.get('failure_class') not in {'TRANSIENT', 'RECIPE_BUG', 'TEST'})):
+                    problem = 'BATTERY_FAILURE_RECEIPT_BINDING_INVALID'; break
+            if problem:
+                break
+        elif battery.get('phase_failure_receipts'):
+            # A failure-phase receipt is meaningful only as part of the exact
+            # verified transition that first closes this runner attempt.
+            if not old or old.get('phase_failure_receipts') != battery.get('phase_failure_receipts'):
+                problem = 'BATTERY_FAILURE_RECEIPT_TRANSITION_INVALID'; break
         for spec in specs:
             tid = str(spec.get('test_id') or '')
             if not old:

@@ -6,6 +6,7 @@ Ownership is an assignment until the recipient explicitly accepts the handoff.
 """
 from __future__ import annotations
 
+import inspect
 from pathlib import Path
 from typing import Any
 
@@ -40,6 +41,30 @@ def fingerprint(test: dict) -> str:
     # repair merely because their current error strings happen to be equal.
     return integrity.digest({"test_id": test["id"], "frozen_design": test.get("prereg_hash") or
                              {key: test.get(key) for key in integrity.FROZEN}})
+
+
+def evaluate_readiness(root: str | Path, test: dict, *, ignore_reservation: bool = False,
+                       readiness_evaluator=None) -> dict:
+    """Use the fail-closed Tower C01 wrapper, preserving canonical baseline behavior."""
+    root = Path(root)
+    baseline = lambda: integrity.readiness(root, test, ignore_reservation=ignore_reservation)
+    evaluator = readiness_evaluator
+    if evaluator is None:
+        try:
+            from .operational_canary import make_tower_readiness_evaluator
+
+            evaluator = make_tower_readiness_evaluator()
+        except (ImportError, AttributeError, TypeError, ValueError):
+            evaluator = None
+    if evaluator is None:
+        return baseline()
+    try:
+        parameters = inspect.signature(evaluator).parameters
+        if "ignore_reservation" in parameters:
+            return evaluator(root, test, baseline, ignore_reservation=ignore_reservation)
+        return evaluator(root, test, baseline)
+    except Exception:
+        return baseline()
 
 
 def _binding_recovery(test: dict, artifacts: list[dict]) -> tuple[dict, list[str], list[str]]:
@@ -127,7 +152,7 @@ def _request(kind: str, current: dict, changes: dict, event: str) -> dict | None
             "writer_role": "ADVISOR", "event_type": event, "changes": changes}
 
 
-def reconcile_requests(root: str | Path) -> list[dict]:
+def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[dict]:
     root = Path(root)
     artifacts, works = _entities(root, "artifact"), _entities(root, "work")
     work_by_id = {w.get("id"): w for w in works}
@@ -190,7 +215,7 @@ def reconcile_requests(root: str | Path) -> list[dict]:
                        test["blocker"] == ",".join(previous.get("reasons") or []))
         if managed:
             provisional["blocker"] = None
-        check = integrity.readiness(root, provisional)
+        check = evaluate_readiness(root, provisional, readiness_evaluator=readiness_evaluator)
         check["reasons"] = sorted(set(check["reasons"] + conflicts))
         check["eligible"] = not check["reasons"]
         changes = {**recovered, "readiness": check}

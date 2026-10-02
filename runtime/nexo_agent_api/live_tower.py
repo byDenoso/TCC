@@ -32,6 +32,8 @@ _JSON_SURFACES = (
     "manifests/**/*.json",
     "events/**/*.json",
     "mutations/receipts/**/*.json",
+    "operations/receipts/**/*.json",
+    "operational/operational_canary.json",
     "snapshot/**/*.json",
     "bootstrap/**/*.json",
     "queues/**/*.json",

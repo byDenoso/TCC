@@ -14,7 +14,7 @@ PRIORITY_RANK = {"P0": -1, "CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2, "MEDIUM":
 STATUS_RANK = {"VERIFIED": 0, "READY": 1, "RUNNING": 2, "CHECKPOINTED": 3, "WAIT_DEPENDENCY": 4}
 PARKED_STATUSES = {"WAIT_DEPENDENCY"}
 HOT_STATUSES = {"READY", "RUNNING", "CHECKPOINTED", "WAIT_DEPENDENCY"}
-_RUNTIME_EVENT_NAME = re.compile(r"^\d{8}T\d{12}Z-[A-Za-z0-9]+\.json$")
+_RUNTIME_EVENT_NAME = re.compile(r"^\d{8}T\d{12}Z-(?:[A-Za-z0-9]+|z\d{8}-[A-Za-z0-9]+)\.json$")
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

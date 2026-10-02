@@ -13,7 +13,6 @@ from runtime.nexo_agent_api import AgentService, evolution as e, execution_recov
 from runtime.nexo_agent_api import incident_operations as ops, scientific_integrity as s
 from runtime.nexo_agent_api.service import TowerAgentIssue
 from runtime.nexo_agent_api.tower_apply import apply_requests
-from runtime.nexo_agent_api.tower_paths import entity_path
 from tests.test_scientific_integrity import fixture, save
 
 
@@ -36,7 +35,10 @@ class IncidentOperationsTests(unittest.TestCase):
         self.reconcile()
 
     def put(self, kind, value):
-        save(self.root, entity_path(self.root, kind, value['id']).relative_to(self.root).as_posix(), value)
+        # `save` accepts a logical Tower path and applies Windows escaping.
+        # Passing entity_path() here would escape the already escaped path a
+        # second time, creating a duplicate entity file on Windows.
+        save(self.root, f"entities/{kind}/{value['id']}.json", value)
 
     def reconcile(self):
         with redirect_stderr(io.StringIO()):

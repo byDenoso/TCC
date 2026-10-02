@@ -46,6 +46,33 @@ class RecoveryTests(unittest.TestCase):
             result, report = apply_to_tower(raw, [])
         return read_live_tower_bytes(result or raw), report
 
+    def test_writer_packs_monitor_refresh_from_materialized_tower(self):
+        raw = json.dumps(build_live_tower_payload(self.root)).encode()
+        calls = []
+
+        def refresh(materialized_root, environment=None, now=None):
+            materialized_root = Path(materialized_root)
+            calls.append(materialized_root)
+            monitor_path = materialized_root / "operational" / "operational_canary.json"
+            monitor_path.parent.mkdir(parents=True, exist_ok=True)
+            monitor_path.write_text(json.dumps({
+                "contract": "OPERATIONAL_CANARY_V1",
+                "monitor": {"state": "HEALTHY", "test_marker": "writer-refresh"},
+            }), encoding="utf-8")
+            return {"heartbeat_refreshed": True, "enabled": True}
+
+        with patch("runtime.nexo_agent_api.operational_canary.refresh_tower_monitor", side_effect=refresh):
+            packed, report = apply_to_tower(raw, [])
+
+        self.assertEqual(len(calls), 1)
+        self.assertNotEqual(calls[0], self.root)
+        self.assertIsNotNone(packed)
+        self.assertEqual(report["status"], "READY_TO_UPLOAD")
+        decoded = read_live_tower_bytes(packed)
+        monitor = decoded["files"]["operational/operational_canary.json"]["value"]
+        self.assertEqual(monitor["monitor"]["test_marker"], "writer-refresh")
+        self.assertEqual(report["after"], decoded["state_fingerprint"])
+
     def reconcile(self):
         with redirect_stderr(io.StringIO()):
             receipts = apply_requests(self.root, r.reconcile_requests(self.root))
@@ -164,7 +191,7 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(self.works()[0]["status"], "WAIT_DEPENDENCY")
         self.assertEqual(self.works()[0]["recovery"]["route_generation"], 2)
         work = self.works()[0]; work["status"] = "REJECTED"
-        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
         self.reconcile()
         self.assertEqual(self.works()[0]["status"], "REJECTED")
 
@@ -297,7 +324,7 @@ class RecoveryTests(unittest.TestCase):
         self.exact_execution_work()
         [request] = r.reconcile_requests(self.root)
         work = self.works()[0]; work["private"] = True
-        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
         [receipt] = apply_requests(self.root, [request])
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
@@ -322,7 +349,7 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(self.works()[0]["status"], "READY")
 
         work = self.works()[0]; work["entity_version"] = "1"
-        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
         [receipt] = apply_requests(self.root, [request])
         self.assertFalse(receipt["accepted"])
         self.assertEqual(receipt["issue"]["code"], "WORK_TERMINAL_TEST_EVIDENCE_INVALID")
@@ -353,7 +380,7 @@ class RecoveryTests(unittest.TestCase):
     def test_nonready_execution_work_is_not_reclassified(self):
         self.terminal_test(); self.exact_execution_work()
         work = self.works()[0]; work["status"] = work["operational_status"] = "CHECKPOINTED"
-        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
         self.assertEqual(r.reconcile_requests(self.root), [])
         self.assertEqual(self.works()[0]["status"], "CHECKPOINTED")
 
@@ -404,7 +431,7 @@ class RecoveryTests(unittest.TestCase):
     def test_cancelled_repair_is_not_reopened(self):
         self.test.pop("data_binding"); self.put(self.test); self.reconcile()
         work = self.works()[0]; work["status"] = "CANCELLED"
-        save(self.root, entity_path(self.root, "work", work["id"]).relative_to(self.root).as_posix(), work)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
         self.reconcile()
         self.assertEqual(self.works()[0]["status"], "CANCELLED")
 
@@ -444,11 +471,11 @@ class RecoveryTests(unittest.TestCase):
     def test_agent_contracts_do_not_remove_required_provenance_or_fake_ready(self):
         repo = Path(__file__).resolve().parents[1]
         for version in ("0.4.0", "0.5.0"):
-            text = (repo / f"gpt/skills/nexo-closed-loop-{version}.md").read_text()
+            text = (repo / f"gpt/skills/nexo-closed-loop-{version}.md").read_text(encoding="utf-8")
             self.assertNotIn("sem `sha256`", text)
             self.assertNotIn("fica READY (não bloqueado)", text)
             self.assertIn("inputs[{name, url, version, sha256}]", text)
-        workspace = (repo / "gpt/skills/nexo-workspace/SKILL.md").read_text()
+        workspace = (repo / "gpt/skills/nexo-workspace/SKILL.md").read_text(encoding="utf-8")
         for required in ("execution_recovery", "HANDOFF_ACK", "ADVISOR", "LEARNER", "EXECUTOR", "Drive privado NEXO_INBOX"):
             self.assertIn(required, workspace)
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from runtime.nexo_agent_api import gpt_writer
+from runtime.nexo_agent_api import operation_receipts
 from runtime.nexo_agent_api.evolution import _emergence, _review_queue
 
 
@@ -57,6 +58,14 @@ class RobotPersistenceTest(unittest.TestCase):
         github = Mock(seen=[])
         github.pending.return_value = []
         calls = []
+        intent = "gateway:isolated-engineering"
+        gateway_receipt = operation_receipts.public_receipt(operation_receipts.build_receipt(
+            intent=intent,
+            payload_sha256=operation_receipts.payload_hash({"kind": "BOARD_POST", "source": "ENGINEER",
+                                                            "payload": {"domain": "ENGINEERING"}}),
+            effect=operation_receipts.envelope_effect_id(intent), outcome="APPLIED",
+            source_revision="sha256:" + "1" * 64, result_revision="sha256:" + "2" * 64,
+            visibility="PUBLIC"))
 
         def apply(raw, items):
             calls.append(raw)
@@ -68,6 +77,7 @@ class RobotPersistenceTest(unittest.TestCase):
                 "status": "READY_TO_UPLOAD" if changed else "NO_OP",
                 "applied": [items[0].get("_inbox_name", stage)],
                 "rejected": [],
+                "public_operation_receipts": [gateway_receipt] if changed else [],
             }
 
         with tempfile.TemporaryDirectory() as work:
@@ -88,7 +98,8 @@ class RobotPersistenceTest(unittest.TestCase):
             tower.compare_and_swap.assert_called_once_with("revision", b"applied")
             self.assertEqual(calls, [b"original"] + [b"applied"] * 5)
             self.assertIn("tower_revision=committed", output.read_text())
-            self.assertIn("gateway_applied=isolated-engineering", output.read_text())
+            self.assertIn("gateway_reported=isolated-engineering", output.read_text())
+            self.assertIn("gateway_resolved=isolated-engineering", output.read_text())
 
 
 if __name__ == "__main__":

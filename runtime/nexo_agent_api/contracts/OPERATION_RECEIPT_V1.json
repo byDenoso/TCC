@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "OPERATION_RECEIPT_V1",
+  "title": "NEXO operation receipt V1",
+  "description": "Durable Writer outcome. Source revision hashes Tower context excluding receipt bookkeeping so a receipt cannot trigger its own dependency retry. Result revision identifies effect state before receipt-bookkeeping bytes are added to the same Tower revision. PRIVATE is the default visibility. PUBLIC is reserved for canonical gateway-envelope summaries whose intent is a safe gateway ID and whose effect ID is the deterministic envelope hash; per-effect identities and private Drive/GitHub envelopes remain private.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "receipt_id",
+    "intent_id",
+    "payload_sha256",
+    "effect_id",
+    "stage",
+    "outcome",
+    "reason_code",
+    "source_revision",
+    "result_revision",
+    "occurred_at",
+    "observed_at",
+    "visibility",
+    "retry_condition",
+    "supersedes"
+  ],
+  "properties": {
+    "contract": {"const": "OPERATION_RECEIPT_V1"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "intent_id": {"type": "string", "minLength": 1},
+    "payload_sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "effect_id": {"type": "string", "minLength": 1},
+    "stage": {"enum": ["STAGED", "DELIVERED", "APPLIED", "RESERVED", "EXECUTED", "REVIEWED", "PROJECTED"]},
+    "outcome": {"enum": ["APPLIED", "ALREADY_APPLIED", "REJECTED_TERMINAL", "DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"]},
+    "reason_code": {"type": ["string", "null"]},
+    "source_revision": {"type": ["string", "null"]},
+    "result_revision": {"type": ["string", "null"]},
+    "occurred_at": {"type": "string", "format": "date-time"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "visibility": {"enum": ["PRIVATE", "PUBLIC"], "description": "PUBLIC is allowed only for a canonical gateway-envelope summary; public projection omits private reason text and noncanonical identifiers."},
+    "retry_condition": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": {"enum": ["SOURCE_REVISION_CHANGED", "AFTER_TRANSPORT_RECOVERY", "OPERATOR_REAUTHORIZATION", "RECONCILE_TOWER_BEFORE_REAPPLY"]},
+            "source_revision": {"type": ["string", "null"]},
+            "detail": {"type": "string"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "supersedes": {"type": ["string", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"enum": ["DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"]}}},
+      "then": {"properties": {"retry_condition": {"type": "object"}}}
+    }
+  ]
+}

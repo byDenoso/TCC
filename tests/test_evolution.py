@@ -147,7 +147,7 @@ def test_battery_dispatch_and_collect(tmp_path, monkeypatch):
         "battery_id": "bat-valid", "status": "RUNNING", "run_ref": "actions/runs/123", "started_tests": {'T-A': NOW, 'T-B': NOW}}})
     assert pending_batteries(root) == []
     _apply(root, {"kind": "BATTERY_STATUS", "_inbox_source": "RUNNER_OBSERVATION", "payload": {"battery_id": "bat-valid", "status": "DONE",
-        "run_ref": "actions/runs/123", "completed_at": END, "results": [
+        "run_ref": "actions/runs/123", "completed_at": END, "conclusion": "success", "results": [
         {"test_id": "T-A", "ok": True, "attempt_id": specs['T-A']['attempt_id'], "recipe_sha256": specs['T-A']['recipe_sha256'], "result": {"verdict": "PROMOTED", "summary": "x"}},
         {"test_id": "T-B", "ok": False, "log_tail": "Traceback"}]}})
     assert _test(root, "T-A")["verdict"] == "PROMOTED" and _test(root, "T-A")["review_state"] == "PENDING_REVIEW"

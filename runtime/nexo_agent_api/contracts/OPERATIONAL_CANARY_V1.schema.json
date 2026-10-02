@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "OPERATIONAL_CANARY_V1.schema.json",
+  "title": "Private operational canary Tower document",
+  "type": "object",
+  "required": ["contract", "visibility", "canaries", "adapters"],
+  "properties": {
+    "contract": {"const": "OPERATIONAL_CANARY_V1"},
+    "visibility": {"const": "PRIVATE"},
+    "canaries": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["canary_id", "adapter_id", "spec", "proposal_sha256", "state", "observations", "reservations"],
+        "properties": {
+          "canary_id": {"type": "string", "const": "C01-readiness-cache"},
+          "adapter_id": {"type": "string", "const": "readiness_cache"},
+          "spec": {"type": "object"},
+          "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "analysis_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "state": {"enum": ["PROPOSED", "APPROVED_SCOPE", "SHADOW", "CANARY", "INSUFFICIENT_EVIDENCE", "PROMOTED", "REJECTED", "INTERRUPTED", "ROLLED_BACK"]},
+          "observations": {"type": "array"},
+          "reservations": {"type": "object"},
+          "actuator_receipt": {"type": ["object", "null"]},
+          "baseline_selection_receipt": {"type": ["object", "null"]},
+          "last_gate": {"type": ["object", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "adapters": {
+      "type": "object",
+      "properties": {
+        "readiness_cache": {
+          "type": "object",
+          "required": ["variant", "version", "sha256"],
+          "properties": {
+            "variant": {"enum": ["baseline", "candidate"]},
+            "version": {"type": "string"},
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "canary_id": {"type": "string"}
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

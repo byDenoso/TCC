@@ -1,0 +1,354 @@
+"""Sanitized end-to-end regression for the staged NEXO Writer path.
+
+The GitHub Contents API boundary is in-memory; request serialization, relay
+readback, Writer materialization, battery reservation, runner result handling,
+transition guards, receipts, and the public projection use the real runtime.
+"""
+from __future__ import annotations
+
+import base64
+import hashlib
+import io
+import json
+import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+
+from nexo_persist import _relay_shared as relay
+from runtime.nexo_agent_api import operation_receipts, scientific_integrity
+from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+from runtime.nexo_agent_api.live_tower import (
+    materialize_live_tower,
+    read_live_tower_bytes,
+    verify_live_tower,
+)
+from runtime.nexo_agent_api.public_projection import build_public_projection, verify_projection
+from tests import test_execution_phase_reconciliation as phase_fixture
+
+END = phase_fixture.END
+RUN_REF = phase_fixture.RUN_REF
+TEST_ID = phase_fixture.TEST_ID
+
+
+class _FakeGitHubContents:
+    """Small GitHub Contents transport fake; no credentials or external calls."""
+
+    def __init__(self) -> None:
+        self.files: dict[str, tuple[str, str]] = {}
+
+    def get(self, path: str) -> tuple[int, dict]:
+        stored = self.files.get(path)
+        if stored is None:
+            return 404, {}
+        body, sha = stored
+        # GitHub may wrap the base64 returned by Contents API at 76 columns.
+        content = base64.encodebytes(body.encode("utf-8")).decode("ascii")
+        return 200, {"content": content, "sha": sha}
+
+    def put(self, path: str, body: str, sha: str | None = None) -> tuple[int, dict]:
+        previous = self.files.get(path)
+        if sha is not None and (previous is None or previous[1] != sha):
+            return 409, {"message": "content changed"}
+        new_sha = hashlib.sha1(body.encode("utf-8")).hexdigest()
+        self.files[path] = (body, new_sha)
+        return (200 if previous else 201), {"content": {"sha": new_sha}}
+
+
+class NexoOperationalPipelineTests(unittest.TestCase):
+    def _stage(self, transport: _FakeGitHubContents, staging_root: Path,
+               stable_id: str, item: dict, source: str,
+               expected_relay_result: str = "relayed") -> tuple[bytes, dict]:
+        envelope = {key: value for key, value in item.items() if not key.startswith("_inbox_")}
+        request_path = staging_root / "nexo_persist" / "requests" / f"{stable_id}.json"
+        request_path.parent.mkdir(parents=True, exist_ok=True)
+        request_path.write_text(json.dumps({"stable_id": stable_id, "envelope": envelope}), encoding="utf-8")
+
+        target, canonical_body = relay.load_request(request_path)
+        self.assertEqual(target, f"inbox/scheduled-{stable_id}.json")
+        self.assertEqual(
+            canonical_body,
+            json.dumps(envelope, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n",
+        )
+        self.assertEqual(
+            relay.relay_one(transport, relay.WriterReceipts(), target, canonical_body, sleep=lambda _: None),
+            expected_relay_result,
+        )
+
+        status, metadata = transport.get(target)
+        self.assertEqual(status, 200)
+        # Build the Writer input only from the bytes read back from the fake API.
+        delivered = relay.decoded(metadata)
+        self.assertEqual(delivered, canonical_body)
+        writer_item = json.loads(delivered)
+        writer_item.update(
+            _inbox_id=f"gateway:{stable_id}",
+            _inbox_name=f"gw-{stable_id}" if source == "GATEWAY" else stable_id,
+            _inbox_source=source,
+        )
+        return canonical_body.encode("utf-8"), writer_item
+
+    @staticmethod
+    def _real_effect_requests(tower_raw: bytes, item: dict) -> list[dict]:
+        """Read expected effects through the real converter on a disposable Tower copy."""
+        if item.get("event_type"):
+            return [item]
+        with tempfile.TemporaryDirectory(prefix="nexo-pipeline-effects-") as temporary:
+            root, _ = materialize_live_tower(tower_raw, Path(temporary) / "expected-effects")
+            return proposal_to_requests(item, root)
+
+    def _apply_writer_item(self, tower_raw: bytes, item: dict, expected_outcome: str) -> tuple[bytes, dict]:
+        expected_effects = self._real_effect_requests(tower_raw, item)
+        self.assertTrue(expected_effects)
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            packed, report = apply_to_tower(tower_raw, [item])
+        self.assertIsNotNone(packed, report)
+        assert packed is not None
+
+        effect_receipts = report["operation_receipts"]
+        by_effect = {row["effect_id"]: row for row in effect_receipts}
+        self.assertEqual(len(by_effect), len(effect_receipts), effect_receipts)
+        expected_ids = {request["request_id"] for request in expected_effects}
+        self.assertTrue(expected_ids.issubset(by_effect), report)
+        label = item.get("_inbox_name") or item.get("request_id") or "item-0"
+        intent = operation_receipts.intent_id(item, str(label))
+        envelope_effect = operation_receipts.envelope_effect_id(intent)
+        self.assertIn(envelope_effect, by_effect)
+        self.assertEqual(
+            by_effect[envelope_effect]["payload_sha256"],
+            operation_receipts.payload_hash(item, trusted_transport=True),
+        )
+
+        bundle = read_live_tower_bytes(packed)
+        persisted = {
+            entry["value"]["receipt_id"]: entry["value"]
+            for entry in bundle["files"].values()
+            if isinstance(entry.get("value"), dict)
+            and entry["value"].get("contract") == operation_receipts.CONTRACT
+        }
+        for request in expected_effects:
+            receipt = by_effect[request["request_id"]]
+            self.assertEqual(receipt["intent_id"], intent)
+            self.assertEqual(
+                receipt["payload_sha256"],
+                operation_receipts.payload_hash(request, trusted_transport=True),
+            )
+            self.assertRegex(receipt["source_revision"], r"^sha256:[0-9a-f]{64}$")
+            self.assertRegex(receipt["result_revision"], r"^sha256:[0-9a-f]{64}$")
+            self.assertEqual(receipt["outcome"], expected_outcome)
+            self.assertEqual(receipt["visibility"], "PRIVATE")
+            self.assertEqual(persisted.get(receipt["receipt_id"]), receipt)
+        self.assertEqual(by_effect[envelope_effect]["outcome"], expected_outcome)
+        self.assertEqual(persisted.get(by_effect[envelope_effect]["receipt_id"]), by_effect[envelope_effect])
+
+        self.assertEqual(report["before"], verify_live_tower(read_live_tower_bytes(tower_raw)))
+        self.assertEqual(report["after"], verify_live_tower(bundle))
+        return packed, report
+
+    def test_staged_request_reservation_runner_result_review_guard_and_projection(self) -> None:
+        fixture = phase_fixture.ExecutionPhaseReconciliationTests()
+        fixture.setUp()
+        try:
+            transport = _FakeGitHubContents()
+            tower_raw = fixture._initial_bundle()
+            initial_test = dict(fixture.test)
+            previous_revision = verify_live_tower(read_live_tower_bytes(tower_raw))
+            reports = []
+
+            # Real recipe-only battery admission creates the immutable attempt reservation.
+            staged_bytes, battery_item = self._stage(
+                transport, fixture.temp_root, "stage-battery", fixture._battery_items(), "WRITER_ROBOT"
+            )
+            battery_tower, battery_report = self._apply_writer_item(tower_raw, battery_item, "APPLIED")
+            self.assertEqual(json.loads(staged_bytes)["kind"], "TEST_BATTERY")
+            self.assertEqual(battery_report["before"], previous_revision)
+            previous_revision = battery_report["after"]
+            reports.append(battery_report)
+            tower_raw = battery_tower
+
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-reservation-") as temporary:
+                reserved_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "reserved")
+                reserved_test = scientific_integrity.entity(reserved_root, TEST_ID)
+                battery = scientific_integrity.batteries(reserved_root)[0]
+            self.assertEqual(battery["status"], "QUEUED")
+            self.assertEqual(reserved_test["execution_phase"], "QUEUED")
+            self.assertEqual(reserved_test["attempt_id"], battery["tests"][0]["attempt_id"])
+
+            # The Writer's private dispatch mark carries an in-memory capability,
+            # not a serializable inbox claim. Exercise the same item shape emitted
+            # by gpt_writer and require durable effect receipts plus canonical readback.
+            dispatch_item = {
+                "kind": "BATTERY_STATUS",
+                "source": "WRITER_ROBOT",
+                "_inbox_name": f"robot-dispatch-{battery['id']}",
+                "_writer_dispatch_token": scientific_integrity.WRITER_DISPATCH_TOKEN,
+                "payload": {
+                    "battery_id": battery["id"],
+                    "status": "DISPATCHED",
+                    "run_ref": "github-actions",
+                },
+            }
+            dispatch_tower, dispatch_report = self._apply_writer_item(tower_raw, dispatch_item, "APPLIED")
+            self.assertEqual(dispatch_report["before"], previous_revision)
+            previous_revision = dispatch_report["after"]
+            reports.append(dispatch_report)
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-dispatch-ack-") as temporary:
+                dispatch_root, _ = materialize_live_tower(dispatch_tower, Path(temporary) / "dispatch-ack")
+                pending_test = scientific_integrity.entity(dispatch_root, TEST_ID)
+                pending_battery = scientific_integrity.batteries(dispatch_root)[0]
+            self.assertEqual(pending_battery["status"], "DISPATCH_PENDING")
+            self.assertEqual(pending_battery["dispatch_confirmation"], "PENDING_EXTERNAL_ACK")
+            self.assertEqual(pending_test["execution_phase"], "DISPATCH_PENDING")
+            self.assertNotIn("_writer_dispatch_token", json.dumps(dispatch_report))
+            tower_raw = dispatch_tower
+
+            # The runner observation advances the same captured reservation to RUNNING.
+            _, running_item = self._stage(
+                transport, fixture.temp_root, "stage-running", fixture._running_item(), "RUNNER_OBSERVATION"
+            )
+            running_tower, running_report = self._apply_writer_item(tower_raw, running_item, "APPLIED")
+            self.assertEqual(running_report["before"], previous_revision)
+            previous_revision = running_report["after"]
+            reports.append(running_report)
+            tower_raw = running_tower
+
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-runner-artifact-") as temporary:
+                runner_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "runner-observation")
+                runner_artifact = fixture._completed_item(runner_root)
+            _, result_item = self._stage(
+                transport, fixture.temp_root, "sanitized-completed", runner_artifact, "RUNNER_OBSERVATION"
+            )
+            result_tower, result_report = self._apply_writer_item(tower_raw, result_item, "APPLIED")
+            self.assertEqual(result_report["before"], previous_revision)
+            previous_revision = result_report["after"]
+            reports.append(result_report)
+            tower_raw = result_tower
+
+            # The same delivered semantic envelope is safely replayed after a lost ACK.
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-result-replay-") as temporary:
+                replay_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "replay-source")
+                replay_artifact = fixture._completed_item(replay_root)
+            _, replay_item = self._stage(
+                transport, fixture.temp_root, "sanitized-completed", replay_artifact,
+                "RUNNER_OBSERVATION", expected_relay_result="redelivered_missing_writer_receipt",
+            )
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                replay_packed, replay_report = apply_to_tower(tower_raw, [replay_item])
+            self.assertIsNone(replay_packed)
+            self.assertEqual(replay_report["handled"], ["sanitized-completed"])
+            self.assertEqual(replay_report["public_operation_receipts"], [])
+            envelope_effect = operation_receipts.envelope_effect_id(replay_item["_inbox_id"])
+            replay_receipt = next(row for row in replay_report["operation_receipts"]
+                                  if row["effect_id"] == envelope_effect)
+            result_receipt = next(row for row in result_report["operation_receipts"]
+                                  if row["effect_id"] == envelope_effect)
+            self.assertEqual(replay_receipt["visibility"], "PRIVATE")
+            self.assertEqual(replay_receipt["effect_id"], operation_receipts.envelope_effect_id(replay_item["_inbox_id"]))
+            self.assertEqual(replay_receipt["payload_sha256"], operation_receipts.payload_hash(replay_item, trusted_transport=True))
+            self.assertEqual(replay_receipt["outcome"], "ALREADY_APPLIED")
+            self.assertEqual(replay_receipt["occurred_at"], result_receipt["occurred_at"])
+            self.assertNotEqual(replay_receipt["observed_at"], result_receipt["observed_at"])
+            from runtime.nexo_agent_api.gpt_writer import _gateway_results
+            private_gateway_payload, reported, resolved = _gateway_results(replay_report, ["sanitized-completed"])
+            self.assertEqual(private_gateway_payload["items"], [])
+            self.assertEqual(reported, [])
+            self.assertEqual(resolved, [])
+
+            # A positive review assertion without an attack receipt must be rejected by the real guard.
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-review-guard-") as temporary:
+                review_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "review-source")
+                terminal_test = scientific_integrity.entity(review_root, TEST_ID)
+            review_attempt = {
+                "kind": "TEST_REVIEW_REQUEST",
+                "payload": {"test_id": TEST_ID, "review_state": "CONFIRMED"},
+                "request_id": "REQ-REVIEW-UNPROVEN-PHASE2",
+                "entity_kind": "test",
+                "entity_name": TEST_ID,
+                "expected_version": terminal_test["entity_version"],
+                "writer_role": "DAILY",
+                "event_type": "VERDICT_REVIEW_RECORDED",
+                "changes": {"review_state": "CONFIRMED"},
+            }
+            _, review_item = self._stage(
+                transport, fixture.temp_root, "stage-unproven-review", review_attempt, "GATEWAY"
+            )
+            guarded_tower, guard_report = self._apply_writer_item(
+                tower_raw, review_item, "REJECTED_TERMINAL"
+            )
+            self.assertEqual(guard_report["before"], previous_revision)
+            self.assertEqual(guard_report["rejected"][0]["reason"], "REVIEW_EVIDENCE_REQUIRED")
+            self.assertEqual(guard_report["public_operation_receipts"][0]["outcome"], "REJECTED_TERMINAL")
+            self.assertIsNone(guard_report["public_operation_receipts"][0]["reason_code"])
+            self.assertEqual(guard_report["after"], verify_live_tower(read_live_tower_bytes(guarded_tower)))
+            tower_raw = guarded_tower
+
+            final_bundle = read_live_tower_bytes(tower_raw)
+            final_test = final_bundle["files"][f"entities/test/{TEST_ID}.json"]["value"]
+            self.assertEqual(final_test["status"], "DONE")
+            self.assertEqual(final_test["execution_phase"], "COMPLETED")
+            self.assertEqual(final_test["executed_at"], END)
+            self.assertEqual(final_test["attempt_id"], reserved_test["attempt_id"])
+            self.assertEqual(final_test["execution_recipe_sha256"], reserved_test["execution_recipe_sha256"])
+            self.assertNotIn("review_state", final_test)
+            self.assertEqual(final_test["verdict"], "INCONCLUSIVE")
+            self.assertEqual(final_test["decision"], "SYNTHETIC_ONLY")
+            for field in scientific_integrity.FROZEN:
+                self.assertEqual(final_test.get(field), initial_test.get(field), field)
+            self.assertEqual(final_test["prereg_hash"], initial_test["prereg_hash"])
+            self.assertEqual(final_test["claim_boundary"], initial_test["claim_boundary"])
+
+            # Each Writer revision flows into the next stage; no replay or live Tower is involved.
+            self.assertEqual([row["before"] for row in reports], [
+                verify_live_tower(read_live_tower_bytes(fixture._initial_bundle())),
+                reports[0]["after"], reports[1]["after"], reports[2]["after"],
+            ])
+            self.assertEqual(reports[-1]["after"], guard_report["before"])
+
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-public-projection-") as temporary:
+                projected_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "public-source")
+                projection = build_public_projection(
+                    projected_root,
+                    tower_revision=verify_live_tower(final_bundle),
+                    generated_at=END,
+                )
+            self.assertTrue(verify_projection(projection)[0])
+            projected_test = next(test for test in projection["tests"] if test["id"] == TEST_ID)
+            self.assertEqual(projected_test["status"], "DONE")
+            self.assertEqual(projected_test["verdict"], "INCONCLUSIVE")
+            self.assertEqual(projected_test["question"], initial_test["question"])
+            self.assertEqual(projected_test["claim_boundary"], initial_test["claim_boundary"])
+            self.assertEqual(projected_test["prereg"]["hash"], initial_test["prereg_hash"])
+            self.assertIsNone(projected_test.get("review"))
+            self.assertEqual(projected_test["execution"]["run_ref"], RUN_REF)
+            public_blob = json.dumps(projection, ensure_ascii=False, sort_keys=True)
+            self.assertNotIn("REVIEW_EVIDENCE_REQUIRED", public_blob)
+            self.assertNotIn("operations/receipts", public_blob)
+
+            # A legacy terminal Tower without a durable effect receipt is not ACKed as success.
+            legacy_raw = fixture._successful_writer_bundle()
+            with tempfile.TemporaryDirectory(prefix="nexo-pipeline-legacy-terminal-") as temporary:
+                legacy_root, _ = materialize_live_tower(legacy_raw, Path(temporary) / "legacy")
+                self.assertEqual(operation_receipts.load_receipts(legacy_root), [])
+                legacy_artifact = fixture._completed_item(legacy_root)
+            _, legacy_item = self._stage(
+                transport, fixture.temp_root, "legacy-no-result-receipt", legacy_artifact,
+                "RUNNER_OBSERVATION",
+            )
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                legacy_packed, legacy_report = apply_to_tower(legacy_raw, [legacy_item])
+            self.assertIsNotNone(legacy_packed)
+            self.assertEqual(legacy_report["handled"], [])
+            self.assertEqual(legacy_report["deferred"][0]["outcome"], "DEFERRED_DEPENDENCY")
+            legacy_deferred = next(
+                row for row in legacy_report["operation_receipts"]
+                if row["effect_id"] == operation_receipts.envelope_effect_id(legacy_item["_inbox_id"])
+            )
+            self.assertEqual(legacy_deferred["outcome"], "DEFERRED_DEPENDENCY")
+            self.assertEqual(legacy_deferred["reason_code"], "LEGACY_EFFECT_RESULT_UNVERIFIED")
+        finally:
+            fixture.tearDown()
+
+
+if __name__ == "__main__":
+    unittest.main()

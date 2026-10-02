@@ -1,5 +1,7 @@
 import base64
 import json
+import os
+import stat
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,7 +46,11 @@ class PortableTowerTests(unittest.TestCase):
         self.assertEqual((self.root / 'restored/NEXO_TOWER_LIVE.json').read_bytes(), self.raw)
         self.assertEqual(json.loads((self.root / 'restored/mutations/inbox/applied.json').read_text())['status'], 'APPLIED')
         self.assertFalse(json.loads((self.root / 'restored/.nexo-isolated.json').read_text())['proposal_replay'])
-        self.assertEqual((self.root / 'restored/runtime/tool.bin').stat().st_mode & 0o777, 0o400)
+        restored_stat = (self.root / 'restored/runtime/tool.bin').stat()
+        if os.name == 'nt':
+            self.assertTrue(restored_stat.st_file_attributes & stat.FILE_ATTRIBUTE_READONLY)
+        else:
+            self.assertEqual(restored_stat.st_mode & 0o777, 0o400)
         self.assertEqual(verify_export(self.root / 'restored/.nexo-export')['source_sha256'], digest(self.raw))
         with self.assertRaises(FileExistsError):
             restore_export(out, self.root / 'restored', allow_incomplete=True)

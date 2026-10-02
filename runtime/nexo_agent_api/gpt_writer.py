@@ -25,6 +25,7 @@ from typing import Any
 from pathlib import Path
 
 from . import evolution
+from . import operation_receipts as operation_receipts
 from .inbox_apply import ProposalError, proposal_to_requests
 from .live_tower import LIVE_TOWER_NAME, materialize_live_tower, read_live_tower_bytes, verify_live_tower
 from .tower_apply import apply_requests
@@ -32,15 +33,229 @@ from .tower_apply import apply_requests
 
 def _is_request(item: dict) -> bool:
     return "document" in item or "entity_kind" in item or item.get("nexo_operation") in {
-        "HANDOFF_CREATE", "HANDOFF_TRANSITION", "EXECUTION_OBSERVATION_ASSESSMENT",
+        "HANDOFF_CREATE", "HANDOFF_TRANSITION", "EXECUTION_OBSERVATION_ASSESSMENT", "OPERATIONAL_CANARY",
     }
 
 
-def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, dict]:
+def _root_revision(root: Path) -> str:
+    return verify_live_tower(read_live_tower_bytes((root / LIVE_TOWER_NAME).read_bytes()))
+
+
+def _operational_status(root: Path) -> dict[str, Any]:
+    """Expose implemented contracts and verified C01 selection without private evidence."""
+    from . import operational_canary
+
+    contract_dir = Path(__file__).with_name("contracts")
+    receipt_schema = contract_dir / "OPERATION_RECEIPT_V1.json"
+    canary_schema = contract_dir / "OPERATIONAL_CANARY_V1.schema.json"
+    atlas_schema = contract_dir / "ATLAS_OBSERVATION_V1.json"
+    atlas_implementation = (
+        Path(__file__).resolve().parents[2].parent
+        / "Pantheon" / "nexo-one" / "src" / "data" / "atlasObservation.ts"
+    )
+    contracts = {
+        operation_receipts.CONTRACT: {
+            "schema": "PRESENT" if receipt_schema.is_file() else "MISSING",
+            "implementation": "TCC_RUNTIME",
+            "deployment": "UNVERIFIED",
+        },
+        operational_canary.CANARY_CONTRACT: {
+            "schema": "PRESENT" if canary_schema.is_file() else "MISSING",
+            "implementation": "TCC_RUNTIME",
+            "deployment": "UNVERIFIED",
+        },
+        "ATLAS_OBSERVATION_V1": {
+            "schema": "PRESENT" if atlas_schema.is_file() else "MISSING",
+            "implementation": "PANTHEON_SOURCE" if atlas_implementation.is_file() else "UNVERIFIED",
+            "deployment": "UNVERIFIED",
+        },
+    }
+    return {
+        "operational_contracts": contracts,
+        "C01": operational_canary.operational_status(root),
+    }
+
+
+def _apply_one_request(root: Path, item: dict, request: dict) -> dict:
+    operation = request.get("nexo_operation")
+    if operation == "EXECUTION_OBSERVATION_ASSESSMENT":
+        from .execution_assessment import AssessmentError, apply_assessment
+        from .service import TowerAgentIssue
+
+        if str(item.get("_inbox_source") or "").upper() != "RUNNER_OBSERVATION":
+            return {"accepted": False, "issue": {"code": "VERIFIED_RUNNER_OBSERVATION_REQUIRED"}}
+        try:
+            receipt = apply_assessment(root, request.get("assessment"))
+            if receipt.get("status") != "NO_OP":
+                from .live_tower import publish_live_tower
+
+                publish_live_tower(root)
+            return receipt
+        except AssessmentError as exc:
+            return {"accepted": False, "issue": {"code": str(exc)}}
+        except TowerAgentIssue as exc:
+            return {"accepted": False, "issue": {"code": exc.code, "details": exc.details}}
+
+    if operation == "OPERATIONAL_CANARY":
+        from . import operational_canary
+
+        try:
+            receipt = dict(operational_canary.apply_writer_canary_request(root, request))
+            if receipt.get("accepted", True) and not receipt.get("issue"):
+                from .live_tower import publish_live_tower
+
+                publish_live_tower(root)
+            return receipt
+        except (ValueError, TypeError, OSError):
+            return {"accepted": False, "issue": {"code": "OPERATIONAL_CANARY_REJECTED"}}
+
+    if operation not in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
+        receipt = apply_requests(root, [request])[0]
+        if receipt.get("accepted", True) and not receipt.get("issue"):
+            from .live_tower import publish_live_tower
+
+            publish_live_tower(root)
+        return receipt
+    if str(item.get("_inbox_source") or "").upper() != "DRIVE":
+        return {"accepted": False, "issue": {"code": "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"}}
+
+    from . import AgentService, TowerAgentIssue
+
+    try:
+        service = AgentService(root)
+        if operation == "HANDOFF_CREATE":
+            envelope = request.get("handoff")
+            if not isinstance(envelope, dict):
+                raise TypeError("handoff must be a JSON object")
+            receipt = service.emit_handoff(**envelope)
+        else:
+            transition = request.get("transition")
+            if not isinstance(transition, dict):
+                raise TypeError("transition must be a JSON object")
+            receipt = service.transition_handoff(
+                transition.get("handoff_id", ""),
+                state=transition.get("state", ""),
+                writer_role=transition.get("writer_role", ""),
+            )
+            if (root / "bootstrap").is_dir():
+                from .views import materialize_role_views
+
+                materialize_role_views(root)
+        from .live_tower import publish_live_tower
+
+        publish_live_tower(root)
+        return receipt
+    except TowerAgentIssue as exc:
+        return {"accepted": False, "issue": {"code": exc.code, "message": exc.message, "details": exc.details}}
+    except (TypeError, AttributeError):
+        return {"accepted": False, "issue": {"code": "HANDOFF_ENVELOPE_INVALID"}}
+
+
+def _append_effect_receipt(report: dict, receipt: dict) -> None:
+    report["operation_receipts"].append(receipt)
+    public = operation_receipts.public_receipt(receipt)
+    if public and not any(row.get("receipt_id") == public.get("receipt_id") for row in report["public_operation_receipts"]):
+        report["public_operation_receipts"].append(public)
+
+
+def _build_effect_receipt(
+    *, root: Path, item: dict, label: str, request: dict, request_index: int,
+    intent: str, source_revision: str, outcome: str, reason_code: str | None = None,
+    retry_condition: dict | None = None, supersedes: str | None = None,
+    result_revision: str | None = None, persist: bool = True,
+) -> dict:
+    payload = request if request else item
+    effect = operation_receipts.effect_id(request, intent=intent, index=request_index)
+    payload_digest = operation_receipts.payload_hash(payload, trusted_transport=True)
+    receipt = operation_receipts.build_receipt(
+        intent=intent, payload_sha256=payload_digest, effect=effect, outcome=outcome,
+        source_revision=source_revision,
+        result_revision=result_revision if result_revision is not None else _root_revision(root),
+        reason_code=reason_code, retry_condition=retry_condition, supersedes=supersedes,
+    )
+    if persist:
+        operation_receipts.persist_receipt(root, receipt)
+    return receipt
+
+
+def _build_envelope_receipt(
+    *, root: Path, item: dict, intent: str, source_revision: str,
+    outcome: str, reason_code: str | None = None, retry_condition: dict | None = None,
+    supersedes: str | None = None, result_revision: str | None = None,
+) -> dict:
+    receipt = operation_receipts.build_receipt(
+        intent=intent,
+        payload_sha256=operation_receipts.payload_hash(item, trusted_transport=True),
+        effect=operation_receipts.envelope_effect_id(intent),
+        outcome=outcome,
+        source_revision=source_revision,
+        result_revision=result_revision if result_revision is not None else _root_revision(root),
+        reason_code=reason_code,
+        retry_condition=retry_condition,
+        supersedes=supersedes,
+        visibility=("PUBLIC" if operation_receipts.public_gateway_envelope(item, intent) else "PRIVATE"),
+    )
+    operation_receipts.persist_receipt(root, receipt)
+    return receipt
+
+
+def _existing_effect(root: Path, *, intent: str, request: dict, payload: dict,
+                     request_index: int, source_revision: str, supersedes: str | None) -> dict | None:
+    effect = operation_receipts.effect_id(request, intent=intent, index=request_index)
+    payload_digest = operation_receipts.payload_hash(request if request else payload, trusted_transport=True)
+    prior = operation_receipts.latest_receipt(root, intent=intent, payload_sha256=payload_digest, effect=effect)
+    if prior:
+        if prior["outcome"] in {"APPLIED", "ALREADY_APPLIED", "REJECTED_TERMINAL"}:
+            return operation_receipts.replay_receipt(prior)
+        if prior["outcome"] == "DEFERRED_DEPENDENCY" and not operation_receipts.retry_allowed(prior, source_revision):
+            return operation_receipts.replay_receipt(prior)
+        if prior["outcome"] == "RETRYABLE_TRANSPORT" and not operation_receipts.retry_allowed(prior, source_revision):
+            return operation_receipts.replay_receipt(prior)
+        return None
+    conflict = operation_receipts.terminal_payload_conflict(
+        root, intent=intent, payload_sha256=payload_digest, effect=effect, supersedes=supersedes,
+    )
+    if conflict:
+        conflict_reason = conflict.get("reason_code") or "TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY"
+        return operation_receipts.build_receipt(
+            intent=intent, payload_sha256=payload_digest, effect=effect, outcome="REJECTED_TERMINAL",
+            source_revision=source_revision, result_revision=source_revision,
+            reason_code=conflict_reason,
+            supersedes=conflict["receipt_id"],
+        )
+    return None
+
+
+def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
-    report: dict = {"before": before, "applied": [], "rejected": [], "receipts": [], "handled": []}
+    contract_versions = {"operation_receipts": operation_receipts.CONTRACT}
+    try:
+        from .operational_canary import CANARY_CONTRACT
+
+        contract_versions["operational_canary"] = CANARY_CONTRACT
+    except (ImportError, AttributeError):
+        pass
+    report: dict = {"before": before, "applied": [], "rejected": [], "receipts": [], "handled": [],
+                    "operation_receipts": [], "public_operation_receipts": [],
+                    "contracts": contract_versions}
     with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
         root, _ = materialize_live_tower(tower_raw, Path(work) / "TOWER_V06")
+        # Refresh/compensate the private canary monitor only at the mutating
+        # Writer boundary. Read-only status and standalone readiness calls do
+        # not write this file; the normal pack/CAS/readback persists this state.
+        try:
+            from .operational_canary import refresh_tower_monitor
+
+            monitor_status = refresh_tower_monitor(root)
+            if (monitor_status.get("heartbeat_refreshed")
+                    or monitor_status.get("rollback_readback") == "PASS"):
+                from .live_tower import publish_live_tower
+
+                publish_live_tower(root)
+        except Exception:
+            # The production readiness wrapper independently fails closed if
+            # the monitor cannot be verified. Do not abort unrelated proposals.
+            pass
         # A BATCH is applied item by item, so later envelopes see earlier ones (e.g. canary then canonize).
         flat: list[dict] = []
         for item in items:
@@ -53,94 +268,287 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
             else:
                 flat.append(item)
         items = flat
+        changed_receipt_ledger = False
         for index, item in enumerate(items):
             label = item.get("_inbox_name") or item.get("request_id") or f"item-{index}"
+            intent = operation_receipts.intent_id(item, str(label))
+            supersedes = str(item.get("supersedes") or ((item.get("payload") or {}).get("supersedes") if isinstance(item.get("payload"), dict) else "") or "").strip() or None
+            envelope_payload_hash = operation_receipts.payload_hash(item, trusted_transport=True)
+            envelope_source = operation_receipts.dependency_context_revision(root, item)
+            envelope_prior = operation_receipts.latest_envelope_receipt(
+                root, intent=intent, payload_sha256=envelope_payload_hash,
+            )
+            if envelope_prior:
+                if (envelope_prior["outcome"] in {"DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"}
+                        and operation_receipts.retry_allowed(envelope_prior, envelope_source)):
+                    pass  # Re-evaluate only after the recorded retry condition changed.
+                else:
+                    confirmation = operation_receipts.replay_receipt(envelope_prior)
+                    _append_effect_receipt(report, confirmation)
+                    if confirmation["outcome"] in {"APPLIED", "ALREADY_APPLIED"}:
+                        report["applied"].append(label)
+                        report["handled"].append(label)
+                    elif confirmation["outcome"] == "REJECTED_TERMINAL":
+                        report["rejected"].append({"item": label, "reason": confirmation.get("reason_code")})
+                        report["handled"].append(label)
+                    else:
+                        report.setdefault("deferred", []).append({"item": label, "outcome": confirmation["outcome"]})
+                    continue
+            else:
+                conflicting_envelopes = [row for row in operation_receipts.envelope_receipts(root, intent=intent)
+                                         if row["payload_sha256"] != envelope_payload_hash]
+                if conflicting_envelopes:
+                    prior = conflicting_envelopes[-1]
+                    row = _build_envelope_receipt(
+                        root=root, item=item, intent=intent, source_revision=envelope_source,
+                        outcome="REJECTED_TERMINAL", reason_code="TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY",
+                        supersedes=prior["receipt_id"], result_revision=envelope_source,
+                    )
+                    _append_effect_receipt(report, row)
+                    changed_receipt_ledger = True
+                    report["rejected"].append({"item": label, "reason": row["reason_code"]})
+                    report["handled"].append(label)
+                    continue
             try:
                 requests = [item] if _is_request(item) else proposal_to_requests(item, root)
             except ProposalError as exc:
-                report["rejected"].append({"item": label, "reason": str(exc)})
-                continue
+                requests = []
+                conversion_error = str(exc)
+            else:
+                conversion_error = None
+            if not requests and conversion_error is None:
+                conversion_error = "PROPOSAL_HAS_NO_EFFECTS"
+            source_revision = operation_receipts.dependency_context_revision(root, item, conversion_error)
             savepoint = (root / LIVE_TOWER_NAME).read_bytes()
-            receipts = []
-            for request in requests:
-                operation = request.get("nexo_operation")
-                if operation == "EXECUTION_OBSERVATION_ASSESSMENT":
-                    from .execution_assessment import AssessmentError, apply_assessment
-                    from .service import TowerAgentIssue
-                    if str(item.get("_inbox_source") or "").upper() != "RUNNER_OBSERVATION":
-                        receipts.append({"accepted": False, "issue": {"code": "VERIFIED_RUNNER_OBSERVATION_REQUIRED"}})
-                        continue
-                    try:
-                        receipt = apply_assessment(root, request.get("assessment"))
-                        receipts.append(receipt)
-                        if receipt.get("status") != "NO_OP":
-                            from .live_tower import publish_live_tower
-                            publish_live_tower(root)
-                    except AssessmentError as exc:
-                        receipts.append({"accepted": False, "issue": {"code": str(exc)}})
-                    except TowerAgentIssue as exc:
-                        receipts.append({"accepted": False, "issue": {"code": exc.code, "details": exc.details}})
-                    continue
-                if operation not in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
-                    receipts.extend(apply_requests(root, [request]))
-                    continue
-                if str(request.get("_inbox_source") or "").upper() != "DRIVE":
-                    receipts.append({
-                        "accepted": False,
-                        "issue": {"code": "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"},
-                    })
-                    continue
-                from . import AgentService, TowerAgentIssue
-
-                try:
-                    service = AgentService(root)
-                    if operation == "HANDOFF_CREATE":
-                        envelope = request.get("handoff")
-                        if not isinstance(envelope, dict):
-                            raise TypeError("handoff must be a JSON object")
-                        receipts.append(service.emit_handoff(**envelope))
+            if conversion_error is not None:
+                prior = _existing_effect(root, intent=intent, request={}, payload=item, request_index=0,
+                                         source_revision=source_revision, supersedes=supersedes)
+                if prior:
+                    _append_effect_receipt(report, prior)
+                    if prior["outcome"] in {"APPLIED", "ALREADY_APPLIED"}:
+                        report["applied"].append(label)
+                        report["handled"].append(label)
+                    elif prior["outcome"] == "REJECTED_TERMINAL":
+                        report["rejected"].append({"item": label, "reason": prior.get("reason_code")})
+                        report["handled"].append(label)
                     else:
-                        transition = request.get("transition")
-                        if not isinstance(transition, dict):
-                            raise TypeError("transition must be a JSON object")
-                        receipts.append(service.transition_handoff(
-                            transition.get("handoff_id", ""),
-                            state=transition.get("state", ""),
-                            writer_role=transition.get("writer_role", ""),
-                        ))
-                        if (root / "bootstrap").is_dir():
-                            from .views import materialize_role_views
-
-                            materialize_role_views(root)
-                except TowerAgentIssue as exc:
-                    receipts.append({
-                        "accepted": False,
-                        "issue": {"code": exc.code, "message": exc.message, "details": exc.details},
-                    })
+                        report.setdefault("deferred", []).append({"item": label, "outcome": prior["outcome"]})
+                    if prior.get("reason_code") in {"TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY", "SUPERSEDES_RECEIPT_NOT_FOUND"}:
+                        operation_receipts.persist_receipt(root, prior)
+                        changed_receipt_ledger = True
                     continue
-                except (TypeError, AttributeError):
-                    receipts.append({"accepted": False, "issue": {"code": "HANDOFF_ENVELOPE_INVALID"}})
-                    continue
+                if conversion_error == "PROPOSAL_HAS_NO_EFFECTS":
+                    # Without a prior durable effect receipt, a no-op conversion
+                    # cannot prove that an older Tower mutation completed.
+                    outcome, reason_code = "DEFERRED_DEPENDENCY", "LEGACY_EFFECT_RESULT_UNVERIFIED"
                 else:
-                    from .live_tower import publish_live_tower
+                    outcome, reason_code = operation_receipts.classify_reason(conversion_error)
+                row = _build_effect_receipt(
+                    root=root, item=item, label=str(label), request={}, request_index=0, intent=intent,
+                    source_revision=source_revision, outcome=outcome, reason_code=reason_code,
+                    retry_condition={"kind": "SOURCE_REVISION_CHANGED", "source_revision": source_revision} if outcome == "DEFERRED_DEPENDENCY" else None,
+                    supersedes=supersedes,
+                )
+                _append_effect_receipt(report, row)
+                changed_receipt_ledger = True
+                envelope_row = _build_envelope_receipt(
+                    root=root, item=item, intent=intent, source_revision=source_revision,
+                    outcome=outcome, reason_code=reason_code,
+                    retry_condition={"kind": "SOURCE_REVISION_CHANGED", "source_revision": source_revision}
+                    if outcome == "DEFERRED_DEPENDENCY" else None,
+                    supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
+                )
+                _append_effect_receipt(report, envelope_row)
+                if outcome == "REJECTED_TERMINAL":
+                    report["rejected"].append({"item": label, "reason": reason_code})
+                    report["handled"].append(label)
+                else:
+                    report.setdefault("deferred", []).append({"item": label, "outcome": outcome})
+                continue
 
-                    publish_live_tower(root)
-            failed = [r for r in receipts if not r.get("accepted", True) or r.get("issue")]
-            report["receipts"].extend(receipts)
+            prior_rows: list[dict | None] = []
+            retry_links: list[dict | None] = []
+            effect_sources: list[str] = []
+            for request_index, request in enumerate(requests):
+                effect_source = operation_receipts.dependency_context_revision(root, request)
+                effect_sources.append(effect_source)
+                prior = _existing_effect(root, intent=intent, request=request, payload=item,
+                                         request_index=request_index, source_revision=effect_source,
+                                         supersedes=supersedes)
+                if prior and prior.get("receipt_id", "").startswith("OR-") and prior.get("reason_code") in {
+                    "TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY", "SUPERSEDES_RECEIPT_NOT_FOUND"
+                }:
+                    operation_receipts.persist_receipt(root, prior)
+                    changed_receipt_ledger = True
+                prior_rows.append(prior)
+                effect = operation_receipts.effect_id(request, intent=intent, index=request_index)
+                payload_digest = operation_receipts.payload_hash(request, trusted_transport=True)
+                retry_links.append(operation_receipts.latest_receipt(root, intent=intent,
+                                                                     payload_sha256=payload_digest, effect=effect))
+            terminal_prior = next((row for row in prior_rows if row and row["outcome"] == "REJECTED_TERMINAL"), None)
+            runnable_requests = [request for request, row in zip(requests, prior_rows) if row is None]
+            if terminal_prior and runnable_requests:
+                # A previously rejected envelope stays closed as one unit. Do not apply
+                # unrecorded siblings after a partial or damaged ledger read.
+                for request_index, (request, prior) in enumerate(zip(requests, prior_rows)):
+                    if prior is not None:
+                        _append_effect_receipt(report, prior)
+                        continue
+                    row = _build_effect_receipt(
+                        root=root, item=item, label=str(label), request=request, request_index=request_index,
+                        intent=intent, source_revision=effect_sources[request_index], outcome="REJECTED_TERMINAL",
+                        reason_code="ENVELOPE_ALREADY_TERMINAL", supersedes=terminal_prior["receipt_id"],
+                    )
+                    _append_effect_receipt(report, row)
+                    operation_receipts.persist_receipt(root, row)
+                    changed_receipt_ledger = True
+                report["rejected"].append({"item": label, "reason": "ENVELOPE_ALREADY_TERMINAL"})
+                report["handled"].append(label)
+                envelope_row = _build_envelope_receipt(
+                    root=root, item=item, intent=intent, source_revision=envelope_source,
+                    outcome="REJECTED_TERMINAL", reason_code="ENVELOPE_ALREADY_TERMINAL",
+                    supersedes=envelope_prior["receipt_id"] if envelope_prior else terminal_prior["receipt_id"],
+                )
+                _append_effect_receipt(report, envelope_row)
+                changed_receipt_ledger = True
+                continue
+
+            if not runnable_requests:
+                for prior in prior_rows:
+                    if prior:
+                        _append_effect_receipt(report, prior)
+                envelope_outcome = operation_receipts.public_outcome([row for row in prior_rows if row])
+                if envelope_outcome in {"APPLIED", "ALREADY_APPLIED"}:
+                    report["applied"].append(label)
+                    report["handled"].append(label)
+                elif envelope_outcome == "REJECTED_TERMINAL":
+                    report["rejected"].append({"item": label, "reason": terminal_prior.get("reason_code") if terminal_prior else "PRIOR_TERMINAL_RECEIPT"})
+                    report["handled"].append(label)
+                else:
+                    report.setdefault("deferred", []).append({"item": label, "outcome": envelope_outcome or "UNRESOLVED"})
+                continue
+
+            receipts = []
+            result_revisions: list[str] = []
+            active_indices = [i for i, row in enumerate(prior_rows) if row is None]
+            source_tower_revision = _root_revision(root)
+            for request_index in active_indices:
+                receipt = _apply_one_request(root, item, requests[request_index])
+                receipts.append((request_index, receipt))
+                result_revisions.append(_root_revision(root))
+                if not receipt.get("accepted", True) or receipt.get("issue"):
+                    break
+            failed = [r for _, r in receipts if not r.get("accepted", True) or r.get("issue")]
+            report["receipts"].extend(receipt for _, receipt in receipts)
             if failed:
                 shutil.rmtree(root)
                 root, _ = materialize_live_tower(savepoint, root)
-                for receipt in receipts:
+                for _, receipt in receipts:
                     receipt["rolled_back"] = True
-                report["rejected"].append({"item": label, "reason": failed[0].get("issue")})
+                issue = failed[0].get("issue")
+                outcome, reason_code = operation_receipts.classify_reason(issue)
+                failure_index = next((request_index for request_index, receipt in receipts
+                                      if not receipt.get("accepted", True) or receipt.get("issue")), None)
+                for request_index in active_indices:
+                    request = requests[request_index]
+                    prior = retry_links[request_index]
+                    is_failure = request_index == failure_index
+                    effect_outcome = outcome if is_failure or outcome == "REJECTED_TERMINAL" else "DEFERRED_DEPENDENCY"
+                    effect_reason = reason_code if is_failure else (
+                        "ENVELOPE_TERMINAL_ROLLBACK" if outcome == "REJECTED_TERMINAL" else "ENVELOPE_ROLLED_BACK"
+                    )
+                    row = _build_effect_receipt(
+                        root=root, item=item, label=str(label), request=request, request_index=request_index,
+                        intent=intent, source_revision=effect_sources[request_index], outcome=effect_outcome, reason_code=effect_reason,
+                        retry_condition={"kind": "SOURCE_REVISION_CHANGED", "source_revision": effect_sources[request_index]} if effect_outcome == "DEFERRED_DEPENDENCY" else None,
+                        supersedes=prior["receipt_id"] if prior else None,
+                        result_revision=source_tower_revision,
+                    )
+                    _append_effect_receipt(report, row)
+                    operation_receipts.persist_receipt(root, row)
+                    changed_receipt_ledger = True
+                for prior in prior_rows:
+                    if prior:
+                        _append_effect_receipt(report, prior)
+                envelope_outcome = outcome
+                envelope_retry = None
+                if envelope_outcome == "DEFERRED_DEPENDENCY":
+                    envelope_retry = {"kind": "SOURCE_REVISION_CHANGED", "source_revision": envelope_source}
+                envelope_row = _build_envelope_receipt(
+                    root=root, item=item, intent=intent, source_revision=envelope_source,
+                    outcome=envelope_outcome, reason_code=reason_code, retry_condition=envelope_retry,
+                    supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
+                    result_revision=source_tower_revision,
+                )
+                _append_effect_receipt(report, envelope_row)
+                changed_receipt_ledger = True
+                report["rejected"].append({"item": label, "reason": reason_code, "outcome": outcome})
+                if outcome == "REJECTED_TERMINAL":
+                    report["handled"].append(label)
+                else:
+                    report.setdefault("deferred", []).append({"item": label, "outcome": outcome})
             else:
                 recorded_refusal = next((request.get("changes", {}).get("payload", {}).get("_not_applied_reason")
                                          for request in requests if str(request.get("changes", {}).get("kind", "")).startswith("UNAPPLIED_")), None)
+                new_result_by_index = {idx: revision for (idx, _), revision in zip(receipts, result_revisions)}
+                for request_index, prior in enumerate(prior_rows):
+                    if prior:
+                        _append_effect_receipt(report, prior)
+                        continue
+                    request = requests[request_index]
+                    if recorded_refusal:
+                        outcome, reason_code, retry_condition = "REJECTED_TERMINAL", str(recorded_refusal), None
+                    else:
+                        outcome = "ALREADY_APPLIED" if new_result_by_index.get(request_index) == source_tower_revision else "APPLIED"
+                        reason_code, retry_condition = None, None
+                    row = _build_effect_receipt(
+                        root=root, item=item, label=str(label), request=request, request_index=request_index,
+                        intent=intent, source_revision=effect_sources[request_index], outcome=outcome,
+                        reason_code=reason_code, retry_condition=retry_condition,
+                        supersedes=(retry_links[request_index]["receipt_id"] if retry_links[request_index] else supersedes),
+                        result_revision=new_result_by_index.get(request_index, _root_revision(root)),
+                    )
+                    _append_effect_receipt(report, row)
+                    operation_receipts.persist_receipt(root, row)
+                    changed_receipt_ledger = True
                 if recorded_refusal:
                     report["rejected"].append({"item":label, "reason":recorded_refusal, "recorded":True})
+                    report["handled"].append(label)
+                    envelope_row = _build_envelope_receipt(
+                        root=root, item=item, intent=intent, source_revision=envelope_source,
+                        outcome="REJECTED_TERMINAL", reason_code=str(recorded_refusal),
+                        supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
+                    )
+                    _append_effect_receipt(report, envelope_row)
+                    changed_receipt_ledger = True
                 else:
+                    item_outcomes = []
+                    for request_index, prior in enumerate(prior_rows):
+                        if prior:
+                            item_outcomes.append(prior["outcome"])
+                        else:
+                            item_outcomes.append("ALREADY_APPLIED" if new_result_by_index.get(request_index) == source_tower_revision else "APPLIED")
+                    envelope_outcome = operation_receipts.public_outcome([{"outcome": value} for value in item_outcomes])
+                    envelope_row = _build_envelope_receipt(
+                        root=root, item=item, intent=intent, source_revision=envelope_source,
+                        outcome=envelope_outcome or "DEFERRED_DEPENDENCY",
+                        reason_code=None if envelope_outcome in {"APPLIED", "ALREADY_APPLIED"} else "ENVELOPE_EFFECTS_UNRESOLVED",
+                        retry_condition={"kind": "SOURCE_REVISION_CHANGED", "source_revision": envelope_source}
+                        if envelope_outcome in {"DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"} else None,
+                        supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
+                    )
+                    _append_effect_receipt(report, envelope_row)
+                    changed_receipt_ledger = True
+                    if envelope_outcome not in {"APPLIED", "ALREADY_APPLIED"}:
+                        report.setdefault("deferred", []).append({"item": label, "outcome": envelope_outcome or "UNRESOLVED"})
+                        continue
                     report["applied"].append(label)
-                report["handled"].append(label)
+                    report["handled"].append(label)
+
+        if changed_receipt_ledger:
+            from .live_tower import publish_live_tower
+
+            publish_live_tower(root)
 
         # Contest lifecycle is mechanical: attacks cannot be attacked, and a completed
         # depth-1 attack closes the original from its frozen criterion result.
@@ -184,7 +592,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
         recovery_receipts = []
         routed = 0
         try:
-            recovery_requests = execution_recovery.reconcile_requests(root)
+            recovery_requests = execution_recovery.reconcile_requests(root, readiness_evaluator=readiness_evaluator)
             recovery_receipts = apply_requests(root, recovery_requests)
             if not any(not r.get("accepted", True) or r.get("issue") for r in recovery_receipts):
                 routed = execution_recovery.ensure_handoffs(root)
@@ -205,6 +613,11 @@ def apply_to_tower(tower_raw: bytes, items: list[dict]) -> tuple[bytes | None, d
                 from .live_tower import publish_live_tower
                 publish_live_tower(root)
             report["execution_recovery"] = {"mutations": len(recovery_receipts), "handoffs_created": routed}
+        # Includes private canary controller/selection/metric mutations from the
+        # same materialized Tower snapshot in the ordinary Writer pack path.
+        from .live_tower import publish_live_tower
+
+        publish_live_tower(root)
         packed = (root / LIVE_TOWER_NAME).read_bytes()
     after = verify_live_tower(read_live_tower_bytes(packed))
     report["after"] = after
@@ -312,6 +725,81 @@ def split_by_producer(items: list[dict[str, Any]], active: str) -> tuple[list[di
     return keep, shadow
 
 
+def _gateway_results(report: dict, gateway_ids: list[str], shadow_ids: set[str] | None = None) -> tuple[dict, list[str], list[str]]:
+    shadow_ids = shadow_ids or set()
+    # Revalidate even pre-projected rows at the last export boundary. This
+    # prevents callers that assemble reports from smuggling private effect IDs.
+    receipts = [safe for row in (report.get("public_operation_receipts") or [])
+                if isinstance(row, dict) and (safe := operation_receipts.public_receipt(row))]
+    result_items, reported, resolved = [], [], []
+    for gateway_id in gateway_ids:
+        if not operation_receipts.is_safe_gateway_id(gateway_id):
+            continue
+        intent = "gateway:" + str(gateway_id)
+        matched = [row for row in receipts if row.get("intent_id") == intent]
+        outcome = operation_receipts.public_outcome(matched)
+        resolution = None
+        if outcome is None and gateway_id in shadow_ids:
+            outcome, resolution = "REJECTED_TERMINAL", "PRODUCER_SHADOW"
+        if outcome is None:
+            continue
+        item = {"id": gateway_id, "intent_id": intent, "outcome": outcome}
+        if resolution:
+            item["resolution"] = resolution
+        safe_rows = [operation_receipts.public_receipt(row) for row in matched]
+        safe_rows = [row for row in safe_rows if row]
+        if safe_rows:
+            item["receipts"] = safe_rows
+            item["receipt_ids"] = sorted({row["receipt_id"] for row in safe_rows})
+        result_items.append(item)
+        reported.append(gateway_id)
+        if outcome in {"APPLIED", "ALREADY_APPLIED", "REJECTED_TERMINAL"}:
+            resolved.append(gateway_id)
+    return ({"contract": operation_receipts.CONTRACT, "items": result_items}, reported, resolved)
+
+
+def _emit_gateway_results(report: dict, gateway_ids: list[str], shadow_ids: set[str] | None = None,
+                          *, path: str | None = None, output: str | None = None) -> tuple[list[str], list[str]]:
+    payload, reported, resolved = _gateway_results(report, gateway_ids, shadow_ids)
+    if path:
+        destination = Path(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    if output and (reported or resolved):
+        with open(output, "a", encoding="utf-8") as handle:
+            handle.write("gateway_reported=" + ",".join(reported) + "\n")
+            handle.write("gateway_resolved=" + ",".join(resolved) + "\n")
+    return reported, resolved
+
+
+def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> dict:
+    condition = getattr(exc, "retry_condition", None)
+    if condition is None:
+        condition = "RECONCILE_TOWER_BEFORE_REAPPLY" if type(exc).__name__ == "TowerConflict" else "AFTER_TRANSPORT_RECOVERY"
+    report = {"operation_receipts": [], "public_operation_receipts": []}
+    for entry in gateway_entries:
+        gateway_id = str(entry.get("id") or "")
+        envelope = entry.get("envelope")
+        if not gateway_id or not isinstance(envelope, dict):
+            continue
+        receipt = operation_receipts.build_receipt(
+            intent="gateway:" + gateway_id,
+            payload_sha256=operation_receipts.payload_hash(envelope, trusted_transport=True),
+            effect=operation_receipts.envelope_effect_id("gateway:" + gateway_id),
+            outcome="RETRYABLE_TRANSPORT",
+            source_revision=None,
+            result_revision=None,
+            reason_code="TOWER_TRANSPORT_UNAVAILABLE",
+            retry_condition={"kind": condition},
+            visibility="PUBLIC",
+        )
+        report["operation_receipts"].append(receipt)
+        safe = operation_receipts.public_receipt(receipt)
+        if safe:
+            report["public_operation_receipts"].append(safe)
+    return report
+
+
 def _main(argv: list[str]) -> int:
     if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
         from . import AgentService
@@ -339,32 +827,47 @@ def _main(argv: list[str]) -> int:
         # Unattended writer (GitHub Actions): Drive NEXO_INBOX -> apply -> compare-and-swap the same Tower file id.
         # Needs env GOOGLE_SERVICE_ACCOUNT_JSON with write scope. Prints only ids and counts (never proposal content).
         import os
-        from .drive_transport import DriveInbox, DriveTower, TowerConflict
+        from .drive_transport import DriveInbox, DriveTower, TowerConflict, TowerTransportError
 
-        tower, inbox = DriveTower(write=True), DriveInbox(write=True)
-        pending = [i for i in inbox.pending() if not str(i.get("name", "")).startswith("_")]
-        items = []
+        gateway_file = os.environ.get("NEXO_GATEWAY_ITEMS", "")
+        gateway_entries = []
+        if gateway_file and Path(gateway_file).is_file():
+            try:
+                gateway_entries = json.loads(Path(gateway_file).read_text(encoding="utf-8")).get("items") or []
+            except (ValueError, OSError):
+                gateway_entries = []
+        gateway_entries = [entry for entry in gateway_entries
+                           if isinstance(entry, dict) and isinstance(entry.get("envelope"), dict)
+                           and operation_receipts.is_safe_gateway_id(entry.get("id"))]
+        gateway_ids = [str(entry["id"]) for entry in gateway_entries]
+        items = [{**entry["envelope"], "_inbox_source": "GATEWAY",
+                  "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + str(entry["id"])}
+                 for entry in gateway_entries]
+        try:
+            tower, inbox = DriveTower(write=True), DriveInbox(write=True)
+        except Exception as exc:
+            print(json.dumps({"status": "TRANSPORT_UNAVAILABLE", "error_type": type(exc).__name__}))
+            return 2
+        try:
+            pending = [i for i in inbox.pending() if not str(i.get("name", "")).startswith("_")]
+        except TowerTransportError as exc:
+            pending = []
+            print(json.dumps({"status": "INBOX_TRANSPORT_UNAVAILABLE", "action": exc.action,
+                              "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
         for entry in pending:
             payload = entry.get("payload")
             if isinstance(payload, dict):
                 items.append({**payload, "_inbox_source": "DRIVE",
                               "_inbox_name": entry.get("name"), "_inbox_id": entry.get("id")})
         github = _GitHubInbox(os.environ.get("NEXO_INBOX_GITHUB_TOKEN", "").strip())
-        for entry in github.pending():
+        try:
+            github_entries = github.pending()
+        except Exception as exc:
+            github_entries = []
+            print(json.dumps({"status": "GITHUB_INBOX_UNAVAILABLE", "error_type": type(exc).__name__}))
+        for entry in github_entries:
             items.append({**entry["payload"], "_inbox_source": "GITHUB",
                           "_inbox_name": entry["name"], "_inbox_id": "github:" + entry["path"]})
-        gateway_file = os.environ.get("NEXO_GATEWAY_ITEMS", "")
-        gateway_ids = []
-        if gateway_file and Path(gateway_file).is_file():
-            try:
-                gateway = json.loads(Path(gateway_file).read_text(encoding="utf-8")).get("items") or []
-            except ValueError:
-                gateway = []
-            for entry in gateway:
-                if isinstance(entry.get("envelope"), dict) and entry.get("id"):
-                    items.append({**entry["envelope"], "_inbox_source": "GATEWAY",
-                                  "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + entry["id"]})
-                    gateway_ids.append(entry["id"])
         updates_file = os.environ.get("NEXO_BATTERY_UPDATES", "")
         if updates_file and Path(updates_file).is_file():
             try:
@@ -386,15 +889,35 @@ def _main(argv: list[str]) -> int:
             shadow_ids = {str(s.get("_inbox_id")) for s in shadowed}
             for entry in list(github.seen):
                 if "github:" + entry["path"] in shadow_ids:
-                    github.mark_processed(entry)
+                    try:
+                        github.mark_processed(entry)
+                    except Exception as exc:
+                        print(json.dumps({"status": "GITHUB_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
             for entry in pending:
                 if entry.get("id") in shadow_ids:
-                    inbox.mark_processed(entry["id"])
+                    try:
+                        inbox.mark_processed(entry["id"])
+                    except TowerTransportError as exc:
+                        print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "action": exc.action,
+                                          "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
+                    except Exception as exc:
+                        print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
             gateway_shadow = [g for g in gateway_ids if "gateway:" + g in shadow_ids]
         dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
         dispatched: list[str] = []
         for attempt in range(3):
-            raw, base = tower.download(cache=False)
+            try:
+                raw, base = tower.download(cache=False)
+            except TowerTransportError as exc:
+                transport_report = _transport_gateway_report(gateway_entries, exc)
+                _emit_gateway_results(
+                    transport_report, gateway_ids, set(gateway_shadow),
+                    path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
+                    output=os.environ.get("GITHUB_OUTPUT"),
+                )
+                print(json.dumps({"status": "TOWER_TRANSPORT_UNAVAILABLE", "action": exc.action,
+                                  "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
+                return 0
             packed, report = apply_to_tower(raw, items)
             # Mechanical duties the GPT should not spend a run on: close roadmaps whose stop criterion was met.
             closes = _stop_closures(packed or raw)
@@ -419,11 +942,14 @@ def _main(argv: list[str]) -> int:
             # Batteries queued by the Executor: hand their specs to the dispatcher step and mark them DISPATCHED.
             queued = _queued_batteries(packed or raw)
             if queued and dispatch_dir:
+                from .scientific_integrity import WRITER_DISPATCH_TOKEN
+
                 Path(dispatch_dir).mkdir(parents=True, exist_ok=True)
                 marks = []
                 for battery in queued:
                     Path(dispatch_dir, f"{battery['id']}.json").write_text(json.dumps(battery, ensure_ascii=False), encoding="utf-8")
                     marks.append({"kind": "BATTERY_STATUS", "source": "WRITER_ROBOT", "_inbox_name": f"robot-dispatch-{battery['id']}",
+                                  "_writer_dispatch_token": WRITER_DISPATCH_TOKEN,
                                   "payload": {"battery_id": battery["id"], "status": "DISPATCHED", "run_ref": "github-actions"}})
                 changed, extra = apply_to_tower(packed or raw, marks)
                 if changed is not None:
@@ -435,10 +961,11 @@ def _main(argv: list[str]) -> int:
             if packed is None:
                 if not items:
                     print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
-                    out = os.environ.get("GITHUB_OUTPUT")
-                    if out and gateway_shadow:  # shadowed-only run still advances the gateway cursor
-                        with open(out, "a", encoding="utf-8") as handle:
-                            handle.write("gateway_applied=" + ",".join(gateway_shadow) + chr(10))
+                    _emit_gateway_results(
+                        report, gateway_ids, set(gateway_shadow),
+                        path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
+                        output=os.environ.get("GITHUB_OUTPUT"),
+                    )
                     return 0
                 break
             if os.environ.get("NEXO_ROBOT_DRY"):
@@ -452,26 +979,52 @@ def _main(argv: list[str]) -> int:
                 break
             except TowerConflict:
                 if attempt == 2:
+                    transport_report = _transport_gateway_report(gateway_entries, TowerConflict("TOWER_HEAD_MOVED"))
+                    _emit_gateway_results(
+                        transport_report, gateway_ids, set(gateway_shadow),
+                        path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
+                        output=os.environ.get("GITHUB_OUTPUT"),
+                    )
                     print(json.dumps({"status": "CONFLICT"}))
                     return 3
+            except TowerTransportError as exc:
+                transport_report = _transport_gateway_report(gateway_entries, exc)
+                _emit_gateway_results(
+                    transport_report, gateway_ids, set(gateway_shadow),
+                    path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
+                    output=os.environ.get("GITHUB_OUTPUT"),
+                )
+                print(json.dumps({"status": "TOWER_TRANSPORT_UNAVAILABLE", "action": exc.action,
+                                  "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
+                return 0
         by_name = {e.get("name"): e.get("id") for e in pending}
         applied_roots = {str(n) for n in report.get("handled", []) + report.get("applied", [])}
         for entry in github.seen:
             if _fully_handled(entry["name"], items, applied_roots):
-                github.mark_processed(entry)
+                try:
+                    github.mark_processed(entry)
+                except Exception as exc:
+                    print(json.dumps({"status": "GITHUB_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
         for name, file_id in by_name.items():
             if file_id and _fully_handled(str(name), items, applied_roots):
-                inbox.mark_processed(file_id)
+                try:
+                    inbox.mark_processed(file_id)
+                except TowerTransportError as exc:
+                    print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "action": exc.action,
+                                      "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
+                except Exception as exc:
+                    print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
         summary = {"status": report.get("status"), "before": report.get("before"), "after": report.get("after"),
                    "applied": len(report.get("applied", [])), "rejected": [r.get("item") for r in report.get("rejected", [])],
                    "write": report.get("write")}
         print(json.dumps(summary, ensure_ascii=False))
         applied = applied_roots
-        acked = [g for g in gateway_ids if _fully_handled(f"gw-{g}", items, applied)] + gateway_shadow
+        _emit_gateway_results(
+            report, gateway_ids, set(gateway_shadow),
+            path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
+            output=os.environ.get("GITHUB_OUTPUT"),
+        )
         out = os.environ.get("GITHUB_OUTPUT")
-        if out and acked and report.get("write"):
-            with open(out, "a", encoding="utf-8") as handle:
-                handle.write("gateway_applied=" + ",".join(acked) + chr(10))
         if out and report.get("write"):
             with open(out, "a", encoding="utf-8") as handle:
                 handle.write("tower_revision=" + str(report["write"]["state_fingerprint"]) + "\n")
@@ -482,7 +1035,9 @@ def _main(argv: list[str]) -> int:
 
         with tempfile.TemporaryDirectory(prefix="nexo-gpt-status-") as work:
             root, _ = materialize_live_tower(Path(argv[1]).read_bytes(), Path(work) / "TOWER_V06")
-            print(json.dumps(evolution_status(root), ensure_ascii=False, indent=1, default=str))
+            status = evolution_status(root)
+            status.update(_operational_status(root))
+            print(json.dumps(status, ensure_ascii=False, indent=1, default=str))
         return 0
     if len(argv) >= 2 and argv[0] == "verify":
         fingerprint = verify_live_tower(read_live_tower_bytes(Path(argv[1]).read_bytes()))

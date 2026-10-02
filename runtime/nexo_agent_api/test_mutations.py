@@ -168,7 +168,7 @@ class MutationInboxTests(unittest.TestCase):
                 self.assertFalse(receipt["accepted"])
                 self.assertEqual(receipt["issue"]["code"], "INBOX_RESULT_ORDER_CONFLICT")
 
-    def test_prepared_test_with_executor_metadata_accepts_its_first_result(self) -> None:
+    def test_prepared_test_accepts_manual_result_without_closing_execution_phase(self) -> None:
         path = entity_path(self.root, "test", "T-PREPARED-FIRST-RESULT")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({
@@ -190,14 +190,16 @@ class MutationInboxTests(unittest.TestCase):
         self.assertTrue(receipt["accepted"])
         self.assertNotEqual(receipt.get("status"), "NO_OP")
         self.assertEqual(receipt["entity_version"], 3)
-        self.assertEqual(json.loads(path.read_text())["result_summary"], "Primeiro resultado real.")
+        current = json.loads(path.read_text())
+        self.assertEqual(current["result_summary"], "Primeiro resultado real.")
+        self.assertNotIn("execution_phase", current)
 
     def test_later_different_result_source_remains_a_real_mutation(self) -> None:
         path = entity_path(self.root, "test", "T-RESULT-LATER")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps({
             "id": "T-RESULT-LATER", "entity_version": 2,
-            "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+            "status": "DONE", "state": "DONE", "execution_phase": "COMPLETED", "verdict": "INCONCLUSIVE",
             "result_summary": "Resultado antigo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
             "executed_at": "2026-09-26T12:10:01Z", "inbox_ref": "gateway:tcc-old",
         }))
@@ -205,7 +207,7 @@ class MutationInboxTests(unittest.TestCase):
             "request_id": "REQ-LATER", "entity_kind": "test", "entity_name": "T-RESULT-LATER",
             "expected_version": 2,
             "changes": {
-                "status": "DONE", "state": "DONE", "verdict": "INCONCLUSIVE",
+                "status": "DONE", "state": "DONE", "execution_phase": "COMPLETED", "verdict": "INCONCLUSIVE",
                 "result_summary": "Resultado novo.", "executed_by": "CHATGPT_TASK_EXECUTOR",
                 "executed_at": "2026-09-26T12:20:01Z", "inbox_ref": "gateway:tcc-new",
             },

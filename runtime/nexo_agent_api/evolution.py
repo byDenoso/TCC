@@ -97,7 +97,47 @@ def _test_update(root: Path, test_id: str, changes: dict[str, Any], rid: str, ev
         return None
     return {"request_id": rid, "entity_kind": "test", "entity_name": test_id,
             "expected_version": int(current.get("entity_version") or 0),
-            "writer_role": "ADVISOR", "event_type": event, "changes": changes}
+            "writer_role": "EXECUTOR" if "execution_phase" in changes else "ADVISOR",
+            "event_type": event, "changes": changes}
+
+
+def _phase_failure_receipt(battery_id: str, test_id: str, spec: dict[str, Any],
+                           result_evidence: dict[str, Any], receipt_kind: str,
+                           run_ref: str, completed_at: str, failure_class: str,
+                           failure_stage: str | None, event_type: str,
+                           phase_target: str) -> dict[str, Any]:
+    """Bind one operational failure phase update to its exact runner evidence.
+
+    This receipt is generated only while converting a verified RUNNER_OBSERVATION
+    into its internal battery-status requests. It carries hashes and immutable
+    bindings, never the raw runner log or scientific payload.
+    """
+    return {
+        "receipt_kind": receipt_kind,
+        "battery_id": battery_id,
+        "test_id": test_id,
+        "spec_sha256": "sha256:" + integrity.digest(spec),
+        "result_sha256": "sha256:" + integrity.digest(result_evidence),
+        "attempt_id": spec.get("attempt_id"),
+        "recipe_sha256": spec.get("recipe_sha256"),
+        "prereg_hash": spec.get("prereg_hash"),
+        "recipe": spec.get("recipe"),
+        "params_sha256": "sha256:" + integrity.digest(spec.get("params")),
+        "run_ref": run_ref,
+        "completed_at": completed_at,
+        "done_at": completed_at,
+        "failure_class": failure_class,
+        "failure_stage": failure_stage,
+        "event_type": event_type,
+        "phase_target": phase_target,
+    }
+
+
+def _readiness(root: Path, test: dict[str, Any], *, ignore_reservation: bool = False) -> dict[str, Any]:
+    """Use the Writer's optional fail-closed readiness evaluator consistently."""
+    from .execution_recovery import evaluate_readiness
+
+    return evaluate_readiness(root, test, ignore_reservation=ignore_reservation)
 
 
 def prereg_hash(test_id: str, fields: dict[str, Any]) -> str:
@@ -751,7 +791,7 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         seen.add(test_id)
         if current.get("private") or is_private(resolve_semantic(current, entity_id=test_id)) or spec.get("script"):
             raise ProposalError("PUBLIC_RECIPE_ONLY")
-        check = integrity.readiness(root, current)
+        check = _readiness(root, current)
         if str(current.get("status") or current.get("state") or "").upper() != "READY" or not check["eligible"]:
             raise ProposalError("TEST_NOT_EXECUTABLE:" + test_id + ":" + ",".join(check["reasons"]))
         if spec.get("recipe") != current.get("recipe") or spec.get("params") != current.get("recipe_params"):
@@ -775,7 +815,12 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     retained = [b for b in batteries if b.get("status") in integrity.ACTIVE]
     retained += [b for b in batteries if b.get("status") not in integrity.ACTIVE][-200:]
     retained.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"),
-                     "submission_fingerprint": submission, "tests": tests})
+                     # Keep the exact accepted source envelope beside its digest.
+                     # The normalized attempt specs below intentionally add frozen
+                     # provenance and clamp operational fields, so they cannot be
+                     # used to reconstruct the caller's original submission later.
+                     "submission_fingerprint": submission, "submitted_specs": specs,
+                     "tests": tests})
     return [_doc(BATTERIES_DOC, {"batteries": retained}, f"REQ-BATTERY-{bid}")] + requests
 
 def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
@@ -1024,7 +1069,7 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
         if (not test.get("contests_test_id")
                 and str(roadmap.get("state") or "").upper() != "ACTIVE"):
             continue
-        check = integrity.readiness(root, test)
+        check = _readiness(root, test)
         if not check["eligible"]:
             continue
         execution_fingerprints[str(test["id"])] = integrity.execution_fingerprint(test, check["recipe_sha256"], check.get("param_preflight"))
@@ -1093,7 +1138,7 @@ def recipe_bind_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
     provisional = dict(test, recipe=recipe, recipe_params=params)
     if test.get("status") in {"DRAFT", "BLOCKED_INPUT"} and (not test.get("blocker") or test.get("readiness")):
         provisional["blocker"] = None
-    check = integrity.readiness(root, provisional)
+    check = _readiness(root, provisional)
     state = "READY" if check["eligible"] else "BLOCKED_INPUT"
     changes = {"recipe": recipe, "recipe_params": params, "status": state, "state": state,
                "readiness": check, "blocker": None if check["eligible"] else (test.get("blocker") or ",".join(check["reasons"]))}
@@ -1119,7 +1164,7 @@ def data_binding_requests(item: dict[str, Any], body: dict[str, Any], root: Path
     provisional = dict(test, data_binding=binding)
     if test.get("readiness"):
         provisional["blocker"] = None
-    check = integrity.readiness(root, provisional)
+    check = _readiness(root, provisional)
     state = "READY" if check["eligible"] else "BLOCKED_INPUT"
     changes = {"data_binding": binding, "readiness": check, "status": state, "state": state,
                "blocker": None if check["eligible"] else (provisional.get("blocker") or ",".join(check["reasons"]))}
@@ -1194,8 +1239,11 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
     # A locally written dispatch spec is not an accepted external run.
     if status == "DISPATCHED" and body.get("run_ref") == "github-actions":
         status = "DISPATCH_PENDING"
+    internal_dispatch = item.get("_writer_dispatch_token") is integrity.WRITER_DISPATCH_TOKEN
     if status not in {"DISPATCH_PENDING", "DISPATCHED", "RUNNING", "DONE"}:
         raise ProposalError("BATTERY_PHASE_INVALID")
+    if status == "DISPATCH_PENDING" and not internal_dispatch:
+        raise ProposalError("WRITER_DISPATCH_CONTEXT_REQUIRED")
     order = {"QUEUED": 0, "DISPATCH_PENDING": 1, "DISPATCHED": 2, "RUNNING": 3, "DONE": 4}
     if order[status] < order.get(previous.get("status"), 0):
         return []
@@ -1239,11 +1287,14 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
         if battery == previous and not requests:
             return []
         batteries[index] = battery
-        return [_doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{bid}-{status}")] + requests
+        status_doc = _doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{bid}-{status}")
+        status_doc["_runner_battery_status_token"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
+        return [status_doc] + requests
     if integrity.timestamp(body.get("completed_at")) is None:
         raise ProposalError("RUNNER_COMPLETION_TIME_REQUIRED")
     entries = body.get("results") or []
-    if body.get("results_missing") and body.get("conclusion") in {"failure", "cancelled", "timed_out", "startup_failure"}:
+    results_missing = bool(body.get("results_missing")) and body.get("conclusion") in {"failure", "cancelled", "timed_out", "startup_failure"}
+    if results_missing:
         entries = [{"test_id": tid, "ok": False, "log_tail": "Temporary failure: runner ended before a complete scientific receipt was available."} for tid in specs]
         body = dict(body, results=entries)
     ids = [str(entry.get("test_id") or "") for entry in entries if isinstance(entry, dict)]
@@ -1273,6 +1324,7 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                    execution_observation="GITHUB_RUN_AND_ARTIFACT", conclusion=body.get("conclusion"))
     if status == "DONE":
         ok = bad = 0
+        phase_failure_receipts: list[dict[str, Any]] = []
         health = dict(_read(root, RECIPE_HEALTH_DOC).get("recipes") or {})
         for entry in body.get("results") or []:
             test_id = str(entry.get("test_id") or "")
@@ -1293,11 +1345,29 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                 current_test = _entity(root, "test", test_id) or {}
                 if entry.get("operational_status") == "INPUT_UNAVAILABLE":
                     reason = entry["operational_reason"]
-                    failure = {"battery_id": bid, "attempt_id": specs[test_id].get("attempt_id"),
+                    spec = specs[test_id]
+                    receipt_kind = "RUNNER_RESULTS_MISSING" if results_missing else "RUNNER_FAILURE_ENTRY"
+                    result_evidence = ({"results_missing": True, "test_id": test_id,
+                                        "run_ref": run_ref, "completed_at": body["completed_at"],
+                                        "conclusion": body.get("conclusion")}
+                                       if results_missing else entry)
+                    phase_receipt = _phase_failure_receipt(
+                        bid, test_id, spec, result_evidence, receipt_kind, run_ref,
+                        body["completed_at"], "INPUT_UNAVAILABLE", str(entry.get("failure_stage") or "")[:80],
+                        "TEST_INPUT_UNAVAILABLE", "BLOCKED_INPUT")
+                    phase_failure_receipts.append(phase_receipt)
+                    failure = {"battery_id": bid,
                                "run_ref": run_ref, "at": body["completed_at"], "class": "INPUT_UNAVAILABLE",
                                "reason": reason, "failure_stage": str(entry.get("failure_stage") or "")[:80],
                                "detail": str(entry.get("operational_detail") or "")[:1200],
-                               "param_preflight": entry.get("param_preflight")}
+                               "param_preflight": entry.get("param_preflight"),
+                               "runner_result_sha256": phase_receipt["result_sha256"],
+                               "runner_spec_sha256": phase_receipt["spec_sha256"],
+                               "runner_result_kind": phase_receipt["receipt_kind"]}
+                    if spec.get("attempt_id"):
+                        failure["attempt_id"] = spec["attempt_id"]
+                    if spec.get("recipe_sha256"):
+                        failure["recipe_sha256"] = spec["recipe_sha256"]
                     # A failed preflight/input fetch is operational evidence,
                     # never a scientific verdict or a completed experiment.
                     # Leave a non-auto-clearing blocker until the exact input
@@ -1339,20 +1409,44 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
                     # The registry closes this failed reservation in the same
                     # envelope. Missing preparation must not reject that close
                     # and strand the old run forever behind READY_INVARIANT.
-                    check = integrity.readiness(root, {**current_test, **changes}, ignore_reservation=True)
+                    check = _readiness(root, {**current_test, **changes}, ignore_reservation=True)
                     changes["readiness"] = check
                     if not check["eligible"]:
                         changes.update(status="BLOCKED_INPUT", state="BLOCKED_INPUT",
                                        blocker=current_test.get("blocker") or ",".join(check["reasons"]))
                 changes["execution_phase"] = changes["status"]
+                spec = specs[test_id]
+                receipt_kind = "RUNNER_RESULTS_MISSING" if results_missing else "RUNNER_FAILURE_ENTRY"
+                result_evidence = ({"results_missing": True, "test_id": test_id,
+                                    "run_ref": run_ref, "completed_at": body["completed_at"],
+                                    "conclusion": body.get("conclusion")}
+                                   if results_missing else entry)
+                phase_receipt = _phase_failure_receipt(
+                    bid, test_id, spec, result_evidence, receipt_kind, run_ref,
+                    body["completed_at"], kind, failure.get("failure_stage"),
+                    "TEST_RUNTIME_FAILURE", changes["execution_phase"])
+                phase_failure_receipts.append(phase_receipt)
+                failure.update(runner_result_sha256=phase_receipt["result_sha256"],
+                               runner_spec_sha256=phase_receipt["spec_sha256"],
+                               runner_result_kind=phase_receipt["receipt_kind"])
+                if spec.get("recipe_sha256"):
+                    failure["recipe_sha256"] = spec["recipe_sha256"]
+                changes["last_runtime_failure"] = failure
                 update = _test_update(root, test_id, changes, f"REQ-BATTERY-FAIL-{bid}-{test_id}", "TEST_RUNTIME_FAILURE")
                 if update:
                     requests.append(update)
         battery.update({"completed_at": body["completed_at"], "run_ref": body.get("run_ref") or battery.get("run_ref"), "ok": ok, "failed": bad})
+        if phase_failure_receipts:
+            battery["phase_failure_receipts"] = phase_failure_receipts
         if health != (_read(root, RECIPE_HEALTH_DOC).get("recipes") or {}):
             requests.append(_doc(RECIPE_HEALTH_DOC, {"recipes": health}, f"REQ-RECIPE-HEALTH-{bid}"))
     batteries[index] = battery
-    return [_doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{status}-{bid}")] + requests
+    status_doc = _doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{status}-{bid}")
+    status_doc["_runner_battery_status_token"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
+    if battery.get("phase_failure_receipts"):
+        status_doc["_runner_phase_failure_receipt_sha256"] = (
+            "sha256:" + integrity.digest(battery["phase_failure_receipts"]))
+    return [status_doc] + requests
 
 
 def pending_batteries(root: Path, stale_hours: float = 8.0) -> list[dict[str, Any]]:

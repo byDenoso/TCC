@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexo.example/contracts/atlas-observation-v1.schema.json",
+  "title": "ATLAS_OBSERVATION_V1",
+  "description": "A validated public point-in-time observation for an Atlas entity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "entity_id",
+    "entity_kind",
+    "scientific_state",
+    "attempt_state",
+    "review_state",
+    "decision_required",
+    "source_revision",
+    "projection_fingerprint",
+    "last_event_id",
+    "last_event_at",
+    "observed_at",
+    "freshness",
+    "coverage",
+    "access"
+  ],
+  "properties": {
+    "contract": { "const": "ATLAS_OBSERVATION_V1" },
+    "entity_id": { "type": "string", "minLength": 1 },
+    "entity_kind": { "type": "string", "minLength": 1 },
+    "scientific_state": { "type": "string", "minLength": 1 },
+    "attempt_state": { "type": "string", "minLength": 1 },
+    "review_state": { "type": "string", "minLength": 1 },
+    "decision_required": { "type": "boolean" },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "projection_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-fA-F]{64}$"
+    },
+    "last_event_id": { "type": ["string", "null"] },
+    "last_event_at": { "type": ["string", "null"], "format": "date-time" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "freshness": { "enum": ["SNAPSHOT", "STALE", "UNKNOWN", "UNAVAILABLE"] },
+    "coverage": { "enum": ["COMPLETE", "PARTIAL", "UNKNOWN"] },
+    "access": { "const": "PUBLIC_PROJECTION" }
+  }
+}
