@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr403-bd171925",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T10:30:47Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/403",
+        "head_sha": "bd17192549786aaf15a62e090fd35f12e873c6c0",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: a correção exige status DONE para cada membro e adiciona regressão que falha fechado para membro não DONE, reproduzindo o contrato congelado já aplicado.",
+          "Item 2: coorte, contagens, AUC esperada e limiares de sucesso e kill permanecem declarativos no smoke.",
+          "Item 3: projection_url agora é derivada e validada contra a URL oficial commit-pinned, com projection_version de 40 hex e projection_sha256; estatística e critérios permaneceram intactos.",
+          "Item 4: verdict, decision, summary, statistics e semantic.result_meaning em português permanecem presentes; smoke versionado existe e executor-runtime-smoke passou no SHA revisado."
+        ]
+      }
+    }
+  }
+}
