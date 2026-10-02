@@ -11,7 +11,7 @@ import math
 import os
 import re
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -1015,8 +1015,62 @@ def guard_transition(root: Path, request: dict) -> dict | None:
     states = {str(next_test[k]).upper() for k in ('status', 'state') if next_test.get(k)}
     next_state = str(next_test.get('status') or next_test.get('state') or '').upper()
     current_phase = str(current.get('execution_phase') or '').upper()
-    terminal_result_payload = (next_state in TERMINAL or bool(changes.get('verdict'))
-                               or bool(changes.get('executed_at')))
+    status_enters_terminal = any(
+        key in changes and str(changes.get(key) or '').upper() in TERMINAL
+        and str(current.get(key) or '').upper() != str(changes.get(key) or '').upper()
+        for key in ('status', 'state'))
+    status_enters_active = any(
+        key in changes and str(changes.get(key) or '').upper() in ACTIVE
+        and str(current.get(key) or '').upper() != str(changes.get(key) or '').upper()
+        for key in ('status', 'state'))
+    status_leaves_active = any(
+        key in changes and str(current.get(key) or '').upper() in ACTIVE
+        and str(current.get(key) or '').upper() != str(changes.get(key) or '').upper()
+        for key in ('status', 'state'))
+    result_fields = ('verdict', 'scientific_verdict', 'executed_at', 'result',
+                     'statistics', 'decision', 'result_summary', 'reproducibility')
+    result_payload_changed = any(
+        key in changes and changes.get(key) != current.get(key) for key in result_fields)
+    terminal_result_payload = status_enters_terminal or result_payload_changed
+    # A stale DRAFT may be archived by maintenance, but that lifecycle change
+    # is not a scientific result. Keep the exception narrower than the general
+    # terminal-result path and bind it to the existing entity version.
+    stale_draft_archive = False
+    if current and request.get('event_type') == 'TEST_ARCHIVED':
+        current_states = {str(current.get(key) or '').upper()
+                          for key in ('status', 'state') if current.get(key) not in (None, '')}
+        expected_version = request.get('expected_version')
+        entity_version = current.get('entity_version')
+        archived_at = timestamp(changes.get('archived_at'))
+        created_at = timestamp(current.get('created_at') or current.get('frozen_at'))
+        try:
+            from .evolution import STALE_DRAFT_DAYS
+        except ImportError:
+            STALE_DRAFT_DAYS = 21
+        try:
+            has_active_reservation = test_id in active_tests(root)
+        except (OSError, ValueError, TypeError):
+            has_active_reservation = True
+        stale_draft_archive = bool(
+            current_states == {'DRAFT'}
+            and request.get('writer_role') == 'ADVISOR'
+            and type(expected_version) is int and type(entity_version) is int
+            and expected_version == entity_version
+            and set(changes) == {'status', 'state', 'archive_reason', 'archived_at'}
+            and str(changes.get('status') or '').upper() == 'ARCHIVED'
+            and str(changes.get('state') or '').upper() == 'ARCHIVED'
+            and changes.get('archive_reason') == 'stale_draft'
+            and archived_at is not None and created_at is not None
+            and archived_at - created_at >= timedelta(days=STALE_DRAFT_DAYS)
+            and archived_at <= datetime.now(timezone.utc) + timedelta(minutes=5)
+            and not has_active_reservation
+            and not any(str(current.get(key) or '').upper() in ACTIVE
+                        for key in ('status', 'state', 'execution_phase'))
+            and not any(current.get(key) not in (None, '', [], {})
+                        for key in ('verdict', 'scientific_verdict', 'executed_at', 'result',
+                                    'statistics', 'decision', 'result_summary',
+                                    'reproducibility', 'battery_id', 'attempt_id', 'run_ref'))
+        )
     phase_changed = ('execution_phase' in changes
                      and changes.get('execution_phase') != current.get('execution_phase'))
     if phase_changed:
@@ -1024,15 +1078,29 @@ def guard_transition(root: Path, request: dict) -> dict | None:
             root, request, current, next_test, current_phase, next_state)
         if phase_issue:
             issue = phase_issue
-    elif request.get('event_type') == 'TEST_RESULT_RECORDED' and terminal_result_payload:
+    elif status_enters_active or (status_leaves_active and not terminal_result_payload):
+        # Lifecycle status and execution phase move together only through the
+        # corresponding proof-bearing event; caller-supplied runner fields do
+        # not authorize entering or leaving an active status by themselves.
+        issue = 'EXECUTION_PHASE_TRANSITION_REQUIRED'
+    elif terminal_result_payload:
         # Imported results remain supported for genuinely unattempted records.
-        # A reservation/runner attempt cannot be bypassed by omitting the phase
-        # field from a terminal-looking result mutation.
+        # An active reservation/attempt cannot be bypassed by choosing another
+        # event or omitting execution_phase from a terminal-looking mutation.
+        event = str(request.get('event_type') or '')
+        has_result_payload = any(
+            changes.get(key) not in (None, '', [], {})
+            for key in ('verdict', 'scientific_verdict', 'decision', 'result_summary',
+                        'statistics', 'result', 'reproducibility'))
+        if not stale_draft_archive and (event != 'TEST_RESULT_RECORDED' or not has_result_payload):
+            issue = 'TERMINAL_STATUS_REQUIRES_RESULT_EVENT'
         try:
             active_attempt = test_id in active_tests(root)
         except (OSError, ValueError, TypeError):
             active_attempt = True
-        if current_phase == 'RUNNING' or active_attempt:
+        current_status_active = any(
+            str(current.get(key) or '').upper() in ACTIVE for key in ('status', 'state'))
+        if not stale_draft_archive and (current_phase in ACTIVE or current_status_active or active_attempt):
             issue = 'EXECUTION_PHASE_RESULT_PROOF_REQUIRED'
     if (current and terminal(current) and 'execution_phase' in changes
             and changes['execution_phase'] != current.get('execution_phase')):
@@ -1054,7 +1122,7 @@ def guard_transition(root: Path, request: dict) -> dict | None:
         issue = 'ACTIVE_EXECUTION_BINDING_IMMUTABLE'
     if next_state == 'READY' and any(k in changes for k in ('status', 'state', 'recipe', 'recipe_params', 'data_binding')):
         check = readiness(root, next_test)
-        if not check['eligible']:
+        if not check['eligible'] and issue is None:
             issue = 'READY_INVARIANT:' + ','.join(check['reasons'])
     if next_state in ACTIVE and any(k in changes for k in ('status', 'state', 'battery_id', 'attempt_id')):
         battery = next((b for b in batteries(root) if b.get('id') == next_test.get('battery_id')), {})

@@ -14,6 +14,7 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from nexo_persist import _relay_shared as relay
 from runtime.nexo_agent_api import operation_receipts, scientific_integrity
@@ -25,6 +26,8 @@ from runtime.nexo_agent_api.live_tower import (
     verify_live_tower,
 )
 from runtime.nexo_agent_api.public_projection import build_public_projection, verify_projection
+from runtime.nexo_agent_api import tower_apply
+from runtime.nexo_agent_api.tower_paths import entity_path
 from tests import test_execution_phase_reconciliation as phase_fixture
 
 END = phase_fixture.END
@@ -146,6 +149,89 @@ class NexoOperationalPipelineTests(unittest.TestCase):
         self.assertEqual(report["after"], verify_live_tower(bundle))
         return packed, report
 
+    def test_stale_terminal_phase_rolls_back_runner_done_and_continues_good_item(self) -> None:
+        fixture = phase_fixture.ExecutionPhaseReconciliationTests()
+        fixture.setUp()
+        try:
+            transport = _FakeGitHubContents()
+            tower_raw = fixture._initial_bundle()
+            battery_id = fixture._battery_items()["payload"]["battery_id"]
+            _, battery_item = self._stage(
+                transport, fixture.temp_root, "stale-version-battery", fixture._battery_items(), "WRITER_ROBOT"
+            )
+            tower_raw, battery_report = self._apply_writer_item(tower_raw, battery_item, "APPLIED")
+            self.assertFalse(battery_report["rejected"], battery_report)
+            _, running_item = self._stage(
+                transport, fixture.temp_root, "stale-version-running", fixture._running_item(), "RUNNER_OBSERVATION"
+            )
+            tower_raw, running_report = self._apply_writer_item(tower_raw, running_item, "APPLIED")
+            self.assertFalse(running_report["rejected"], running_report)
+
+            with tempfile.TemporaryDirectory(prefix="nexo-stale-phase-source-") as temporary:
+                runner_root, _ = materialize_live_tower(tower_raw, Path(temporary) / "running")
+                completed = fixture._completed_item(runner_root)
+            _, runner_item = self._stage(
+                transport, fixture.temp_root, "stale-version-result", completed, "RUNNER_OBSERVATION"
+            )
+            expected_requests = self._real_effect_requests(tower_raw, runner_item)
+            phase_request = next(request for request in expected_requests
+                                 if request.get("entity_kind") == "test")
+
+            independent_item = {
+                "request_id": "REQ-INDEPENDENT-GOOD-DOCUMENT",
+                "document": "indexes/stale-phase-independent-check.json",
+                "merge": {"marker": "independent-good-item-applied"},
+                "_inbox_id": "gateway:independent-good",
+                "_inbox_name": "independent-good",
+                "_inbox_source": "GATEWAY",
+            }
+            original_apply_document = tower_apply.apply_document
+            bumped_version = False
+
+            def apply_document_with_intervening_version_change(root, request):
+                nonlocal bumped_version
+                receipt = original_apply_document(root, request)
+                terminal_battery = any(
+                    row.get("id") == battery_id and row.get("status") == "DONE"
+                    for row in (request.get("merge") or {}).get("batteries", [])
+                    if isinstance(row, dict)
+                ) if request.get("document") == "evolution/batteries.json" else False
+                if receipt.get("accepted") and terminal_battery:
+                    path = entity_path(root, "test", TEST_ID)
+                    value = json.loads(path.read_text(encoding="utf-8"))
+                    value["entity_version"] = int(value.get("entity_version") or 0) + 1
+                    path.write_text(json.dumps(value, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+                    bumped_version = True
+                return receipt
+
+            with mock.patch.object(tower_apply, "apply_document", side_effect=apply_document_with_intervening_version_change):
+                packed, report = apply_to_tower(tower_raw, [runner_item, independent_item])
+            self.assertTrue(bumped_version)
+            self.assertIsNotNone(packed, report)
+            self.assertTrue(any(row.get("item") == "stale-version-result"
+                                and "EXECUTION_PHASE_SOURCE_VERSION_INVALID" in str(row.get("reason"))
+                                for row in report["rejected"]), report)
+            self.assertNotIn("stale-version-result", report["applied"])
+            self.assertIn("independent-good", report["applied"])
+
+            assert packed is not None
+            bundle = read_live_tower_bytes(packed)
+            with tempfile.TemporaryDirectory(prefix="nexo-stale-phase-readback-") as temporary:
+                readback, _ = materialize_live_tower(packed, Path(temporary) / "rollback-readback")
+                battery = scientific_integrity.batteries(readback)[0]
+                test = scientific_integrity.entity(readback, TEST_ID)
+                probe = json.loads((readback / "indexes/stale-phase-independent-check.json").read_text(encoding="utf-8"))
+            self.assertEqual(battery["status"], "RUNNING")
+            self.assertEqual(test["status"], test["execution_phase"], "RUNNING")
+            self.assertEqual(probe["marker"], "independent-good-item-applied")
+            phase_receipt = next(row for row in report["operation_receipts"]
+                                 if row["effect_id"] == phase_request["request_id"])
+            self.assertEqual(phase_receipt["outcome"], "REJECTED_TERMINAL")
+            self.assertEqual(phase_receipt["reason_code"], "EXECUTION_PHASE_SOURCE_VERSION_INVALID")
+            self.assertEqual(report["after"], verify_live_tower(bundle))
+        finally:
+            fixture.tearDown()
+
     def test_staged_request_reservation_runner_result_review_guard_and_projection(self) -> None:
         fixture = phase_fixture.ExecutionPhaseReconciliationTests()
         fixture.setUp()
@@ -181,6 +267,10 @@ class NexoOperationalPipelineTests(unittest.TestCase):
             dispatch_item = {
                 "kind": "BATTERY_STATUS",
                 "source": "WRITER_ROBOT",
+                # Dispatch conversion stamps `dispatch_requested_at` from the
+                # envelope clock; keep the expected and Writer conversions
+                # byte-identical instead of depending on wall-clock seconds.
+                "created_at": END,
                 "_inbox_name": f"robot-dispatch-{battery['id']}",
                 "_writer_dispatch_token": scientific_integrity.WRITER_DISPATCH_TOKEN,
                 "payload": {

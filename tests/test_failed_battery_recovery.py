@@ -1,8 +1,10 @@
 """Failure observations release reservations without asserting scientific execution."""
+import pytest
+
 from runtime.nexo_agent_api import evolution as e, scientific_integrity as s
 from runtime.nexo_agent_api.inbox_apply import _result_request
 from runtime.nexo_agent_api.tower_apply import apply_requests
-from tests.test_scientific_integrity import install_fixture_catalog, store_fixture_test, save, NOW, END
+from tests.test_scientific_integrity import fixture as science_fixture, install_fixture_catalog, store_fixture_test, save, NOW, END
 
 
 def prepared(tmp_path,monkeypatch):
@@ -53,6 +55,102 @@ def test_failure_phase_update_without_terminal_battery_receipt_is_rejected(tmp_p
     after=s.entity(root,original['id'])
     assert after['status']==after['state']==after['execution_phase']=='QUEUED'
     assert s.batteries(root)[0]['status']=='QUEUED'
+
+
+def test_status_only_terminal_failure_cannot_bypass_phase_proof(tmp_path,monkeypatch):
+    root,original=prepared(tmp_path,monkeypatch)
+    before=s.entity(root,original['id'])
+    denied=apply_requests(root,[{
+        'request_id':'REQ-UNPROVEN-FAILURE-DONE',
+        'entity_kind':'test','entity_name':original['id'],
+        'expected_version':before['entity_version'],'writer_role':'EXECUTOR',
+        'event_type':'TEST_RUNTIME_FAILURE',
+        'changes':{'status':'DONE','state':'DONE'},
+    }])[0]
+    assert not denied['accepted']
+    assert denied['issue']['code']=='EXECUTION_PHASE_RESULT_PROOF_REQUIRED'
+    after=s.entity(root,original['id'])
+    assert after['status']==after['state']==after['execution_phase']=='QUEUED'
+    assert s.batteries(root)[0]['status']=='QUEUED'
+
+
+@pytest.mark.parametrize(('field', 'active_state'), [
+    (field, state)
+    for state in ('QUEUED', 'DISPATCH_PENDING', 'DISPATCHED', 'RUNNING')
+    for field in ('status', 'state')
+])
+def test_active_status_alias_without_phase_or_battery_cannot_be_manually_closed(
+        tmp_path, field, active_state):
+    root=tmp_path/'tower'
+    test_id=f'TEST-UNRESERVED-{field}-{active_state}'
+    current=science_fixture(test_id)
+    current.pop('status',None)
+    current.pop('state',None)
+    current[field]=active_state
+    save(root,f'entities/test/{test_id}.json',current)
+    before=s.entity(root,current['id'])
+    terminal=apply_requests(root,[{
+        'request_id':f'REQ-{field}-{active_state}-UNRESERVED-MANUAL-RESULT',
+        'entity_kind':'test','entity_name':test_id,
+        'expected_version':before['entity_version'],'writer_role':'EXECUTOR',
+        'event_type':'TEST_RESULT_RECORDED',
+        'changes':{'status':'DONE','state':'DONE','verdict':'INCONCLUSIVE','executed_at':END},
+    }])[0]
+    assert not terminal['accepted']
+    assert terminal['issue']['code']=='EXECUTION_PHASE_RESULT_PROOF_REQUIRED'
+    assert s.entity(root,test_id)==before
+
+    released=apply_requests(root,[{
+        'request_id':f'REQ-{field}-{active_state}-UNPROVEN-RELEASE',
+        'entity_kind':'test','entity_name':test_id,
+        'expected_version':before['entity_version'],'writer_role':'ADVISOR',
+        'event_type':'TEST_ENRICHED',
+        'changes':{'status':'READY','state':'READY'},
+    }])[0]
+    assert not released['accepted']
+    assert released['issue']['code']=='EXECUTION_PHASE_TRANSITION_REQUIRED'
+    assert s.entity(root,current['id'])==before
+    assert not s.active_tests(root)
+
+
+def test_active_status_transition_requires_lifecycle_phase_event(tmp_path,monkeypatch):
+    root,original=prepared(tmp_path,monkeypatch)
+    before=s.entity(root,original['id'])
+    for target in ('DISPATCH_PENDING','DISPATCHED','RUNNING'):
+        changes={'status':target,'state':target,'run_ref':'actions/runs/123',
+                 'started_at':END,'execution_observation':'GITHUB_JOB_STEP'}
+        denied=apply_requests(root,[{
+            'request_id':'REQ-UNPROVEN-ACTIVE-'+target,
+            'entity_kind':'test','entity_name':original['id'],
+            'expected_version':before['entity_version'],'writer_role':'EXECUTOR',
+            'event_type':'DECOY_REVEALED','changes':changes,
+        }])[0]
+        assert not denied['accepted']
+        assert denied['issue']['code']=='EXECUTION_PHASE_TRANSITION_REQUIRED'
+        after=s.entity(root,original['id'])
+        assert after['status']==after['state']==after['execution_phase']=='QUEUED'
+        assert s.batteries(root)[0]['status']=='QUEUED'
+
+
+def test_unattempted_terminal_status_requires_result_event_and_payload(tmp_path,monkeypatch):
+    root=tmp_path/'tower'
+    install_fixture_catalog(tmp_path/'recipes',monkeypatch,'audit_recipe')
+    save(root,'CONTROL.json',{'mode':'ACTIVE'})
+    save(root,'indexes/active-roadmaps.json',{'items':[{'roadmap_id':'RM-A','state':'ACTIVE'}]})
+    original=store_fixture_test(root,'TEST-MANUAL-IMPORT',roadmap_id='RM-A')
+    before=s.entity(root,original['id'])
+    for event in ('TEST_RUNTIME_FAILURE','TEST_RESULT_RECORDED'):
+        denied=apply_requests(root,[{
+            'request_id':'REQ-EMPTY-TERMINAL-'+event,
+            'entity_kind':'test','entity_name':original['id'],
+            'expected_version':before['entity_version'],'writer_role':'EXECUTOR',
+            'event_type':event,'changes':{'status':'DONE','state':'DONE'},
+        }])[0]
+        assert not denied['accepted']
+        assert denied['issue']['code']=='TERMINAL_STATUS_REQUIRES_RESULT_EVENT'
+        after=s.entity(root,original['id'])
+        assert after['status']==after['state']=='READY'
+        assert after.get('execution_phase')==before.get('execution_phase')
 
 
 def test_failed_attempt_with_lost_inputs_closes_and_blocks_instead_of_staying_active(tmp_path,monkeypatch):

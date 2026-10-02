@@ -265,11 +265,11 @@ class MutationInboxTests(unittest.TestCase):
                 "id": "GZSB-01-DESI-INFERENCE-PRIOR-SENSITIVITY",
                 "test_group_id": "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY",
                 "campaign_id": "CAMP-GROWTH-LSS",
-                "status": "VERIFIED",
+                "status": "DRAFT",
                 "evidence_class": "FROZEN_BATTERY_CHILD",
             },
             "writer_role": "EXECUTOR",
-            "event_type": "TEST_VERIFIED",
+            "event_type": "TEST_CREATED",
         })
         self.assertTrue(receipt["accepted"])
         self.assertEqual(receipt["entity_version"], 1)
@@ -279,6 +279,22 @@ class MutationInboxTests(unittest.TestCase):
         self.assertEqual(entity["entity_version"], 1)
         self.assertEqual(entity["campaign_id"], "CAMP-GROWTH-LSS")
         self.assertEqual(entity["test_group_id"], "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY")
+        self.assertEqual(entity["status"], "DRAFT")
+
+    def test_zero_version_cannot_create_terminal_test_without_result_proof(self) -> None:
+        test_id = "GZSB-01-UNPROVEN-TERMINAL-CREATE"
+        receipt = apply_mutation_request(self.root, {
+            "request_id": "REQ-CREATE-TERMINAL-TEST-1",
+            "entity_kind": "test",
+            "entity_name": test_id,
+            "expected_version": 0,
+            "changes": {"id": test_id, "domain": "SCIENCE", "status": "VERIFIED", "state": "VERIFIED"},
+            "writer_role": "EXECUTOR",
+            "event_type": "TEST_VERIFIED",
+        })
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"], "TERMINAL_STATUS_REQUIRES_RESULT_EVENT")
+        self.assertFalse(entity_path(self.root, "test", test_id).exists())
 
     def test_zero_version_creates_new_test_group_with_exact_readback(self) -> None:
         group_id = "TEST_GROUP::CAMP-GROWTH-LSS::GZ01-EROSITA-SUPERBATTERY"
