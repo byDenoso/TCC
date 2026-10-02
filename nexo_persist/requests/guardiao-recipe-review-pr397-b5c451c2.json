@@ -1,0 +1,23 @@
+{
+  "stable_id": "guardiao-recipe-review-pr397-b5c451c2",
+  "envelope": {
+    "kind": "LEARNING_SIGNAL",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-02T02:24:29Z",
+    "payload": {
+      "gap_type": "RECIPE_REVIEW",
+      "review": {
+        "spec_ref": "https://github.com/byDenoso/Pantheon/pull/397",
+        "head_sha": "b5c451c2529b9e892fe080d4d08faef571c70134",
+        "verdict": "APPROVED",
+        "reasons": [
+          "Item 1: receita, regressão, smoke e documentação estão byte a byte idênticos ao head 6da37ccf já aprovado no PR 365; o contrato congelado permanece reproduzido.",
+          "Item 2: combinações, escolhas de host, intervalos e referências continuam parâmetros declarativos; o binding permanece condicionado aos valores científicos congelados ausentes.",
+          "Item 3: release oficial GWTC-3 v1, URL, versão, SHA256, estatística e critérios permanecem intactos.",
+          "Item 4: verdict, decision, summary, statistics, semantic.result_meaning em português e recipes/smoke/standard_sirens.json permanecem íntegros; executor-runtime-smoke passou no head revisado."
+        ]
+      }
+    }
+  }
+}
