@@ -1,0 +1,32 @@
+{
+  "stable_id": "learner-20261002t1925z-gz01-t03-recipe-bind-v2",
+  "envelope": {
+    "kind": "RECIPE_BIND",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-10-02T19:25:40Z",
+    "payload": {
+      "test_id": "GZ01-B03-T03-WINDOW-ROTATION-NULL",
+      "recipe": "desi_lss_selection_binding_family",
+      "params": {
+        "mode": "window_rotation_null",
+        "test_id": "GZ01-B03-T03-WINDOW-ROTATION-NULL",
+        "prereg_hash": "sha256:21d38d27b2ef12f17940fb9a01448c0ad3fe73950cb7e0352b1b0c11803b6069",
+        "null_method": "selection_stratified_permutation",
+        "null_count": 199,
+        "seed": 2437447024982823400,
+        "statistics": [
+          {
+            "name": "max_abs_gaussian_smoothed_delta",
+            "sigma_cells": 0.32
+          }
+        ],
+        "criterion": {
+          "promote_p_emp_lte": 0.01,
+          "bh_q": 0.1,
+          "reject_all_p_emp_gte": 0.1
+        }
+      }
+    }
+  }
+}
