@@ -1,13 +1,20 @@
 # NEXO — contrato operacional das automações
 
-Vale para todas as automações (Claude Code, tarefas agendadas no PC do Dener).
-Consenso Claude + ChatGPT em 2026-09-23.
+As regras científicas, de privacidade e de readback valem para todos os papéis.
+Os comandos locais de escrita deste documento pertencem ao adapter Claude Code/PC
+com Writer autorizado. As dez ChatGPT Tasks usam a rota descrita em
+**Limite do runtime ChatGPT Tasks**, conforme `nexo-master-router-0.5.0` e
+`gpt/skills/nexo-workspace/SKILL.md`; não recebem autorização para escrever a Tower
+ou trocar essa rota por um inbox direto.
 
 ## Verdade e escrita
 
 - Truth Owner: `NEXO_TOWER_LIVE.json` no Drive (file id `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`).
-- Único caminho de escrita: `python scripts/nexo_tower.py apply <request.json>` neste repositório.
+- No adapter local Claude Code/PC, o caminho de escrita autorizado é
+  `python scripts/nexo_tower.py apply <request.json>` neste repositório.
   Ele faz lock → leitura → mutação → releitura do head → escrita no mesmo file id → readback, e avisa o ATLAS.
+- Nas ChatGPT Tasks, gravar o envelope pelo transporte aprovado e deixar a aplicação
+  canônica para o Writer existente. Os comandos locais abaixo não ampliam esse escopo.
 - Leitura: `python scripts/nexo_tower.py pull` materializa a Tower num diretório local (somente leitura).
 - Nunca escreva no Drive por outro meio, nunca edite a cópia `TOWER_V06/` do vault no Git como estado,
   nunca commite projeção à mão. ATLAS, MCP, índices e snapshots são derivados.
@@ -136,36 +143,58 @@ materialmente diferente exige nova identidade TEST.
 Termine cada execução com um relatório curto em português: o que rodou, o que mudou na Tower
 (fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
 
-## Limite do runtime ChatGPT
+## Limite do runtime ChatGPT Tasks
 
-- **Proposal e handoff são objetos diferentes.** Proposal entra pelos inboxes de proposals e nunca significa ACK, DONE nem comunicação dirigida entre papéis. Handoff é comunicação privada dirigida entre papéis e continua exclusivamente em `python scripts/nexo_tower.py handoff ...` (ou interface equivalente), sempre com lock, CAS e readback.
-- O repositório `byDenoso/TCC`, o branch `nexo-inbox` e as issues do repositório são publicamente legíveis. Uma **proposal sem conteúdo confidencial** pode seguir a ordem de inboxes já definida abaixo, começando pelo GitHub canônico, mas só depois de saneada para exposição pública: sem dados privados ou pessoais, credenciais ou segredos, conteúdo confidencial da Tower ou conteúdo de handoff privado.
-- Uma **proposal que precise preservar conteúdo não público** pode usar o fallback privado da pasta Drive `NEXO_INBOX` somente quando o runtime tiver writer autorizado para essa pasta e conseguir confirmar readback exato. Ela continua sendo proposal: a persistência nesse inbox não cria ACK, DONE nem aplicação na Tower.
-- Se uma proposal não puder ser saneada sem perder significado e o runtime não tiver writer autorizado com readback exato para o Drive `NEXO_INBOX`, declare o bloqueio e não publique o conteúdo como fallback no GitHub `nexo-inbox` nem em issue pública. Da mesma forma, se o runtime não expuser writer de handoff compatível, não simule ACK/DONE e não converta handoff em proposal.
-- Para conteúdo que pode ser publicado, preserve a ordem existente em **ChatGPT inboxes** abaixo. `create_file` seguido de `fetch_file` com conteúdo exatamente igual confirma apenas **PERSISTED no inbox**; não significa ACK, DONE nem aplicação na Tower. A semântica e a autoridade da Tower permanecem inalteradas.
-- Não dependa de branch intermediária, relay ou "wake" para considerar uma proposal persistida quando o inbox escolhido já teve readback exato. A ausência de consumidor verificável não deve transformar persistência confirmada em `STAGED_PENDING_RELAY` ou `PERSISTED_WAKE_PENDING`.
+As dez Tasks carregam `gpt/skills/nexo-master-router-0.5.0.md` e
+`gpt/skills/nexo-workspace/SKILL.md`. Para propostas públicas sanitizadas, a rota vigente é:
 
-## ChatGPT inboxes
-ChatGPT proposals arrive in three create-only inboxes; `python scripts/nexo_tower.py inbox list` reads all of them.
-Use them in this order (the first is canonical; the others are fallbacks only when the one above is refused):
-1. **Canonical:** GitHub `byDenoso/TCC`, branch `nexo-inbox`, folder `inbox/`.
-2. Fallback: Drive folder `NEXO_INBOX` (when the Drive connector accepts the JSON file).
-3. Last resort: GitHub issues on `byDenoso/TCC` (when both writes above are refused): title starting with `[NEXO_INBOX]`
-  (or label `nexo-proposal`), body = the proposal envelope, ideally inside a ```json block. Only issues
-  opened by `byDenoso` count (the repo is public). Applied issues get a comment and are closed.
-All three feed the same converter and the same single CAS write + readback; none writes the Tower directly.
-`inbox apply` applies everything pending and marks it processed; `inbox done <id>` does it by hand
-(`github:<name>` ids move to `processed/`, `issue:<n>` ids are closed). Reading issues needs `GITHUB_TOKEN`
-(or `NEXO_INBOX_GITHUB_TOKEN`, or a logged-in `gh`); without it the issue inbox is skipped with a log.
+`byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json`
+→ relay → `byDenoso/TCC@nexo-inbox:inbox/` → Writer → Tower privada → projeção.
 
-### Tower upload bridge (ChatGPT runtime)
-When the ChatGPT runtime applies the inbox itself, the Tower file is updated only through this path:
-1. Keep the applied Tower as a preserved TXT file (never import a temporary TXT directly: the runtime blocks it).
-2. Reference it as `sediment://...`.
-3. `update_file` on the **same canonical Tower file_id** (never create a new file).
-4. Readback of that file_id: fingerprint must equal the locally projected one.
-5. Only then move the inbox JSONs to `processed/` and update `tower-head.json`, then re-read it.
+- O arquivo de staging contém `{"stable_id": "...", "envelope": {...}}`.
+  Usar stable_id determinístico em `[a-z0-9-]`, até 60 caracteres, e reutilizar
+  identidade e bytes exatos no retry. Aplicam-se `gpt/PROPOSAL_SCHEMA.md` e os recibos
+  do Writer; payload diferente com a mesma identidade é conflito.
+- Releitura exata de `nexo_persist/requests` confirma apenas STAGED. Confirmar
+  separadamente entrega pelo relay e aplicação pelo Writer: esta exige recibo
+  `OPERATION_RECEIPT_V1` com hash correspondente e outcome `APPLIED` ou
+  `ALREADY_APPLIED`; ack do relay comprova apenas entrega. STAGED_PENDING_RELAY é diagnóstico válido quando staging
+  foi confirmado e a entrega ainda não tem prova; não chamar isso de aplicação.
+- `nexo-inbox/inbox` é destino do relay nesta rota, não uma alternativa de gravação
+  direta para as Tasks. Uma recusa de autorização/acesso/política não autoriza trocar
+  branch, formato, serviço ou abrir issue para contorná-la. Registrar bloqueio e
+  manter a operação pendente; só falhas técnicas podem ser retentadas pelo caminho
+  já autorizado, depois de consultar acked e receipts com hash exato.
+- Handoffs e outras mensagens privadas explicitamente autorizadas usam
+  `NEXO_INBOX` da Drive com releitura exata. Uma proposta pública que não possa ser
+  sanitizada sem perder significado permanece pendente; não criar um fallback
+  privado genérico sem autorização específica do router para essa operação.
+  Nunca publicar conteúdo confidencial no GitHub. Persistência no inbox nunca
+  significa aplicação na Tower.
+- **Proposal científica e handoff têm semânticas diferentes.** Nas Tasks, os
+  envelopes `HANDOFF` e `HANDOFF_TRANSITION` (aliases `HANDOFF_ACK`, `HANDOFF_DONE`,
+  `HANDOFF_FAILED`) são documentos JSON privados no Drive `NEXO_INBOX`, conforme
+  `gpt/PROPOSAL_SCHEMA.md`. O converter validado e o Writer persistem o evento
+  dirigido na Tower com controle de versão e readback; gravar o documento não
+  comprova ACK/DONE. Nunca colocar esses envelopes no staging público.
+- A Task pode ler sua caixa privada com o bundle:
+  `python nexo_gpt_writer.py handoff TOWER.json list PAPEL`. Sem canal privado
+  autorizado ou readback, declarar o canal privado indisponível, manter owner
+  e oferta anteriores e não simular ACK nem aceitar em nome de outro destinatário.
+- A aplicação canônica continua no Writer existente. Não usar `scripts/nexo_tower.py
+  apply/handoff`, upload direto da Tower, sediment/TXT bridge, `inbox done` ou edição
+  manual de `tower-head.json` para promover uma simulação local a estado canônico.
 
-Failure rule: without step 4 PASS, the report says "não afirmo que chegou à Tower", keeps the JSONs in
-`inbox/`, and reports the projected fingerprint separately from the real one. Never report a projected
-fingerprint as the Tower head.
+## Inboxes consumidos por adapters locais e pelo Writer
+
+O leitor local `python scripts/nexo_tower.py inbox list` também conhece o inbox
+GitHub `nexo-inbox/inbox/`, a pasta Drive `NEXO_INBOX` e issues legadas
+`[NEXO_INBOX]`/`nexo-proposal`. Essa capacidade de leitura não cria uma ordem de
+fallback para as dez Tasks. Os adapters que já têm autorização específica para
+esses canais continuam sujeitos a privacidade, versão, CAS e readback; nenhuma
+Task recebe nova autorização por carregar este documento.
+
+O Writer aplica as operações admitidas e reconhece sua aplicação. Leitura de
+staging, receipt de transporte, fingerprint projetado localmente e coincidência
+de fingerprints de dados não comprovam escrita na Tower nem publicação de uma
+nova revisão de código. Não existe upload bridge ativo para as ChatGPT Tasks.
