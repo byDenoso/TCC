@@ -40,6 +40,12 @@ Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO L
 Ler `nexo-operations` e `gpt/PROPOSAL_SCHEMA.md`. Preservar o fluxo atual:
 `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` -> relay -> `nexo-inbox` -> Writer -> Tower -> projeção.
 
+Essa é a rota das dez ChatGPT Tasks sob `nexo-master-router-0.5.0`.
+`automations/OPERATING_CONTRACT.md` distingue os comandos do adapter Claude Code/PC:
+seu leitor de inboxes não autoriza as Tasks a gravar diretamente em `nexo-inbox`,
+abrir issue como fallback ou fazer upload da Tower. Handoffs privados seguem
+`PROPOSAL_SCHEMA` e o canal Drive; uma recusa não autoriza trocar de rota.
+
 Usar stable_id determinístico em `[a-z0-9-]`, com até 60 caracteres; reutilizar no retry. Conferir fila e recibos antes de repetir. Conteúdo diferente com a mesma identidade é conflito. Releitura do staging prova somente staging; confirmar separadamente relay e aplicação.
 
 Enviar pelo Git público somente propostas sanitizadas permitidas. Manter dados privados, notas pessoais, handoffs privados e transcrições no Drive privado. Não gravar Tower diretamente. Em recusa de autorização, acesso ou política, interromper a ação e relatar; não contornar trocando formato ou serviço. Retentar apenas falhas técnicas pelos caminhos autorizados.
