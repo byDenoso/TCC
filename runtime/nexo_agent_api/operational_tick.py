@@ -42,8 +42,25 @@ def private_intents(session):
 
 
 def tick_existing_writer(tower, env):
+    if env.get("NEXO_ROBOT_DRY"):
+        return {"status": "NO_OP", "reason": "DRY_RUN"}
+    require(env.get("GITHUB_ACTIONS") == "true" and env.get("GITHUB_WORKFLOW_REF") == WRITER_REF,
+            "EXISTING_SINGLETON_WRITER_REQUIRED")
     store = TowerWriterStore(tower)
     _, _, data = store._load()
+    try:
+        return _tick(tower, env, store, data)
+    finally:
+        if env.get("GITHUB_OUTPUT"):
+            _, _, after = store._load()
+            if after["revision"] != data["revision"]:
+                # The existing workflow signals Atlas only after verified writes.
+                # A later normal Writer write replaces this output with its head.
+                with open(env["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+                    output.write("tower_revision=" + after["revision"] + "\n")
+
+
+def _tick(tower, env, store, data):
     config = install_if_requested(store, data, env)
     if not config or not config.get("enabled"):
         return {"status": "NO_OP", "reason": "NO_AUTHORIZED_OPERATIONAL_CONFIG"}
