@@ -262,11 +262,30 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
             if str(item.get("kind") or "").upper() == "BATCH" and isinstance(payload.get("items"), list):
                 base = item.get("_inbox_name") or "batch"
-                flat += [{**sub, "_inbox_source": item.get("_inbox_source"),
-                          "_inbox_name": f"{base}-{i}", "_inbox_id": item.get("_inbox_id")}
-                         for i, sub in enumerate(payload["items"]) if isinstance(sub, dict)]
+                parent_id = str(item.get("_inbox_id") or "").strip()
+                child_intents = []
+                if (str(item.get("_inbox_source") or "").upper() == "GATEWAY"
+                        and parent_id.startswith("gateway:")):
+                    gateway_id = parent_id[len("gateway:"):]
+                    child_intents = [f"{parent_id}.batch-{i}" for i, sub in enumerate(payload["items"])
+                                     if isinstance(sub, dict)]
+                    report.setdefault("gateway_batch_intents", {})[gateway_id] = child_intents
+                child_position = 0
+                children = []
+                for i, sub in enumerate(payload["items"]):
+                    if not isinstance(sub, dict):
+                        continue
+                    child_intent = (child_intents[child_position] if child_intents
+                                    else (f"{parent_id}.batch-{i}" if parent_id else None))
+                    child_position += 1
+                    children.append({**sub, "_inbox_source": item.get("_inbox_source"),
+                                     "_inbox_name": f"{base}-{i}", "_inbox_id": parent_id or None,
+                                     "_inbox_child_id": child_intent})
+                flat += children
             else:
-                flat.append(item)
+                # Child receipt identity is Writer-owned transport metadata.
+                # A top-level envelope cannot mint a new intent by supplying it.
+                flat.append({key: value for key, value in item.items() if key != "_inbox_child_id"})
         items = flat
         changed_receipt_ledger = False
         for index, item in enumerate(items):
@@ -562,6 +581,48 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             else:
                 report["reconciled_contests"] = [r.get("document") or r.get("entity_name") for r in contest_receipts]
 
+        # A terminal result and a live execution phase describe incompatible
+        # states. Repair only the cases for which the existing evidence planner
+        # can bind the exact attempt, runner observation, result, and battery.
+        # Ambiguous historical rows remain conflicts and are never guessed.
+        from .execution_phase_reconciliation import build_reconciliation_plan
+
+        phase_savepoint = (root / LIVE_TOWER_NAME).read_bytes()
+        phase_error = None
+        try:
+            phase_plan = build_reconciliation_plan(root)
+            phase_requests = phase_plan["requests"]
+            phase_receipts = apply_requests(root, phase_requests) if phase_requests else []
+        except (AttributeError, KeyError, OSError, RuntimeError, TypeError, ValueError) as exc:
+            phase_error = type(exc).__name__
+            phase_plan = {"summary": {"terminal_running": None, "conflict_count": None}}
+            phase_requests = []
+            phase_receipts = [{"accepted": False, "issue": {
+                "code": "EXECUTION_PHASE_RECONCILIATION_FAILED", "error_type": phase_error,
+            }}]
+        phase_failed = [r for r in phase_receipts if not r.get("accepted", True) or r.get("issue")]
+        report["receipts"].extend(phase_receipts)
+        report["execution_phase_reconciliation"] = {
+            "terminal_running": phase_plan["summary"]["terminal_running"],
+            "proposed": len(phase_requests),
+            "applied": len(phase_receipts) - len(phase_failed),
+            "conflicts": phase_plan["summary"]["conflict_count"],
+        }
+        if phase_error:
+            report["execution_phase_reconciliation"]["error_type"] = phase_error
+        if phase_failed:
+            shutil.rmtree(root)
+            root, _ = materialize_live_tower(phase_savepoint, root)
+            for receipt in phase_receipts:
+                receipt["rolled_back"] = True
+            report["execution_phase_reconciliation"]["rolled_back"] = (
+                len(phase_receipts) - len(phase_failed))
+            report["execution_phase_reconciliation"]["applied"] = 0
+            report["rejected"].append({
+                "item": "execution-phase-reconcile",
+                "reason": phase_failed[0].get("issue"),
+            })
+
         # Maintenance is mechanical too: watchdog, repeated-failure stop, stale drafts,
         # pre-registration audit and roadmap FDR annotations.
         maintenance_requests = evolution.maintenance_reconcile_requests(root)
@@ -736,7 +797,12 @@ def _gateway_results(report: dict, gateway_ids: list[str], shadow_ids: set[str] 
         if not operation_receipts.is_safe_gateway_id(gateway_id):
             continue
         intent = "gateway:" + str(gateway_id)
-        matched = [row for row in receipts if row.get("intent_id") == intent]
+        expected = (report.get("gateway_batch_intents") or {}).get(gateway_id)
+        expected = [str(value) for value in expected] if isinstance(expected, list) else []
+        intents = set(expected or [intent])
+        matched = [row for row in receipts if row.get("intent_id") in intents]
+        if expected and {row.get("intent_id") for row in matched} != intents:
+            continue
         outcome = operation_receipts.public_outcome(matched)
         resolution = None
         if outcome is None and gateway_id in shadow_ids:

@@ -521,7 +521,7 @@ def _mark(github: "GitHubInbox", item_ids: list[str]) -> None:
 
 def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
     """Apply every inbox proposal (generic converter) in ONE CAS write, then mark them processed."""
-    from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
+    from runtime.nexo_agent_api.inbox_apply import ProposalError, compose_board_snapshots, proposal_to_requests
 
     items = _collect_inbox(github)
     if not items:
@@ -537,8 +537,9 @@ def _inbox_apply(github: "GitHubInbox", args: argparse.Namespace) -> int:
                 skipped.append({"id": item["id"], "reason": "UNPARSEABLE"})
                 continue
             try:
-                requests += proposal_to_requests({**envelope, "_inbox_source": item.get("source"),
+                converted = proposal_to_requests({**envelope, "_inbox_source": item.get("source"),
                                                   "_inbox_id": item["id"], "_inbox_name": item["name"]}, root)
+                requests = compose_board_snapshots(requests + converted)
                 used.append(item["id"])
             except ProposalError as exc:
                 skipped.append({"id": item["id"], "reason": str(exc)})

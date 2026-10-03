@@ -32,7 +32,7 @@ class OperationReceiptTests(unittest.TestCase):
     def test_payload_hash_is_contract_scoped_and_does_not_strip_arbitrary_private_keys(self):
         base = {"kind": "BOARD_POST", "payload": {"text": "same"}}
         self.assertNotEqual(receipts.payload_hash(base), receipts.payload_hash({**base, "_semantic": "changed"}))
-        # Only the three Writer-injected transport annotations may be omitted.
+        # Only Writer-injected transport annotations may be omitted.
         self.assertEqual(receipts.payload_hash({**base, "_inbox_id": "transient"}, trusted_transport=True),
                          receipts.payload_hash(base, trusted_transport=True))
         self.assertNotEqual(receipts.payload_hash({**base, "_private_semantics": "changed"}, trusted_transport=True),
@@ -288,6 +288,56 @@ class OperationReceiptTests(unittest.TestCase):
             for secret in ("PRIVATE_VALIDATION_DETAIL", "private credential diagnostics",
                            "secret_metric_detail", "private canary evidence", private["receipt_id"]):
                 self.assertNotIn(secret, rendered)
+
+    def test_gateway_batch_waits_for_every_child_receipt_before_parent_ack(self):
+        intents = ["gateway:batch-parent.batch-0", "gateway:batch-parent.batch-1"]
+        rows = [receipts.build_receipt(
+            intent=intent,
+            payload_sha256=receipts.payload_hash({"child": index}),
+            effect=receipts.envelope_effect_id(intent),
+            outcome="APPLIED",
+            source_revision="sha256:" + "1" * 64,
+            result_revision="sha256:" + "2" * 64,
+            visibility="PUBLIC",
+        ) for index, intent in enumerate(intents)]
+        report = {"gateway_batch_intents": {"batch-parent": intents},
+                  "public_operation_receipts": [receipts.public_receipt(rows[0])]}
+        payload, reported, resolved = _gateway_results(report, ["batch-parent"])
+        self.assertEqual((payload["items"], reported, resolved), ([], [], []))
+
+        report["public_operation_receipts"].append(receipts.public_receipt(rows[1]))
+        payload, reported, resolved = _gateway_results(report, ["batch-parent"])
+        self.assertEqual(reported, ["batch-parent"])
+        self.assertEqual(resolved, ["batch-parent"])
+        self.assertEqual(payload["items"][0]["outcome"], "APPLIED")
+        self.assertEqual({row["intent_id"] for row in payload["items"][0]["receipts"]}, set(intents))
+
+    def test_top_level_envelope_cannot_forge_child_receipt_identity(self):
+        first = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:02:44Z",
+                 "_inbox_source": "GITHUB", "_inbox_id": "github:same", "_inbox_name": "same.json",
+                 "_inbox_child_id": "forged-a",
+                 "payload": {"to": "GUARDIAO", "text": "Primeiro.", "id": "BP-A"}}
+        second = {**first, "_inbox_child_id": "forged-b",
+                  "payload": {"to": "GUARDIAO", "text": "Segundo.", "id": "BP-B"}}
+        self.assertEqual(receipts.intent_id(first, "fallback"), "github:same")
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            }), encoding="utf-8")
+            raw = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode("utf-8")
+            applied, first_report = apply_to_tower(raw, [first])
+            self.assertIsNotNone(applied)
+            self.assertFalse(first_report["rejected"], first_report)
+            changed, second_report = apply_to_tower(applied, [second])
+
+        self.assertTrue(second_report["rejected"], second_report)
+        self.assertEqual(second_report["rejected"][0]["reason"],
+                         "TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY")
+        after = read_live_tower_bytes(changed or applied)
+        posts = after["files"]["evolution/board.json"]["value"]["posts"]
+        self.assertEqual([(post["id"], post["text"]) for post in posts], [("BP-A", "Primeiro.")])
 
     def test_receipt_bookkeeping_does_not_change_dependency_retry_context(self):
         with tempfile.TemporaryDirectory() as temporary:

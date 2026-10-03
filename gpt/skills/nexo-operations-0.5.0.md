@@ -30,7 +30,7 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 | Família | Cientista escreve `FAMILY_CHARTER`; o robô expande e despacha | 3 ou mais testes com a mesma receita entram como família (até 40 instâncias, grade declarada antes; fecha com 2 REJECTED, 2 PROMOTED ou roadmap fechado) |
 | Receita | Engenheiro | receita nova traz `recipes/smoke/<nome>.json`; o CI roda com dado real e abre issue se quebrar |
 | Ligar receita | quem tiver o teste na mão (Operador, Cientista, Engenheiro): `RECIPE_BIND {test_id, recipe, params}` | uma linha; o robô despacha na rodada seguinte |
-| Bateria | robô (até 20 por bateria; com 20 ou menos prontos envia 75%, mínimo 5) e Operador nas avulsas | somente readiness elegível com inputs versionados e hashes; receita deve consumir os inputs e respeitar os parâmetros congelados |
+| Bateria | Operador prepara seleção/bindings; o Writer reserva e despacha (até 20 por bateria; envia todos quando há 1–4, depois 75% com mínimo 5) | somente readiness elegível com inputs versionados e hashes; receita deve consumir os inputs e respeitar os parâmetros congelados |
 | Resultado | robô grava; o Operador registra o que sai fora do robô | falha transitória ou receita quebrada não gasta as 2 chances do teste; receita quebrada 2 vezes abre o circuito, e o primeiro sucesso o fecha |
 | Contestação e veredito | Crítico | positivo sem contestação há 2 rodadas é a prioridade da rodada |
 | Nova ideia | volta ao começo | refutação vira rival na mesma rodada |
@@ -62,9 +62,10 @@ Formatos: `byDenoso/TCC gpt/PROPOSAL_SCHEMA.md`. Envelope: `{kind, source, produ
 - **Corrigir vínculo errado:** `SEMANTIC_BACKFILL` com `overwrite:true` e o `hypothesis_id` certo, lendo pergunta, nula e rival de cada teste — nunca por padrão de nome. Na dúvida, deixe sem hipótese e avise no mural.
 
 ## Consertar (quem vê, age)
-Antes do trabalho novo, seguir `nexo-workspace` → “Consumir recuperação e aceite privado”.
+Antes de assumir um item, seguir `nexo-workspace` → “Consumir recuperação e aceite privado”.
 Engenheiro consome recuperação técnica na caixa ADVISOR; Cientista, LEARNER; Operadores, EXECUTOR.
 Esses são papéis de handoff, não mudança do source normal da tarefa nem autorização para aceitar por outro papel.
+Uma recuperação sem aceite bloqueia somente a WORK correspondente. `READY` independente continua; indisponibilidade do canal privado não é barreira global.
 Conserte na mesma rodada quando o conserto cabe no que já existe.
 **Pode, sozinho:** reenviar proposta (envelope enxuto), recolocar teste na fila, completar contrato, nome, domínio, vínculo ou leitura (`SEMANTIC_BACKFILL`), ligar dado público (`DATA_BINDING`), ligar receita (`RECIPE_BIND`), pedir ou propor receita (`RECIPE_REQUEST`), dividir lote, trocar receita por outra que mede o mesmo, avisar no mural (`BOARD_POST`), propor canário de gene.
 **Nunca:** mudar a espinha (contrato, Writer, critérios congelados de teste pré-registrado, aptidão, privacidade, portões do Dener, caminho de gravação), apagar dado, forçar veredito. Isso vira `LEARNING_SIGNAL` `RUNTIME_CHANGE_PROPOSAL` ao Dener, com o gargalo, a evidência e o conserto sugerido.
@@ -81,22 +82,13 @@ Todo conserto sai numa linha do relatório ("⚙️ Consertei: …").
 | Robô, relay, site ou bateria falhou | Engenheiro | conserta, roda os testes, publica |
 | Papel parado há mais de 3h | tarefa seguinte | cobertura cruzada |
 | Proposta recusada | quem propôs | envelope enxuto; lotes de 3 |
-Duas rodadas sem avanço: reclamação no mural ao Guardião, que reatribui. Com travas abertas, o Guardião posta o painel "trava, dono, há quantas rodadas".
+Duas rodadas sem avanço: reclamação no mural ao Guardião, que diagnostica e solicita o handoff correto. Ownership só muda com `HANDOFF_ACK` aplicado por CAS; painel e `BOARD_POST` não reatribuem. Com travas abertas, o Guardião pode postar o painel "trava, dono, há quantas rodadas".
 
 ## As 10 tarefas (ChatGPT Business)
-Horário em BRT. Cada item gravado leva o `source` do papel, nunca o nome da tarefa.
-| Tarefa | Agenda | Papel (`source`) | Entrega da rodada |
-|---|---|---|---|
-| Cientista | :05 de hora em hora | LEARNER | fila executável ≥ 20, 3+ famílias ativas, 1 transferência de método por dia |
-| Pítia | :12 de hora em hora | PITIA | crise, surpresa, pensamento com refs, sonho diário |
-| Operador A | :20 de hora em hora | EXECUTOR | ≥ 5 testes ligados ou despachados, do início da fila |
-| Crítico | :35 de hora em hora | REFEREE_1 | positivos da fila contestados, do mais antigo |
-| Engenheiro | :45 a cada 2h | ENGINEER | até 2 receitas por PR, circuito aberto primeiro |
-| Operador B | :50 de hora em hora | EXECUTOR | ≥ 5 testes, do fim da fila |
-| Guardião | :57 de hora em hora | GUARDIAO | heartbeat com `status.autonomy`, revisão de receita, painel de travas, iscas |
-| Bom dia | 07:00 diária | — | 10 linhas para o Dener |
-| Sentinela | 07:30 diária | SENTINEL | arXiv/ADS de 24h contra os resultados confirmados |
-| Revisor de PR | evento: PR em `byDenoso/Pantheon` | GUARDIAO | RECIPE_REVIEW pelos 4 itens, comentário no PR |
+Nomes, agendas e habilitação vêm do inventário vivo da ferramenta. O mapa integrado atual fica em `nexo-workspace` → “Dez automações ativas”; este arquivo não mantém uma segunda tabela. Em divergência, preserve as dez tarefas e a agenda viva, registre o drift e não altere cartões a partir deste texto.
+
+Cada item gravado leva o `source` do papel, nunca o nome da tarefa. Operadores selecionam segmentos e emitem bindings/intents idempotentes; o Writer é o único que materializa reserva/dispatch na Tower. A serialização do Writer e o CAS protegem contra duplicação; nenhum papel interpreta `BOARD_POST` como reserva.
+
 Quem escreve nunca aprova. Carga proporcional à fila: fila grande, rodada dobrada; fila vazia, NO-OP de uma linha. Papel quieto há mais de 3h: a tarefa seguinte faz um item dele com o `source` dele.
 
 ## Pítia (tarefa própria)
@@ -120,4 +112,3 @@ O histórico da Tower é dataset: recusas, tempos, previsões, vereditos, retrie
 ## Papel de conversa
 **Conversa** (chat com o Dener): qualquer pedido; único lugar dos portões; atualiza o mapa cosmológico; implementa receita aprovada; nunca edita a Tower à mão.
 Contrato de máquina (só ao gravar ou em dúvida de regra): `MCP/MCP_RUNTIME_CONTRACT_V1.json`.
-

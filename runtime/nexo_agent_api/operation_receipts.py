@@ -48,14 +48,33 @@ def is_safe_gateway_id(value: Any) -> bool:
     return isinstance(value, str) and bool(_SAFE_GATEWAY_ID_RE.fullmatch(value))
 
 
+def _trusted_child_intent(item: dict) -> str | None:
+    parent = item.get("_inbox_id")
+    child = item.get("_inbox_child_id")
+    name = item.get("_inbox_name")
+    if not all(isinstance(value, str) and value for value in (parent, child, name)):
+        return None
+    match = re.fullmatch(rf"{re.escape(parent)}\.batch-([0-9]+)", child)
+    if not match or not name.endswith("-" + match.group(1)):
+        return None
+    return child
+
+
 def public_gateway_envelope(item: dict, intent: str) -> bool:
     """Whether transport metadata identifies a canonical public gateway envelope."""
     if str(item.get("_inbox_source") or "").strip().upper() != "GATEWAY":
         return False
     if not isinstance(intent, str) or not intent.startswith("gateway:"):
         return False
-    gateway_id = intent[len("gateway:"):]
-    if not is_safe_gateway_id(gateway_id) or item.get("_inbox_id") != intent:
+    parent_intent = item.get("_inbox_id")
+    if not isinstance(parent_intent, str) or not parent_intent.startswith("gateway:"):
+        return False
+    gateway_id = parent_intent[len("gateway:"):]
+    if not is_safe_gateway_id(gateway_id):
+        return False
+    child_intent = _trusted_child_intent(item)
+    expected_intent = child_intent or parent_intent
+    if intent != expected_intent:
         return False
     name = item.get("_inbox_name")
     return isinstance(name, str) and bool(re.fullmatch(rf"gw-{re.escape(gateway_id)}(?:-[0-9]+)?", name))
@@ -162,7 +181,7 @@ def now_utc() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-_TRUSTED_INBOX_ANNOTATIONS = frozenset({"_inbox_source", "_inbox_name", "_inbox_id"})
+_TRUSTED_INBOX_ANNOTATIONS = frozenset({"_inbox_source", "_inbox_name", "_inbox_id", "_inbox_child_id"})
 _TRUSTED_CAPABILITY_FIELDS = frozenset({
     "_runner_battery_status_token",
     "_writer_dispatch_token",
@@ -204,7 +223,8 @@ def payload_hash(payload: Any, *, trusted_transport: bool = False) -> str:
 
 
 def intent_id(item: dict, label: str) -> str:
-    identity = item.get("intent_id") or item.get("_inbox_id") or item.get("request_id") or label
+    identity = (item.get("intent_id") or _trusted_child_intent(item) or item.get("_inbox_id")
+                or item.get("request_id") or label)
     identity = str(identity).strip()
     if not identity:
         raise OperationReceiptError("OPERATION_INTENT_ID_REQUIRED")

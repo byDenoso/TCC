@@ -750,6 +750,50 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
         self.assertEqual(result["status"], "NOTHING_APPLICABLE")
         self.assertEqual(result["skipped"][0]["reason"], "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX")
 
+    def test_cli_inbox_composes_same_snapshot_board_posts_before_apply(self):
+        from scripts import nexo_tower
+        from runtime.nexo_agent_api.live_tower import build_live_tower_payload
+
+        created_at = "2026-10-03T00:02:44Z"
+        items = [
+            {"id": "github:first.json", "name": "first.json", "source": "GITHUB",
+             "payload": {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                         "payload": {"to": "GUARDIAO", "text": "Primeiro CLI."}}},
+            {"id": "github:second.json", "name": "second.json", "source": "GITHUB",
+             "payload": {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                         "payload": {"to": "GUARDIAO", "text": "Segundo CLI."}}},
+        ]
+        captured = {}
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work) / "tower"
+            root.mkdir()
+            (root / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            }), encoding="utf-8")
+            raw = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode("utf-8")
+
+            class FakeDriveTower:
+                def download(self):
+                    return raw, "BASE-HEAD"
+
+            def fake_apply(args):
+                captured["requests"] = json.loads(Path(args.requests[0]).read_text(encoding="utf-8"))
+                return 0
+
+            with patch.object(nexo_tower, "_collect_inbox", lambda github: items), \
+                 patch.object(nexo_tower, "DriveTower", FakeDriveTower), \
+                 patch.object(nexo_tower, "cmd_apply", fake_apply), \
+                 patch.object(nexo_tower, "_mark", lambda github, ids: None):
+                code = nexo_tower._inbox_apply(object(), argparse.Namespace(dry_run=False))
+
+        self.assertEqual(code, 0)
+        requests = captured["requests"]
+        self.assertEqual(len(requests), 2)
+        self.assertEqual(len(requests[0]["merge"]["posts"]), 1)
+        self.assertEqual(len(requests[1]["merge"]["posts"]), 2)
+        self.assertEqual([post["text"] for post in requests[1]["merge"]["posts"][-2:]],
+                         ["Primeiro CLI.", "Segundo CLI."])
+
     def test_create_handoff_uses_writer_lock_cas_readback_and_atlas_notification(self):
         from scripts import nexo_tower
 
