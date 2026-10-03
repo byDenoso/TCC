@@ -24,6 +24,52 @@ class ProposalError(ValueError):
     """The proposal cannot be applied as-is; it stays in the inbox."""
 
 
+def compose_board_snapshots(requests: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Carry BOARD_POST document snapshots forward inside one conversion batch.
+
+    Document merges replace a complete list. When several envelopes were
+    converted from the same root, later snapshots otherwise erased posts from
+    earlier envelopes. Preserve order and let a later copy of the same id win.
+    """
+    order: list[str] = []
+    by_id: dict[str, dict[str, Any]] = {}
+    composed: list[dict[str, Any]] = []
+    def signature(post: dict[str, Any]) -> tuple:
+        return (post.get("from"), post.get("to"), post.get("text"), tuple(post.get("refs") or []),
+                post.get("reply_to"), bool(post.get("private")))
+
+    for request in requests:
+        current = request
+        if request.get("document") == evolution.BOARD_DOC:
+            merge = request.get("merge") if isinstance(request.get("merge"), dict) else {}
+            posts = merge.get("posts") if isinstance(merge.get("posts"), list) else []
+            for post in posts:
+                if not isinstance(post, dict) or not str(post.get("id") or ""):
+                    continue
+                post_id = str(post["id"])
+                prior = by_id.get(post_id)
+                prior_content = prior is not None and all(prior.get(key) is not None for key in ("from", "to", "text"))
+                post_content = all(post.get(key) is not None for key in ("from", "to", "text"))
+                if prior_content and post_content and signature(prior) != signature(post):
+                    raise ProposalError("BOARD_ID_COLLISION")
+                if prior is None:
+                    order.append(post_id)
+                combined = {**(prior or {}), **post}
+                if prior is not None and prior.get("resolved_at") and not combined.get("resolved_at"):
+                    combined["resolved_at"] = prior["resolved_at"]
+                    combined["resolved_by"] = prior.get("resolved_by")
+                by_id[post_id] = combined
+            resolve_ids = {str(value) for value in request.get("_board_resolve_ids") or []}
+            for post_id in resolve_ids:
+                if post_id in by_id and not by_id[post_id].get("resolved_at"):
+                    by_id[post_id] = {**by_id[post_id],
+                                      "resolved_at": request.get("_board_resolved_at"),
+                                      "resolved_by": request.get("_board_resolved_by")}
+            current = {**request, "merge": {**merge, "posts": [by_id[post_id] for post_id in order][-300:]}}
+        composed.append(current)
+    return composed
+
+
 def _entity(root: Path, kind: str, entity_id: str) -> dict[str, Any] | None:
     path = entity_path(root, kind, entity_id)
     if not path.is_file():
@@ -708,10 +754,15 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         requests = []
         for index, entry in enumerate(body.get("items") or []):
             if isinstance(entry, dict):
-                requests.extend(proposal_to_requests({**entry, "_inbox_source": item.get("_inbox_source"),
-                                                      "_inbox_name": f"{item.get('_inbox_name') or 'batch'}-{index}",
-                                                      "_inbox_id": item.get("_inbox_id")}, root))
-        return requests
+                parent_id = str(item.get("_inbox_id") or "").strip()
+                requests.extend(proposal_to_requests({
+                    **entry,
+                    "_inbox_source": item.get("_inbox_source"),
+                    "_inbox_name": f"{item.get('_inbox_name') or 'batch'}-{index}",
+                    "_inbox_id": parent_id or None,
+                    "_inbox_child_id": f"{parent_id}.batch-{index}" if parent_id else None,
+                }, root))
+        return compose_board_snapshots(requests)
     batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
     first = batch[0] if batch and isinstance(batch[0], dict) else {}
     kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"

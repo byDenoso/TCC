@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from runtime.nexo_agent_api import evolution, scientific_integrity as integrity
 from runtime.nexo_agent_api.execution_phase_reconciliation import build_reconciliation_plan
+from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.inbox_apply import _result_request, proposal_to_requests
 from runtime.nexo_agent_api.live_tower import (
     build_live_tower_payload,
@@ -279,6 +280,131 @@ class ExecutionPhaseReconciliationTests(unittest.TestCase):
             events = [entry['value'] for name, entry in read_live_tower_bytes(applied)['files'].items()
                       if name.startswith('events/') and entry['value'].get('event_type') == request['event_type']]
             self.assertEqual(len(events), 1)
+
+    def test_writer_maintenance_applies_only_proven_phase_reconciliation(self):
+        raw = self._successful_writer_bundle()
+        with tempfile.TemporaryDirectory() as legacy_dir:
+            root, _ = materialize_live_tower(raw, Path(legacy_dir) / 'legacy')
+            path = entity_path(root, 'test', TEST_ID)
+            test = json.loads(path.read_text(encoding='utf-8'))
+            test['execution_phase'] = 'RUNNING'
+            path.write_text(json.dumps(test), encoding='utf-8')
+            legacy_bundle = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode('utf-8')
+
+        repaired, report = apply_to_tower(legacy_bundle, [])
+        self.assertIsNotNone(repaired)
+        phase = report['execution_phase_reconciliation']
+        self.assertEqual(phase, {'terminal_running': 1, 'proposed': 1, 'applied': 1, 'conflicts': 0})
+        self.assertEqual(_entity_from_bundle(repaired)['execution_phase'], 'COMPLETED')
+
+        replayed, replay_report = apply_to_tower(repaired, [])
+        self.assertEqual(replay_report['execution_phase_reconciliation']['proposed'], 0)
+        self.assertEqual(replay_report['execution_phase_reconciliation']['applied'], 0)
+        stable = replayed or repaired
+        events = [entry['value'] for name, entry in read_live_tower_bytes(stable)['files'].items()
+                  if name.startswith('events/')
+                  and entry['value'].get('event_type') == 'TEST_EXECUTION_PHASE_RECONCILED']
+        self.assertEqual(len(events), 1)
+
+    def test_writer_maintenance_preserves_unproven_terminal_running_conflict(self):
+        test = dict(self.test, status='DONE', state='DONE', verdict='INCONCLUSIVE',
+                    executed_at=END, execution_phase='RUNNING')
+        _save(self.root, f'entities/test/{TEST_ID}.json', test)
+        raw = self._initial_bundle()
+
+        changed, report = apply_to_tower(raw, [])
+        after = changed or raw
+        self.assertEqual(_entity_from_bundle(after)['execution_phase'], 'RUNNING')
+        self.assertEqual(report['execution_phase_reconciliation']['proposed'], 0)
+        self.assertEqual(report['execution_phase_reconciliation']['applied'], 0)
+        self.assertEqual(report['execution_phase_reconciliation']['conflicts'], 1)
+
+    def test_malformed_legacy_phase_evidence_fails_closed_without_blocking_independent_item(self):
+        raw = self._successful_writer_bundle()
+        with tempfile.TemporaryDirectory() as legacy_dir:
+            root, _ = materialize_live_tower(raw, Path(legacy_dir) / 'legacy')
+            test_path = entity_path(root, 'test', TEST_ID)
+            test = json.loads(test_path.read_text(encoding='utf-8'))
+            test['execution_phase'] = 'RUNNING'
+            test_path.write_text(json.dumps(test), encoding='utf-8')
+            battery_path = fs_path(root, evolution.BATTERIES_DOC)
+            document = json.loads(battery_path.read_text(encoding='utf-8'))
+            document['batteries'][0]['submitted_specs'][0]['test_id'] = []
+            battery_path.write_text(json.dumps(document), encoding='utf-8')
+            malformed = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode('utf-8')
+
+        board = {'kind': 'BOARD_POST', 'source': 'ENGINEER', 'created_at': END,
+                 '_inbox_name': 'independent-board.json',
+                 'payload': {'to': 'GUARDIAO', 'text': 'Independent item survives phase conflict.'}}
+        changed, report = apply_to_tower(malformed, [board])
+        self.assertIsNotNone(changed)
+        phase = report['execution_phase_reconciliation']
+        self.assertEqual(phase['proposed'], 0)
+        self.assertEqual(phase['applied'], 0)
+        self.assertEqual(phase['error_type'], 'TypeError')
+        self.assertEqual(_entity_from_bundle(changed)['execution_phase'], 'RUNNING')
+        with tempfile.TemporaryDirectory() as readback_dir:
+            readback, _ = materialize_live_tower(changed, Path(readback_dir) / 'readback')
+            posts = json.loads(fs_path(readback, evolution.BOARD_DOC).read_text(encoding='utf-8'))['posts']
+        self.assertEqual([post['text'] for post in posts], ['Independent item survives phase conflict.'])
+
+    def test_malformed_binding_shape_fails_closed_at_writer_boundary(self):
+        raw = self._successful_writer_bundle()
+        with tempfile.TemporaryDirectory() as legacy_dir:
+            root, _ = materialize_live_tower(raw, Path(legacy_dir) / 'legacy')
+            test_path = entity_path(root, 'test', TEST_ID)
+            test = json.loads(test_path.read_text(encoding='utf-8'))
+            test.update(execution_phase='RUNNING', data_binding=[1])
+            test_path.write_text(json.dumps(test), encoding='utf-8')
+            malformed = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode('utf-8')
+
+        board = {'kind': 'BOARD_POST', 'source': 'ENGINEER', 'created_at': END,
+                 '_inbox_name': 'independent-binding-board.json',
+                 'payload': {'to': 'GUARDIAO', 'text': 'Independent binding item survives.'}}
+        changed, report = apply_to_tower(malformed, [board])
+        self.assertIsNotNone(changed)
+        phase = report['execution_phase_reconciliation']
+        self.assertEqual(phase['error_type'], 'AttributeError')
+        self.assertEqual(_entity_from_bundle(changed)['execution_phase'], 'RUNNING')
+        with tempfile.TemporaryDirectory() as readback_dir:
+            readback, _ = materialize_live_tower(changed, Path(readback_dir) / 'readback')
+            posts = json.loads(fs_path(readback, evolution.BOARD_DOC).read_text(encoding='utf-8'))['posts']
+        self.assertEqual([post['text'] for post in posts], ['Independent binding item survives.'])
+
+    def test_partial_phase_failure_reports_zero_applied_after_rollback(self):
+        raw = self._initial_bundle()
+        planned = [
+            {'request_id': 'REQ-PHASE-A', 'entity_kind': 'test', 'entity_name': TEST_ID,
+             'expected_version': 1, 'writer_role': 'EXECUTOR',
+             'event_type': 'TEST_EXECUTION_PHASE_RECONCILED', 'changes': {'execution_phase': 'COMPLETED'}},
+            {'request_id': 'REQ-PHASE-B', 'entity_kind': 'test', 'entity_name': TEST_ID,
+             'expected_version': 2, 'writer_role': 'EXECUTOR',
+             'event_type': 'TEST_EXECUTION_PHASE_RECONCILED', 'changes': {'execution_phase': 'COMPLETED'}},
+        ]
+        fake_plan = {'summary': {'terminal_running': 2, 'conflict_count': 0}, 'requests': planned}
+        from runtime.nexo_agent_api.tower_apply import apply_requests as real_apply_requests
+
+        def partial(root, requests):
+            if requests is planned:
+                return [
+                    {'request_id': 'REQ-PHASE-A', 'accepted': True, 'readback': 'PASS'},
+                    {'request_id': 'REQ-PHASE-B', 'accepted': False,
+                     'issue': {'code': 'EXECUTION_PHASE_RECONCILIATION_INVALID'}},
+                ]
+            return real_apply_requests(root, requests)
+
+        with patch('runtime.nexo_agent_api.execution_phase_reconciliation.build_reconciliation_plan',
+                   return_value=fake_plan), \
+             patch('runtime.nexo_agent_api.gpt_writer.apply_requests', side_effect=partial):
+            changed, report = apply_to_tower(raw, [])
+
+        phase = report['execution_phase_reconciliation']
+        self.assertEqual(phase['proposed'], 2)
+        self.assertEqual(phase['applied'], 0)
+        self.assertEqual(phase['rolled_back'], 1)
+        self.assertTrue(all(receipt['rolled_back'] for receipt in report['receipts'][:2]))
+        after = changed or raw
+        self.assertEqual(_entity_from_bundle(after)['status'], 'READY')
 
     def test_legacy_battery_without_source_submission_remains_a_conflict(self):
         raw = self._successful_writer_bundle()

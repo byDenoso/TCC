@@ -701,7 +701,18 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
             ttl = 48
         refs = [str(r) for r in entry.get("refs") or []][:12]
         private = bool(entry.get("private")) or any(r.upper().startswith(("OLY", "OLYMPUS")) for r in refs)
-        posts.append({"id": str(entry.get("id") or f"BP-{now[:16]}-{source}-{index}"), "at": now, "from": source, "to": to,
+        transport_identity = {
+            "inbox_id": str(item.get("_inbox_id") or "").strip(),
+            "inbox_name": str(item.get("_inbox_name") or "").strip(),
+        }
+        declared_at = str(item.get("created_at") or "").strip()
+        identity = {"transport": transport_identity, "source": source, "at": declared_at, "index": index}
+        if not any(transport_identity.values()):
+            identity["entry"] = entry
+        suffix = hashlib.sha256(json.dumps(identity, ensure_ascii=False, sort_keys=True,
+                                             separators=(",", ":"), default=str).encode("utf-8")).hexdigest()[:12].upper()
+        generated_id = f"BP-{declared_at[:16] if declared_at else 'UNDATED'}-{source}-{suffix}"
+        posts.append({"id": str(entry.get("id") or generated_id), "at": now, "from": source, "to": to,
                       "text": " ".join(str(entry["text"]).split())[:500], "refs": refs,
                       "reply_to": entry.get("reply_to"), "expires_at": (base + timedelta(hours=ttl)).strftime("%Y-%m-%dT%H:%M:%SZ"),
                       "private": private})
@@ -709,12 +720,37 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
     if not posts and not resolve:
         return NoOpRequests("NO_ACTIONABLE_BOARD_CONTENT")
     old = _read(root, BOARD_DOC).get("posts") or []
-    old = [dict(p, resolved_at=now, resolved_by=source) if p.get("id") in resolve and not p.get("resolved_at") else p for p in old]
+    resolved = [{"id": str(post["id"]), "resolved_at": now, "resolved_by": source}
+                for post in old if str(post.get("id") or "") in resolve and not post.get("resolved_at")]
+    def signature(post: dict[str, Any]) -> tuple:
+        return (post.get("from"), post.get("to"), post.get("text"), tuple(post.get("refs") or []),
+                post.get("reply_to"), bool(post.get("private")))
+
+    by_id = {str(post.get("id")): post for post in old if str(post.get("id") or "")}
+    unique = []
+    for post in posts:
+        post_id = str(post["id"])
+        prior = by_id.get(post_id)
+        if prior is not None:
+            if signature(prior) != signature(post):
+                from .inbox_apply import ProposalError
+                raise ProposalError("BOARD_ID_COLLISION")
+            continue
+        by_id[post_id] = post
+        unique.append(post)
+    posts = unique
     seen = {(p.get("from"), p.get("to"), " ".join(str(p.get("text") or "").split()).lower()) for p in old}
     posts = [p for p in posts if (p["from"], p["to"], p["text"].lower()) not in seen]
     if not posts and not resolve:
         return NoOpRequests("BOARD_MESSAGE_ALREADY_RECORDED")
-    return [_doc(BOARD_DOC, {"posts": (old + posts)[-300:]}, f"REQ-BOARD-{now[:16]}-{source}")]
+    request_identity = json.dumps({"post_ids": [p["id"] for p in posts], "resolve": sorted(resolve)},
+                                  ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    request_suffix = hashlib.sha256(request_identity.encode("utf-8")).hexdigest()[:16].upper()
+    request = _doc(BOARD_DOC, {"posts": resolved + posts}, f"REQ-BOARD-{source}-{request_suffix}", {"posts": "id"})
+    if resolve:
+        request.update({"_board_resolve_ids": sorted(resolve), "_board_resolved_at": now,
+                        "_board_resolved_by": source})
+    return [request]
 
 
 def _board_view(root: Path, now: datetime | None, public: bool) -> list[dict[str, Any]]:
@@ -1098,7 +1134,8 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     for recipe, tests in groups:
         if not re.fullmatch(r"[a-z0-9_]{2,40}", recipe):
             continue
-        # Batch policy: up to 20 per battery, but with 20 or fewer ready it sends 75% (20 -> 15), always at least 5 when there are 5.
+        # Batch policy: up to 20 per battery; send all 1-4 available tests,
+        # otherwise 75% with a floor of 5 (20 -> 15).
         take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
         tests = tests[:take]
         if (health.get(recipe) or {}).get("state") == "OPEN":

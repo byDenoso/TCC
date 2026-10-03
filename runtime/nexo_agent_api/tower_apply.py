@@ -28,6 +28,23 @@ def apply_document(root: Path, request: dict) -> dict:
     path = fs_path(root, relative)
     current = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
 
+    if relative == "evolution/board.json":
+        existing = {str(post.get("id")): post for post in current.get("posts") or []
+                    if isinstance(post, dict) and str(post.get("id") or "")}
+        proposed = (request.get("merge") or {}).get("posts") or []
+        def signature(post):
+            return (post.get("from"), post.get("to"), post.get("text"), tuple(post.get("refs") or []),
+                    post.get("reply_to"), bool(post.get("private")))
+        for post in proposed:
+            if not isinstance(post, dict) or not str(post.get("id") or ""):
+                continue
+            prior = existing.get(str(post["id"]))
+            prior_content = prior is not None and all(prior.get(key) is not None for key in ("from", "to", "text"))
+            post_content = all(post.get(key) is not None for key in ("from", "to", "text"))
+            if prior_content and post_content and signature(prior) != signature(post):
+                return {"request_id": request.get("request_id"), "accepted": False,
+                        "issue": {"code": "BOARD_ID_COLLISION", "message": str(post["id"])}}
+
     def merge(base, patch, key_fields):
         for key, value in patch.items():
             if key in key_fields and isinstance(value, list) and isinstance(base.get(key), list):
@@ -45,6 +62,8 @@ def apply_document(root: Path, request: dict) -> dict:
         return base
 
     merged = merge(current, dict(request.get("merge") or {}), dict(request.get("list_merge") or {}))
+    if relative == "evolution/board.json" and isinstance(merged.get("posts"), list):
+        merged["posts"] = merged["posts"][-300:]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     return {"request_id": request.get("request_id"), "accepted": True, "document": relative, "readback": "PASS"}

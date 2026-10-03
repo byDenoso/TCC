@@ -272,6 +272,300 @@ def test_board_posts_are_addressed_expire_and_hide_private(tmp_path):
     assert [p["to"] for p in task] == ["ALL"]
 
 
+def test_board_generated_ids_are_stable_unique_and_resolve_only_the_target(tmp_path):
+    from datetime import datetime, timezone
+
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    first = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+             "_inbox_name": "engineer-backlog.json",
+             "payload": {"to": "GUARDIAO", "text": "Backlog relido.", "refs": ["WORK-A"]}}
+    second = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+              "_inbox_name": "engineer-terminal.json",
+              "payload": {"to": "GUARDIAO", "text": "Fase terminal relida.", "refs": ["WORK-B"]}}
+
+    first_request = proposal_to_requests(first, root)[0]
+    replay_request = proposal_to_requests(first, root)[0]
+    first_id = first_request["merge"]["posts"][-1]["id"]
+    replay_id = replay_request["merge"]["posts"][-1]["id"]
+    [first_receipt] = apply_requests(root, [first_request])
+    assert first_receipt.get("accepted", True) is not False, first_receipt
+
+    # The Writer converts/applies envelopes serially, so the second conversion
+    # sees the first post in the canonical board document.
+    second_request = proposal_to_requests(second, root)[0]
+    second_id = second_request["merge"]["posts"][-1]["id"]
+    assert first_id == replay_id
+    assert first_request["request_id"] == replay_request["request_id"]
+    assert first_id != second_id
+    assert first_request["request_id"] != second_request["request_id"]
+
+    [second_receipt] = apply_requests(root, [second_request])
+    assert second_receipt.get("accepted", True) is not False, second_receipt
+    posts = evolution_status(root, now=datetime(2026, 10, 3, 1, tzinfo=timezone.utc))["board"]
+    assert {post["id"] for post in posts} == {first_id, second_id}
+
+    _apply(root, {"kind": "BOARD_POST", "source": "GUARDIAO", "created_at": created_at,
+                  "payload": {"resolve": [first_id]}})
+    remaining = evolution_status(root, now=datetime(2026, 10, 3, 1, tzinfo=timezone.utc))["board"]
+    assert [post["id"] for post in remaining] == [second_id]
+
+
+def test_board_id_fallback_and_legacy_explicit_linkage_are_preserved(tmp_path):
+    root = _tower(tmp_path)
+    first = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:02:44Z",
+             "payload": {"to": "GUARDIAO", "text": "Primeiro corpo."}}
+    second = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:02:44Z",
+              "payload": {"to": "GUARDIAO", "text": "Segundo corpo."}}
+    first_request = proposal_to_requests(first, root)[0]
+    second_request = proposal_to_requests(second, root)[0]
+    first_id = first_request["merge"]["posts"][-1]["id"]
+    second_id = second_request["merge"]["posts"][-1]["id"]
+    assert first_id != second_id
+    assert proposal_to_requests(first, root)[0]["merge"]["posts"][-1]["id"] == first_id
+
+    undated = {"kind": "BOARD_POST", "source": "ENGINEER",
+               "payload": {"to": "GUARDIAO", "text": "Envelope legado sem data."}}
+    undated_id = proposal_to_requests(undated, root)[0]["merge"]["posts"][-1]["id"]
+    assert undated_id.startswith("BP-UNDATED-ENGINEER-")
+    assert proposal_to_requests(undated, root)[0]["merge"]["posts"][-1]["id"] == undated_id
+
+    explicit = {"kind": "BOARD_POST", "source": "GUARDIAO", "created_at": "2026-10-03T00:03:00Z",
+                "payload": {"to": "ENGINEER", "text": "Resposta legada.",
+                            "id": "BP-LEGACY-EXPLICIT", "reply_to": first_id}}
+    explicit_post = proposal_to_requests(explicit, root)[0]["merge"]["posts"][-1]
+    assert explicit_post["id"] == "BP-LEGACY-EXPLICIT"
+    assert explicit_post["reply_to"] == first_id
+
+
+def test_board_explicit_id_replay_is_noop_and_incompatible_reuse_is_rejected(tmp_path):
+    from runtime.nexo_agent_api.inbox_apply import ProposalError
+
+    root = _tower(tmp_path)
+    original = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:03:00Z",
+                "payload": {"to": "GUARDIAO", "text": "Identidade explícita.", "id": "BP-SAME"}}
+    _apply(root, original)
+    [replay] = proposal_to_requests(original, root)
+    assert replay["changes"]["kind"] == "BOARD_POST_NOOP"
+    assert replay["changes"]["payload"]["_noop_reason"] == "BOARD_MESSAGE_ALREADY_RECORDED"
+
+    incompatible = {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:03:00Z",
+                    "payload": {"to": "GUARDIAO", "text": "Outro conteúdo.", "id": "BP-SAME"}}
+    [rejected] = proposal_to_requests(incompatible, root)
+    assert rejected["changes"]["kind"] == "UNAPPLIED_BOARD_POST"
+    assert rejected["changes"]["payload"]["_not_applied_reason"] == "BOARD_ID_COLLISION"
+
+    posts = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
+    assert [(post["id"], post["text"]) for post in posts] == [("BP-SAME", "Identidade explícita.")]
+
+    batch = {"kind": "BATCH", "source": "ENGINEER", "created_at": "2026-10-03T00:03:00Z",
+             "payload": {"items": [original, incompatible]}}
+    empty_root = _tower(tmp_path / "batch")
+    try:
+        proposal_to_requests(batch, empty_root)
+    except ProposalError as exc:
+        assert str(exc) == "BOARD_ID_COLLISION"
+    else:
+        raise AssertionError("generic BATCH silently overwrote an incompatible BOARD_POST id")
+
+
+def test_writer_keeps_same_minute_board_envelopes_distinct_and_replay_idempotent(tmp_path):
+    from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+    from runtime.nexo_agent_api.live_tower import build_live_tower_payload, materialize_live_tower
+
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    items = [
+        {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+         "_inbox_name": "engineer-backlog.json",
+         "payload": {"to": "GUARDIAO", "text": "Backlog relido.", "refs": ["WORK-A"]}},
+        {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+         "_inbox_name": "engineer-terminal.json",
+         "payload": {"to": "GUARDIAO", "text": "Fase terminal relida.", "refs": ["WORK-B"]}},
+    ]
+    (root / "CONTROL.json").write_text(
+        json.dumps({"truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE"}), encoding="utf-8")
+    raw = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode("utf-8")
+    changed, report = apply_to_tower(raw, items)
+    assert changed is not None, report
+
+    readback, _ = materialize_live_tower(changed, tmp_path / "readback")
+    posts = evolution_status(readback)["board"]
+    assert len(posts) == 2
+    ids = [post["id"] for post in posts]
+    assert len(set(ids)) == 2
+
+    replayed, replay_report = apply_to_tower(changed, items)
+    assert not replay_report["rejected"], replay_report
+    replay_bundle = replayed or changed
+    replay_root, _ = materialize_live_tower(replay_bundle, tmp_path / "replay")
+    replay_posts = evolution_status(replay_root)["board"]
+    assert [post["id"] for post in replay_posts] == ids
+
+    resolved, resolve_report = apply_to_tower(replay_bundle, [{
+        "kind": "BOARD_POST", "source": "GUARDIAO", "created_at": "2026-10-03T00:04:00Z",
+        "_inbox_name": "resolve-first.json", "payload": {"resolve": [ids[0]]},
+    }])
+    assert resolved is not None, resolve_report
+    resolved_root, _ = materialize_live_tower(resolved, tmp_path / "resolved")
+    assert [post["id"] for post in evolution_status(resolved_root)["board"]] == [ids[1]]
+
+
+def test_writer_batch_children_get_distinct_board_and_request_identities(tmp_path):
+    from runtime.nexo_agent_api.gpt_writer import apply_to_tower
+    from runtime.nexo_agent_api.gpt_writer import _gateway_results
+    from runtime.nexo_agent_api.live_tower import build_live_tower_payload, materialize_live_tower
+
+    root = _tower(tmp_path)
+    (root / "CONTROL.json").write_text(
+        json.dumps({"truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE"}), encoding="utf-8")
+    created_at = "2026-10-03T00:02:44Z"
+    batch = {
+        "kind": "BATCH", "source": "ENGINEER", "created_at": created_at,
+        "_inbox_source": "GATEWAY", "_inbox_id": "gateway:shared-parent",
+        "_inbox_name": "gw-shared-parent",
+        "payload": {"items": [
+            {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+             "payload": {"to": "GUARDIAO", "text": "Primeiro filho."}},
+            {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+             "payload": {"to": "GUARDIAO", "text": "Segundo filho."}},
+        ]},
+    }
+    raw = json.dumps(build_live_tower_payload(root), ensure_ascii=False).encode("utf-8")
+    changed, report = apply_to_tower(raw, [batch])
+    assert changed is not None, report
+    assert not report["rejected"], report
+    payload, reported, resolved = _gateway_results(report, ["shared-parent"])
+    assert reported == resolved == ["shared-parent"]
+    assert payload["items"][0]["outcome"] == "APPLIED"
+    assert len(payload["items"][0]["receipts"]) == 2
+
+    readback, _ = materialize_live_tower(changed, tmp_path / "batch-readback")
+    posts = evolution_status(readback)["board"]
+    assert [post["text"] for post in posts] == ["Primeiro filho.", "Segundo filho."]
+    assert len({post["id"] for post in posts}) == 2
+
+
+def test_generic_batch_board_requests_compose_without_overwrite(tmp_path):
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    batch = {
+        "kind": "BATCH", "source": "ENGINEER", "created_at": created_at,
+        "_inbox_id": "generic-parent", "_inbox_name": "generic-parent",
+        "payload": {"items": [
+            {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+             "payload": {"to": "GUARDIAO", "text": "Primeiro genérico."}},
+            {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+             "payload": {"to": "GUARDIAO", "text": "Segundo genérico."}},
+        ]},
+    }
+    requests = proposal_to_requests(batch, root)
+    assert len(requests) == 2
+    assert len(requests[0]["merge"]["posts"]) == 1
+    assert len(requests[1]["merge"]["posts"]) == 2
+    receipts = apply_requests(root, requests)
+    assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
+    posts = evolution_status(root)["board"]
+    assert [post["text"] for post in posts] == ["Primeiro genérico.", "Segundo genérico."]
+
+
+def test_generic_batch_can_resolve_a_post_created_by_an_earlier_child(tmp_path):
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    batch = {"kind": "BATCH", "source": "ENGINEER", "created_at": created_at,
+             "payload": {"items": [
+                 {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                  "payload": {"to": "GUARDIAO", "text": "Criado e fechado.", "id": "BP-X"}},
+                 {"kind": "BOARD_POST", "source": "GUARDIAO", "created_at": created_at,
+                  "payload": {"resolve": ["BP-X"]}},
+             ]}}
+    requests = proposal_to_requests(batch, root)
+    assert len(requests) == 2
+    resolved = next(post for post in requests[1]["merge"]["posts"] if post["id"] == "BP-X")
+    assert resolved["resolved_at"] == created_at
+    receipts = apply_requests(root, requests)
+    assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
+    posts = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
+    assert posts[0]["id"] == "BP-X" and posts[0]["resolved_at"] == created_at
+    assert evolution_status(root)["board"] == []
+
+
+def test_composed_board_snapshots_never_reopen_a_resolved_post(tmp_path):
+    from runtime.nexo_agent_api.inbox_apply import compose_board_snapshots
+
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    _apply(root, {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                  "payload": {"to": "GUARDIAO", "text": "Fechar depois.", "id": "BP-1"}})
+    resolve = proposal_to_requests({"kind": "BOARD_POST", "source": "GUARDIAO", "created_at": created_at,
+                                    "payload": {"resolve": ["BP-1"]}}, root)[0]
+    add = proposal_to_requests({"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                                "payload": {"to": "GUARDIAO", "text": "Novo recado."}}, root)[0]
+    [resolved_request, add_request] = compose_board_snapshots([resolve, add])
+    assert resolved_request["merge"]["posts"][0]["resolved_at"] == created_at
+    assert add_request["merge"]["posts"][0]["resolved_at"] == created_at
+    receipts = apply_requests(root, [resolved_request, add_request])
+    assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
+    visible = evolution_status(root)["board"]
+    assert [post["text"] for post in visible] == ["Novo recado."]
+
+
+def test_stale_board_request_merges_with_concurrent_post_instead_of_losing_it(tmp_path):
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    stale_request = proposal_to_requests({
+        "kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+        "_inbox_name": "stale.json",
+        "payload": {"to": "GUARDIAO", "text": "Planejado no snapshot A."},
+    }, root)[0]
+    assert stale_request["list_merge"] == {"posts": "id"}
+
+    _apply(root, {"kind": "BOARD_POST", "source": "GUARDIAO", "created_at": created_at,
+                  "payload": {"to": "ENGINEER", "text": "Concorrente no snapshot B."}})
+    [receipt] = apply_requests(root, [stale_request])
+    assert receipt.get("accepted", True) is not False, receipt
+    posts = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
+    assert {post["text"] for post in posts} == {
+        "Planejado no snapshot A.", "Concorrente no snapshot B.",
+    }
+
+
+def test_stale_explicit_board_id_cannot_overwrite_concurrent_content(tmp_path):
+    root = _tower(tmp_path)
+    created_at = "2026-10-03T00:02:44Z"
+    stale = proposal_to_requests({
+        "kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+        "payload": {"to": "GUARDIAO", "text": "Snapshot A.", "id": "BP-SAME"},
+    }, root)[0]
+    _apply(root, {"kind": "BOARD_POST", "source": "ENGINEER", "created_at": created_at,
+                  "payload": {"to": "GUARDIAO", "text": "Snapshot B.", "id": "BP-SAME"}})
+
+    [receipt] = apply_requests(root, [stale])
+    assert receipt["accepted"] is False
+    assert receipt["issue"]["code"] == "BOARD_ID_COLLISION"
+    posts = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
+    assert [(post["id"], post["text"]) for post in posts] == [("BP-SAME", "Snapshot B.")]
+
+
+def test_board_list_merge_keeps_legacy_ids_privacy_and_300_post_bound(tmp_path):
+    root = _tower(tmp_path)
+    requests = []
+    for index in range(305):
+        requests.extend(proposal_to_requests({
+            "kind": "BOARD_POST", "source": "ENGINEER", "created_at": "2026-10-03T00:02:44Z",
+            "_inbox_name": f"bounded-{index}.json",
+            "payload": {"to": "GUARDIAO", "text": f"Post {index}", "id": f"BP-LEGACY-{index}",
+                        "private": index == 304},
+        }, root))
+    receipts = apply_requests(root, requests)
+    assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
+    stored = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
+    assert len(stored) == 300
+    assert stored[0]["id"] == "BP-LEGACY-5"
+    assert stored[-1]["id"] == "BP-LEGACY-304" and stored[-1]["private"] is True
+    assert all(post["id"] != "BP-LEGACY-304" for post in evolution_status(root, public=True)["board"])
+
+
 def test_referee_queue_holds_only_reviewable_originals_oldest_first(tmp_path):
     """Attacks are evidence, never attackable: queueing them starved real originals (2026-09-29:
     17 of 30 referee_1 entries were CONTEST-* attacks, sorted ahead of the originals)."""
