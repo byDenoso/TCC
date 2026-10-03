@@ -37,6 +37,13 @@ def _is_request(item: dict) -> bool:
     }
 
 
+def _claims_operational_receipt(request: dict) -> bool:
+    changes = request.get("changes") if isinstance(request.get("changes"), dict) else {}
+    return (str(changes.get("kind") or "").upper() == "OPERATIONAL_RECEIPT"
+            or str(request.get("entity_name") or "").upper().startswith("OPERATIONAL_RECEIPT::")
+            or str(request.get("event_type") or "").upper() == "OPERATIONAL_RECEIPT_RECORDED")
+
+
 def _root_revision(root: Path) -> str:
     return verify_live_tower(read_live_tower_bytes((root / LIVE_TOWER_NAME).read_bytes()))
 
@@ -76,7 +83,11 @@ def _operational_status(root: Path) -> dict[str, Any]:
     }
 
 
-def _apply_one_request(root: Path, item: dict, request: dict) -> dict:
+def _apply_one_request(root: Path, item: dict, request: dict, *,
+                       operational_receipt_validated: bool = False) -> dict:
+    if _claims_operational_receipt(request) and not operational_receipt_validated:
+        return {"accepted": False,
+                "issue": {"code": "OPERATIONAL_RECEIPT_REQUIRES_STRICT_CONVERTER"}}
     operation = request.get("nexo_operation")
     if operation == "EXECUTION_OBSERVATION_ASSESSMENT":
         from .execution_assessment import AssessmentError, apply_assessment
@@ -329,7 +340,11 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     report["handled"].append(label)
                     continue
             try:
-                requests = [item] if _is_request(item) else proposal_to_requests(item, root)
+                raw_request = _is_request(item)
+                requests = [item] if raw_request else proposal_to_requests(item, root)
+                operational_receipt_validated = (
+                    not raw_request and str(item.get("kind") or "").upper() == "OPERATIONAL_RECEIPT"
+                )
             except ProposalError as exc:
                 requests = []
                 conversion_error = str(exc)
@@ -452,7 +467,10 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             active_indices = [i for i, row in enumerate(prior_rows) if row is None]
             source_tower_revision = _root_revision(root)
             for request_index in active_indices:
-                receipt = _apply_one_request(root, item, requests[request_index])
+                receipt = _apply_one_request(
+                    root, item, requests[request_index],
+                    operational_receipt_validated=operational_receipt_validated,
+                )
                 receipts.append((request_index, receipt))
                 result_revisions.append(_root_revision(root))
                 if not receipt.get("accepted", True) or receipt.get("issue"):
@@ -866,6 +884,78 @@ def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> di
     return report
 
 
+def _runner_battery_updates(path: str) -> list[dict]:
+    """Load only Writer-produced BATTERY_STATUS observations."""
+    if not path or not Path(path).is_file():
+        return []
+    try:
+        updates = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    result = []
+    for index, update in enumerate(updates if isinstance(updates, list) else []):
+        payload = update.get("payload") if isinstance(update, dict) else None
+        if (isinstance(payload, dict)
+                and set(update) == {"kind", "source", "payload"}
+                and update.get("kind") == "BATTERY_STATUS"
+                and update.get("source") == "WRITER_ROBOT"
+                and str(payload.get("battery_id") or "")):
+            result.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
+                           "_inbox_name": f"battery-update-{index}-{payload['battery_id']}",
+                           "_inbox_id": f"runner:battery:{index}:{payload['battery_id']}"})
+    return result
+
+
+def _runner_execution_assessment_updates(path: str) -> list[dict]:
+    """Load only the reviewed assessment shape appended by the collector."""
+    if not path or not Path(path).is_file():
+        return []
+    try:
+        updates = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    result = []
+    for update in updates if isinstance(updates, list) else []:
+        assessment = update.get("assessment") if isinstance(update, dict) else None
+        approved = assessment.get("approved") if isinstance(assessment, dict) else None
+        source = assessment.get("source") if isinstance(assessment, dict) else None
+        test_id = str(approved.get("test_id") or "") if isinstance(approved, dict) else ""
+        artifact_id = approved.get("artifact_id") if isinstance(approved, dict) else None
+        if (isinstance(update, dict)
+                and set(update) == {"nexo_operation", "assessment"}
+                and update.get("nexo_operation") == "EXECUTION_OBSERVATION_ASSESSMENT"
+                and isinstance(assessment, dict)
+                and set(assessment) == {"approved", "source"}
+                and isinstance(approved, dict) and isinstance(source, dict)
+                and test_id and type(artifact_id) is int and artifact_id > 0):
+            result.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
+                           "_inbox_name": f"execution-assessment-{test_id}-{artifact_id}",
+                           "_inbox_id": f"runner:assessment:{test_id}:{artifact_id}"})
+    return result
+
+
+def _runner_operational_updates(path: str) -> list[dict]:
+    """Load Writer-collected receipts and stamp their non-user-authenticable source."""
+    if not path or not Path(path).is_file():
+        return []
+    try:
+        updates = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    result = []
+    for update in updates if isinstance(updates, list) else []:
+        payload = update.get("payload") if isinstance(update, dict) else None
+        receipt_id = str(payload.get("receipt_id") or "") if isinstance(payload, dict) else ""
+        if (receipt_id and set(update) == {"kind", "source", "created_at", "payload"}
+                and update.get("kind") == "OPERATIONAL_RECEIPT"
+                and update.get("source") == "WRITER_ROBOT"
+                and update.get("created_at") == payload.get("executed_at")):
+            result.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
+                           "_inbox_name": "operational-receipt-" + receipt_id,
+                           "_inbox_id": "runner:" + receipt_id})
+    return result
+
+
 def _main(argv: list[str]) -> int:
     if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
         from . import AgentService
@@ -935,15 +1025,9 @@ def _main(argv: list[str]) -> int:
             items.append({**entry["payload"], "_inbox_source": "GITHUB",
                           "_inbox_name": entry["name"], "_inbox_id": "github:" + entry["path"]})
         updates_file = os.environ.get("NEXO_BATTERY_UPDATES", "")
-        if updates_file and Path(updates_file).is_file():
-            try:
-                updates = json.loads(Path(updates_file).read_text(encoding="utf-8"))
-            except ValueError:
-                updates = []
-            for index, update in enumerate(updates if isinstance(updates, list) else []):
-                if isinstance(update, dict):
-                    items.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
-                                  "_inbox_name": f"battery-update-{index}-{update.get('payload', {}).get('battery_id')}"})
+        items.extend(_runner_battery_updates(updates_file))
+        items.extend(_runner_execution_assessment_updates(updates_file))
+        items.extend(_runner_operational_updates(os.environ.get("NEXO_OPERATIONAL_UPDATES", "")))
         # Producer gate (fallback in shadow): only the active producer's automated proposals reach the Tower;
         # the other producer's are acknowledged and logged, never applied. Unlabelled items (Dener, conversations,
         # robot) always pass, so switching GPT <-> CLAUDE never creates a second writer or a second truth.

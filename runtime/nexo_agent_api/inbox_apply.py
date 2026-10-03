@@ -10,7 +10,9 @@ Every function is pure over a materialized Tower root; nothing here writes.
 from __future__ import annotations
 
 import json
+import math
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -660,6 +662,84 @@ def _record_request(item: dict[str, Any], body: dict[str, Any], kind: str) -> li
     }]
 
 
+def _operational_receipt_request(item: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any]]:
+    """Admit one runner-bound engineering receipt without creating a TEST."""
+    receipt_id = str(body.get("receipt_id") or "")
+    if (item.get("_inbox_source") != "RUNNER_OBSERVATION"
+            or item.get("source") != "WRITER_ROBOT"
+            or item.get("_inbox_name") != "operational-receipt-" + receipt_id
+            or item.get("_inbox_id") != "runner:" + receipt_id):
+        raise ProposalError("OPERATIONAL_RECEIPT_REQUIRES_RUNNER_OBSERVATION")
+    required = {"contract", "receipt_id", "pipeline", "status", "scope",
+                "scientific_result_eligible", "repository", "commit_sha", "run_ref",
+                "run_attempt", "role_session", "input", "result", "decision",
+                "result_sha256", "executed_at"}
+    if set(body) != required:
+        raise ProposalError("OPERATIONAL_RECEIPT_FIELDS_INVALID")
+    attempt = body.get("run_attempt")
+    run_ref = str(body.get("run_ref") or "")
+    run_id = run_ref.removeprefix("actions/runs/")
+    if (body.get("contract") != "NEXO_OPERATIONAL_RECEIPT_V1"
+            or body.get("pipeline") != "DRIVE_GITHUB_ACTIONS_WRITER_TOWER_V1"
+            or body.get("scope") != "ENGINEERING_OPERATIONAL_ONLY"
+            or body.get("scientific_result_eligible") is not False
+            or body.get("repository") != "byDenoso/Pantheon"
+            or not re.fullmatch(r"[0-9a-f]{40}", str(body.get("commit_sha") or ""))
+            or not re.fullmatch(r"actions/runs/[1-9][0-9]*", run_ref)
+            or type(attempt) is not int or attempt < 1
+            or receipt_id != f"drive-actions-{run_id}-{attempt}"
+            or body.get("status") not in {"PASS", "DIVERGED"}
+            or not re.fullmatch(r"[0-9a-f]{64}", str(body.get("result_sha256") or ""))):
+        raise ProposalError("OPERATIONAL_RECEIPT_IDENTITY_INVALID")
+    session = body.get("role_session")
+    if (not isinstance(session, dict)
+            or set(session) != {"contract", "session_id", "role", "work_id",
+                                "mcp_endpoint", "mcp_tool", "prompt_sha256",
+                                "context_sha256"}
+            or session.get("contract") != "NEXO_ROLE_SESSION_V1"
+            or session.get("session_id") != "drive-operational-control-v1"
+            or session.get("role") != "EXECUTOR"
+            or session.get("work_id") != "OPERATIONAL-CONTROL-DRIVE-SUM-V1"
+            or session.get("mcp_endpoint") != "https://nexo-one-two.vercel.app/api/mcp"
+            or session.get("mcp_tool") != "get_role_session"
+            or session.get("prompt_sha256") != "47fe9079dc26f58ef206be163edb963c572199e923218bc79984172787520484"
+            or not re.fullmatch(r"[0-9a-f]{64}", str(session.get("context_sha256") or ""))):
+        raise ProposalError("OPERATIONAL_RECEIPT_ROLE_SESSION_INVALID")
+    source = body.get("input")
+    if (not isinstance(source, dict)
+            or set(source) != {"source_storage", "file_id", "version", "sha256", "scope"}
+            or source.get("source_storage") != "GOOGLE_DRIVE_PRIVATE"
+            or source.get("scope") != "DRIVE_BYTES_REVERIFIED_IN_SECRET_FREE_JOB"
+            or source.get("file_id") != "1Cr7L6bbVlOqB0HUvYett0xkhRS-NWRWr"
+            or source.get("version") != "0B9ZwoXbzaIA-dURSU09VT3BkanJvNlBlSDN5RjZUTUFOYnVRPQ"
+            or source.get("sha256") != "3d87520f2b1bffb5c337e3d13d568ebe63d6aa09ad9cfa7dd2ed1a444d659988"):
+        raise ProposalError("OPERATIONAL_RECEIPT_INPUT_INVALID")
+    result = body.get("result")
+    if (not isinstance(result, dict)
+            or set(result) != {"count", "sum", "mean", "known_result_matched"}
+            or type(result.get("count")) is not int or result["count"] < 1
+            or any(isinstance(result.get(key), bool)
+                   or not isinstance(result.get(key), (int, float))
+                   or not math.isfinite(float(result[key])) for key in ("sum", "mean"))
+            or type(result.get("known_result_matched")) is not bool):
+        raise ProposalError("OPERATIONAL_RECEIPT_RESULT_INVALID")
+    passed = body["status"] == "PASS"
+    if ((passed != result["known_result_matched"])
+            or body.get("decision") != ("OPERATIONAL_CONTROL_PASS" if passed
+                                         else "OPERATIONAL_CONTROL_DIVERGED")
+            or (passed and (result["count"] != 3
+                            or not math.isclose(float(result["sum"]), 6.0, rel_tol=0, abs_tol=1e-12)
+                            or not math.isclose(float(result["mean"]), 2.0, rel_tol=0, abs_tol=1e-12)))):
+        raise ProposalError("OPERATIONAL_RECEIPT_KNOWN_RESULT_INVALID")
+    try:
+        executed = datetime.fromisoformat(str(body.get("executed_at") or "").replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ProposalError("OPERATIONAL_RECEIPT_TIMESTAMP_INVALID") from error
+    if executed.tzinfo is None:
+        raise ProposalError("OPERATIONAL_RECEIPT_TIMESTAMP_INVALID")
+    return _record_request(item, body, "OPERATIONAL_RECEIPT")
+
+
 _KIND_ALIASES = {
     "MUTATION_PROPOSAL": "MUTATION_PROPOSAL", "RESULT": "MUTATION_PROPOSAL", "TEST_RESULT": "MUTATION_PROPOSAL",
     "RESULT_PROPOSAL": "MUTATION_PROPOSAL", "EXECUTION_RESULT": "MUTATION_PROPOSAL",
@@ -682,6 +762,7 @@ _KIND_ALIASES = {
     "HANDOFF_TRANSITION": "HANDOFF_TRANSITION", "HANDOFF_ACK": "HANDOFF_TRANSITION",
     "HANDOFF_DONE": "HANDOFF_TRANSITION", "HANDOFF_FAILED": "HANDOFF_TRANSITION",
     "C01_CANARY": "OPERATIONAL_CANARY", "OPERATIONAL_CANARY": "OPERATIONAL_CANARY",
+    "OPERATIONAL_RECEIPT": "OPERATIONAL_RECEIPT",
 }
 _EVOLUTION = {
     "DATA_BINDING": evolution.data_binding_requests,
@@ -831,6 +912,8 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             raise ProposalError("OPERATIONAL_CANARY_FIELDS_REQUIRED:" + ",".join(missing))
         return [{"nexo_operation": "OPERATIONAL_CANARY", "action": action,
                  **{key: dict(body[key]) for key in action_fields[action]}}]
+    if kind == "OPERATIONAL_RECEIPT":
+        return _operational_receipt_request(item, body)
     if batch is not None and kind in {"MUTATION_PROPOSAL", "HYPOTHESIS_PROPOSAL", "LESSON_PROPOSAL"}:
         requests: list[dict[str, Any]] = []
         for index, entry in enumerate(batch):

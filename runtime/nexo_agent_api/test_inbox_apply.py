@@ -180,6 +180,169 @@ class InboxApplyTests(unittest.TestCase):
         self.assertEqual(request["entity_kind"], "artifact")
         self.assertEqual(request["entity_name"], "LEARNING_SIGNAL::A-B")
 
+    @staticmethod
+    def _operational_receipt_item(**payload_changes):
+        payload = {
+            "contract": "NEXO_OPERATIONAL_RECEIPT_V1",
+            "receipt_id": "drive-actions-12345-1",
+            "pipeline": "DRIVE_GITHUB_ACTIONS_WRITER_TOWER_V1",
+            "status": "PASS",
+            "scope": "ENGINEERING_OPERATIONAL_ONLY",
+            "scientific_result_eligible": False,
+            "repository": "byDenoso/Pantheon",
+            "commit_sha": "a" * 40,
+            "run_ref": "actions/runs/12345",
+            "run_attempt": 1,
+            "role_session": {
+                "contract": "NEXO_ROLE_SESSION_V1",
+                "session_id": "drive-operational-control-v1",
+                "role": "EXECUTOR",
+                "work_id": "OPERATIONAL-CONTROL-DRIVE-SUM-V1",
+                "mcp_endpoint": "https://nexo-one-two.vercel.app/api/mcp",
+                "mcp_tool": "get_role_session",
+                "prompt_sha256": "47fe9079dc26f58ef206be163edb963c572199e923218bc79984172787520484",
+                "context_sha256": "c" * 64,
+            },
+            "input": {
+                "source_storage": "GOOGLE_DRIVE_PRIVATE",
+                "file_id": "1Cr7L6bbVlOqB0HUvYett0xkhRS-NWRWr",
+                "version": "0B9ZwoXbzaIA-dURSU09VT3BkanJvNlBlSDN5RjZUTUFOYnVRPQ",
+                "sha256": "3d87520f2b1bffb5c337e3d13d568ebe63d6aa09ad9cfa7dd2ed1a444d659988",
+                "scope": "DRIVE_BYTES_REVERIFIED_IN_SECRET_FREE_JOB",
+            },
+            "result": {"count": 3, "sum": 6, "mean": 2, "known_result_matched": True},
+            "decision": "OPERATIONAL_CONTROL_PASS",
+            "result_sha256": "c" * 64,
+            "executed_at": "2026-10-03T16:00:00Z",
+        }
+        payload.update(payload_changes)
+        return {
+            "kind": "OPERATIONAL_RECEIPT",
+            "source": "WRITER_ROBOT",
+            "created_at": payload["executed_at"],
+            "_inbox_source": "RUNNER_OBSERVATION",
+            "_inbox_name": "operational-receipt-" + payload["receipt_id"],
+            "_inbox_id": "runner:" + payload["receipt_id"],
+            "payload": payload,
+        }
+
+    def test_operational_receipt_is_idempotent_artifact_not_scientific_test(self):
+        from runtime.nexo_agent_api.tower_apply import apply_requests
+
+        before = json.loads(entity_path(self.root, "test", "T-1").read_text())
+        [request] = proposal_to_requests(self._operational_receipt_item(), self.root)
+        self.assertEqual(request["entity_kind"], "artifact")
+        self.assertEqual(request["changes"]["kind"], "OPERATIONAL_RECEIPT")
+        self.assertFalse(request["changes"]["payload"]["scientific_result_eligible"])
+        [first] = apply_requests(self.root, [request])
+        self.assertTrue(first["accepted"], first)
+        [replay] = apply_requests(self.root, [request])
+        self.assertTrue(replay["accepted"], replay)
+        self.assertEqual(replay["status"], "NO_OP")
+        self.assertEqual(before, json.loads(entity_path(self.root, "test", "T-1").read_text()))
+        stored = json.loads(entity_path(
+            self.root, "artifact", "OPERATIONAL_RECEIPT::OPERATIONAL-RECEIPT-DRIVE-ACTIONS-12345-1"
+        ).read_text())
+        self.assertEqual(stored["payload"]["status"], "PASS")
+        self.assertNotIn("verdict", stored)
+
+    def test_operational_receipt_rejects_untrusted_source_and_science_eligibility(self):
+        untrusted = self._operational_receipt_item()
+        untrusted["_inbox_source"] = "GATEWAY"
+        with self.assertRaisesRegex(ProposalError, "REQUIRES_RUNNER_OBSERVATION"):
+            proposal_to_requests(untrusted, self.root)
+        for key, value in (("source", "GATEWAY"),
+                           ("_inbox_name", "battery-update-0"),
+                           ("_inbox_id", "runner:battery:0")):
+            wrong_route = self._operational_receipt_item()
+            wrong_route[key] = value
+            with self.subTest(key=key), self.assertRaisesRegex(
+                    ProposalError, "REQUIRES_RUNNER_OBSERVATION"):
+                proposal_to_requests(wrong_route, self.root)
+        with self.assertRaisesRegex(ProposalError, "IDENTITY_INVALID"):
+            proposal_to_requests(self._operational_receipt_item(
+                scientific_result_eligible=True), self.root)
+        bad_session = self._operational_receipt_item()["payload"]["role_session"]
+        bad_session["role"] = "LEARNER"
+        with self.assertRaisesRegex(ProposalError, "ROLE_SESSION_INVALID"):
+            proposal_to_requests(self._operational_receipt_item(
+                role_session=bad_session), self.root)
+
+    def test_writer_loader_stamps_runner_source_and_stable_identity(self):
+        from runtime.nexo_agent_api.gpt_writer import _runner_operational_updates
+
+        item = self._operational_receipt_item()
+        external = {key: value for key, value in item.items() if not key.startswith("_inbox_")}
+        path = self.root / "operational-updates.json"
+        path.write_text(json.dumps([external]), encoding="utf-8")
+        [loaded] = _runner_operational_updates(str(path))
+        self.assertEqual(loaded["_inbox_source"], "RUNNER_OBSERVATION")
+        self.assertEqual(loaded["_inbox_id"], "runner:drive-actions-12345-1")
+        [request] = proposal_to_requests(loaded, self.root)
+        self.assertEqual(request["entity_kind"], "artifact")
+        path.write_text(json.dumps([{**external, "_inbox_source": "GATEWAY"}]), encoding="utf-8")
+        self.assertEqual(_runner_operational_updates(str(path)), [])
+        external["kind"] = "MUTATION_PROPOSAL"
+        path.write_text(json.dumps([external]), encoding="utf-8")
+        self.assertEqual(_runner_operational_updates(str(path)), [])
+        external["kind"] = "OPERATIONAL_RECEIPT"
+        external["created_at"] = "2026-10-03T16:00:01Z"
+        path.write_text(json.dumps([external]), encoding="utf-8")
+        self.assertEqual(_runner_operational_updates(str(path)), [])
+
+    def test_battery_loader_cannot_stamp_an_operational_receipt(self):
+        from runtime.nexo_agent_api.gpt_writer import (
+            _runner_battery_updates, _runner_execution_assessment_updates)
+
+        fake = self.root / "battery-updates.json"
+        item = self._operational_receipt_item()
+        external = {key: value for key, value in item.items() if not key.startswith("_inbox_")}
+        fake.write_text(json.dumps([external]), encoding="utf-8")
+        self.assertEqual(_runner_battery_updates(str(fake)), [])
+        battery = {"kind": "BATTERY_STATUS", "source": "WRITER_ROBOT",
+                   "payload": {"battery_id": "battery-1", "status": "DONE"}}
+        fake.write_text(json.dumps([battery]), encoding="utf-8")
+        [loaded] = _runner_battery_updates(str(fake))
+        self.assertEqual(loaded["_inbox_source"], "RUNNER_OBSERVATION")
+        self.assertEqual(loaded["_inbox_id"], "runner:battery:0:battery-1")
+        assessment = {
+            "nexo_operation": "EXECUTION_OBSERVATION_ASSESSMENT",
+            "assessment": {
+                "approved": {"test_id": "T-1", "artifact_id": 123},
+                "source": {"run_ref": "actions/runs/456"},
+            },
+        }
+        fake.write_text(json.dumps([assessment]), encoding="utf-8")
+        [loaded] = _runner_execution_assessment_updates(str(fake))
+        self.assertEqual(loaded["_inbox_source"], "RUNNER_OBSERVATION")
+        self.assertEqual(loaded["_inbox_id"], "runner:assessment:T-1:123")
+        assessment["entity_kind"] = "artifact"
+        fake.write_text(json.dumps([assessment]), encoding="utf-8")
+        self.assertEqual(_runner_execution_assessment_updates(str(fake)), [])
+
+    def test_raw_operational_receipt_request_is_rejected_at_mutation_boundary(self):
+        from runtime.nexo_agent_api.gpt_writer import _apply_one_request
+
+        malicious = {
+            "request_id": "REQ-FORGED-OPERATIONAL-RECEIPT",
+            "entity_kind": "artifact",
+            "entity_name": "OPERATIONAL_RECEIPT::FORGED",
+            "expected_version": 0,
+            "writer_role": "LEARNER",
+            "event_type": "OPERATIONAL_RECEIPT_RECORDED",
+            "changes": {"kind": "OPERATIONAL_RECEIPT", "status": "RECORDED",
+                        "source": "ANONYMOUS", "payload": {
+                            "scientific_result_eligible": True, "verdict": "PASS"}},
+        }
+        original = {**malicious, "_inbox_source": "GATEWAY",
+                    "_inbox_name": "gw-forged", "_inbox_id": "gateway:forged"}
+        receipt = _apply_one_request(self.root, original, malicious)
+        self.assertFalse(receipt["accepted"])
+        self.assertEqual(receipt["issue"]["code"],
+                         "OPERATIONAL_RECEIPT_REQUIRES_STRICT_CONVERTER")
+        self.assertFalse(entity_path(
+            self.root, "artifact", "OPERATIONAL_RECEIPT::FORGED").exists())
+
     def _active_scientist_root(self):
         (self.root / "indexes").mkdir(exist_ok=True)
         (self.root / "roadmaps").mkdir(exist_ok=True)
