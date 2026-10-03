@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 from .operational_mcp_transport import decode_rpc_response
 from .operational_control import OperationalError
+from . import operational_tick
 from .operational_tick import tick_existing_writer, WRITER_REF
 
 
@@ -37,13 +38,13 @@ class McpTransportTest(unittest.TestCase):
     def test_malformed_json_is_a_labeled_error(self):
         with self.assertRaisesRegex(OperationalError,'MCP_JSON_INITIALIZE'):decode_rpc_response(response(b'{'),1,'initialize')
     def test_dry_run_performs_no_io(self):
-        with patch('runtime.nexo_agent_api.operational_tick.TowerWriterStore',side_effect=AssertionError('no store in dry run')):
+        with patch.object(operational_tick,'TowerWriterStore',side_effect=AssertionError('no store in dry run')):
             self.assertEqual(tick_existing_writer(None,{'NEXO_ROBOT_DRY':'1'})['reason'],'DRY_RUN')
     def test_canonical_change_signals_existing_workflow(self):
         before={'revision':'sha256:'+'a'*64};after={'revision':'sha256:'+'b'*64}
         with tempfile.TemporaryDirectory() as tmp:
             target=Path(tmp)/'out'
-            with patch('runtime.nexo_agent_api.operational_tick.TowerWriterStore') as store, patch('runtime.nexo_agent_api.operational_tick._tick',return_value={'status':'OK'}):
+            with patch.object(operational_tick,'TowerWriterStore') as store, patch.object(operational_tick,'_tick',return_value={'status':'OK'}):
                 store.return_value._load.side_effect=[(None,None,before),(None,None,after)]
                 tick_existing_writer(None,{'GITHUB_ACTIONS':'true','GITHUB_WORKFLOW_REF':WRITER_REF,'GITHUB_OUTPUT':str(target)})
             self.assertEqual(target.read_text(),'tower_revision='+after['revision']+'\n')
