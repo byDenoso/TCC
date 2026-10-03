@@ -79,7 +79,9 @@ class TowerWriterStore:
     def _load(self):
         raw, head = self.tower.download(cache=False)
         data = read_live_tower_bytes(raw)
-        verify_live_tower(data)
+        fingerprint = verify_live_tower(data)
+        require(data.get("revision") == data.get("state_fingerprint") == fingerprint, "OPERATIONAL_TOWER_HASH_MISMATCH")
+        require(data.get("stable_file_id") == "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z", "OPERATIONAL_TOWER_ID_MISMATCH")
         return raw, head, data
 
     @staticmethod

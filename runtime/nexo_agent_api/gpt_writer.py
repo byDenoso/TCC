@@ -84,7 +84,13 @@ def _operational_status(root: Path) -> dict[str, Any]:
 
 
 def _apply_one_request(root: Path, item: dict, request: dict, *,
-                       operational_receipt_validated: bool = False) -> dict:
+                       operational_receipt_validated: bool = False,
+                       operational_work_authorized: bool = False) -> dict:
+    changes = request.get("changes") or {}
+    reserved = (changes.get("kind") == "NEXO_OPERATIONAL_WORK_V1"
+                or str(request.get("entity_name") or "").startswith("OPERATIONAL-CONTROL-"))
+    if reserved and not operational_work_authorized:
+        return {"accepted": False, "issue": {"code": "OPERATIONAL_WORK_REQUIRES_WRITER_SERVICE"}}
     if _claims_operational_receipt(request) and not operational_receipt_validated:
         return {"accepted": False,
                 "issue": {"code": "OPERATIONAL_RECEIPT_REQUIRES_STRICT_CONVERTER"}}
@@ -237,7 +243,7 @@ def _existing_effect(root: Path, *, intent: str, request: dict, payload: dict,
     return None
 
 
-def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None) -> tuple[bytes | None, dict]:
+def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None, operational_work_authorized: bool = False) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
     contract_versions = {"operation_receipts": operation_receipts.CONTRACT}
     try:
@@ -470,6 +476,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 receipt = _apply_one_request(
                     root, item, requests[request_index],
                     operational_receipt_validated=operational_receipt_validated,
+                    operational_work_authorized=operational_work_authorized,
                 )
                 receipts.append((request_index, receipt))
                 result_revisions.append(_root_revision(root))
@@ -1053,6 +1060,16 @@ def _main(argv: list[str]) -> int:
                     except Exception as exc:
                         print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
             gateway_shadow = [g for g in gateway_ids if "gateway:" + g in shadow_ids]
+        # Operational work shares the existing Writer, credential and concurrency.
+        try:
+            from .operational_tick import tick_existing_writer
+            operational_report = tick_existing_writer(tower, os.environ)
+            print(json.dumps({"operational_worker": operational_report}, ensure_ascii=False))
+        except Exception as exc:
+            print(json.dumps({"operational_worker": "ITEMS_DEFERRED",
+                              "error_type": type(exc).__name__,
+                              "code": getattr(exc, "code", type(exc).__name__)}))
+        items = [item for item in items if item.get("contract") != "NEXO_OPERATIONAL_INTENT_V1"]
         dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
         dispatched: list[str] = []
         for attempt in range(3):
