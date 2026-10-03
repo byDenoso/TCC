@@ -664,6 +664,7 @@ def _record_request(item: dict[str, Any], body: dict[str, Any], kind: str) -> li
 
 def _operational_receipt_request(item: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any]]:
     """Admit one runner-bound engineering receipt without creating a TEST."""
+    from .operational_prompts import EXECUTOR_PROMPT_HASHES
     receipt_id = str(body.get("receipt_id") or "")
     if (item.get("_inbox_source") != "RUNNER_OBSERVATION"
             or item.get("source") != "WRITER_ROBOT"
@@ -702,7 +703,7 @@ def _operational_receipt_request(item: dict[str, Any], body: dict[str, Any]) -> 
             or session.get("work_id") != "OPERATIONAL-CONTROL-DRIVE-SUM-V1"
             or session.get("mcp_endpoint") != "https://nexo-one-two.vercel.app/api/mcp"
             or session.get("mcp_tool") != "get_role_session"
-            or session.get("prompt_sha256") != "47fe9079dc26f58ef206be163edb963c572199e923218bc79984172787520484"
+            or session.get("prompt_sha256") not in EXECUTOR_PROMPT_HASHES
             or not re.fullmatch(r"[0-9a-f]{64}", str(session.get("context_sha256") or ""))):
         raise ProposalError("OPERATIONAL_RECEIPT_ROLE_SESSION_INVALID")
     source = body.get("input")
