@@ -1,19 +1,13 @@
-"""Integration with the existing scheduled Writer; no new credentials or cron.
-
-The private canonical configuration is installed only through authorized Writer
-maintenance after review. Missing configuration is a harmless NO_OP.
-"""
+"""Integration with the existing scheduled Writer; no new credentials or cron."""
 from __future__ import annotations
 import base64
 import csv
 import io
 import json
-from .operational_control import (TowerWriterStore, OperationalWorker, OperationalError,
-                                  initialize_work, canonical, digest, require)
+from .operational_control import TowerWriterStore, OperationalWorker, initialize_work, digest, require
 from .operational_transports import BoundedDrive, GitHubActions
 from .operational_bootstrap import install_if_requested
 
-CONFIG_PATH = "contracts/OPERATIONAL_RUNTIME_V1.json"
 SPOOL_ID = "1M2maKkuEjxumZRa145dzei7dEPFi2yKsKlUf7_scC-E"
 WRITER_REF = "byDenoso/Pantheon/.github/workflows/nexo-writer-robot.yml@refs/heads/main"
 
@@ -81,9 +75,15 @@ def tick_existing_writer(tower, env):
                                recipe_loader=lambda recipe: drive.read_frozen(recipe["drive"]),
                                input_loader=reader.read_frozen)
     try:
+        from .operational_probe import probe_role_session
+        probe = probe_role_session(store, config, env)
+    except Exception as exc:
+        probe = {"state": "DEFERRED", "code": getattr(exc, "code", type(exc).__name__)}
+    try:
         intents, spool_errors = private_intents(tower.session)
     except Exception as exc:
         intents, spool_errors = [], [{"error": getattr(exc, "code", type(exc).__name__)}]
     result = worker.tick(intents)
+    result["role_probe"] = probe
     result["errors"].extend(errors + spool_errors)
     return {"status": "TICK_COMPLETED", **result}
