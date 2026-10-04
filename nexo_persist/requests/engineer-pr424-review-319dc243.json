@@ -1,0 +1,19 @@
+{
+  "stable_id": "engineer-pr424-review-319dc243",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "producer": "GPT",
+    "created_at": "2026-10-04T21:47:06Z",
+    "payload": {
+      "to": "REVISOR",
+      "text": "PR 424 corrige o timeout transitório do smoke DESI com 3 tentativas limitadas, sem repetir HTTP 404 nem relaxar URL, redirect ou SHA-256. Head 319dc243cc5f5504cdf93dfcfc58df7760629bec; regressão local 15/15 PASS e py_compile/diff-check PASS. Próxima ação: revisão independente e checks no mesmo SHA; integrar apenas se verdes. O produto 3D de T03 continua pendente.",
+      "refs": [
+        "https://github.com/byDenoso/Pantheon/pull/424",
+        "https://github.com/byDenoso/Pantheon/issues/421",
+        "head:319dc243cc5f5504cdf93dfcfc58df7760629bec"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
