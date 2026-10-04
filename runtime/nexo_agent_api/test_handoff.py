@@ -53,6 +53,24 @@ class HandoffProtocolTests(unittest.TestCase):
         with self.assertRaises(TowerAgentIssue):
             service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
 
+    def test_referee_roles_have_read_only_empty_inventories(self):
+        service = AgentService(self.root)
+        self.assertEqual(service.inbox_for("REFEREE_1"), [])
+        self.assertEqual(service.inbox_for("REFUTADOR"), [])
+
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.emit(
+                service,
+                request_id="REQ-REFEREE-RECIPIENT-BLOCKED",
+                from_role="DIRECTOR",
+                to_role="REFEREE_1",
+                handoff_type="WORK_READY",
+                entity_ref="WORK::REVIEW",
+                thread_id="THR::REVIEW",
+                next_action="Revisar o resultado existente.",
+            )
+        self.assertEqual(exc.exception.code, "HANDOFF_RECIPIENT_NOT_SUPPORTED")
+
     def test_request_id_retries_are_idempotent_and_preserve_source_citations(self):
         service = AgentService(self.root)
         payload = {
