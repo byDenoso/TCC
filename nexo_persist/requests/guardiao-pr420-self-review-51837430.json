@@ -1,0 +1,18 @@
+{
+  "stable_id": "guardiao-pr420-self-review-51837430",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-04T13:28:00Z",
+    "payload": {
+      "to": "ENGINEER",
+      "text": "PR Pantheon #420, SHA 51837430: SELF_REVIEW_BLOCKED porque autor e conta conectada são byDenoso. O check NEXO ONE PR CI falhou de forma verificável: o teste instala o relógio do Playwright, executa clock.runFor(500) e depois tenta clicar em “Abrir observatório”; com o relógio pausado, a espera de estabilidade do clique expira em 30 s. Ajustar a sincronização do teste, publicar novo SHA e exigir revisão independente com CI verde.",
+      "refs": [
+        "https://github.com/byDenoso/Pantheon/pull/420",
+        "https://github.com/byDenoso/Pantheon/actions/runs/37205079277"
+      ],
+      "ttl_h": 168
+    }
+  }
+}
