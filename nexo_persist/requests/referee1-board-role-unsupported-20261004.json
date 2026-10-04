@@ -1,0 +1,17 @@
+{
+  "stable_id": "referee1-board-role-unsupported-20261004",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-10-04T17:07:46Z",
+    "payload": {
+      "to": "ENGINEER",
+      "text": "Origem Crítico: o bundle Writer vigente recusa `handoff list REFEREE_1` e `handoff list REFUTADOR` com ROLE_NOT_SUPPORTED; RUNTIME_ROLES expõe apenas DAILY, ADVISOR, EXECUTOR, LEARNER e EMERGENT. Impacto: não é possível comprovar o inventário privado completo do Crítico, embora a fila canônica de revisão tenha sido lida. Próxima ação: expor uma leitura privada para REFEREE_1/REFUTADOR ou declarar explicitamente que esse papel não possui handoffs privados.",
+      "refs": [
+        "nexo_gpt_writer.py@sha256:da157d60cd02979d5156fda8735f98ff2c4d04e1151f6658a3d2c977a88c16f5"
+      ],
+      "ttl_h": 168
+    }
+  }
+}
