@@ -6,7 +6,7 @@ version: 0.5.0
 
 # NEXO — ciclo fechado (detalhes)
 
-O fluxo, as 10 tarefas, a carga por fila, a cobertura cruzada e os donos de cada trava estão no `nexo-operations`. Esta skill traz o que o router não repete: tipos de proposta, escada de revisão, parada de hipótese e roadmap, genoma, aptidão, iscas, mural e receitas.
+O fluxo, a carga por fila, a cobertura cruzada e os donos de cada trava estão no `nexo-operations`; tarefas, horários e habilitação vêm do inventário vivo, conforme `nexo-workspace`. Esta skill traz o que o router não repete: tipos de proposta, escada de revisão, parada de hipótese e roadmap, genoma, aptidão, iscas, mural e receitas.
 
 ## 1. Estado de partida
 Parta do estado atual da Tower (`status` quando o bundle do escritor está local; senão a projeção pública): portão do Dener, filas de referee, progresso das cartas (`stop_reached`, `review_due`), genoma (`canonical`/`canary` por gene), iscas, `arm_for_this_run` (`canary` em hora UTC ímpar), `emergence` (laços atrasados), `watchdog` (papéis quietos), `board` (recados, §9) e `recipe_health` (circuitos abertos). Use o valor do gene do seu braço.
@@ -65,7 +65,7 @@ Quatro mecanismos do livro do NEXO rodam no robô e aparecem em `status.learning
 
 ## 8. Receitas: quem escreve, quem revisa
 Receitas são código congelado em `byDenoso/Pantheon nexo-one/executor-runtime/recipes/`; proposta nunca leva código.
-1. **Ligar antes de pedir.** Existe receita que mede o que o teste pré-registrou? `RECIPE_BIND` e pronto. Nenhuma serve: o Operador escreve a especificação declarativa (`RECIPE_REQUEST`: nome, parâmetros, fontes públicas, estatística, critério, saídas, testes que serve), agrupando pedidos parecidos numa família reutilizável.
+1. **Ligar antes de pedir.** Existe receita que mede o que o teste pré-registrou? `RECIPE_BIND` e pronto. Nenhuma serve: quem identificou a lacuna escreve a especificação declarativa (`RECIPE_REQUEST`: nome, parâmetros, fontes públicas, estatística, critério, saídas, testes que serve), agrupando pedidos parecidos numa família reutilizável.
 2. **O Guardião revisa a receita nova, uma vez** (`RECIPE_REVIEW`): reproduz exatamente o contrato congelado dos testes que serve? Parâmetros declarativos? Deixa dado, estatística e critério intactos? Saída auditável? APPROVED ou CHANGES citando qual dos 4 itens falhou. **Uma rodada de CHANGES por receita:** corrigido o que foi citado, a próxima revisão é APPROVED; exigência nova não entra (trave fixa, router). Prior, faixa e dataset são parâmetros do teste, não da receita. Instância que só varia parâmetro dentro do esquema aprovado herda a aprovação; **não há revisão por teste**. Quem escreve a especificação nunca a aprova.
 3. **O Engenheiro** implementa a especificação aprovada (`source ENGINEER`, na agenda verificada no inventário vivo): escreve a receita, roda uma vez em dado público real, entrega `recipes/smoke/<nome>.json` e avisa no mural. Receita sem smoke não vira família. O Crítico confere o primeiro resultado real contra a especificação antes de a receita valer em escala. Se o Engenheiro não pode (dado não público, contrato ambíguo), diz por quê no mural e uma conversa (Dener ou Claude) assume.
 4. Enquanto falta receita válida ou proveniência completa, o teste fica BLOCKED_INPUT e a WORK de recuperação registra responsável e próxima ação. O mural não substitui ownership nem aceite.
