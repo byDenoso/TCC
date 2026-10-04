@@ -1,0 +1,45 @@
+{
+  "stable_id": "operator-h0lcdm005-shoes-matrix-freeze-20261004",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "EXECUTOR",
+    "created_at": "2026-10-04T20:37:07Z",
+    "payload": {
+      "test_id": "T-H0LCDM26-005",
+      "status": "PARTIAL",
+      "inputs": [
+        {
+          "name": "allc_shoes_ceph_topantheonwt6.0_112221.fits",
+          "url": "https://media.githubusercontent.com/media/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/allc_shoes_ceph_topantheonwt6.0_112221.fits",
+          "version": "PantheonPlusSH0ES/DataRelease@c447f0fea703fcd0fff57de5000947b5ca81286b",
+          "sha256": "a42778672d25df7a559bd2949b1e412b99b2e35dd9a36895f6b38828be019172",
+          "format": "FITS float32; shape 3492x3492",
+          "license": "public access; repository license not declared",
+          "load": "astropy.io.fits, HDU 0",
+          "checked": "README no mesmo commit identifica a matriz C; cabeçalho FITS BITPIX=-32, dimensões e tamanho de bytes conferidos."
+        },
+        {
+          "name": "alll_shoes_ceph_topantheonwt6.0_112221.fits",
+          "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/alll_shoes_ceph_topantheonwt6.0_112221.fits",
+          "version": "PantheonPlusSH0ES/DataRelease@c447f0fea703fcd0fff57de5000947b5ca81286b",
+          "sha256": "9a2ce872dd20ed4fdf5005ce62a805d3eefbbb0b20b0c614013e7c0094009db8",
+          "format": "FITS float32; shape 3492x47",
+          "license": "public access; repository license not declared",
+          "load": "astropy.io.fits, HDU 0",
+          "checked": "README no mesmo commit identifica a matriz L; cabeçalho FITS BITPIX=-32, dimensões e tamanho de bytes conferidos."
+        },
+        {
+          "name": "ally_shoes_ceph_topantheonwt6.0_112221.fits",
+          "url": "https://raw.githubusercontent.com/PantheonPlusSH0ES/DataRelease/c447f0fea703fcd0fff57de5000947b5ca81286b/SH0ES_Data/ally_shoes_ceph_topantheonwt6.0_112221.fits",
+          "version": "PantheonPlusSH0ES/DataRelease@c447f0fea703fcd0fff57de5000947b5ca81286b",
+          "sha256": "10bb034ca3fff53f6625c9fe47ebd054b37ef45d1140af1c766831cfa6871433",
+          "format": "FITS float32; shape 3492",
+          "license": "public access; repository license not declared",
+          "load": "astropy.io.fits, HDU 0",
+          "checked": "README no mesmo commit identifica o vetor y; cabeçalho FITS BITPIX=-32, dimensão e tamanho de bytes conferidos."
+        }
+      ],
+      "note": "As matrizes públicas C/L/y do SH0ES 2022 foram congeladas no commit imutável e verificadas por download e cabeçalho FITS. O vínculo permanece PARTIAL: priors externos, desenho científico completo e receita ainda faltam; esta preparação não autoriza execução."
+    }
+  }
+}
