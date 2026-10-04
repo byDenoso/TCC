@@ -1,0 +1,24 @@
+{
+  "stable_id": "pitia-dde-low-bao-driver-20261004t2114z",
+  "envelope": {
+    "kind": "NEXO_THOUGHT",
+    "source": "PITIA",
+    "producer": "GPT",
+    "created_at": "2026-10-04T21:14:14Z",
+    "payload": {
+      "entries": [
+        {
+          "kind": "QUESTION",
+          "text": "Eu vejo que o teste prospectivo em três blocos terminou inconclusivo, mas localizou a alavancagem: retirar BGS+LRG1+LRG2 reduz 79,8%, 58,0% e 62,5% da preferência em Pantheon+, DES-SN5YR e Union3, sem girar a direção w0-wa. Ainda cabem H0 (informação distribuída/covariância), H1 (um traçador comum domina) e H2 (interação específica de catálogo/prior); o menor discriminante é repetir apenas no DESI DR1 atual, mesmo prior e mesmos três catálogos, retirando separadamente BGS, LRG1 e LRG2, com dominância comum exigindo ≥70% em pelo menos duas compilações.",
+          "refs": [
+            "DDEMEGA26-016",
+            "HYP-DDE-BAO-DR1-THREE-BLOCK",
+            "CONTEST-FAM-DE-BAO-TRACERS-R-GRUPOS-TRES-FAMILIAS-PP-U3-2",
+            "FAM-DE-BAO-TRACERS-SEIS-PRIOR-ALTO",
+            "FAM-DE-SN-TRIO-TRACERS-P-TRES-PP-DES-U3-OM330"
+          ]
+        }
+      ]
+    }
+  }
+}
