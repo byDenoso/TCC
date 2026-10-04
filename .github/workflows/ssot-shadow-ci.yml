@@ -1,0 +1,29 @@
+name: SSOT Shadow CI
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/nexo_ssot/**'
+      - 'scripts/reconcile_dener_ssot.py'
+      - 'scripts/materialize_ssot_view.py'
+      - '.github/workflows/ssot-shadow-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run SSOT tests
+        run: |
+          python -m unittest \
+            runtime.nexo_ssot.test_schema \
+            runtime.nexo_ssot.test_reconcile \
+            runtime.nexo_ssot.test_public_projection \
+            runtime.nexo_ssot.test_materialize -v
