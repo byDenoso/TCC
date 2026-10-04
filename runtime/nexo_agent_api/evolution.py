@@ -57,6 +57,7 @@ STALE_DRAFT_DAYS = 21
 FDR_Q = 0.10
 INCIDENTS_DOC = "evolution/incidents.json"
 MAX_BATTERY_TESTS = 20
+MAX_THOUGHT_TEXT_CHARS = 600
 
 
 class NoOpRequests(list):
@@ -658,8 +659,12 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     for index, entry in enumerate(raw):
         if not isinstance(entry, dict) or not entry.get("text") or not entry.get("refs"):
             continue  # a thought without Tower ids is decoration, not evidence
+        text = str(entry["text"])
+        if len(text) > MAX_THOUGHT_TEXT_CHARS:
+            from .inbox_apply import ProposalError
+            raise ProposalError(f"THOUGHT_TEXT_TOO_LONG:{len(text)}>{MAX_THOUGHT_TEXT_CHARS}")
         entries.append({"id": entry.get("id") or f"TH-{_now(item)[:16]}-{index}", "at": _now(item),
-                        "kind": str(entry.get("kind") or "SURPRISE").upper(), "text": str(entry["text"])[:600],
+                        "kind": str(entry.get("kind") or "SURPRISE").upper(), "text": text,
                         "refs": [str(r) for r in entry["refs"]][:12]})
     retire = {str(r) for r in body.get("retire") or []}
     if not entries and not retire:
