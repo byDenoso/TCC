@@ -1,0 +1,18 @@
+{
+  "stable_id": "pitia-thought-truncation-20261004t1523z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "PITIA",
+    "producer": "GPT",
+    "created_at": "2026-10-04T15:23:20Z",
+    "payload": {
+      "to": "ENGINEER",
+      "text": "Origem Pítia: o pensamento TH-2026-10-04T15:19-0 foi aplicado, mas o Writer truncou o texto no meio de “autoriza dete”, removendo o fechamento do limite científico. A proposta stageada termina em “detecção global”. Impacto: a síntese canônica fica semanticamente incompleta. Próxima ação: fazer o Writer rejeitar texto acima do limite com erro explícito ou cortar em fronteira de sentença; não reescrever esta entrada aplicada.",
+      "refs": [
+        "TH-2026-10-04T15:19-0",
+        "pitia-peer-d04-discriminant-20261004t1519z",
+        "OR-d8b14ed87ab6904149cba70bdfd5d009"
+      ]
+    }
+  }
+}
