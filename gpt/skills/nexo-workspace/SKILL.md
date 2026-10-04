@@ -1,6 +1,6 @@
 ---
 name: nexo-workspace
-description: Operar a conversa do Dener como interface da Tower e das dez automações NEXO ativas. Usar para status, ideias e testes científicos, resultados antigos, investigação de falhas, comparação com literatura, manutenção e verificação de automações. Reutilizar GitHub, Drive, Writer e projeção; preservar critérios científicos e verificar cada afirmação de conclusão.
+description: Operar a conversa do Dener como interface da Tower e das funções NEXO habilitadas no inventário vivo. Usar para status, ideias e testes científicos, resultados antigos, investigação de falhas, comparação com literatura, manutenção e verificação de automações. Reutilizar GitHub, Drive, Writer e projeção; preservar critérios científicos e verificar cada afirmação de conclusão.
 ---
 
 # Workspace operacional do NEXO
@@ -14,7 +14,7 @@ Usar a intenção da mensagem; não apresentar menus. Abrir somente as fontes ex
 
 ## Autoridade por assunto
 - Ciência: Tower, entidades e evidências; projeção como leitura derivada.
-- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. O workspace mantém dez automações ativas por limite do plano; `Bom dia` foi incorporado ao Guardião e pausado para abrir o slot do Operador C. Campos antigos com quatro bindings ou cinco tarefas não substituem esse inventário.
+- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. A configuração verificada em 03/10/2026 tem Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela. Operadores B/C permanecem pausados com histórico preservado. `Bom dia` pertence ao Guardião. Referências históricas de quantidade, limite do plano e bindings não substituem esse inventário; a integração separada de Revisor de PR por evento só conta como ativa quando comprovada na ferramenta.
 - Caminho operacional: raiz atual, prompts salvos, código implantado e recibos de execução. Divergência com CONTROL histórico deve ser explicitada, sem trocar de arquitetura por conta própria.
 - Literatura: `cosmology-world-model` no Drive, com data da referência; confirmar valores atuais em fontes primárias antes de congelar critérios. O mapa orienta e não produz vereditos.
 - Memória: contexto operacional em `NEXO Lite/notas`, nunca fonte de resultado científico.
@@ -40,7 +40,7 @@ Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO L
 Ler `nexo-operations` e `gpt/PROPOSAL_SCHEMA.md`. Preservar o fluxo atual:
 `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` -> relay -> `nexo-inbox` -> Writer -> Tower -> projeção.
 
-Essa é a rota das dez ChatGPT Tasks sob `nexo-master-router-0.5.0`.
+Essa é a rota das ChatGPT Tasks habilitadas sob `nexo-master-router-0.5.0`.
 `automations/OPERATING_CONTRACT.md` distingue os comandos do adapter Claude Code/PC:
 seu leitor de inboxes não autoriza as Tasks a gravar diretamente em `nexo-inbox`,
 abrir issue como fallback ou fazer upload da Tower. Handoffs privados seguem
@@ -52,23 +52,22 @@ Enviar pelo Git público somente propostas sanitizadas permitidas. Manter dados 
 
 Registrar Diretriz aceita em `NEXO Lite/pendentes`, com ID estável, objetivo, referência da proposta, estado comprovado e próxima verificação. Não prometer data de resultado sem evidência. Memória nativa indisponível não impede a nota operacional autorizada no Drive.
 
-## Dez automações ativas: pipeline horário
-O plano permite dez automações ativas. Preservar função antes de preservar cartões separados: o resumo `Bom dia` foi incorporado ao Guardião na rodada das 07:07, e o cartão antigo permanece pausado. O slot liberado pertence ao Operador C.
+## Funções atuais: pipeline por item
 
-O Writer externo usa o cron `7,22,37,52 * * * *` (UTC). Os minutos coincidem em BRT. Esta descrição não altera as agendas existentes.
+A configuração verificada tem sete papéis agendados e um Operador único. Conferir habilitação e horários na ferramenta a cada alteração; esta tabela documenta a configuração observada e não altera as tarefas. Operadores B/C e o cartão `Bom dia` antigo ficam pausados, com histórico preservado.
 
-| Tarefa | Gatilho BRT | Entrada -> saída | Próximo consumidor |
+O Writer externo usa o cron `7,22,37,52 * * * *` (UTC). Os minutos coincidem em BRT. A ordem é uma dependência por item; trabalho elegível não espera uma barreira global entre papéis.
+
+| Tarefa | Gatilho observado BRT | Entrada -> saída | Próximo consumidor |
 |---|---|---|---|
-| Operador C | :00, toda hora | READY residual após A/B -> despacho/bindings | Writer :07 |
-| Engenheiro | :05, toda hora | RECIPE_REQUEST/circuitos -> PR e smoke | Revisor e Operadores |
-| Guardião | :07, toda hora | saúde, SLA A/B/C, Writer e travas -> integridade/reatribuição | papéis; às 07:07 também resumo diário ao Dener |
-| Crítico | :09, toda hora | positivos novos -> até 20 contestações independentes | Writer :22 e Operadores |
-| Cientista | :12, toda hora | quedas, diretrizes e lacunas -> READY realmente executável | Writer :22 |
-| Pítia | :15, toda hora | resultados e roadmaps -> pensamentos com refs | Writer :22, Cientista e Dener |
-| Operador A | :30, toda hora | primeiro segmento READY elegível -> até 12 despachos | Writer :37 |
-| Operador B | :45, toda hora | segmento restante READY elegível -> até 12 despachos | Writer :52 |
-| Sentinela | 06:40 diário | literatura/releases -> contestação, dado ou sinal | Writer :52; Cientista/Operadores |
-| Revisor de PR | evento de PR | diff de receita -> revisão e sinal | autor e Dener |
+| Engenheiro | :05, toda hora | recuperações/RECIPE_REQUEST -> receita e smoke | Revisor e Operador |
+| Guardião | :07, toda hora | saúde, recibos, recuperação e integridade -> encaminhamento | papéis; às 07:07 também resumo diário ao Dener |
+| Crítico | :09, toda hora | resultados válidos novos -> contestação independente | Writer e Operador |
+| Cientista | :12, toda hora | recuperações, diretrizes, literatura e lacunas -> desenho congelado | Engenheiro/Operador via Writer |
+| Pítia | :15, toda hora | evidências revisadas -> interpretação e próxima ação | Cientista e Dener |
+| Operador | :30, toda hora | toda a fila READY elegível, acompanhamento e resíduos -> execução/recibos | Writer e Crítico |
+| Sentinela | 06:40 diário | literatura/releases -> fonte, dado ou sinal com referência | Cientista/Engenheiro/Crítico |
+| Revisor de PR | evento de PR, quando habilitado | diff de receita -> revisão independente | autor e integração |
 
 ### Invariante READY
 `READY` significa executável agora, não “quase pronto”. Exigir definição científica congelada e suficiente, dados/entradas canônicos disponíveis e vinculados, recipe/capability executável, ausência de blocker ou `WAIT_DEPENDENCY`, identidade estável e nenhuma execução equivalente staged/RUNNING/terminal. Se faltar qualquer requisito, corrigir pelo fluxo autorizado para `CHECKPOINTED` ou `WAIT_DEPENDENCY` e criar o binding/reparo; não contar como despacho.
@@ -82,7 +81,7 @@ para essa caixa privada, mantendo o `source` normal nas demais propostas:
 
 - Engenheiro: `ADVISOR`, triagem e receita/verificação técnica
 - Cientista: `LEARNER`, definição congelada e conflitos de linhagem
-- Operadores A/B/C: `EXECUTOR`, insumos/proveniência e execução; reler antes de aceitar para não duplicar
+- Operador: `EXECUTOR`, insumos/proveniência e execução; reler antes de aceitar para não duplicar
 - Guardião: verifica oferta pendente, idade, responsável e readback; não aceita em nome de outro papel
 
 Ao assumir uma WORK, enviar `HANDOFF_ACK` com `writer_role` igual ao destinatário canônico pelo
@@ -139,7 +138,7 @@ O Executor despacha READY ordinário somente de roadmap `ACTIVE`; contestação 
 a revisão do resultado que atacou. Avançar fase depende de readiness e recibos, não do minuto da
 agenda. Sem inventário vivo, não alterar horários nem afirmar mudança nos prompts salvos.
 
-Enquanto houver READY elegível no segmento de um Operador e capacidade na rodada, NO-OP é inválido. A processa o início/mais antigo, B o fim/mais novo restante e C faz sweep residual após A/B; todos relêem staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
+Enquanto houver READY elegível e capacidade na rodada do Operador, NO-OP é inválido. O Operador único cobre toda a fila elegível por prioridade/idade e herda acompanhamento, resíduos e recuperações de EXECUTOR; relê staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
 
 Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
 

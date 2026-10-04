@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .service import AgentService
+from .telemetry import refresh_semantic_counts
 
 ROLES = ("DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT")
 ROLE_QUEUE_LIMIT = 5
@@ -188,6 +189,7 @@ def _refresh_hot_state(root: Path) -> dict[str, int]:
     if event_cursor:
         snapshot["event_cursor"] = event_cursor
     _write_json(snapshot_path, snapshot)
+    refresh_semantic_counts(root)
     telemetry = _write_ai_roi_snapshot(root, refreshed, event_cursor)
     return {"active_work": len(refreshed), **telemetry}
 

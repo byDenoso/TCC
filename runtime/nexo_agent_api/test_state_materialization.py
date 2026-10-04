@@ -16,6 +16,8 @@ class StateMaterializationTests(unittest.TestCase):
             for rel in (
                 "indexes",
                 "entities/work",
+                "entities/hypothesis",
+                "entities/test",
                 "snapshot",
                 "manifests",
                 "events/2026-09-14",
@@ -24,7 +26,10 @@ class StateMaterializationTests(unittest.TestCase):
             ):
                 (root / rel).mkdir(parents=True)
             (root / "CONTROL.json").write_text(json.dumps({"mode": "ACTIVE", "schema_version": "0.6"}))
-            (root / "snapshot/latest.json").write_text(json.dumps({"schema_version": "0.6", "event_cursor": "EVT-TOWER-V06-CUTOVER", "counts": {"active_work": 999}}))
+            (root / "snapshot/latest.json").write_text(json.dumps({
+                "schema_version": "0.6", "event_cursor": "EVT-TOWER-V06-CUTOVER",
+                "counts": {"active_work": 999, "hypotheses": 8, "tests": 35},
+            }))
             (root / "manifests/capabilities.json").write_text(json.dumps({"capabilities": {}}))
             (root / "manifests/artifacts.json").write_text(json.dumps({"artifacts": {}}))
             (root / "indexes/active-work.json").write_text(json.dumps({
@@ -47,6 +52,9 @@ class StateMaterializationTests(unittest.TestCase):
             (entity_path(root, "work", "W3")).write_text(json.dumps({
                 "id": "W3", "entity_version": 3, "status": "DONE", "owner_role": "ADVISOR", "kind": "RESEARCH"
             }))
+            for name in ("H1", "H2"):
+                (root / "entities/hypothesis" / f"{name}.json").write_text("{}")
+            (entity_path(root, "test", "T1")).write_text("{}")
             (root / "events/migration/ZZZ.json").write_text(json.dumps({"event_id": "EVT-TOWER-V06-CUTOVER"}))
             runtime_event = "20260914T042812842429Z-e6dbcab6"
             (root / f"events/2026-09-14/{runtime_event}.json").write_text(json.dumps({
@@ -74,6 +82,13 @@ class StateMaterializationTests(unittest.TestCase):
             self.assertEqual((by_id["W2"]["entity_version"], by_id["W2"]["status"]), (1, "READY"))
             self.assertNotIn("W3", by_id)
             self.assertEqual(snapshot["counts"]["active_work"], 3)
+            self.assertEqual(snapshot["counts"]["hypotheses"], 2)
+            self.assertEqual(snapshot["counts"]["tests"], 1)
+            self.assertEqual(snapshot["semantic_freshness"], "CURRENT_CANONICAL_ENTITY_SCAN")
+            self.assertEqual(snapshot["semantic_count_sources"], {
+                "hypotheses": "entities/hypothesis/*.json",
+                "tests": "entities/test/*.json",
+            })
             self.assertEqual(snapshot["event_cursor"], runtime_event)
             self.assertEqual(roi["source_event_cursor"], runtime_event)
             self.assertEqual(roi["active_work"]["count"], 3)
