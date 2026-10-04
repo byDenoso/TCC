@@ -412,7 +412,9 @@ def inbox_for(self, role: str) -> list[dict]:
         and not _handoff_is_stale(self, event)
     ]
     items.sort(key=lambda item: (str(item.get("opened_at", "")), str(item.get("handoff_id", ""))))
-    return items[:INBOX_LIMIT]
+    # The five-card limit belongs to the bootstrap projection. Applying it to
+    # the operational reader lets old ACKs permanently hide newer offers.
+    return items
 
 
 def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -> dict:
@@ -480,9 +482,10 @@ def install_handoff_protocol(agent_service_cls) -> None:
     def bootstrap(self, role: str) -> dict:
         payload = original_bootstrap(self, role)
         inbox = self.inbox_for(role)
-        payload["inbox"] = inbox
+        payload["inbox"] = inbox[:INBOX_LIMIT]
         payload["inbox_count"] = len(inbox)
         payload["inbox_limit"] = INBOX_LIMIT
+        payload["inbox_has_more"] = len(inbox) > INBOX_LIMIT
         return payload
 
     agent_service_cls.emit_handoff = emit_handoff

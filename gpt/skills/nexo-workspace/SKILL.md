@@ -84,6 +84,10 @@ para essa caixa privada, mantendo o `source` normal nas demais propostas:
 - Operador: `EXECUTOR`, insumos/proveniência e execução; reler antes de aceitar para não duplicar
 - Guardião: verifica oferta pendente, idade, responsável e readback; não aceita em nome de outro papel
 
+A caixa de bootstrap mostra cinco cartões, com `inbox_count` total e `inbox_has_more`; ela não limita a fila operacional. `handoff ... list PAPEL` retorna todas as ofertas abertas válidas do papel. Cruze essa lista com `execution_recovery.items`; ACK antigo não pode esconder oferta pendente. Até o bundle atualizado estar comprovado, use a seção privada completa para identificar os itens omitidos pelo leitor antigo.
+
+Aceite é transferência de ownership; diagnóstico, leitura de fontes, preparação local e reparo de código já autorizado podem avançar antes dele. A operação que depende de assumir a WORK espera o ACK aplicado. Combine preparação e persistência na mesma rodada quando os contratos e o transporte permitirem, sem aguardar o próximo horário de outro papel para uma ação já elegível.
+
 Ao assumir uma WORK, enviar `HANDOFF_ACK` com `writer_role` igual ao destinatário canônico pelo
 Drive privado NEXO_INBOX conforme PROPOSAL_SCHEMA. Reler a aplicação: só o aceite aplicado muda
 ownership. Proposta gravada, comentário no mural e atribuição ADVISOR não são aceite. Se faltarem

@@ -17,7 +17,7 @@ Nome: `<utc>-<kind>-<slug>`.
 `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json`.
 O relay entrega ao ramo público `nexo-inbox`; esse destino comprova transporte, não aplicação.
 Preserve stable_id e bytes no retry. Recibo exige hash exato. Recibo ausente, erro de leitura,
-conflito e rejeição terminal são resultados distintos. O MCP hospedado é somente leitura.
+conflito e rejeição terminal são resultados distintos. O MCP hospedado mantém leitura e pode anunciar operações autenticadas específicas; confira as ferramentas e o contrato de persistência realmente disponíveis. Capability publicada não prova acesso da tarefa agendada e não autoriza trocar de transporte.
 
 **Privacidade e destino:** GitHub é público e aceita somente propostas
 sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de

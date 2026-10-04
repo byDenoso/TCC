@@ -7,7 +7,7 @@ version: 0.5.0
 # NEXO — operação
 
 ## Uma inteligência, dois órgãos
-O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente em qualquer chat. O **NEXO** (pesquisa) é o órgão que ele usa por trás: as 10 tarefas agendadas, o robô e a Tower.
+O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente em qualquer chat. O **NEXO** (pesquisa) é o órgão que ele usa por trás: as funções habilitadas no inventário vivo, o robô e a Tower.
 | | **NEXO Lite** (porta única) | **NEXO** (pesquisa autônoma) |
 |---|---|---|
 | Papel | responde, ensina, decide, escreve, codifica, lembra, antecipa, delega | gera hipótese, testa, contesta, se conserta |
@@ -47,10 +47,10 @@ Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; 
 **Regra:** antes de marcar binding faltando, procure no Drive acima (o Cientista e o Operador têm acesso). Achou: `DATA_BINDING` com o id do arquivo e a URL pública oficial do mesmo produto, e `RECIPE_BIND`. O runner público não lê o Drive: a receita baixa da URL oficial; o arquivo do Drive serve para conferir versão e formato. Só é "dado inexistente" o que não está no Drive nem em release público.
 
 ## Gravar (qualquer papel)
-1. As dez ChatGPT Tasks seguem `nexo-master-router-0.5.0` e `nexo-workspace`: para proposta pública sanitizada permitida, crie `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` = `{"stable_id","envelope"}`. O stable_id é determinístico, em `[a-z0-9-]`, com até 60 caracteres, e é reusado no retry. Leia os bytes de volta; isso comprova somente `STAGED`.
+1. As ChatGPT Tasks habilitadas seguem `nexo-master-router-0.5.0` e `nexo-workspace`: para proposta pública sanitizada permitida, crie `byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` = `{"stable_id","envelope"}`. O stable_id é determinístico, em `[a-z0-9-]`, com até 60 caracteres, e é reusado no retry. Leia os bytes de volta; isso comprova somente `STAGED`.
 2. O relay copia para `nexo-inbox:inbox/scheduled-<stable_id>.json` e **acorda o Writer sozinho**. Não tente acordar o Writer. `STAGED_PENDING_RELAY` é espera legítima. Confirme a entrega pelo ack ou recibo durável de entrega do relay com o SHA256 exato do envelope de transporte; confirme aplicação separadamente pelo `OPERATION_RECEIPT_V1` do Writer com hash semântico exato e outcome `APPLIED` ou `ALREADY_APPLIED`. Ack não comprova aplicação, execução científica ou projeção.
 3. Para essas Tasks não há fallback para escrita direta em `nexo-inbox/inbox/`, `/api/inbox-drop`, issues, outro ramo ou serviço. Recusa de acesso, autorização ou política interrompe a ação; preserve a pendência e declare a causa. Em ausência técnica ou espera legítima, mantenha `NEXO_PENDING_PROPOSAL … END_NEXO_PENDING_PROPOSAL` e só retente pela mesma rota quando a condição registrada no recibo permitir. Erro de leitura não é ausência; conteúdo diferente sob a mesma identidade é conflito.
-4. **Proposta não leva código** (o filtro do ChatGPT bloqueia). Em `TEST_BATTERY`, cada teste chama uma **receita congelada**: `{"test_id", "recipe": "<nome>", "params": {…}, "prediction", "timeout_min"}`. Receitas, parâmetros e exemplos: `byDenoso/Pantheon nexo-one/executor-runtime/recipes/README.md` — escolha a receita pelo que o teste mede. Se nenhuma receita servir, o teste fica BLOCKED_INPUT com WORK de recuperação e o Operador escreve a especificação (`LEARNING_SIGNAL` `RECIPE_REQUEST`), que o Crítico revisa (`nexo-closed-loop` §12).
+4. **Proposta não leva código** (o filtro do ChatGPT bloqueia). Em `TEST_BATTERY`, cada teste chama uma **receita congelada**: `{"test_id", "recipe": "<nome>", "params": {…}, "prediction", "timeout_min"}`. Receitas, parâmetros e exemplos: `byDenoso/Pantheon nexo-one/executor-runtime/recipes/README.md` — escolha a receita pelo que o teste mede. Se nenhuma receita servir, o teste fica BLOCKED_INPUT com WORK de recuperação e o Operador escreve a especificação (`LEARNING_SIGNAL` `RECIPE_REQUEST`), que o Guardião revisa uma vez pelos quatro critérios fixos (`nexo-closed-loop` §8).
 5. **Envelope enxuto:** nunca inclua credenciais, tokens ou logs privados. Preserve a proveniência obrigatória: SHA256 de input público é checksum, não credencial; `DATA_BINDING` exige versão e hash obtidos dos bytes exatos, sem inventar nem retirar esses campos para passar um gate. O Writer não calcula automaticamente o hash de uma URL remota. Recusa de ferramenta exige diagnóstico e rota permitida, nunca contorno de acesso. Use IDs de entidade, contagens, estados e frases curtas. **No máximo 10 itens por envelope** (lotes grandes são recusados); divida antes do staging e mantenha IDs, hashes e campos obrigatórios. Enxugar o payload ou trocar identidade não é retry para contornar recusa, conflito ou rejeição terminal; siga o recibo e o contrato de correção.
 6. Handoffs e mensagens explicitamente privados seguem o canal privado Drive do `gpt/PROPOSAL_SCHEMA.md`: Doc JSON no NEXO_INBOX, com readback, consumido pelo Writer. Isso não é uma terceira rota de reserva para proposta pública recusada. Outros conteúdos privados só usam um canal privado explicitamente roteado; se indisponível, permanecem pendentes sem migração para Git público. O leitor de inboxes do adapter Claude Code/PC não concede essa permissão às Tasks.
 Formatos: `byDenoso/TCC gpt/PROPOSAL_SCHEMA.md`. Envelope: `{kind, source, producer:"GPT", payload, created_at}`.
@@ -67,7 +67,7 @@ Engenheiro consome recuperação técnica na caixa ADVISOR; Cientista, LEARNER; 
 Esses são papéis de handoff, não mudança do source normal da tarefa nem autorização para aceitar por outro papel.
 Uma recuperação sem aceite bloqueia somente a WORK correspondente. `READY` independente continua; indisponibilidade do canal privado não é barreira global.
 Conserte na mesma rodada quando o conserto cabe no que já existe.
-**Pode, sozinho:** reenviar proposta (envelope enxuto), recolocar teste na fila, completar contrato, nome, domínio, vínculo ou leitura (`SEMANTIC_BACKFILL`), ligar dado público (`DATA_BINDING`), ligar receita (`RECIPE_BIND`), pedir ou propor receita (`RECIPE_REQUEST`), dividir lote, trocar receita por outra que mede o mesmo, avisar no mural (`BOARD_POST`), propor canário de gene.
+**Pode, sozinho:** retentar falha técnica pela mesma rota e identidade quando o recibo permitir, recolocar teste na fila, completar contrato, nome, domínio, vínculo ou leitura (`SEMANTIC_BACKFILL`), ligar dado público (`DATA_BINDING`), ligar receita (`RECIPE_BIND`), pedir ou propor receita (`RECIPE_REQUEST`), dividir lote, trocar receita por outra que mede o mesmo, avisar no mural (`BOARD_POST`), propor canário de gene.
 **Nunca:** mudar a espinha (contrato, Writer, critérios congelados de teste pré-registrado, aptidão, privacidade, portões do Dener, caminho de gravação), apagar dado, forçar veredito. Isso vira `LEARNING_SIGNAL` `RUNTIME_CHANGE_PROPOSAL` ao Dener, com o gargalo, a evidência e o conserto sugerido.
 Todo conserto sai numa linha do relatório ("⚙️ Consertei: …").
 **Donos do que trava:**
@@ -81,15 +81,15 @@ Todo conserto sai numa linha do relatório ("⚙️ Consertei: …").
 | Teste bloqueado após 2 falhas próprias | Cientista | refinar (nova instância dentro do contrato) ou pivotar (rival com dado disponível) |
 | Robô, relay, site ou bateria falhou | Engenheiro | conserta, roda os testes, publica |
 | Papel parado há mais de 3h | tarefa seguinte | cobertura cruzada |
-| Proposta recusada | quem propôs | envelope enxuto; lotes de 3 |
+| Proposta recusada | quem propôs | ler o recibo: falha técnica admite retry autorizado; rejeição terminal, conflito ou recusa de acesso exige resolver a causa |
 Duas rodadas sem avanço: reclamação no mural ao Guardião, que diagnostica e solicita o handoff correto. Ownership só muda com `HANDOFF_ACK` aplicado por CAS; painel e `BOARD_POST` não reatribuem. Com travas abertas, o Guardião pode postar o painel "trava, dono, há quantas rodadas".
 
-## As 10 tarefas (ChatGPT Business)
-Nomes, agendas e habilitação vêm do inventário vivo da ferramenta. O mapa integrado atual fica em `nexo-workspace` → “Dez automações ativas”; este arquivo não mantém uma segunda tabela. Em divergência, preserve as dez tarefas e a agenda viva, registre o drift e não altere cartões a partir deste texto.
+## Funções agendadas
+Nomes, agendas e habilitação vêm do inventário vivo da ferramenta. O mapa integrado atual fica em `nexo-workspace` → “Funções atuais: pipeline por item”; este arquivo não mantém uma segunda tabela. Preserve agenda e habilitação verificadas; referências históricas não reativam cartões.
 
 Cada item gravado leva o `source` do papel, nunca o nome da tarefa. Operadores selecionam segmentos e emitem bindings/intents idempotentes; o Writer é o único que materializa reserva/dispatch na Tower. A serialização do Writer e o CAS protegem contra duplicação; nenhum papel interpreta `BOARD_POST` como reserva.
 
-Quem escreve nunca aprova. Carga proporcional à fila: fila grande, rodada dobrada; fila vazia, NO-OP de uma linha. Papel quieto há mais de 3h: a tarefa seguinte faz um item dele com o `source` dele.
+Quem escreve nunca aprova. Processe a fila dentro da capacidade medida. NO-OP exige leitura completa válida e ausência de ação própria. Cobertura cruzada conserva o source de quem age e o escopo autorizado; assumir trabalho de outro papel exige a transferência canônica aplicável.
 
 ## Pítia (tarefa própria)
 A tarefa Pítia faz **uma passada por rodada** (regras completas em `nexo-closed-loop` §8). Ordem:
@@ -104,7 +104,7 @@ A Pítia só pensa, avisa e abre carta rival: **nunca executa, julga nem aprova*
 De vez em quando (cerca de 1 por dia), o Guardião planta uma isca: um resultado fabricado com falha embutida (`DECOY_PLANT`, compromisso registrado antes) para medir se Crítico e Cientista pegam. **Nenhum outro papel é avisado.** O Guardião não cita a isca em mural, relatório nem prompt até ela ser descoberta (`DECOY_CALL` de alguém) ou passar batida por 3 rodadas do Crítico; só então revela (`DECOY_REVEAL`) e registra acerto ou falha no `FITNESS_REPORT`. Papel que suspeita de um resultado bom demais grava `DECOY_CALL` na hora. Isca nunca vira claim, contestação real nem entra em estatística de família.
 
 ## Direção do Dener e alarme
-O sistema segue sozinho e nunca pede direção. Portões que esperam o Dener: aprovar carta e canonizar gene. Toda outra decisão que falta vira `BOARD_POST` para DENER com "vou fazer X; diga se quiser outra coisa", e o sistema faz X depois de 24h. O único alarme humano é a issue do GitHub (e-mail) quando site, papel ou robô ficam parados.
+O sistema segue sozinho e nunca pede direção. Portões que esperam o Dener: aprovar carta e canonizar gene. Rotina reversível já autorizada segue na mesma rodada e registra a evidência; não cria espera de 24h nem aceite humano genérico. Decisão reservada ao Dener continua pendente até autorização explícita, sem aprovação por silêncio. O único alarme humano é a issue do GitHub (e-mail) quando site, papel ou robô ficam parados.
 
 ## Autoengenharia
 O histórico da Tower é dataset: recusas, tempos, previsões, vereditos, retries. Melhore as **regras mutáveis** (genes: prioridade, cotas, pesos, frequência) em três passos: observar, formular hipótese sobre uma regra, congelar teste e critério antes do resultado (canário). No máximo 1 em 3 hipóteses novas é sobre o próprio NEXO. A espinha nunca é objeto.

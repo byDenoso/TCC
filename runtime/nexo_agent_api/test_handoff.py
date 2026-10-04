@@ -138,14 +138,34 @@ class HandoffProtocolTests(unittest.TestCase):
                 next_action="execute",
             )
         bootstrap = service.bootstrap("EXECUTOR")
-        self.assertEqual(bootstrap["inbox_count"], 5)
+        self.assertEqual(bootstrap["inbox_count"], 6)
         self.assertEqual(bootstrap["inbox_limit"], 5)
         self.assertEqual(len(bootstrap["inbox"]), 5)
+        self.assertTrue(bootstrap["inbox_has_more"])
+        self.assertEqual(len(service.inbox_for("EXECUTOR")), 6)
 
         materialize_role_views(self.root)
         persisted = json.loads((self.root / "bootstrap/executor.json").read_text())
-        self.assertEqual(persisted["inbox_count"], 5)
+        self.assertEqual(persisted["inbox_count"], 6)
         self.assertEqual(persisted["inbox_limit"], 5)
+        self.assertTrue(persisted["inbox_has_more"])
+
+    def test_old_accepted_handoffs_do_not_hide_new_pending_offers(self):
+        service = AgentService(self.root)
+        for i in range(12):
+            created = self.emit(service, request_id=f"REQ-QUEUE-{i}",
+                                from_role="ADVISOR", to_role="EXECUTOR",
+                                handoff_type="WORK_READY", entity_ref=f"W{i}",
+                                thread_id="THR-QUEUE", next_action="Executar o trabalho definido.")
+            if i < 9:
+                service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        self.emit(service, request_id="REQ-OTHER-ROLE", from_role="ADVISOR", to_role="LEARNER",
+                  handoff_type="RESULT_READY", entity_ref="W-OTHER", thread_id="THR-QUEUE",
+                  next_action="Ler o resultado existente.")
+        items = service.inbox_for("EXECUTOR")
+        self.assertEqual(len(items), 12)
+        self.assertEqual([x["entity_ref"] for x in items if x["state"] == "PENDING"], ["W9", "W10", "W11"])
+        self.assertNotIn("W-OTHER", [x["entity_ref"] for x in items])
 
     def test_handoff_embeds_canonical_work_envelope_and_preserves_it_on_ack(self):
         work = {
