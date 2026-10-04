@@ -1,0 +1,14 @@
+{
+  "stable_id": "referee1-resolve-guardiao-77917e9d-20261004",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-10-04T17:07:46Z",
+    "payload": {
+      "resolve": [
+        "BP-2026-10-03T11:36-GUARDIAO-77917E9DEA07"
+      ]
+    }
+  }
+}
