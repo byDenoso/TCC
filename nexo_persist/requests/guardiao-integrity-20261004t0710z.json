@@ -1,0 +1,54 @@
+{
+  "stable_id": "guardiao-integrity-20261004t0710z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-04T07:10:36Z",
+    "payload": {
+      "date": "2026-10-04",
+      "status": "YELLOW",
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Leitura oficial pelo nexo-workspace em OK_NATIVE, somente leitura e input inalterado; Tower na revisão sha256:b8cdca2731651580d2d79b9b8c36079a809a057c334dceaa94c70abb5f7b5fe1."
+        },
+        {
+          "area": "inbox",
+          "ok": true,
+          "detail": "Amostra recente fechou staging→relay→Writer: guardiao-integrity-20261004t0038z recebeu APPLIED e nexo-google-subject-repair-932a5ba6 recebeu ALREADY_APPLIED; o Writer teve job verde às 06:56Z. Job verde prova o job, não execução científica."
+        },
+        {
+          "area": "tasks",
+          "ok": true,
+          "detail": "Inventário vivo tem sete papéis agendados habilitados: Cientista, Engenheiro, Operador único, Crítico, Pítia, Guardião e Sentinela. Operadores B/C não estão habilitados e não foram reativados."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Estado derivado: ready_verified=0, running_verified=0, 65 recuperações abertas e 0 resultados não-contestação nas últimas 24h. Como não há READY elegível, o zero processamento do Operador único não caracteriza falha dele; o gargalo permanece a montante nas recuperações."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "positive_review_closure segue 25/67=0,373 como estoque histórico; não é taxa de confirmação nem throughput. Mantidos contadores separados e sem contar retry/seed como teste."
+        },
+        {
+          "area": "contract",
+          "ok": false,
+          "detail": "Persistem 47 TESTs com status DONE e execution_phase=RUNNING. O Engenheiro já identificou ausência de reconciliação histórica segura; Guardião não corrige nem encerra essas tentativas sem evidência da mesma tentativa."
+        },
+        {
+          "area": "site",
+          "ok": false,
+          "detail": "Pior indicador: defasagem do Atlas. CONTROL define Tower V06 como verdade, mas os aliases de produção seguem no último READY 294d7e67a6f12a5df18cb713c39013f00ea714cb (tower head c34f7327...), enquanto o deploy do head d9cd0bd27d90cf613d50f5eb0fffad93650f821a com tower head b8cdca27... foi CANCELED por ignored-build-step e não recebeu alias. A projeção science-drive-projection.json continua gerada em 2026-09-14. Dono: ENGINEER; próxima ação: reconciliar a fonte/revisão consumida pelo Atlas sem mudar a autoridade."
+        }
+      ],
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
