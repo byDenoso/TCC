@@ -169,7 +169,70 @@ class ScientificIntegrityTest(unittest.TestCase):
 
         self.assertFalse(any(reason.startswith('MISSING_') for reason in result['reasons']), result)
         self.assertIn('FROZEN_DESIGN_UNVERIFIED', result['reasons'])
+        self.assertIn('STRUCTURED_DESIGN_UNVERIFIED', result['reasons'])
         self.assertFalse(result['eligible'])
+
+    def test_hybrid_freeze_binds_all_structured_inputs_even_with_legacy_method(self):
+        structured = structured_fixture()
+        legacy = fixture()
+        for key in ('null', 'rival', 'method', 'dataset_and_selection'):
+            structured[key] = legacy[key]
+        structured['prereg_ref'] = 'synthetic-hybrid-prereg'
+        structured['prereg_hash'] = e.prereg_hash(structured['id'], s._readiness_contract_view(structured))
+        self.assertTrue(s.readiness(self.root, structured)['eligible'])
+        for key in ('scientific_question', 'mechanism', 'null_contract', 'input_contract',
+                    'estimator_contract', 'environment_operator_contract', 'decision_contract'):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(structured)
+                if isinstance(changed[key], dict):
+                    changed[key]['changed_after_freeze'] = 'different scientific declaration'
+                else:
+                    changed[key] += ' changed after freeze'
+                before = copy.deepcopy(changed)
+                result = s.readiness(self.root, changed)
+                self.assertFalse(result['eligible'])
+                self.assertIn('FROZEN_DESIGN_CHANGED', result['reasons'])
+                self.assertEqual(changed, before)
+
+    def test_structured_prereg_hash_binds_each_normalized_scientific_input(self):
+        structured = structured_fixture()
+        structured['prereg_hash'] = e.prereg_hash(
+            structured['id'], s._readiness_contract_view(structured)
+        )
+        structured['prereg_ref'] = 'synthetic-structured-prereg'
+        self.assertTrue(s.readiness(self.root, structured)['eligible'])
+
+        mutations = {
+            'question': lambda value: value.update(
+                scientific_question='Changed structured question.'
+            ),
+            'null': lambda value: value['null_contract'].update(
+                primary='Changed synthetic null.'
+            ),
+            'input': lambda value: value['input_contract']['clustering_de_extension'].update(
+                framework='Changed synthetic rival.'
+            ),
+            'estimator': lambda value: value['estimator_contract'].update(
+                procedure='Changed synthetic estimator.'
+            ),
+            'decision': lambda value: value['decision_contract'].update(
+                SHIFT='p < 0.01 and the declared effect has the expected sign.'
+            ),
+            'operator': lambda value: value['environment_operator_contract']['primary_environment'].update(
+                product='Changed synthetic field.'
+            ),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(field=name):
+                changed = copy.deepcopy(structured)
+                mutate(changed)
+                before = copy.deepcopy(changed)
+
+                result = s.readiness(self.root, changed)
+
+                self.assertFalse(result['eligible'], result)
+                self.assertIn('FROZEN_DESIGN_CHANGED', result['reasons'])
+                self.assertEqual(changed, before)
 
     def test_unknown_binding_is_recorded_blocked(self):
         self.test.update(status='DRAFT',state='DRAFT'); self.test.pop('recipe'); self.test.pop('recipe_params')

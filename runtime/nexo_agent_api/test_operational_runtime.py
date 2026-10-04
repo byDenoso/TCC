@@ -152,6 +152,9 @@ class OperationalConformance(unittest.TestCase):
         writes=rig.tower.writes
         replay=rig.worker.handle(old)
         self.assertTrue(replay['idempotent']);self.assertEqual(rig.tower.writes,writes)
+        unlinked=rig.worker.handle(rig.intent())
+        self.assertEqual(unlinked['state'],'SUPERSESSION_REQUIRED')
+        self.assertEqual(unlinked['disposition'],'REJECTED')
         fresh=rig.intent(supersedes=old['id'])
         self.assertNotEqual(fresh['id'],old['id'])
         self.assertEqual(rig.worker.handle(fresh)['state'],'DISPATCH_PENDING')
@@ -169,7 +172,11 @@ class OperationalConformance(unittest.TestCase):
         self.assertEqual(rig.store.get(WORK_ID)['version'],version);self.assertEqual(rig.tower.writes,writes)
         self.assertEqual(rig.drive.reads,reads)
 
-        wrong_route=rig.worker.handle(rig.intent('validate_package'))
+        unlinked=rig.worker.handle(rig.intent())
+        self.assertEqual(unlinked['state'],'SUPERSESSION_REQUIRED')
+        self.assertEqual(unlinked['disposition'],'REJECTED')
+
+        wrong_route=rig.worker.handle(rig.intent('validate_package',supersedes=intent['id']))
         self.assertEqual(wrong_route['error']['code'],'BLOCKED_ACTION_NOT_RESUMABLE')
         self.assertEqual(rig.store.get(WORK_ID)['resume_state'],'CLAIMED')
 
@@ -194,6 +201,17 @@ class OperationalConformance(unittest.TestCase):
         self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
         replay=rig.worker.handle(intent)
         self.assertEqual(replay['state'],'BLOCKED');self.assertTrue(replay['idempotent'])
+
+    def test_legacy_blocked_work_without_terminal_intent_receipt_has_explicit_migration(self):
+        rig=Rig();rig.worker.handle(rig.intent('claim_work'))
+        work=rig.store.get(WORK_ID)
+        work.update(state='BLOCKED',resume_state='CLAIMED',error={'code':'LEGACY_BLOCKED','retryable':False})
+        rig.store.save(work,work['version'])
+        recovery=rig.intent()
+        self.assertNotIn('supersedes',recovery)
+        result=rig.worker.handle(recovery)
+        self.assertEqual(result['state'],'DISPATCH_PENDING')
+        self.assertEqual(result['recovery_mode'],'LEGACY_BLOCKED_WITHOUT_TERMINAL_INTENT_RECEIPT')
     def test_forged_prompt_context_rejected_before_side_effect(self):
         rig=Rig();intent=rig.intent();intent['role_session']['context_sha256']='f'*64
         intent['id']='op-'+digest({k:v for k,v in intent.items() if k!='id'})[:48]

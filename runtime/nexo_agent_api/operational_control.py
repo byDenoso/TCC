@@ -352,21 +352,59 @@ class OperationalWorker:
         return record
 
     @staticmethod
-    def _validate_supersession(work, intent):
-        """If supplied, bind a fresh intent to an earlier durable disposition."""
+    def _terminal_intents(work):
+        terminal = []
+        for intent_id, receipt in work.get("processed", {}).items():
+            if not isinstance(receipt, dict) or receipt.get("disposition") not in {"BLOCKED", "STALE_VERSION"}:
+                continue
+            expected = receipt.get("expected_version")
+            if (receipt.get("intent_id") == intent_id and type(expected) is int
+                    and expected < work.get("version", 0)):
+                terminal.append((intent_id, receipt))
+        return terminal
+
+    @classmethod
+    def _validate_supersession(cls, work, intent):
+        """Require a fresh retry to continue the latest matching intent lineage.
+
+        Old BLOCKED entities created before processed-intent receipts existed
+        get one explicit migration attempt; any known terminal receipt requires
+        a link. A different action may link a BLOCKED receipt only while the
+        work itself is BLOCKED, and its state transition is still checked below.
+        """
+        terminal = cls._terminal_intents(work)
+        same_action = [(key, value) for key, value in terminal
+                       if value.get("action") == intent["action"]
+                       and value.get("principal") == intent["principal"]]
+        if work.get("state") == "BLOCKED" and not same_action:
+            candidates = [(key, value) for key, value in terminal
+                          if value.get("disposition") == "BLOCKED"
+                          and value.get("principal") == intent["principal"]]
+        else:
+            candidates = same_action
+        candidates.sort(key=lambda item: (item[1]["expected_version"], item[0]))
+        target = candidates[-1] if candidates else None
         prior_id = intent.get("supersedes")
-        if prior_id is None:
-            return
+
+        if target is None:
+            require(prior_id is None, "SUPERSESSION_NOT_FOUND")
+            if work.get("state") == "BLOCKED" and terminal:
+                raise OperationalError("SUPERSESSION_UNAVAILABLE")
+            return work.get("state") == "BLOCKED" and not terminal
+
+        require(prior_id is not None, "SUPERSESSION_REQUIRED")
         require(isinstance(prior_id, str) and prior_id.startswith("op-"), "SUPERSESSION_ID_INVALID")
-        prior = work.get("processed", {}).get(prior_id)
-        require(prior is not None, "SUPERSESSION_NOT_FOUND")
-        require(prior.get("disposition") in {"BLOCKED", "STALE_VERSION", "REJECTED"},
-                "SUPERSESSION_NOT_RETRYABLE")
-        require(prior.get("action") == intent["action"] and prior.get("principal") == intent["principal"],
-                "SUPERSESSION_IDENTITY_MISMATCH")
+        require(prior_id == target[0], "SUPERSESSION_NOT_LATEST")
+        prior = target[1]
+        same_action_link = prior.get("action") == intent["action"]
+        blocked_transition_link = (work.get("state") == "BLOCKED"
+                                   and prior.get("disposition") == "BLOCKED")
+        require(prior.get("principal") == intent["principal"]
+                and (same_action_link or blocked_transition_link), "SUPERSESSION_IDENTITY_MISMATCH")
         require(type(intent.get("expected_version")) is int
                 and intent["expected_version"] > prior.get("expected_version", -1),
                 "SUPERSESSION_VERSION_NOT_ADVANCED")
+        return False
 
     @staticmethod
     def _resume_blocked_action(work, action):
@@ -426,7 +464,14 @@ class OperationalWorker:
         elif action != "claim_work":
             require(work.get("owner") == intent["principal"], "CLAIM_OWNERSHIP_REQUIRED")
             require(intent["role_session"] == work.get("role_session"), "SESSION_CHANGED")
-        self._validate_supersession(work, intent)
+        try:
+            legacy_blocked_recovery = self._validate_supersession(work, intent)
+        except OperationalError as exc:
+            result = {"work_id": work["id"], "state": exc.code, "retryable": False,
+                      "error": self._error_body(exc), "idempotent": False}
+            result = self._record_disposition(work, intent, result, "REJECTED")
+            self._save(work)
+            return result
         if work["version"] != intent["expected_version"]:
             result = {"state": "VERSION_CONFLICT", "work_id": work["id"], "retryable": False,
                       "expected_version": intent["expected_version"], "observed_version": work["version"],
@@ -465,6 +510,8 @@ class OperationalWorker:
             work.pop("resume_state", None)
             result = {"work_id": work["id"], "state": work["state"], "idempotent": False,
                       "retryable": False}
+            if legacy_blocked_recovery:
+                result["recovery_mode"] = "LEGACY_BLOCKED_WITHOUT_TERMINAL_INTENT_RECEIPT"
             result = self._record_disposition(work, intent, result, "APPLIED")
             work = self._save(work)
             return result
