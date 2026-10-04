@@ -88,6 +88,17 @@ def test_parameter_rejection_reaches_queue_and_recovery_route(context):
     assert _route(['PREFLIGHT_CONTRACT_MISSING'])[0]=='ADVISOR'
 
 
+@pytest.mark.parametrize('code', [
+    'UNSUPPORTED_COMPILATIONS', 'UNSUPPORTED_DATA_RELEASE', 'UNSUPPORTED_RECIPE_MODE',
+    'UNSUPPORTED_RECIPE_PARAMS', 'UNUSED_RECIPE_PARAMS', 'RECIPE_PARAMS_INVALID',
+    'RECIPE_PRIORS_INVALID', 'RECIPE_HOLDOUTS_INVALID', 'FROZEN_RECIPE_PARAMS_MISMATCH',
+])
+def test_frozen_parameter_errors_route_to_scientist_before_input_or_recipe_repair(code):
+    role, action = _route([code, 'INPUT_PROVENANCE_INCOMPLETE', 'RECIPE_BINDING_MISSING'])
+    assert role == 'LEARNER'
+    assert 'Preservar os parâmetros congelados' in action
+
+
 def test_verified_receipt_is_committed_at_reservation(context):
     root,recipes,test=context
     check=s.readiness(root,test)

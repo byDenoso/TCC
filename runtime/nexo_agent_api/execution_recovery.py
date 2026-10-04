@@ -134,7 +134,13 @@ def _owner(test: dict, work: list[dict]) -> tuple[str, str, list[str]]:
 
 
 def _route(reasons: list[str]) -> tuple[str, str]:
-    if "DATA_RELEASE_PARAM_MISMATCH" in reasons:
+    parameter_definition_errors = {
+        "DATA_RELEASE_PARAM_MISMATCH", "UNSUPPORTED_COMPILATIONS", "UNSUPPORTED_DATA_RELEASE",
+        "UNSUPPORTED_RECIPE_MODE", "UNSUPPORTED_RECIPE_PARAMS", "UNUSED_RECIPE_PARAMS",
+        "RECIPE_PARAMS_INVALID", "RECIPE_PRIORS_INVALID", "RECIPE_HOLDOUTS_INVALID",
+        "FROZEN_RECIPE_PARAMS_MISMATCH",
+    }
+    if parameter_definition_errors.intersection(reasons):
         return "LEARNER", "Preservar os parâmetros congelados e comparar a seleção ao contrato de dados; registrar a incompatibilidade e propor uma nova identidade científica se a seleção precisar mudar."
     if any(reason.startswith(("MISSING_", "FROZEN_", "CONFLICTING_")) for reason in reasons):
         return "LEARNER", "Recuperar a definição já congelada na linhagem e identificar a referência inequívoca; se houver conflito, registrar a decisão científica que falta."
