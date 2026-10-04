@@ -56,6 +56,39 @@ def store_fixture_test(root, test_id, recipe='audit_recipe', params=None, **chan
     return test
 
 
+def structured_fixture(test_id='TEST-STRUCTURED'):
+    """A small declared contract with legacy readiness names omitted."""
+    test = fixture(test_id)
+    for key in ('question', 'null', 'rival', 'method', 'dataset_and_selection',
+                'prereg_hash', 'prereg_ref', 'frozen_at'):
+        test.pop(key, None)
+    test.update({
+        'scientific_question': 'Does the declared mechanism change the synthetic observable?',
+        'mechanism': 'SYNTHETIC_MEAN_SHIFT',
+        'contract_lock': True,
+        'capability_resolution': {'scientific_definition_frozen_now': True},
+        'null_contract': {'primary': 'The unchanged synthetic sample.'},
+        'decision_contract': {'SHIFT': 'p < 0.05 and the declared effect has the expected sign.'},
+        'input_contract': {
+            'clustering_de_extension': {'framework': 'declared synthetic extension'},
+            'observational_sampling': 'Use the complete synthetic sample.',
+            'environment_template': 'Use the declared synthetic input.',
+        },
+        'estimator_contract': {'procedure': 'Apply the same estimator to both cases.'},
+        'environment_operator_contract': {
+            'observational_recovery': {
+                'dataset': 'synthetic sample v1',
+                'selection': 'include every generated row',
+            },
+            'primary_environment': {
+                'product': 'synthetic field v1',
+                'source': 'fixture generator v1',
+            },
+        },
+    })
+    return test
+
+
 class ScientificIntegrityTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -111,6 +144,32 @@ class ScientificIntegrityTest(unittest.TestCase):
     def test_changed_frozen_design_is_detected(self):
         self.test['method'] = 'different'
         self.assertIn('FROZEN_DESIGN_CHANGED', s.readiness(self.root, self.test)['reasons'])
+
+    def test_structured_readiness_normalizes_without_mutating_scientific_contract(self):
+        structured = structured_fixture()
+        before = copy.deepcopy(structured)
+
+        result = s.readiness(self.root, structured)
+
+        self.assertFalse(any(reason.startswith('MISSING_') for reason in result['reasons']), result)
+        self.assertEqual(structured, before)
+
+    def test_structured_readiness_still_blocks_when_rival_definition_is_missing(self):
+        structured = structured_fixture()
+        structured['input_contract'].pop('clustering_de_extension')
+
+        reasons = s.readiness(self.root, structured)['reasons']
+
+        self.assertIn('MISSING_RIVAL', reasons)
+
+    def test_structured_contract_lock_does_not_replace_preregistration_proof(self):
+        structured = structured_fixture()
+
+        result = s.readiness(self.root, structured)
+
+        self.assertFalse(any(reason.startswith('MISSING_') for reason in result['reasons']), result)
+        self.assertIn('FROZEN_DESIGN_UNVERIFIED', result['reasons'])
+        self.assertFalse(result['eligible'])
 
     def test_unknown_binding_is_recorded_blocked(self):
         self.test.update(status='DRAFT',state='DRAFT'); self.test.pop('recipe'); self.test.pop('recipe_params')

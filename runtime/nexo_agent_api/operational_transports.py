@@ -28,19 +28,24 @@ class BoundedDrive:
         self.forbidden_roots = set(forbidden_roots) | {"root", ""}
         require(not self.allowed_folders.intersection(self.forbidden_roots), "ROOT_WRITE_FORBIDDEN")
 
-    def _request(self, method, url, **kwargs):
+    def _request(self, method, url, *, stage="DRIVE_REQUEST", **kwargs):
         try:
             response = self.session.request(method, url, timeout=45, **kwargs)
         except Exception as exc:
-            raise OperationalError("DRIVE_TRANSPORT_UNKNOWN", retryable=True) from exc
+            raise OperationalError("DRIVE_TRANSPORT_UNKNOWN", retryable=True, stage=stage) from exc
         if response.status_code in {408, 425, 429} or response.status_code >= 500:
-            raise OperationalError("DRIVE_TEMPORARY_FAILURE", retryable=True)
-        require(response.status_code < 400, f"DRIVE_HTTP_{response.status_code}")
+            raise OperationalError("DRIVE_TEMPORARY_FAILURE", retryable=True, stage=stage)
+        if response.status_code >= 400:
+            # Preserve the stable public code; stage is a bounded internal
+            # label so an operator can distinguish which read failed without
+            # persisting a URL, Drive response body, or credential detail.
+            raise OperationalError(f"DRIVE_HTTP_{response.status_code}", stage=stage)
         return response
 
     def metadata(self, file_id):
         require(isinstance(file_id, str) and re.fullmatch(r"[\w-]+", file_id), "DRIVE_ID_INVALID")
-        return self._request("GET", f"{DRIVE}/files/{quote(file_id)}", params={"fields": META, "supportsAllDrives": "true"}).json()
+        return self._request("GET", f"{DRIVE}/files/{quote(file_id)}", stage="DRIVE_METADATA_READ",
+                             params={"fields": META, "supportsAllDrives": "true"}).json()
 
     def read_frozen(self, reference):
         file_id = reference.get("file_id")
@@ -49,7 +54,8 @@ class BoundedDrive:
         require(not before.get("trashed") and before.get("id") == file_id, "DRIVE_SOURCE_ID_MISMATCH")
         require(before.get("headRevisionId") == reference["version"], "DRIVE_REVISION_CHANGED")
         require(int(before.get("size", MAX_BYTES + 1)) <= MAX_BYTES, "DRIVE_SOURCE_TOO_LARGE")
-        raw = self._request("GET", f"{DRIVE}/files/{quote(file_id)}", params={"alt": "media", "supportsAllDrives": "true"}).content
+        raw = self._request("GET", f"{DRIVE}/files/{quote(file_id)}", stage="DRIVE_CONTENT_READ",
+                            params={"alt": "media", "supportsAllDrives": "true"}).content
         require(len(raw) <= MAX_BYTES and digest(raw) == reference["sha256"], "DRIVE_BODY_HASH_MISMATCH")
         after = self.metadata(file_id)
         require(after.get("headRevisionId") == before["headRevisionId"], "DRIVE_READ_RACE")
@@ -66,7 +72,7 @@ class BoundedDrive:
                       "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"}
             if page:
                 params["pageToken"] = page
-            result = self._request("GET", f"{DRIVE}/files", params=params).json()
+            result = self._request("GET", f"{DRIVE}/files", stage="DRIVE_DESTINATION_LIST", params=params).json()
             items.extend(result.get("files", []))
             page = result.get("nextPageToken")
             if not page:
@@ -92,7 +98,8 @@ class BoundedDrive:
         body = (f"--{boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n".encode() + metadata
                 + f"\r\n--{boundary}\r\nContent-Type: application/json\r\n\r\n".encode() + raw
                 + f"\r\n--{boundary}--\r\n".encode())
-        created = self._request("POST", f"{UPLOAD}/files", params={"uploadType": "multipart", "fields": META, "supportsAllDrives": "true"},
+        created = self._request("POST", f"{UPLOAD}/files", stage="DRIVE_IMMUTABLE_CREATE",
+                                params={"uploadType": "multipart", "fields": META, "supportsAllDrives": "true"},
                                 headers={"Content-Type": f"multipart/related; boundary={boundary}"}, data=body).json()
         actual = self.metadata(created["id"])
         require(actual.get("parents") == [parent] and actual.get("name") == name, "DRIVE_DESTINATION_MISMATCH")
