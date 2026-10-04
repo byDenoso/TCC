@@ -1,0 +1,103 @@
+{
+  "stable_id": "guardiao-integrity-20261004t0038z",
+  "envelope": {
+    "kind": "INTEGRITY_REPORT",
+    "source": "GUARDIAO",
+    "producer": "GPT",
+    "created_at": "2026-10-04T00:38:32Z",
+    "payload": {
+      "date": "2026-10-03",
+      "status": "YELLOW",
+      "checks": [
+        {
+          "area": "tower",
+          "ok": true,
+          "detail": "Leitura oficial nexo-workspace OK_NATIVE; Tower sha256:b59664b034fe8f63083aab4a511fc509c737e19882b4651d591df5c04598ab54, input inalterado."
+        },
+        {
+          "area": "tasks",
+          "ok": false,
+          "detail": "Inventario vivo: 9 automacoes enabled; mapa vigente espera 10 e o Revisor de PR por evento nao apareceu. Guardiao nao alterou scheduler."
+        },
+        {
+          "area": "cycle",
+          "ok": false,
+          "detail": "Janela 24h: 0 resultados nao-contestacao, READY=0, BLOCKED*=67; 47 TESTs seguem status DONE com execution_phase RUNNING."
+        },
+        {
+          "area": "science",
+          "ok": false,
+          "detail": "Pior indicador comparavel: positive_review_closure=25/67=0.373. Acao: ownership do ataque prior-bands confirmado para EXECUTOR e recado de espera resolvido para revalidacao do blocker."
+        },
+        {
+          "area": "contract",
+          "ok": true,
+          "detail": "blocked_share=67/67 descreve composicao READY+BLOCKED e nao taxa de bloqueio incorreto; T03 segue fora de READY por INPUT_PROVENANCE_INCOMPLETE."
+        }
+      ],
+      "evolution": {
+        "autonomy": {
+          "schema_version": "AUTONOMY_METRICS_V2",
+          "computed_at": "2026-10-04T00:38:32.139391Z",
+          "window_start": "2026-10-03T00:38:32.139391Z",
+          "window_end": "2026-10-04T00:38:32.139391Z",
+          "window_hours": 24,
+          "metrics": {
+            "results": {
+              "value": 0,
+              "numerator": 0,
+              "denominator": null,
+              "scope": "window",
+              "unit": "count"
+            },
+            "positive_review_closure": {
+              "value": 0.373,
+              "numerator": 25,
+              "denominator": 67,
+              "scope": "all_tests",
+              "unit": "ratio"
+            },
+            "failure_result_coverage": {
+              "value": 1,
+              "numerator": 4,
+              "denominator": 4,
+              "scope": "all_tests",
+              "unit": "ratio"
+            },
+            "blocked_share": {
+              "value": 1,
+              "numerator": 67,
+              "denominator": 67,
+              "scope": "all_tests",
+              "unit": "ratio"
+            }
+          },
+          "buckets": {
+            "positive_review_states": {
+              "CONFIRMED": 19,
+              "CONTESTED": 40,
+              "REFEREE1_PASSED": 2,
+              "REFUTED": 6
+            },
+            "queue_statuses": {
+              "ready": 0,
+              "blocked": 67,
+              "other": 362
+            }
+          }
+        }
+      },
+      "action": {
+        "indicator": "positive_review_closure",
+        "value": 0.373,
+        "ref": "CONTEST-FAM-DE-PRIOR-BANDS-R-P3-PRIOR-ALTO-PP-U3-1",
+        "owner": "EXECUTOR",
+        "next": "Revalidar o blocker da recuperacao ja aceita sem alterar desenho cientifico; so depois reservar/despachar."
+      },
+      "semantic": {
+        "domain_id": "engineering",
+        "topic_id": "engineering.nexo_runtime"
+      }
+    }
+  }
+}
