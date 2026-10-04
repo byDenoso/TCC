@@ -4,6 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from runtime.nexo_agent_api.evolution import evolution_status
 from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
 from runtime.nexo_agent_api.tower_apply import apply_requests
@@ -119,6 +121,13 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
     _apply(root, {"kind": "NEXO_THOUGHT", "payload": {"entries": [{"text": "sem prova"}, {"text": "H0 falhou 3x em z~0.5", "refs": ["T-1"]}]}})
     thoughts = json.loads((root / "evolution" / "thoughts.json").read_text())["entries"]
     assert [t["text"] for t in thoughts] == ["H0 falhou 3x em z~0.5"]
+
+    with pytest.raises(Exception, match="THOUGHT_TEXT_TOO_LONG"):
+        proposal_to_requests(
+            {"kind": "NEXO_THOUGHT", "payload": {"entries": [{"text": "x" * 601, "refs": ["T-1"]}]}},
+            root,
+        )
+    assert json.loads((root / "evolution" / "thoughts.json").read_text())["entries"] == thoughts
     _apply(root, {"kind": "HYPOTHESIS_PROPOSAL", "payload": {"display_name": "Teste de exemplo", "domain": "science", "test_id": "T-D", "question": "q", "success_criteria": "s", "kill_criteria": "k"}})
     _apply(root, {"kind": "MUTATION_PROPOSAL", "payload": {"test_id": "T-D", "result": {"verdict": "PROMOTED"}}})
     commitment = hashlib.sha256(b"T-D:segredo").hexdigest()
