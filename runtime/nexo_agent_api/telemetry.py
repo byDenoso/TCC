@@ -42,6 +42,21 @@ def _semantic_entity_counts(root: Path) -> tuple[dict[str, int], dict[str, str]]
     return counts, sources
 
 
+def refresh_semantic_counts(root: str | Path) -> tuple[dict[str, int], dict[str, str]]:
+    """Reconcile the persisted semantic counts with the current canonical entity files."""
+    root = Path(root)
+    latest_path = root / "snapshot" / "latest.json"
+    latest = _read_json(latest_path)
+    counts = dict(latest.get("counts", {})) if isinstance(latest.get("counts", {}), dict) else {}
+    semantic_counts, semantic_sources = _semantic_entity_counts(root)
+    counts.update(semantic_counts)
+    latest["counts"] = counts
+    latest["semantic_freshness"] = "CURRENT_CANONICAL_ENTITY_SCAN"
+    latest["semantic_count_sources"] = semantic_sources
+    _write_json(latest_path, latest)
+    return semantic_counts, semantic_sources
+
+
 def _work_entities(root: Path) -> list[dict[str, Any]]:
     folder = root / "entities" / "work"
     if not folder.exists():
@@ -166,16 +181,7 @@ def _dependency_wait_metrics(work: list[dict[str, Any]]) -> dict[str, Any]:
 
 def enrich_materialized_state(root: str | Path) -> dict[str, Any]:
     root = Path(root)
-
-    latest_path = root / "snapshot" / "latest.json"
-    latest = _read_json(latest_path)
-    counts = dict(latest.get("counts", {})) if isinstance(latest.get("counts", {}), dict) else {}
-    semantic_counts, semantic_sources = _semantic_entity_counts(root)
-    counts.update(semantic_counts)
-    latest["counts"] = counts
-    latest["semantic_freshness"] = "CURRENT_CANONICAL_ENTITY_SCAN"
-    latest["semantic_count_sources"] = semantic_sources
-    _write_json(latest_path, latest)
+    semantic_counts, _ = refresh_semantic_counts(root)
 
     roi_path = root / "snapshot" / "ai-roi.json"
     roi = _read_json(roi_path)
