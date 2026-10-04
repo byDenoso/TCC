@@ -274,6 +274,86 @@ class HandoffProtocolTests(unittest.TestCase):
         self.assertEqual(service.inbox_for("LEARNER"), [])
 
 
+    def test_new_ack_rejects_stale_work_without_writing_event(self):
+        service = AgentService(self.root)
+        for reason, changes in (("terminal", {"status": "DONE"}),
+                                ("owner", {"owner_role": "LEARNER"})):
+            with self.subTest(reason=reason):
+                work = {"id": f"WORK-STALE-{reason}", "entity_version": 1,
+                        "status": "READY", "owner_role": "EXECUTOR"}
+                path = entity_path(self.root, "work", work["id"])
+                path.write_text(json.dumps(work))
+                created = self.emit(service, from_role="ADVISOR", to_role="EXECUTOR",
+                                    handoff_type="WORK_READY", entity_ref=work["id"],
+                                    thread_id="THR-STALE", next_action="Executar o trabalho definido.")
+                path.write_text(json.dumps({**work, "entity_version": 2, **changes}))
+                self.assertEqual(service.inbox_for("EXECUTOR"), [])
+                before = {p: p.read_bytes() for p in (self.root / "events").rglob("*.json")}
+                with self.assertRaises(TowerAgentIssue) as exc:
+                    service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                self.assertEqual(exc.exception.code, "HANDOFF_STALE")
+                self.assertEqual(before, {p: p.read_bytes() for p in (self.root / "events").rglob("*.json")})
+
+    def test_stale_handoff_can_close_without_being_reopened(self):
+        service = AgentService(self.root)
+        for initial in ("PENDING", "ACK"):
+            for terminal in ("DONE", "FAILED"):
+                with self.subTest(initial=initial, terminal=terminal):
+                    work = {"id": f"WORK-CLOSE-{initial}-{terminal}", "entity_version": 1,
+                            "status": "READY", "owner_role": "EXECUTOR"}
+                    path = entity_path(self.root, "work", work["id"])
+                    path.write_text(json.dumps(work))
+                    created = self.emit(service, from_role="ADVISOR", to_role="EXECUTOR",
+                                        handoff_type="WORK_READY", entity_ref=work["id"],
+                                        thread_id="THR-STALE", next_action="Executar o trabalho definido.")
+                    if initial == "ACK":
+                        accepted = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                    path.write_text(json.dumps({**work, "entity_version": 2, "status": "DONE"}))
+                    if initial == "ACK":
+                        replay = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                        self.assertEqual(replay["event_id"], accepted["event_id"])
+                    closed = service.transition_handoff(created["handoff_id"], state=terminal, writer_role="EXECUTOR")
+                    self.assertEqual(closed["state"], terminal)
+                    before = len(list((self.root / "events").rglob("*.json")))
+                    with self.assertRaises(TowerAgentIssue) as exc:
+                        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                    self.assertEqual(exc.exception.code, "HANDOFF_ILLEGAL_TRANSITION")
+                    self.assertEqual(len(list((self.root / "events").rglob("*.json"))), before)
+
+    def test_closed_roadmap_contest_and_resumable_work_remain_ackable(self):
+        from .frontier import roadmap_frontier
+
+        service = AgentService(self.root)
+        (self.root / "indexes").mkdir()
+        (self.root / "roadmaps").mkdir()
+        (self.root / "entities/test").mkdir()
+        (self.root / "indexes/active-roadmaps.json").write_text(json.dumps({
+            "items": [{"roadmap_id": "RM-CLOSED", "state": "CLOSED"}]}))
+        (self.root / "roadmaps/RM-CLOSED.json").write_text(json.dumps({"state": "CLOSED"}))
+        for state in ("READY", "RUNNING", "CHECKPOINTED"):
+            with self.subTest(state=state):
+                test = {"id": f"TEST-CLOSED-{state}", "state": state, "roadmap_id": "RM-CLOSED"}
+                if state == "READY":
+                    test["contests_test_id"] = "TEST-RESULT"
+                entity_path(self.root, "test", test["id"]).write_text(json.dumps(test))
+                work = {"id": f"WORK-CLOSED-{state}", "entity_version": 1, "status": state,
+                        "owner_role": "EXECUTOR", "test_id": test["id"], "roadmap_id": "RM-CLOSED"}
+                path = entity_path(self.root, "work", work["id"])
+                path.write_text(json.dumps(work))
+                created = self.emit(service, from_role="ADVISOR", to_role="EXECUTOR",
+                                    handoff_type="WORK_READY", entity_ref=work["id"],
+                                    thread_id="THR-CLOSED", next_action="Executar o trabalho definido.")
+                path.write_text(json.dumps({**work, "entity_version": 2}))
+                frontier = roadmap_frontier(self.root)
+                self.assertIn(test["id"], [row["test_id"] for row in frontier["ready"] + frontier["resumable"]])
+                accepted = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                self.assertEqual(accepted["state"], "ACK")
+                service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")
+                with self.assertRaises(TowerAgentIssue) as exc:
+                    service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                self.assertEqual(exc.exception.code, "HANDOFF_ILLEGAL_TRANSITION")
+
+
 class RecoveryOwnershipTests(unittest.TestCase):
     def setUp(self):
         HandoffProtocolTests.setUp(self)
