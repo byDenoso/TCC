@@ -33,6 +33,7 @@ ACTIONS = frozenset({"claim_work", "prepare_package", "validate_package", "reque
 SHA = re.compile(r"^[0-9a-f]{64}$")
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
 SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$")
+SAFE_ERROR_STAGE = re.compile(r"^[A-Z][A-Z0-9_]{0,63}$")
 TERMINAL = frozenset({"REGISTERED", "FAILED"})
 
 
@@ -49,8 +50,11 @@ def utcnow() -> str:
 
 
 class OperationalError(RuntimeError):
-    def __init__(self, code: str, *, retryable: bool = False):
+    def __init__(self, code: str, *, retryable: bool = False, stage: str | None = None):
         self.code, self.retryable = code, retryable
+        # Stages are fixed, non-sensitive labels supplied by the runtime. Never
+        # attach URLs, response bodies, or credential material to a receipt.
+        self.stage = stage if isinstance(stage, str) and SAFE_ERROR_STAGE.fullmatch(stage) else None
         super().__init__(code)
 
 
@@ -319,6 +323,107 @@ class OperationalWorker:
         work["updated_at"] = self.now()
         return self.store.save(work, work["version"])
 
+    @staticmethod
+    def _error_body(exc):
+        result = {"code": exc.code, "retryable": exc.retryable}
+        if exc.stage:
+            result["stage"] = exc.stage
+        return result
+
+    @staticmethod
+    def _record_disposition(work, intent, result, disposition):
+        """Attach a durable, immutable-intent receipt to the work entity.
+
+        The intent ID already commits to every request field. Persisting the full
+        body hash and the relevant decision inputs makes that invariant explicit
+        when replaying receipts written by this version of the runtime.
+        """
+        record = {
+            **result,
+            "intent_id": intent["id"],
+            "intent_sha256": digest(intent),
+            "action": intent["action"],
+            "principal": intent["principal"],
+            "expected_version": intent["expected_version"],
+            "disposition": disposition,
+        }
+        record.setdefault("idempotent", False)
+        work.setdefault("processed", {})[intent["id"]] = record
+        return record
+
+    @staticmethod
+    def _terminal_intents(work):
+        terminal = []
+        for intent_id, receipt in work.get("processed", {}).items():
+            if not isinstance(receipt, dict) or receipt.get("disposition") not in {"BLOCKED", "STALE_VERSION"}:
+                continue
+            expected = receipt.get("expected_version")
+            if (receipt.get("intent_id") == intent_id and type(expected) is int
+                    and expected < work.get("version", 0)):
+                terminal.append((intent_id, receipt))
+        return terminal
+
+    @classmethod
+    def _validate_supersession(cls, work, intent):
+        """Require a fresh retry to continue the latest matching intent lineage.
+
+        Old BLOCKED entities created before processed-intent receipts existed
+        get one explicit migration attempt; any known terminal receipt requires
+        a link. A different action may link a BLOCKED receipt only while the
+        work itself is BLOCKED, and its state transition is still checked below.
+        """
+        terminal = cls._terminal_intents(work)
+        same_action = [(key, value) for key, value in terminal
+                       if value.get("action") == intent["action"]
+                       and value.get("principal") == intent["principal"]]
+        if work.get("state") == "BLOCKED" and not same_action:
+            candidates = [(key, value) for key, value in terminal
+                          if value.get("disposition") == "BLOCKED"
+                          and value.get("principal") == intent["principal"]]
+        else:
+            candidates = same_action
+        candidates.sort(key=lambda item: (item[1]["expected_version"], item[0]))
+        target = candidates[-1] if candidates else None
+        prior_id = intent.get("supersedes")
+
+        if target is None:
+            require(prior_id is None, "SUPERSESSION_NOT_FOUND")
+            if work.get("state") == "BLOCKED" and terminal:
+                raise OperationalError("SUPERSESSION_UNAVAILABLE")
+            return work.get("state") == "BLOCKED" and not terminal
+
+        require(prior_id is not None, "SUPERSESSION_REQUIRED")
+        require(isinstance(prior_id, str) and prior_id.startswith("op-"), "SUPERSESSION_ID_INVALID")
+        require(prior_id == target[0], "SUPERSESSION_NOT_LATEST")
+        prior = target[1]
+        same_action_link = prior.get("action") == intent["action"]
+        blocked_transition_link = (work.get("state") == "BLOCKED"
+                                   and prior.get("disposition") == "BLOCKED")
+        require(prior.get("principal") == intent["principal"]
+                and (same_action_link or blocked_transition_link), "SUPERSESSION_IDENTITY_MISMATCH")
+        require(type(intent.get("expected_version")) is int
+                and intent["expected_version"] > prior.get("expected_version", -1),
+                "SUPERSESSION_VERSION_NOT_ADVANCED")
+        return False
+
+    @staticmethod
+    def _resume_blocked_action(work, action):
+        """Restore only a state from which this explicit action is valid."""
+        if work.get("state") != "BLOCKED":
+            return
+        resumable = {
+            "prepare_package": {"CLAIMED", "PREPARED"},
+            "validate_package": {"PREPARED", "VALIDATED"},
+            "request_execution": {"READY", "CLAIMED", "PREPARED", "VALIDATED", "DISPATCH_PENDING",
+                                  "DISPATCH_UNKNOWN", "RUNNING", "RESULT_AVAILABLE", "DELIVERY_PENDING", "REGISTERED"},
+            "register_delivery": {"RESULT_AVAILABLE", "DELIVERY_PENDING", "REGISTERED"},
+        }
+        resume_state = work.get("resume_state")
+        require(resume_state in resumable.get(action, set()), "BLOCKED_ACTION_NOT_RESUMABLE")
+        work["state"] = resume_state
+        work.pop("resume_state", None)
+        work.pop("error", None)
+
     def _prepare(self, work):
         definition = work["definition"]
         validate_definition(definition)
@@ -334,17 +439,22 @@ class OperationalWorker:
         work.update(state="VALIDATED", error=None)
 
     def handle(self, intent: dict) -> dict:
-        require(set(intent) == {"contract", "id", "action", "work_id", "principal", "role_session", "expected_version"}, "INTENT_FIELDS_INVALID")
+        required_fields = {"contract", "id", "action", "work_id", "principal", "role_session", "expected_version"}
+        require(required_fields <= set(intent) and set(intent) <= required_fields | {"supersedes"}, "INTENT_FIELDS_INVALID")
         require(intent["contract"] == INTENT and intent["action"] in ACTIONS, "INTENT_ACTION_INVALID")
         require(SHA.fullmatch(str(intent["principal"])), "AUTHENTICATED_PRINCIPAL_REQUIRED")
+        require(type(intent["expected_version"]) is int and intent["expected_version"] >= 0,
+                "INTENT_VERSION_INVALID")
         identity = {key: value for key, value in intent.items() if key != "id"}
         require(intent["id"] == "op-" + digest(identity)[:48], "INTENT_HASH_MISMATCH")
         work = self.store.get(intent["work_id"])
-        prior = work["processed"].get(intent["id"])
+        prior = work.get("processed", {}).get(intent["id"])
         if prior:
+            # Older work entities stored only the response. Their intent IDs
+            # were still verified above, so they remain safely replayable.
+            require(not prior.get("intent_sha256") or prior["intent_sha256"] == digest(intent),
+                    "INTENT_IDENTITY_CONFLICT")
             return {**prior, "idempotent": True}
-        if work["version"] != intent["expected_version"]:
-            return {"state": "VERSION_CONFLICT", "work_id": work["id"], "retryable": True}
         action = intent["action"]
         from .operational_prompts import PROMPTS
         require(intent["role_session"] == role_context(work, PROMPTS[work["role"]]), "ROLE_CONTEXT_OR_PROMPT_CHANGED")
@@ -355,6 +465,22 @@ class OperationalWorker:
             require(work.get("owner") == intent["principal"], "CLAIM_OWNERSHIP_REQUIRED")
             require(intent["role_session"] == work.get("role_session"), "SESSION_CHANGED")
         try:
+            legacy_blocked_recovery = self._validate_supersession(work, intent)
+        except OperationalError as exc:
+            result = {"work_id": work["id"], "state": exc.code, "retryable": False,
+                      "error": self._error_body(exc), "idempotent": False}
+            result = self._record_disposition(work, intent, result, "REJECTED")
+            self._save(work)
+            return result
+        if work["version"] != intent["expected_version"]:
+            result = {"state": "VERSION_CONFLICT", "work_id": work["id"], "retryable": False,
+                      "expected_version": intent["expected_version"], "observed_version": work["version"],
+                      "recovery": "REREAD_AND_CREATE_A_LINKED_INTENT_IF_THE_ACTION_IS_STILL_VALID"}
+            result = self._record_disposition(work, intent, result, "STALE_VERSION")
+            self._save(work)
+            return result
+        try:
+            self._resume_blocked_action(work, action)
             if action == "claim_work":
                 require(work["state"] == "READY" or (work["state"] == "CLAIMED" and work["owner"] == intent["principal"]), "WORK_ALREADY_CLAIMED")
                 work.update(state="CLAIMED", owner=intent["principal"], role_session=intent["role_session"])
@@ -381,22 +507,34 @@ class OperationalWorker:
                 require(work["state"] in {"RESULT_AVAILABLE", "DELIVERY_PENDING", "REGISTERED"}, "RESULT_NOT_AVAILABLE")
                 if work["state"] != "REGISTERED":
                     work["state"] = "DELIVERY_PENDING"
-            result = {"work_id": work["id"], "state": work["state"], "idempotent": False}
-            work["processed"][intent["id"]] = result
+            work.pop("resume_state", None)
+            result = {"work_id": work["id"], "state": work["state"], "idempotent": False,
+                      "retryable": False}
+            if legacy_blocked_recovery:
+                result["recovery_mode"] = "LEGACY_BLOCKED_WITHOUT_TERMINAL_INTENT_RECEIPT"
+            result = self._record_disposition(work, intent, result, "APPLIED")
             work = self._save(work)
             return result
         except OperationalError as exc:
-            if action == "claim_work":
-                return {"work_id": work["id"], "state": exc.code, "retryable": False}
             if exc.retryable:
                 return {"work_id": work["id"], "state": work["state"],
-                        "error": {"code": exc.code, "retryable": True}}
-            work["error"] = {"code": exc.code, "retryable": exc.retryable}
-            if not exc.retryable:
+                        "error": self._error_body(exc),
+                        "intent_id": intent["id"], "disposition": "RETRYABLE_FAILURE"}
+            if action == "claim_work":
+                result = {"work_id": work["id"], "state": exc.code, "retryable": False,
+                          "error": self._error_body(exc), "idempotent": False}
+                result = self._record_disposition(work, intent, result, "REJECTED")
+                self._save(work)
+                return result
+            work["error"] = self._error_body(exc)
+            if work.get("state") != "BLOCKED":
                 work["resume_state"] = work["state"]
                 work["state"] = "BLOCKED"
+            result = {"work_id": work["id"], "state": work["state"], "retryable": False,
+                      "error": work["error"], "idempotent": False}
+            result = self._record_disposition(work, intent, result, "BLOCKED")
             self._save(work)
-            return {"work_id": work["id"], "state": work["state"], "error": work["error"]}
+            return result
 
     def progress(self, work_id: str) -> dict:
         work = self.store.get(work_id)
@@ -463,6 +601,6 @@ class OperationalWorker:
                 if isinstance(exc, OperationalError) and not exc.retryable:
                     current = self.store.get(item["id"])
                     current.update(resume_state=current["state"], state="BLOCKED",
-                                   error={"code": code, "retryable": False})
+                                   error=self._error_body(exc))
                     self._save(current)
         return report

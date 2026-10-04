@@ -53,8 +53,9 @@ class LocalTower:
 
 
 class MemoryDrive:
-    def __init__(self):self.files={INPUT['file_id']:DATA};self.writes=0;self.error=None
+    def __init__(self):self.files={INPUT['file_id']:DATA};self.writes=0;self.reads=0;self.error=None
     def read_frozen(self,reference):
+        self.reads+=1
         if self.error:raise self.error
         raw=self.files[reference['file_id']]
         require(digest(raw)==reference['sha256'],'DRIVE_BODY_HASH_MISMATCH')
@@ -91,10 +92,11 @@ class Rig:
         self.tower=LocalTower();self.store=TowerWriterStore(self.tower);self.drive=MemoryDrive();self.actions=FakeActions(self.drive)
         self.worker=OperationalWorker(self.store,self.drive,self.actions,recipe_loader=lambda _:RECIPE)
         for item in definitions or [definition()]:self.store.save(initialize_work(item),0)
-    def intent(self,action='request_execution',identity=WORK_ID,principal=PRINCIPAL):
+    def intent(self,action='request_execution',identity=WORK_ID,principal=PRINCIPAL,supersedes=None):
         work=self.store.get(identity)
         body={'contract':INTENT,'action':action,'work_id':identity,'principal':principal,
               'role_session':role_context(work,PROMPTS[work['role']]),'expected_version':work['version']}
+        if supersedes is not None:body['supersedes']=supersedes
         return {**body,'id':'op-'+digest(body)[:48]}
     def complete(self):
         self.worker.tick([self.intent()]);self.worker.tick([])
@@ -142,9 +144,74 @@ class OperationalConformance(unittest.TestCase):
     def test_second_claim_cannot_destroy_owner_work(self):
         rig=Rig();rig.worker.handle(rig.intent('claim_work'));out=rig.worker.handle(rig.intent('claim_work',principal='b'*64))
         self.assertEqual(out['state'],'WORK_ALREADY_CLAIMED');self.assertEqual(rig.store.get(WORK_ID)['owner'],PRINCIPAL)
-    def test_stale_version_does_not_mutate(self):
+    def test_stale_version_is_durable_and_requires_linked_fresh_intent(self):
         rig=Rig();old=rig.intent();rig.worker.handle(rig.intent('claim_work'));writes=rig.tower.writes
-        self.assertEqual(rig.worker.handle(old)['state'],'VERSION_CONFLICT');self.assertEqual(rig.tower.writes,writes)
+        conflict=rig.worker.handle(old)
+        self.assertEqual(conflict['state'],'VERSION_CONFLICT');self.assertFalse(conflict['retryable'])
+        self.assertEqual(conflict['disposition'],'STALE_VERSION');self.assertEqual(rig.tower.writes,writes+1)
+        writes=rig.tower.writes
+        replay=rig.worker.handle(old)
+        self.assertTrue(replay['idempotent']);self.assertEqual(rig.tower.writes,writes)
+        unlinked=rig.worker.handle(rig.intent())
+        self.assertEqual(unlinked['state'],'SUPERSESSION_REQUIRED')
+        self.assertEqual(unlinked['disposition'],'REJECTED')
+        fresh=rig.intent(supersedes=old['id'])
+        self.assertNotEqual(fresh['id'],old['id'])
+        self.assertEqual(rig.worker.handle(fresh)['state'],'DISPATCH_PENDING')
+
+    def test_forbidden_failure_is_durable_and_new_intent_retries_only_after_reconciliation(self):
+        rig=Rig();intent=rig.intent();rig.drive.error=OperationalError('DRIVE_HTTP_403',stage='DRIVE_METADATA_READ')
+        blocked=rig.worker.handle(intent)
+        self.assertEqual(blocked['state'],'BLOCKED');self.assertEqual(blocked['error']['code'],'DRIVE_HTTP_403')
+        self.assertEqual(blocked['error']['stage'],'DRIVE_METADATA_READ')
+        self.assertEqual(blocked['disposition'],'BLOCKED');self.assertEqual(blocked['expected_version'],intent['expected_version'])
+        self.assertEqual(blocked['intent_sha256'],digest(intent))
+        version=rig.store.get(WORK_ID)['version'];writes=rig.tower.writes;reads=rig.drive.reads
+        replay=rig.worker.handle(intent)
+        self.assertEqual(replay['state'],'BLOCKED');self.assertTrue(replay['idempotent'])
+        self.assertEqual(rig.store.get(WORK_ID)['version'],version);self.assertEqual(rig.tower.writes,writes)
+        self.assertEqual(rig.drive.reads,reads)
+
+        unlinked=rig.worker.handle(rig.intent())
+        self.assertEqual(unlinked['state'],'SUPERSESSION_REQUIRED')
+        self.assertEqual(unlinked['disposition'],'REJECTED')
+
+        wrong_route=rig.worker.handle(rig.intent('validate_package',supersedes=intent['id']))
+        self.assertEqual(wrong_route['error']['code'],'BLOCKED_ACTION_NOT_RESUMABLE')
+        self.assertEqual(rig.store.get(WORK_ID)['resume_state'],'CLAIMED')
+
+        # A new intent is still subject to the same permission check. Repair
+        # the reader only after that independent retry is itself durably blocked.
+        denied_retry=rig.intent(supersedes=intent['id'])
+        denied=rig.worker.handle(denied_retry)
+        self.assertEqual(denied['state'],'BLOCKED');self.assertEqual(denied['error']['code'],'DRIVE_HTTP_403')
+        self.assertEqual(rig.actions.dispatches,0)
+        reads=rig.drive.reads;writes=rig.tower.writes
+        self.assertTrue(rig.worker.handle(denied_retry)['idempotent'])
+        self.assertEqual(rig.drive.reads,reads);self.assertEqual(rig.tower.writes,writes)
+
+        # Once the access condition changes, submit a new identity linked to
+        # the latest durable disposition and current entity version.
+        rig.drive.error=None
+        retry=rig.intent(supersedes=denied_retry['id'])
+        self.assertNotEqual(retry['id'],intent['id'])
+        self.assertEqual(rig.worker.handle(retry)['state'],'DISPATCH_PENDING')
+        rig.worker.tick([])
+        rig.worker.tick([])
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
+        replay=rig.worker.handle(intent)
+        self.assertEqual(replay['state'],'BLOCKED');self.assertTrue(replay['idempotent'])
+
+    def test_legacy_blocked_work_without_terminal_intent_receipt_has_explicit_migration(self):
+        rig=Rig();rig.worker.handle(rig.intent('claim_work'))
+        work=rig.store.get(WORK_ID)
+        work.update(state='BLOCKED',resume_state='CLAIMED',error={'code':'LEGACY_BLOCKED','retryable':False})
+        rig.store.save(work,work['version'])
+        recovery=rig.intent()
+        self.assertNotIn('supersedes',recovery)
+        result=rig.worker.handle(recovery)
+        self.assertEqual(result['state'],'DISPATCH_PENDING')
+        self.assertEqual(result['recovery_mode'],'LEGACY_BLOCKED_WITHOUT_TERMINAL_INTENT_RECEIPT')
     def test_forged_prompt_context_rejected_before_side_effect(self):
         rig=Rig();intent=rig.intent();intent['role_session']['context_sha256']='f'*64
         intent['id']='op-'+digest({k:v for k,v in intent.items() if k!='id'})[:48]
@@ -200,6 +267,27 @@ class OperationalConformance(unittest.TestCase):
         with self.assertRaisesRegex(OperationalError,'DIGEST_MISMATCH'):verified_result_archive(raw,metadata,run,work)
     def test_drive_root_is_never_an_allowed_destination(self):
         with self.assertRaisesRegex(OperationalError,'ROOT_WRITE_FORBIDDEN'):BoundedDrive(object(),allowed_folders={'root'})
+    def test_drive_403_receipt_identifies_only_metadata_or_content_stage(self):
+        class Response:
+            def __init__(self,status,payload=None):
+                self.status_code=status;self.content=b'private response body';self._payload=payload
+            def json(self):return self._payload
+        class Session:
+            def __init__(self,statuses):self.statuses=list(statuses);self.calls=[]
+            def request(self,method,url,timeout,**kwargs):
+                self.calls.append((method,kwargs.get('params',{})))
+                status=self.statuses.pop(0)
+                payload={'id':'input-file','trashed':False,'headRevisionId':'revision-1','size':'10'}
+                return Response(status,payload if status==200 else None)
+        reference={'file_id':'input-file','version':'revision-1','sha256':'a'*64}
+        for statuses,stage in [([403],'DRIVE_METADATA_READ'),([200,403],'DRIVE_CONTENT_READ')]:
+            with self.subTest(stage=stage):
+                session=Session(statuses);drive=BoundedDrive(session,allowed_folders=set())
+                with self.assertRaises(OperationalError) as caught:drive.read_frozen(reference)
+                self.assertEqual(caught.exception.code,'DRIVE_HTTP_403')
+                self.assertEqual(caught.exception.stage,stage)
+                self.assertNotIn('private response body',str(caught.exception))
+                self.assertTrue(all(method=='GET' for method,_ in session.calls))
 
 
 if __name__=='__main__':unittest.main()

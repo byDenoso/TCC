@@ -719,15 +719,114 @@ def valid_inputs(inputs: Any) -> bool:
     return True
 
 
+def _readiness_contract_view(test: dict) -> dict:
+    """Expose legacy readiness names from the equivalent structured contract.
+
+    This is a read-only view: it copies only values already present in the
+    frozen scientific declaration and never writes aliases back to the TEST.
+    The hash/reference/timestamp freeze proof is checked separately below.
+    """
+    view = dict(test)
+    input_contract = test.get('input_contract')
+    input_contract = input_contract if isinstance(input_contract, dict) else {}
+    operator = test.get('environment_operator_contract')
+    operator = operator if isinstance(operator, dict) else {}
+    estimator = test.get('estimator_contract')
+    null_contract = test.get('null_contract')
+
+    if not view.get('question'):
+        question = test.get('scientific_question')
+        if isinstance(question, str) and question.strip():
+            view['question'] = question
+    if not view.get('null') and isinstance(null_contract, dict) and null_contract:
+        view['null'] = null_contract
+    if not view.get('rival'):
+        rival = input_contract.get('clustering_de_extension')
+        if isinstance(rival, dict) and rival:
+            view['rival'] = rival
+
+    if not view.get('method'):
+        mechanism = test.get('mechanism')
+        if (isinstance(mechanism, str) and mechanism.strip()
+                and input_contract and isinstance(estimator, dict) and estimator
+                and operator):
+            view['method'] = {
+                'mechanism': mechanism,
+                'input_contract': input_contract,
+                'estimator_contract': estimator,
+                'environment_operator_contract': operator,
+            }
+
+    decision_contract = test.get('decision_contract')
+    method = view.get('method')
+    if isinstance(decision_contract, (dict, list, str)) and decision_contract and method:
+        if isinstance(method, dict):
+            method = dict(method)
+            method['decision_contract'] = decision_contract
+        else:
+            method = {'declared_method': method, 'decision_contract': decision_contract}
+        view['method'] = method
+
+    if not view.get('dataset_and_selection'):
+        observation = operator.get('observational_recovery')
+        primary_environment = operator.get('primary_environment')
+        sampling = input_contract.get('observational_sampling')
+        environment_template = input_contract.get('environment_template')
+        if (isinstance(sampling, str) and sampling.strip()
+                and isinstance(environment_template, str) and environment_template.strip()
+                and isinstance(observation, dict)
+                and observation.get('dataset') and observation.get('selection')
+                and isinstance(primary_environment, dict)
+                and primary_environment.get('product')
+                and (primary_environment.get('source') or primary_environment.get('density_file'))):
+            view['dataset_and_selection'] = {
+                'observational_sampling': sampling,
+                'environment_template': environment_template,
+                'observational_recovery': observation,
+                'primary_environment': primary_environment,
+            }
+    # A hybrid record can retain a legacy method while getting only its question
+    # from the structured declaration. Bind every consumed structured input,
+    # not just whichever field supplied the missing alias. Keep legacy hashes
+    # unchanged and do not manufacture a missing method from this wrapper.
+    aliases = ('question', 'null', 'rival', 'method', 'dataset_and_selection')
+    if view.get('method') and any(not test.get(key) and view.get(key) for key in aliases):
+        declaration_keys = ('scientific_question', 'mechanism', 'null_contract',
+                            'input_contract', 'estimator_contract',
+                            'environment_operator_contract', 'decision_contract')
+        view['method'] = {
+            'declared_method': view['method'],
+            'structured_declaration': {key: test[key] for key in declaration_keys if key in test},
+        }
+    return view
+
+
 def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> dict:
     from .evolution import prereg_hash
     reasons = []
     if terminal(test):
         reasons.append('TERMINAL_TEST')
+    frozen_view = _readiness_contract_view(test)
+    structured_fields = ('question', 'null', 'rival', 'method', 'dataset_and_selection')
+    uses_structured_fallback = any(
+        not test.get(key) and bool(frozen_view.get(key)) for key in structured_fields
+    )
     for key in FROZEN[:-1]:
-        if not test.get(key):
+        if not frozen_view.get(key):
             reasons.append('MISSING_' + key.upper())
-    if not test.get('prereg_hash') or not (test.get('prereg_ref') or timestamp(test.get('frozen_at'))):
+    has_freeze_proof = bool(test.get('prereg_hash')) and bool(
+        test.get('prereg_ref') or timestamp(test.get('frozen_at'))
+    )
+    if uses_structured_fallback:
+        if not has_freeze_proof:
+            reasons.extend(('FROZEN_DESIGN_UNVERIFIED', 'STRUCTURED_DESIGN_UNVERIFIED'))
+        elif test['prereg_hash'] != prereg_hash(str(test.get('id') or ''), frozen_view):
+            # Keep the global legacy hash schema. Structured-only declarations
+            # are verified by feeding their normalized fields through that
+            # same eight-field schema; a hash over the unnormalized record does
+            # not bind those scientific inputs.
+            reasons.append('FROZEN_DESIGN_CHANGED')
+    elif not has_freeze_proof:
         reasons.append('FROZEN_DESIGN_UNVERIFIED')
     elif test['prereg_hash'] != prereg_hash(str(test.get('id') or ''), test):
         reasons.append('FROZEN_DESIGN_CHANGED')
