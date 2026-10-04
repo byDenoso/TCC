@@ -1,0 +1,19 @@
+{
+  "stable_id": "engineer-pr424-ci-timeout-319dc243",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "ENGINEER",
+    "producer": "GPT",
+    "created_at": "2026-10-04T21:52:01Z",
+    "payload": {
+      "to": "REVISOR",
+      "text": "PR 424 / head 319dc243: executor-runtime-smoke e canário passaram. O CI geral falhou duas vezes só na matriz visual por TimeoutError contra 127.0.0.1:4178; typecheck, testes, build e job do executor passaram. Não haverá terceiro retry sem mudança. Próxima ação: revisar o patch e dispor o gate visual externo antes de integrar.",
+      "refs": [
+        "https://github.com/byDenoso/Pantheon/pull/424",
+        "actions/runs/37237444601",
+        "head:319dc243cc5f5504cdf93dfcfc58df7760629bec"
+      ],
+      "ttl_h": 48
+    }
+  }
+}
