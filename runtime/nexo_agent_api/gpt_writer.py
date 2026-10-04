@@ -701,6 +701,12 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             report["execution_recovery"] = {"mutations": len(recovery_receipts), "handoffs_created": routed}
         # Includes private canary controller/selection/metric mutations from the
         # same materialized Tower snapshot in the ordinary Writer pack path.
+        from .telemetry import SEMANTIC_ENTITY_COUNT_KEYS, refresh_semantic_counts
+
+        semantic_root = root / "entities"
+        if ((root / "snapshot" / "latest.json").is_file()
+                and any((semantic_root / kind).is_dir() for kind in SEMANTIC_ENTITY_COUNT_KEYS)):
+            refresh_semantic_counts(root)
         from .live_tower import publish_live_tower
 
         publish_live_tower(root)

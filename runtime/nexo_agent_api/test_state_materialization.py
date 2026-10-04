@@ -6,10 +6,88 @@ import unittest
 from pathlib import Path
 
 from .views import _deferred_by_active_p0, _prioritize, materialize_role_views
+from .gpt_writer import apply_to_tower
+from .live_tower import build_live_tower_payload, read_live_tower_bytes
 from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class StateMaterializationTests(unittest.TestCase):
+    def test_writer_pack_refreshes_stale_semantic_counts_without_proposals(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td) / "tower"
+            for relative in ("snapshot", "entities/hypothesis", "entities/test"):
+                (root / relative).mkdir(parents=True, exist_ok=True)
+            (root / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            }))
+            (root / "snapshot/latest.json").write_text(json.dumps({
+                "schema_version": "0.6", "counts": {"hypotheses": 8, "tests": 35},
+            }))
+            for name in ("H1", "H2"):
+                (root / "entities/hypothesis" / f"{name}.json").write_text(json.dumps({
+                    "id": name, "scientific_question": f"Preserve {name}",
+                }))
+            (root / "entities/test/T1.json").write_text(json.dumps({
+                "id": "T1", "status": "VERIFIED", "scientific_question": "Keep frozen science",
+                "null": "Keep its null", "verdict": "SYNTHETIC_FIXTURE_ONLY",
+            }))
+            raw = json.dumps(build_live_tower_payload(root), sort_keys=True,
+                             separators=(",", ":")).encode("utf-8")
+            packed, first = apply_to_tower(raw, [])
+
+            self.assertIsNotNone(packed)
+            self.assertEqual(first["status"], "READY_TO_UPLOAD")
+            result = read_live_tower_bytes(packed)
+            latest = result["files"]["snapshot/latest.json"]["value"]
+            self.assertEqual(latest["counts"]["hypotheses"], 2)
+            self.assertEqual(latest["counts"]["tests"], 1)
+            self.assertEqual(latest["semantic_freshness"], "CURRENT_CANONICAL_ENTITY_SCAN")
+            test_entity = result["files"]["entities/test/T1.json"]["value"]
+            self.assertEqual(
+                {key: test_entity[key] for key in ("status", "scientific_question", "null", "verdict")},
+                {"status": "VERIFIED", "scientific_question": "Keep frozen science",
+                 "null": "Keep its null", "verdict": "SYNTHETIC_FIXTURE_ONLY"},
+            )
+
+            replay, second = apply_to_tower(packed, [])
+            self.assertIsNone(replay)
+            self.assertEqual(second["status"], "NO_OP")
+            self.assertEqual(second["before"], second["after"])
+
+    def test_writer_skips_semantic_refresh_without_snapshot_or_semantic_entity_model(self):
+        with tempfile.TemporaryDirectory() as td:
+            no_model = Path(td) / "no-model"
+            (no_model / "CONTROL.json").parent.mkdir(parents=True)
+            (no_model / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            }))
+            (no_model / "snapshot").mkdir()
+            (no_model / "snapshot/latest.json").write_text(json.dumps({
+                "counts": {"hypotheses": 8, "tests": 35},
+            }))
+            (no_model / "entities/work").mkdir(parents=True)
+            raw = json.dumps(build_live_tower_payload(no_model), sort_keys=True,
+                             separators=(",", ":")).encode("utf-8")
+            packed, report = apply_to_tower(raw, [])
+            self.assertIsNotNone(packed)
+            self.assertEqual(report["status"], "READY_TO_UPLOAD")
+            snapshot = read_live_tower_bytes(packed)["files"]["snapshot/latest.json"]["value"]
+            self.assertEqual(snapshot["counts"], {"hypotheses": 8, "tests": 35})
+            self.assertNotIn("semantic_freshness", snapshot)
+
+            no_snapshot = Path(td) / "no-snapshot"
+            (no_snapshot / "CONTROL.json").parent.mkdir(parents=True)
+            (no_snapshot / "CONTROL.json").write_text(json.dumps({
+                "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+            }))
+            (no_snapshot / "entities/hypothesis").mkdir(parents=True)
+            (no_snapshot / "entities/hypothesis/H1.json").write_text(json.dumps({"id": "H1"}))
+            raw_without_snapshot = json.dumps(build_live_tower_payload(no_snapshot), sort_keys=True,
+                                              separators=(",", ":")).encode("utf-8")
+            output, _ = apply_to_tower(raw_without_snapshot, [])
+            bundle = read_live_tower_bytes(output or raw_without_snapshot)
+            self.assertNotIn("snapshot/latest.json", bundle["files"])
+
     def test_reconciles_state_cursor_and_ai_roi_snapshot(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
