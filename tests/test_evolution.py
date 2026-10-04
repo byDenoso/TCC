@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from runtime.nexo_agent_api.evolution import evolution_status
-from runtime.nexo_agent_api.inbox_apply import proposal_to_requests
+from runtime.nexo_agent_api.inbox_apply import ProposalError, proposal_to_requests
 from runtime.nexo_agent_api.tower_apply import apply_requests
 from runtime.nexo_agent_api.tower_paths import entity_path
 
@@ -122,7 +122,7 @@ def test_thoughts_need_refs_and_decoys_are_verified(tmp_path):
     thoughts = json.loads((root / "evolution" / "thoughts.json").read_text())["entries"]
     assert [t["text"] for t in thoughts] == ["H0 falhou 3x em z~0.5"]
 
-    with pytest.raises(Exception, match="THOUGHT_TEXT_TOO_LONG"):
+    with pytest.raises(ProposalError, match="THOUGHT_TEXT_TOO_LONG"):
         proposal_to_requests(
             {"kind": "NEXO_THOUGHT", "payload": {"entries": [{"text": "x" * 601, "refs": ["T-1"]}]}},
             root,
