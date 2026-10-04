@@ -1,0 +1,35 @@
+{
+  "stable_id": "operator-h0lcdm010-pr4-lollipop-bind-20261004",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "EXECUTOR",
+    "created_at": "2026-10-04T23:41:06Z",
+    "payload": {
+      "test_id": "T-H0LCDM26-010",
+      "inputs": [
+        {
+          "name": "planck_pr4_lollipop_data",
+          "url": "https://portal.nersc.gov/cfs/cmb/planck2020/likelihoods/planck_2020_lollipop.tar.gz",
+          "version": "Planck PR4 LoLLiPoP bundle published 2020-11-20; loader planck-npipe/lollipop@0c7421b6c24319e471a544d22b6e94870d8a7434 (v4.1.0)",
+          "sha256": "115564f7acc239f1d47ecac264c93baa702f15f814497211bd24f7ebf9f19a3c",
+          "format": "tar.gz containing ASCII spectra and FITS covariance",
+          "load": "Extract without changing ownership; use planck_2020/lollipop/cl_lolEB_NPIPE.dat, clcov_lolEB_NPIPE.fits and fiducial_lolEB_planck2018_tensor_lensedCls.dat with planck_2020_lollipop.lowlE.",
+          "checked": "Downloaded 6217890 bytes from the immutable product URL; gzip/tar structure validated. The archive contains exactly the three loader inputs. FITS covariance is a valid 64-bit image on 2880-byte blocks; both text spectra have 299 numeric rows and four columns. Internal SHA-256: data 9125f8ce5a36fafb5f43d4dddd620d8638759f0846033cea5d66f7dbb06a422d, covariance 59c527b840a852243423bf903ef2227a6076b2a217460f0f96796f05b0970155, fiducial 6f175c6edacc3e79bb2ed22300c432f7da0edd6e52b06883976da1855fe21981.",
+          "license": "GPL-3.0 loader; public Planck PR4 likelihood data"
+        },
+        {
+          "name": "planck_pr4_lollipop_likelihood_contract",
+          "url": "https://raw.githubusercontent.com/planck-npipe/lollipop/0c7421b6c24319e471a544d22b6e94870d8a7434/planck_2020_lollipop/_lollipop.yaml",
+          "version": "planck-npipe/lollipop@0c7421b6c24319e471a544d22b6e94870d8a7434 (v4.1.0)",
+          "sha256": "af3873fc19841bc140255acc39466a44d6cd457b1d585e5d34643bae96910e48",
+          "format": "YAML",
+          "load": "Cobaya defaults for planck_2020_lollipop.lowlE; lmin=2, lmax=30, Nsim=400, covariance marginalization enabled and A_planck calibration prior fixed by this file.",
+          "checked": "Downloaded from the commit-pinned raw URL; 456 UTF-8 bytes and SHA-256 verified. The file names match all three members in the validated data archive.",
+          "license": "GPL-3.0"
+        }
+      ],
+      "status": "PARTIAL",
+      "note": "Componente low-ell LoLLiPoP do Planck PR4 congelado e validado byte a byte. T-H0LCDM26-010 continua bloqueado: ainda faltam a escolha e os bytes exatos do likelihood high-ell, o componente de lensing, as combinações BAO, os priors cosmológicos de baseline e uma receita fiel; esta ligação não autoriza execução."
+    }
+  }
+}
