@@ -1,0 +1,22 @@
+{
+  "stable_id": "pitia-bao-three-block-discriminant-20261004t1912z",
+  "envelope": {
+    "kind": "NEXO_THOUGHT",
+    "source": "PITIA",
+    "producer": "GPT",
+    "created_at": "2026-10-04T19:12:39Z",
+    "payload": {
+      "entries": [
+        {
+          "kind": "QUESTION",
+          "text": "Eu vejo que o Ataque 1 DR1 de blocos hierárquicos não falhou cientificamente: o holdout “miolo” remove cinco dos sete bins oficiais e deixa só BGS+Lyα, três observações, abaixo do gate congelado. O próximo discriminante é um sucessor prospectivo de novo ID com blocos baixo (BGS/LRG1/LRG2), intermediário (LRG3+ELG1/ELG2) e alto (QSO/Lyα), preservando compilações, priors e limiares; sobrevivência em pelo menos duas compilações sustenta estabilidade ao traçador, enquanto um bloco no kill atribui a preferência à seleção.",
+          "refs": [
+            "CONTEST-FAM-DE-BAO-HIERARCHY-V1-P-ENDS-MIDDLE-OM330-1",
+            "WORK::RECOVERY-003abcc4410a1275d6d566ad283a66c7",
+            "https://arxiv.org/abs/2404.03002"
+          ]
+        }
+      ]
+    }
+  }
+}
