@@ -39,7 +39,7 @@ Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO L
 ## Gravação e acompanhamento
 Antes de escrever, resolva a Tower atual e `CONTROL.json`. Use a superfície de mutação canônica declarada ali, com persistência e readback. Não force `byDenoso/TCC@nexo/dispatch-runtime` quando o CONTROL atual marcar Git state/staging como aposentado ou congelado; referências históricas servem apenas para proveniência.
 
-Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Na rota privada Drive, prefira upload create-only de **arquivo JSON bruto UTF-8** diretamente no `NEXO_INBOX`, em uma única operação, seguido de readback dos bytes/MIME/parent. Não crie Google Doc vazio e dependa de uma segunda escrita quando upload bruto estiver disponível. Presença no inbox é entrega, não aplicação; releia receipt/Tower antes de retry. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
+Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Na rota privada Drive, prefira upload create-only de **arquivo JSON bruto UTF-8** diretamente no `NEXO_INBOX`, em uma única operação, seguido de readback dos bytes/MIME/parent. Não crie Google Doc vazio e dependa de uma segunda escrita quando upload bruto estiver disponível. Presença no inbox é entrega, não aplicação. Faça uma releitura imediata da entrega e continue trabalho independente; consulte receipt/Tower numa rodada posterior antes de retry. Não use aplicação do Writer como gate global. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
 
 ## Funções atuais: pipeline por item
 
@@ -56,13 +56,13 @@ A configuração viva tem sete papéis. Agenda atual verificada:
 
 A meta de 6 mede trabalho material, não volume administrativo. Seeds, retries, shards, downloads, smokes, leituras e duplicatas não são TESTs distintos. Se não houver 6 candidatos válidos, fazer o máximo e provar varredura real das frentes; nunca fabricar ciência para cumprir quota.
 
-A cadência não é barreira global. Cada papel consome entregas já aplicadas, inclusive de rodadas anteriores. Blocker pertence ao item. Se um item trava, registrar/encaminhar e seguir imediatamente para outro.
+A cadência não é barreira global. Cada papel consome estado já aplicado e também pode avançar trabalho próprio a partir de entregas persistidas/relidas quando esse avanço não exige efeito canônico prévio. Blocker pertence ao item. Se um item trava, registrar/encaminhar e seguir imediatamente para outro. Latência de Writer, BOARD_POST pendente ou HANDOFF ainda não aplicado nunca congela outras frentes independentes.
 
 ### Conversa e ownership entre automações
 - `BOARD_POST` é o canal de conversa direta entre papéis nomeados: PITIA, LEARNER, EXECUTOR, REFEREE_1, GUARDIAO, ENGINEER, SENTINEL, ADVISOR e demais destinos válidos do schema. Usar refs/reply_to e resolver recados consumidos.
 - `HANDOFF` é transferência de ownership e o runtime aceita somente recipient `DAILY|ADVISOR|EXECUTOR|LEARNER|EMERGENT`; sender é um desses ou DIRECTOR. ENGINEER usa ADVISOR no handoff privado.
 - PITIA, REFEREE_1, GUARDIAO e SENTINEL não criam handoff com seus nomes. Eles usam BOARD_POST; se ownership precisar mudar, pedem ao runtime role competente para criar/transicionar o HANDOFF.
-- Uma entrega com próximo consumidor não termina em prosa: precisa mensagem aplicada e, quando couber, handoff válido.
+- Uma entrega com próximo consumidor não termina em prosa: precisa mensagem persistida e relida. Confirme `APPLIED` quando o próximo passo depende de efeito canônico ou transferência de ownership; caso contrário, marque `DELIVERED` e continue outras frentes sem esperar o Writer.
 
 ### Rota operacional atual
 Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive é armazenamento canônico primário, Git state está aposentado como estado operacional, Actions científico está desabilitado por orçamento e ChatGPT runtime é a execução primária. Não forçar staging/relay Git antigo se o CONTROL vigente não o declarar como rota ativa.
