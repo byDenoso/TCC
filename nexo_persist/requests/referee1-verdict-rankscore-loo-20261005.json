@@ -1,0 +1,13 @@
+{
+  "stable_id": "referee1-verdict-rankscore-loo-20261005",
+  "envelope": {
+    "kind": "VERDICT_REVIEW",
+    "source": "REFEREE_1",
+    "producer": "GPT",
+    "created_at": "2026-10-05T14:48:57Z",
+    "payload": {
+      "test_id": "HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7",
+      "contest_test_id": "CONTEST-HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7-2"
+    }
+  }
+}
