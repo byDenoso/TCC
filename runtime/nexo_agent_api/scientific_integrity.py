@@ -1087,6 +1087,92 @@ def _guard_terminal_work_reconcile(root: Path, request: dict) -> dict | None:
     }
 
 
+def _guard_terminal_recovery_reconcile(root: Path, request: dict) -> dict | None:
+    """Supersede stale dependency-recovery WORKs without changing science."""
+    work_name = str(request.get('entity_name') or '')
+    try:
+        work = json.loads(entity_path(root, 'work', work_name).read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        work = {}
+    if not isinstance(work, dict):
+        work = {}
+    changes = request.get('changes')
+    evidence = changes.get('completion_evidence') if isinstance(changes, dict) else None
+    test_id = work.get('test_id') if isinstance(work.get('test_id'), str) else ''
+    try:
+        test = entity(root, test_id) if test_id else {}
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        test = {}
+    if not isinstance(test, dict):
+        test = {}
+
+    roadmap_id = str(test.get('roadmap_id') or '')
+    roadmap_state = ''
+    if roadmap_id:
+        roadmap_path = root / 'roadmaps' / f'{roadmap_id}.json'
+        try:
+            roadmap = json.loads(roadmap_path.read_text(encoding='utf-8')) if roadmap_path.is_file() else {}
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            roadmap = {}
+        if isinstance(roadmap, dict):
+            roadmap_state = str(roadmap.get('status') or roadmap.get('state') or roadmap.get('semantic_state') or '').upper()
+
+    terminal_roadmap = {'CLOSED', 'DONE', 'ARCHIVED', 'COMPLETE', 'COMPLETED', 'STOPPED', 'REJECTED'}
+    reason = ('TEST_ENTITY_ALREADY_TERMINAL' if terminal(test)
+              else 'ROADMAP_ALREADY_TERMINAL' if roadmap_state in terminal_roadmap
+              else '')
+    test_version = test.get('entity_version')
+    work_version = work.get('entity_version')
+    expected_evidence = {
+        'kind': 'RECOVERY_SCOPE_TERMINAL_OBSERVED',
+        'test_id': test_id,
+        'test_entity_version': test_version,
+        'test_status': str(test.get('status') or test.get('state') or '').upper(),
+        'roadmap_id': test.get('roadmap_id'),
+        'roadmap_state': roadmap_state,
+    }
+    expected_changes = {
+        'status': 'SUPERSEDED',
+        'operational_status': 'SUPERSEDED',
+        'closure_reason': reason,
+        'completion_evidence': expected_evidence,
+    }
+    from .semantics import is_private, resolve
+    test_private = bool(test.get('private')) or (bool(test_id) and is_private(resolve(test, entity_id=test_id)))
+    work_private = bool(work.get('private')) or (bool(work_name) and is_private(resolve(work, entity_id=work_name)))
+    work_terminal = str(work.get('status') or '').upper() in {
+        'DONE', 'VERIFIED', 'REJECTED', 'FAILED', 'SUPERSEDED', 'CANCELLED', 'CANCELED',
+        'ARCHIVED', 'COMPLETED', 'CLOSED_VERIFIED', 'DISCARDED', 'WITHDRAWN',
+    }
+    valid = (
+        bool(test_id)
+        and reason
+        and request.get('writer_role') == 'ADVISOR'
+        and isinstance(changes, dict)
+        and isinstance(evidence, dict)
+        and type(test_version) is int and test_version > 0
+        and type(work_version) is int and work_version > 0
+        and ('expected_version' not in request or request.get('expected_version') == work_version)
+        and work.get('id') == work_name
+        and work.get('kind') == 'DEPENDENCY_RECOVERY'
+        and (work.get('recovery') or {}).get('policy') == 'EXECUTION_RECOVERY_V1'
+        and work.get('test_id') == test_id
+        and not work_terminal
+        and test_id not in active_tests(root)
+        and not test_private
+        and not work_private
+        and evidence == expected_evidence
+        and changes == expected_changes
+    )
+    if valid:
+        return None
+    return {
+        'request_id': request.get('request_id'),
+        'accepted': False,
+        'issue': {'code': 'RECOVERY_TERMINAL_SCOPE_EVIDENCE_INVALID', 'entity_name': work_name},
+    }
+
+
 def guard_transition(root: Path, request: dict) -> dict | None:
     if request.get('event_type') == 'TEST_EXECUTION_PHASE_RECONCILED':
         if request.get('entity_kind') == 'test':
@@ -1096,6 +1182,9 @@ def guard_transition(root: Path, request: dict) -> dict | None:
     if (request.get('entity_kind') == 'work'
             and request.get('event_type') == 'WORK_RECONCILED_TERMINAL_TEST'):
         return _guard_terminal_work_reconcile(root, request)
+    if (request.get('entity_kind') == 'work'
+            and request.get('event_type') == 'DEPENDENCY_RECOVERY_RECONCILED_TERMINAL_SCOPE'):
+        return _guard_terminal_recovery_reconcile(root, request)
     if request.get('entity_kind') != 'test':
         return None
     test_id = str(request.get('entity_name') or '')
