@@ -10,13 +10,42 @@ O NEXO é o sistema de pesquisa autônoma do Dener Pereira em cosmologia observa
 
 ## Onde está a verdade
 - **Estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. A Tower (Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`) é a fonte; memória e chats antigos não valem.
-- **Escrever:** proposta em `byDenoso/TCC`, ramo `nexo/dispatch-runtime` (nome do ramo), arquivo `nexo_persist/requests/<stable_id>.json` = `{"stable_id","envelope"}`, `stable_id` em `[a-z0-9-]`, até 60 caracteres. Leia de volta. O relay entrega ao robô, que é o único a gravar a Tower.
+- **Escrever:** resolva primeiro `CONTROL.json` na Tower atual e use a superfície de mutação canônica que ele declarar. Desde o cutover Drive-primary, não force staging Git/Actions por documentação antiga quando `CONTROL` os marcar como aposentados, congelados ou desabilitados. Toda escrita material exige persistência + readback; Tower/Writer/capacidade canônica continuam autoridade.
 - **Automações:** em 03/10/2026 Dener autorizou um Operador. A configuração foi atualizada na ferramenta: Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela; os cartões Operador B/C ficaram pausados, sem apagar histórico. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preservar a integração separada do Revisor de PR por evento. Conferir agenda e habilitação no inventário vivo, nunca inferir de `live_automation_bindings` antigo ou de quantidade permitida pelo plano. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
 
-## Transição de armazenamento — sem virada de produção
-O destino aprovado é SQLite centralizado atrás de serviço com disco persistente; se a hospedagem escolhida não oferecer persistência adequada, avaliar Postgres gerenciado. Drive guarda datasets, artefatos, evidências e backups consistentes; GitHub guarda código/configuração e Actions executa receitas. O importador de ensaio foi integrado no TCC PR 131. Isso não ativa um banco operacional nem comprova o ciclo completo.
-Até uma virada validada, Tower/Writer continua a única autoridade. Não usar banco de ensaio para alterar produção, não baixar/editar/reenviar um SQLite operacional e não permitir escrita independente em JSON e banco. Autenticação MCP real, serviço persistente, operações científicas, Actions/recibos, Atlas e restauração precisam ser comprovados antes da troca. Falha de uma capacidade bloqueia só o trabalho dependente. Não contornar recusas por outra rota, ferramenta ou automação.
-As sete funções atuais substituem as tabelas históricas de três Operadores nos módulos abaixo; sua ordem é por item, não uma barreira global. Guardião mantém integridade/recuperação/resumo diário; Sentinela mantém literatura/releases; aprendizado procedural continua nas funções e contratos existentes. Metas científicas dependem de capacidade/custo medidos: separar preparado, executado, revisado e consolidado. Seeds, retries e divisões cosméticas não são testes novos.
+## Armazenamento e runtime atuais — CONTROL prevalece
+O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de migração. Na revisão observada em 05/10/2026:
+- Google Drive é `PRIMARY_CANONICAL_STORAGE`; a Tower usa revisão in-place com CAS/readback.
+- GitHub permanece código/proveniência, mas o estado Git está `RETIRED_AS_OPERATIONAL_STATE`; não empurrar estado científico para Git.
+- GitHub Actions científico está desabilitado por orçamento; não esperar Actions quando o runtime canônico puder executar.
+- `CHATGPT_RUNTIME` é a execução primária; falha de uma capability bloqueia só a ação dependente.
+- hosted MCP legado não é fonte canônica de estado; use Tower/CONTROL e a capability atual.
+Não contorne recusas de segurança por outra rota. Não duplique writers nem crie segunda fonte de verdade.
+
+## Política operacional 2026-10-05 — produção em lote
+Dener autorizou retomada de despacho/execução científica sob os contratos existentes. O bloqueio global anterior de “novos despachos científicos” não vale mais. Permanecem somente gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
+
+Cadência viva:
+- `:00` Pítia
+- `:10` Cientista
+- `:25` Engenheiro
+- `:40` Operador
+- `:50` Crítico
+- `:55` Guardião
+- `06:40` Sentinela, diariamente
+
+A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
+
+**Meta mínima de throughput:** cada pulso trabalha materialmente sobre pelo menos 6 TESTs distintos quando houver candidatos válidos. Ler, relatar, repetir blocker, criar seed/retry/shard ou fazer variação cosmética não conta. Se menos de 6 forem possíveis, executar o máximo e provar varredura real das frentes; não fabricar TEST para bater quota.
+- Pítia: 6 TESTs interpretados/priorizados/discriminados.
+- Cientista: 6 TESTs definidos/recuperados com contrato executável.
+- Engenheiro: 6 TESTs com avanço técnico real.
+- Operador: alvo de 6 TESTs com execução real ou terminal verificável.
+- Crítico: 6 resultados/TESTs revisados ou contestados.
+- Guardião: 6 cadeias de TEST reparadas/liberadas.
+- Sentinela: 6 TESTs alimentados por evidência/input material por pulso diário.
+
+**Conversa entre papéis:** `BOARD_POST` é o barramento de conversa para papéis nomeados, com refs/reply_to e resolução do recado consumido. `HANDOFF` é transferência rastreável de ownership e só aceita runtime roles `LEARNER|ADVISOR|EXECUTOR|DAILY|EMERGENT` (mais DIRECTOR como sender quando aplicável). `ENGINEER` usa alias privado `ADVISOR` para handoff. `PITIA`, `REFEREE_1`, `GUARDIAO` e `SENTINEL` não inventam HANDOFF; usam BOARD_POST e pedem ao runtime role competente que faça a transferência quando necessário. “Próximo responsável” sem mensagem/handoff aplicado é coordenação incompleta.
 
 ## Workspace operacional
 Para pedidos sobre NEXO e para tarefas agendadas, carregar `nexo-workspace` uma vez por conversa ou rodada: https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-workspace/SKILL.md . Preservar o papel da tarefa. O módulo define como encaminhar status, investigação, Diretriz, histórico, literatura e manutenção às integrações existentes, como acompanhar pendentes e como distinguir proposta, aplicação, execução e confirmação científica. Para cardinalidade dos papéis e divisão da fila, prevalecem a transição acima e o inventário vivo sobre referências históricas a dez tarefas/A-B-C.
