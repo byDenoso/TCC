@@ -897,6 +897,23 @@ def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> di
     return report
 
 
+def _github_science_dispatch_enabled(raw_live_tower: bytes) -> bool:
+    """Honor CONTROL: never enqueue GitHub science when that surface is disabled."""
+    try:
+        live = read_live_tower_bytes(raw_live_tower)
+        entry = (live.get("files") or {}).get("CONTROL.json") or {}
+        control = entry.get("value") if isinstance(entry, dict) else {}
+        if not isinstance(control, dict):
+            return True
+        role = str(control.get("github_actions_science_role") or "").upper()
+    except (OSError, ValueError, TypeError, KeyError):
+        return True
+    return role not in {
+        "DISABLED", "DISABLED_BUDGET_EXHAUSTED", "RETIRED", "FROZEN",
+        "RETIRED_AS_OPERATIONAL_STATE",
+    }
+
+
 def _runner_battery_updates(path: str) -> list[dict]:
     """Load only Writer-produced BATTERY_STATUS observations."""
     if not path or not Path(path).is_file():
@@ -1114,7 +1131,8 @@ def _main(argv: list[str]) -> int:
                     report["status"] = "READY_TO_UPLOAD"
             # Batteries queued by the Executor: hand their specs to the dispatcher step and mark them DISPATCHED.
             queued = _queued_batteries(packed or raw)
-            if queued and dispatch_dir:
+            github_science_enabled = _github_science_dispatch_enabled(packed or raw)
+            if queued and dispatch_dir and github_science_enabled:
                 from .scientific_integrity import WRITER_DISPATCH_TOKEN
 
                 Path(dispatch_dir).mkdir(parents=True, exist_ok=True)
@@ -1131,6 +1149,12 @@ def _main(argv: list[str]) -> int:
                 report["after"] = extra.get("after", report.get("after"))
                 report["status"] = "READY_TO_UPLOAD"
                 dispatched = [b["id"] for b in queued]
+            elif queued and dispatch_dir and not github_science_enabled:
+                print(json.dumps({
+                    "status": "GITHUB_SCIENCE_DISPATCH_DISABLED_BY_CONTROL",
+                    "queued": len(queued),
+                    "execution_primary": "CHATGPT_RUNTIME",
+                }))
             if packed is None:
                 if not items:
                     print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
