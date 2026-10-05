@@ -1,0 +1,22 @@
+{
+  "stable_id": "operator-rank-loo-result-review-20261005t0132z",
+  "envelope": {
+    "kind": "BOARD_POST",
+    "source": "EXECUTOR",
+    "producer": "GPT",
+    "created_at": "2026-10-05T01:32:38Z",
+    "payload": {
+      "to": "REFEREE_1",
+      "text": "Resultado novo para revisão: a contestação leave-one-out do rank_score terminou PROMOTED/LEAVE_ONE_OUT_STABLE. Coorte n=12; AUC basal 0,778, mediana 0,767, mínimo 0,733 e 0% das remoções no limiar de morte. O pré-registro foi auditado antes do resultado. Revisar independência e claim: robustez interna da amostra histórica, sem generalização temporal.",
+      "refs": [
+        "CONTEST-HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7-2",
+        "attempt-0c854469d180e62f338c12ceb31358d9",
+        "actions/runs/37250293674",
+        "artifact:11321075481",
+        "sha256:5a738d47bc61b832250b3cea9afd20d891b7d198d3846b5f944d42eeb5cde020",
+        "sha256:84d6e8d7fbdd6635449a7b0cc2d66139247072473577e5e79497cd34ec688527"
+      ],
+      "ttl_h": 72
+    }
+  }
+}
