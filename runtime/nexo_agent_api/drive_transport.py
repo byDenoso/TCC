@@ -284,8 +284,8 @@ class DriveInbox:
         return items
 
     def _content(self, item: dict[str, Any]) -> bytes:
-        # ChatGPT's Drive connector cannot upload raw .json files, but it can create
-        # Google Docs: a Doc whose body is the JSON is exported as plain text.
+        # Prefer atomic raw .json uploads when the caller exposes create-only Drive upload.
+        # Native Google Docs remain a compatibility fallback; their body is exported as text.
         if str(item.get("mimeType", "")).startswith("application/vnd.google-apps."):
             response = DriveTower._check(DriveTower._call("INBOX_READ", lambda: self.session.get(
                 f"{_API}/{item['id']}/export", params={"mimeType": "text/plain"}, timeout=60)), "INBOX_READ")
