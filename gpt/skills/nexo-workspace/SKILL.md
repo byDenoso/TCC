@@ -37,37 +37,35 @@ Para análise local, usar a cópia autenticada e o bundle utilizado pelo workflo
 Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO Lite`; ler a identidade do SKILL.md antes de usar. Preservar pastas existentes. Pesquisar histórico por referências, não por semelhança de nomes apenas.
 
 ## Gravação e acompanhamento
-Ler `nexo-operations` e `gpt/PROPOSAL_SCHEMA.md`. Preservar o fluxo atual:
-`byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json` -> relay -> `nexo-inbox` -> Writer -> Tower -> projeção.
+Antes de escrever, resolva a Tower atual e `CONTROL.json`. Use a superfície de mutação canônica declarada ali, com persistência e readback. Não force `byDenoso/TCC@nexo/dispatch-runtime` quando o CONTROL atual marcar Git state/staging como aposentado ou congelado; referências históricas servem apenas para proveniência.
 
-Essa é a rota das ChatGPT Tasks habilitadas sob `nexo-master-router-0.5.0`.
-`automations/OPERATING_CONTRACT.md` distingue os comandos do adapter Claude Code/PC:
-seu leitor de inboxes não autoriza as Tasks a gravar diretamente em `nexo-inbox`,
-abrir issue como fallback ou fazer upload da Tower. Handoffs privados seguem
-`PROPOSAL_SCHEMA` e o canal Drive; uma recusa não autoriza trocar de rota.
-
-Usar stable_id determinístico em `[a-z0-9-]`, com até 60 caracteres; reutilizar no retry. Conferir fila e recibos antes de repetir. Conteúdo diferente com a mesma identidade é conflito. Releitura do staging prova somente staging; confirmar separadamente relay e aplicação.
-
-Enviar pelo Git público somente propostas sanitizadas permitidas. Manter dados privados, notas pessoais, handoffs privados e transcrições no Drive privado. Não gravar Tower diretamente. Em recusa de autorização, acesso ou política, interromper a ação e relatar; não contornar trocando formato ou serviço. Retentar apenas falhas técnicas pelos caminhos autorizados.
-
-Registrar Diretriz aceita em `NEXO Lite/pendentes`, com ID estável, objetivo, referência da proposta, estado comprovado e próxima verificação. Não prometer data de resultado sem evidência. Memória nativa indisponível não impede a nota operacional autorizada no Drive.
+Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
 
 ## Funções atuais: pipeline por item
 
-A configuração verificada tem sete papéis agendados e um Operador único. Conferir habilitação e horários na ferramenta a cada alteração; esta tabela documenta a configuração observada e não altera as tarefas. Operadores B/C e o cartão `Bom dia` antigo ficam pausados, com histórico preservado.
-
-O Writer externo usa o cron `7,22,37,52 * * * *` (UTC). Os minutos coincidem em BRT. A ordem é uma dependência por item; trabalho elegível não espera uma barreira global entre papéis.
-
-| Tarefa | Gatilho observado BRT | Entrada -> saída | Próximo consumidor |
+A configuração viva tem sete papéis. Agenda atual verificada:
+| Tarefa | Gatilho BRT | Produção mínima por pulso | Próximo consumidor |
 |---|---|---|---|
-| Engenheiro | :05, toda hora | recuperações/RECIPE_REQUEST -> receita e smoke | Revisor e Operador |
-| Guardião | :07, toda hora | saúde, recibos, recuperação e integridade -> encaminhamento | papéis; às 07:07 também resumo diário ao Dener |
-| Crítico | :09, toda hora | resultados válidos novos -> contestação independente | Writer e Operador |
-| Cientista | :12, toda hora | recuperações, diretrizes, literatura e lacunas -> desenho congelado | Engenheiro/Operador via Writer |
-| Pítia | :15, toda hora | evidências revisadas -> interpretação e próxima ação | Cientista e Dener |
-| Operador | :30, toda hora | toda a fila READY elegível, acompanhamento e resíduos -> execução/recibos | Writer e Crítico |
-| Sentinela | 06:40 diário | literatura/releases -> fonte, dado ou sinal com referência | Cientista/Engenheiro/Crítico |
-| Revisor de PR | evento de PR, quando habilitado | diff de receita -> revisão independente | autor e integração |
+| Pítia | :00, toda hora | 6 TESTs interpretados/priorizados/discriminados | Cientista/Crítico/Operador |
+| Cientista | :10, toda hora | 6 TESTs definidos/recuperados com contrato executável | Engenheiro/Operador |
+| Engenheiro | :25, toda hora | 6 TESTs com avanço técnico real | Operador |
+| Operador | :40, toda hora | alvo de 6 TESTs executados ou terminais verificáveis | Crítico/Pítia |
+| Crítico | :50, toda hora | 6 resultados/TESTs revisados ou contestados | Operador/Pítia/Cientista |
+| Guardião | :55, toda hora | 6 cadeias de TEST reparadas/liberadas | todos os papéis |
+| Sentinela | 06:40 diário | 6 TESTs alimentados com evidência/input material | Cientista/Engenheiro/Crítico |
+
+A meta de 6 mede trabalho material, não volume administrativo. Seeds, retries, shards, downloads, smokes, leituras e duplicatas não são TESTs distintos. Se não houver 6 candidatos válidos, fazer o máximo e provar varredura real das frentes; nunca fabricar ciência para cumprir quota.
+
+A cadência não é barreira global. Cada papel consome entregas já aplicadas, inclusive de rodadas anteriores. Blocker pertence ao item. Se um item trava, registrar/encaminhar e seguir imediatamente para outro.
+
+### Conversa e ownership entre automações
+- `BOARD_POST` é o canal de conversa direta entre papéis nomeados: PITIA, LEARNER, EXECUTOR, REFEREE_1, GUARDIAO, ENGINEER, SENTINEL, ADVISOR e demais destinos válidos do schema. Usar refs/reply_to e resolver recados consumidos.
+- `HANDOFF` é transferência de ownership e o runtime aceita somente recipient `DAILY|ADVISOR|EXECUTOR|LEARNER|EMERGENT`; sender é um desses ou DIRECTOR. ENGINEER usa ADVISOR no handoff privado.
+- PITIA, REFEREE_1, GUARDIAO e SENTINEL não criam handoff com seus nomes. Eles usam BOARD_POST; se ownership precisar mudar, pedem ao runtime role competente para criar/transicionar o HANDOFF.
+- Uma entrega com próximo consumidor não termina em prosa: precisa mensagem aplicada e, quando couber, handoff válido.
+
+### Rota operacional atual
+Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive é armazenamento canônico primário, Git state está aposentado como estado operacional, Actions científico está desabilitado por orçamento e ChatGPT runtime é a execução primária. Não forçar staging/relay Git antigo se o CONTROL vigente não o declarar como rota ativa.
 
 ### Invariante READY
 `READY` significa executável agora, não “quase pronto”. Exigir definição científica congelada e suficiente, dados/entradas canônicos disponíveis e vinculados, recipe/capability executável, ausência de blocker ou `WAIT_DEPENDENCY`, identidade estável e nenhuma execução equivalente staged/RUNNING/terminal. Se faltar qualquer requisito, corrigir pelo fluxo autorizado para `CHECKPOINTED` ou `WAIT_DEPENDENCY` e criar o binding/reparo; não contar como despacho.
