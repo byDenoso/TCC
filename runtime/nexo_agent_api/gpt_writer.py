@@ -18,6 +18,7 @@ were rejected (those stay in the inbox).
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import shutil
@@ -243,6 +244,71 @@ def _existing_effect(root: Path, *, intent: str, request: dict, payload: dict,
     return None
 
 
+def _runner_battery_identity(payload: dict) -> str:
+    """Identify a source observation, never its position or mutable result content.
+
+    Older collectors omit run_attempt/artifact_id, so source execution timestamps
+    and per-test attempt IDs retain reruns without treating changed result bytes
+    as a new observation. Missing source fields stay missing (fail conservatively).
+    """
+    fields = ("battery_id", "status", "run_ref", "run_id", "run_attempt", "attempt_id",
+              "artifact_id", "artifact_sha256", "started_at", "completed_at")
+    identity = {key: payload[key] for key in fields if key in payload}
+    if "started_tests" in payload:
+        identity["started_tests"] = payload["started_tests"]
+    sources = []
+    for result in (payload.get("results") if isinstance(payload.get("results"), list) else []):
+        if isinstance(result, dict):
+            sources.append({key: result[key] for key in (
+                "test_id", "attempt_id", "run_attempt", "artifact_id", "artifact_sha256",
+                "recipe_sha256", "started_at", "executed_at",
+            ) if key in result})
+    identity["result_sources"] = sorted(sources, key=lambda row: json.dumps(row, sort_keys=True))
+    return "runner:battery:v2:" + operation_receipts.sha256(identity)[7:]
+
+
+def _migrate_runner_battery_receipt(root: Path, item: dict, intent: str) -> dict | None:
+    """Bind exact legacy observations to v2 without reopening their retry gates.
+
+    Legacy receipts contain hashes, not source metadata. Only an exact envelope
+    (or pre-conversion failure) hash can prove the match; battery ID alone cannot.
+    Keep the old receipt immutable and persist a private, linked v2 envelope once.
+    """
+    payload = item.get("payload")
+    if (item.get("kind") != "BATTERY_STATUS" or item.get("source") != "WRITER_ROBOT"
+            or item.get("_inbox_source") != "RUNNER_OBSERVATION"
+            or not isinstance(payload, dict) or intent != _runner_battery_identity(payload)):
+        return None
+    digest = operation_receipts.payload_hash(item, trusted_transport=True)
+    pattern = re.compile(r"runner:battery:[0-9]+:" + re.escape(str(payload.get("battery_id") or "")))
+    matches = []
+    for row in operation_receipts.load_receipts(root):
+        old_intent = row["intent_id"]
+        if (not pattern.fullmatch(old_intent) or row["payload_sha256"] != digest
+                or row["effect_id"] not in {
+                    operation_receipts.envelope_effect_id(old_intent),
+                    operation_receipts.effect_id({}, intent=old_intent, index=0),
+                }):
+            continue
+        matches.append(row)
+    if not matches:
+        return None
+    # Historical duplicates may span several positions. A durable terminal result
+    # must not be hidden by a later deferred duplicate from another position.
+    terminal = [row for row in matches if row["outcome"] == "REJECTED_TERMINAL"]
+    applied = [row for row in matches if row["outcome"] in {"APPLIED", "ALREADY_APPLIED"}]
+    prior = (terminal or applied or matches)[-1]
+    migrated = operation_receipts.build_receipt(
+        intent=intent, payload_sha256=digest, effect=operation_receipts.envelope_effect_id(intent),
+        outcome=prior["outcome"], source_revision=prior["source_revision"],
+        result_revision=prior["result_revision"], reason_code=prior["reason_code"],
+        retry_condition=prior["retry_condition"], supersedes=prior["receipt_id"],
+        occurred_at=prior["occurred_at"],
+    )
+    operation_receipts.persist_receipt(root, migrated)
+    return migrated
+
+
 def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None, operational_work_authorized: bool = False) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
     contract_versions = {"operation_receipts": operation_receipts.CONTRACT}
@@ -314,6 +380,11 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             envelope_prior = operation_receipts.latest_envelope_receipt(
                 root, intent=intent, payload_sha256=envelope_payload_hash,
             )
+            if (envelope_prior is None and intent.startswith("runner:battery:v2:")
+                    and not operation_receipts.envelope_receipts(root, intent=intent)):
+                envelope_prior = _migrate_runner_battery_receipt(root, item, intent)
+                if envelope_prior is not None:
+                    changed_receipt_ledger = True
             if envelope_prior:
                 if (envelope_prior["outcome"] in {"DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"}
                         and operation_receipts.retry_allowed(envelope_prior, envelope_source)):
@@ -906,16 +977,21 @@ def _runner_battery_updates(path: str) -> list[dict]:
     except (OSError, ValueError):
         return []
     result = []
-    for index, update in enumerate(updates if isinstance(updates, list) else []):
+    for update in updates if isinstance(updates, list) else []:
         payload = update.get("payload") if isinstance(update, dict) else None
         if (isinstance(payload, dict)
                 and set(update) == {"kind", "source", "payload"}
                 and update.get("kind") == "BATTERY_STATUS"
                 and update.get("source") == "WRITER_ROBOT"
+                and ("results" not in payload or isinstance(payload["results"], list))
                 and str(payload.get("battery_id") or "")):
+            try:
+                identity = _runner_battery_identity(payload)
+            except (TypeError, ValueError):
+                continue  # Malformed/non-finite source metadata cannot stop other observations.
             result.append({**update, "_inbox_source": "RUNNER_OBSERVATION",
-                           "_inbox_name": f"battery-update-{index}-{payload['battery_id']}",
-                           "_inbox_id": f"runner:battery:{index}:{payload['battery_id']}"})
+                           "_inbox_name": "battery-update-" + identity.rsplit(":", 1)[-1],
+                           "_inbox_id": identity})
     return result
 
 
