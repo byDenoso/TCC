@@ -220,6 +220,53 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(inbox[0]["work_envelope"]["recovery"]["route_generation"], 3)
         self.assertEqual(self.works()[0]["owner_role"], "ADVISOR")
 
+    def test_terminal_test_supersedes_dependency_recovery_without_changing_science(self):
+        self.test.pop("data_binding"); self.put(self.test); self.reconcile()
+        recovery = next(w for w in self.works() if w.get("kind") == "DEPENDENCY_RECOVERY")
+        self.assertEqual(recovery["status"], "WAIT_DEPENDENCY")
+        terminal = self.terminal_test()
+        before = copy.deepcopy(s.entity(self.root, "TEST-A"))
+
+        receipts = self.reconcile()
+
+        self.assertEqual(len(receipts), 1)
+        recovery = next(w for w in self.works() if w.get("kind") == "DEPENDENCY_RECOVERY")
+        self.assertEqual(recovery["status"], "SUPERSEDED")
+        self.assertEqual(recovery["operational_status"], "SUPERSEDED")
+        self.assertEqual(recovery["closure_reason"], "TEST_ENTITY_ALREADY_TERMINAL")
+        self.assertEqual(recovery["completion_evidence"]["kind"], "RECOVERY_SCOPE_TERMINAL_OBSERVED")
+        self.assertEqual(recovery["completion_evidence"]["test_entity_version"], terminal["entity_version"])
+        self.assertEqual(s.entity(self.root, "TEST-A"), before)
+
+    def test_closed_roadmap_supersedes_existing_dependency_recovery(self):
+        self.test["roadmap_id"] = "RM-CLOSED"
+        self.test.pop("data_binding")
+        save(self.root, "roadmaps/RM-CLOSED.json", {"id": "RM-CLOSED", "status": "ACTIVE"})
+        self.put(self.test)
+        self.reconcile()
+        recovery = next(w for w in self.works() if w.get("kind") == "DEPENDENCY_RECOVERY")
+        self.assertEqual(recovery["status"], "WAIT_DEPENDENCY")
+
+        save(self.root, "roadmaps/RM-CLOSED.json", {"id": "RM-CLOSED", "status": "CLOSED"})
+        receipts = self.reconcile()
+
+        self.assertEqual(len(receipts), 1)
+        recovery = next(w for w in self.works() if w.get("kind") == "DEPENDENCY_RECOVERY")
+        self.assertEqual(recovery["status"], "SUPERSEDED")
+        self.assertEqual(recovery["closure_reason"], "ROADMAP_ALREADY_TERMINAL")
+        self.assertEqual(recovery["completion_evidence"]["roadmap_state"], "CLOSED")
+        self.assertEqual(s.entity(self.root, "TEST-A")["status"], "READY")
+
+    def test_active_attempt_prevents_dependency_recovery_supersession(self):
+        self.test.pop("data_binding"); self.put(self.test); self.reconcile()
+        self.terminal_test()
+        save(self.root, "evolution/batteries.json", {"batteries": [{
+            "id": "BAT-A", "status": "RUNNING", "tests": [{"test_id": "TEST-A"}],
+        }]})
+        self.assertEqual(r.reconcile_requests(self.root), [])
+        recovery = next(w for w in self.works() if w.get("kind") == "DEPENDENCY_RECOVERY")
+        self.assertEqual(recovery["status"], "WAIT_DEPENDENCY")
+
     def exact_execution_work(self, *, work_id="WORK::TEST-A", owner="EXECUTOR",
                              private=False, semantic=None, entity_version=1):
         work = {
