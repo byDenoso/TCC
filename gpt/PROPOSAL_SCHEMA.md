@@ -13,11 +13,14 @@ Envelope (um arquivo ou documento por proposta):
 ```
 Nome: `<utc>-<kind>-<slug>`.
 
-**Transporte público vigente:** grave propostas sanitizadas em
-`byDenoso/TCC@nexo/dispatch-runtime:nexo_persist/requests/<stable_id>.json`.
-O relay entrega ao ramo público `nexo-inbox`; esse destino comprova transporte, não aplicação.
-Preserve stable_id e bytes no retry. Recibo exige hash exato. Recibo ausente, erro de leitura,
-conflito e rejeição terminal são resultados distintos. O MCP hospedado mantém leitura e pode anunciar operações autenticadas específicas; confira as ferramentas e o contrato de persistência realmente disponíveis. Capability publicada não prova acesso da tarefa agendada e não autoriza trocar de transporte.
+**Transporte público/operacional:** resolva primeiro o `CONTROL.json` da Tower viva. Se
+`github_state_role` estiver `RETIRED_AS_OPERATIONAL_STATE` ou o alvo Git estiver congelado, **não**
+trate `byDenoso/TCC@nexo/dispatch-runtime` como rota vigente de estado; Git permanece código e
+proveniência. Use a superfície de mutação/ingress declarada pelo CONTROL atual e faça readback da
+Tower/receipt. O staging Git abaixo é apenas compatibilidade histórica quando explicitamente
+reativado pelo CONTROL. Preserve identidade e bytes no retry; recibo ausente, erro de leitura,
+conflito e rejeição terminal são resultados distintos. Capability publicada não prova acesso da
+tarefa agendada e não autoriza trocar de transporte.
 
 **Privacidade e destino:** GitHub é público e aceita somente propostas
 sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de
