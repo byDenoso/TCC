@@ -12,6 +12,8 @@ from .service import TowerAgentIssue
 from .tower_paths import entity_path, json_file
 
 RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
+READ_ONLY_ROLES = {"REFEREE_1", "REFUTADOR"}
+HANDOFF_READ_ROLES = RUNTIME_ROLES | READ_ONLY_ROLES
 SEND_ROLES = RUNTIME_ROLES | {"DIRECTOR"}
 ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
@@ -402,7 +404,7 @@ def emit_handoff(
 
 def inbox_for(self, role: str) -> list[dict]:
     recipient = role.upper()
-    if recipient not in RUNTIME_ROLES:
+    if recipient not in HANDOFF_READ_ROLES:
         raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": recipient})
     items = [
         event
