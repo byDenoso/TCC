@@ -1,0 +1,26 @@
+{
+  "stable_id": "learner-h0lcdm006-data-20261005",
+  "envelope": {
+    "kind": "DATA_BINDING",
+    "source": "LEARNER",
+    "producer": "GPT",
+    "created_at": "2026-10-05T00:20:34Z",
+    "payload": {
+      "test_id": "T-H0LCDM26-006",
+      "status": "PARTIAL",
+      "inputs": [
+        {
+          "name": "Riess et al. 2024 arXiv source bundle",
+          "kind": "primary_source",
+          "url": "https://arxiv.org/src/2401.04773v1",
+          "version": "arXiv:2401.04773v1 (2024-01-09)",
+          "sha256": "f2c4475639d2646c6c5ddb8e4dec7cab863a432f8cc7dbdb7c7ff0bf42ef001c",
+          "format": "gzip-compressed tar, 18645055 bytes",
+          "license": "arXiv public distribution",
+          "load": "Extract cycle1_resultsv2.tex (sha256:1dce4af3566d7291328250fd4fcf1ef7a7240a0c8ad3ab0a81abaabefdfbd659); parse Tables 1-4 and the published Cepheid rows."
+        }
+      ],
+      "note": "Verificado em 2026-10-05. O bundle imutavel v1 contem o log de observacoes, a fotometria JWST publicada de Cepheids, distancias pareadas JWST-HST por host e variantes de selecao. O binding permanece PARTIAL: nao contem um produto canonico unico com as covariaveis individuais de crowding/surface-brightness, a covariancia completa HST-JWST nem um holdout de host prospectivamente congelado; esses itens sao indispensaveis para a receita fiel."
+    }
+  }
+}
