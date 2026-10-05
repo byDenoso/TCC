@@ -48,6 +48,19 @@ class WatchdogActionabilityTest(unittest.TestCase):
             self.assertIn("contest", stale)
 
 
+class WriterDispatchControlTest(unittest.TestCase):
+    def test_github_science_dispatch_respects_disabled_control(self):
+        raw = json.dumps({"files": {"CONTROL.json": {"value": {
+            "github_actions_science_role": "DISABLED_BUDGET_EXHAUSTED",
+            "execution_primary": "CHATGPT_RUNTIME",
+        }}}}).encode()
+        self.assertFalse(gpt_writer._github_science_dispatch_enabled(raw))
+
+    def test_legacy_control_without_explicit_disable_keeps_compatibility(self):
+        raw = json.dumps({"files": {"CONTROL.json": {"value": {}}}}).encode()
+        self.assertTrue(gpt_writer._github_science_dispatch_enabled(raw))
+
+
 class RobotPersistenceTest(unittest.TestCase):
     def test_no_op_family_stage_never_discards_previously_applied_proposals(self):
         tower = Mock()
