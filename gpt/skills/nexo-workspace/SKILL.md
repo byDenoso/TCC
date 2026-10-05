@@ -39,7 +39,7 @@ Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO L
 ## Gravação e acompanhamento
 Antes de escrever, resolva a Tower atual e `CONTROL.json`. Use a superfície de mutação canônica declarada ali, com persistência e readback. Não force `byDenoso/TCC@nexo/dispatch-runtime` quando o CONTROL atual marcar Git state/staging como aposentado ou congelado; referências históricas servem apenas para proveniência.
 
-Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
+Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Na rota privada Drive, prefira upload create-only de **arquivo JSON bruto UTF-8** diretamente no `NEXO_INBOX`, em uma única operação, seguido de readback dos bytes/MIME/parent. Não crie Google Doc vazio e dependa de uma segunda escrita quando upload bruto estiver disponível. Presença no inbox é entrega, não aplicação; releia receipt/Tower antes de retry. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
 
 ## Funções atuais: pipeline por item
 
