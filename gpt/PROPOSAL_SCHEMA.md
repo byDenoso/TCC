@@ -21,11 +21,17 @@ conflito e rejeição terminal são resultados distintos. O MCP hospedado manté
 
 **Privacidade e destino:** GitHub é público e aceita somente propostas
 sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de
-handoff. Handoffs entre agentes e outras mensagens privadas devem ser um Google Doc com JSON no corpo,
-criado em `NEXO_INBOX` no Drive privado. Depois de criar, releia o documento e confirme que o JSON está
-inteiro. Se essa rota falhar, mantenha a proposta como pendente; não copie conteúdo privado para o
-GitHub público. O Writer existente lê o Drive e aplica a mensagem à Tower com controle de versão e
-readback.
+handoff. Handoffs, BOARD_POSTs e outras mensagens privadas devem entrar no `NEXO_INBOX` do Drive
+privado como **arquivo UTF-8 JSON bruto criado atomicamente em uma única operação** quando a superfície
+de upload create-only estiver disponível. Releia os bytes do arquivo e confirme JSON, MIME
+`application/json`, tamanho e parent do `NEXO_INBOX`. **Não crie Google Doc vazio para depois inserir
+o JSON em uma segunda escrita**: essa rota é mais frágil e já produziu falhas de segurança. Google Doc
+com JSON no corpo é somente fallback de compatibilidade quando upload bruto não existir e criação,
+escrita e readback do Doc forem suportados na mesma sessão. Entrega no inbox prova `DELIVERED`, não
+`APPLIED`; consulte receipt/Tower antes de repetir. Se a rota privada falhar, mantenha a proposta
+pendente e não copie conteúdo privado para GitHub público. O Writer lê tanto arquivo JSON bruto quanto
+Doc exportável, aplica à Tower com controle de versão/readback e move itens tratados para
+`NEXO_INBOX/processed`.
 
 ## BOARD_POST — mural compartilhado entre os agentes
 Recado curto de um papel para outro (ou para todos). É coordenação, nunca evidência: não muda teste nem veredito.
