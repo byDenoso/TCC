@@ -1,0 +1,40 @@
+{
+  "stable_id": "engineer-rank-loo-bind-bb5f-2-20261005",
+  "envelope": {
+    "kind": "RECIPE_BIND",
+    "source": "ENGINEER",
+    "created_at": "2026-10-05T01:06:56Z",
+    "payload": {
+      "test_id": "CONTEST-HYP-GW-TCC-BB5F5271E227A46CFE907BF477E00AD7-2",
+      "recipe": "rank_score_leave_one_out",
+      "params": {
+        "projection_url": "https://raw.githubusercontent.com/byDenoso/Pantheon/4f7fe6980476a4c1cd00c205a85336269153b35a/nexo-one/executor-runtime/snapshots/public-projection-20260930-194720.json.gz",
+        "projection_version": "4f7fe6980476a4c1cd00c205a85336269153b35a",
+        "projection_sha256": "8b4c0da9ddb63b07f1043c53a1dab3cfd7d88cf3ec6c372ee63d00a2b1888b8b",
+        "cohort_ids": [
+          "HYP-GW-SCHEDULED-LEARNER-HYPOTHESIS-A67092558F28417C",
+          "HYP-GW-TCC-66231A52F4BD983F90A9E18699DFCB8D-0",
+          "META-BATTERY26-001-RUNNER-CANARY",
+          "META-CAMPAIGN26-001-OBJECTIVE-ATTRIBUTION",
+          "META-EVENT26-001-REPLAY-SIGNATURE",
+          "META-RELAY26-001-SCHEDULED-PERSISTENCE-YIELD",
+          "META-REVIEW26-001-SEMANTIC-COVERAGE",
+          "META-ROADMAP26-001-AUTOATTACH-REPAIR",
+          "META-UNAPPLIED26-001-STALE-DEADLETTER",
+          "DMN26-006-JOINT-SUBSTRUCTURE-HOLDOUT",
+          "META-TRANSPORT26-001-CLEAN-BRIDGE",
+          "T-H0LSS26-001-ENVIRONMENT-RESIDUAL"
+        ],
+        "expected_n": 12,
+        "expected_promoted": 6,
+        "expected_non_promoted": 6,
+        "expected_auc": 0.7777777777777778,
+        "success_median_ge": 0.7,
+        "success_min_ge": 0.6,
+        "kill_auc_le": 0.55,
+        "kill_fraction_ge": 0.25,
+        "kill_median_le": 0.6
+      }
+    }
+  }
+}
