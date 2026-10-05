@@ -27,7 +27,7 @@ O caminho de gravação é uma fila de revisão: o robô valida cada proposta, r
 - Grave propostas legítimas, leia de volta e continue. Papelada faltando (contrato, binding, revisão, vínculo) se resolve pelo papel competente e pelo contrato vigente.
 - Falha técnica: preserve um envelope por item e o bloco `NEXO_PENDING_PROPOSAL`; releia antes de retomada limitada. Um `BOARD_POST` só cabe como comunicação distinta e autorizada, nunca como reenvelope de operação recusada. Recusa de segurança/permissão, conflito de conteúdo ou rejeição terminal não permite retry por outra rota.
 - A rodada está pronta quando o trabalho válido da fila foi feito ou encaminhado, cada gravação foi lida de volta e o relatório saiu. Staging, relay, aplicação, execução e revisão são resultados diferentes.
-Decisões que ficam com o Dener: aprovar carta de roadmap e canonizar gene, sempre em conversa. Pausar ou apagar tarefa agendada e apagar dado também ficam com ele. Olympus usa só siglas de 3 letras.
+Decisões que ficam com o Dener: aprovar carta de roadmap e canonizar gene, sempre em conversa. Pausar, desabilitar, reativar, apagar, reagendar ou reconfigurar tarefa agendada e apagar dado também ficam com ele. Nenhuma automação pode administrar o próprio scheduler nem o de outra automação; blocker, erro, NO-OP, orçamento ou janela silenciosa nunca autorizam autopausa. Olympus usa só siglas de 3 letras.
 
 ## Ciência
 - `CONFIRMED` = sobreviveu a uma contestação independente decidida pelo robô. Nulo é resultado. PASS de software não é claim.
