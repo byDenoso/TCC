@@ -18,6 +18,7 @@ POLICY = "EXECUTION_RECOVERY_V1"
 ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
 TERMINAL_WORK = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED", "CANCELLED", "CANCELED",
                  "ARCHIVED", "COMPLETED", "CLOSED_VERIFIED", "DISCARDED", "WITHDRAWN"}
+TERMINAL_ROADMAP = {"CLOSED", "DONE", "ARCHIVED", "COMPLETE", "COMPLETED", "STOPPED", "REJECTED"}
 
 
 def _entity_version(value: Any) -> int | None:
@@ -34,6 +35,21 @@ def _public(entity: dict) -> bool:
 def _entities(root: Path, kind: str) -> list[dict]:
     return [integrity.read(root, p.relative_to(root).as_posix())
             for p in sorted((root / "entities" / kind).glob("*.json"))]
+
+
+def _roadmap_state(root: Path, roadmap_id: Any) -> str:
+    """Return the canonical roadmap lifecycle state without inferring one."""
+    roadmap_id = str(roadmap_id or "")
+    if not roadmap_id:
+        return ""
+    path = root / "roadmaps" / f"{roadmap_id}.json"
+    if not path.is_file():
+        return ""
+    try:
+        roadmap = integrity.read(root, path.relative_to(root).as_posix())
+    except (OSError, ValueError, TypeError):
+        return ""
+    return str(roadmap.get("status") or roadmap.get("state") or roadmap.get("semantic_state") or "").upper()
 
 
 def fingerprint(test: dict) -> str:
@@ -173,6 +189,57 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
         # even if a legacy TEST simultaneously carries a terminal-looking state.
         if tid in active:
             continue
+
+        # A dependency-recovery WORK has no legitimate future once either its
+        # TEST or owning roadmap is terminal.  Supersede only the operational
+        # repair object; never mutate the TEST, result, review, binding or
+        # frozen scientific contract.
+        fp = fingerprint(test)
+        recovery_work = work_by_id.get("WORK::RECOVERY-" + fp[:32])
+        roadmap_state = _roadmap_state(root, test.get("roadmap_id"))
+        recovery_reason = (
+            "TEST_ENTITY_ALREADY_TERMINAL" if integrity.terminal(test)
+            else "ROADMAP_ALREADY_TERMINAL" if roadmap_state in TERMINAL_ROADMAP
+            else ""
+        )
+        recovery_version = _entity_version((recovery_work or {}).get("entity_version"))
+        test_version = _entity_version(test.get("entity_version"))
+        if (recovery_reason and recovery_work and recovery_version is not None
+                and test_version is not None and _public(recovery_work)
+                and recovery_work.get("kind") == "DEPENDENCY_RECOVERY"
+                and recovery_work.get("test_id") == tid
+                and (recovery_work.get("recovery") or {}).get("policy") == POLICY
+                and str(recovery_work.get("status") or "").upper() not in TERMINAL_WORK):
+            evidence = {
+                "kind": "RECOVERY_SCOPE_TERMINAL_OBSERVED",
+                "test_id": tid,
+                "test_entity_version": test_version,
+                "test_status": state,
+                "roadmap_id": test.get("roadmap_id"),
+                "roadmap_state": roadmap_state,
+            }
+            requests.append({
+                "request_id": "REQ-RECOVERY-SUPERSEDE-" + integrity.digest({
+                    "work_id": recovery_work["id"],
+                    "work_version": recovery_version,
+                    "test_id": tid,
+                    "test_version": test_version,
+                    "reason": recovery_reason,
+                    "roadmap_state": roadmap_state,
+                })[:32],
+                "entity_kind": "work",
+                "entity_name": recovery_work["id"],
+                "expected_version": recovery_version,
+                "writer_role": "ADVISOR",
+                "event_type": "DEPENDENCY_RECOVERY_RECONCILED_TERMINAL_SCOPE",
+                "changes": {
+                    "status": "SUPERSEDED",
+                    "operational_status": "SUPERSEDED",
+                    "closure_reason": recovery_reason,
+                    "completion_evidence": evidence,
+                },
+            })
+
         if integrity.terminal(test):
             # A legacy one-to-one execution WORK can outlive the TEST it was
             # created to execute. Close only that exact public EXECUTOR twin.
@@ -211,6 +278,8 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
                     "event_type": "WORK_RECONCILED_TERMINAL_TEST",
                     "changes": changes,
                 })
+            continue
+        if roadmap_state in TERMINAL_ROADMAP:
             continue
         if state not in {"READY", "BLOCKED_INPUT"}:
             continue
