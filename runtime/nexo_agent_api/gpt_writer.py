@@ -972,11 +972,14 @@ def _runner_operational_updates(path: str) -> list[dict]:
 def _main(argv: list[str]) -> int:
     if argv and argv[0] == "memory":
         # Existing automations keep the stable memory command. Evidence
-        # retrieval uses the measured 1.1 engine; Dreaming and feedback remain
-        # on memory 1.0.1.
+        # retrieval uses the measured 1.1 engine; its cache is a sidecar so
+        # memory 1.0.1 indexes remain readable and untouched.
         if len(argv) > 1 and argv[1] in {"context", "search"}:
             from .retrieval_cli import main as retrieval_main
-            return retrieval_main(argv[1:])
+            routed = list(argv[1:])
+            if len(routed) >= 3 and not routed[2].endswith(".retrieval-1.1"):
+                routed[2] += ".retrieval-1.1"
+            return retrieval_main(routed)
         from .memory_cli import main as memory_main
         return memory_main(argv[1:])
     if argv and argv[0] == "retrieval":
