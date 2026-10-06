@@ -19,6 +19,7 @@ on:
       - 'runtime/nexo_agent_api/inbox_apply.py'
       - 'runtime/nexo_agent_api/service.py'
       - 'runtime/nexo_agent_api/tower_apply.py'
+      - 'gpt/nexo_memory.py'
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
       - 'tests/test_scientific_integrity.py'
