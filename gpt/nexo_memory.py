@@ -37,9 +37,11 @@ def main():
         _extract(memory_raw, root, "memory")
         _extract(retrieval_raw, root, "retrieval")
         sys.path.insert(0, str(root))
-        args = sys.argv[1:]
+        args = list(sys.argv[1:])
         if args and args[0] in {"context", "search"}:
             from runtime.nexo_agent_api.retrieval_cli import main as run
+            if len(args) >= 3 and not args[2].endswith(".retrieval-1.1"):
+                args[2] += ".retrieval-1.1"
         else:
             from runtime.nexo_agent_api.memory_cli import main as run
         return run(args)
