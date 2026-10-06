@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import base64
+import hashlib
 import importlib.util
 import io
 import json
@@ -13,6 +14,29 @@ from pathlib import Path
 
 
 class NexoMemoryBundleTest(unittest.TestCase):
+    def test_generated_loader_matches_sources_and_declared_hashes(self) -> None:
+        repo = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location(
+            "build_nexo_memory_source_test", repo / "scripts/build_nexo_memory_bundle.py")
+        module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(module)
+        self.assertEqual(self.loader().read_bytes(), module.render())
+        constants = {
+            target.id: ast.literal_eval(node.value)
+            for node in ast.parse(self.loader().read_text(encoding="utf-8")).body
+            if isinstance(node, ast.Assign)
+            for target in node.targets if isinstance(target, ast.Name)
+        }
+        for payload, digest in (("_BUNDLE", "_SHA256"), ("_RETRIEVAL_BUNDLE", "_RETRIEVAL_SHA256")):
+            raw = base64.b64decode(constants[payload], validate=True)
+            self.assertEqual(hashlib.sha256(raw).hexdigest(), constants[digest])
+            with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+                self.assertIsNone(archive.testzip())
+                for name in archive.namelist():
+                    if name.endswith(".py") and not name.endswith("__init__.py"):
+                        self.assertEqual(archive.read(name), (repo / name).read_bytes())
+
     @staticmethod
     def loader() -> Path:
         return Path(__file__).resolve().parents[1] / "gpt" / "nexo_memory.py"

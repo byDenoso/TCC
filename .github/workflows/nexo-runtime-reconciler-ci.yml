@@ -25,6 +25,7 @@ on:
       - 'tests/test_scientific_integrity.py'
       - 'tests/test_writer_bundle.py'
       - 'scripts/build_gpt_writer_bundle.py'
+      - 'scripts/build_nexo_memory_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -49,11 +50,13 @@ on:
       - 'runtime/nexo_agent_api/inbox_apply.py'
       - 'runtime/nexo_agent_api/service.py'
       - 'runtime/nexo_agent_api/tower_apply.py'
+      - 'gpt/nexo_memory.py'
       - 'gpt/nexo_gpt_writer.py'
       - 'tests/test_robot_persistence.py'
       - 'tests/test_scientific_integrity.py'
       - 'tests/test_writer_bundle.py'
       - 'scripts/build_gpt_writer_bundle.py'
+      - 'scripts/build_nexo_memory_bundle.py'
       - 'runtime/nexo_agent_api/global_reconciler.py'
       - 'runtime/nexo_agent_api/scheduler_topology.py'
       - 'runtime/nexo_agent_api/test_global_reconciler.py'
@@ -74,7 +77,7 @@ jobs:
           python-version: '3.12'
       - name: Verify complete runtime regression suite
         run: |
-          python -m pip install pytest==9.1.1
+          python -m pip install pytest==9.1.1 numpy==2.3.5 scikit-learn==1.8.0
           python -m pytest tests runtime/nexo_agent_api runtime/nexo_execution -q
       - name: Verify reconciler and scheduler topology
         run: |
@@ -99,6 +102,8 @@ jobs:
       - name: Rebuild ChatGPT Writer bundle from tested sources
         run: |
           set -euo pipefail
+          python scripts/build_nexo_memory_bundle.py --check
           python scripts/build_gpt_writer_bundle.py
           python -m py_compile gpt/nexo_gpt_writer.py
           grep -q 'Bundle sha256:' gpt/nexo_gpt_writer.py
+          git diff --exit-code -- gpt/nexo_memory.py gpt/nexo_gpt_writer.py

@@ -9,7 +9,6 @@ Rebuild after any change to the writer: python scripts/build_gpt_writer_bundle.p
 
 from __future__ import annotations
 
-import ast
 import base64
 import hashlib
 import io
@@ -48,47 +47,10 @@ if __name__ == "__main__":
 
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
-_EMBEDDED_RUNTIME = (
-    (
-        REPO / "gpt" / "nexo_memory.py",
-        "_BUNDLE",
-        (
-            "runtime/nexo_agent_api/memory.py",
-            "runtime/nexo_agent_api/memory_cli.py",
-        ),
-    ),
-    (
-        REPO / "gpt" / "nexo_memory.py",
-        "_RETRIEVAL_BUNDLE",
-        (
-            "runtime/nexo_agent_api/retrieval.py",
-            "runtime/nexo_agent_api/retrieval_cli.py",
-            "runtime/nexo_agent_api/retrieval_mcp.py",
-            "runtime/nexo_agent_api/retrieval_models.py",
-        ),
-    ),
+_REQUIRED_EXTENSION_SOURCES = (
+    "memory.py", "memory_cli.py", "retrieval.py", "retrieval_cli.py",
+    "retrieval_mcp.py", "retrieval_models.py",
 )
-
-
-def _embedded_sources(loader: Path, variable: str, members: tuple[str, ...]) -> dict[str, bytes]:
-    """Extract reviewed runtime members from a self-contained loader."""
-    tree = ast.parse(loader.read_text(encoding="utf-8"))
-    payload = None
-    for node in tree.body:
-        if not isinstance(node, ast.Assign):
-            continue
-        if any(isinstance(target, ast.Name) and target.id == variable for target in node.targets):
-            payload = ast.literal_eval(node.value)
-            break
-    if not isinstance(payload, str):
-        raise RuntimeError(f"{loader.relative_to(REPO)} has no embedded {variable}")
-    with zipfile.ZipFile(io.BytesIO(base64.b64decode(payload))) as source:
-        names = set(source.namelist())
-        missing = [name for name in members if name not in names]
-        if missing:
-            raise RuntimeError(f"{loader.name} bundle missing: " + ", ".join(missing))
-        return {name: source.read(name) for name in members}
-
 
 def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
     """Write a stable ZIP member: source mtimes must never change the Writer hash."""
@@ -100,6 +62,11 @@ def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> No
 
 
 def build() -> Path:
+    # Missing extension sources must fail closed, never strip installed commands.
+    for name in _REQUIRED_EXTENSION_SOURCES:
+        path = REPO / "runtime" / "nexo_agent_api" / name
+        if not path.is_file():
+            raise RuntimeError(f"Writer extension source missing: {path.relative_to(REPO)}")
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         _write_deterministic(archive, "runtime/__init__.py", b"")
@@ -109,14 +76,6 @@ def build() -> Path:
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
                     _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
-        archived = set(archive.namelist())
-        for loader, variable, members in _EMBEDDED_RUNTIME:
-            for name, data in _embedded_sources(loader, variable, members).items():
-                # Embedded reviewed code wins only when the repo does not already
-                # carry that runtime module directly.
-                if name not in archived:
-                    _write_deterministic(archive, name, data)
-                    archived.add(name)
         contracts_root = REPO / "contracts"
         if contracts_root.is_dir():
             for path in sorted(contracts_root.rglob("*.json")):

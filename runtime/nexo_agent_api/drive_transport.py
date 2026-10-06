@@ -246,39 +246,79 @@ class DriveInbox:
 
     Writers outside the single Tower writer create one new file per message in
     ``NEXO_INBOX``; the writer applies it and moves it to ``NEXO_INBOX/processed``.
+    Pin the folder with ``folder_id`` or ``NEXO_INBOX_FOLDER_ID``. Legacy name
+    discovery requires exactly one match and keeps that identity for this client.
     """
 
     FOLDER = "application/vnd.google-apps.folder"
 
-    def __init__(self, name: str = "NEXO_INBOX", *, session: Any = None, write: bool = False) -> None:
+    def __init__(self, name: str = "NEXO_INBOX", *, session: Any = None, write: bool = False,
+                 folder_id: str | None = None) -> None:
         if session is None:
             from google.auth.transport.requests import AuthorizedSession
 
             session = AuthorizedSession(load_credentials(write=write))
         self.session = session
         self.name = name
+        self._inbox_folder_id = (folder_id if folder_id is not None else
+                                 os.environ.get("NEXO_INBOX_FOLDER_ID", "")).strip() or None
 
     def _query(self, q: str) -> list[dict[str, Any]]:
-        response = DriveTower._check(DriveTower._call("INBOX_LIST", lambda: self.session.get(
-            _API,
-            params={"q": q, "fields": "files(id,name,createdTime,parents,mimeType)", "orderBy": "createdTime", "pageSize": 200,
-                    "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"},
-            timeout=60,
-        )), "INBOX_LIST")
-        return response.json().get("files", [])
+        params = {"q": q, "fields": "nextPageToken,incompleteSearch,files(id,name,createdTime,parents,mimeType)",
+                  "orderBy": "createdTime", "pageSize": 200,
+                  "supportsAllDrives": "true", "includeItemsFromAllDrives": "true"}
+        items: list[dict[str, Any]] = []
+        seen_tokens: set[str] = set()
+        while True:
+            response = DriveTower._check(DriveTower._call("INBOX_LIST", lambda: self.session.get(
+                _API, params=params, timeout=60,
+            )), "INBOX_LIST")
+            page = response.json()
+            if page.get("incompleteSearch"):
+                raise RuntimeError("INBOX_LIST_INCOMPLETE")
+            items.extend(page.get("files", []))
+            token = page.get("nextPageToken")
+            if not token:
+                return items
+            if token in seen_tokens:
+                raise RuntimeError("INBOX_LIST_REPEATED_PAGE_TOKEN")
+            seen_tokens.add(token)
+            params = {**params, "pageToken": token}
+
+    @staticmethod
+    def _quote(value: str) -> str:
+        return value.replace("\\", "\\\\").replace("'", "\\'")
+
+    def _metadata(self, file_id: str) -> dict[str, Any]:
+        response = DriveTower._check(DriveTower._call("INBOX_METADATA", lambda: self.session.get(
+            f"{_API}/{file_id}",
+            params={"fields": "id,mimeType,parents,trashed", "supportsAllDrives": "true"}, timeout=60,
+        )), "INBOX_METADATA")
+        return response.json()
+
+    def _inbox(self) -> str:
+        if self._inbox_folder_id is None:
+            self._inbox_folder_id = self._folder(self.name)
+        if self._inbox_folder_id is None:
+            raise RuntimeError("INBOX_FOLDER_NOT_FOUND:configure NEXO_INBOX_FOLDER_ID")
+        meta = self._metadata(self._inbox_folder_id)
+        if (meta.get("id") != self._inbox_folder_id or meta.get("mimeType") != self.FOLDER
+                or meta.get("trashed") is not False):
+            raise RuntimeError("INBOX_FOLDER_INVALID")
+        return self._inbox_folder_id
 
     def _folder(self, name: str, parent: str | None = None) -> str | None:
-        q = f"name = '{name}' and mimeType = '{self.FOLDER}' and trashed = false"
+        q = f"name = '{self._quote(name)}' and mimeType = '{self.FOLDER}' and trashed = false"
         if parent:
-            q += f" and '{parent}' in parents"
+            q += f" and '{self._quote(parent)}' in parents"
         found = self._query(q)
+        if len(found) > 1:
+            raise RuntimeError("INBOX_FOLDER_AMBIGUOUS:configure a unique folder")
         return found[0]["id"] if found else None
 
     def pending(self) -> list[dict[str, Any]]:
-        inbox = self._folder(self.name)
-        if not inbox:
-            return []
-        items = self._query(f"'{inbox}' in parents and mimeType != '{self.FOLDER}' and trashed = false")
+        inbox = self._inbox()
+        items = self._query(f"'{self._quote(inbox)}' in parents and mimeType != '{self.FOLDER}' and trashed = false")
         for item in items:
             item["payload"] = _parse_proposal(self._content(item))
         return items
@@ -295,16 +335,30 @@ class DriveInbox:
         return response.content
 
     def mark_processed(self, file_id: str) -> None:
-        inbox = self._folder(self.name)
+        inbox = self._inbox()
+        item = self._metadata(file_id)
+        if (item.get("id") != file_id or item.get("trashed") is not False
+                or item.get("mimeType") == self.FOLDER or inbox not in item.get("parents", [])):
+            raise RuntimeError("INBOX_ITEM_PARENT_MISMATCH")
         processed = self._folder("processed", inbox)
         if not processed:
             created = DriveTower._check(DriveTower._call("INBOX_MARK_PROCESSED", lambda: self.session.post(
-                _API, json={"name": "processed", "mimeType": self.FOLDER, "parents": [inbox]}, timeout=60
+                _API, json={"name": "processed", "mimeType": self.FOLDER, "parents": [inbox]},
+                params={"supportsAllDrives": "true"}, timeout=60,
             )), "INBOX_MARK_PROCESSED")
             processed = created.json()["id"]
+        destination = self._metadata(processed)
+        if (destination.get("id") != processed or destination.get("mimeType") != self.FOLDER
+                or destination.get("trashed") is not False or inbox not in destination.get("parents", [])):
+            raise RuntimeError("INBOX_PROCESSED_FOLDER_INVALID")
         DriveTower._check(DriveTower._call("INBOX_MARK_PROCESSED", lambda: self.session.patch(
-            f"{_API}/{file_id}", params={"addParents": processed, "removeParents": inbox}, json={}, timeout=60
+            f"{_API}/{file_id}",
+            params={"addParents": processed, "removeParents": inbox, "supportsAllDrives": "true"}, json={}, timeout=60,
         )), "INBOX_MARK_PROCESSED")
+        readback = self._metadata(file_id)
+        if (readback.get("id") != file_id or readback.get("trashed") is not False
+                or processed not in readback.get("parents", []) or inbox in readback.get("parents", [])):
+            raise RuntimeError("INBOX_MARK_READBACK_MISMATCH")
 
 
 @contextmanager
