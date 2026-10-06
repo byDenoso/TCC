@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import base64
+import importlib.util
 import io
 import json
 import subprocess
@@ -40,6 +41,30 @@ class NexoMemoryBundleTest(unittest.TestCase):
             self.assertIn("def dreams(", memory)
             self.assertIn("def related_work(", memory)
             self.assertIn("def feedback_proposal(", memory)
+
+    def test_writer_bundle_exposes_same_memory_cli(self) -> None:
+        repo = Path(__file__).resolve().parents[1]
+        script = repo / "scripts" / "build_gpt_writer_bundle.py"
+        spec = importlib.util.spec_from_file_location("build_gpt_writer_bundle_memory_test", script)
+        self.assertIsNotNone(spec)
+        module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(module)
+
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as work:
+            module.OUT = Path(work) / "nexo_gpt_writer.py"
+            writer = module.build()
+            proc = subprocess.run(
+                [sys.executable, str(writer), "memory", "--help"],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("context", proc.stdout)
+        self.assertIn("feedback", proc.stdout)
 
     def test_cli_exposes_retrieval_without_write_commands(self) -> None:
         proc = subprocess.run(
