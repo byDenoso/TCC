@@ -970,6 +970,9 @@ def _runner_operational_updates(path: str) -> list[dict]:
 
 
 def _main(argv: list[str]) -> int:
+    if argv and argv[0] == "memory":
+        from .memory_cli import main as memory_main
+        return memory_main(argv[1:])
     if len(argv) == 4 and argv[0] == "handoff" and argv[2] == "list":
         from . import AgentService
 
