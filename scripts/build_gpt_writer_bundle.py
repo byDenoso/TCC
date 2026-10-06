@@ -9,6 +9,7 @@ Rebuild after any change to the writer: python scripts/build_gpt_writer_bundle.p
 
 from __future__ import annotations
 
+import ast
 import base64
 import hashlib
 import io
@@ -25,6 +26,7 @@ TEMPLATE = '''#!/usr/bin/env python3
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
+    python nexo_gpt_writer.py memory <context|search|dream|related|feedback> ...
 
 Bundle sha256: {digest}
 """
@@ -44,6 +46,32 @@ if __name__ == "__main__":
 
 
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
+_MEMORY_LOADER = REPO / "gpt" / "nexo_memory.py"
+_MEMORY_MEMBERS = (
+    "runtime/nexo_agent_api/memory.py",
+    "runtime/nexo_agent_api/memory_cli.py",
+)
+
+
+def _memory_sources() -> dict[str, bytes]:
+    """Extract the reviewed memory runtime from the private-memory loader."""
+    tree = ast.parse(_MEMORY_LOADER.read_text(encoding="utf-8"))
+    payload = None
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == "_BUNDLE" for target in node.targets):
+            payload = ast.literal_eval(node.value)
+            break
+    if not isinstance(payload, str):
+        raise RuntimeError("gpt/nexo_memory.py has no embedded _BUNDLE")
+    with zipfile.ZipFile(io.BytesIO(base64.b64decode(payload))) as source:
+        names = set(source.namelist())
+        missing = [name for name in _MEMORY_MEMBERS if name not in names]
+        if missing:
+            raise RuntimeError("memory bundle missing: " + ", ".join(missing))
+        return {name: source.read(name) for name in _MEMORY_MEMBERS}
 
 
 def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
@@ -65,6 +93,10 @@ def build() -> Path:
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
                     _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
+        archived = set(archive.namelist())
+        for name, data in _memory_sources().items():
+            if name not in archived:
+                _write_deterministic(archive, name, data)
         for path in sorted((REPO / "contracts").rglob("*.json")):
             _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
