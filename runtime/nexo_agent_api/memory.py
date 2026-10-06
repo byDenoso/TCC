@@ -607,12 +607,26 @@ class Memory:
         if mode not in {"hybrid", "lexical", "vector"}:
             raise ValueError("Unknown retrieval mode")
         snap, generation = self.select(expected_revision=expected_revision, as_of=as_of)
+        authorization = self.head()
+        current_generation = (generation if authorization["revision"] == snap["revision"]
+                              else self._generation(authorization["generation"]))
+        current = {d["uid"]: d for d in current_generation["documents"]}
+
+        def check_authorization() -> None:
+            if self.head()["revision"] != authorization["revision"]:
+                raise Conflict("Authorization/source changed during retrieval")
+
         at = as_of or datetime.now(timezone.utc).isoformat()
         docs = {d["uid"]: Document(**d) for d in generation["documents"]}
-        allowed = {uid for uid, d in docs.items() if self.eligible(d, role, at, include_inactive)
+        # Current permissions also gate history; deletion cannot resurrect cached evidence.
+        allowed = {uid for uid, d in docs.items() if uid in current
+                   and role in current[uid]["allowed_roles"] and current[uid]["state"] != "DELETED"
+                   and not current[uid].get("ambiguous_identity")
+                   and self.eligible(d, role, at, include_inactive)
                    and (not kinds or d.kind in kinds)}
         rows = [(i, c) for i, c in enumerate(generation["chunks"]) if c["uid"] in allowed]
         if not rows or not query.strip():
+            check_authorization()
             return {"snapshot": snap, "hits": [], "method": generation["model"]["kind"], "query": clean(query), "role": role}
         query_words = Counter(words(query))
         tokens = [Counter(words(c["body"])) for _, c in rows]
@@ -685,6 +699,7 @@ class Memory:
                          "cosine": round(float(cosine[n]), 6), "citation": d.citation(snap),
                          "clusters": [g for g in groups if len(g["members"]) > 1][:4],
                          "authority": "evidence_only", "truncated_source": d.truncated})
+        check_authorization()
         return {"snapshot": snap, "hits": hits, "method": generation["model"]["kind"],
                 "query": clean(query), "role": role, "mode": mode,
                 "model_sha256": generation["model"].get("model_sha256"), "chunk_version": CHUNK_VERSION}

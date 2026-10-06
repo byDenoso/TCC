@@ -8,6 +8,19 @@ from .memory import Snapshot, SourceError, feedback_proposal
 from .retrieval import Retrieval, VERSION, MODES
 
 
+MEMORY_CACHE_SUFFIX = ".retrieval-1.1-security-20261006"
+
+
+def memory_cache_path(path: str) -> str:
+    """Select a fresh security-patch sidecar without touching older indexes."""
+    if path.endswith(MEMORY_CACHE_SUFFIX):
+        return path
+    old_suffix = ".retrieval-1.1"
+    if path.endswith(old_suffix):
+        path = path[:-len(old_suffix)]
+    return path + MEMORY_CACHE_SUFFIX
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Read-only, versioned NEXO evidence retrieval")
     parser.add_argument("--version", action="version", version=VERSION)

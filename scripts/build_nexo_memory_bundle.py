@@ -61,9 +61,9 @@ def main():
         sys.path.insert(0, str(root))
         args = list(sys.argv[1:])
         if args and args[0] in {{"context", "search"}}:
-            from runtime.nexo_agent_api.retrieval_cli import main as run
-            if len(args) >= 3 and not args[2].endswith(".retrieval-1.1"):
-                args[2] += ".retrieval-1.1"
+            from runtime.nexo_agent_api.retrieval_cli import main as run, memory_cache_path
+            if len(args) >= 3:
+                args[2] = memory_cache_path(args[2])
         else:
             from runtime.nexo_agent_api.memory_cli import main as run
         return run(args)
@@ -100,7 +100,7 @@ def render() -> bytes:
         f"runtime/nexo_agent_api/{name}": (REPO / "runtime/nexo_agent_api" / name).read_bytes()
         for name in RETRIEVAL_SOURCES
     }
-    # Preserve the compression settings and hashes of the installed releases.
+    # Preserve the installed release line's deterministic compression settings.
     memory_raw = _archive(memory, compresslevel=6)
     retrieval_raw = _archive(retrieval, compresslevel=9)
     return TEMPLATE.format(
@@ -132,4 +132,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

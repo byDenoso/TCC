@@ -127,11 +127,17 @@ def typed_equal(left: Any, right: Any) -> bool:
     return type(left) is type(right) and left == right
 
 
+# Keep expanded surfaces at least as restrictive as the legacy memory policy.
+SECRET_NAMES = {re.sub(r"[^a-z0-9]", "", name.lower()) for name in SECRETS | {
+    "apikey", "secretkey", "accesstoken", "refreshtoken", "clientsecret", "privatekey",
+    "password", "authorization", "credentials", "cookie", "cookies", "bearertoken",
+}}
+
+
 def safe_clean(value: Any) -> Any:
-    secret_names = {"apikey", "secretkey", "accesstoken", "refreshtoken", "clientsecret", "privatekey", "password", "authorization", "credentials", "cookie", "cookies", "bearertoken"}
     if isinstance(value, dict):
         return {str(k): safe_clean(v) for k, v in value.items()
-                if re.sub(r"[^a-z0-9]", "", str(k).lower()) not in secret_names}
+                if re.sub(r"[^a-z0-9]", "", str(k).lower()) not in SECRET_NAMES}
     if isinstance(value, list):
         return [safe_clean(v) for v in value]
     value = clean(value)

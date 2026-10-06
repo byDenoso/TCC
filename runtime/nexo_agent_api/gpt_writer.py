@@ -975,10 +975,10 @@ def _main(argv: list[str]) -> int:
         # retrieval uses the measured 1.1 engine; its cache is a sidecar so
         # memory 1.0.1 indexes remain readable and untouched.
         if len(argv) > 1 and argv[1] in {"context", "search"}:
-            from .retrieval_cli import main as retrieval_main
+            from .retrieval_cli import main as retrieval_main, memory_cache_path
             routed = list(argv[1:])
-            if len(routed) >= 3 and not routed[2].endswith(".retrieval-1.1"):
-                routed[2] += ".retrieval-1.1"
+            if len(routed) >= 3:
+                routed[2] = memory_cache_path(routed[2])
             return retrieval_main(routed)
         from .memory_cli import main as memory_main
         return memory_main(argv[1:])

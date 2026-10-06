@@ -17,6 +17,8 @@ class NexoRetrievalBundleTest(unittest.TestCase):
     def test_bundled_search_preserves_tower_and_legacy_cache(self) -> None:
         from runtime.nexo_agent_api.live_tower import build_live_tower_payload
         from runtime.nexo_agent_api.memory import Memory, Snapshot
+        from runtime.nexo_agent_api.retrieval import Retrieval, Conflict
+        from runtime.nexo_agent_api.retrieval_cli import MEMORY_CACHE_SUFFIX
 
         repo = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as work:
@@ -34,11 +36,31 @@ class NexoRetrievalBundleTest(unittest.TestCase):
             legacy = root / "legacy-cache"
             Memory(legacy).sync(Snapshot.read(tower))
             legacy_original = legacy.read_bytes()
-            sidecar = Path(str(legacy) + ".retrieval-1.1")
+            old_sidecar = Path(str(legacy) + ".retrieval-1.1")
+            old_engine = Retrieval(old_sidecar)
+            old_engine.sync(Snapshot.read(tower))
+            # Model the incompatible source fingerprint of an installed 1.1 cache.
+            with old_engine.connect() as db:
+                db.execute("UPDATE meta SET value=? WHERE key='retrieval_config'", ("previous-security-config",))
+            with self.assertRaises(Conflict):
+                Retrieval(old_sidecar)
+            old_sidecar_original = old_sidecar.read_bytes()
+            sidecar = Path(str(legacy) + MEMORY_CACHE_SUFFIX)
+            blocked = subprocess.run(
+                [sys.executable, str(repo / "gpt/nexo_gpt_writer.py"), "retrieval", "search",
+                 str(tower), str(old_sidecar), "--role", "ENGINEER", "--query", "T-CI-FIXTURE"],
+                text=True, capture_output=True, check=False)
+            self.assertEqual(blocked.returncode, 2, blocked.stderr)
+            self.assertIn("separate cache", blocked.stderr)
             commands = (
                 [str(self.loader()), "search", str(tower), str(legacy)],
+                [str(self.loader()), "search", str(tower), str(old_sidecar)],
+                [str(self.loader()), "search", str(tower), str(sidecar)],
+                [str(self.loader()), "context", str(tower), str(old_sidecar)],
                 [str(repo / "gpt/nexo_gpt_writer.py"), "memory", "search", str(tower), str(legacy)],
+                [str(repo / "gpt/nexo_gpt_writer.py"), "memory", "search", str(tower), str(old_sidecar)],
                 [str(repo / "gpt/nexo_gpt_writer.py"), "memory", "search", str(tower), str(sidecar)],
+                [str(repo / "gpt/nexo_gpt_writer.py"), "memory", "context", str(tower), str(old_sidecar)],
                 [str(repo / "gpt/nexo_gpt_writer.py"), "retrieval", "search", str(tower), str(sidecar)],
             )
             for command in commands:
@@ -50,9 +72,14 @@ class NexoRetrievalBundleTest(unittest.TestCase):
                 self.assertEqual(result["method"], "nexo-retrieval-1.1.0")
                 self.assertEqual([hit["id"] for hit in result["hits"]], ["TESTS::T-CI-FIXTURE"])
             self.assertTrue(sidecar.is_file())
+            with Retrieval(sidecar).connect() as db:
+                self.assertEqual(db.execute("SELECT COUNT(*) FROM snapshots").fetchone()[0], 1)
             self.assertFalse(Path(str(sidecar) + ".retrieval-1.1").exists())
+            self.assertFalse(Path(str(sidecar) + MEMORY_CACHE_SUFFIX).exists())
+            self.assertFalse(Path(str(old_sidecar) + MEMORY_CACHE_SUFFIX).exists())
             self.assertEqual(tower.read_bytes(), original)
             self.assertEqual(legacy.read_bytes(), legacy_original)
+            self.assertEqual(old_sidecar.read_bytes(), old_sidecar_original)
 
     @staticmethod
     def loader() -> Path:
