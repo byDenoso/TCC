@@ -27,6 +27,7 @@ TEMPLATE = '''#!/usr/bin/env python3
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
     python nexo_gpt_writer.py memory <context|search|dream|related|feedback> ...
+    python nexo_gpt_writer.py retrieval <sync|search|context|get|trace|groups|dream|diff|serve> ...
 
 Bundle sha256: {digest}
 """
@@ -47,31 +48,46 @@ if __name__ == "__main__":
 
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
-_MEMORY_LOADER = REPO / "gpt" / "nexo_memory.py"
-_MEMORY_MEMBERS = (
-    "runtime/nexo_agent_api/memory.py",
-    "runtime/nexo_agent_api/memory_cli.py",
+_EMBEDDED_RUNTIME = (
+    (
+        REPO / "gpt" / "nexo_memory.py",
+        "_BUNDLE",
+        (
+            "runtime/nexo_agent_api/memory.py",
+            "runtime/nexo_agent_api/memory_cli.py",
+        ),
+    ),
+    (
+        REPO / "gpt" / "nexo_memory.py",
+        "_RETRIEVAL_BUNDLE",
+        (
+            "runtime/nexo_agent_api/retrieval.py",
+            "runtime/nexo_agent_api/retrieval_cli.py",
+            "runtime/nexo_agent_api/retrieval_mcp.py",
+            "runtime/nexo_agent_api/retrieval_models.py",
+        ),
+    ),
 )
 
 
-def _memory_sources() -> dict[str, bytes]:
-    """Extract the reviewed memory runtime from the private-memory loader."""
-    tree = ast.parse(_MEMORY_LOADER.read_text(encoding="utf-8"))
+def _embedded_sources(loader: Path, variable: str, members: tuple[str, ...]) -> dict[str, bytes]:
+    """Extract reviewed runtime members from a self-contained loader."""
+    tree = ast.parse(loader.read_text(encoding="utf-8"))
     payload = None
     for node in tree.body:
         if not isinstance(node, ast.Assign):
             continue
-        if any(isinstance(target, ast.Name) and target.id == "_BUNDLE" for target in node.targets):
+        if any(isinstance(target, ast.Name) and target.id == variable for target in node.targets):
             payload = ast.literal_eval(node.value)
             break
     if not isinstance(payload, str):
-        raise RuntimeError("gpt/nexo_memory.py has no embedded _BUNDLE")
+        raise RuntimeError(f"{loader.relative_to(REPO)} has no embedded {variable}")
     with zipfile.ZipFile(io.BytesIO(base64.b64decode(payload))) as source:
         names = set(source.namelist())
-        missing = [name for name in _MEMORY_MEMBERS if name not in names]
+        missing = [name for name in members if name not in names]
         if missing:
-            raise RuntimeError("memory bundle missing: " + ", ".join(missing))
-        return {name: source.read(name) for name in _MEMORY_MEMBERS}
+            raise RuntimeError(f"{loader.name} bundle missing: " + ", ".join(missing))
+        return {name: source.read(name) for name in members}
 
 
 def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
@@ -94,11 +110,17 @@ def build() -> Path:
                     rel = path.relative_to(package_root).as_posix()
                     _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
         archived = set(archive.namelist())
-        for name, data in _memory_sources().items():
-            if name not in archived:
-                _write_deterministic(archive, name, data)
-        for path in sorted((REPO / "contracts").rglob("*.json")):
-            _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
+        for loader, variable, members in _EMBEDDED_RUNTIME:
+            for name, data in _embedded_sources(loader, variable, members).items():
+                # Embedded reviewed code wins only when the repo does not already
+                # carry that runtime module directly.
+                if name not in archived:
+                    _write_deterministic(archive, name, data)
+                    archived.add(name)
+        contracts_root = REPO / "contracts"
+        if contracts_root.is_dir():
+            for path in sorted(contracts_root.rglob("*.json")):
+                _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
     digest = hashlib.sha256(buffer.getvalue()).hexdigest()
     OUT.parent.mkdir(exist_ok=True)
