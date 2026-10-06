@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from runtime.nexo_agent_api.evolution import evolution_status
@@ -11,6 +12,8 @@ from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 _COUNTER = iter(range(10**6))
+# Board identity/merge fixtures use Oct 3 envelopes; inspect them before their TTL.
+_BOARD_NOW = datetime(2026, 10, 3, 1, tzinfo=timezone.utc)
 
 
 def _apply(root: Path, item: dict) -> list[dict]:
@@ -390,7 +393,7 @@ def test_writer_keeps_same_minute_board_envelopes_distinct_and_replay_idempotent
     assert changed is not None, report
 
     readback, _ = materialize_live_tower(changed, tmp_path / "readback")
-    posts = evolution_status(readback)["board"]
+    posts = evolution_status(readback, now=_BOARD_NOW)["board"]
     assert len(posts) == 2
     ids = [post["id"] for post in posts]
     assert len(set(ids)) == 2
@@ -399,7 +402,7 @@ def test_writer_keeps_same_minute_board_envelopes_distinct_and_replay_idempotent
     assert not replay_report["rejected"], replay_report
     replay_bundle = replayed or changed
     replay_root, _ = materialize_live_tower(replay_bundle, tmp_path / "replay")
-    replay_posts = evolution_status(replay_root)["board"]
+    replay_posts = evolution_status(replay_root, now=_BOARD_NOW)["board"]
     assert [post["id"] for post in replay_posts] == ids
 
     resolved, resolve_report = apply_to_tower(replay_bundle, [{
@@ -408,7 +411,7 @@ def test_writer_keeps_same_minute_board_envelopes_distinct_and_replay_idempotent
     }])
     assert resolved is not None, resolve_report
     resolved_root, _ = materialize_live_tower(resolved, tmp_path / "resolved")
-    assert [post["id"] for post in evolution_status(resolved_root)["board"]] == [ids[1]]
+    assert [post["id"] for post in evolution_status(resolved_root, now=_BOARD_NOW)["board"]] == [ids[1]]
 
 
 def test_writer_batch_children_get_distinct_board_and_request_identities(tmp_path):
@@ -441,7 +444,7 @@ def test_writer_batch_children_get_distinct_board_and_request_identities(tmp_pat
     assert len(payload["items"][0]["receipts"]) == 2
 
     readback, _ = materialize_live_tower(changed, tmp_path / "batch-readback")
-    posts = evolution_status(readback)["board"]
+    posts = evolution_status(readback, now=_BOARD_NOW)["board"]
     assert [post["text"] for post in posts] == ["Primeiro filho.", "Segundo filho."]
     assert len({post["id"] for post in posts}) == 2
 
@@ -465,7 +468,7 @@ def test_generic_batch_board_requests_compose_without_overwrite(tmp_path):
     assert len(requests[1]["merge"]["posts"]) == 2
     receipts = apply_requests(root, requests)
     assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
-    posts = evolution_status(root)["board"]
+    posts = evolution_status(root, now=_BOARD_NOW)["board"]
     assert [post["text"] for post in posts] == ["Primeiro genérico.", "Segundo genérico."]
 
 
@@ -487,7 +490,7 @@ def test_generic_batch_can_resolve_a_post_created_by_an_earlier_child(tmp_path):
     assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
     posts = json.loads((root / "evolution" / "board.json").read_text(encoding="utf-8"))["posts"]
     assert posts[0]["id"] == "BP-X" and posts[0]["resolved_at"] == created_at
-    assert evolution_status(root)["board"] == []
+    assert evolution_status(root, now=_BOARD_NOW)["board"] == []
 
 
 def test_composed_board_snapshots_never_reopen_a_resolved_post(tmp_path):
@@ -506,7 +509,7 @@ def test_composed_board_snapshots_never_reopen_a_resolved_post(tmp_path):
     assert add_request["merge"]["posts"][0]["resolved_at"] == created_at
     receipts = apply_requests(root, [resolved_request, add_request])
     assert all(receipt.get("accepted", True) is not False for receipt in receipts), receipts
-    visible = evolution_status(root)["board"]
+    visible = evolution_status(root, now=_BOARD_NOW)["board"]
     assert [post["text"] for post in visible] == ["Novo recado."]
 
 
