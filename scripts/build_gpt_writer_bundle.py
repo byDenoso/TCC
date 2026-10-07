@@ -27,7 +27,7 @@ TEMPLATE = '''#!/usr/bin/env python3
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
     python nexo_gpt_writer.py memory <context|search|dream|related|feedback> ...
     python nexo_gpt_writer.py retrieval <sync|search|context|get|trace|groups|dream|diff|serve> ...
-    python nexo_gpt_writer.py continuity <inspect|prepare> ...
+    python nexo_gpt_writer.py continuity <inspect|context|prepare> ...
 
 Bundle sha256: {digest}
 """
@@ -51,6 +51,7 @@ _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 _REQUIRED_EXTENSION_SOURCES = (
     "memory.py", "memory_cli.py", "retrieval.py", "retrieval_cli.py",
     "retrieval_mcp.py", "retrieval_models.py",
+    "continuity.py", "continuity_cli.py", "continuity_context.py", "enxame.py",
 )
 
 def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
