@@ -79,6 +79,19 @@ def role_name(role: str) -> str:
     return role
 
 
+def runtime_acl(values: list[str]) -> list[str]:
+    """Unknown human principals grant no runtime role and never abort siblings."""
+    roles = set()
+    for value in values:
+        if not isinstance(value, str):
+            raise SourceError("ACL principals must be strings")
+        try:
+            roles.add(role_name(value))
+        except ValueError:
+            continue
+    return sorted(roles)
+
+
 def words(text: str) -> list[str]:
     text = unicodedata.normalize("NFKD", text.lower())
     text = "".join(c for c in text if not unicodedata.combining(c))
@@ -209,10 +222,10 @@ def documents(snapshot: Snapshot) -> tuple[list[Document], dict[str, int]]:
         if explicit_acl is not None:
             if not isinstance(explicit_acl, list):
                 raise SourceError("allowed_roles must be a list")
-            acl = sorted({role_name(r) for r in explicit_acl})
+            acl = runtime_acl(explicit_acl)
         elif safe.get("private") is True:
             recipient = safe.get("to") or safe.get("writer_role")
-            acl = [role_name(recipient)] if recipient and recipient != "ALL" else []
+            acl = runtime_acl([recipient]) if recipient and recipient != "ALL" else []
         else:
             acl = sorted(ROLES)
         state = str(safe.get("state") or safe.get("status") or safe.get("charter", {}).get("status") or "RECORDED").upper()

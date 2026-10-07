@@ -24,7 +24,7 @@ from .live_tower import LIVE_TOWER_CONTRACT, LIVE_TOWER_FILE_ID
 
 from .memory import (Memory, Document, Snapshot, SourceError, Conflict, ROLES, INACTIVE,
                      SECRETS, STOP, canonical, clean, digest, documents, derive,
-                     fit_vectors, query_vector, references, role_name, utc)
+                     fit_vectors, query_vector, references, role_name, runtime_acl, utc)
 
 VERSION = "nexo-retrieval-1.1.0"
 CHUNKER = "context-fields-1000-v1"
@@ -173,10 +173,10 @@ def import_documents(snapshot: Snapshot, expanded: bool = True) -> tuple[list[Do
         if acl is not None:
             if not isinstance(acl, list):
                 raise SourceError("Invalid allowed_roles")
-            acl = sorted({role_name(r) for r in acl})
+            acl = runtime_acl(acl)
         elif safe.get("private"):
             recipient = safe.get("to") or safe.get("writer_role")
-            acl = [role_name(recipient)] if recipient and recipient != "ALL" else []
+            acl = runtime_acl([recipient]) if recipient and recipient != "ALL" else []
         else:
             acl = sorted(ROLES)
         state = str(safe.get("state") or safe.get("status") or "RECORDED").upper()
@@ -565,7 +565,7 @@ class Retrieval(Memory):
     @staticmethod
     def route(query: str, has_id: bool, filters: dict) -> dict:
         q = fold(query)
-        unknown_identifier = any(re.match(r"^(?:TEST|HYP|RUN|RESULT|WORK|DATA|RECIPE|CONTRACT|T)-[A-Z0-9_-]+$", x)
+        unknown_identifier = bool(re.fullmatch(r'(?:TEST|HYPOTHESIS|HYP|RUN|RESULT|WORK|DATASET|DATA|RECIPE|CONTRACT)::[A-Za-z0-9_.:/-]+', query.strip())) or any(re.match(r"^(?:(?:TEST|HYPOTHESIS|HYP|RUN|RESULT|WORK|DATASET|DATA|RECIPE|CONTRACT)::[A-Za-z0-9_.:/-]+|(?:TEST|HYP|RUN|RESULT|WORK|DATA|RECIPE|CONTRACT|T)-[A-Z0-9_-]+)$", x)
                                  for x in TECH_ID.findall(query))
         graph_cue = any(s in q for s in ("relacion", "connect", "conecta", "cadeia", "trace", "receita", "recipe", "depende", "depend", "resultado de", "result of", "associad", "associated", "quais testes", "which tests"))
         if has_id and graph_cue:

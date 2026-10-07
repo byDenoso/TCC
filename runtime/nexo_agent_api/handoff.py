@@ -436,6 +436,11 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     allowed = {"PENDING": {"ACK", "DONE", "FAILED"}, "ACK": {"DONE", "FAILED"}}
     if target not in allowed.get(current_state, set()):
         raise TowerAgentIssue("HANDOFF_ILLEGAL_TRANSITION", "Illegal handoff state transition.", {"from": current_state, "to": target})
+    # Inbox filtering is not an authorization boundary: a caller can retain an
+    # old handoff ID after its WORK has finished or moved to another owner.
+    # Preserve idempotent ACK replay and allow stale offers to be closed.
+    if target == "ACK" and _handoff_is_stale(self, current):
+        raise TowerAgentIssue("HANDOFF_STALE", "A stale handoff cannot be accepted.", {"handoff_id": handoff_id})
     payload = {key: current.get(key) for key in (
         "handoff_id", "request_id", "request_fingerprint", "correlation_id", "parent_handoff_id",
         "thread_id", "from_role", "to_role", "handoff_type", "objective_ref",
