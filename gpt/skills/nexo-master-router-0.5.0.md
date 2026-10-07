@@ -43,14 +43,14 @@ Cadência viva:
 - `:40` Operador
 - `:50` Crítico
 - `:55` Guardião
-- `06:40` Sentinela, diariamente
+- `:40` Sentinela, a cada 2h
 
 A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
 
 **Meta mínima de throughput:** cada pulso trabalha materialmente sobre pelo menos 6 TESTs distintos quando houver candidatos válidos. Ler, relatar, repetir blocker, criar seed/retry/shard ou fazer variação cosmética não conta. Se menos de 6 forem possíveis, executar o máximo e provar varredura real das frentes; não fabricar TEST para bater quota.
 - Pítia: 6 TESTs interpretados/priorizados/discriminados.
-- Cientista: 6 TESTs definidos/recuperados com contrato executável.
-- Engenheiro: 6 TESTs com avanço técnico real.
+- Cientista: 6 TESTs definidos/recuperados com contrato executável e, quando houver candidatos, até 24 RECEITAS COMPLETAS prontas para revisão técnica. Receita completa inclui inputs/versionamento, método, parâmetros/priors, null/rival, estatística, critérios, comando/runtime, outputs, checkpoint, proveniência e validação esperada. Não fabricar receitas para cumprir quota.
+- Engenheiro: 6 TESTs com avanço técnico real e certificação técnica de até 24 receitas completas por pulso. Só marcar READY_FOR_EXECUTOR após implementação/capability existente, inputs vinculados, smoke/preflight fiel, comando reproduzível, checkpoint/resume e readback; receita incompleta volta ao Cientista com causa específica.
 - Operador: alvo de 6 TESTs com execução real ou terminal verificável.
 - Crítico: 6 resultados/TESTs revisados ou contestados.
 - Guardião: 6 cadeias de TEST reparadas/liberadas.
