@@ -10,6 +10,7 @@ from .inbox_client import INBOX_ID, prepare, deliver, receipt_status, DriveInbox
 from .drive_transport import TowerTransportError
 from .live_tower import build_live_tower_payload
 from .gpt_writer import apply_to_tower
+from .operation_receipts import intent_id, payload_hash
 
 
 ENV = {'kind':'BOARD_POST','source':'CHATGPT','intent_id':'SYNTHETIC-CANARY',
@@ -42,6 +43,24 @@ class ClientTests(unittest.TestCase):
             with self.assertRaises(PermissionError): prepare({**ENV,**change},runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
         for change in [{'intent_id':''},{'payload':None},{'_inbox_source':'DRIVE'}]:
             with self.assertRaises(ValueError): prepare({**ENV,**change},runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+    def test_rejects_noncanonical_intent_identity_before_delivery(self):
+        for identity in (' ', '\t\n', '\u00a0', ' SYNTHETIC-CANARY',
+                         'SYNTHETIC-CANARY ', '\tSYNTHETIC-CANARY',
+                         'SYNTHETIC-CANARY\n', '\u2003SYNTHETIC-CANARY\u2003'):
+            with self.subTest(identity=repr(identity)):
+                envelope={**ENV,'intent_id':identity};before=copy.deepcopy(envelope)
+                with self.assertRaisesRegex(ValueError,'STABLE_INTENT_ID_REQUIRED'):
+                    prepare(envelope,runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+                self.assertEqual(envelope,before)
+    def test_valid_identity_matches_writer_without_changing_approved_payload(self):
+        for identity in ('SYNTHETIC-CANARY','science/ref:1','canário-café','valid internal space'):
+            with self.subTest(identity=identity):
+                envelope={**ENV,'intent_id':identity};before=copy.deepcopy(envelope)
+                prepared=prepare(envelope,runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+                self.assertEqual(prepared['intent_id'],intent_id(envelope,'fallback'))
+                self.assertEqual(json.loads(prepared['raw']),before)
+                self.assertEqual(prepared['payload_sha256'],payload_hash(before))
+                self.assertEqual(envelope,before)
     def test_denied_write_makes_no_create(self):
         t=Transport();t.can_write=False
         with self.assertRaises(PermissionError): deliver(self.prepared,t,tower=self.tower,journal={})
@@ -82,6 +101,10 @@ class ClientTests(unittest.TestCase):
             written,report=apply_to_tower(raw,[item]);self.assertFalse(report['rejected'])
             tower=json.loads(written);status=receipt_status(tower,self.prepared)
             self.assertEqual(status['stage'],'APPLIED');self.assertTrue(status['entity_readback_required'])
+            self.assertEqual(status['receipt']['intent_id'],self.prepared['intent_id'])
+            transport=Transport();transport.can_write=False
+            self.assertEqual(deliver(self.prepared,transport,tower=tower,journal={})['stage'],'APPLIED')
+            self.assertEqual(transport.calls,0)
             post=tower['files']['evolution/board.json']['value']['posts'][0];self.assertTrue(post['private']);self.assertEqual(post['id'],ENV['payload']['id'])
             replay_bytes,replay=apply_to_tower(written,[item]);self.assertIsNone(replay_bytes)
             self.assertEqual(replay['operation_receipts'][0]['outcome'],'ALREADY_APPLIED')

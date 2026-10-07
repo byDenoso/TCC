@@ -30,7 +30,10 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
     if envelope.get("source") != runtime_role or envelope.get("kind") not in allowed_kinds:
         raise PermissionError("OPERATION_NOT_AUTHORIZED")
     identity = envelope.get("intent_id")
-    if not isinstance(identity, str) or not identity or len(identity) > 200:
+    # Reject rather than trim: the approved identity participates in hashes and
+    # must already match the Writer's stripped receipt identity.
+    if (not isinstance(identity, str) or not identity or identity != identity.strip()
+            or len(identity) > 200):
         raise ValueError("STABLE_INTENT_ID_REQUIRED")
     if not isinstance(envelope.get("payload"), dict) or not envelope.get("created_at"):
         raise ValueError("ENVELOPE_SCHEMA_INVALID")
