@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from test_continuity_enxame import Lab, SPEC, SCOPE
+from tests.test_continuity_enxame import Lab, SPEC, SCOPE
 from runtime.nexo_agent_api import continuity_cli, enxame
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload, materialize_live_tower
 from runtime.nexo_agent_api.memory import digest
