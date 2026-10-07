@@ -111,5 +111,23 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(journal['stage'],'PERMISSION_DENIED')
         with self.assertRaises(PermissionError):deliver(self.prepared,Transport(),tower=self.tower,journal=journal)
 
+    def test_definitive_remote_create_rejection_is_distinct_from_timeout(self):
+        class Response:
+            def __init__(self,code):self.status_code=code
+        class Session:
+            def post(self,*args,**kwargs):self.calls+=1;return Response(self.code)
+        for code in (400,404,409,422):
+            with self.subTest(code=code):
+                session=Session();session.calls=0;session.code=code;journal={}
+                transport=DriveInboxClientTransport(session,can_write=True,checkpoint=lambda j:None)
+                transport.lookup=lambda *args:[]
+                with patch.object(transport.inbox,'_inbox',return_value=INBOX_ID):
+                    result=deliver(self.prepared,transport,tower=self.tower,journal=journal)
+                    self.assertEqual(result['stage'],'CREATE_REJECTED')
+                    self.assertEqual(result['status_code'],code)
+                    self.assertEqual(result['retry'],'OPERATOR_CORRECTION')
+                    self.assertEqual(deliver(self.prepared,transport,tower=self.tower,journal=journal),result)
+                    self.assertEqual(session.calls,1)
+
 
 if __name__=='__main__':unittest.main()
