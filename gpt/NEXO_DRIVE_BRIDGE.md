@@ -37,6 +37,11 @@ separadamente, com identidade, papel autorizado, journal e recibo próprios.
 Tipos desconhecidos também são recusados; o cliente não autoriza inferência de
 outra operação pelo conteúdo do payload. Replays ALREADY_APPLIED continuam
 exigindo conferência da entidade.
+`created_at` precisa ser um timestamp UTC válido, com `Z` ou `+00:00`; o cliente
+rejeita valores inválidos sem normalizar os bytes aprovados. Em CONTEST/REFUTATION,
+os campos opcionais `source` e `referee` do payload devem corresponder ao papel
+confiável, preservando os controles de admissão e autoria do Writer.
+Papéis diferentes do padrão REFEREE_1 precisam explicitar essa autoria no payload.
 Em HANDOFF, `from_role` deve corresponder ao `runtime_role` confiável; nas
 transições, a mesma regra vale para `writer_role`, inclusive nos wrappers e aliases.
 Uma origem genérica CHATGPT não autoriza assumir outro papel no payload. O

@@ -6,7 +6,9 @@ caller must persist the returned journal across pulses before attempting deliver
 from __future__ import annotations
 
 import json
+import re
 import threading
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
@@ -17,6 +19,7 @@ from .inbox_apply import _KIND_ALIASES
 INBOX_ID = "1NxhMy_HiGmHX2XHNLDDTRzqUoYY07HYR"
 _delivery_lock = threading.RLock()
 _ENVELOPE_FIELDS = frozenset({'kind', 'source', 'created_at', 'intent_id', 'payload', 'supersedes'})
+_UTC_TIMESTAMP = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|\+00:00)')
 
 
 class InboxCreateRejected(RuntimeError):
@@ -54,8 +57,15 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
     if (not isinstance(identity, str) or not identity or identity != identity.strip()
             or len(identity) > 200):
         raise ValueError("STABLE_INTENT_ID_REQUIRED")
-    if not isinstance(envelope.get("payload"), dict) or not envelope.get("created_at"):
+    if not isinstance(envelope.get("payload"), dict):
         raise ValueError("ENVELOPE_SCHEMA_INVALID")
+    created_at = envelope.get('created_at')
+    if not isinstance(created_at, str) or not _UTC_TIMESTAMP.fullmatch(created_at):
+        raise ValueError('CREATED_AT_UTC_REQUIRED')
+    try:
+        datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+    except ValueError:
+        raise ValueError('CREATED_AT_UTC_REQUIRED') from None
     if envelope.get('supersedes') is not None and (
             not isinstance(envelope['supersedes'], str) or not envelope['supersedes']
             or envelope['supersedes'] != envelope['supersedes'].strip()):
@@ -66,6 +76,18 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
         operation = body.get(wrapper) if isinstance(body.get(wrapper), dict) else body
         actor = operation.get(role_field)
         if not isinstance(actor, str) or actor.upper() != runtime_role.upper():
+            raise PermissionError('PAYLOAD_ROLE_NOT_AUTHORIZED')
+    if canonical_kind == 'CONTEST':
+        # The converter prefers payload.source for admission and payload.referee
+        # for attribution. Neither may claim another runtime's authority.
+        for field in ('source', 'referee'):
+            if field in envelope['payload']:
+                actor = envelope['payload'][field]
+                if not isinstance(actor, str) or actor.upper() != runtime_role.upper():
+                    raise PermissionError('PAYLOAD_ROLE_NOT_AUTHORIZED')
+        attributed_role = (envelope['payload'].get('source')
+                           or envelope['payload'].get('referee') or 'REFEREE_1')
+        if attributed_role.upper() != runtime_role.upper():
             raise PermissionError('PAYLOAD_ROLE_NOT_AUTHORIZED')
     raw = json.dumps(envelope, ensure_ascii=False, sort_keys=True,
                      separators=(",", ":"), allow_nan=False).encode("utf-8")

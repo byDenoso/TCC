@@ -112,6 +112,40 @@ class ClientTests(unittest.TestCase):
         for value in (' ', ' OR-x', 123):
             with self.assertRaisesRegex(ValueError,'SUPERSEDES_ID_INVALID'):
                 prepare({**ENV,'supersedes':value},runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+    def test_created_at_rejects_non_utc_or_invalid_chronology(self):
+        for stamp in (None, True, 123, {'date':'today'}, '', 'not-a-date', '2026-10-07',
+                      '2026-10-07T01:00:00', '2026-10-07T01:00:00+01:00',
+                      '2026-10-07T01:00:00-00:00', '2026-02-30T00:00:00Z',
+                      '2026-10-07T25:00:00Z', ' 2026-10-07T00:00:00Z'):
+            with self.subTest(stamp=stamp), self.assertRaisesRegex(ValueError,'CREATED_AT_UTC_REQUIRED'):
+                prepare({**ENV,'created_at':stamp},runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+    def test_created_at_valid_utc_bytes_are_preserved(self):
+        for stamp in ('2026-10-07T00:00:00Z','2026-10-07T01:40:40.885204Z',
+                      '2026-10-07T00:00:00+00:00'):
+            with self.subTest(stamp=stamp):
+                envelope={**ENV,'created_at':stamp}
+                prepared=prepare(envelope,runtime_role='CHATGPT',allowed_kinds={'BOARD_POST'})
+                self.assertEqual(json.loads(prepared['raw']),envelope)
+    def test_contest_actor_fields_cannot_change_authorized_runtime_role(self):
+        for kind in ('CONTEST','REFUTATION'):
+            for fields in ({'source':'SENTINEL'},{'referee':'SENTINEL'},
+                           {'source':'REFEREE_1','referee':'SENTINEL'}, {'source':True}):
+                with self.subTest(kind=kind,fields=fields):
+                    envelope={**ENV,'kind':kind,'source':'REFEREE_1',
+                              'payload':{'test_id':'SYNTHETIC',**fields}}
+                    with self.assertRaisesRegex(PermissionError,'PAYLOAD_ROLE_NOT_AUTHORIZED'):
+                        prepare(envelope,runtime_role='REFEREE_1',allowed_kinds={kind})
+    def test_explicitly_authorized_contest_roles_remain_supported(self):
+        for role in ('REFEREE_1','SENTINEL'):
+            for fields in ({},{'source':role},{'referee':role},{'source':role,'referee':role}):
+                with self.subTest(role=role,fields=fields):
+                    envelope={**ENV,'kind':'CONTEST','source':role,'payload':{'test_id':'SYNTHETIC',**fields}}
+                    if role=='SENTINEL' and not fields:
+                        with self.assertRaisesRegex(PermissionError,'PAYLOAD_ROLE_NOT_AUTHORIZED'):
+                            prepare(envelope,runtime_role=role,allowed_kinds={'CONTEST'})
+                        continue
+                    self.assertEqual(json.loads(prepare(envelope,runtime_role=role,
+                        allowed_kinds={'CONTEST'})['raw']),envelope)
     def test_nested_command_fields_and_intent_wrapper_are_data_to_actual_writer(self):
         for kind in ('BOARD_POST','INTENT','OPERATOR_INTENT'):
             with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
