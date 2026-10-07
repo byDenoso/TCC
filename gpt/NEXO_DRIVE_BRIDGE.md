@@ -12,6 +12,8 @@ Leia o recibo do Writer e a entidade resultante na Tower. Registre APPLIED somen
 com recibo correspondente e readback. Mensagem ou binding aplicado não prova receita
 pronta nem execução científica. Timeout significa resultado desconhecido: reconciliar
 sem criar outro arquivo. Recusa de permissão exige reautorização, sem trocar de rota.
+Recusa definitiva de criação (400/404/409/422) fica CREATE_REJECTED e exige
+correção explícita pelo operador; não é timeout nem autoriza reenvio automático.
 
 Se faltar uma ferramenta, informe exatamente a operação pendente e diferencie
 ferramenta ausente, autenticação ausente, permissão negada e erro do Writer. Uma URL
