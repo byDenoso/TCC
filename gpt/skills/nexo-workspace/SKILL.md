@@ -30,6 +30,7 @@ Usar a intenção da mensagem; não apresentar menus. Abrir somente as fontes ex
 | confere automação; arruma | prompt/agenda, execução, entrada, saída, recibo e consumidor | correção mínima autorizada, teste e estado real |
 
 ## Leitura das fontes
+Carregar `nexo-connectors` antes de operar Google Drive ou GitHub. Busca/snippet e fetch textual degradado nao provam conteudo, ausencia ou versao; usar identidade direta, paginacao, raw fetch/ref pinado e readback conforme o contrato.
 Ler a projeção em https://bydenoso.github.io/Pantheon/tower-projection/projection.json . Se a ferramenta não abrir, ler o arquivo canônico via Drive; erro de acesso não prova fila vazia. A Tower é o arquivo JSON `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`, não uma pasta. Confirmar metadados antes de baixar.
 
 Para análise local, usar a cópia autenticada e o bundle utilizado pelo workflow `byDenoso/Pantheon@main:.github/workflows/nexo-writer-robot.yml`. Inspecionar antes de executar. Rodar somente leituras como `verify`, `status` e `frontier` na cópia local. Conferir stderr e seções esperadas: saída zero com mensagem `skipped` é leitura degradada. Identificar projeção reconstruída como local, sem alegar publicação.
