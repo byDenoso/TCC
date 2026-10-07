@@ -565,7 +565,9 @@ class Retrieval(Memory):
     @staticmethod
     def route(query: str, has_id: bool, filters: dict) -> dict:
         q = fold(query)
-        unknown_identifier = bool(re.fullmatch(r'(?:TEST|HYPOTHESIS|HYP|RUN|RESULT|WORK|DATASET|DATA|RECIPE|CONTRACT)::[A-Za-z0-9_.:/-]+', query.strip())) or any(re.match(r"^(?:(?:TEST|HYPOTHESIS|HYP|RUN|RESULT|WORK|DATASET|DATA|RECIPE|CONTRACT)::[A-Za-z0-9_.:/-]+|(?:TEST|HYP|RUN|RESULT|WORK|DATA|RECIPE|CONTRACT|T)-[A-Z0-9_-]+)$", x)
+        # Every canonical typed namespace is exact, including hidden/retired IDs.
+        # A namespace absent from this authorized view never permits fuzzy substitution.
+        unknown_identifier = bool(re.fullmatch(r'[A-Z][A-Z0-9_]{0,63}::[A-Za-z0-9_][A-Za-z0-9_.:/-]*', query.strip())) or any(re.match(r"^(?:(?:TEST|HYPOTHESIS|HYP|RUN|RESULT|WORK|DATASET|DATA|RECIPE|CONTRACT)::[A-Za-z0-9_.:/-]+|(?:TEST|HYP|RUN|RESULT|WORK|DATA|RECIPE|CONTRACT|T)-[A-Z0-9_-]+)$", x)
                                  for x in TECH_ID.findall(query))
         graph_cue = any(s in q for s in ("relacion", "connect", "conecta", "cadeia", "trace", "receita", "recipe", "depende", "depend", "resultado de", "result of", "associad", "associated", "quais testes", "which tests"))
         if has_id and graph_cue:
