@@ -47,14 +47,16 @@ Cadência viva:
 
 A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
 
-**Meta mínima de throughput:** cada pulso trabalha materialmente sobre pelo menos 6 TESTs distintos quando houver candidatos válidos. Ler, relatar, repetir blocker, criar seed/retry/shard ou fazer variação cosmética não conta. Se menos de 6 forem possíveis, executar o máximo e provar varredura real das frentes; não fabricar TEST para bater quota.
-- Pítia: 6 TESTs interpretados/priorizados/discriminados.
-- Cientista: 6 TESTs definidos/recuperados com contrato executável e, quando houver candidatos, até 24 RECEITAS COMPLETAS prontas para revisão técnica. Receita completa inclui inputs/versionamento, método, parâmetros/priors, null/rival, estatística, critérios, comando/runtime, outputs, checkpoint, proveniência e validação esperada. Não fabricar receitas para cumprir quota.
-- Engenheiro: 6 TESTs com avanço técnico real e certificação técnica de até 24 receitas completas por pulso. Só marcar READY_FOR_EXECUTOR após implementação/capability existente, inputs vinculados, smoke/preflight fiel, comando reproduzível, checkpoint/resume e readback; receita incompleta volta ao Cientista com causa específica.
-- Operador: alvo de 6 TESTs com execução real ou terminal verificável.
-- Crítico: 6 resultados/TESTs revisados ou contestados.
-- Guardião: 6 cadeias de TEST reparadas/liberadas.
-- Sentinela: 6 TESTs alimentados por evidência/input material por pulso diário.
+**Política work-conserving de throughput:** os números históricos 6/24 são sondas de capacidade e observabilidade, não quotas, estágios obrigatórios nem tetos. Em cada pulso, cada papel drena todos os itens independentes elegíveis que couberem no orçamento real de tempo, custo e runtime. Se houver mais de 6 e capacidade segura, continue; se houver menos, processe o máximo real. Nunca crie TEST, receita, mensagem, retry ou variação para atingir um número.
+- Pítia: prioriza e discrimina todos os TESTs materialmente acionáveis no orçamento do pulso.
+- Cientista: resolve definições científicas e produz todas as receitas completas elegíveis que puder; 24 serve apenas como benchmark de capacidade. Receita completa inclui inputs/versionamento, método, parâmetros/priors, null/rival, estatística, critérios, comando/runtime, outputs, checkpoint, proveniência e validação esperada.
+- Engenheiro: certifica todas as receitas completas elegíveis que puder; 24 é benchmark, não limite. Só marca READY_FOR_EXECUTOR após implementação/capability existente, inputs vinculados, smoke/preflight fiel, comando reproduzível, checkpoint/resume e readback; receita incompleta volta ao Cientista com causa específica.
+- Operador: executa ou terminaliza todos os TESTs elegíveis independentes que couberem no runtime, sem limite artificial de seis.
+- Crítico: revisa/contesta todos os resultados elegíveis que couberem no pulso; seis não é teto.
+- Guardião: repara/libera todas as cadeias independentes materialmente acionáveis no orçamento.
+- Sentinela: alimenta evidência/input apenas quando houver delta real; ausência de delta é no-op correto.
+
+**Métrica de utilização:** por pulso registrar candidatos elegíveis observados, itens materialmente avançados, itens que permaneceram elegíveis ao encerrar e motivo de parada (fila drenada, runtime, custo, dependência ou autorização). Utilização mede trabalho material sobre capacidade praticável; mensagens, receipts, scans, seeds, retries, shards e smokes isolados não contam.
 
 **Conversa entre papéis:** `BOARD_POST` é o barramento de conversa para papéis nomeados, com refs/reply_to e resolução do recado consumido. `HANDOFF` é transferência rastreável de ownership e só aceita runtime roles `LEARNER|ADVISOR|EXECUTOR|DAILY|EMERGENT` (mais DIRECTOR como sender quando aplicável). `ENGINEER` usa alias privado `ADVISOR` para handoff. `PITIA`, `REFEREE_1`, `GUARDIAO` e `SENTINEL` não inventam HANDOFF; usam BOARD_POST e pedem ao runtime role competente que faça a transferência quando necessário. “Próximo responsável” sem mensagem/handoff aplicado é coordenação incompleta.
 

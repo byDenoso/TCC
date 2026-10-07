@@ -45,17 +45,17 @@ Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HA
 ## Funções atuais: pipeline por item
 
 A configuração viva tem sete papéis. Agenda atual verificada:
-| Tarefa | Gatilho BRT | Produção mínima por pulso | Próximo consumidor |
+| Tarefa | Gatilho BRT | Política de produção por pulso | Próximo consumidor |
 |---|---|---|---|
-| Pítia | :00, toda hora | 6 TESTs interpretados/priorizados/discriminados | Cientista/Crítico/Operador |
-| Cientista | :10, toda hora | 6 TESTs definidos/recuperados + até 24 receitas completas | Engenheiro |
-| Engenheiro | :25, toda hora | 6 TESTs com avanço técnico + até 24 receitas certificadas READY_FOR_EXECUTOR | Operador |
-| Operador | :40, toda hora | alvo de 6 TESTs executados ou terminais verificáveis | Crítico/Pítia |
-| Crítico | :50, toda hora | 6 resultados/TESTs revisados ou contestados | Operador/Pítia/Cientista |
-| Guardião | :55, toda hora | 6 cadeias de TEST reparadas/liberadas | todos os papéis |
-| Sentinela | :05, a cada 2h | 6 TESTs alimentados com evidência/input material | Cientista/Engenheiro/Crítico |
+| Pítia | :00, toda hora | drenar TESTs interpretáveis/priorizáveis com delta real | Cientista/Crítico/Operador |
+| Cientista | :10, toda hora | drenar definições/receitas completas elegíveis; 24 é benchmark, não teto | Engenheiro |
+| Engenheiro | :25, toda hora | drenar receitas tecnicamente certificáveis; 24 é benchmark, não teto | Operador |
+| Operador | :40, toda hora | executar/terminalizar todos os TESTs elegíveis que couberem no runtime | Crítico/Pítia |
+| Crítico | :50, toda hora | revisar/contestar todos os resultados elegíveis no orçamento | Operador/Pítia/Cientista |
+| Guardião | :55, toda hora | reparar/liberar cadeias independentes acionáveis | todos os papéis |
+| Sentinela | :05, a cada 2h | agir apenas sobre evidência/input novo ou blocker que mudou | Cientista/Engenheiro/Crítico |
 
-A meta de 6 mede trabalho material, não volume administrativo. Seeds, retries, shards, downloads, smokes, leituras e duplicatas não são TESTs distintos. Se não houver 6 candidatos válidos, fazer o máximo e provar varredura real das frentes; nunca fabricar ciência para cumprir quota.
+Os antigos números 6/24 são probes de capacidade para medir utilização, nunca quotas nem limites. Continue enquanto houver trabalho independente elegível e orçamento seguro. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Se a fila elegível drenar, o no-op é correto; se restarem itens elegíveis, a rodada deve registrar por que parou.
 
 A cadência não é barreira global. Cada papel consome entregas já aplicadas, inclusive de rodadas anteriores. Blocker pertence ao item. Se um item trava, registrar/encaminhar e seguir imediatamente para outro.
 
@@ -111,11 +111,11 @@ Sem ferramentas para o canal privado, use `PRIVATE_CHANNEL_UNAVAILABLE` e preser
 pendente. NO-OP da rodada exige leitura válida e ausência de ação executável ou recuperação que
 o papel possa realizar; não gere recado, hipótese ou resultado só para eliminar o rótulo.
 
-### Pipeline de 24 receitas
+### Pipeline de receitas work-conserving
 
-O Cientista é dono da definição científica da receita. Por pulso, quando houver candidatos válidos, entrega até 24 receitas completas ao Engenheiro. Cada receita deve conter: TEST/roadmap/hipótese, pergunta, inputs e versões/hashes, método, modelo/null/rival, parâmetros e priors, estatística/estimando, critérios de sucesso/kill, implementação/capability alvo, comando/runtime, outputs esperados, schema de artifacts, checkpoint/resume, dependências, custo/runtime esperado, smoke/preflight esperado e proveniência. Receita incompleta não é entregue como pronta.
+O Cientista é dono da definição científica da receita. Por pulso, quando houver candidatos válidos, entrega ao Engenheiro todas as receitas completas que couberem no orçamento real do runtime; 24 é apenas benchmark histórico de capacidade. Cada receita deve conter: TEST/roadmap/hipótese, pergunta, inputs e versões/hashes, método, modelo/null/rival, parâmetros e priors, estatística/estimando, critérios de sucesso/kill, implementação/capability alvo, comando/runtime, outputs esperados, schema de artifacts, checkpoint/resume, dependências, custo/runtime esperado, smoke/preflight esperado e proveniência. Receita incompleta não é entregue como pronta.
 
-O Engenheiro é dono da certificação técnica. Para cada receita recebida, implementar ou ligar a capability mínima fiel, conferir inputs, dependências, parâmetros congelados, comando reproduzível, smoke/preflight, artifacts, checkpoint/resume e readback. Só então emitir READY_FOR_EXECUTOR e HANDOFF ADVISOR→EXECUTOR. Se falhar, reparar no mesmo pulso quando possível; se a lacuna for científica, devolver ao LEARNER com causa concreta e seguir para outra receita. A meta é certificar até 24 por pulso, sem fabricar candidatos.
+O Engenheiro é dono da certificação técnica. Para cada receita recebida, implementar ou ligar a capability mínima fiel, conferir inputs, dependências, parâmetros congelados, comando reproduzível, smoke/preflight, artifacts, checkpoint/resume e readback. Só então emitir READY_FOR_EXECUTOR e HANDOFF ADVISOR→EXECUTOR. Se falhar, reparar no mesmo pulso quando possível; se a lacuna for científica, devolver ao LEARNER com causa concreta e seguir para outra receita. Continue certificando enquanto houver candidatas independentes elegíveis e orçamento; 24 não é teto nem quota.
 
 O Operador consome apenas receitas com certificação técnica atual READY_FOR_EXECUTOR. Certificação técnica não substitui revisão científica independente do resultado.
 
