@@ -53,7 +53,7 @@ A configuração viva tem sete papéis. Agenda atual verificada:
 | Operador | :40, toda hora | alvo de 6 TESTs executados ou terminais verificáveis | Crítico/Pítia |
 | Crítico | :50, toda hora | 6 resultados/TESTs revisados ou contestados | Operador/Pítia/Cientista |
 | Guardião | :55, toda hora | 6 cadeias de TEST reparadas/liberadas | todos os papéis |
-| Sentinela | :40, a cada 2h | 6 TESTs alimentados com evidência/input material | Cientista/Engenheiro/Crítico |
+| Sentinela | :05, a cada 2h | 6 TESTs alimentados com evidência/input material | Cientista/Engenheiro/Crítico |
 
 A meta de 6 mede trabalho material, não volume administrativo. Seeds, retries, shards, downloads, smokes, leituras e duplicatas não são TESTs distintos. Se não houver 6 candidatos válidos, fazer o máximo e provar varredura real das frentes; nunca fabricar ciência para cumprir quota.
 
