@@ -40,7 +40,11 @@ def apply(root, request):
             utc(body[field])
     if body.get("valid_from") and body.get("valid_until"):
         need(utc(body["valid_until"]) > utc(body["valid_from"]), "MEMORY_VALIDITY_INVALID")
-    body["sources"] = source_refs(root, body.get("sources", []))
+    # Normalize the optional list before comparing a persisted immutable event.
+    # An exact replay reads the original record; it is not a new observation of
+    # the current source. New writes still validate every current source hash.
+    body.setdefault("sources", [])
+    need(isinstance(body["sources"], list), "CONTINUITY_SOURCE_REFS_INVALID")
     if kind == "NEXO_MEMORY_ENTRY":
         need(body.get("category") in CATEGORIES, "MEMORY_CATEGORY_INVALID")
         need(isinstance(body.get('contradicts', []), list) and all(isinstance(i, str) for i in body.get('contradicts', [])), 'MEMORY_CONTRADICTIONS_INVALID')
@@ -57,7 +61,7 @@ def apply(root, request):
             need(body.get("decision") and body.get("next_action"), "PROJECT_DECISION_REQUIRED")
         if body["action"] == "DELIVERY":
             delivery = body.get("delivery")
-            need(isinstance(delivery, dict) and delivery.get("source_path") in {r["path"] for r in body["sources"]}, "DELIVERY_CANONICAL_SOURCE_REQUIRED")
+            need(isinstance(delivery, dict) and delivery.get("source_path") in {r.get("path") for r in body["sources"] if isinstance(r, dict) and isinstance(r.get("path"), str)}, "DELIVERY_CANONICAL_SOURCE_REQUIRED")
     ident = ("MEMORY-" if kind == "NEXO_MEMORY_ENTRY" else "PROJECT-EVENT-") + digest([body["scope"], body["event_id"]])[:40]
     path = entity_path(root, "artifact", ident)
     existing = records(root)
@@ -70,6 +74,7 @@ def apply(root, request):
         replay = {k: v for k, v in current.get("payload", {}).items() if k != "sequence"}
         need(replay == value and current.get("kind") == kind, "CONTINUITY_ID_CONFLICT")
         return {"accepted": True, "status": "NO_OP", "readback": "PASS", "record_id": ident}
+    body["sources"] = source_refs(root, body["sources"])
     if body.get("supersedes_record_id"):
         old = next((r for r in existing if r["id"] == body["supersedes_record_id"]), None)
         need(old and old["kind"] == kind and old["payload"]["scope"] == body["scope"], "MEMORY_SUPERSESSION_SCOPE_INVALID")
