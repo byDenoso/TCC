@@ -11,7 +11,7 @@ import subprocess
 import sys
 import zipfile
 import pytest
-from test_continuity_enxame import Lab, AT
+from tests.test_continuity_enxame import Lab, AT
 from runtime.nexo_agent_api.retrieval_cli import MEMORY_CACHE_SUFFIX, memory_cache_path
 
 ROOT=Path(__file__).parents[1]

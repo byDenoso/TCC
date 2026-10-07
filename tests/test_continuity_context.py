@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import pytest
 
-from test_continuity_enxame import Lab, AT
+from tests.test_continuity_enxame import Lab, AT
 from runtime.nexo_agent_api import continuity_cli
 from runtime.nexo_agent_api.continuity_context import context
 from runtime.nexo_agent_api.live_tower import materialize_live_tower

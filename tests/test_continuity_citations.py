@@ -4,7 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import pytest
-from test_continuity_enxame import Lab
+from tests.test_continuity_enxame import Lab
 from runtime.nexo_agent_api.memory import Snapshot, digest
 from runtime.nexo_agent_api.continuity_context import context
 from runtime.nexo_agent_api.retrieval import resolve_pointer

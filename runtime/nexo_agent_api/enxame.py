@@ -82,6 +82,10 @@ def gap_names(spec):
 def load_events(root, scope_id=None, version=None):
     folder = fs_path(root, EVENT_ROOT)
     rows = [json.loads(p.read_text(encoding="utf-8")) for p in folder.glob("*.json")] if folder.is_dir() else []
+    return validate_events(rows, scope_id, version)
+
+def validate_events(rows, scope_id=None, version=None):
+    """Validate the same event chain for disk and verified snapshot readers."""
     rows = [r for r in rows if (scope_id is None or r.get("scope_id") == scope_id) and (version is None or r.get("scope_version") == version)]
     groups = {}
     for row in rows:

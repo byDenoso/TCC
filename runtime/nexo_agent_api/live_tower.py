@@ -184,7 +184,8 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     base, so a later :func:`publish_live_tower` preserves unscanned files.
     """
     bundle = read_live_tower_bytes(raw)
-    verify_live_tower(bundle)
+    # This locally decoded object is unchanged while its files are unpacked.
+    fingerprint = verify_live_tower(bundle)
     root = Path(destination).resolve()
     root.mkdir(parents=True, exist_ok=True)
     for relative, entry in bundle["files"].items():
@@ -210,9 +211,9 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
 
     metadata = {
         "export_role": "PUBLIC_READ_ONLY_DERIVED_COPY",
-        "tower_revision": verify_live_tower(bundle),
+        "tower_revision": fingerprint,
         "tower_file_id": str(bundle.get("stable_file_id")).strip(),
-        "source_state_fingerprint": verify_live_tower(bundle),
+        "source_state_fingerprint": fingerprint,
         "source_storage": bundle.get("storage"),
         "truth_owner": bundle.get("truth_owner"),
     }
