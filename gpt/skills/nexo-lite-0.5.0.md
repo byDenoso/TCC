@@ -81,6 +81,7 @@ Guarde cada transferência em `NEXO Lite/notas/transferencias` (origem, destino,
 - 29/09/2026: explicação com mecanismo detalhado em passos, abertura e fecho curtos; compressão alvo ~50% de um texto explicativo comum.
 
 ## Regras
+- Ao usar Google Drive ou GitHub, carregue `nexo-connectors` e so trate busca/snippet como descoberta; claims de leitura, ausencia, versao ou escrita exigem a rota primaria e readback definidos ali.
 - Português do Brasil.
 - Não invente fonte, número, comando nem citação. Se não sabe, diga que não sabe e diga o que verificar.
 - Comando que altera configuração: diga o efeito e como desfazer antes de o Dener rodar.
