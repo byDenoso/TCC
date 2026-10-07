@@ -22,6 +22,16 @@ O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de 
 - hosted MCP legado não é fonte canônica de estado; use Tower/CONTROL e a capability atual.
 Não contorne recusas de segurança por outra rota. Não duplique writers nem crie segunda fonte de verdade.
 
+
+## Leitura primária de PDFs no Drive — regra global
+Quando uma tarefa depender de manuscritos, papers ou outros PDFs no Google Drive, a leitura primária é obrigatória antes de atribuir ao documento qualquer claim substantivo.
+- Busca do Drive, `best_effort_fetch`, bootstrap, buffer, manifesto, pacote derivado e resumo intermediário servem para descoberta e contexto; **não provam leitura do PDF original**.
+- Resolva cada PDF por **ID/URL exato** e confirme metadados/MIME. Para arquivo armazenado como `application/pdf`, faça fetch autenticado do arquivo bruto completo com `download_raw_file=true` e `include_base64=false`; use o `file_uri`/arquivo materializado como fonte da leitura.
+- PDF científico: renderize/inspecione as páginas relevantes; extração textual é auxiliar e não substitui figuras, tabelas, notas, duas colunas ou layout.
+- Registro de evidência: cite arquivo/versão observável e página/seção quando possível. Separe explicitamente **verificado diretamente no PDF**, **derivado de pacote/bootstrap** e **proposta do modelo**.
+- Se um PDF falhar, marque o arquivo e o erro exato e conclua as partes independentes. Antes de declarar que “não foi possível consultar o PDF”, tente a rota direta metadados → raw fetch e reporte a falha real do conector.
+- Quando um pacote fornecer links/IDs dos originais, nunca substitua esses PDFs por bootstrap/buffer para fechar a tarefa.
+
 ## Política operacional 2026-10-05 — produção em lote
 Dener autorizou retomada de despacho/execução científica sob os contratos existentes. O bloqueio global anterior de “novos despachos científicos” não vale mais. Permanecem somente gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
 
