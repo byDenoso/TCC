@@ -17,6 +17,13 @@ INBOX_ID = "1NxhMy_HiGmHX2XHNLDDTRzqUoYY07HYR"
 _delivery_lock = threading.RLock()
 
 
+class InboxCreateRejected(RuntimeError):
+    """Definitive Drive create rejection, without a private response body."""
+    def __init__(self, status_code: int):
+        self.status_code = status_code
+        super().__init__(f"DRIVE_INBOX_CREATE_REJECTED:{status_code}")
+
+
 def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> dict:
     if not isinstance(envelope, dict) or any(k.startswith("_") for k in envelope):
         raise ValueError("UNTRUSTED_TRANSPORT_METADATA")
@@ -71,6 +78,8 @@ def deliver(prepared: dict, transport: Any, *, tower: dict, journal: dict | None
         if journal and (journal.get("intent_id") != prepared["intent_id"]
                         or journal.get("payload_sha256") != prepared["payload_sha256"]):
             raise ValueError("JOURNAL_IDENTITY_CONFLICT")
+        if journal and journal.get("stage") == "CREATE_REJECTED":
+            return dict(journal)
         found = transport.lookup(prepared["filename"], INBOX_ID)
         if len(found) > 1:
             raise ValueError("INBOX_DUPLICATE_FILES_REQUIRE_RECONCILIATION")
@@ -88,6 +97,11 @@ def deliver(prepared: dict, transport: Any, *, tower: dict, journal: dict | None
             transport.checkpoint(journal)
             try:
                 file_id = transport.create(prepared["raw"], prepared["filename"], INBOX_ID)
+            except InboxCreateRejected as error:
+                journal.update({"stage": "CREATE_REJECTED", "status_code": error.status_code,
+                                "retry": "OPERATOR_CORRECTION"})
+                transport.checkpoint(journal)
+                return dict(journal)
             except (TimeoutError, TowerTransportError) as error:
                 if isinstance(error,TowerTransportError) and error.retry_condition=='OPERATOR_REAUTHORIZATION':
                     journal.update({'stage':'PERMISSION_DENIED','retry':'OPERATOR_REAUTHORIZATION'})
@@ -133,10 +147,13 @@ class DriveInboxClientTransport:
         body=(b'--'+boundary.encode()+b'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+metadata+
               b'\r\n--'+boundary.encode()+b'\r\nContent-Type: application/json\r\n\r\n'+raw+
               b'\r\n--'+boundary.encode()+b'--\r\n')
-        response=DriveTower._check(DriveTower._call('INBOX_CREATE',lambda:self.inbox.session.post(
+        response=DriveTower._call('INBOX_CREATE',lambda:self.inbox.session.post(
             'https://www.googleapis.com/upload/drive/v3/files',
             params={'uploadType':'multipart','supportsAllDrives':'true','fields':'id'},data=body,
-            headers={'Content-Type':'multipart/related; boundary='+boundary},timeout=60)),'INBOX_CREATE')
+            headers={'Content-Type':'multipart/related; boundary='+boundary},timeout=60))
+        if 400 <= response.status_code < 500 and response.status_code not in {401,403,408,425,429}:
+            raise InboxCreateRejected(response.status_code)
+        response=DriveTower._check(response,'INBOX_CREATE')
         return response.json()['id']
     def read(self,file_id: str) -> dict:
         meta=self.inbox._metadata(file_id)
