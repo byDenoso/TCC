@@ -9,10 +9,12 @@ import json
 import re
 import threading
 from datetime import datetime
+from pathlib import PurePosixPath
 from typing import Any
 from uuid import uuid4
 
-from .operation_receipts import payload_hash, envelope_effect_id
+from .operation_receipts import (payload_hash, envelope_effect_id, CONTRACT,
+    RECEIPT_ROOT, LEGACY_RECEIPT_ROOT, OperationReceiptError, _validate)
 from .drive_transport import DriveInbox, DriveTower, TowerTransportError
 from .inbox_apply import _KIND_ALIASES
 
@@ -98,11 +100,40 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
             "filename": "nexo-" + envelope_effect_id(identity) + ".json", "raw": raw}
 
 
+def _receipt_records(tower: dict) -> list[dict]:
+    """Mirror the Writer's current/legacy ledger reads without mutating Tower."""
+    current = PurePosixPath(RECEIPT_ROOT.as_posix())
+    directories = {current, PurePosixPath(LEGACY_RECEIPT_ROOT.as_posix()), PurePosixPath('mutations/receipts')}
+    records = []
+    for path, entry in tower.get('files', {}).items():
+        logical = PurePosixPath(path)
+        if logical.parent not in directories or logical.suffix != '.json':
+            continue
+        value = entry.get('value') if isinstance(entry, dict) else None
+        if not isinstance(value, dict) or not {'receipt_id','intent_id','payload_sha256','effect_id','outcome'}.issubset(value):
+            if logical.parent == current:
+                raise OperationReceiptError('OPERATION_RECEIPT_LEDGER_INVALID')
+            continue  # Older directories also contain unrelated mutation records.
+        row = dict(value)
+        row.setdefault('contract', CONTRACT)
+        for key in ('reason_code','source_revision','result_revision','retry_condition','supersedes'):
+            row.setdefault(key, None)
+        row.setdefault('occurred_at', row.get('observed_at') or 'legacy')
+        row.setdefault('observed_at', row.get('occurred_at') or 'legacy')
+        row.setdefault('visibility', 'PRIVATE')
+        row.setdefault('stage', 'APPLIED' if row.get('outcome') in {'APPLIED','ALREADY_APPLIED'} else 'DELIVERED')
+        try:
+            _validate(row)
+        except OperationReceiptError:
+            raise OperationReceiptError('OPERATION_RECEIPT_LEDGER_INVALID') from None
+        records.append(row)
+    return records
+
+
 def receipt_status(tower: dict, prepared: dict) -> dict:
     rows = []
-    for path, entry in tower.get("files", {}).items():
-        row = entry.get("value", {})
-        if (path.startswith("operations/receipts/") and row.get("intent_id") == prepared["intent_id"]
+    for row in _receipt_records(tower):
+        if (row.get("intent_id") == prepared["intent_id"]
                 and row.get("effect_id") == envelope_effect_id(prepared["intent_id"])):
             rows.append(row)
     rows.sort(key=lambda r: (r.get("observed_at", ""), r.get("receipt_id", "")))
@@ -185,6 +216,8 @@ class DriveInboxClientTransport:
     This adapter never discovers credentials or changes sharing or Tower bytes.
     """
     def __init__(self, session: Any, *, can_write: bool, checkpoint):
+        if session is None:
+            raise ValueError('AUTHENTICATED_DRIVE_SESSION_REQUIRED')
         self.can_write=can_write
         self.inbox=DriveInbox(session=session,folder_id=INBOX_ID)
         self.checkpoint=checkpoint

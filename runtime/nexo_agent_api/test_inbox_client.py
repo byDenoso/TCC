@@ -10,7 +10,7 @@ from .inbox_client import INBOX_ID, prepare, deliver, receipt_status, DriveInbox
 from .drive_transport import TowerTransportError
 from .live_tower import build_live_tower_payload
 from .gpt_writer import apply_to_tower, _is_request
-from .operation_receipts import intent_id, payload_hash
+from .operation_receipts import intent_id, payload_hash, build_receipt, envelope_effect_id, OperationReceiptError
 
 
 ENV = {'kind':'BOARD_POST','source':'CHATGPT','intent_id':'SYNTHETIC-CANARY',
@@ -191,6 +191,42 @@ class ClientTests(unittest.TestCase):
         t=Transport();t.can_write=False
         with self.assertRaises(PermissionError): deliver(self.prepared,t,tower=self.tower,journal={})
         self.assertEqual(t.calls,0)
+    def test_missing_session_cannot_trigger_ambient_credential_discovery(self):
+        with patch('runtime.nexo_agent_api.inbox_client.DriveInbox') as inbox:
+            with self.assertRaisesRegex(ValueError,'AUTHENTICATED_DRIVE_SESSION_REQUIRED'):
+                DriveInboxClientTransport(None,can_write=True,checkpoint=lambda journal:None)
+            inbox.assert_not_called()
+    def test_current_and_legacy_receipts_prevent_redundant_delivery(self):
+        receipt=build_receipt(intent=self.prepared['intent_id'],
+            payload_sha256=self.prepared['payload_sha256'],effect=envelope_effect_id(self.prepared['intent_id']),
+            outcome='APPLIED',source_revision=None,result_revision=None)
+        for parent in ('operations/receipts','mutations/receipts/operations','mutations/receipts'):
+            for minimal in (False,True):
+                with self.subTest(parent=parent,minimal=minimal):
+                    row=copy.deepcopy(receipt)
+                    if minimal:
+                        for key in ('contract','stage','reason_code','source_revision','result_revision',
+                                    'occurred_at','observed_at','visibility','retry_condition','supersedes'):
+                            row.pop(key,None)
+                    tower={'files':{parent+'/'+receipt['receipt_id']+'.json':{'value':row}}}
+                    t=Transport();status=deliver(self.prepared,t,tower=tower,journal={})
+                    self.assertEqual(status['stage'],'APPLIED')
+                    self.assertTrue(status['entity_readback_required']);self.assertEqual(t.calls,0)
+    def test_legacy_unrelated_records_are_ignored_but_current_corruption_is_not_absence(self):
+        for parent in ('mutations/receipts/operations','mutations/receipts'):
+            tower={'files':{parent+'/unrelated.json':{'value':{'legacy_mutation':True}}}}
+            self.assertEqual(receipt_status(tower,self.prepared)['stage'],'UNOBSERVED')
+        tower={'files':{'operations/receipts/broken.json':{'value':{}}}}
+        with self.assertRaisesRegex(OperationReceiptError,'OPERATION_RECEIPT_LEDGER_INVALID'):
+            receipt_status(tower,self.prepared)
+    def test_invalid_matching_receipt_is_not_reported_as_applied(self):
+        receipt=build_receipt(intent=self.prepared['intent_id'],
+            payload_sha256=self.prepared['payload_sha256'],effect=envelope_effect_id(self.prepared['intent_id']),
+            outcome='APPLIED',source_revision=None,result_revision=None)
+        receipt['contract']='UNTRUSTED'
+        for parent in ('operations/receipts','mutations/receipts/operations','mutations/receipts'):
+            with self.subTest(parent=parent), self.assertRaisesRegex(OperationReceiptError,'OPERATION_RECEIPT_LEDGER_INVALID'):
+                receipt_status({'files':{parent+'/invalid.json':{'value':receipt}}},self.prepared)
     def test_delivery_readback_and_idempotence(self):
         t=Transport();j={}
         for _ in range(2): self.assertEqual(deliver(self.prepared,t,tower=self.tower,journal=j)['stage'],'DELIVERED')

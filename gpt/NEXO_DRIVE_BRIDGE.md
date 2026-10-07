@@ -28,6 +28,10 @@ Tower já lida e um journal persistente; exige checkpoint antes da criação rem
 multipart e busca a raiz e processed com paginação pelo transporte existente.
 Não descobre credenciais nem escreve na Tower. `receipt_status` usa o mesmo hash
 e identidade de recibos do Writer existente.
+Sessão Drive ausente é recusada antes de qualquer procura de credenciais. A
+reconciliação lê `operations/receipts/`, `mutations/receipts/operations/` e o
+layout antigo direto `mutations/receipts/`, com os defaults e a validação de
+recibos do Writer. Um ledger inválido é erro, não ausência de recibo.
 
 A lista de tipos autorizados é definida pelo chamador confiável, nunca pelo JSON.
 O cliente aceita somente um envelope por arquivo: `kind`, `source`, `created_at`,
