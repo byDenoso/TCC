@@ -43,7 +43,7 @@ Cadência viva:
 - `:40` Operador
 - `:50` Crítico
 - `:55` Guardião
-- `:40` Sentinela, a cada 2h
+- `:05` Sentinela, a cada 2h
 
 A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
 
