@@ -30,8 +30,8 @@ def records(root):
 def apply(root, request):
     kind, body, role = request["nexo_operation"], copy.deepcopy(request["payload"]), request["role"]
     need(role in SOURCES and isinstance(body, dict), "CONTINUITY_AUTHOR_INVALID")
-    common = {"event_id", "scope", "sources", "text", "supersedes_record_id", "valid_from", "valid_until"}
-    allowed = common | ({"category", "contradicts", "applicability"} if kind == "NEXO_MEMORY_ENTRY" else {"project_id", "title", "action", "next_action", "owner", "depends_on", "delivery", "expected_previous", "decision"})
+    common = {"event_id", "scope", "sources", "text"}
+    allowed = common | ({"category", "contradicts", "applicability", "supersedes_record_id", "valid_from", "valid_until"} if kind == "NEXO_MEMORY_ENTRY" else {"project_id", "title", "action", "next_action", "owner", "depends_on", "delivery", "expected_previous", "decision"})
     need(not set(body)-allowed and SCOPE.fullmatch(str(body.get("scope", ""))) and IDENTITY.fullmatch(str(body.get("event_id", ""))), "CONTINUITY_FIELDS_INVALID")
     need(isinstance(body.get("text"), str) and body["text"].strip() and len(body["text"]) <= 12000, "CONTINUITY_TEXT_REQUIRED")
     utc(request["created_at"])
@@ -82,6 +82,8 @@ def apply(root, request):
         prior = chain[-1] if chain else None
         need(body["expected_previous"] == (prior["id"] if prior else None), "PROJECT_VERSION_CHANGED")
         need((not prior and body["action"] == "CREATED") or (prior and body["action"] != "CREATED"), "PROJECT_LIFECYCLE_INVALID")
+        if body["action"] == "REOPENED":
+            need(prior and prior["payload"]["action"] == "COMPLETED", "PROJECT_REOPEN_REQUIRES_COMPLETED")
         if prior and prior["payload"]["action"] == "COMPLETED":
             need(body["action"] == "REOPENED" and body["sources"], "PROJECT_REOPEN_EVIDENCE_REQUIRED")
         value["sequence"] = len(chain)+1
