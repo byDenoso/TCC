@@ -7,6 +7,7 @@ No scheduling, scientific execution, credentials, transport or Tower publication
 from __future__ import annotations
 import copy
 import json
+import math
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -59,20 +60,30 @@ def source_refs(root, values):
         need(digest(read_json(root, row["path"])) == row["sha256"], "SOURCE_CONTENT_CHANGED")
     return copy.deepcopy(values)
 
+def has_content(value):
+    """Reject empty/whitespace containers without discarding a defined zero."""
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, dict):
+        return any(has_content(item) for item in value.values())
+    if isinstance(value, list):
+        return any(has_content(item) for item in value)
+    return type(value) in {int, float, bool} and math.isfinite(value)
+
 def gap_names(spec):
-    missing = [key for key in ESSENTIAL if not spec.get(key)]
+    missing = [key for key in ESSENTIAL if not has_content(spec.get(key))]
     requirements = spec.get("requirements", {})
     if not isinstance(requirements, dict):
         return missing + ["requirements"]
     for key in DESIGN_FIELDS:
         row = requirements.get(key)
         if not isinstance(row, dict) or not (
-            row.get("status") == "DEFINED" and row.get("value") not in (None, "", [], {})
+            row.get("status") == "DEFINED" and has_content(row.get("value"))
             or row.get("status") == "NOT_APPLICABLE" and isinstance(row.get("reason"), str) and row["reason"].strip()
         ):
             missing.append(key)
     for key, row in requirements.items():
-        if key not in DESIGN_FIELDS and isinstance(row, dict) and row.get("required") is True and not row.get("value"):
+        if key not in DESIGN_FIELDS and isinstance(row, dict) and row.get("required") is True and not has_content(row.get("value")):
             missing.append(key)
     explicit = spec.get("gaps", [])
     if not isinstance(explicit, list) or any(not isinstance(x, str) or not x.strip() for x in explicit):
@@ -157,7 +168,7 @@ def derive(events, now=None):
         card["charge_key"] = digest([card["id"], card["last_material_event"], card["next_owner"], card["gaps"], card["open_objections"], card["open_conflicts"]])
         card["stale"] = card["state"] not in {"REGISTRADO", "NAO_TESTAVEL"} and (utc(now)-utc(card["last_material_at"])).total_seconds() > 7200
         card['pulses_without_progress'] = sum(s['sequence']>card.get('last_material_sequence',1) and not s.get('charge_key') for s in card['signals'])
-    return {"contract": CONTRACT, "access": "PRIVATE", "head": head, "closed": closed, "cards": cards, "events": events, "independent_human_reviewers": 1, "execution_triggered": False}
+    return {"contract": CONTRACT, "access": "PRIVATE", "head": head, "closed": closed, "cards": cards, "events": events, "independent_human_reviewers": 0, "logical_roles_one_owner": True, "execution_triggered": False}
 
 def validate_event(root, payload, role, created_at, events):
     need(role in ROLES and isinstance(payload, dict), "LOGICAL_ROLE_INVALID")
@@ -235,6 +246,9 @@ def validate_event(root, payload, role, created_at, events):
             need(card["quorum"] and body.get("spec_sha256") == card["spec_sha256"], "FREEZE_QUORUM_OR_HASH_INVALID")
             need(not card['freeze'], 'SPEC_ALREADY_FROZEN')
         if kind == "REGISTRO":
+            # A freeze is historical evidence, not permission to ignore a later
+            # objection. Re-check the current review before confirming readback.
+            need(card["quorum"], "REGISTRATION_CURRENT_QUORUM_REQUIRED")
             need(card["freeze"] and body.get("test_id") == registration_id(payload, card), "REGISTRATION_ID_INVALID")
             test = read_json(root, "entities/test/" + body["test_id"] + ".json")
             readback = body.get("readback", {})
