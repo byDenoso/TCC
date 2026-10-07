@@ -30,6 +30,17 @@ Não descobre credenciais nem escreve na Tower. `receipt_status` usa o mesmo has
 e identidade de recibos do Writer existente.
 
 A lista de tipos autorizados é definida pelo chamador confiável, nunca pelo JSON.
+O cliente aceita somente um envelope por arquivo: `kind`, `source`, `created_at`,
+`intent_id`, `payload` e, em correções, `supersedes`. Campos de request bruto não
+podem ser acrescentados no topo. `BATCH` é recusado: entregue cada filho aprovado
+separadamente, com identidade, papel autorizado, journal e recibo próprios.
+Tipos desconhecidos também são recusados; o cliente não autoriza inferência de
+outra operação pelo conteúdo do payload. Replays ALREADY_APPLIED continuam
+exigindo conferência da entidade.
+Em HANDOFF, `from_role` deve corresponder ao `runtime_role` confiável; nas
+transições, a mesma regra vale para `writer_role`, inclusive nos wrappers e aliases.
+Uma origem genérica CHATGPT não autoriza assumir outro papel no payload. O
+chamador precisa resolver o papel autorizado antes de preparar essas operações.
 O Writer continua validando schema, papéis das mutações, dependências e revisões.
 O lock do cliente serializa apenas threads do mesmo processo. Runtimes distintos
 podem criar duplicatas físicas concorrentes; o intent_id mantém o efeito idempotente

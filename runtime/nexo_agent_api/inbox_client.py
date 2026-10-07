@@ -12,9 +12,11 @@ from uuid import uuid4
 
 from .operation_receipts import payload_hash, envelope_effect_id
 from .drive_transport import DriveInbox, DriveTower, TowerTransportError
+from .inbox_apply import _KIND_ALIASES
 
 INBOX_ID = "1NxhMy_HiGmHX2XHNLDDTRzqUoYY07HYR"
 _delivery_lock = threading.RLock()
+_ENVELOPE_FIELDS = frozenset({'kind', 'source', 'created_at', 'intent_id', 'payload', 'supersedes'})
 
 
 class InboxCreateRejected(RuntimeError):
@@ -25,10 +27,27 @@ class InboxCreateRejected(RuntimeError):
 
 
 def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> dict:
-    if not isinstance(envelope, dict) or any(k.startswith("_") for k in envelope):
+    if not isinstance(envelope, dict) or any(not isinstance(k, str) or k.startswith("_") for k in envelope):
         raise ValueError("UNTRUSTED_TRANSPORT_METADATA")
+    # The Writer also accepts raw requests. An envelope may never smuggle the
+    # document/entity/nexo_operation dispatch keys past this client's kind gate.
+    if set(envelope) - _ENVELOPE_FIELDS:
+        raise ValueError("UNSUPPORTED_ENVELOPE_FIELDS")
     if envelope.get("source") != runtime_role or envelope.get("kind") not in allowed_kinds:
         raise PermissionError("OPERATION_NOT_AUTHORIZED")
+    kind = envelope.get('kind')
+    if not isinstance(kind, str) or not isinstance(runtime_role, str) or not runtime_role:
+        raise ValueError('ENVELOPE_SCHEMA_INVALID')
+    raw_kind = kind.upper().replace('-', '_').replace(' ', '_')
+    if raw_kind == 'BATCH':
+        # Parent reconciliation has no aggregate Writer receipt. Each child must
+        # pass its own role/kind authorization and keep its own durable journal.
+        raise ValueError('BATCH_REQUIRES_INDIVIDUAL_DELIVERY')
+    canonical_kind = _KIND_ALIASES.get(raw_kind)
+    if canonical_kind is None:
+        # Unknown labels let the tolerant Writer infer a different operation
+        # from payload fields. This narrow client requires an explicit kind.
+        raise ValueError('UNSUPPORTED_PROPOSAL_KIND')
     identity = envelope.get("intent_id")
     # Reject rather than trim: the approved identity participates in hashes and
     # must already match the Writer's stripped receipt identity.
@@ -37,6 +56,17 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
         raise ValueError("STABLE_INTENT_ID_REQUIRED")
     if not isinstance(envelope.get("payload"), dict) or not envelope.get("created_at"):
         raise ValueError("ENVELOPE_SCHEMA_INVALID")
+    if envelope.get('supersedes') is not None and (
+            not isinstance(envelope['supersedes'], str) or not envelope['supersedes']
+            or envelope['supersedes'] != envelope['supersedes'].strip()):
+        raise ValueError('SUPERSEDES_ID_INVALID')
+    if canonical_kind in {'HANDOFF', 'HANDOFF_TRANSITION'}:
+        body = envelope['payload']
+        wrapper, role_field = ('handoff', 'from_role') if canonical_kind == 'HANDOFF' else ('transition', 'writer_role')
+        operation = body.get(wrapper) if isinstance(body.get(wrapper), dict) else body
+        actor = operation.get(role_field)
+        if not isinstance(actor, str) or actor.upper() != runtime_role.upper():
+            raise PermissionError('PAYLOAD_ROLE_NOT_AUTHORIZED')
     raw = json.dumps(envelope, ensure_ascii=False, sort_keys=True,
                      separators=(",", ":"), allow_nan=False).encode("utf-8")
     if len(raw) > 1024 * 1024:
@@ -60,7 +90,8 @@ def receipt_status(tower: dict, prepared: dict) -> dict:
     if row.get("payload_sha256") != prepared["payload_sha256"]:
         raise ValueError("INTENT_PAYLOAD_CONFLICT")
     return {"stage": row.get("outcome"), "receipt": row,
-            "tower_revision": tower.get("revision"), "entity_readback_required": row.get("outcome") == "APPLIED"}
+            "tower_revision": tower.get("revision"),
+            "entity_readback_required": row.get("outcome") in {"APPLIED", "ALREADY_APPLIED"}}
 
 
 def deliver(prepared: dict, transport: Any, *, tower: dict, journal: dict | None = None) -> dict:
