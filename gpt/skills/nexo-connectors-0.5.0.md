@@ -100,6 +100,24 @@ Classifique antes de concluir:
 | confirmacao | readback do mesmo ID | fetch_file no branch/ref + commit quando necessario |
 | limite | paginacao, truncamento, ACL, parser | indice, paginacao, permissoes, CI |
 
+## Smoke de capacidade read-only
+
+Quando houver suspeita de falha geral do conector, rode antes de declarar indisponibilidade:
+
+**Drive**
+1. get_file_metadata na Tower canonica 1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z.
+2. fetch textual do mesmo ID. Se content vier vazio com is_empty=false, registrar DEGRADED_READ.
+3. repetir por raw fetch com download_raw_file=true e include_base64=false.
+4. confirmar tamanho do arquivo materializado e parse JSON. Se isso passar, o conector Drive esta funcional e a falha era da superficie textual/arquivo alvo.
+
+**GitHub**
+1. get_profile para confirmar identidade da conexao.
+2. fetch_file de byDenoso/TCC:gpt/skills/nexo-master-router-0.5.0.md em main.
+3. usar search apenas como teste de indice. Resultado zero nao invalida o fetch_file.
+4. quando uma versao exata importar, repetir fetch_file com commit SHA conhecido e/ou fetch_commit.
+
+Nao executar writes de smoke por padrao. Validar escrita apenas quando a tarefa ja exige uma mutacao real, usando o proprio write e readback como teste.
+
 ## Criterio de conclusao
 
 - **LIDO:** conteudo primario efetivamente acessado na versao identificada.
