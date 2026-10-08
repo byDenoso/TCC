@@ -830,16 +830,49 @@ def _stop_closures(raw: bytes) -> list[dict]:
 
     from .evolution import evolution_status
 
+    def exhausted(used: Any, limit: Any) -> bool:
+        # Charter limits are integers (legacy JSON can store integer strings).
+        # Unknown/invalid limits never become invented authority to close.
+        if type(used) not in (int, str) or type(limit) not in (int, str):
+            return False
+        try:
+            count, maximum = int(used), int(limit)
+        except ValueError:
+            return False
+        return maximum > 0 and count >= maximum
+
     with tempfile.TemporaryDirectory(prefix="nexo-robot-status-") as work:
         root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
         roadmaps = evolution_status(root).get("roadmaps", [])
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return [{"kind": "ROADMAP_CLOSE", "source": "WRITER_ROBOT", "created_at": now, "_inbox_name": f"robot-close-{r['roadmap_id']}",
-             "payload": {"roadmap_id": r["roadmap_id"], "reason": r["stop_reached"],
-                         "final_report": f"Fechado automaticamente pelo critério de parada ({r['stop_reached']}): "
-                                         f"{r['confirmed']} confirmados, {r['tests_used']} testes usados."}}
-            for r in roadmaps if r.get("stop_reached")]
-
+    closures = []
+    for roadmap in roadmaps:
+        if (roadmap.get("charter_status") != "CHARTERED"
+                or roadmap.get("renewable")
+                or str(roadmap.get("state") or "").upper() in {"CLOSED", "CANCELLED", "ARCHIVED"}):
+            continue
+        # SUCCESS/KILL counts are review signals, not proof that every frozen
+        # comparison was executed and independently reviewed. Recompute budget
+        # exhaustion because those signals can mask BUDGET in roadmap_progress.
+        if not (exhausted(roadmap.get("tests_used"), roadmap.get("max_tests"))
+                or exhausted(roadmap.get("days"), roadmap.get("max_days"))):
+            continue
+        rid = roadmap["roadmap_id"]
+        closures.append({
+            "kind": "ROADMAP_CLOSE", "source": "WRITER_ROBOT", "created_at": now,
+            "_inbox_name": f"robot-close-{rid}",
+            "payload": {
+                "roadmap_id": rid, "reason": "BUDGET",
+                "final_report": (
+                    "Encerramento operacional por esgotamento do orcamento aprovado: "
+                    f"{roadmap.get('tests_used')} / {roadmap.get('max_tests')} testes; "
+                    f"{roadmap.get('days')} / {roadmap.get('max_days')} dias. "
+                    "Nao constitui confirmacao ou refutacao cientifica. Comparacoes "
+                    "nao concluidas e revisao pendente devem constar do relatorio final."
+                ),
+            },
+        })
+    return closures
 
 class _GitHubInbox:
     """byDenoso/TCC@nexo-inbox inbox/*.json via the REST API (optional; needs a token with Contents read/write)."""
