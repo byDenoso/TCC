@@ -197,7 +197,7 @@ class AgentService:
         if roadmaps.is_dir():
             for path in roadmaps.glob("*.json"):
                 payload = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(payload, dict) and str(payload.get("status") or "").upper() == "ACTIVE":
+                if isinstance(payload, dict) and str(payload.get("status") or payload.get("state") or "").upper() == "ACTIVE":
                     active_roadmaps.add(path.stem)
 
         recipe_blocked = []
@@ -207,7 +207,7 @@ class AgentService:
                 test = json.loads(path.read_text(encoding="utf-8"))
                 if not isinstance(test, dict):
                     continue
-                if str(test.get("status") or "").upper() != "BLOCKED_INPUT":
+                if str(test.get("status") or test.get("state") or "").upper() != "BLOCKED_INPUT":
                     continue
                 roadmap_id = str(test.get("roadmap_id") or "")
                 if roadmap_id not in active_roadmaps:
