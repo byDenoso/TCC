@@ -149,6 +149,33 @@ class AgentServiceTests(unittest.TestCase):
         self.assertTrue(all(t["visibility_status"] == "RECOVERY_DISCOVERY_ONLY"
                             for t in view["active_input_blocked_tests"]))
 
+    def test_closed_roadmap_with_stale_active_state_does_not_reopen_tests(self):
+        root = self.root / "roadmaps"
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "RM-CLOSED.json").write_text(json.dumps({
+            "status": "CLOSED", "state": "ACTIVE",
+        }))
+        (root / "RM-ACTIVE.json").write_text(json.dumps({
+            "status": "ACTIVE", "state": "ACTIVE",
+        }))
+        for test_id, roadmap_id in (("CLOSED-TEST", "RM-CLOSED"),
+                                    ("OPEN-TEST", "RM-ACTIVE")):
+            folder = self.root / "entities" / "test"
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (test_id + ".json")).write_text(json.dumps({
+                "id": test_id, "status": "BLOCKED_INPUT",
+                "roadmap_id": roadmap_id,
+                "data_binding": {"status": "BOUND"},
+                "readiness": {"eligible": False, "reasons": ["RECIPE_BINDING_MISSING"]},
+            }))
+        result = AgentService(self.root).bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(result["active_input_blocked_test_count"], 1)
+        self.assertEqual(result["active_recipe_blocked_test_count"], 1)
+        self.assertEqual(result["active_input_blocked_tests"][0]["test_id"], "OPEN-TEST")
+        self.assertEqual(result["roadmap_state_conflict_count"], 1)
+        self.assertEqual(result["roadmap_state_conflicts"][0]["roadmap_id"], "RM-CLOSED")
+        self.assertEqual(result["roadmap_state_conflicts"][0]["effective_status"], "CLOSED")
+
     def test_five_card_queue_reveals_full_runnable_count(self):
         for i in range(7):
             self.write_work(f"ID{i}", self.eligible(f"ID{i}"))
