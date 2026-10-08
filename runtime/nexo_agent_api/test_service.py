@@ -122,6 +122,33 @@ class AgentServiceTests(unittest.TestCase):
         self.assertEqual(discovery["active_recipe_blocked_tests"][0]["data_binding_status"], "BOUND")
         self.assertEqual(service.queue_for("EXECUTOR"), [])
 
+    def test_all_forty_blocked_tests_are_visible_without_fabricating_readiness(self):
+        roadmap = self.root / "roadmaps" / "RM-ACTIVE.json"
+        roadmap.parent.mkdir(parents=True, exist_ok=True)
+        roadmap.write_text(json.dumps({"state": "ACTIVE"}))
+        for index in range(40):
+            test_id = f"SYNTH-BLOCKED-{index:02d}"
+            reasons = (["RECIPE_BINDING_MISSING"] if index < 36
+                       else ["INPUT_PROVENANCE_INCOMPLETE"])
+            binding = {"status": "BOUND" if index < 5 else "PARTIAL"}
+            path = self.root / "entities" / "test" / (test_id + ".json")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({
+                "id": test_id, "state": "BLOCKED_INPUT",
+                "roadmap_id": "RM-ACTIVE", "data_binding": binding,
+                "readiness": {"eligible": False, "reasons": reasons},
+            }))
+        service = AgentService(self.root)
+        self.assertEqual(service.queue_for("EXECUTOR"), [])
+        view = service.bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(view["active_input_blocked_test_count"], 40)
+        self.assertEqual(view["active_recipe_blocked_test_count"], 36)
+        self.assertEqual(view["active_data_bound_recipe_blocked_count"], 5)
+        self.assertEqual(len({t["test_id"] for t in view["active_input_blocked_tests"]}), 40)
+        self.assertEqual(sum(not t["recipe_missing"] for t in view["active_input_blocked_tests"]), 4)
+        self.assertTrue(all(t["visibility_status"] == "RECOVERY_DISCOVERY_ONLY"
+                            for t in view["active_input_blocked_tests"]))
+
     def test_five_card_queue_reveals_full_runnable_count(self):
         for i in range(7):
             self.write_work(f"ID{i}", self.eligible(f"ID{i}"))
