@@ -843,6 +843,9 @@ def _load_evolution(root: Path, generated_at: str) -> dict[str, Any] | None:
     try:
         now = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
         status = evolution_status(root, now=now, public=True)
+        # Defense in depth: no inter-agent BOARD payload enters a public snapshot
+        # even if the upstream evolution view changes in a future version.
+        status["board"] = []
     except Exception as exc:  # the projection never fails because of the evolution layer, but says why
         import sys
         import traceback
