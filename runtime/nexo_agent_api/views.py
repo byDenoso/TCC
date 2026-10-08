@@ -242,9 +242,13 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
         if active_ids is not None:
             queue = [item for item in queue if str(item.get("id")) in active_ids]
             queue = [item for item in queue if not _deferred_by_active_p0(item, active_ids)]
+        total_before_projection = len(queue)
         queue = _prioritize(queue, role)
         view["queue"] = queue
         view["queue_count"] = len(queue)
+        view["queue_total_count"] = total_before_projection
+        view["queue_has_more"] = total_before_projection > len(queue)
+        view["queue_scope"] = "TOP_CARDS_ONLY_DISCOVERY_NOT_EXECUTION_AUTHORIZATION"
         view["queue_limit"] = ROLE_QUEUE_LIMIT
         view["view_model"] = "SINGLE_ROLE_VIEW"
         _write_json(root / "bootstrap" / f"{role.lower()}.json", view)
