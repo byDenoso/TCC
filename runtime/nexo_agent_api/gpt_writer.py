@@ -874,6 +874,7 @@ def _stop_closures(raw: bytes) -> list[dict]:
         })
     return closures
 
+
 class _GitHubInbox:
     """byDenoso/TCC@nexo-inbox inbox/*.json via the REST API (optional; needs a token with Contents read/write)."""
 
