@@ -700,7 +700,9 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
         except (TypeError, ValueError):
             ttl = 48
         refs = [str(r) for r in entry.get("refs") or []][:12]
-        private = bool(entry.get("private")) or any(r.upper().startswith(("OLY", "OLYMPUS")) for r in refs)
+        # BOARD_POST is internal coordination. A client-supplied false flag cannot
+        # authorize a public release, including messages from legacy roles.
+        private = True
         transport_identity = {
             "inbox_id": str(item.get("_inbox_id") or "").strip(),
             "inbox_name": str(item.get("_inbox_name") or "").strip(),
@@ -754,6 +756,10 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
 
 
 def _board_view(root: Path, now: datetime | None, public: bool) -> list[dict[str, Any]]:
+    # The shared BOARD is never an approved publication surface. Fail closed for
+    # existing posts whose private flag was omitted or incorrectly set to false.
+    if public:
+        return []
     posts = _read(root, BOARD_DOC).get("posts") or []
     keep = []
     for post in posts:
