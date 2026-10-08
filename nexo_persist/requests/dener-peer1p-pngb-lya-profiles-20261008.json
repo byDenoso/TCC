@@ -1,0 +1,254 @@
+{
+  "stable_id": "dener-peer1p-pngb-lya-profiles-20261008",
+  "envelope": {
+    "kind": "BATCH",
+    "source": "CONVERSA",
+    "producer": "GPT",
+    "created_at": "2026-10-08T03:30:00Z",
+    "payload": {
+      "items": [
+        {
+          "kind": "HYPOTHESIS_PROPOSAL",
+          "source": "CONVERSA",
+          "producer": "GPT",
+          "created_at": "2026-10-08T03:30:00Z",
+          "payload": {
+            "test_id": "T-PEER1P-PNGB-LYA-CC-20261008",
+            "display_name": "pNGB com Lyα e cronômetros",
+            "domain": "SCIENCE",
+            "origin_kind": "DENER_DIRECTED",
+            "priority": "P0",
+            "question": "No PEER-1P pNGB de forma congelada, qual é o profile likelihood de f_PEER para CMB + DESI DR2 Ly-alpha full-shape + cronômetros cósmicos + SH0ES, e o corredor ativo sobrevive ao novo Ly-alpha?",
+            "null": "O profile colapsa para f_PEER=0 ou não mantém um corredor ativo compatível com o stack após a reotimização comum dos parâmetros cosmológicos e nuisances.",
+            "rival": "Qualquer preferência aparente por f_PEER>0 é produzida pela calibração SH0ES, por resposta específica do experimento auxiliar ou por dupla contagem/uso incorreto do bloco Ly-alpha.",
+            "method": "Profile likelihood nativo em f_PEER para o PEER-1P pNGB. Herdar sem alteração a forma pNGB, solver, parâmetros fixos, likelihood CMB e tratamento de nuisances do contrato pNGB canônico atual. Substituir o antigo bloco Ly-alpha pelo DESI DR2 2026 full-shape 2D em z=2.33: DM/rd=39.32±0.33, DH/rd=8.600±0.066, rho=0.225. Não usar fσ8 do Ly-alpha. Bloco auxiliar=cc. SH0ES deve usar o bloco covariance-aware Pantheon+SH0ES já validado no projeto, não um prior H0 gaussiano avulso. Grade congelada f_PEER=[0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.10,0.12,0.14]; em cada nó reotimizar os parâmetros cosmológicos livres e nuisances previstos pelo contrato. Reportar Q por bloco, Q total, H0, rd, Omega_m, ns e S8. O ponto f=0 é o comparador LCDM same-stack.",
+            "data": "CMB canônico do perfil pNGB + DESI DR2 Ly-alpha full-shape 2026 + cronômetros cósmicos + Pantheon+SH0ES covariance-aware.",
+            "success_criteria": "PASS de robustez se houver interseção não vazia em f_PEER>0 entre o intervalo profile ΔQ<=4 deste stack e o corredor pNGB canônico, sem qualquer bloco individual piorar >=9 em Q no melhor ponto. Reportar ΔQ(f=0) sem convertê-lo em sigma.",
+            "kill_criteria": "REFUTED para este stack se todo f_PEER>0.01 ficar ΔQ>=9 acima do mínimo em f=0, ou se o melhor ponto ativo exigir falha de solver, nuisance em limite físico inválido, dupla contagem de Ly-alpha, ou inconsistência de likelihood.",
+            "claim_boundary": "Profile likelihood condicional do PEER-1P pNGB com forma congelada. Não é Bayes factor, posterior, sigma global nem evidência independente entre os três stacks, que compartilham CMB, Ly-alpha e SH0ES.",
+            "hypothesis": {
+              "id": "HYP-PEER1P-PNGB-LYA-PROFILES-20261008",
+              "statement": "O corredor de amplitude do PEER-1P pNGB permanece viável quando o novo DESI DR2 Ly-alpha full-shape substitui o bloco Ly-alpha anterior, e sua localização pode ser confrontada por CC, ACT DR6 e SPT-3G D1.",
+              "model": "PEER-1P pNGB de forma congelada com f_PEER como parâmetro de perfil.",
+              "baseline": "LambdaCDM same-stack, equivalente ao limite f_PEER=0.",
+              "falsification_criterion": "Colapso reproduzível do profile para f_PEER=0 e exclusão ΔQ>=9 de todo corredor ativo em um stress CMB independente validado, ou ausência de corredor comum entre os stacks após tratamento correto das covariâncias."
+            },
+            "preparation_evidence": {
+              "literature_refs": [
+                "DESI Collaboration, DESI DR2 Results IV, arXiv:2607.27410",
+                "DESI Collaboration, Ly-alpha full-shape validation, arXiv:2607.27411",
+                "SPT-3G Collaboration, Axion early dark energy with CMB experiments and DESI observations, Phys. Rev. D 113, 103546 (2026)",
+                "ACT DR6 public TT/TE/EE likelihood, NASA LAMBDA"
+              ],
+              "internal_test_search": {
+                "checked": true,
+                "query": "PEER pNGB DESI DR2 Ly-alpha full-shape profile ACT SPT SH0ES CC",
+                "matched_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              },
+              "replication": {
+                "justified": true,
+                "purpose": "Os testes anteriores usam predição congelada, compressões diagnósticas ou um stack conjunto diferente. Estes três novos testes perfilam diretamente a amplitude PEER-1P pNGB com o Ly-alpha DR2 2026 e substituições controladas de CC, ACT e SPT.",
+                "independence_axis": "perfil nativo de amplitude e substituição do bloco auxiliar",
+                "compares_to_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              }
+            },
+            "semantic": {
+              "domain_id": "science",
+              "subdomain_id": "science.cosmology.dark_energy",
+              "display_name": "pNGB com Lyα e cronômetros",
+              "question_plain": "O novo Ly-alpha do DESI mantém o PEER pNGB viável quando combinado com cronômetros cósmicos?",
+              "why_it_matters": "O Ly-alpha mede a geometria em alto redshift e testa diretamente a combinação entre a escala acústica reduzida pelo PEER e o H0 elevado favorecido pelo bloco local."
+            }
+          }
+        },
+        {
+          "kind": "HYPOTHESIS_PROPOSAL",
+          "source": "CONVERSA",
+          "producer": "GPT",
+          "created_at": "2026-10-08T03:30:00Z",
+          "payload": {
+            "test_id": "T-PEER1P-PNGB-LYA-ACT-20261008",
+            "display_name": "pNGB com Lyα e ACT",
+            "domain": "SCIENCE",
+            "origin_kind": "DENER_DIRECTED",
+            "priority": "P0",
+            "question": "No PEER-1P pNGB de forma congelada, qual é o profile likelihood de f_PEER para CMB + DESI DR2 Ly-alpha full-shape + ACT DR6 TT/TE/EE + SH0ES, e o corredor ativo sobrevive ao novo Ly-alpha?",
+            "null": "O profile colapsa para f_PEER=0 ou não mantém um corredor ativo compatível com o stack após a reotimização comum dos parâmetros cosmológicos e nuisances.",
+            "rival": "Qualquer preferência aparente por f_PEER>0 é produzida pela calibração SH0ES, por resposta específica do experimento auxiliar ou por dupla contagem/uso incorreto do bloco Ly-alpha.",
+            "method": "Profile likelihood nativo em f_PEER para o PEER-1P pNGB. Herdar sem alteração a forma pNGB, solver, parâmetros fixos, likelihood CMB e tratamento de nuisances do contrato pNGB canônico atual. Substituir o antigo bloco Ly-alpha pelo DESI DR2 2026 full-shape 2D em z=2.33: DM/rd=39.32±0.33, DH/rd=8.600±0.066, rho=0.225. Não usar fσ8 do Ly-alpha. Bloco auxiliar=act_dr6. SH0ES deve usar o bloco covariance-aware Pantheon+SH0ES já validado no projeto, não um prior H0 gaussiano avulso. Grade congelada f_PEER=[0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.10,0.12,0.14]; em cada nó reotimizar os parâmetros cosmológicos livres e nuisances previstos pelo contrato. Reportar Q por bloco, Q total, H0, rd, Omega_m, ns e S8. O ponto f=0 é o comparador LCDM same-stack.",
+            "data": "CMB canônico do perfil pNGB + DESI DR2 Ly-alpha full-shape 2026 + ACT DR6 TT/TE/EE + Pantheon+SH0ES covariance-aware.",
+            "success_criteria": "PASS de robustez se houver interseção não vazia em f_PEER>0 entre o intervalo profile ΔQ<=4 deste stack e o corredor pNGB canônico, sem qualquer bloco individual piorar >=9 em Q no melhor ponto. Reportar ΔQ(f=0) sem convertê-lo em sigma.",
+            "kill_criteria": "REFUTED para este stack se todo f_PEER>0.01 ficar ΔQ>=9 acima do mínimo em f=0, ou se o melhor ponto ativo exigir falha de solver, nuisance em limite físico inválido, dupla contagem de Ly-alpha, ou inconsistência de likelihood.",
+            "claim_boundary": "Profile likelihood condicional do PEER-1P pNGB com forma congelada. Não é Bayes factor, posterior, sigma global nem evidência independente entre os três stacks, que compartilham CMB, Ly-alpha e SH0ES.",
+            "hypothesis": {
+              "id": "HYP-PEER1P-PNGB-LYA-PROFILES-20261008",
+              "statement": "O corredor de amplitude do PEER-1P pNGB permanece viável quando o novo DESI DR2 Ly-alpha full-shape substitui o bloco Ly-alpha anterior, e sua localização pode ser confrontada por CC, ACT DR6 e SPT-3G D1.",
+              "model": "PEER-1P pNGB de forma congelada com f_PEER como parâmetro de perfil.",
+              "baseline": "LambdaCDM same-stack, equivalente ao limite f_PEER=0.",
+              "falsification_criterion": "Colapso reproduzível do profile para f_PEER=0 e exclusão ΔQ>=9 de todo corredor ativo em um stress CMB independente validado, ou ausência de corredor comum entre os stacks após tratamento correto das covariâncias."
+            },
+            "preparation_evidence": {
+              "literature_refs": [
+                "DESI Collaboration, DESI DR2 Results IV, arXiv:2607.27410",
+                "DESI Collaboration, Ly-alpha full-shape validation, arXiv:2607.27411",
+                "SPT-3G Collaboration, Axion early dark energy with CMB experiments and DESI observations, Phys. Rev. D 113, 103546 (2026)",
+                "ACT DR6 public TT/TE/EE likelihood, NASA LAMBDA"
+              ],
+              "internal_test_search": {
+                "checked": true,
+                "query": "PEER pNGB DESI DR2 Ly-alpha full-shape profile ACT SPT SH0ES CC",
+                "matched_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              },
+              "replication": {
+                "justified": true,
+                "purpose": "Os testes anteriores usam predição congelada, compressões diagnósticas ou um stack conjunto diferente. Estes três novos testes perfilam diretamente a amplitude PEER-1P pNGB com o Ly-alpha DR2 2026 e substituições controladas de CC, ACT e SPT.",
+                "independence_axis": "perfil nativo de amplitude e substituição do bloco auxiliar",
+                "compares_to_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              }
+            },
+            "semantic": {
+              "domain_id": "science",
+              "subdomain_id": "science.cosmology.dark_energy",
+              "display_name": "pNGB com Lyα e ACT",
+              "question_plain": "O novo Ly-alpha do DESI mantém o PEER pNGB viável quando combinado com ACT DR6 TT/TE/EE?",
+              "why_it_matters": "O Ly-alpha mede a geometria em alto redshift e testa diretamente a combinação entre a escala acústica reduzida pelo PEER e o H0 elevado favorecido pelo bloco local."
+            }
+          }
+        },
+        {
+          "kind": "HYPOTHESIS_PROPOSAL",
+          "source": "CONVERSA",
+          "producer": "GPT",
+          "created_at": "2026-10-08T03:30:00Z",
+          "payload": {
+            "test_id": "T-PEER1P-PNGB-LYA-SPT-20261008",
+            "display_name": "pNGB com Lyα e SPT",
+            "domain": "SCIENCE",
+            "origin_kind": "DENER_DIRECTED",
+            "priority": "P0",
+            "question": "No PEER-1P pNGB de forma congelada, qual é o profile likelihood de f_PEER para CMB + DESI DR2 Ly-alpha full-shape + SPT-3G D1 TT/TE/EE + SH0ES, e o corredor ativo sobrevive ao novo Ly-alpha?",
+            "null": "O profile colapsa para f_PEER=0 ou não mantém um corredor ativo compatível com o stack após a reotimização comum dos parâmetros cosmológicos e nuisances.",
+            "rival": "Qualquer preferência aparente por f_PEER>0 é produzida pela calibração SH0ES, por resposta específica do experimento auxiliar ou por dupla contagem/uso incorreto do bloco Ly-alpha.",
+            "method": "Profile likelihood nativo em f_PEER para o PEER-1P pNGB. Herdar sem alteração a forma pNGB, solver, parâmetros fixos, likelihood CMB e tratamento de nuisances do contrato pNGB canônico atual. Substituir o antigo bloco Ly-alpha pelo DESI DR2 2026 full-shape 2D em z=2.33: DM/rd=39.32±0.33, DH/rd=8.600±0.066, rho=0.225. Não usar fσ8 do Ly-alpha. Bloco auxiliar=spt3g_d1. SH0ES deve usar o bloco covariance-aware Pantheon+SH0ES já validado no projeto, não um prior H0 gaussiano avulso. Grade congelada f_PEER=[0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.10,0.12,0.14]; em cada nó reotimizar os parâmetros cosmológicos livres e nuisances previstos pelo contrato. Reportar Q por bloco, Q total, H0, rd, Omega_m, ns e S8. O ponto f=0 é o comparador LCDM same-stack.",
+            "data": "CMB canônico do perfil pNGB + DESI DR2 Ly-alpha full-shape 2026 + SPT-3G D1 TT/TE/EE + Pantheon+SH0ES covariance-aware.",
+            "success_criteria": "PASS de robustez se houver interseção não vazia em f_PEER>0 entre o intervalo profile ΔQ<=4 deste stack e o corredor pNGB canônico, sem qualquer bloco individual piorar >=9 em Q no melhor ponto. Reportar ΔQ(f=0) sem convertê-lo em sigma.",
+            "kill_criteria": "REFUTED para este stack se todo f_PEER>0.01 ficar ΔQ>=9 acima do mínimo em f=0, ou se o melhor ponto ativo exigir falha de solver, nuisance em limite físico inválido, dupla contagem de Ly-alpha, ou inconsistência de likelihood.",
+            "claim_boundary": "Profile likelihood condicional do PEER-1P pNGB com forma congelada. Não é Bayes factor, posterior, sigma global nem evidência independente entre os três stacks, que compartilham CMB, Ly-alpha e SH0ES.",
+            "hypothesis": {
+              "id": "HYP-PEER1P-PNGB-LYA-PROFILES-20261008",
+              "statement": "O corredor de amplitude do PEER-1P pNGB permanece viável quando o novo DESI DR2 Ly-alpha full-shape substitui o bloco Ly-alpha anterior, e sua localização pode ser confrontada por CC, ACT DR6 e SPT-3G D1.",
+              "model": "PEER-1P pNGB de forma congelada com f_PEER como parâmetro de perfil.",
+              "baseline": "LambdaCDM same-stack, equivalente ao limite f_PEER=0.",
+              "falsification_criterion": "Colapso reproduzível do profile para f_PEER=0 e exclusão ΔQ>=9 de todo corredor ativo em um stress CMB independente validado, ou ausência de corredor comum entre os stacks após tratamento correto das covariâncias."
+            },
+            "preparation_evidence": {
+              "literature_refs": [
+                "DESI Collaboration, DESI DR2 Results IV, arXiv:2607.27410",
+                "DESI Collaboration, Ly-alpha full-shape validation, arXiv:2607.27411",
+                "SPT-3G Collaboration, Axion early dark energy with CMB experiments and DESI observations, Phys. Rev. D 113, 103546 (2026)",
+                "ACT DR6 public TT/TE/EE likelihood, NASA LAMBDA"
+              ],
+              "internal_test_search": {
+                "checked": true,
+                "query": "PEER pNGB DESI DR2 Ly-alpha full-shape profile ACT SPT SH0ES CC",
+                "matched_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              },
+              "replication": {
+                "justified": true,
+                "purpose": "Os testes anteriores usam predição congelada, compressões diagnósticas ou um stack conjunto diferente. Estes três novos testes perfilam diretamente a amplitude PEER-1P pNGB com o Ly-alpha DR2 2026 e substituições controladas de CC, ACT e SPT.",
+                "independence_axis": "perfil nativo de amplitude e substituição do bloco auxiliar",
+                "compares_to_test_ids": [
+                  "T-NEXO26-LYA-FS-PEER-REPLACE-022",
+                  "T-NEXO26-LYA-FS-APONLY-ATTRIB-045",
+                  "T-PEER-PNGB-LOWF-COMMONF-CMB-003",
+                  "T-PEER-PNGB-SPT-ACT-SHOES-BRIDGE-20260902",
+                  "T-PEER-PNGB-NATIVE-JOINT-SPTNEW-20260902"
+                ]
+              }
+            },
+            "semantic": {
+              "domain_id": "science",
+              "subdomain_id": "science.cosmology.dark_energy",
+              "display_name": "pNGB com Lyα e SPT",
+              "question_plain": "O novo Ly-alpha do DESI mantém o PEER pNGB viável quando combinado com SPT-3G D1 TT/TE/EE?",
+              "why_it_matters": "O Ly-alpha mede a geometria em alto redshift e testa diretamente a combinação entre a escala acústica reduzida pelo PEER e o H0 elevado favorecido pelo bloco local."
+            }
+          }
+        },
+        {
+          "kind": "LEARNING_SIGNAL",
+          "source": "CONVERSA",
+          "producer": "GPT",
+          "created_at": "2026-10-08T03:30:00Z",
+          "payload": {
+            "gap_type": "RECIPE_REQUEST",
+            "spec": {
+              "name": "peer1p_pngb_lya_profile",
+              "inputs": [
+                "Contrato e runtime pNGB canônico do PEER-1P",
+                "CMB canônico do perfil pNGB",
+                "DESI DR2 Ly-alpha full-shape 2026 2D",
+                "Pantheon+SH0ES covariance-aware",
+                "CC ou ACT DR6 ou SPT-3G D1 conforme aux_probe"
+              ],
+              "data_sources": [
+                "arXiv:2607.27410 Eq. 26: z=2.33, DM/rd=39.32±0.33, DH/rd=8.600±0.066, rho=0.225",
+                "arXiv:2607.27411: validação Ly-alpha; fσ8 excluído por viés em mocks",
+                "NASA LAMBDA ACT DR6 TT/TE/EE likelihood",
+                "NASA LAMBDA SPT-3G D1 TT/TE/EE candl likelihood",
+                "ativos canônicos CC e Pantheon+SH0ES já validados no Drive"
+              ],
+              "statistic": "Para cada f_PEER congelado, minimizar Q=-2lnL total sobre cosmologia e nuisances do contrato, registrar contribuições por bloco e construir ΔQ(f)=Q(f)-Qmin. Comparar f=0 e o corredor ativo, sem converter ΔQ em sigma.",
+              "criterion": "Executar os três stacks com settings numéricos idênticos onde aplicável. DESI Ly-alpha full-shape substitui qualquer Ly-alpha BAO do mesmo DR2 e nunca é somado a ele. Fails de solver ou likelihood são operacionais e não contam como resultado científico.",
+              "outputs": [
+                "f_best e Q_min",
+                "curva ΔQ(f) completa",
+                "intervalos ΔQ<=1 e ΔQ<=4",
+                "ΔQ em f=0",
+                "Q por bloco",
+                "H0, rd, Omega_m, ns, S8 por nó",
+                "nuisances no melhor ponto",
+                "readback exato e proveniência dos dados"
+              ],
+              "tests_served": [
+                "T-PEER1P-PNGB-LYA-CC-20261008",
+                "T-PEER1P-PNGB-LYA-ACT-20261008",
+                "T-PEER1P-PNGB-LYA-SPT-20261008"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}
