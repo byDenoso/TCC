@@ -590,3 +590,41 @@ def test_referee_queue_holds_only_reviewable_originals_oldest_first(tmp_path):
     # as pending completion, without offering a duplicate attack to Referee 1.
     assert [t for t in queue["referee_1"] if t in {"T-OLD", "T-NEW"}] == ["T-NEW"]
     assert "T-OLD" in queue["waiting_on_existing_contest"]
+
+
+def test_board_public_projection_excludes_legacy_false_and_missing_privacy(tmp_path):
+    """Internal BOARD entries are private even if a historical Writer mislabels them."""
+    root = _tower(tmp_path)
+    _apply(root, {"kind": "BOARD_POST", "source": "ENGINEER",
+                  "created_at": "2026-10-08T18:35:00Z",
+                  "payload": {"to": "GUARDIAO", "text": "Private PEER diagnostic",
+                              "refs": ["WORK::PEER-DETECTION-D04"], "private": False}})
+    doc = root / "evolution/board.json"
+    record = json.loads(doc.read_text(encoding="utf-8"))
+    assert record["posts"][0]["private"] is True
+    now = datetime(2026, 10, 8, 18, 36, tzinfo=timezone.utc)
+    assert len(evolution_status(root, now=now)["board"]) == 1
+    for broken_flag in (False, None):
+        if broken_flag is None:
+            record["posts"][0].pop("private", None)
+        else:
+            record["posts"][0]["private"] = broken_flag
+        doc.write_text(json.dumps(record), encoding="utf-8")
+        assert evolution_status(root, now=now, public=True)["board"] == []
+
+
+def test_public_projection_defense_hides_board_if_upstream_regresses(tmp_path):
+    """The public projection does not trust even its own upstream board serializer."""
+    from unittest.mock import patch
+    from runtime.nexo_agent_api import evolution
+    from runtime.nexo_agent_api.public_projection import _load_evolution
+    root = _tower(tmp_path)
+    exposed = {
+        "charters": [{"id": "fixture"}], "genome": {"genes": []},
+        "thoughts": [], "signal_clusters": [], "incidents": [],
+        "board": [{"id": "legacy", "text": "Private PEER evidence", "private": False}],
+    }
+    with patch.object(evolution, "evolution_status", return_value=exposed):
+        public = _load_evolution(root, "2026-10-08T18:36:00Z")
+    assert public is not None
+    assert public["board"] == []
