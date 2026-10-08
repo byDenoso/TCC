@@ -269,7 +269,7 @@ def test_board_posts_are_addressed_expire_and_hide_private(tmp_path):
     task = evolution_status(root, now=datetime(2026, 9, 28, 13, tzinfo=timezone.utc))["board"]
     assert [p["to"] for p in task] == ["LEARNER", "ALL"]          # the 2 h note expired
     public = evolution_status(root, public=True)["board"]
-    assert all("privada" not in p["text"] for p in public) and len(public) == 2
+    assert public == []  # inter-agent BOARD traffic is private in every public projection
     _apply(root, {"kind": "BOARD_POST", "source": "LEARNER", "payload": {"resolve": ["BP-1"]}})
     task = evolution_status(root, now=datetime(2026, 9, 28, 13, tzinfo=timezone.utc))["board"]
     assert [p["to"] for p in task] == ["ALL"]
