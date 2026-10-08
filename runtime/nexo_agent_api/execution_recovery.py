@@ -133,7 +133,7 @@ def _owner(test: dict, work: list[dict]) -> tuple[str, str, list[str]]:
     return "ADVISOR", "OWNER_CONFLICT_TRIAGE" if len(owners) > 1 else "UNASSIGNED_TRIAGE", sorted(str(x["id"]) for x in associated)
 
 
-def _route(reasons: list[str]) -> tuple[str, str]:
+def _route(reasons: list[str], *, domain: str | None = None) -> tuple[str, str]:
     parameter_definition_errors = {
         "DATA_RELEASE_PARAM_MISMATCH", "UNSUPPORTED_COMPILATIONS", "UNSUPPORTED_DATA_RELEASE",
         "UNSUPPORTED_RECIPE_MODE", "UNSUPPORTED_RECIPE_PARAMS", "UNUSED_RECIPE_PARAMS",
@@ -145,7 +145,9 @@ def _route(reasons: list[str]) -> tuple[str, str]:
     if any(reason.startswith(("MISSING_", "FROZEN_", "CONFLICTING_")) for reason in reasons):
         return "LEARNER", "Recuperar a definição já congelada na linhagem e identificar a referência inequívoca; se houver conflito, registrar a decisão científica que falta."
     if any(reason.startswith(("RECIPE_", "PREFLIGHT_")) for reason in reasons):
-        return "ADVISOR", "Ligar ou reparar a receita que reproduz o contrato congelado, incluindo a verificação mínima, e publicar a proposta de ligação pelo escritor."
+        if str(domain or "SCIENCE").upper() == "SCIENCE":
+            return "EXECUTOR", "Implementar e ligar a receita científica já contratada, validar os insumos e executar somente após os critérios canônicos de prontidão."
+        return "ADVISOR", "Reparar a infraestrutura genérica da validação e encaminhar qualquer receita científica ao Operador."
     return "EXECUTOR", "Recuperar os insumos exatos e suas versões e assinaturas, registrar a ligação pelo escritor e revalidar a execução sem mudar o desenho científico."
 
 
@@ -245,7 +247,7 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
         else:
             changes["recovery_work_id"] = wid
             owner, owner_source, source_work = _owner(test, works)
-            target, action = _route(check["reasons"])
+            target, action = _route(check["reasons"], domain=test.get("domain"))
             current_work = current_work or {"id": wid, "entity_version": 0}
             recovery = {**(current_work.get("recovery") or {}), "policy": POLICY, "fingerprint": fp,
                         "reasons": check["reasons"], "target_role": target, "candidate_artifact_refs": refs,

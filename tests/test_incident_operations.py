@@ -73,10 +73,12 @@ class IncidentOperationsTests(unittest.TestCase):
     def test_cause_routes_definition_recipe_and_inputs(self):
         for reasons, expected in [(['FROZEN_DESIGN_CHANGED'], 'LEARNER'),
                                   (['CONFLICTING_RECORDED_DATA_BINDING'], 'LEARNER'),
-                                  (['RECIPE_BINDING_MISSING'], 'ADVISOR'),
-                                  (['PREFLIGHT_INVALID'], 'ADVISOR'),
+                                  (['RECIPE_BINDING_MISSING'], 'EXECUTOR'),
+                                  (['PREFLIGHT_INVALID'], 'EXECUTOR'),
                                   (['INPUT_PROVENANCE_INCOMPLETE'], 'EXECUTOR')]:
             self.assertEqual(r._route(reasons)[0], expected)
+        self.assertEqual(r._route(['RECIPE_BINDING_MISSING'], domain='ENGINEERING')[0], 'ADVISOR')
+        self.assertEqual(r._route(['RECIPE_BINDING_MISSING'], domain='OLYMPUS')[0], 'ADVISOR')
         for code, expected in ops.CAUSE_OWNER.items():
             self.incident['signal_code'] = code
             self.incident['signal_test_ids'] = []

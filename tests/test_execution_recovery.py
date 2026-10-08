@@ -215,9 +215,35 @@ class RecoveryTests(unittest.TestCase):
         from runtime.nexo_agent_api.handoff import _latest_by_handoff
         events = list(_latest_by_handoff(self.root).values())
         self.assertEqual(len(events), 3)
-        inbox = AgentService(self.root).inbox_for("ADVISOR")
+        inbox = [item for item in AgentService(self.root).inbox_for("EXECUTOR")
+                 if item["work_envelope"]["recovery"]["route_generation"] == 3]
         self.assertEqual(len(inbox), 1)
         self.assertEqual(inbox[0]["work_envelope"]["recovery"]["route_generation"], 3)
+        self.assertEqual(self.works()[0]["owner_role"], "ADVISOR")
+
+    def test_legacy_accepted_science_recipe_retargets_without_auto_ack(self):
+        self.test.pop("recipe"); self.test.pop("recipe_params"); self.put(self.test)
+        self.reconcile()
+        work = self.works()[0]
+        self.assertEqual(work["recovery"]["target_role"], "EXECUTOR")
+        historical = {"handoff_id": "HO-LEGACY", "request_id": "REQ-LEGACY",
+                      "from_role": "ADVISOR", "to_role": "ADVISOR"}
+        work["recovery"].update(target_role="ADVISOR", ownership_state="ACCEPTED",
+                                acceptance_source=historical)
+        save(self.root, "entities/work/" + work["id"] + ".json", work)
+        self.reconcile()
+        updated = self.works()[0]
+        self.assertEqual(updated["owner_role"], "ADVISOR")
+        self.assertEqual(updated["recovery"]["target_role"], "EXECUTOR")
+        self.assertEqual(updated["recovery"]["route_generation"], 2)
+        self.assertEqual(updated["recovery"]["ownership_state"], "ASSIGNED_UNACCEPTED")
+        self.assertEqual(updated["recovery"]["previous_acceptance"], historical)
+        self.assertNotIn("acceptance_source", updated["recovery"])
+        from runtime.nexo_agent_api import AgentService
+        self.assertEqual(r.ensure_handoffs(self.root), 1)
+        pending = AgentService(self.root).inbox_for("EXECUTOR")
+        self.assertEqual(len(pending), 1)
+        self.assertEqual(pending[0]["state"], "PENDING")
         self.assertEqual(self.works()[0]["owner_role"], "ADVISOR")
 
     def exact_execution_work(self, *, work_id="WORK::TEST-A", owner="EXECUTOR",
