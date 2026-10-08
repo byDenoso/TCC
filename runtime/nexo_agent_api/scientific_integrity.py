@@ -801,6 +801,55 @@ def _readiness_contract_view(test: dict) -> dict:
     return view
 
 
+def _verified_legacy_dependency(root: Path, dependency_id: str, dependency: dict) -> bool:
+    """Resolve legacy DONE dependencies only from matched scientific RUN/RESULT/EVIDENCE readback.
+
+    The old H0HOM tests keep their verified run chain in scientific_result, not
+    executed_at/verdict. A DONE flag or a copied scientific_result alone is not
+    execution proof; missing or contradictory primary records fail closed.
+    """
+    if str(dependency.get('state') or dependency.get('status') or '') != 'DONE':
+        return False
+    scientific = dependency.get('scientific_result')
+    if not isinstance(scientific, dict) or scientific.get('status') != 'VERIFIED':
+        return False
+    run_id, result_id, evidence_id, artifact_ref = (
+        scientific.get(key) for key in ('run_ref', 'result_ref', 'evidence_ref', 'artifact_ref')
+    )
+    if not (isinstance(run_id, str) and re.fullmatch(r'RUN-[A-Za-z0-9_-]+', run_id)
+            and isinstance(result_id, str) and re.fullmatch(r'RESULT-[A-Za-z0-9_-]+', result_id)
+            and isinstance(evidence_id, str) and re.fullmatch(r'EVIDENCE-[A-Za-z0-9_-]+', evidence_id)
+            and isinstance(artifact_ref, str) and re.fullmatch(
+                r'TOWER_V06/runtime/artifacts/[A-Za-z0-9_-]+\\.json', artifact_ref)):
+        return False
+    try:
+        run = read(root, 'runtime/runs/' + run_id + '.json')
+        result = read(root, 'runtime/results/' + result_id + '.json')
+        evidence = read(root, 'runtime/evidence/' + evidence_id + '.json')
+        artifact = read(root, artifact_ref.removeprefix('TOWER_V06/'))
+    except (OSError, ValueError, TypeError):
+        return False
+    return (
+        run.get('run_id') == run_id and run.get('result_id') == result_id
+        and run.get('evidence_id') == evidence_id
+        and run.get('work_id') == 'WORK::' + dependency_id
+        and run.get('status') == 'VERIFIED' and run.get('readback_status') == 'PASS'
+        and result.get('id') == result_id and result.get('run_id') == run_id
+        and result.get('evidence_ref') == evidence_id
+        and result.get('work_id') == 'WORK::' + dependency_id
+        and result.get('status') == 'COMPLETE'
+        and isinstance(result.get('scientific_closure'), dict)
+        and result['scientific_closure'].get('complete') is True
+        and evidence.get('id') == evidence_id and evidence.get('run_id') == run_id
+        and evidence.get('source_id') == dependency_id
+        and evidence.get('validation_status') == 'PASS'
+        and evidence.get('verification_scope') == 'SCIENTIFIC'
+        and artifact.get('test_id') == dependency_id
+        and artifact.get('status') == 'TERMINAL'
+        and result.get('scientific_decision') == scientific.get('decision') == artifact.get('decision')
+    )
+
+
 def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> dict:
     from .evolution import prereg_hash
     reasons = []
@@ -865,7 +914,8 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     else:
         for dependency_id in dependencies:
             dependency = entity(root, str(dependency_id))
-            if not dependency.get('executed_at') or not dependency.get('verdict'):
+            if not ((dependency.get('executed_at') and dependency.get('verdict'))
+                    or _verified_legacy_dependency(root, str(dependency_id), dependency)):
                 reasons.append('DEPENDENCY_UNRESOLVED')
                 break
     if test.get('blocker'):
