@@ -820,7 +820,7 @@ def _verified_legacy_dependency(root: Path, dependency_id: str, dependency: dict
             and isinstance(result_id, str) and re.fullmatch(r'RESULT-[A-Za-z0-9_-]+', result_id)
             and isinstance(evidence_id, str) and re.fullmatch(r'EVIDENCE-[A-Za-z0-9_-]+', evidence_id)
             and isinstance(artifact_ref, str) and re.fullmatch(
-                r'TOWER_V06/runtime/artifacts/[A-Za-z0-9_-]+\\.json', artifact_ref)):
+                r'TOWER_V06/runtime/artifacts/[A-Za-z0-9_-]+\.json', artifact_ref)):
         return False
     try:
         run = read(root, 'runtime/runs/' + run_id + '.json')
