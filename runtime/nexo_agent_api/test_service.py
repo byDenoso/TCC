@@ -105,13 +105,13 @@ class AgentServiceTests(unittest.TestCase):
         for name, status in (("RM-H0-ACTIVE", "ACTIVE"), ("RM-DE-CLOSED", "CLOSED")):
             path = self.root / "roadmaps" / (name + ".json")
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(json.dumps({"status": status}))
+            path.write_text(json.dumps({"state": status}))
         for test_id, roadmap in (("H0-BRIDGE", "RM-H0-ACTIVE"),
                                  ("DDE-CLOSED", "RM-DE-CLOSED")):
             path = self.root / "entities/test" / (test_id + ".json")
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(json.dumps({
-                "id": test_id, "status": "BLOCKED_INPUT",
+                "id": test_id, "state": "BLOCKED_INPUT",
                 "roadmap_id": roadmap, "data_binding": {"status": "BOUND"},
                 "readiness": {"eligible": False, "reasons": ["RECIPE_BINDING_MISSING"]},
             }))
