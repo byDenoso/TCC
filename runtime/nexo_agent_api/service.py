@@ -162,6 +162,86 @@ class AgentService:
         keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ())
         return {key: item[key] for key in keys if key in item and item[key] is not None}
 
+    def executor_discovery(self) -> dict[str, Any]:
+        """Expose hidden operational work and repairable TESTs without authorizing execution.
+
+        A WORK's READY label is not sufficient scientific readiness. Keep
+        queue_for(EXECUTOR) fail-closed; discovery merely identifies the exact
+        canonical records which the Engineer/Scientist must repair or bind.
+        """
+        capabilities = self.capabilities_for("EXECUTOR")
+        omitted = []
+        for item in self._work_items():
+            if (item.get("owner_role") != "EXECUTOR"
+                    or item.get("status") not in {"READY", "CHECKPOINTED", "RUNNING"}
+                    or self._executor_eligible(item, capabilities)):
+                continue
+            capability_id = str(item.get("capability_id") or "")
+            capability = capabilities.get(capability_id)
+            capability_active = (
+                isinstance(capability, dict)
+                and str(capability.get("status") or "").upper()
+                in {"ACTIVE", "PROVEN", "VALIDATED_CURRENT"}
+            )
+            omitted.append({
+                **self._queue_card(item, "EXECUTOR"),
+                "visibility_status": "DISCOVERY_ONLY_NOT_EXECUTABLE",
+                "first_gap": (
+                    "CAPABILITY_DECLARED_BUT_WORK_BINDING_INCOMPLETE"
+                    if capability_active else "EXECUTION_BINDING_OR_CAPABILITY_MISSING"
+                ),
+            })
+
+        active_roadmaps = set()
+        roadmaps = self.root / "roadmaps"
+        if roadmaps.is_dir():
+            for path in roadmaps.glob("*.json"):
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if isinstance(payload, dict) and str(payload.get("status") or "").upper() == "ACTIVE":
+                    active_roadmaps.add(path.stem)
+
+        recipe_blocked = []
+        tests = self.root / "entities" / "test"
+        if tests.is_dir():
+            for path in tests.glob("*.json"):
+                test = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(test, dict):
+                    continue
+                if str(test.get("status") or "").upper() != "BLOCKED_INPUT":
+                    continue
+                roadmap_id = str(test.get("roadmap_id") or "")
+                if roadmap_id not in active_roadmaps:
+                    continue
+                reasons = (test.get("readiness") or {}).get("reasons") or []
+                if not isinstance(reasons, list):
+                    reasons = []
+                if ("RECIPE_BINDING_MISSING" not in reasons
+                        and "RECIPE_BINDING_MISSING" not in str(test.get("blocker") or "")):
+                    continue
+                binding = test.get("data_binding") or test.get("input_binding") or {}
+                recipe_blocked.append({
+                    "test_id": str(test.get("id") or path.stem),
+                    "roadmap_id": roadmap_id,
+                    "data_binding_status": binding.get("status") if isinstance(binding, dict) else None,
+                    "blocker_reasons": sorted(set(str(reason) for reason in reasons)),
+                    "visibility_status": "RECOVERY_DISCOVERY_ONLY",
+                    "next_role": "ADVISOR",
+                })
+
+        omitted.sort(key=lambda item: (
+            0 if item.get("status") == "READY" else 1,
+            str(item.get("id") or ""),
+        ))
+        recipe_blocked.sort(key=lambda item: (item["roadmap_id"], item["test_id"]))
+        return {
+            "classification": "NONCANONICAL_DISCOVERY_VIEW_NEVER_EXECUTION_PERMISSION",
+            "omitted_executor_work_count": len(omitted),
+            "omitted_executor_work": omitted,
+            "active_recipe_blocked_test_count": len(recipe_blocked),
+            "active_recipe_blocked_tests": recipe_blocked,
+            "source": "CURRENT_ENTITIES_WORK_TEST_AND_ROADMAPS",
+        }
+
     def queue_for(self, role: str) -> list[dict[str, Any]]:
         role = role.upper()
         if role not in self.ROLES:
@@ -292,7 +372,7 @@ class AgentService:
         control = self._read_json("CONTROL.json")
         snapshot = self._read_json("snapshot/latest.json")
         queue = self.queue_for(role)
-        return {
+        view = {
             "role": role,
             "control": control,
             "event_cursor": snapshot.get("event_cursor"),
@@ -300,6 +380,9 @@ class AgentService:
             "queue_count": len(queue),
             "capabilities": self.capabilities_for(role),
         }
+        if role == "EXECUTOR":
+            view["discovery"] = self.executor_discovery()
+        return view
 
     def resolve_artifact(self, artifact_id: str) -> dict[str, Any]:
         payload = self._read_json("manifests/artifacts.json")
