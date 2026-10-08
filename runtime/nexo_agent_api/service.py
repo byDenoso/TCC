@@ -201,6 +201,8 @@ class AgentService:
                     active_roadmaps.add(path.stem)
 
         recipe_blocked = []
+        all_input_blocked = []
+        work_owners = {str(w.get("id") or w.get("work_id")): w.get("owner_role") for w in self._work_items()}
         tests = self.root / "entities" / "test"
         if tests.is_dir():
             for path in tests.glob("*.json"):
@@ -215,30 +217,45 @@ class AgentService:
                 reasons = (test.get("readiness") or {}).get("reasons") or []
                 if not isinstance(reasons, list):
                     reasons = []
-                if ("RECIPE_BINDING_MISSING" not in reasons
-                        and "RECIPE_BINDING_MISSING" not in str(test.get("blocker") or "")):
-                    continue
                 binding = test.get("data_binding") or test.get("input_binding") or {}
-                recipe_blocked.append({
+                recipe_missing = (
+                    "RECIPE_BINDING_MISSING" in reasons
+                    or "RECIPE_BINDING_MISSING" in str(test.get("blocker") or "")
+                )
+                recovery_work_id = str(test.get("recovery_work_id") or "")
+                card = {
                     "test_id": str(test.get("id") or path.stem),
                     "roadmap_id": roadmap_id,
                     "data_binding_status": binding.get("status") if isinstance(binding, dict) else None,
                     "blocker_reasons": sorted(set(str(reason) for reason in reasons)),
+                    "recorded_blocker": str(test.get("blocker") or "")[:320],
+                    "recipe_missing": recipe_missing,
+                    "recovery_work_id": recovery_work_id or None,
                     "visibility_status": "RECOVERY_DISCOVERY_ONLY",
-                    "next_role": "ADVISOR",
-                })
+                    "next_role": work_owners.get(recovery_work_id)
+                        or ("LEARNER" if "FROZEN_DESIGN_UNVERIFIED" in reasons else "ADVISOR"),
+                }
+                all_input_blocked.append(card)
+                if recipe_missing:
+                    recipe_blocked.append(card)
 
         omitted.sort(key=lambda item: (
             0 if item.get("status") == "READY" else 1,
             str(item.get("id") or ""),
         ))
         recipe_blocked.sort(key=lambda item: (item["roadmap_id"], item["test_id"]))
+        all_input_blocked.sort(key=lambda item: (item["roadmap_id"], item["test_id"]))
         return {
             "classification": "NONCANONICAL_DISCOVERY_VIEW_NEVER_EXECUTION_PERMISSION",
             "omitted_executor_work_count": len(omitted),
             "omitted_executor_work": omitted,
+            "active_input_blocked_test_count": len(all_input_blocked),
+            "active_input_blocked_tests": all_input_blocked,
             "active_recipe_blocked_test_count": len(recipe_blocked),
             "active_recipe_blocked_tests": recipe_blocked,
+            "active_data_bound_recipe_blocked_count": sum(
+                1 for x in recipe_blocked if x["data_binding_status"] == "BOUND"
+            ),
             "source": "CURRENT_ENTITIES_WORK_TEST_AND_ROADMAPS",
         }
 
