@@ -193,11 +193,26 @@ class AgentService:
             })
 
         active_roadmaps = set()
+        roadmap_state_conflicts = []
         roadmaps = self.root / "roadmaps"
         if roadmaps.is_dir():
             for path in roadmaps.glob("*.json"):
                 payload = json.loads(path.read_text(encoding="utf-8"))
-                if isinstance(payload, dict) and str(payload.get("status") or payload.get("state") or "").upper() == "ACTIVE":
+                if not isinstance(payload, dict):
+                    continue
+                status = str(payload.get("status") or "").upper()
+                legacy_state = str(payload.get("state") or "").upper()
+                if status and legacy_state and status != legacy_state:
+                    roadmap_state_conflicts.append({
+                        "roadmap_id": path.stem,
+                        "status": status,
+                        "legacy_state": legacy_state,
+                        "effective_status": status,
+                        "disposition": "STATUS_AUTHORITATIVE_LEGACY_STATE_IGNORED",
+                    })
+                # 'state' is legacy metadata: a CLOSED roadmap with state=ACTIVE
+                # must NEVER be resurrected by the discovery-only projection.
+                if (status or legacy_state) == "ACTIVE":
                     active_roadmaps.add(path.stem)
 
         recipe_blocked = []
@@ -249,6 +264,8 @@ class AgentService:
             "classification": "NONCANONICAL_DISCOVERY_VIEW_NEVER_EXECUTION_PERMISSION",
             "omitted_executor_work_count": len(omitted),
             "omitted_executor_work": omitted,
+            "roadmap_state_conflict_count": len(roadmap_state_conflicts),
+            "roadmap_state_conflicts": sorted(roadmap_state_conflicts, key=lambda x: x["roadmap_id"]),
             "active_input_blocked_test_count": len(all_input_blocked),
             "active_input_blocked_tests": all_input_blocked,
             "active_recipe_blocked_test_count": len(recipe_blocked),
