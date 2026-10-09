@@ -8,14 +8,14 @@ from .memory import Snapshot, SourceError, feedback_proposal
 from .retrieval import Retrieval, VERSION, MODES
 
 
-MEMORY_CACHE_SUFFIX = ".retrieval-1.1-continuity-validated-20261007"
+MEMORY_CACHE_SUFFIX = ".retrieval-1.1-continuity-audit-20261007"
 
 
 def memory_cache_path(path: str) -> str:
     """Select a fresh security-patch sidecar without touching older indexes."""
     if path.endswith(MEMORY_CACHE_SUFFIX):
         return path
-    for old_suffix in ('.retrieval-1.1-continuity-20261007', '.retrieval-1.1-security-20261006', '.retrieval-1.1'):
+    for old_suffix in ('.retrieval-1.1-continuity-validated-20261007', '.retrieval-1.1-continuity-20261007', '.retrieval-1.1-security-20261006', '.retrieval-1.1'):
         if path.endswith(old_suffix):
             path = path[:-len(old_suffix)]
             break

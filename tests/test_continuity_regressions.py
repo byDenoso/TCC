@@ -1,7 +1,7 @@
 """Regressions for observed gaps; use only synthetic Tower files."""
 import json
 import pytest
-from test_continuity_enxame import Lab
+from tests.test_continuity_enxame import Lab
 from runtime.nexo_agent_api import continuity_cli
 from runtime.nexo_agent_api.memory import Snapshot
 

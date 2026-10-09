@@ -1,7 +1,7 @@
 """Canonical namespace lookups must never turn into fuzzy replacements."""
 import json
 import pytest
-from test_continuity_enxame import Lab
+from tests.test_continuity_enxame import Lab
 from runtime.nexo_agent_api.memory import Snapshot, digest
 from runtime.nexo_agent_api.retrieval import Retrieval
 
