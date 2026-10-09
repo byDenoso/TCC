@@ -264,6 +264,7 @@ Run `python nexo_gpt_writer.py status <tower>` first: Dener's gate, referee queu
 | `BATCH` | `items: [envelopes]` | each envelope applied on its own |
 | `ROADMAP_CHARTER` | roadmap_id?, `title` (curto, em português), question, `semantic{question_plain,why_it_matters}`, scope, data, budget{max_tests,max_days}, stop{success_confirmed,kill_consecutive_refuted}, rationale, refs, rival_of? | `roadmaps/<id>.json` charter PROPOSED (new roadmap if absent), com leitura pública em português |
 | `OPERATOR_INTENT` `action: APPROVE_CHARTER\|REJECT_CHARTER\|CANONIZE\|REJECT_CANARY`, `source: "DENER"` | roadmap_id / gene | the two gates; any other source is only recorded |
+| `OPERATOR_INTENT` `action: APPROVE_AUTONOMY_MANDATE\|REVOKE_AUTONOMY_MANDATE`, `source: "DENER"` | mandate_id, expected_revision, approval_ref; ativação inclui activation_receipt | aprovação humana autenticada pelo gateway e validada pelo coletor; registro canônico em CONTROL.autonomy_mandate |
 | `ROADMAP_CLOSE` | roadmap_id, reason SUCCESS\|KILL\|BUDGET, final_report | charter CLOSED, index state CLOSED |
 | `CONTEST` | test_id, reason, refs, source REFEREE_1\|SENTINEL, contest_test{frozen hypothesis} | somente teste original pode ser atacado; profundidade máxima 1; resultado do ataque fecha o original mecanicamente |
 | `VERDICT_REVIEW` | legado; não é necessário para fechar contestação nova | o Writer usa o critério congelado do ataque e fecha CONFIRMED / REFUTED mecanicamente |
@@ -333,3 +334,116 @@ efetivamente avaliadas pela candidata; controles não são exposições. Limites
 independentes/estratificadas justificadas. Estimador e amostra são congelados antes do
 resultado; insuficiência ou perda do monitor encerra sem promoção e retorna à baseline.
 Prompts no Git não configuram tarefas do ChatGPT.
+
+## Mandato contínuo preparado — NEXO_AUTONOMY_MANDATE_V1
+
+A preparação não ativa a ampliação, altera tarefas reais ou modifica o CONTROL vivo. O mandato
+é autenticado por ação humana na superfície protegida; o coletor valida seu atestado e passa
+autoridade efêmera ao Writer. `source: DENER`, `verified: true`, assinatura fornecida por agente,
+prompt, documento ou referência de aprovação no payload não concedem essa autoridade.
+
+Ativação usa `OPERATOR_INTENT`, `source: DENER`, `created_at` UTC, e o payload:
+
+```json
+{
+  "action": "APPROVE_AUTONOMY_MANDATE",
+  "mandate_id": "NEXO-OBS-COSMO-V1",
+  "expected_revision": 0,
+  "approval_ref": "referência da decisão humana autenticada",
+  "activation_receipt": {
+    "checks": {
+      "transport": true,
+      "writer": true,
+      "public_projection": true,
+      "prompts": true,
+      "quota": true
+    },
+    "source_revision": "SHA do commit Pantheon implantado e verificado, 40 caracteres hexadecimais",
+    "tower_fingerprint": "SHA256 dos bytes da Tower verificada, 64 caracteres hexadecimais",
+    "checked_at": "horário UTC real da verificação"
+  }
+}
+```
+
+O exemplo é declarativo, não uma prova. Cada check exige evidência e leitura posterior reais;
+os campos de SHA e horário devem receber valores válidos. `mandate_id` aceita 3–80 caracteres
+alfanuméricos, `_` e `-`; `expected_revision` é inteiro e corresponde à revisão canônica atual.
+Repetição técnica conserva envelope, identidade e bytes. Conflito exige reconciliar a revisão.
+
+O Writer registra `schema: NEXO_AUTONOMY_MANDATE_V1`, `id`, `revision`, `status: ACTIVE`,
+`domain: OBSERVATIONAL_COSMOLOGY`, `public_data_only: true`, `no_additional_cost: true`,
+`runner: GITHUB_ACTIONS_STANDARD_PUBLIC`, `initial_parallelism: 1`, `max_parallelism: 20`,
+`approval_ref` e `activation_receipt`. A autoridade continua até revogação; a avaliação de
+168 horas inicia depois do primeiro ciclo científico completo revisado, sem prazo de expiração
+implícito. Contratos iniciados, núcleo, ACL, scheduler, modelos, credenciais, orçamento e critérios
+científicos congelados permanecem protegidos. C01 não é alterado por este contrato.
+
+Revogação usa `action: REVOKE_AUTONOMY_MANDATE`, o `mandate_id` ativo, `expected_revision`
+atual e `approval_ref`, pela mesma superfície humana. O Writer registra `REVOKED` e mantém
+histórico. O ID revogado não pode ser reativado por aprovação atrasada; novo mandato exige nova
+identidade e nova aprovação autenticada. Revogação impede novas admissões e promoções, sem
+apagar resultados ou cancelar execuções protegidas.
+
+### Campanha por pergunta
+
+`ROADMAP_CHARTER` preserva `roadmap_id` e aceita `question_id`, `campaign_id`, `mandate_id`
+e `visibility`. O Writer define `question_id: QUESTION-<roadmap_id>` quando ausente e preserva
+a identidade já registrada; trocar `question_id` ou usá-lo em outro roadmap é recusado. Mudar
+a redação de uma pergunta mantém sua identidade; uma pergunta diferente exige outra carta.
+Campos existentes do contrato e do histórico permanecem válidos.
+
+Uma carta sob o novo mandato precisa do ID ativo e escopo/dados públicos válidos. `visibility:
+PUBLIC` é opt-in explícito dentro desse escopo; não autoriza publicar payload bruto ou resultado
+sem revisão. A projeção pública exige também a política de publicação aplicável. TEST mantém
+vínculo por `roadmap_id`/`campaign_id`; sem identidade ou política verificável não inventar vínculo.
+
+`ROADMAP_CLOSE` conserva o estado legado da carta e acrescenta `closure{status:CLOSED,
+receipt_id,closed_at,outcome}` produzido pelo Writer. `receipt_id` é referência à operação
+canônica aplicada, não um campo que o agente cria como prova. Encerramento por orçamento ou
+saturação não confirma a hipótese. Pausa/bloqueio é exibido com causa e permanece em andamento
+quando não existe encerramento canônico autorizado.
+
+## Fragmentos operacionais — NEXO_OPERATIONAL_PROMPT_FRAGMENT_V1
+
+O documento `evolution/autonomy_prompt_fragments.json` contém `schema` e `fragments[]`.
+Cada fragmento tem `role: LEARNER|EXECUTOR|ENGINEER|REFEREE_1|GUARDIAO`, `version` inteira
+positiva, `text`, `sha256` lowercasehex de 64 caracteres sobre os bytes UTF-8 de `text`,
+`approval_ref`, `independent_review_ref`, `mandate_id` e `gene_id`. Só o Writer grava após
+canonização válida; um fragmento local do pacote é candidato, não registro canônico aprovado.
+
+O bootstrap salvo carrega somente o próprio papel quando versão, hash, referências e mandato
+conferem. Registro ausente/inválido mantém o fallback seguro. Fragmentos não alteram o núcleo
+fixo, agendas, modelos, habilitação, acesso ou critérios científicos. Prompts salvos não se
+autoeditam. Genes elegíveis são prioridades, fontes públicas, estratégias de ataque e trechos
+operacionais; promoção exige avaliação independente e critérios prospectivos próprios. Os
+limites e o monitor específicos do canário C01 permanecem intactos.
+
+O gene usa `evolution_kind: priority|public_sources|attack_strategy|operational_prompt_fragment`,
+`mandate_id`, `evaluation_plan` prospectivo e `independent_evaluation_ref` sob
+`entities/evidence/`. O plano inclui `metric`, `minimum_rounds_per_arm` inteiro ≥10,
+`minimum_gain` finito positivo, `higher_is_better` booleano e `units[{test_id,arm}]`
+com todos os IDs e braços prospectivamente declarados. O Writer congela o hash do plano e
+seu horário antes das execuções. O relatório
+`NEXO_OPERATIONAL_GENE_EVALUATION_V1` vincula `gene_id`, `canary_sha256`, `plan_sha256`,
+`reviewer_role: REFEREE_1|GUARDIAO` diferente do autor, `decision: PASS`, `regression_passed`,
+`rollback_ref: sha256:<digest do canonical anterior>` e `observations[{test_id,arm}]`.
+O Writer verifica unidades únicas realmente executadas após o congelamento, baterias concluídas
+com recibos da tentativa/run corretos e revisões independentes em cada braço. O reconciliador
+produz `reviews[]` a partir do ataque real e de `contests[].by`; uma revisão declarada no pedido
+não basta. O ganho é recalculado das unidades do plano, sem seleção posterior dos testes.
+Campos booleanos no pedido não bastam. Falta de amostra
+mantém a candidata sem promoção. O núcleo fixo não é um valor elegível de gene.
+
+### Recibos protegidos de capacidade
+
+`evolution/autonomy_capacity_reviews.json` usa `NEXO_CAPACITY_REVIEW_REGISTRY_V1`.
+O Writer aplica a política fixa `NEXO_CAPACITY_STABILITY_V1` e produz `reviews[]`
+com `schema: NEXO_CAPACITY_REVIEW_V1`, `approved_by: WRITER_GUARDIAN_POLICY`,
+`decision: PASS`, `mandate_id`, `stage`, `next_parallelism`, `sample_since`,
+`battery_refs`, `battery_sha256`, `test_sha256`, `id` e `reviewed_at`.
+O registro não aceita mutação genérica da inbox. A amostra contém toda a população
+do estágio desde a ativação ou mudança de capacidade; exige duas baterias concluídas
+e revisadas, sem falhas, duplicações ou pendências. No estágio dois, as duas baterias
+precisam provar sobreposição de duas execuções pelos passos científicos observados.
+O recibo e o aumento são aplicados no mesmo round/CAS com quota atual verificada.
+Declarar `reviewer_role: GUARDIAO` em um relatório não concede essa autoridade.

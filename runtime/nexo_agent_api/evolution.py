@@ -76,7 +76,10 @@ def _read(root: Path, relative: str) -> dict[str, Any]:
 
 
 def _entity(root: Path, kind: str, entity_id: str) -> dict[str, Any] | None:
-    path = entity_path(root, kind, entity_id)
+    try:
+        path = entity_path(root, kind, entity_id)
+    except ValueError:
+        return None
     return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else None
 
 
@@ -88,6 +91,9 @@ def _doc(relative: str, merge: dict[str, Any], rid: str, list_merge: dict[str, s
     request = {"request_id": rid, "document": relative, "merge": merge}
     if list_merge:
         request["list_merge"] = list_merge
+    if relative == GENOME_DOC:
+        from .autonomy import WRITER_AUTHORITY
+        request["_autonomy_authority"] = WRITER_AUTHORITY
     return request
 
 
@@ -95,10 +101,14 @@ def _test_update(root: Path, test_id: str, changes: dict[str, Any], rid: str, ev
     current = _entity(root, "test", test_id)
     if current is None:
         return None
-    return {"request_id": rid, "entity_kind": "test", "entity_name": test_id,
+    request = {"request_id": rid, "entity_kind": "test", "entity_name": test_id,
             "expected_version": int(current.get("entity_version") or 0),
             "writer_role": "EXECUTOR" if "execution_phase" in changes else "ADVISOR",
             "event_type": event, "changes": changes}
+    if set(changes) & {"reviews", "contests", "mechanical_contest_verdict", "review_validation"}:
+        from .autonomy import WRITER_AUTHORITY
+        request["_scientific_review_authority"] = WRITER_AUTHORITY
+    return request
 
 
 def _phase_failure_receipt(battery_id: str, test_id: str, spec: dict[str, Any],
@@ -144,6 +154,8 @@ def prereg_hash(test_id: str, fields: dict[str, Any]) -> str:
     """Public pre-registration fingerprint of the frozen design (committed in the inbox before any run)."""
     frozen = {k: fields.get(k) for k in ("question", "null", "rival", "method", "dataset_and_selection",
                                          "success_criteria", "kill_criteria", "claim_boundary")}
+    if fields.get("gene_id"):
+        frozen.update({key: fields.get(key) for key in ("gene_id", "gene_arm", "gene_plan_sha256")})
     blob = json.dumps({"test_id": test_id, **frozen}, ensure_ascii=False, sort_keys=True, default=str)
     return "sha256:" + hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
@@ -151,11 +163,23 @@ def prereg_hash(test_id: str, fields: dict[str, Any]) -> str:
 # ── Gate 1: roadmap charters ────────────────────────────────────────────────
 
 def charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    from . import autonomy
+    from .inbox_apply import ProposalError
     rid = str(body.get("roadmap_id") or "").strip()
     if not rid:
         slug = "".join(c if c.isalnum() else "-" for c in str(body.get("question") or "NOVO").upper())[:40].strip("-")
         rid = f"RM-{slug}-{_now(item)[:10].replace('-', '')}-V1"
     existing = _read(root, f"roadmaps/{rid}.json")
+    question_id = str(body.get("question_id") or existing.get("question_id") or "QUESTION-" + rid)
+    if not re.fullmatch(r"[A-Za-z0-9_:-]{3,120}", question_id):
+        raise ProposalError("QUESTION_ID_INVALID")
+    if existing.get("question_id") and question_id != existing["question_id"]:
+        raise ProposalError("QUESTION_ID_IMMUTABLE")
+    if any(other.get("question_id") == question_id and other.get("roadmap_id") != rid
+           for other in (_read(root, str(path.relative_to(root))) for path in (root / "roadmaps").glob("*.json"))):
+        raise ProposalError("QUESTION_ALREADY_HAS_CAMPAIGN")
+    if body.get("mandate_id") and not autonomy.charter_allowed(root, body):
+        raise ProposalError("MANDATE_CHARTER_OUT_OF_SCOPE")
     if (existing.get("charter") or {}).get("status") in {"CHARTERED", "CLOSED"}:
         return []  # a signed charter is frozen like test criteria
     charter = {
@@ -176,15 +200,35 @@ def charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         "proposed_at": _now(item),
     }
     merge: dict[str, Any] = {"charter": {k: v for k, v in charter.items() if v not in (None, "", [])}}
+    merge["question_id"] = question_id
+    if body.get("campaign_id"):
+        merge["campaign_id"] = body["campaign_id"]
+    if isinstance(body.get("public_presentation"), dict):
+        merge["public_presentation"] = body["public_presentation"]
+    if body.get("public_id"):
+        merge["public_id"] = body["public_id"]
+    if body.get("visibility") == "PUBLIC" and body.get("mandate_id"):
+        merge["visibility"] = "PUBLIC"
+    if body.get("mandate_id"):
+        charter.update(status="CHARTERED", chartered_at=_now(item), approved_by="STANDING_HUMAN_MANDATE",
+                       mandate_id=body["mandate_id"], mandate_revision=autonomy.mandate(root)["revision"])
+        charter["charter_hash"] = "sha256:" + autonomy.digest({k: charter.get(k) for k in ("question", "scope", "data", "budget", "stop")})
+        merge.update(charter=charter, status="ACTIVE", mandate_id=body["mandate_id"],
+                     public_data_only=True, public_data_refs=body["public_data_refs"])
     semantic = body.get("semantic")
     if isinstance(semantic, dict):
         plain_semantic = {k: v for k, v in semantic.items() if v not in (None, "", [])}
         if plain_semantic:
             merge["semantic"] = plain_semantic
     if not existing:
-        merge.update({"roadmap_id": rid, "status": "PROPOSED", "frontier_refs": [],
+        merge.update({"roadmap_id": rid, "status": "ACTIVE" if body.get("mandate_id") else "PROPOSED", "frontier_refs": [],
                       "title": body.get("title") or body.get("question"), "domain": body.get("domain")})
-    return [_doc(f"roadmaps/{rid}.json", merge, f"REQ-CHARTER-{rid}")]
+    requests = [_doc(f"roadmaps/{rid}.json", merge, f"REQ-CHARTER-{rid}")]
+    if body.get("mandate_id"):
+        requests.append(_doc("indexes/active-roadmaps.json", {"items": [{"roadmap_id": rid, "state": "ACTIVE",
+                             "priority": body.get("priority") or "NORMAL", "relative_path": f"roadmaps/{rid}.json"}]},
+                             f"REQ-INDEX-ACTIVATE-{rid}", {"items": "roadmap_id"}))
+    return requests
 
 
 def _gate_is_dener(item: dict[str, Any], body: dict[str, Any]) -> bool:
@@ -196,6 +240,9 @@ def _gate_is_dener(item: dict[str, Any], body: dict[str, Any]) -> bool:
 def operator_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]] | None:
     """Dener's gate actions. Returns None when the intent is not a gate action (caller records it)."""
     action = str(body.get("action") or "").upper()
+    from . import autonomy
+    if action in autonomy.ACTIONS:
+        return autonomy.operator_requests(item, body, root)
     if action not in {"APPROVE_CHARTER", "REJECT_CHARTER", "CANONIZE", "REJECT_CANARY"}:
         return None
     if not _gate_is_dener(item, body):
@@ -224,6 +271,10 @@ def operator_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     current = next((g for g in genome.get("genes") or [] if g.get("id") == gene), None)
     if not current or current.get("status") != "CANARY":
         return None
+    if action == "CANONIZE" and autonomy.evolvable(current):
+        # Standing-mandate promotion still needs the independent evidence gate.
+        return [request for request in autonomy.canonization_requests(root)
+                if request.get("document") in {GENOME_DOC, autonomy.FRAGMENTS_DOC}]
     if action == "REJECT_CANARY":
         return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None,
                                                "incident_id": None, "canary_id": None,
@@ -252,11 +303,24 @@ def close_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
         return []
     closed = {"status": "CLOSED", "closed_at": _now(item), "close_reason": str(body.get("reason") or "BUDGET").upper(),
               "final_report": body.get("final_report") or body.get("evidence")}
-    return [
-        _doc(f"roadmaps/{rid}.json", {"charter": closed, "status": "CLOSED"}, f"REQ-ROADMAP-CLOSE-{rid}"),
+    # Closure proves an operational ending. Scientific outcomes belong to
+    # independently reviewed tests and cannot be supplied by closing prose.
+    from .autonomy import WRITER_AUTHORITY
+    requests = [
+        _doc(f"roadmaps/{rid}.json", {"charter": closed, "status": "CLOSED",
+             "closure": {"status": "CLOSED", "receipt_id": f"REQ-ROADMAP-CLOSE-{rid}", "closed_at": closed["closed_at"],
+                         "reason": closed["close_reason"], "outcome": None}}, f"REQ-ROADMAP-CLOSE-{rid}"),
         _doc("indexes/active-roadmaps.json", {"items": [{"roadmap_id": rid, "state": "CLOSED"}]},
              f"REQ-INDEX-CLOSE-{rid}", {"items": "roadmap_id"}),
     ]
+    requests[0]["_autonomy_authority"] = WRITER_AUTHORITY
+    if isinstance(roadmap.get("public_presentation"), dict):
+        presentation = dict(roadmap["public_presentation"])
+        presentation["closure"] = {"receiptId": f"REQ-ROADMAP-CLOSE-{rid}", "closedAt": closed["closed_at"],
+                                   "reason": closed["close_reason"], "outcome": None,
+                                   "summary": {"pt-BR": "Campanha encerrada.", "en": "Campaign closed."}}
+        requests[0]["merge"]["public_presentation"] = presentation
+    return requests
 
 
 # ── Refutation (Referee 1 = GPT, Referee 2 = Claude, Sentinel = world) ──────
@@ -306,7 +370,7 @@ def contest_requests(item: dict[str, Any], body: dict[str, Any], root: Path, hyp
                                          "semantic": {**integrity.clean_result_fields(parent_semantic), **integrity.clean_result_fields(attack_semantic),
                                                       "display_name": natural_name,
                                                       "domain_id": str(domain).lower()}}, root)
-    entry = {"n": len(contests) + 1, "by": str(body.get("source") or body.get("referee") or "REFEREE_1").upper(),
+    entry = {"n": len(contests) + 1, "by": str(item.get("source") or body.get("source") or body.get("referee") or "REFEREE_1").upper(),
              "reason": body.get("reason"), "contest_test_id": attack_id, "incident_id": current.get("incident_id"),
              "at": _now(item), "refs": body.get("refs")}
     update = _test_update(root, test_id, {"review_state": "CONTESTED", "contests": contests + [entry]},
@@ -429,14 +493,21 @@ def contest_chain_reconcile_requests(root: str | Path) -> list[dict[str, Any]]:
                                              "REQ-REVIEW-VALIDATION-" + integrity.digest({"id":parent_id, **validation})[:32], "REVIEW_VALIDATION_REQUIRED"))
             continue
         outcome = attack["independence"]["on_pass" if _attack_outcome(attack) == "CONFIRMED" else "on_fail"]
-        update = _test_update(root, parent_id, {
+        changes = {
             "review_state": outcome, "review_validation": validation,
             "mechanical_contest_verdict": {
                 "contest_test_id": attack.get("id"), "outcome": outcome,
                 "rule": "FROZEN_INDEPENDENT_ATTACK_V2",
                 "at": attack.get("executed_at") or attack.get("updated_at"),
             },
-        }, f"REQ-CONTEST-MECHANICAL-{parent_id}", f"RESULT_{outcome}")
+        }
+        contest = next((entry for entry in parent.get("contests") or []
+                        if entry.get("contest_test_id") == attack.get("id")), {})
+        if contest.get("by") in {"REFEREE_1", "GUARDIAO"}:
+            changes["reviews"] = list(parent.get("reviews") or []) + [{
+                "referee": contest["by"], "outcome": "SURVIVED" if outcome == "CONFIRMED" else "REFUTED",
+                "contest_test_id": attack["id"], "at": attack.get("executed_at")}]
+        update = _test_update(root, parent_id, changes, f"REQ-CONTEST-MECHANICAL-{parent_id}", f"RESULT_{outcome}")
         if update:
             requests.append(update)
     return requests
@@ -572,9 +643,14 @@ def _spine(gene: str) -> bool:
 
 
 def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
+    from . import autonomy
     gene = str(body.get("gene") or "").strip()
     if not gene or _spine(gene):
         return []  # the spine is not evolvable; the caller records the proposal as a recommendation
+    if body.get("evolution_kind") and (body.get("seed") or body["evolution_kind"] not in autonomy.EVOLVABLE
+            or not autonomy.active(root, body.get("mandate_id"))
+            or not autonomy.valid_gene_value(body["evolution_kind"], body.get("value"))):
+        return NoOpRequests("AUTONOMY_GENE_OUT_OF_SCOPE")
     incident_id = resolve_incident_id(root, body.get("incident_id"), refs=body.get("refs") or [])
     if body.get("incident_id") and not incident_id:
         return []  # never attach a canary to an ungrounded incident id
@@ -585,6 +661,10 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
         return []  # causal canaries require an actually CONFIRMED test, never a declared state
     genome = _read(root, GENOME_DOC)
     current = next((g for g in genome.get("genes") or [] if g.get("id") == gene), None)
+    if autonomy.evolvable(current or {}) and (body.get("evolution_kind") != current.get("evolution_kind")
+            or body.get("mandate_id") != current.get("mandate_id")
+            or not autonomy.active(root, current.get("mandate_id")) or body.get("seed")):
+        return NoOpRequests("AUTONOMY_GENE_REQUIRES_SCOPED_PROSPECTIVE_MUTATION")
     if current and current.get("status") == "CANARY":
         return []  # one canary per gene at a time
     if body.get("seed"):
@@ -599,6 +679,18 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     entry = {"id": gene, "status": "CANARY", "canary": body.get("value"), "canary_since": _now(item),
              "rationale": body.get("rationale"), "refs": body.get("refs") or [], "proposed_by": item.get("source") or body.get("proposed_by"),
              "metric": body.get("metric") or "confirmed_per_test", "scope": body.get("scope") or "GLOBAL"}
+    if body.get("evolution_kind"):
+        if (body["evolution_kind"] not in autonomy.EVOLVABLE or not autonomy.active(root, body.get("mandate_id"))
+                or (body["evolution_kind"] == "operational_prompt_fragment" and not autonomy.valid_fragment(body.get("value")))):
+            return NoOpRequests("AUTONOMY_GENE_OUT_OF_SCOPE")
+        entry.update(evolution_kind=body["evolution_kind"], mandate_id=body["mandate_id"],
+                     evaluation_plan=body.get("evaluation_plan"), independent_evaluation_ref=body.get("independent_evaluation_ref"),
+                     evaluation_plan_sha256=autonomy.digest(body.get("evaluation_plan")),
+                     evaluation_frozen_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
+        units = (body.get("evaluation_plan") or {}).get("units") or []
+        if not units or any((_entity(root, "test", str(unit.get("test_id") or "")) or {}).get("executed_at")
+                            for unit in units if isinstance(unit, dict)):
+            return NoOpRequests("AUTONOMY_GENE_REQUIRES_PROSPECTIVE_UNITS")
     if incident_id:
         seed = json.dumps({"gene": gene, "incident_id": incident_id, "value": body.get("value")},
                           ensure_ascii=False, sort_keys=True, default=str)
@@ -609,7 +701,10 @@ def mutation_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
     merge: dict[str, Any] = {"genes": [entry]}
     if "generation" not in genome:
         merge["generation"] = 0
-    return [_doc(GENOME_DOC, merge, f"REQ-GENE-CANARY-{gene}-{_now(item)[:13]}", {"genes": "id"})]
+    request = _doc(GENOME_DOC, merge, f"REQ-GENE-CANARY-{gene}-{_now(item)[:13]}", {"genes": "id"})
+    if body.get("evolution_kind"):
+        request["_autonomy_authority"] = autonomy.WRITER_AUTHORITY
+    return [request]
 
 
 def rollback_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
@@ -622,9 +717,13 @@ def rollback_requests(item: dict[str, Any], body: dict[str, Any], root: Path) ->
                                                         "fitness": body.get("fitness"),
                                                         "incident_id": current.get("incident_id"),
                                                         "canary_id": current.get("canary_id")}]
-    return [_doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None,
+    request = _doc(GENOME_DOC, {"genes": [{"id": gene, "status": "CANONICAL", "canary": None,
                                          "incident_id": None, "canary_id": None, "rolled_back": history}]},
-                 f"REQ-GENE-ROLLBACK-{gene}-{_now(item)[:13]}", {"genes": "id"})]
+                 f"REQ-GENE-ROLLBACK-{gene}-{_now(item)[:13]}", {"genes": "id"})
+    from . import autonomy
+    if autonomy.evolvable(current):
+        request["_autonomy_authority"] = autonomy.WRITER_AUTHORITY
+    return [request]
 
 
 def fitness_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
@@ -813,6 +912,11 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         if old.get("submission_fingerprint") == submission:
             return []
         raise ProposalError("BATTERY_ID_CONTENT_CONFLICT")
+    from . import autonomy
+    scoped_tests = [_entity(root, "test", str(spec.get("test_id") or "")) or {} for spec in specs if isinstance(spec, dict)]
+    reason = autonomy.admission(root, scoped_tests, len(specs))
+    if reason:
+        raise ProposalError(reason)
     if sum(b.get("status") in integrity.ACTIVE for b in batteries) >= MAX_BATTERIES_IN_FLIGHT:
         raise ProposalError("BATTERY_CAPACITY_FULL")
     active_fingerprints = {t.get("execution_fingerprint") for b in batteries if b.get("status") in integrity.ACTIVE for t in b.get("tests") or []}
@@ -842,14 +946,21 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
                       "inputs": (current.get("data_binding") or current.get("input_binding"))["inputs"],
                       "prereg_hash": current["prereg_hash"], "attempt_id": attempt, "execution_fingerprint": fingerprint,
                       "timeout_min": max(1, min(int(spec.get("timeout_min") or 30), 340)), "prediction": current.get("prediction")})
+        for key in ("gene_id", "gene_arm", "gene_plan_sha256"):
+            if current.get(key):
+                tests[-1][key] = current[key]
         if check.get("param_preflight") is not None:
             tests[-1]["param_preflight"] = check["param_preflight"]
         changes = {"status": "QUEUED", "state": "QUEUED", "execution_phase": "QUEUED",
                    "execution": "GITHUB_ACTIONS_BATTERY", "battery_id": bid, "attempt_id": attempt,
-                   "execution_recipe": current["recipe"], "execution_recipe_sha256": check["recipe_sha256"], "readiness": check}
-        requests.append(_test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_QUEUED"))
+                   "execution_recipe": current["recipe"], "execution_recipe_sha256": check["recipe_sha256"], "readiness": check,
+                   "started_at": None, "execution_observation": None, "run_ref": None}
+        request = _test_update(root, test_id, changes, f"REQ-BATTERY-{bid}-{test_id}", "TEST_QUEUED")
+        request["_runner_observation_authority"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
+        requests.append(request)
     retained = [b for b in batteries if b.get("status") in integrity.ACTIVE]
-    retained += [b for b in batteries if b.get("status") not in integrity.ACTIVE][-200:]
+    retained += [b for b in batteries if b.get("status") not in integrity.ACTIVE and b.get("mandate_id")]
+    retained += [b for b in batteries if b.get("status") not in integrity.ACTIVE and not b.get("mandate_id")][-200:]
     retained.append({"id": bid, "status": "QUEUED", "created_at": _now(item), "source": item.get("source"),
                      # Keep the exact accepted source envelope beside its digest.
                      # The normalized attempt specs below intentionally add frozen
@@ -857,7 +968,19 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
                      # used to reconstruct the caller's original submission later.
                      "submission_fingerprint": submission, "submitted_specs": specs,
                      "tests": tests})
-    return [_doc(BATTERIES_DOC, {"batteries": retained}, f"REQ-BATTERY-{bid}")] + requests
+    if any(test.get("mandate_id") for test in scoped_tests):
+        revision = os.environ.get("NEXO_RECIPE_REVISION")
+        if not re.fullmatch(r"[0-9a-f]{40}", str(revision or "")):
+            raise ProposalError("AUTONOMY_RECIPE_REVISION_UNVERIFIED")
+        retained[-1].update(mandate_id=autonomy.mandate(root)["id"], mandate_revision=autonomy.mandate(root)["revision"],
+                            parallelism=autonomy.parallelism(root), transport="CANONICAL_DRIVE_PACKAGE", source_revision=revision)
+        retained[-1]["pending_reason"] = "EXTERNAL_RUN_RECONCILIATION_REQUIRED"
+        retained[-1]["package_json"] = autonomy.package_json(retained[-1])
+        retained[-1]["package_sha256"] = hashlib.sha256(retained[-1]["package_json"].encode("utf-8")).hexdigest()
+    document = _doc(BATTERIES_DOC, {"batteries": retained}, f"REQ-BATTERY-{bid}")
+    if retained[-1].get("mandate_id"):
+        document["_autonomy_authority"] = autonomy.WRITER_AUTHORITY
+    return [document] + requests
 
 def family_charter_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> list[dict[str, Any]]:
     """FAMILY_CHARTER {family_id, roadmap_id, recipe, domain, hypothesis_id?, template{...contract...}, instances[{label, params}], stop?}.
@@ -1087,6 +1210,7 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     A recipe with an OPEN circuit gets a single probe test."""
     now = now or datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    from . import autonomy
     in_flight = sum(1 for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") in integrity.ACTIVE)
     if in_flight >= MAX_BATTERIES_IN_FLIGHT:
         return []
@@ -1098,6 +1222,8 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
     execution_fingerprints: dict[str, str] = {}
     for test in all_tests:
         if str(test.get("status") or "").upper() != "READY":
+            continue
+        if test.get("mandate_id") and autonomy.admission(root, [test], 1, now=now):
             continue
         # A new ordinary dispatch must belong to an ACTIVE roadmap. A pending
         # contest may finish review of an already-produced result.
@@ -1128,7 +1254,10 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
 
     # Rank globally before the bounded recipe groups: alphabetical recipe names
     # must never consume every slot ahead of a higher-priority objective.
-    groups = [(recipe, sorted(tests, key=rank)) for recipe, tests in by_recipe.items()]
+    groups = []
+    for recipe, tests in by_recipe.items():
+        for mandate_id in sorted(set(str(test.get("mandate_id") or "") for test in tests)):
+            groups.append((recipe, sorted([test for test in tests if str(test.get("mandate_id") or "") == mandate_id], key=rank)))
     groups.sort(key=lambda group: (rank(group[1][0]), group[0]))
     items = []
     for recipe, tests in groups:
@@ -1137,6 +1266,11 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
         # Batch policy: up to 20 per battery; send all 1-4 available tests,
         # otherwise 75% with a floor of 5 (20 -> 15).
         take = len(tests) if len(tests) <= 4 else min(MAX_BATTERY_TESTS, max(5, -(-len(tests) * 3 // 4)))
+        if tests[0].get("mandate_id"):
+            reserved = sum(len(b.get("tests") or []) for b in integrity.batteries(root) if b.get("status") in integrity.ACTIVE)
+            take = min(take, autonomy.parallelism(root) - reserved - sum(len(x["payload"]["tests"]) for x in items))
+            if take < 1:
+                continue
         tests = tests[:take]
         if (health.get(recipe) or {}).get("state") == "OPEN":
             if recipe in running:
@@ -1301,11 +1435,20 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
             raise ProposalError("RUNNER_STARTED_TESTS_INVALID")
         if status == "RUNNING" and (not started or any(integrity.timestamp(t) is None for t in started.values())):
             raise ProposalError("RUNNER_STEP_START_REQUIRED")
+        known_starts = dict(previous.get("started_tests") or {})
+        if any(tid in known_starts and known_starts[tid] != stamp for tid, stamp in started.items()):
+            raise ProposalError("RUNNER_START_COMMITMENT_CHANGED")
+        if started:
+            battery["started_tests"] = {**known_starts, **started}
         if status == "DISPATCH_PENDING":
             battery.setdefault("dispatch_requested_at", _now(item))
             battery["dispatch_confirmation"] = "PENDING_EXTERNAL_ACK"
+            if previous.get("mandate_id"):
+                battery["pending_reason"] = "EXTERNAL_RUN_RECONCILIATION_REQUIRED"
         else:
             battery.update(run_ref=run_ref, dispatch_confirmation="EXTERNAL_RUN_IDENTIFIED")
+            if previous.get("mandate_id"):
+                battery["pending_reason"] = None
             battery.setdefault("dispatched_at", _now(item))
         for tid in specs:
             current = _entity(root, "test", tid) or {}
@@ -1315,6 +1458,8 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
             if current.get("execution_phase") == "RUNNING" and phase != "RUNNING":
                 continue
             changes = {"status": phase, "state": phase, "execution_phase": phase}
+            if previous.get("mandate_id"):
+                changes["execution_pending_reason"] = "EXTERNAL_RUN_RECONCILIATION_REQUIRED" if phase == "DISPATCH_PENDING" else None
             if status != "DISPATCH_PENDING":
                 changes["run_ref"] = run_ref
             if tid in started:
@@ -1326,6 +1471,9 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
         batteries[index] = battery
         status_doc = _doc(BATTERIES_DOC, {"batteries": batteries}, f"REQ-BATTERY-{bid}-{status}")
         status_doc["_runner_battery_status_token"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
+        for request in requests:
+            if request.get("entity_kind") == "test":
+                request["_runner_observation_authority"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
         return [status_doc] + requests
     if integrity.timestamp(body.get("completed_at")) is None:
         raise ProposalError("RUNNER_COMPLETION_TIME_REQUIRED")
@@ -1483,12 +1631,18 @@ def battery_status_requests(item: dict[str, Any], body: dict[str, Any], root: Pa
     if battery.get("phase_failure_receipts"):
         status_doc["_runner_phase_failure_receipt_sha256"] = (
             "sha256:" + integrity.digest(battery["phase_failure_receipts"]))
+    for request in requests:
+        if request.get("entity_kind") == "test":
+            request["_runner_observation_authority"] = integrity.RUNNER_BATTERY_STATUS_TOKEN
     return [status_doc] + requests
 
 
 def pending_batteries(root: Path, stale_hours: float = 8.0) -> list[dict[str, Any]]:
     """Never blindly repeat an ambiguous external submission."""
-    return [b for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") == "QUEUED"]
+    from . import autonomy
+    return [b for b in _read(root, BATTERIES_DOC).get("batteries") or [] if b.get("status") == "QUEUED"
+            and (not b.get("mandate_id") or not autonomy.admission(
+                root, [_entity(root, "test", str(spec.get("test_id"))) or {} for spec in b.get("tests") or []], 0))]
 
 def _tests(root: Path) -> list[dict[str, Any]]:
     folder = root / "entities" / "test"

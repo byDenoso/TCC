@@ -185,6 +185,10 @@ _TRUSTED_INBOX_ANNOTATIONS = frozenset({"_inbox_source", "_inbox_name", "_inbox_
 _TRUSTED_CAPABILITY_FIELDS = frozenset({
     "_runner_battery_status_token",
     "_writer_dispatch_token",
+    "_autonomy_human_authority",
+    "_autonomy_authority",
+    "_scientific_review_authority",
+    "_runner_observation_authority",
 })
 
 
@@ -204,7 +208,13 @@ def _is_writer_dispatch_capability(value: Any) -> bool:
 
 
 def _is_trusted_capability(field: str, value: Any) -> bool:
-    if field == "_runner_battery_status_token":
+    if field == "_scientific_review_authority":
+        from .autonomy import WRITER_AUTHORITY
+        return value is WRITER_AUTHORITY
+    if field in {"_autonomy_human_authority", "_autonomy_authority"}:
+        from .autonomy import HUMAN_AUTHORITY, WRITER_AUTHORITY
+        return value is HUMAN_AUTHORITY or (field == "_autonomy_authority" and value is WRITER_AUTHORITY)
+    if field in {"_runner_battery_status_token", "_runner_observation_authority"}:
         return _is_runner_status_capability(value)
     if field == "_writer_dispatch_token":
         return _is_writer_dispatch_capability(value)

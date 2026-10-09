@@ -207,15 +207,19 @@ class RecoveryTests(unittest.TestCase):
     def test_route_cycle_has_new_identity_and_preserves_current_owner(self):
         self.test.pop("data_binding"); self.test.pop("recipe"); self.test.pop("recipe_params"); self.put(self.test)
         self.reconcile(); r.ensure_handoffs(self.root)
-        current = s.entity(self.root, "TEST-A"); current.update(recipe="audit_recipe", recipe_params={"seed": 17}); self.put(current)
+        current = s.entity(self.root, "TEST-A"); current.update(recipe="audit_recipe", recipe_params={"seed": 17})
+        # Scientific ambiguity belongs to the Scientist; both recipe and input
+        # preparation now belong to the Operator and must not create false hops.
+        original_null = current.pop("null"); self.put(current)
         self.reconcile(); r.ensure_handoffs(self.root)
+        current = s.entity(self.root, "TEST-A"); current["null"] = original_null; self.put(current)
         (self.recipes / "audit_recipe.py").unlink()
         self.reconcile(); r.ensure_handoffs(self.root)
         from runtime.nexo_agent_api import AgentService
         from runtime.nexo_agent_api.handoff import _latest_by_handoff
         events = list(_latest_by_handoff(self.root).values())
         self.assertEqual(len(events), 3)
-        inbox = AgentService(self.root).inbox_for("ADVISOR")
+        inbox = AgentService(self.root).inbox_for("EXECUTOR")
         self.assertEqual(len(inbox), 1)
         self.assertEqual(inbox[0]["work_envelope"]["recovery"]["route_generation"], 3)
         self.assertEqual(self.works()[0]["owner_role"], "ADVISOR")

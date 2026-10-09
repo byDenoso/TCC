@@ -74,13 +74,13 @@ def build() -> Path:
         _write_deterministic(archive, "runtime/__init__.py", b"")
         for package in ("nexo_agent_api", "nexo_execution", "portable_camb"):
             package_root = REPO / "runtime" / package
-            for path in sorted(package_root.rglob("*")):
+            for path in sorted(package_root.rglob("*"), key=lambda path: path.relative_to(package_root).as_posix()):
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
                     _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
         contracts_root = REPO / "contracts"
         if contracts_root.is_dir():
-            for path in sorted(contracts_root.rglob("*.json")):
+            for path in sorted(contracts_root.rglob("*.json"), key=lambda path: path.relative_to(REPO).as_posix()):
                 _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
     digest = hashlib.sha256(buffer.getvalue()).hexdigest()

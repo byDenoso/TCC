@@ -18,8 +18,18 @@ def apply_document(root: Path, request: dict) -> dict:
     such as roadmaps are merged here, inside the same CAS write.
     ``list_merge`` names list fields whose items are merged by ``key``.
     """
-    relative = str(request["document"]).lstrip("/")
-    if not relative.startswith(_DOCUMENT_PREFIXES) or ".." in relative.split("/") or not relative.endswith(".json"):
+    relative = str(request["document"])
+    # Reject aliases before the authority check. On Windows, backslashes,
+    # repeated separators and dot components can otherwise reach the same file
+    # through a spelling that escapes the protected-document allowlist.
+    if "\\" in relative or ":" in relative or any(part in {"", ".", ".."} for part in relative.split("/")):
+        return {"request_id": request.get("request_id"), "accepted": False,
+                "issue": {"code": "DOCUMENT_PATH_NOT_CANONICAL", "message": relative}}
+    from .autonomy import guard_document
+    refused = guard_document(root, request)
+    if refused is not None:
+        return refused
+    if (relative != "CONTROL.json" and not relative.startswith(_DOCUMENT_PREFIXES)) or ".." in relative.split("/") or not relative.endswith(".json"):
         return {"request_id": request.get("request_id"), "accepted": False, "issue": {"code": "DOCUMENT_PATH_NOT_ALLOWED", "message": relative}}
     from .scientific_integrity import guard_batteries
     refused = guard_batteries(root, request)
@@ -27,6 +37,36 @@ def apply_document(root: Path, request: dict) -> dict:
         return refused
     path = fs_path(root, relative)
     current = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    patch = request.get("merge") or {}
+    if not isinstance(patch, dict):
+        return {"accepted": False, "issue": {"code": "INVALID_DOCUMENT_MERGE"}}
+    frozen_issue = None
+    if relative.startswith("roadmaps/"):
+        charter = current.get("charter") or {}
+        charter = charter if isinstance(charter, dict) else {}
+        signed = charter.get("status") in {"CHARTERED", "CLOSED"} or bool(charter.get("charter_hash"))
+        charter_patch = patch["charter"] if "charter" in patch else {}
+        operational = {"status", "closed_at", "close_reason", "final_report"}
+        if signed and (not isinstance(charter_patch, dict) or any(value != charter.get(key)
+                              for key, value in charter_patch.items() if key not in operational)):
+            frozen_issue = "SIGNED_CHARTER_IMMUTABLE"
+        identity_fields = {"question_id", "roadmap_id", "mandate_id", "public_data_only", "public_data_refs"}
+        if any(current.get(key) is not None and key in patch and patch[key] != current[key] for key in identity_fields):
+            frozen_issue = "CAMPAIGN_IDENTITY_AND_SCOPE_IMMUTABLE"
+        from .autonomy import WRITER_AUTHORITY
+        changes_closure = ("closure" in patch or patch.get("status") == "CLOSED"
+                           or isinstance(charter_patch, dict) and any(
+                               key in charter_patch for key in ("closed_at", "close_reason"))
+                           or isinstance(charter_patch, dict) and charter_patch.get("status") == "CLOSED")
+        if changes_closure and request.get("_autonomy_authority") is not WRITER_AUTHORITY:
+            frozen_issue = "CAMPAIGN_CLOSURE_WRITER_ONLY"
+    if relative.startswith("contracts/") and current:
+        # Existing contracts carry scientific/authority promises. A changed
+        # contract needs a new versioned identity, never an in-place raw merge.
+        if any(key not in current or value != current[key] for key, value in patch.items()):
+            frozen_issue = "EXISTING_CONTRACT_IMMUTABLE_USE_NEW_VERSION"
+    if frozen_issue:
+        return {"request_id": request.get("request_id"), "accepted": False, "issue": {"code": frozen_issue}}
 
     if relative == "evolution/board.json":
         existing = {str(post.get("id")): post for post in current.get("posts") or []

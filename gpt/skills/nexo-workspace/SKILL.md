@@ -14,7 +14,7 @@ Usar a intenção da mensagem; não apresentar menus. Abrir somente as fontes ex
 
 ## Autoridade por assunto
 - Ciência: Tower, entidades e evidências; projeção como leitura derivada.
-- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. A configuração verificada em 03/10/2026 tem Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela. Operadores B/C permanecem pausados com histórico preservado. `Bom dia` pertence ao Guardião. Referências históricas de quantidade, limite do plano e bindings não substituem esse inventário; a integração separada de Revisor de PR por evento só conta como ativa quando comprovada na ferramenta.
+- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. O pacote de preparação atual abrange somente Cientista, Operador, Engenheiro, Crítico e Guardião; não altera tarefas reais. Estados de Pítia, Sentinela, Nested Watch, Operadores B/C e Revisor por evento permanecem como encontrados. `Bom dia` pertence ao Guardião. Referências históricas, bindings e IDs do pacote não substituem esse inventário.
 - Caminho operacional: raiz atual, prompts salvos, código implantado e recibos de execução. Divergência com CONTROL histórico deve ser explicitada, sem trocar de arquitetura por conta própria.
 - Literatura: `cosmology-world-model` no Drive, com data da referência; confirmar valores atuais em fontes primárias antes de congelar critérios. O mapa orienta e não produz vereditos.
 - Memória: contexto operacional em `NEXO Lite/notas`, nunca fonte de resultado científico.
@@ -44,16 +44,14 @@ Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HA
 
 ## Funções atuais: pipeline por item
 
-A configuração viva tem sete papéis. Agenda atual verificada:
+O pacote atual prepara cinco funções. Os horários abaixo são referências observadas e nunca configuração; reler o inventário vivo antes de uma atualização humana:
 | Tarefa | Gatilho BRT | Política de produção por pulso | Próximo consumidor |
 |---|---|---|---|
-| Pítia | :00, toda hora | drenar TESTs interpretáveis/priorizáveis com delta real | Cientista/Crítico/Operador |
-| Cientista | :10, toda hora | drenar definições/receitas completas elegíveis; 24 é benchmark, não teto | Engenheiro |
-| Engenheiro | :25, toda hora | drenar receitas tecnicamente certificáveis; 24 é benchmark, não teto | Operador |
-| Operador | :40, toda hora | executar/terminalizar todos os TESTs elegíveis que couberem no runtime | Crítico/Pítia |
-| Crítico | :50, toda hora | revisar/contestar todos os resultados elegíveis no orçamento | Operador/Pítia/Cientista |
+| Cientista | :10, toda hora | perguntas, hipóteses, literatura, antecedentes e contratos prospectivos | Operador |
+| Engenheiro | :25, toda hora | infraestrutura, dependências, transporte e recuperação | papel afetado |
+| Operador | :40, toda hora | receitas, preflight, execução e recuperação de tentativas | Crítico |
+| Crítico | :50, toda hora | revisar/contestar resultados elegíveis independentemente | Operador/Cientista |
 | Guardião | :55, toda hora | reparar/liberar cadeias independentes acionáveis | todos os papéis |
-| Sentinela | :05, a cada 2h | agir apenas sobre evidência/input novo ou blocker que mudou | Cientista/Engenheiro/Crítico |
 
 Os antigos números 6/24 são probes de capacidade para medir utilização, nunca quotas nem limites. Continue enquanto houver trabalho independente elegível e orçamento seguro. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Se a fila elegível drenar, o no-op é correto; se restarem itens elegíveis, a rodada deve registrar por que parou.
 
@@ -78,9 +76,9 @@ mural. A projeção pública não publica ofertas/aceites. Com o bundle atual, c
 `python nexo_gpt_writer.py handoff TOWER.json list PAPEL`; use o papel canônico abaixo apenas
 para essa caixa privada, mantendo o `source` normal nas demais propostas:
 
-- Engenheiro: `ADVISOR`, triagem e receita/verificação técnica
+- Engenheiro: `ADVISOR`, triagem de infraestrutura e dependências compartilhadas
 - Cientista: `LEARNER`, definição congelada e conflitos de linhagem
-- Operador: `EXECUTOR`, insumos/proveniência e execução; reler antes de aceitar para não duplicar
+- Operador: `EXECUTOR`, receitas, insumos/proveniência, preflight e execução; reler antes de aceitar para não duplicar
 - Guardião: verifica oferta pendente, idade, responsável e readback; não aceita em nome de outro papel
 
 A caixa de bootstrap mostra cinco cartões, com `inbox_count` total e `inbox_has_more`; ela não limita a fila operacional. `handoff ... list PAPEL` retorna todas as ofertas abertas válidas do papel. Cruze essa lista com `execution_recovery.items`; ACK antigo não pode esconder oferta pendente. Até o bundle atualizado estar comprovado, use a seção privada completa para identificar os itens omitidos pelo leitor antigo.
@@ -113,15 +111,15 @@ o papel possa realizar; não gere recado, hipótese ou resultado só para elimin
 
 ### Pipeline de receitas work-conserving
 
-O Cientista é dono da definição científica da receita. Por pulso, quando houver candidatos válidos, entrega ao Engenheiro todas as receitas completas que couberem no orçamento real do runtime; 24 é apenas benchmark histórico de capacidade. Cada receita deve conter: TEST/roadmap/hipótese, pergunta, inputs e versões/hashes, método, modelo/null/rival, parâmetros e priors, estatística/estimando, critérios de sucesso/kill, implementação/capability alvo, comando/runtime, outputs esperados, schema de artifacts, checkpoint/resume, dependências, custo/runtime esperado, smoke/preflight esperado e proveniência. Receita incompleta não é entregue como pronta.
+O Cientista define a pergunta e o contrato científico: TEST/roadmap/hipótese, literatura, antecedentes internos, modelo/null/rival, método, seleção, parâmetros/priors, estatística/estimando, sucesso/kill e independência. Entrega o contrato ao Operador. Lacuna de definição volta ao Cientista sem alterar contratos congelados; não precisa de uma passagem obrigatória pelo Engenheiro.
 
-O Engenheiro é dono da certificação técnica. Para cada receita recebida, implementar ou ligar a capability mínima fiel, conferir inputs, dependências, parâmetros congelados, comando reproduzível, smoke/preflight, artifacts, checkpoint/resume e readback. Só então emitir READY_FOR_EXECUTOR e HANDOFF ADVISOR→EXECUTOR. Se falhar, reparar no mesmo pulso quando possível; se a lacuna for científica, devolver ao LEARNER com causa concreta e seguir para outra receita. Continue certificando enquanto houver candidatas independentes elegíveis e orçamento; 24 não é teto nem quota.
+O Operador é dono do código da receita e da preparação da execução. Reutiliza receita fiel ou implementa a especificação aprovada; confere inputs/versionamento/hashes, dependências, parâmetros, comando reproduzível, outputs, artifacts, preflight/smoke, checkpoint/resume, custo e proveniência. Só solicita READY após os gates técnicos e a revisão independente aplicáveis. O Engenheiro mantém infraestrutura, transporte, dependências compartilhadas e recuperação de falhas; não é uma barreira administrativa por teste.
 
-O Operador consome apenas receitas com certificação técnica atual READY_FOR_EXECUTOR. Certificação técnica não substitui revisão científica independente do resultado.
+O Operador executa apenas receitas tecnicamente válidas e readiness atual, com reserva canônica por teste/tentativa. Não aprova a própria receita. Certificação técnica não substitui revisão científica independente do resultado.
 
 ### Autonomia de receitas do roadmap
 Dentro da autorização de Dener para resolver receitas NEXO, seguir o ciclo completo:
-diagnóstico e WORK com dono → Engenheiro aceita a recuperação → patch mínimo e smoke fiel
+diagnóstico e WORK com dono → Operador prepara a receita (Engenheiro resolve infraestrutura) → patch mínimo e smoke fiel
 ao contrato → Revisor independente verifica os critérios existentes → integração com todos
 os checks passando no mesmo SHA → Operador relê a versão integrada, revalida binding/readiness
 e reserva a bateria pelo Writer. Reutilizar PR já aberto e dependência existente antes de criar outro.
@@ -143,7 +141,7 @@ Cientista. Toda nova `HYPOTHESIS_PROPOSAL` do Cientista usa um roadmap
 somente uma replicação com propósito explícito segue: acrescentar
 `replication:{justified:true,purpose,independence_axis,compares_to_test_ids}` cobrindo os IDs
 encontrados. Duplicata sem propósito fica registrada como não aplicada. Abrir outra frente exige
-carta aprovada pelo Dener e ativação canônica antes da hipótese.
+carta aprovada pelo Dener ou pelo Writer dentro do novo mandato ativo verificável, e ativação canônica antes da hipótese. O pacote preparado não ativa essa delegação.
 
 O Executor despacha READY ordinário somente de roadmap `ACTIVE`; contestação pendente pode terminar
 a revisão do resultado que atacou. Avançar fase depende de readiness e recibos, não do minuto da

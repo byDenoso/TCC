@@ -328,7 +328,9 @@ def _migrate_runner_battery_receipt(root: Path, item: dict, intent: str) -> dict
     return migrated
 
 
-def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None, operational_work_authorized: bool = False) -> tuple[bytes | None, dict]:
+def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None, operational_work_authorized: bool = False,
+                   verified_human_intents: frozenset[str] | None = None,
+                   verified_capacity_observation: dict | None = None) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
     contract_versions = {"operation_receipts": operation_receipts.CONTRACT}
     try:
@@ -342,6 +344,30 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     "contracts": contract_versions}
     with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
         root, _ = materialize_live_tower(tower_raw, Path(work) / "TOWER_V06")
+        from . import autonomy
+        if isinstance(verified_capacity_observation, dict):
+            for request in autonomy.capacity_requests(root, {"quota": verified_capacity_observation.get("quota")}):
+                apply_requests(root, [request])
+        for request in autonomy.capacity_requests(root, verified_capacity_observation):
+            apply_requests(root, [request])
+        # Fixed policy may consume an existing authorized review before any new
+        # reservation changes its prospective sample.
+        from .capacity_guard import facts as capacity_facts, review_requests as capacity_review_requests, REGISTRY as CAPACITY_REVIEWS
+        def refresh_capacity_policy():
+            proof = capacity_facts(root)
+            if not proof:
+                return
+            receipts = apply_requests(root, capacity_review_requests(root))
+            if any(not row.get("accepted") for row in receipts):
+                return
+            quota = autonomy.read(root, autonomy.CAPACITY_DOC).get("quota") or {}
+            growth = autonomy.capacity_requests(root, {"quota": quota, "parallelism": proof["next_parallelism"],
+                                                      "battery_refs": proof["battery_refs"],
+                                                      "review_ref": CAPACITY_REVIEWS + "#" + proof["id"]})
+            receipts.extend(apply_requests(root, growth))
+            report["receipts"].extend(receipts)
+            report["autonomy_capacity"] = {"review_id": proof["id"], "parallelism": autonomy.parallelism(root)}
+        refresh_capacity_policy()
         # Refresh/compensate the private canary monitor only at the mutating
         # Writer boundary. Read-only status and standalone readiness calls do
         # not write this file; the normal pack/CAS/readback persists this state.
@@ -361,6 +387,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         # A BATCH is applied item by item, so later envelopes see earlier ones (e.g. canary then canonize).
         flat: list[dict] = []
         for item in items:
+            item = autonomy.attach_human_authority(item, verified_human_intents)
             payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
             if str(item.get("kind") or "").upper() == "BATCH" and isinstance(payload.get("items"), list):
                 base = item.get("_inbox_name") or "batch"
@@ -740,7 +767,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
 
         # Maintenance is mechanical too: watchdog, repeated-failure stop, stale drafts,
         # pre-registration audit and roadmap FDR annotations.
-        maintenance_requests = evolution.maintenance_reconcile_requests(root)
+        maintenance_requests = evolution.maintenance_reconcile_requests(root) + autonomy.canonization_requests(root)
         if maintenance_requests:
             maintenance_receipts = apply_requests(root, maintenance_requests)
             maintenance_failed = [r for r in maintenance_receipts if not r.get("accepted", True) or r.get("issue")]
@@ -789,6 +816,13 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 from .live_tower import publish_live_tower
                 publish_live_tower(root)
             report["execution_recovery"] = {"mutations": len(recovery_receipts), "handoffs_created": routed}
+        from .public_campaigns import publication_requests
+        refresh_capacity_policy()
+        public_requests = publication_requests(root)
+        if public_requests:
+            public_receipts = apply_requests(root, public_requests)
+            report["receipts"].extend(public_receipts)
+            report["public_campaigns"] = {"approved_updates": sum(receipt.get("accepted") is True for receipt in public_receipts)}
         # Includes private canary controller/selection/metric mutations from the
         # same materialized Tower snapshot in the ordinary Writer pack path.
         from .telemetry import SEMANTIC_ENTITY_COUNT_KEYS, refresh_semantic_counts
@@ -815,6 +849,42 @@ def _queued_batteries(raw: bytes) -> list[dict]:
         return pending_batteries(root)
 
 
+def _clear_dispatch_specs(directory: str) -> None:
+    """Remove only prior battery specs from the designated private staging directory."""
+    if not directory:
+        return
+    root = Path(directory).resolve()
+    if not root.is_dir():
+        return
+    for path in root.glob("*.json"):
+        if path.resolve().parent != root or not re.fullmatch(r"[a-z0-9-]{3,48}", path.stem):
+            continue
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(value, dict) and value.get("id") == path.stem and isinstance(value.get("tests"), list):
+            path.unlink()
+
+
+def _emit_committed_dispatch_specs(directory: str, raw: bytes, battery_ids: list[str]) -> None:
+    """Export reservations only after successful CAS and verified Drive readback."""
+    from .scientific_integrity import batteries
+    with tempfile.TemporaryDirectory(prefix="nexo-dispatch-readback-") as work:
+        root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
+        by_id = {battery.get("id"): battery for battery in batteries(root)}
+        selected = [by_id[bid] for bid in battery_ids if bid in by_id and by_id[bid].get("status") == "DISPATCH_PENDING"]
+    target = Path(directory).resolve()
+    target.mkdir(parents=True, exist_ok=True)
+    for battery in selected:
+        if not re.fullmatch(r"[a-z0-9-]{3,48}", str(battery.get("id") or "")):
+            continue
+        path = target / (battery["id"] + ".json")
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(battery, ensure_ascii=False), encoding="utf-8")
+        temporary.replace(path)
+
+
 def _family_items(raw: bytes, kind: str) -> list[dict]:
     """Robot-made proposals from pre-registered families: new grid cells as tests, READY instances as batteries."""
     from .evolution import family_battery_items, family_contest_items, family_instance_items, family_spawn_items
@@ -830,15 +900,49 @@ def _stop_closures(raw: bytes) -> list[dict]:
 
     from .evolution import evolution_status
 
+    def exhausted(used: Any, limit: Any) -> bool:
+        # Charter limits are integers (legacy JSON can store integer strings).
+        # Unknown/invalid limits never become invented authority to close.
+        if type(used) not in (int, str) or type(limit) not in (int, str):
+            return False
+        try:
+            count, maximum = int(used), int(limit)
+        except ValueError:
+            return False
+        return maximum > 0 and count >= maximum
+
     with tempfile.TemporaryDirectory(prefix="nexo-robot-status-") as work:
         root, _ = materialize_live_tower(raw, Path(work) / "TOWER_V06")
         roadmaps = evolution_status(root).get("roadmaps", [])
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return [{"kind": "ROADMAP_CLOSE", "source": "WRITER_ROBOT", "created_at": now, "_inbox_name": f"robot-close-{r['roadmap_id']}",
-             "payload": {"roadmap_id": r["roadmap_id"], "reason": r["stop_reached"],
-                         "final_report": f"Fechado automaticamente pelo critério de parada ({r['stop_reached']}): "
-                                         f"{r['confirmed']} confirmados, {r['tests_used']} testes usados."}}
-            for r in roadmaps if r.get("stop_reached")]
+    closures = []
+    for roadmap in roadmaps:
+        if (roadmap.get("charter_status") != "CHARTERED"
+                or roadmap.get("renewable")
+                or str(roadmap.get("state") or "").upper() in {"CLOSED", "CANCELLED", "ARCHIVED"}):
+            continue
+        # SUCCESS/KILL counts are review signals, not proof that every frozen
+        # comparison was executed and independently reviewed. Recompute budget
+        # exhaustion because those signals can mask BUDGET in roadmap_progress.
+        if not (exhausted(roadmap.get("tests_used"), roadmap.get("max_tests"))
+                or exhausted(roadmap.get("days"), roadmap.get("max_days"))):
+            continue
+        rid = roadmap["roadmap_id"]
+        closures.append({
+            "kind": "ROADMAP_CLOSE", "source": "WRITER_ROBOT", "created_at": now,
+            "_inbox_name": f"robot-close-{rid}",
+            "payload": {
+                "roadmap_id": rid, "reason": "BUDGET",
+                "final_report": (
+                    "Encerramento operacional por esgotamento do orcamento aprovado: "
+                    f"{roadmap.get('tests_used')} / {roadmap.get('max_tests')} testes; "
+                    f"{roadmap.get('days')} / {roadmap.get('max_days')} dias. "
+                    "Nao constitui confirmacao ou refutacao cientifica. Comparacoes "
+                    "nao concluidas e revisao pendente devem constar do relatorio final."
+                ),
+            },
+        })
+    return closures
 
 
 class _GitHubInbox:
@@ -1110,6 +1214,8 @@ def _main(argv: list[str]) -> int:
         # Needs env GOOGLE_SERVICE_ACCOUNT_JSON with write scope. Prints only ids and counts (never proposal content).
         import os
         from .drive_transport import DriveInbox, DriveTower, TowerConflict, TowerTransportError
+        dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
+        _clear_dispatch_specs(dispatch_dir)
 
         gateway_file = os.environ.get("NEXO_GATEWAY_ITEMS", "")
         gateway_entries = []
@@ -1122,6 +1228,19 @@ def _main(argv: list[str]) -> int:
                            if isinstance(entry, dict) and isinstance(entry.get("envelope"), dict)
                            and operation_receipts.is_safe_gateway_id(entry.get("id"))]
         gateway_ids = [str(entry["id"]) for entry in gateway_entries]
+        # This file is produced by the robot's protected HMAC/OIDC verifier,
+        # never from client metadata or the raw Drive/GitHub inbox.
+        verified_human_intents = frozenset()
+        verified_capacity_observation = None
+        context_file = os.environ.get("NEXO_VERIFIED_HUMAN_INTENTS", "")
+        if context_file:
+            try:
+                context = json.loads(Path(context_file).read_text(encoding="utf-8"))
+                verified_human_intents = frozenset(value for value in context.get("proposal_sha256") or []
+                                                   if isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value))
+                verified_capacity_observation = context.get("capacity_observation")
+            except (ValueError, OSError, TypeError):
+                pass
         items = [{**entry["envelope"], "_inbox_source": "GATEWAY",
                   "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + str(entry["id"])}
                  for entry in gateway_entries]
@@ -1190,8 +1309,11 @@ def _main(argv: list[str]) -> int:
                               "code": getattr(exc, "code", type(exc).__name__)}))
         items = [item for item in items if item.get("contract") != "NEXO_OPERATIONAL_INTENT_V1"]
         dispatch_dir = os.environ.get("NEXO_BATTERY_DIR", "")
+        _clear_dispatch_specs(dispatch_dir)
         dispatched: list[str] = []
         for attempt in range(3):
+            dispatched = []
+            _clear_dispatch_specs(dispatch_dir)
             try:
                 raw, base = tower.download(cache=False)
             except TowerTransportError as exc:
@@ -1204,7 +1326,12 @@ def _main(argv: list[str]) -> int:
                 print(json.dumps({"status": "TOWER_TRANSPORT_UNAVAILABLE", "action": exc.action,
                                   "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
                 return 0
-            packed, report = apply_to_tower(raw, items)
+            trusted_context = {}
+            if verified_human_intents:
+                trusted_context["verified_human_intents"] = verified_human_intents
+            if verified_capacity_observation is not None:
+                trusted_context["verified_capacity_observation"] = verified_capacity_observation
+            packed, report = apply_to_tower(raw, items, **trusted_context)
             # Mechanical duties the GPT should not spend a run on: close roadmaps whose stop criterion was met.
             closes = _stop_closures(packed or raw)
             if closes:
@@ -1230,10 +1357,8 @@ def _main(argv: list[str]) -> int:
             if queued and dispatch_dir:
                 from .scientific_integrity import WRITER_DISPATCH_TOKEN
 
-                Path(dispatch_dir).mkdir(parents=True, exist_ok=True)
                 marks = []
                 for battery in queued:
-                    Path(dispatch_dir, f"{battery['id']}.json").write_text(json.dumps(battery, ensure_ascii=False), encoding="utf-8")
                     marks.append({"kind": "BATTERY_STATUS", "source": "WRITER_ROBOT", "_inbox_name": f"robot-dispatch-{battery['id']}",
                                   "_writer_dispatch_token": WRITER_DISPATCH_TOKEN,
                                   "payload": {"battery_id": battery["id"], "status": "DISPATCHED", "run_ref": "github-actions"}})
@@ -1262,6 +1387,8 @@ def _main(argv: list[str]) -> int:
             try:
                 write = tower.compare_and_swap(base, packed)
                 report["write"] = {k: write.get(k) for k in ("state_fingerprint", "head_revision_id", "readback")}
+                if dispatch_dir and dispatched and write.get("readback") in {True, "PASS"}:
+                    _emit_committed_dispatch_specs(dispatch_dir, packed, dispatched)
                 break
             except TowerConflict:
                 if attempt == 2:

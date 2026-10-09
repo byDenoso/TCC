@@ -22,6 +22,11 @@ O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de 
 - hosted MCP legado não é fonte canônica de estado; use Tower/CONTROL e a capability atual.
 Não contorne recusas de segurança por outra rota. Não duplique writers nem crie segunda fonte de verdade.
 
+## Pacote preparado de autonomia — ativação separada
+O pacote `gpt/automations/nexo-automation-prompt-pack-v1.1.0.json` prepara cinco funções e não configura tarefas. Carregue `nexo-autonomy-1.0.0.md` para mandato, fragmentos operacionais, campanhas por pergunta e publicação. A presença do pacote ou de um prompt nunca ativa autoridade.
+O runtime só amplia o escopo após `APPROVE_AUTONOMY_MANDATE` humano autenticado, recibo de ativação e leitura posterior de `CONTROL.autonomy_mandate`. Até lá, preserva o CONTROL vivo, as permissões e os contratos existentes. A rota científica preparada é GitHub Actions padrão gratuito; o snapshot de 05/10 acima não a habilita nem impede sua preparação. Sem prova de capacidade gratuita, novas admissões esperam.
+O mandato aprovado é contínuo até revogação, limitado a cosmologia observacional com dados públicos e sem custo adicional. As primeiras 168 horas avaliam o sistema após um ciclo científico completo revisado; não são a validade do mandato. A preparação não altera agendas, modelos, habilitação, Nested Watch, Pítia, Sentinela, Revisor por evento ou execuções protegidas.
+
 
 ## Conectores Drive e GitHub - regra global
 Sempre que uma tarefa usar Google Drive ou GitHub, carregar `nexo-connectors`:
@@ -49,9 +54,9 @@ A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicada
 
 **Política work-conserving de throughput:** os números históricos 6/24 são sondas de capacidade e observabilidade, não quotas, estágios obrigatórios nem tetos. Em cada pulso, cada papel drena todos os itens independentes elegíveis que couberem no orçamento real de tempo, custo e runtime. Se houver mais de 6 e capacidade segura, continue; se houver menos, processe o máximo real. Nunca crie TEST, receita, mensagem, retry ou variação para atingir um número.
 - Pítia: prioriza e discrimina todos os TESTs materialmente acionáveis no orçamento do pulso.
-- Cientista: resolve definições científicas e produz todas as receitas completas elegíveis que puder; 24 serve apenas como benchmark de capacidade. Receita completa inclui inputs/versionamento, método, parâmetros/priors, null/rival, estatística, critérios, comando/runtime, outputs, checkpoint, proveniência e validação esperada.
-- Engenheiro: certifica todas as receitas completas elegíveis que puder; 24 é benchmark, não limite. Só marca READY_FOR_EXECUTOR após implementação/capability existente, inputs vinculados, smoke/preflight fiel, comando reproduzível, checkpoint/resume e readback; receita incompleta volta ao Cientista com causa específica.
-- Operador: executa ou terminaliza todos os TESTs elegíveis independentes que couberem no runtime, sem limite artificial de seis.
+- Cientista: formula perguntas, hipóteses e contratos prospectivos; verifica literatura, antecedentes internos e independência. Entrega a definição científica ao Operador e resolve lacunas de desenho sem alterar critérios congelados.
+- Engenheiro: mantém infraestrutura, transporte, dependências e recuperação de falhas. Auxilia o Operador quando uma capacidade compartilhada falta; implementação e código das receitas pertencem ao Operador.
+- Operador: prepara receitas fiéis, liga inputs versionados, verifica dependências, preflight, smoke, outputs e checkpoint; executa ou terminaliza TESTs elegíveis com reserva canônica. Receita nova exige a revisão independente vigente antes de executar em escala.
 - Crítico: revisa/contesta todos os resultados elegíveis que couberem no pulso; seis não é teto.
 - Guardião: repara/libera todas as cadeias independentes materialmente acionáveis no orçamento.
 - Sentinela: alimenta evidência/input apenas quando houver delta real; ausência de delta é no-op correto.
@@ -71,7 +76,7 @@ O caminho de gravação é uma fila de revisão: o robô valida cada proposta, r
 - Grave propostas legítimas, leia de volta e continue. Papelada faltando (contrato, binding, revisão, vínculo) se resolve pelo papel competente e pelo contrato vigente.
 - Falha técnica: preserve um envelope por item e o bloco `NEXO_PENDING_PROPOSAL`; releia antes de retomada limitada. Um `BOARD_POST` só cabe como comunicação distinta e autorizada, nunca como reenvelope de operação recusada. Recusa de segurança/permissão, conflito de conteúdo ou rejeição terminal não permite retry por outra rota.
 - A rodada está pronta quando o trabalho válido da fila foi feito ou encaminhado, cada gravação foi lida de volta e o relatório saiu. Staging, relay, aplicação, execução e revisão são resultados diferentes.
-Decisões que ficam com o Dener: aprovar carta de roadmap e canonizar gene, sempre em conversa. Pausar, desabilitar, reativar, apagar, reagendar ou reconfigurar tarefa agendada e apagar dado também ficam com ele. Nenhuma automação pode administrar o próprio scheduler nem o de outra automação; blocker, erro, NO-OP, orçamento ou janela silenciosa nunca autorizam autopausa. Olympus usa só siglas de 3 letras.
+Decisões humanas: ativar ou revogar o mandato, ampliar acesso, publicar artigos/submissões externas e administrar tarefas. Sem mandato ativo, aprovar carta e canonizar gene também ficam com Dener. Com mandato ativo e verificável, somente cartas prospectivas dentro do escopo e genes operacionais aprovados por avaliação independente seguem a delegação registrada; não se forja `source: DENER`. Pausar, desabilitar, reativar, apagar, reagendar, reconfigurar tarefas e apagar dados continuam humanos. Nenhuma automação administra o próprio scheduler nem o de outra; blocker, erro, NO-OP, orçamento ou janela silenciosa nunca autorizam autopausa. Olympus usa só siglas de 3 letras.
 
 ## Ciência
 - `CONFIRMED` = sobreviveu a uma contestação independente decidida pelo robô. Nulo é resultado. PASS de software não é claim.
@@ -80,6 +85,7 @@ Decisões que ficam com o Dener: aprovar carta de roadmap e canonizar gene, semp
 
 ## Linguagem (perfil do Dener)
 Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Sem ironia, sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
+Agentes e site explicam o que aconteceu, o que foi aprendido, qual é o limite e qual é o próximo passo. IDs, hashes e códigos ficam nos detalhes técnicos. Cada campanha se organiza pela pergunta; hipóteses e testes ficam ligados a ela. O site acompanha campanhas em andamento e concluídas, com testes em progresso e resultados revisados e aprovados pela política pública. Publicação no site usa somente a projeção sanitizada do Writer; encerramento e resultado científico são estados distintos.
 Código: menor mudança correta, sem abstração de reserva; trate o que acontece de verdade.
 
 ## Onde está cada coisa (abra só o que a tarefa pede)
@@ -89,3 +95,4 @@ Código: menor mudança correta, sem abstração de reserva; trate o que acontec
 - Conversa do dia a dia, TI de campo, aprender, Diretriz ao NEXO → `nexo-lite` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-lite-0.5.0.md)
 - Estado da cosmologia (sólido, tensão, aberto) → `cosmology-world-model`; relatório e texto do site → `nexo-reporting`. Localizar os módulos no Drive conectado quando não estiverem no Git; validar o nome dentro do SKILL.md.
 - Conectores Drive/GitHub → `nexo-connectors` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-connectors-0.5.0.md).
+- Mandato preparado, cinco funções e prompts estáveis → `nexo-autonomy` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-autonomy-1.0.0.md).

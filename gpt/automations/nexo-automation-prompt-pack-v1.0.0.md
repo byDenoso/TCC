@@ -1,5 +1,7 @@
 # NEXO automation prompt pack v1.0.0
 
+Historical snapshot: the statements below describe the audit dated 2026-10-04, not the current scheduler. The prepared five-role package is `nexo-automation-prompt-pack-v1.1.0.json`; its preparation does not apply prompts or activate a mandate. Reconcile live task identities before a human-authorized update.
+
 Generated from the audit package and live prompt snapshot dated 2026-10-04. Existing seven IDs, schedules, enabled states, and role-specific operational safeguards are preserved.
 
 Requested model: GPT-6 Luna, Medium. The exposed automation create/update APIs have no model or effort field; this pack does not claim that setting was applied.

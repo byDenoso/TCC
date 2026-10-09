@@ -73,7 +73,10 @@ def compose_board_snapshots(requests: list[dict[str, Any]]) -> list[dict[str, An
 
 
 def _entity(root: Path, kind: str, entity_id: str) -> dict[str, Any] | None:
-    path = entity_path(root, kind, entity_id)
+    try:
+        path = entity_path(root, kind, entity_id)
+    except ValueError:
+        return None
     if not path.is_file():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
@@ -183,6 +186,8 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "arm": body.get("arm"),
         "semantic": semantic,
     }
+    if isinstance(body.get("public_presentation"), dict):
+        changes["public_presentation"] = body["public_presentation"]
     # A legacy/manual result may still be recorded scientifically, but it may
     # close an execution attempt only when it names the current observed
     # runner attempt. The mutation guard revalidates the completed battery and
@@ -436,6 +441,21 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "preparation_evidence": preparation_record,
         "semantic": semantic,
     }
+    if body.get("gene_id"):
+        from .autonomy import read as autonomy_read, active as autonomy_active
+        gene = next((gene for gene in autonomy_read(root, evolution.GENOME_DOC).get("genes") or []
+                     if gene.get("id") == body["gene_id"]), {})
+        units = (gene.get("evaluation_plan") or {}).get("units") or []
+        if (gene.get("status") != "CANARY" or not autonomy_active(root, gene.get("mandate_id"))
+                or not any(unit.get("test_id") == test_id and unit.get("arm") == body.get("gene_arm")
+                           for unit in units if isinstance(unit, dict))):
+            raise ProposalError("OPERATIONAL_GENE_UNIT_NOT_PREREGISTERED")
+        changes.update(gene_id=body["gene_id"], gene_arm=body["gene_arm"],
+                       gene_plan_sha256=gene["evaluation_plan_sha256"])
+    if isinstance(body.get("public_presentation"), dict):
+        changes["public_presentation"] = body["public_presentation"]
+    if body.get("public_id"):
+        changes["public_id"] = body["public_id"]
     if lifecycle == "READY":
         changes["frozen_at"] = item.get("created_at") or evolution._now(item)
         # Public pre-registration: the frozen design's hash; the inbox commit that carried it is the timestamp.
@@ -477,6 +497,16 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         })
     requests[0]["changes"]["hypothesis_id"] = hypothesis_id
     if roadmap_id:
+        roadmap_record = evolution._read(root, f"roadmaps/{roadmap_id}.json")
+        if roadmap_record.get("question_id"):
+            requests[0]["changes"]["question_id"] = roadmap_record["question_id"]
+        if roadmap_record.get("mandate_id"):
+            from .autonomy import active
+            if not active(root, roadmap_record["mandate_id"]):
+                raise ProposalError("AUTONOMY_MANDATE_INACTIVE")
+            requests[0]["changes"]["mandate_id"] = roadmap_record["mandate_id"]
+            requests[0]["changes"]["public_data_only"] = True
+            requests[0]["changes"]["visibility"] = roadmap_record.get("visibility") or "PRIVATE"
         path = fs_path(root, f"roadmaps/{roadmap_id}.json")
         if path.is_file():
             roadmap = json.loads(path.read_text(encoding="utf-8"))

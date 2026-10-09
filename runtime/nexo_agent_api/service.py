@@ -22,7 +22,7 @@ class TowerAgentIssue(RuntimeError):
 class AgentService:
     """Small file-backed operational contract for NEXO agents."""
 
-    ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
+    ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT", "ENGINEER", "REFEREE_1", "REFUTADOR", "GUARDIAO"}
     LEGACY_ADVISOR_KINDS = {"ACTION", "RESEARCH", "REVIEW", "PROCEDURAL_HYPOTHESIS", "ENGINEERING_FIX"}
     LEGITIMATE_BLOCKERS = {
         "SCIENTIFIC_DEFINITION_MISSING",
@@ -159,14 +159,143 @@ class AgentService:
             "execution_class", "dispatch_requested", "dispatch_state",
         )
         learner = ("result_ref", "learning_state")
-        keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ())
+        critic = ("review_state", "executed_at", "verdict", "roadmap_id")
+        keys = common + (executor if role == "EXECUTOR" else ()) + (learner if role == "LEARNER" else ()) + (critic if role in {"REFEREE_1", "REFUTADOR"} else ())
         return {key: item[key] for key in keys if key in item and item[key] is not None}
+
+    def executor_discovery(self) -> dict[str, Any]:
+        """Expose hidden operational work and repairable TESTs without authorizing execution.
+
+        A WORK's READY label is not sufficient scientific readiness. Keep
+        queue_for(EXECUTOR) fail-closed; discovery merely identifies the exact
+        canonical records which the Operator must prepare or bind, and the
+        Scientist must resolve when the frozen scientific definition is unclear.
+        """
+        capabilities = self.capabilities_for("EXECUTOR")
+        omitted = []
+        for item in self._work_items():
+            if (item.get("owner_role") != "EXECUTOR"
+                    or item.get("status") not in {"READY", "CHECKPOINTED", "RUNNING"}
+                    or self._executor_eligible(item, capabilities)):
+                continue
+            capability_id = str(item.get("capability_id") or "")
+            capability = capabilities.get(capability_id)
+            capability_active = (
+                isinstance(capability, dict)
+                and str(capability.get("status") or "").upper()
+                in {"ACTIVE", "PROVEN", "VALIDATED_CURRENT"}
+            )
+            omitted.append({
+                **self._queue_card(item, "EXECUTOR"),
+                "visibility_status": "DISCOVERY_ONLY_NOT_EXECUTABLE",
+                "first_gap": (
+                    "CAPABILITY_DECLARED_BUT_WORK_BINDING_INCOMPLETE"
+                    if capability_active else "EXECUTION_BINDING_OR_CAPABILITY_MISSING"
+                ),
+            })
+
+        active_roadmaps = set()
+        roadmap_state_conflicts = []
+        roadmaps = self.root / "roadmaps"
+        if roadmaps.is_dir():
+            for path in roadmaps.glob("*.json"):
+                payload = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(payload, dict):
+                    continue
+                status = str(payload.get("status") or "").upper()
+                legacy_state = str(payload.get("state") or "").upper()
+                if status and legacy_state and status != legacy_state:
+                    roadmap_state_conflicts.append({
+                        "roadmap_id": path.stem,
+                        "status": status,
+                        "legacy_state": legacy_state,
+                        "effective_status": status,
+                        "disposition": "STATUS_AUTHORITATIVE_LEGACY_STATE_IGNORED",
+                    })
+                # 'state' is legacy metadata: a CLOSED roadmap with state=ACTIVE
+                # must NEVER be resurrected by the discovery-only projection.
+                if (status or legacy_state) == "ACTIVE":
+                    active_roadmaps.add(path.stem)
+
+        recipe_blocked = []
+        all_input_blocked = []
+        work_owners = {str(w.get("id") or w.get("work_id")): w.get("owner_role") for w in self._work_items()}
+        tests = self.root / "entities" / "test"
+        if tests.is_dir():
+            for path in tests.glob("*.json"):
+                test = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(test, dict):
+                    continue
+                if str(test.get("status") or test.get("state") or "").upper() != "BLOCKED_INPUT":
+                    continue
+                roadmap_id = str(test.get("roadmap_id") or "")
+                if roadmap_id not in active_roadmaps:
+                    continue
+                reasons = (test.get("readiness") or {}).get("reasons") or []
+                if not isinstance(reasons, list):
+                    reasons = []
+                binding = test.get("data_binding") or test.get("input_binding") or {}
+                recipe_missing = (
+                    "RECIPE_BINDING_MISSING" in reasons
+                    or "RECIPE_BINDING_MISSING" in str(test.get("blocker") or "")
+                )
+                recovery_work_id = str(test.get("recovery_work_id") or "")
+                card = {
+                    "test_id": str(test.get("id") or path.stem),
+                    "roadmap_id": roadmap_id,
+                    "data_binding_status": binding.get("status") if isinstance(binding, dict) else None,
+                    "blocker_reasons": sorted(set(str(reason) for reason in reasons)),
+                    "recorded_blocker": str(test.get("blocker") or "")[:320],
+                    "recipe_missing": recipe_missing,
+                    "recovery_work_id": recovery_work_id or None,
+                    "visibility_status": "RECOVERY_DISCOVERY_ONLY",
+                    "next_role": work_owners.get(recovery_work_id)
+                        or ("LEARNER" if "FROZEN_DESIGN_UNVERIFIED" in reasons else "EXECUTOR"),
+                }
+                all_input_blocked.append(card)
+                if recipe_missing:
+                    recipe_blocked.append(card)
+
+        omitted.sort(key=lambda item: (
+            0 if item.get("status") == "READY" else 1,
+            str(item.get("id") or ""),
+        ))
+        recipe_blocked.sort(key=lambda item: (item["roadmap_id"], item["test_id"]))
+        all_input_blocked.sort(key=lambda item: (item["roadmap_id"], item["test_id"]))
+        return {
+            "classification": "NONCANONICAL_DISCOVERY_VIEW_NEVER_EXECUTION_PERMISSION",
+            "omitted_executor_work_count": len(omitted),
+            "omitted_executor_work": omitted,
+            "roadmap_state_conflict_count": len(roadmap_state_conflicts),
+            "roadmap_state_conflicts": sorted(roadmap_state_conflicts, key=lambda x: x["roadmap_id"]),
+            "active_input_blocked_test_count": len(all_input_blocked),
+            "active_input_blocked_tests": all_input_blocked,
+            "active_recipe_blocked_test_count": len(recipe_blocked),
+            "active_recipe_blocked_tests": recipe_blocked,
+            "active_data_bound_recipe_blocked_count": sum(
+                1 for x in recipe_blocked if x["data_binding_status"] == "BOUND"
+            ),
+            "source": "CURRENT_ENTITIES_WORK_TEST_AND_ROADMAPS",
+        }
 
     def queue_for(self, role: str) -> list[dict[str, Any]]:
         role = role.upper()
         if role not in self.ROLES:
             raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": role})
         items = self._work_items()
+        if role == "ENGINEER":
+            return [self._queue_card(item, role) for item in items
+                    if item.get("owner_role") == role and item.get("status") not in {"DONE", "VERIFIED", "REJECTED", "FAILED"}
+                    or self._advisor_routed(item)]
+        if role in {"REFEREE_1", "REFUTADOR"}:
+            from .evolution import _reviewable
+            from .scientific_integrity import timestamp
+            tests = [json.loads(path.read_text(encoding="utf-8")) for path in sorted((self.root / "entities/test").glob("*.json"))]
+            return [self._queue_card(test, role) for test in tests
+                    if test.get("verdict") and timestamp(test.get("executed_at")) and _reviewable(test)]
+        if role == "GUARDIAO":
+            return [self._queue_card(item, role) for item in items
+                    if item.get("owner_role") == role or item.get("director_relevant") is True]
         if role == "EXECUTOR":
             capabilities = self.capabilities_for("EXECUTOR")
             return [self._queue_card(item, role) for item in items if self._executor_eligible(item, capabilities)]
@@ -186,9 +315,11 @@ class AgentService:
                 return {}
             raise
         result: dict[str, Any] = {}
+        requested = role.upper()
+        alias = {"ENGINEER": "ADVISOR", "REFUTADOR": "REFEREE_1"}.get(requested, requested)
         for capability_id, capability in payload.get("capabilities", {}).items():
             roles = capability.get("roles", []) if isinstance(capability, dict) else []
-            if not roles or role.upper() in roles:
+            if not roles or requested in roles or alias in roles:
                 result[capability_id] = capability
         return result
 
@@ -292,7 +423,7 @@ class AgentService:
         control = self._read_json("CONTROL.json")
         snapshot = self._read_json("snapshot/latest.json")
         queue = self.queue_for(role)
-        return {
+        view = {
             "role": role,
             "control": control,
             "event_cursor": snapshot.get("event_cursor"),
@@ -300,6 +431,14 @@ class AgentService:
             "queue_count": len(queue),
             "capabilities": self.capabilities_for(role),
         }
+        from .autonomy import status as autonomy_status, prompt_fragment
+        view["autonomy"] = autonomy_status(self.root)
+        fragment = prompt_fragment(self.root, role)
+        if fragment:
+            view["operational_prompt_fragment"] = fragment
+        if role == "EXECUTOR":
+            view["discovery"] = self.executor_discovery()
+        return view
 
     def resolve_artifact(self, artifact_id: str) -> dict[str, Any]:
         payload = self._read_json("manifests/artifacts.json")
@@ -326,8 +465,13 @@ class AgentService:
         event_type: str,
         material: bool = True,
         _execution_assessment_token: object = None,
+        _scientific_review_authority: object = None,
+        _runner_observation_authority: object = None,
     ) -> dict[str, Any]:
-        path = entity_path(self.root, entity_kind, entity_name)
+        try:
+            path = entity_path(self.root, entity_kind, entity_name)
+        except ValueError as exc:
+            raise TowerAgentIssue("ENTITY_PATH_COMPONENT_INVALID", "Entity identifiers must be single canonical path components.", {}) from exc
         try:
             current = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError as exc:
@@ -349,6 +493,8 @@ class AgentService:
         from .scientific_integrity import guard_transition
         refused = guard_transition(self.root, {"entity_kind":entity_kind, "entity_name":entity_name,
                                                "changes":changes, "event_type":event_type,
+                                               "_scientific_review_authority": _scientific_review_authority,
+                                               "_runner_observation_authority": _runner_observation_authority,
                                                "writer_role":writer_role, "expected_version":expected_version})
         if refused is not None:
             raise TowerAgentIssue(refused["issue"]["code"], "Scientific integrity rejected this transition.", {"entity_name":entity_name})

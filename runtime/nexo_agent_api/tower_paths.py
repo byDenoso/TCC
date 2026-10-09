@@ -9,9 +9,19 @@ Every place that turns an identity into a file path must go through here.
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 _ESCAPE = os.name == "nt"
+
+
+def _identity_component(value: str) -> str:
+    if (not isinstance(value, str) or not value or value in {".", ".."}
+            or any(character in value for character in '/\\<>"|?*')
+            or any(ord(character) < 32 for character in value)
+            or value.endswith((".", " "))):
+        raise ValueError("ENTITY_PATH_COMPONENT_INVALID")
+    return value
 
 
 def fs_name(logical: str) -> str:
@@ -40,9 +50,12 @@ def logical_path(root: str | Path, path: str | Path) -> str:
 
 
 def entity_path(root: str | Path, kind: str, entity_id: str) -> Path:
+    if not isinstance(kind, str) or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", kind):
+        raise ValueError("ENTITY_PATH_COMPONENT_INVALID")
+    _identity_component(entity_id)
     return Path(root) / "entities" / kind / fs_name(f"{entity_id}.json")
 
 
 def json_file(directory: str | Path, identity: str) -> Path:
     """``<directory>/<identity>.json`` with the identity escaped for this OS."""
-    return Path(directory) / fs_name(f"{identity}.json")
+    return Path(directory) / fs_name(f"{_identity_component(identity)}.json")
