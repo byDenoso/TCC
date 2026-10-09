@@ -127,7 +127,7 @@ class CampaignFrontierResolverTests(unittest.TestCase):
         self.assertEqual(frontier["ready"], [])
         self.assertEqual(frontier["next_test_ids"], ["TEST::A"])
 
-    def test_terminal_campaign_detected_from_terminal_test_ids(self) -> None:
+    def test_terminal_test_completion_still_waits_for_independent_review(self) -> None:
         self.write(
             "campaign",
             "CAMP-4",
@@ -140,8 +140,12 @@ class CampaignFrontierResolverTests(unittest.TestCase):
 
         frontier = CampaignFrontierResolver(self.root).resolve("CAMP-4")
 
-        self.assertTrue(frontier["terminal"])
-        self.assertEqual(frontier["status"], "TERMINAL")
+        self.assertFalse(frontier["terminal"])
+        self.assertTrue(frontier["execution_complete"])
+        self.assertFalse(frontier["review_complete"])
+        self.assertEqual(frontier["pending_review"], ["TEST::A", "TEST::B"])
+        self.assertEqual(frontier["status"], "ACTIVE")
+        self.assertEqual(frontier["next_action"], "REQUEST_INDEPENDENT_REVIEW")
         self.assertEqual(frontier["next_test_ids"], [])
 
     def test_test_group_is_read_as_campaign_without_duplicate_campaign_entity(self) -> None:

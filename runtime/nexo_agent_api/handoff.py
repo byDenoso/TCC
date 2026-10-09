@@ -11,7 +11,8 @@ from uuid import uuid4
 from .service import TowerAgentIssue
 from .tower_paths import entity_path, json_file
 
-RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
+RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT", "ENGINEER", "REFEREE_1", "REFUTADOR", "GUARDIAO"}
+ROLE_ALIASES = {"ADVISOR": "ENGINEER", "REFUTADOR": "REFEREE_1"}
 SEND_ROLES = RUNTIME_ROLES | {"DIRECTOR"}
 ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
@@ -304,7 +305,7 @@ def _handoff_is_stale(self, event: dict) -> bool:
         return True
     current_owner = str(current.get("owner_role") or "").upper()
     recipient = str(event.get("to_role") or "").upper()
-    return bool(current_owner and recipient and current_owner != recipient)
+    return bool(current_owner and recipient and ROLE_ALIASES.get(current_owner, current_owner) != ROLE_ALIASES.get(recipient, recipient))
 
 
 def emit_handoff(
@@ -407,7 +408,7 @@ def inbox_for(self, role: str) -> list[dict]:
     items = [
         event
         for event in _latest_by_handoff(self.root).values()
-        if event.get("to_role") == recipient
+        if ROLE_ALIASES.get(event.get("to_role"), event.get("to_role")) == ROLE_ALIASES.get(recipient, recipient)
         and event.get("state") in ACTIONABLE_STATES
         and not _handoff_is_stale(self, event)
     ]
@@ -425,8 +426,11 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     current = _latest_by_handoff(self.root).get(handoff_id)
     if not current:
         raise TowerAgentIssue("HANDOFF_NOT_FOUND", "Handoff does not exist.", {"handoff_id": handoff_id})
-    if writer != current.get("to_role"):
+    recipient = current.get("to_role")
+    if ROLE_ALIASES.get(writer, writer) != ROLE_ALIASES.get(recipient, recipient):
         raise TowerAgentIssue("HANDOFF_WRITER_MISMATCH", "Only the recipient can transition a handoff.", {"writer_role": writer})
+    # Aliases retain the recipient identity and ownership of the original offer.
+    writer = recipient
     current_state = str(current.get("state", ""))
     recovery_work, acceptance = (None, None)
     if current.get("handoff_type") == RECOVERY_HANDOFF:

@@ -66,7 +66,10 @@ def read(root: Path, relative: str) -> dict:
 
 
 def entity(root: Path, test_id: str) -> dict:
-    path = entity_path(root, 'test', test_id)
+    try:
+        path = entity_path(root, 'test', test_id)
+    except ValueError:
+        return {}
     return json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {}
 
 
@@ -93,7 +96,7 @@ def _phase_reconciliation_protected(test: dict) -> bool:
     identity_fields = ('id', 'domain', 'target_domain', 'roadmap_id', 'campaign_id',
                        'test_group_id', 'recipe', 'execution_recipe')
     values = [str(test.get(key) or '').upper() for key in identity_fields]
-    if any(value in {'COSMOLOGY', 'COSMOLOGIA'} for value in values[1:3]):
+    if any(value in {'COSMOLOGY', 'COSMOLOGIA', 'OBSERVATIONAL_COSMOLOGY'} for value in values[1:3]):
         return True
     return any(re.search(r'(^|[^A-Z0-9])(?:CAMB|MCMC)([^A-Z0-9]|$)', value) for value in values)
 
@@ -265,6 +268,8 @@ def execution_phase_reconciliation_evidence(
     completed_at = None
     verified_external_submission = None
     if battery:
+        if battery.get('mandate_id') and (battery.get('started_tests') or {}).get(test_id) != test.get('started_at'):
+            reasons.append('RUNNER_TEST_START_COMMITMENT_REQUIRED')
         if str(battery.get('status') or '').upper() != 'DONE':
             reasons.append('BATTERY_NOT_TERMINAL')
         if battery.get('execution_observation') != 'GITHUB_RUN_AND_ARTIFACT':
@@ -640,6 +645,7 @@ def _phase_transition_proof(root: Path, request: dict, current: dict, next_test:
                 or battery.get('run_ref') != next_test.get('run_ref')
                 or not RUN_REF.fullmatch(str(next_test.get('run_ref') or ''))
                 or next_test.get('execution_observation') != 'GITHUB_JOB_STEP'
+                or (battery.get('started_tests') or {}).get(str(next_test.get('id') or '')) != next_test.get('started_at')
                 or timestamp(next_test.get('started_at')) is None):
             return 'RUNNER_STEP_EVIDENCE_REQUIRED'
     return None
@@ -801,6 +807,55 @@ def _readiness_contract_view(test: dict) -> dict:
     return view
 
 
+def _verified_legacy_dependency(root: Path, dependency_id: str, dependency: dict) -> bool:
+    """Resolve legacy DONE dependencies only from matched scientific RUN/RESULT/EVIDENCE readback.
+
+    The old H0HOM tests keep their verified run chain in scientific_result, not
+    executed_at/verdict. A DONE flag or a copied scientific_result alone is not
+    execution proof; missing or contradictory primary records fail closed.
+    """
+    if str(dependency.get('state') or dependency.get('status') or '') != 'DONE':
+        return False
+    scientific = dependency.get('scientific_result')
+    if not isinstance(scientific, dict) or scientific.get('status') != 'VERIFIED':
+        return False
+    run_id, result_id, evidence_id, artifact_ref = (
+        scientific.get(key) for key in ('run_ref', 'result_ref', 'evidence_ref', 'artifact_ref')
+    )
+    if not (isinstance(run_id, str) and re.fullmatch(r'RUN-[A-Za-z0-9_-]+', run_id)
+            and isinstance(result_id, str) and re.fullmatch(r'RESULT-[A-Za-z0-9_-]+', result_id)
+            and isinstance(evidence_id, str) and re.fullmatch(r'EVIDENCE-[A-Za-z0-9_-]+', evidence_id)
+            and isinstance(artifact_ref, str) and re.fullmatch(
+                r'TOWER_V06/runtime/artifacts/[A-Za-z0-9_-]+\.json', artifact_ref)):
+        return False
+    try:
+        run = read(root, 'runtime/runs/' + run_id + '.json')
+        result = read(root, 'runtime/results/' + result_id + '.json')
+        evidence = read(root, 'runtime/evidence/' + evidence_id + '.json')
+        artifact = read(root, artifact_ref.removeprefix('TOWER_V06/'))
+    except (OSError, ValueError, TypeError):
+        return False
+    return (
+        run.get('run_id') == run_id and run.get('result_id') == result_id
+        and run.get('evidence_id') == evidence_id
+        and run.get('work_id') == 'WORK::' + dependency_id
+        and run.get('status') == 'VERIFIED' and run.get('readback_status') == 'PASS'
+        and result.get('id') == result_id and result.get('run_id') == run_id
+        and result.get('evidence_ref') == evidence_id
+        and result.get('work_id') == 'WORK::' + dependency_id
+        and result.get('status') == 'COMPLETE'
+        and isinstance(result.get('scientific_closure'), dict)
+        and result['scientific_closure'].get('complete') is True
+        and evidence.get('id') == evidence_id and evidence.get('run_id') == run_id
+        and evidence.get('source_id') == dependency_id
+        and evidence.get('validation_status') == 'PASS'
+        and evidence.get('verification_scope') == 'SCIENTIFIC'
+        and artifact.get('test_id') == dependency_id
+        and artifact.get('status') == 'TERMINAL'
+        and result.get('scientific_decision') == scientific.get('decision') == artifact.get('decision')
+    )
+
+
 def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> dict:
     from .evolution import prereg_hash
     reasons = []
@@ -865,7 +920,8 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     else:
         for dependency_id in dependencies:
             dependency = entity(root, str(dependency_id))
-            if not dependency.get('executed_at') or not dependency.get('verdict'):
+            if not ((dependency.get('executed_at') and dependency.get('verdict'))
+                    or _verified_legacy_dependency(root, str(dependency_id), dependency)):
                 reasons.append('DEPENDENCY_UNRESOLVED')
                 break
     if test.get('blocker'):
@@ -886,6 +942,8 @@ def execution_fingerprint(test: dict, recipe_sha: str, param_preflight: dict | N
     value = {**{key: test.get(key) for key in FROZEN}, 'recipe': test.get('recipe'),
                    'params': test.get('recipe_params'), 'recipe_sha256': recipe_sha,
                    'inputs': binding.get('inputs')}
+    if test.get('gene_id'):
+        value.update({key: test.get(key) for key in ('gene_id', 'gene_arm', 'gene_plan_sha256')})
     if param_preflight is not None:
         from .parameter_admission import commitment
         value['param_preflight'] = commitment(param_preflight)
@@ -1204,9 +1262,24 @@ def guard_transition(root: Path, request: dict) -> dict | None:
     if (current and terminal(current) and 'execution_phase' in changes
             and changes['execution_phase'] != current.get('execution_phase')):
         issue = 'TERMINAL_ATTEMPT_PHASE_IMMUTABLE'
-    scientific = str(next_test.get('domain') or current.get('domain') or '').upper() in {'SCIENCE', 'COSMOLOGY', 'COSMOLOGIA'}
+    scientific = any(record.get('mandate_id') or str(record.get('domain') or '').upper() in {'SCIENCE', 'COSMOLOGY', 'COSMOLOGIA', 'OBSERVATIONAL_COSMOLOGY'}
+                     for record in (current, next_test))
     if not scientific:
         return {'request_id': request.get('request_id'), 'accepted': False, 'issue': {'code': issue, 'entity_name': test_id}} if issue else None
+    if (current.get('battery_id') or current.get('attempt_id') or next_test.get('mandate_id')) and any(
+            key in changes and changes[key] != current.get(key) for key in ('started_at', 'execution_observation', 'run_ref')):
+        if request.get('_runner_observation_authority') is not RUNNER_BATTERY_STATUS_TOKEN:
+            issue = 'RUNNER_OBSERVATION_METADATA_WRITER_ONLY'
+        elif current.get('started_at') and changes.get('started_at', current['started_at']) != current['started_at'] and not (
+                request.get('event_type') == 'TEST_QUEUED' and next_test.get('attempt_id') != current.get('attempt_id')
+                and changes.get('started_at') is None and changes.get('execution_observation') is None
+                and changes.get('run_ref') is None and _reservation_attempt(root, next_test)[0] is not None):
+            issue = 'RUNNER_START_COMMITMENT_IMMUTABLE'
+    if any(key in changes and changes[key] != current.get(key)
+           for key in ('reviews', 'contests', 'mechanical_contest_verdict', 'review_validation')):
+        from .autonomy import WRITER_AUTHORITY
+        if request.get('_scientific_review_authority') is not WRITER_AUTHORITY:
+            issue = 'CANONICAL_REVIEW_LEDGER_WRITER_ONLY'
     if len(states) > 1 and any(k in changes for k in ('status', 'state')):
         issue = 'INCONSISTENT_TEST_STATES'
     result_fields = ('verdict', 'scientific_verdict', 'executed_at', 'result', 'statistics', 'decision', 'result_summary', 'reproducibility')
@@ -1215,8 +1288,11 @@ def guard_transition(root: Path, request: dict) -> dict | None:
             issue = 'TERMINAL_TEST_CANNOT_REOPEN'
         if any(k in changes and changes[k] != current.get(k) for k in result_fields):
             issue = 'TERMINAL_RESULT_IMMUTABLE'
-    if current.get('prereg_hash') and any(k in changes and changes[k] != current.get(k) for k in (*FROZEN, 'prereg_hash', 'independence', 'independence_fingerprint')):
+    if current.get('prereg_hash') and any(k in changes and changes[k] != current.get(k) for k in (*FROZEN, 'prereg_hash', 'independence', 'independence_fingerprint', 'gene_id', 'gene_arm', 'gene_plan_sha256')):
         issue = 'FROZEN_DEFINITION_IMMUTABLE'
+    if current.get('mandate_id') and any(k in changes and changes[k] != current.get(k)
+                                       for k in ('mandate_id', 'question_id', 'domain', 'public_data_only', 'visibility')):
+        issue = 'AUTONOMY_SCOPE_IMMUTABLE'
     if str(current.get('id')) in active_tests(root) and any(k in changes and changes[k] != current.get(k) for k in ('recipe', 'recipe_params', 'data_binding')):
         issue = 'ACTIVE_EXECUTION_BINDING_IMMUTABLE'
     if next_state == 'READY' and any(k in changes for k in ('status', 'state', 'recipe', 'recipe_params', 'data_binding')):
@@ -1256,7 +1332,7 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
         proposed = []
         problem = 'BATTERY_REGISTRY_INVALID'
     runner_status_authorized = request.get('_runner_battery_status_token') is RUNNER_BATTERY_STATUS_TOKEN
-    runner_fields = ('status', 'dispatch_requested_at', 'dispatch_confirmation', 'dispatched_at',
+    runner_fields = ('status', 'dispatch_requested_at', 'dispatch_confirmation', 'dispatched_at', 'started_tests',
                      'run_ref', 'completed_at', 'done_at', 'execution_observation',
                      'conclusion', 'ok', 'failed', 'phase_failure_receipts')
     phase_order = {'QUEUED': 0, 'DISPATCH_PENDING': 1, 'DISPATCHED': 2, 'RUNNING': 3, 'DONE': 4}
@@ -1266,6 +1342,10 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
             problem = 'BATTERY_ID_INVALID_OR_DUPLICATE'; break
         seen.add(battery['id'])
         old = existing.get(battery['id'])
+        if old and (old.get('mandate_id') or battery.get('mandate_id')) and any(
+                old.get(key) != battery.get(key) for key in
+                ('mandate_id', 'mandate_revision', 'parallelism', 'created_at', 'source_revision', 'package_json', 'package_sha256')):
+            problem = 'FROZEN_SCOPED_BATTERY_METADATA_IMMUTABLE'; break
         if old and old.get('tests') != battery.get('tests'):
             problem = 'FROZEN_BATTERY_SPEC_IMMUTABLE'; break
         if old and any(old.get(key) != battery.get(key) for key in runner_fields):
@@ -1283,6 +1363,10 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
         specs = battery.get('tests')
         if not isinstance(specs, list) or not specs or not all(isinstance(t, dict) for t in specs):
             problem = 'BATTERY_TESTS_INVALID'; break
+        if not old and (battery.get('mandate_id') or any(entity(root, str(spec.get('test_id') or '')).get('mandate_id') for spec in specs)):
+            from .autonomy import WRITER_AUTHORITY
+            if request.get('_autonomy_authority') is not WRITER_AUTHORITY:
+                problem = 'AUTONOMY_RESERVATION_REQUIRES_WRITER_CONVERTER'; break
         newly_done = str(battery.get('status') or '').upper() == 'DONE' and (
             old is None or str(old.get('status') or '').upper() != 'DONE')
         if newly_done:
@@ -1359,6 +1443,8 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
             break
     if any(b.get('status') in ACTIVE and bid not in seen for bid,b in existing.items()):
         problem = 'ACTIVE_RESERVATION_CANNOT_BE_DROPPED'
+    if any(b.get('mandate_id') and bid not in seen for bid, b in existing.items()):
+        problem = 'SCOPED_RESERVATION_HISTORY_CANNOT_BE_DROPPED'
     if problem:
         return {'request_id':request.get('request_id'), 'accepted':False, 'issue':{'code':problem}}
     return None

@@ -188,12 +188,18 @@ class CampaignFrontierResolver:
 
         campaign_state = _status(campaign)
         terminal_ids = [str(value) for value in campaign.get("terminal_test_ids", []) if str(value)]
-        terminal = campaign_state in _CAMPAIGN_TERMINAL_STATES
-        if not terminal and terminal_ids:
-            terminal = all(test_id in completed for test_id in terminal_ids)
-        if not terminal and tests and not terminal_ids:
-            terminal = len(completed) == len(tests)
+        # Treat terminal_test_ids as an additional dependency, not permission to
+        # skip other declared comparisons or independent reviews.
+        required_ids = set(tests) | set(terminal_ids)
+        execution_complete = bool(required_ids) and all(item in completed for item in required_ids)
+        pending_review = sorted(item for item in required_ids if item in completed and
+                                str(tests[item].get("review_state") or "").upper()
+                                not in {"CONFIRMED", "REFUTED"})
+        review_complete = execution_complete and not pending_review
 
+        # A status computed from DONE tests cannot close the campaign. Closing
+        # requires an explicit, persisted campaign decision with its own review.
+        terminal = campaign_state in _CAMPAIGN_TERMINAL_STATES
         if terminal:
             next_test_ids: list[str] = []
             frontier_status = "TERMINAL"
@@ -212,6 +218,16 @@ class CampaignFrontierResolver:
             "blocker_classes": blocker_classes,
             "completed": completed,
             "terminal": terminal,
+            "terminal_source": "EXPLICIT_CAMPAIGN_STATE" if terminal else None,
+            "execution_complete": execution_complete,
+            "review_complete": review_complete,
+            "pending_review": pending_review,
+            "unresolved_declared_tests": sorted(required_ids - set(tests)),
+            "next_action": (
+                None if terminal or next_test_ids else
+                "REQUEST_INDEPENDENT_REVIEW" if pending_review else
+                "REQUEST_CLOSURE_DECISION" if review_complete else None
+            ),
             "next_test_ids": list(next_test_ids),
             "sources": sources,
         }

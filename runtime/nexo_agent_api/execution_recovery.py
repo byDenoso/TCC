@@ -145,7 +145,7 @@ def _route(reasons: list[str]) -> tuple[str, str]:
     if any(reason.startswith(("MISSING_", "FROZEN_", "CONFLICTING_")) for reason in reasons):
         return "LEARNER", "Recuperar a definição já congelada na linhagem e identificar a referência inequívoca; se houver conflito, registrar a decisão científica que falta."
     if any(reason.startswith(("RECIPE_", "PREFLIGHT_")) for reason in reasons):
-        return "ADVISOR", "Ligar ou reparar a receita que reproduz o contrato congelado, incluindo a verificação mínima, e publicar a proposta de ligação pelo escritor."
+        return "EXECUTOR", "Preparar ou reparar a receita que reproduz o contrato congelado, conferir a execução mínima e enviar a proposta de ligação ao escritor."
     return "EXECUTOR", "Recuperar os insumos exatos e suas versões e assinaturas, registrar a ligação pelo escritor e revalidar a execução sem mudar o desenho científico."
 
 
