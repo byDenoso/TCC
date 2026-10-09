@@ -1266,7 +1266,7 @@ def guard_transition(root: Path, request: dict) -> dict | None:
                      for record in (current, next_test))
     if not scientific:
         return {'request_id': request.get('request_id'), 'accepted': False, 'issue': {'code': issue, 'entity_name': test_id}} if issue else None
-    if (current.get('battery_id') or current.get('attempt_id') or next_test.get('mandate_id')) and any(
+    if issue is None and (current.get('battery_id') or current.get('attempt_id') or next_test.get('mandate_id')) and any(
             key in changes and changes[key] != current.get(key) for key in ('started_at', 'execution_observation', 'run_ref')):
         if request.get('_runner_observation_authority') is not RUNNER_BATTERY_STATUS_TOKEN:
             issue = 'RUNNER_OBSERVATION_METADATA_WRITER_ONLY'
