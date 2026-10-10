@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from .tower_paths import entity_path, fs_path
+from .scientific_integrity import RUN_REF, timestamp
 
 TERMINAL = {"DONE", "VERIFIED", "RESULT", "REJECTED", "FAILED", "INCONCLUSIVE", "SUPERSEDED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED"}
 RESUMABLE = {"RUNNING", "CHECKPOINTED"}
@@ -37,7 +38,33 @@ def _read(path: Path) -> dict[str, Any] | None:
 def _lifecycle(test: dict[str, Any] | None) -> str:
     if not test:
         return "MISSING"
-    return str(test.get("state") or test.get("status") or "READY").upper()
+    return str(test.get("state") or test.get("status") or "UNKNOWN").upper()
+
+
+def _resume_evidence(test: dict[str, Any]) -> dict[str, Any]:
+    """Expose missing evidence without authorizing execution or changing state.
+
+    Resume candidates remain visible for reconciliation.  This is the same
+    recorded start proof used by scientific_integrity, not a network readback.
+    A recorded checkpoint reference still needs the runner's artifact validation.
+    """
+    started = (test.get("execution_observation") == "GITHUB_JOB_STEP"
+               and timestamp(test.get("started_at")) is not None
+               and RUN_REF.fullmatch(str(test.get("run_ref") or "")) is not None)
+    checkpoint = test.get("checkpoint_ref")
+    has_checkpoint = isinstance(checkpoint, str) and bool(checkpoint.strip())
+    missing = []
+    if not started:
+        missing.append("EXECUTION_START_EVIDENCE_MISSING")
+    if _lifecycle(test) == "CHECKPOINTED" and not has_checkpoint:
+        missing.append("CHECKPOINT_REFERENCE_MISSING")
+    return {
+        "recorded_start_verified": bool(started),
+        "checkpoint_reference_recorded": has_checkpoint,
+        "missing_evidence": missing,
+        "action": "RECONCILE_EVIDENCE" if missing else "VERIFY_RUNTIME_BEFORE_RESUME",
+        "execution_authorized": False,
+    }
 
 
 def _dependency_met(dep: str, status_of) -> bool:
@@ -103,7 +130,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
                 skipped.append({**base, "reason": "FRONTIER_TEST_NOT_MATERIALIZED"})
                 continue
             if state in RESUMABLE:
-                resumable.append(base)
+                resumable.append({**base, "resume_evidence": _resume_evidence(entity)})
                 continue
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 # DRAFT = hypothesis still missing frozen criteria; the Learner completes it, the Executor waits.
@@ -135,7 +162,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             base = {"roadmap_id": entity.get("roadmap_id"), "test_id": ref, "state": state,
                     "priority": entity.get("priority"), "source": "ENTITY_MATERIALIZED"}
             if state in RESUMABLE:
-                resumable.append(base)
+                resumable.append({**base, "resume_evidence": _resume_evidence(entity)})
                 continue
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 waiting.append({**base, "reason": state})
@@ -219,6 +246,8 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
         "batch": (running + fair_ready + checkpointed)[:max_batch],
         "checkpoint_review": fair_checkpointed[:checkpoint_quota],
         "resumable": resumable,
+        "resumable_semantics": "RECORDED_STATE_CANDIDATES_ONLY; NOT_EXECUTION_AUTHORIZATION",
+        "resume_evidence_missing": [entry for entry in resumable if entry["resume_evidence"]["missing_evidence"]],
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
