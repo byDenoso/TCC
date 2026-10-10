@@ -142,6 +142,13 @@ class CampaignFrontierResolver:
         tests, sources = self._campaign_items(campaign_id)
         runs_by_test = self._runs(campaign_id)
         ordered_ids = self._ordered_ids(campaign, tests)
+        # Scientific predecessors are tested against the entire canonical
+        # campaign, not their position in a display/execution order. A child
+        # may appear before an already-completed parent in execution_order.
+        completed_ids = {
+            item_id for item_id, item in tests.items()
+            if _status(item) in _SUCCESS_STATES
+        }
 
         completed: list[str] = []
         active: list[str] = []
@@ -170,7 +177,7 @@ class CampaignFrontierResolver:
                 continue
 
             dependencies = [str(value) for value in test.get("depends_on", []) if str(value)]
-            dependencies_closed = all(dep in completed for dep in dependencies)
+            dependencies_closed = all(dep in completed_ids for dep in dependencies)
             manual = str(test.get("execution_policy") or "AUTO").upper() == "MANUAL"
             blocker_class = _blocker_class(test)
             if blocker_class:
@@ -204,7 +211,10 @@ class CampaignFrontierResolver:
             next_test_ids: list[str] = []
             frontier_status = "TERMINAL"
         else:
-            next_test_ids = recoverable or active or ready
+            # These are independent candidates, not an exclusive phase gate.
+            # Keep active runs first (no duplicate dispatch), then ready tests;
+            # checkpoint recovery must not hide unrelated executable work.
+            next_test_ids = active + ready + recoverable
             frontier_status = "ACTIVE"
 
         return {
