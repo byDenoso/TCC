@@ -132,16 +132,48 @@ do roadmap e do teste e valor informativo. O nome alfabético da receita não de
 Contestações de resultados anteriores podem concluir revisão após o fechamento do roadmap sem
 reabrir a campanha nem criar novas famílias automaticamente.
 
-## Conclusão de um teste
+## Conclusão canônica de um TEST
 
-Só conta com cômputo real + persistência pela Tower + readback. Preflight, download e reparo não são resultado.
-PASS de software nunca promove claim científico. Identidade científica congelada é preservada; ciência
-materialmente diferente exige nova identidade TEST.
+Um TEST só pode ser declarado **concluído e registrado canonicamente** após computação real fiel ao
+contrato científico congelado, resultado com evidência reprodutível, persistência de RUN/RESULT
+pelo Writer e confirmação na Tower por readback. Computação científica executada localmente,
+mesmo parcial, é atividade real e deve ser relatada como tal, mas não vira TEST integral,
+RESULT canônico ou veredito por essa razão. Preflight, download, inspeção, smoke, reparo,
+CI e replay sem novo resultado científico não contam como análise científica inédita.
+PASS de software nunca promove claim científico. Identidade científica congelada é preservada;
+ciência materialmente diferente exige nova identidade TEST.
 
-## Relato
+## Relato e contagem de ciência produzida
 
-Termine cada execução com um relatório curto em português: o que rodou, o que mudou na Tower
-(fingerprint antes/depois), estado do ATLAS (`status`), e o próximo passo que a próxima execução vai pegar.
+**Abertura obrigatória:** comece pelo avanço científico verificável do pulso, em português natural,
+indicando o que foi realmente calculado e o resultado relevante. Se houve computação científica,
+não abra com «0 TESTs executados», expressão que apaga trabalho real e confunde execução com
+persistência. A ausência de RUN/RESULT deve aparecer explicitamente, mas como métrica própria.
+
+Distinga sempre, sem somar categorias incompatíveis:
+
+1. **Análises científicas executadas:** unidades de análise novas que realmente rodaram sobre
+   dados/entradas e produziram número, evidência ou conclusão científica verificável, com
+   identidade de código, insumos e artefato. Informe quantas e quais. Refit, fold, cenário,
+   contrato examinado e replay idêntico não viram automaticamente análises independentes.
+2. **TESTs com computação material nesta rodada:** IDs de TESTs congelados efetivamente
+   submetidos a computação nova que lhes pertence; indique PARCIAL ou INTEGRAL. Uma análise
+   transversal a 33 contratos não significa 33 TESTs executados.
+3. **TESTs integralmente calculados:** subconjunto que cumpriu todas as condições do contrato
+   científico congelado; se ainda não canonizado, qualifique como «integral calculado,
+   persistência pendente», nunca como TEST concluído na Tower.
+4. **RUN/RESULT canônicos com readback:** quantidade de pares realmente aplicados pelo Writer
+   e relidos na Tower, inclusive de pulsos anteriores quando relevante, com os IDs. STAGED,
+   DELIVERED, PENDING_WRITE, APPLIED e READBACK são estados diferentes; não inferir o último
+   dos anteriores. Revisão independente e publicação são estados separados.
+
+Ao final, descreva as entregas ao Writer, o que mudou na Tower (revisão/fingerprint
+antes/depois, se houve mutação), o estado do ATLAS apenas quando verificado, a primeira
+transição pendente e seu dono. Em pulso sem computação, declare zero sem inventar progresso.
+
+**Exemplo fiel:** «Executei 1 análise científica de sobreposição BAO em 33 contratos;
+identifiquei 31 sobreposições. 0 TESTs integrais concluídos e 0 RUN/RESULT com readback.
+Resposta ao Cientista: PENDING_WRITE».
 
 ## Limite do runtime ChatGPT Tasks
 
