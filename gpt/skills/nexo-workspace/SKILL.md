@@ -53,7 +53,7 @@ O pacote atual prepara cinco funções. Os horários abaixo são referências ob
 | Crítico | :50, toda hora | revisar/contestar resultados elegíveis independentemente | Operador/Cientista |
 | Guardião | :55, toda hora | reparar/liberar cadeias independentes acionáveis | todos os papéis |
 
-Os antigos números 6/24 são probes de capacidade para medir utilização, nunca quotas nem limites. Continue enquanto houver trabalho independente elegível e orçamento seguro. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Se a fila elegível drenar, o no-op é correto; se restarem itens elegíveis, a rodada deve registrar por que parou.
+A diretriz operacional de 11/10/2026 estabelece teto de **10 TESTs executados por pulso do Operador/EXECUTOR**, **5 entregas materiais do Cientista/LEARNER** e **5 reparos/entregas do Engenheiro/ADVISOR**. Pedidos de outros papéis contam dentro dos tetos. Estes números não são metas mínimas nem alteram autorização, paralelismo, critérios científicos ou CONTROL. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Havendo fila elegível além do teto, registrar o saldo e a próxima fronteira.
 
 A cadência não é barreira global. Cada papel consome entregas já aplicadas, inclusive de rodadas anteriores. Blocker pertence ao item. Se um item trava, registrar/encaminhar e seguir imediatamente para outro.
 
@@ -62,6 +62,9 @@ A cadência não é barreira global. Cada papel consome entregas já aplicadas, 
 - `HANDOFF` é transferência de ownership e o runtime aceita somente recipient `DAILY|ADVISOR|EXECUTOR|LEARNER|EMERGENT`; sender é um desses ou DIRECTOR. ENGINEER usa ADVISOR no handoff privado.
 - PITIA, REFEREE_1, GUARDIAO e SENTINEL não criam handoff com seus nomes. Eles usam BOARD_POST; se ownership precisar mudar, pedem ao runtime role competente para criar/transicionar o HANDOFF.
 - Uma entrega com próximo consumidor não termina em prosa: precisa mensagem aplicada e, quando couber, handoff válido.
+
+### Reconciliar trabalho compartilhado e Writer no pulso seguinte
+Seguir `gpt/skills/nexo-shared-mural-v1.md`, subordinado ao CONTROL vivo. No início de **todo** pulso, consultar mural/BOARD_POST e o inventário **completo** de HANDOFFs ao próprio papel, não somente cinco cartões. Responder às solicitações válidas com artefato ou bloqueio concreto e `reply_to`; usar ACK/DONE/FAILED apenas conforme a autorização do Writer. No fim, enviar envelopes de identidade estável ao NEXO_INBOX privado e registrar PENDING_WRITE quando ainda não aplicada a alteração. A próxima automação, qualquer papel, confronta recibos com a Tower efetiva antes de confirmar. Não concluir resultados científicos sem computação e persistência reais; não criar gate síncrono artificial a cada envio. Cientista pode **propor** ROADMAP_CHARTER sem mandato, gerando cartão privado para aprovação humana, não ativar campanha sozinho. Identifique repo público exato no CONTROL e ateste runner/custos, mas não despache se `github_actions_science_role` seguir desabilitado. PEER não entra no Atlas privado ou público.
 
 ### Rota operacional atual
 Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive é armazenamento canônico primário, Git state está aposentado como estado operacional, Actions científico está desabilitado por orçamento e ChatGPT runtime é a execução primária. Não forçar staging/relay Git antigo se o CONTROL vigente não o declarar como rota ativa.
