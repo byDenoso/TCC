@@ -70,10 +70,19 @@ Criar um handoff:
     "objective_ref": "ID-DO-OBJETIVO",
     "confidence_plain": "Confiança moderada porque a fonte sustenta a comparação, mas não decide qual explicação está correta.",
     "evidence_refs": [{"ref": "TEST::ID", "kind": "TEST"}],
-    "source_links": [{"label": "Artigo", "url": "https://example.org/paper", "access_date": "2026-09-27"}]
+    "source_links": [{"label": "Artigo", "url": "https://example.org/paper", "access_date": "2026-09-27"}],
+    "completion_contract": {
+      "schema": "NEXO_HANDOFF_EFFECT_V1",
+      "expected_changes": {"status": "RUNNING"}
+    }
   }
 }
 ```
+
+`completion_contract` é obrigatório para novos handoffs que não sejam `BLOCKER_RECOVERY`.
+Declare os campos estruturados que a próxima ação realmente precisa alterar; no exemplo, o
+destinatário deve mudar o `status` canônico da WORK para `RUNNING`. Texto em `next_action` não
+substitui esse contrato.
 
 O destinatário consulta sua fila de mensagens no Tower usando o bundle existente:
 `python nexo_gpt_writer.py handoff <TOWER.json> list <PAPEL>`. A fila contém apenas mensagens
@@ -91,8 +100,11 @@ prosseguir, envie `HANDOFF_FAILED`. As transições também são documentos JSON
 ```
 
 O Writer valida se o papel que responde é o destinatário original. `ACK` mantém a mensagem ativa;
-`DONE` e `FAILED` encerram essa etapa e preservam o histórico privado. Não marque como concluído até
-que a ação descrita esteja registrada ou tenha um motivo claro para parar.
+`DONE` e `FAILED` encerram essa etapa e preservam o histórico privado. Para `DONE`, inclua
+`completion_event_id` na transição; ele deve apontar para um evento canônico do destinatário cuja
+mudança material e readback atual satisfaçam todos os campos de `completion_contract`. Recibo de
+transporte, prosa, ou evento sem o efeito pedido não comprovam conclusão. Use `FAILED` quando não
+puder prosseguir, preservando a causa no registro apropriado.
 
 Para `handoff_type: BLOCKER_RECOVERY`, a WORK deve ter `kind: DEPENDENCY_RECOVERY` e
 `recovery.policy: EXECUTION_RECOVERY_V1`. O emissor é o dono atual; criar o evento não transfere

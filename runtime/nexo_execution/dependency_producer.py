@@ -242,6 +242,11 @@ def _manifest(test: dict[str, Any]) -> list[dict[str, Any]]:
     return result
 
 
+def _dependency_status(dependency: dict[str, Any]) -> str:
+    """Read the current field first, with the legacy state alias as fallback."""
+    return str(dependency.get("status") or dependency.get("state") or "MISSING").upper()
+
+
 def compile_hydration_plan(
     test: dict[str, Any],
     *,
@@ -256,7 +261,7 @@ def compile_hydration_plan(
     for dependency in _manifest(test):
         dependency_id = str(dependency["id"])
         required = bool(dependency.get("required", True))
-        state = str(dependency.get("status") or "MISSING").upper()
+        state = _dependency_status(dependency)
         action = "NONE"
         reason = "already satisfied"
         evidence_id: str | None = None
@@ -326,6 +331,11 @@ def hydrate_test_dependencies(
     canonical_evidence = canonical_evidence or {}
     recipes = recipes or {}
     hydrated = copy.deepcopy(test)
+    for dependency in _manifest(hydrated):
+        # Normalize only an absent legacy status. An explicit current status,
+        # including MISSING, remains authoritative over stale state metadata.
+        if not dependency.get("status") and _dependency_status(dependency) == "SATISFIED":
+            dependency["status"] = "SATISFIED"
     plan = compile_hydration_plan(hydrated, canonical_evidence=canonical_evidence, recipes=recipes)
     action_by_id = {item["dependency_id"]: item for item in plan["items"]}
     producer_results: list[dict[str, Any]] = []
@@ -384,7 +394,7 @@ def hydrate_test_dependencies(
             dependency["operational_repair_required"] = True
 
     required = [item for item in hydrated.get("dependency_manifest", []) if bool(item.get("required", True))]
-    evaluator_ready = all(str(item.get("status") or "").upper() == "SATISFIED" for item in required)
+    evaluator_ready = all(_dependency_status(item) == "SATISFIED" for item in required)
     return {
         "schema": "nexo.hydration-result.v1",
         "test": hydrated,

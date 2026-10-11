@@ -142,7 +142,7 @@ def receipt_status(tower: dict, prepared: dict) -> dict:
     row = rows[-1]
     if row.get("payload_sha256") != prepared["payload_sha256"]:
         raise ValueError("INTENT_PAYLOAD_CONFLICT")
-    return {"stage": row.get("outcome"), "receipt": row,
+    return {"stage": row.get("stage"), "outcome": row.get("outcome"), "receipt": row,
             "tower_revision": tower.get("revision"),
             "entity_readback_required": row.get("outcome") in {"APPLIED", "ALREADY_APPLIED"}}
 

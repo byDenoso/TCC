@@ -18,7 +18,11 @@ ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
 TERMINAL_WORK_STATES = {"DONE", "VERIFIED", "REJECTED", "FAILED", "SUPERSEDED"}
 INBOX_LIMIT = 5
+HANDOFF_PRIORITY_RANK = {"P0": -1, "CRITICAL": 0, "HIGH": 1, "MEDIUM_HIGH": 2,
+                         "MEDIUM": 3, "NORMAL": 4, "LOW": 5}
 RECOVERY_HANDOFF = "BLOCKER_RECOVERY"
+HANDOFF_EFFECT_SCHEMA = "NEXO_HANDOFF_EFFECT_V1"
+_HANDOFF_EFFECT_PROTECTED_FIELDS = {"id", "entity_id", "entity_version", "writer_role"}
 RECOVERY_POLICY = "EXECUTION_RECOVERY_V1"
 RECOVERY_COMPLETE_STATES = {"DONE", "VERIFIED", "COMPLETED", "CLOSED_VERIFIED"}
 
@@ -91,6 +95,20 @@ def _handoff_events(root: Path) -> list[dict]:
         if isinstance(payload, dict) and payload.get("handoff_id"):
             events.append(payload)
     return events
+
+
+def _event_by_id(root: Path, event_id: str) -> dict | None:
+    event_root = root / "events"
+    if not event_root.exists():
+        return None
+    for path in sorted(event_root.rglob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, dict) and payload.get("event_id") == event_id:
+            return payload
+    return None
 
 
 def _latest_by_handoff(root: Path) -> dict[str, dict]:
@@ -198,6 +216,148 @@ def _normalize_source_links(value: object) -> list[dict]:
 def _request_fingerprint(payload: dict) -> str:
     blob = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str)
     return "sha256:" + hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _normalize_completion_contract(contract: dict | None) -> dict | None:
+    if contract is None:
+        return None
+    if not isinstance(contract, dict) or contract.get("schema") != HANDOFF_EFFECT_SCHEMA:
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                              "completion_contract must use the supported structured effect schema.")
+    expected = contract.get("expected_changes")
+    if not isinstance(expected, dict) or not expected:
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                              "completion_contract requires non-empty expected_changes.")
+    if any(not isinstance(key, str) or not key.strip() for key in expected):
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                              "Expected effect field names must be non-empty strings.")
+    protected = sorted(_HANDOFF_EFFECT_PROTECTED_FIELDS.intersection(expected))
+    if protected:
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                              "completion_contract cannot assert protected identity or writer fields.",
+                              {"fields": protected})
+    try:
+        # Copy and validate the complete contract as JSON so the fingerprint and
+        # canonical event use a stable, recoverable representation.
+        normalized = {"schema": HANDOFF_EFFECT_SCHEMA, "expected_changes": expected}
+        return json.loads(json.dumps(normalized, ensure_ascii=False, sort_keys=True, allow_nan=False))
+    except (TypeError, ValueError) as exc:
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                              "completion_contract values must be finite JSON values.") from exc
+
+
+def _validate_parent_chain(root: Path, child: dict) -> None:
+    parent_id = child.get("parent_handoff_id")
+    if not parent_id:
+        return
+    latest = _latest_by_handoff(root)
+    seen: set[str] = set()
+    child_edge = (
+        ROLE_ALIASES.get(child["from_role"], child["from_role"]),
+        ROLE_ALIASES.get(child["to_role"], child["to_role"]),
+        child["handoff_type"],
+        child["entity_ref"],
+    )
+    while parent_id:
+        if parent_id in seen:
+            raise TowerAgentIssue("HANDOFF_PARENT_CHAIN_INVALID", "The parent handoff chain contains a cycle.")
+        seen.add(parent_id)
+        parent = latest.get(parent_id)
+        if parent is None:
+            raise TowerAgentIssue("HANDOFF_PARENT_NOT_FOUND", "A referenced parent handoff is not canonical.",
+                                  {"parent_handoff_id": parent_id})
+        if parent.get("thread_id") != child.get("thread_id"):
+            raise TowerAgentIssue("HANDOFF_PARENT_THREAD_MISMATCH", "Parent and child handoffs must share a thread.")
+        parent_edge = (
+            ROLE_ALIASES.get(str(parent.get("from_role") or ""), str(parent.get("from_role") or "")),
+            ROLE_ALIASES.get(str(parent.get("to_role") or ""), str(parent.get("to_role") or "")),
+            str(parent.get("handoff_type") or ""),
+            str(parent.get("entity_ref") or ""),
+        )
+        if parent_edge == child_edge:
+            raise TowerAgentIssue("HANDOFF_CYCLE_DETECTED", "This request edge already exists in its parent chain.",
+                                  {"parent_handoff_id": parent_id, "entity_ref": child["entity_ref"]})
+        parent_id = parent.get("parent_handoff_id")
+
+
+def _completion_receipt(self, handoff: dict, event_id: str | None, writer_role: str) -> dict:
+    if not isinstance(event_id, str) or not event_id.strip():
+        raise TowerAgentIssue("HANDOFF_APPLICATION_RECEIPT_REQUIRED",
+                              "DONE requires an application event with canonical readback.")
+    event = _event_by_id(self.root, event_id)
+    if event is None:
+        raise TowerAgentIssue("HANDOFF_APPLICATION_RECEIPT_REQUIRED",
+                              "The referenced application event is not canonical.", {"event_id": event_id})
+    entity_ref = str(handoff.get("entity_ref") or "")
+    try:
+        path = entity_path(self.root, "work", entity_ref)
+        current = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        raise TowerAgentIssue("HANDOFF_APPLICATION_READBACK_MISMATCH",
+                              "The canonical work entity could not be read back.", {"entity_ref": entity_ref}) from exc
+    try:
+        opened_version = int(handoff.get("entity_version") or 0)
+        current_version = int(current.get("entity_version") or 0)
+        event_version = int(event.get("entity_version") or 0)
+    except (TypeError, ValueError):
+        opened_version, current_version, event_version = -1, -1, -1
+    recipient = str(handoff.get("to_role") or "").upper()
+    normalized_recipient = ROLE_ALIASES.get(recipient, recipient)
+    valid = (
+        ROLE_ALIASES.get(str(writer_role or "").upper(), str(writer_role or "").upper()) == normalized_recipient
+        and event.get("entity_kind") == "work"
+        and event.get("entity_name") == entity_ref
+        and ROLE_ALIASES.get(str(event.get("writer_role") or "").upper(), str(event.get("writer_role") or "").upper()) == normalized_recipient
+        and event.get("material") is True
+        and event.get("readback") == "PASS"
+        and event_version > opened_version
+        and current.get("id") == entity_ref
+        and current_version == event_version
+        and ROLE_ALIASES.get(str(current.get("writer_role") or "").upper(), str(current.get("writer_role") or "").upper()) == normalized_recipient
+    )
+    if not valid:
+        raise TowerAgentIssue("HANDOFF_APPLICATION_READBACK_MISMATCH",
+                              "The application event does not match the recipient's current canonical readback.",
+                              {"event_id": event_id, "entity_ref": entity_ref,
+                               "expected_version_after_offer": opened_version, "event_version": event_version,
+                               "current_version": current_version})
+    changed_fields = event.get("changed_fields")
+    changed = set(changed_fields) if isinstance(changed_fields, list) and all(
+        isinstance(field, str) for field in changed_fields
+    ) else set()
+    if handoff.get("handoff_type") == RECOVERY_HANDOFF:
+        # Recovery has a server-owned structured completion rule: the canonical
+        # WORK must be terminal and the TEST readiness proof is checked by
+        # _recovery_completion before this receipt is accepted.
+        recovery_effect_applied = (
+            str(current.get("status") or "").upper() in RECOVERY_COMPLETE_STATES
+            and bool(changed.intersection({"status", "recovery"}))
+        )
+        if not recovery_effect_applied:
+            raise TowerAgentIssue("HANDOFF_EFFECT_NOT_APPLIED",
+                                  "The recovery receipt did not change its terminal WORK or recovery state.",
+                                  {"event_id": event_id, "changed_fields": sorted(changed)})
+    else:
+        contract = handoff.get("completion_contract")
+        if not isinstance(contract, dict) or contract.get("schema") != HANDOFF_EFFECT_SCHEMA:
+            raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_REQUIRED",
+                                  "DONE requires a structured completion_contract; prose is not proof of its effect.",
+                                  {"handoff_id": handoff.get("handoff_id")})
+        expected = contract.get("expected_changes")
+        if not isinstance(expected, dict) or not expected:
+            raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_INVALID",
+                                  "The canonical completion_contract is malformed.",
+                                  {"handoff_id": handoff.get("handoff_id")})
+        applied = all(field in changed and current.get(field) == value
+                      for field, value in expected.items())
+        if not applied:
+            raise TowerAgentIssue("HANDOFF_EFFECT_NOT_APPLIED",
+                                  "The canonical event did not apply every requested structured effect.",
+                                  {"event_id": event_id, "expected_fields": sorted(expected),
+                                   "changed_fields": sorted(changed)})
+    return {"event_id": event_id, "entity_ref": entity_ref, "entity_version": current_version,
+            "writer_role": str(current.get("writer_role") or "").upper(), "readback": "PASS",
+            "changed_fields": sorted(changed)}
 
 
 def _work_envelope(self, entity_ref: str) -> dict | None:
@@ -324,6 +484,8 @@ def emit_handoff(
     confidence_plain: str | None = None,
     evidence_refs: list[dict] | None = None,
     source_links: list[dict] | None = None,
+    priority: str = "NORMAL",
+    completion_contract: dict | None = None,
     correlation_id: str | None = None,
     parent_handoff_id: str | None = None,
 ) -> dict:
@@ -337,6 +499,10 @@ def emit_handoff(
     if recipient not in RUNTIME_ROLES:
         raise TowerAgentIssue("HANDOFF_RECIPIENT_NOT_SUPPORTED", "Unknown handoff recipient.", {"to_role": recipient})
 
+    priority = str(priority or "NORMAL").upper()
+    if priority not in HANDOFF_PRIORITY_RANK:
+        raise TowerAgentIssue("HANDOFF_PRIORITY_NOT_SUPPORTED", "Unsupported handoff priority.", {"priority": priority})
+    completion_contract = _normalize_completion_contract(completion_contract)
     immutable = {
         "request_id": request_id,
         "from_role": sender,
@@ -352,7 +518,10 @@ def emit_handoff(
         "evidence_refs": _normalize_evidence_refs(evidence_refs),
         "source_links": _normalize_source_links(source_links),
         "parent_handoff_id": str(parent_handoff_id).strip() if parent_handoff_id else None,
+        "priority": priority,
     }
+    if completion_contract is not None:
+        immutable["completion_contract"] = completion_contract
     if not immutable["handoff_type"] or not immutable["entity_ref"] or not immutable["thread_id"]:
         raise TowerAgentIssue(
             "HANDOFF_ROUTE_FIELDS_REQUIRED",
@@ -363,13 +532,28 @@ def emit_handoff(
     fingerprint = _request_fingerprint(immutable)
     previous = _latest_by_request_id(self.root).get(request_id)
     if previous:
-        if previous.get("request_fingerprint") != fingerprint:
+        legacy_immutable = dict(immutable)
+        legacy_immutable.pop("priority", None)
+        legacy_match = (
+            previous.get("priority") is None
+            and completion_contract is None
+            and priority == "NORMAL"
+            and previous.get("request_fingerprint") == _request_fingerprint(legacy_immutable)
+        )
+        if previous.get("request_fingerprint") != fingerprint and not legacy_match:
             raise TowerAgentIssue(
                 "HANDOFF_REQUEST_ID_CONFLICT",
                 "request_id was already used with different handoff content.",
                 {"request_id": request_id, "handoff_id": previous.get("handoff_id")},
             )
         return previous
+
+    if immutable["handoff_type"] != RECOVERY_HANDOFF and completion_contract is None:
+        raise TowerAgentIssue("HANDOFF_EFFECT_CONTRACT_REQUIRED",
+                              "A new non-recovery handoff requires a structured completion_contract.",
+                              {"handoff_type": immutable["handoff_type"]})
+
+    _validate_parent_chain(self.root, immutable)
 
     handoff_id = "HO-" + hashlib.sha256(request_id.encode("utf-8")).hexdigest()[:32]
     envelope = _work_envelope(self, immutable["entity_ref"])
@@ -412,13 +596,18 @@ def inbox_for(self, role: str) -> list[dict]:
         and event.get("state") in ACTIONABLE_STATES
         and not _handoff_is_stale(self, event)
     ]
-    items.sort(key=lambda item: (str(item.get("opened_at", "")), str(item.get("handoff_id", ""))))
+    items.sort(key=lambda item: (
+        HANDOFF_PRIORITY_RANK.get(str(item.get("priority") or "NORMAL").upper(), 9),
+        0 if item.get("state") == "PENDING" else 1,
+        str(item.get("opened_at", "")), str(item.get("handoff_id", "")),
+    ))
     # The five-card limit belongs to the bootstrap projection. Applying it to
     # the operational reader lets old ACKs permanently hide newer offers.
     return items
 
 
-def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -> dict:
+def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str,
+                        completion_event_id: str | None = None) -> dict:
     target = state.upper()
     writer = writer_role.upper()
     if target not in {"ACK", "DONE", "FAILED"}:
@@ -437,7 +626,10 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
         recovery_work, acceptance = _recovery_context(self, current)
     if current_state == target:
         return current
-    allowed = {"PENDING": {"ACK", "DONE", "FAILED"}, "ACK": {"DONE", "FAILED"}}
+    if target == "DONE" and current_state != "ACK":
+        code = "HANDOFF_RECOVERY_ACK_REQUIRED" if current.get("handoff_type") == RECOVERY_HANDOFF else "HANDOFF_ACK_REQUIRED"
+        raise TowerAgentIssue(code, "A handoff must be accepted before it can be completed.")
+    allowed = {"PENDING": {"ACK", "FAILED"}, "ACK": {"DONE", "FAILED"}}
     if target not in allowed.get(current_state, set()):
         raise TowerAgentIssue("HANDOFF_ILLEGAL_TRANSITION", "Illegal handoff state transition.", {"from": current_state, "to": target})
     # Inbox filtering is not an authorization boundary: a caller can retain an
@@ -449,9 +641,14 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
         "handoff_id", "request_id", "request_fingerprint", "correlation_id", "parent_handoff_id",
         "thread_id", "from_role", "to_role", "handoff_type", "objective_ref",
         "entity_ref", "entity_path", "entity_version", "work_envelope", "hydration_required",
-        "summary_plain", "why_it_matters", "next_action", "confidence_plain", "evidence_refs",
+        "summary_plain", "why_it_matters", "next_action", "confidence_plain", "evidence_refs", "priority",
+        "completion_contract",
         "source_links", "opened_at",
     )}
+    if target == "DONE":
+        if recovery_work is not None:
+            payload["completion_evidence"] = _recovery_completion(self, recovery_work)
+        payload["completion_receipt"] = _completion_receipt(self, current, completion_event_id, writer)
     if recovery_work is not None:
         if target == "DONE" and (current_state != "ACK" or acceptance is None):
             raise TowerAgentIssue("HANDOFF_RECOVERY_ACK_REQUIRED", "Recovery ownership must be accepted before completion.")
@@ -470,8 +667,6 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
             recovery_work, recorded_acceptance = _recovery_context(self, current)
             if recorded_acceptance != acceptance:
                 raise TowerAgentIssue("READBACK_FAILED", "Recovery acceptance readback did not match.")
-        if target == "DONE":
-            payload["completion_evidence"] = _recovery_completion(self, recovery_work)
         if target == "FAILED":
             payload["route_failure"] = {"owner_role": recovery_work["owner_role"],
                                         "failed_by": writer, "failed_at": _now(),
@@ -491,6 +686,38 @@ def install_handoff_protocol(agent_service_cls) -> None:
     def bootstrap(self, role: str) -> dict:
         payload = original_bootstrap(self, role)
         inbox = self.inbox_for(role)
+        work_queue = [dict(item, queue_kind="WORK") for item in payload.get("queue", [])]
+        request_queue = [{
+            "id": item["handoff_id"],
+            "queue_kind": "INTER_AGENT_REQUEST",
+            "handoff_id": item["handoff_id"],
+            "request_id": item.get("request_id"),
+            "status": item.get("state"),
+            "owner_role": item.get("to_role"),
+            "from_role": item.get("from_role"),
+            "priority": item.get("priority") or "NORMAL",
+            "thread_id": item.get("thread_id"),
+            "entity_ref": item.get("entity_ref"),
+            "question": item.get("summary_plain"),
+            "next_action": item.get("next_action"),
+            "opened_at": item.get("opened_at"),
+        } for item in inbox]
+        # Keep the role's own workload and incoming requests in one view. The
+        # bounded projection applies later; alternating here prevents either
+        # queue from hiding the other in an unbounded bootstrap response.
+        merged = []
+        work_index = request_index = 0
+        while work_index < len(work_queue) or request_index < len(request_queue):
+            if work_index < len(work_queue):
+                merged.append(work_queue[work_index])
+                work_index += 1
+            if request_index < len(request_queue):
+                merged.append(request_queue[request_index])
+                request_index += 1
+        payload["queue"] = merged
+        payload["work_queue_count"] = len(work_queue)
+        payload["request_queue_count"] = len(request_queue)
+        payload["queue_count"] = len(merged)
         payload["inbox"] = inbox[:INBOX_LIMIT]
         payload["inbox_count"] = len(inbox)
         payload["inbox_limit"] = INBOX_LIMIT
