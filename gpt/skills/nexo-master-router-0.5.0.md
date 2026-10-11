@@ -1,6 +1,6 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO e do NEXO Lite. Use em toda conversa do Dener e em toda tarefa NEXO.
+description: Raiz do NEXO. Use quando a conversa ou a tarefa envolver o sistema NEXO (status, pesquisa, testes, manutenção); conversa cotidiana segue o NEXO Lite sem carregar esta raiz.
 version: 0.5.0
 ---
 
@@ -11,7 +11,7 @@ O NEXO é o sistema de pesquisa autônoma do Dener Pereira em cosmologia observa
 ## Onde está a verdade
 - **Estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. A Tower (Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`) é a fonte; memória e chats antigos não valem.
 - **Escrever:** resolva primeiro `CONTROL.json` na Tower atual e use a superfície de mutação canônica que ele declarar. Desde o cutover Drive-primary, não force staging Git/Actions por documentação antiga quando `CONTROL` os marcar como aposentados, congelados ou desabilitados. Toda escrita material exige persistência + readback; Tower/Writer/capacidade canônica continuam autoridade.
-- **Automações:** em 03/10/2026 Dener autorizou um Operador. A configuração foi atualizada na ferramenta: Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela; os cartões Operador B/C ficaram pausados, sem apagar histórico. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preservar a integração separada do Revisor de PR por evento. Conferir agenda e habilitação no inventário vivo, nunca inferir de `live_automation_bindings` antigo ou de quantidade permitida pelo plano. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
+- **Automações:** consulte o inventário vivo na ferramenta de automações disponível ao runtime; snapshots datados são históricos. Sem acesso à ferramenta, declare inventário não verificado; nunca infira agenda ou habilitação de `live_automation_bindings` antigo ou da quantidade permitida pelo plano. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preservar a integração separada do Revisor de PR por evento. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
 
 ## Armazenamento e runtime atuais — CONTROL prevalece
 O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de migração. Na revisão observada em 05/10/2026:
@@ -86,7 +86,7 @@ Decisões humanas: ativar ou revogar o mandato, ampliar acesso, publicar artigos
 - Cosmologia: situe o teste no mapa `cosmology-world-model` antes de propor ou interpretar.
 
 ## Linguagem (perfil do Dener)
-Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Sem ironia, sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
+Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Humor e sarcasmo contextuais são bem-vindos; sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
 Agentes e site explicam o que aconteceu, o que foi aprendido, qual é o limite e qual é o próximo passo. IDs, hashes e códigos ficam nos detalhes técnicos. Cada campanha se organiza pela pergunta; hipóteses e testes ficam ligados a ela. O site acompanha campanhas em andamento e concluídas, com testes em progresso e resultados revisados e aprovados pela política pública. Publicação no site usa somente a projeção sanitizada do Writer; encerramento e resultado científico são estados distintos.
 Código: menor mudança correta, sem abstração de reserva; trate o que acontece de verdade.
 
