@@ -180,16 +180,15 @@ def _activity_diagnostics(root, projection) -> None:
         print(f"activity_diagnostics_error = {exc}")
 
 
-def _existing_fingerprint(path: Path) -> str | None:
+def _existing_verified_projection(path: Path) -> dict | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict) or not isinstance(payload.get("manifest"), dict):
+            return None
+        ok, _ = verify_projection(payload)
     except (OSError, ValueError, TypeError):
         return None
-    manifest = payload.get("manifest") if isinstance(payload, dict) else None
-    if not isinstance(manifest, dict):
-        return None
-    value = manifest.get("projection_fingerprint")
-    return str(value) if value else None
+    return payload if ok else None
 
 
 def _atomic_replace(path: Path, data: bytes) -> None:
@@ -211,7 +210,9 @@ def _atomic_replace(path: Path, data: bytes) -> None:
 def write_projection_if_changed(out: str | Path, projection: dict) -> bool:
     """Persist a verified projection only when canonical content changed.
 
-    Returns True when new bytes were written, False for a content-identical NO_OP.
+    Returns True when bytes were written or repaired, False for a verified,
+    content-identical NO_OP. An intact projection retains its original metadata
+    even when its separate manifest needs repair after an interrupted write.
     The manifest is replaced last. Consumers therefore either observe the old
     matching pair, the new matching pair, or a transient mismatch that their
     verifier must reject.
@@ -226,8 +227,16 @@ def write_projection_if_changed(out: str | Path, projection: dict) -> bool:
     manifest_path = out / "manifest.json"
 
     new_fingerprint = str(projection["manifest"]["projection_fingerprint"])
-    if _existing_fingerprint(projection_path) == new_fingerprint:
-        return False
+    existing = _existing_verified_projection(projection_path)
+    if existing and existing["manifest"]["projection_fingerprint"] == new_fingerprint:
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError, TypeError):
+            manifest = None
+        if manifest == existing["manifest"]:
+            return False
+        _atomic_replace(manifest_path, _manifest_bytes(existing))
+        return True
 
     _atomic_replace(projection_path, projection_bytes(projection))
     _atomic_replace(manifest_path, _manifest_bytes(projection))
