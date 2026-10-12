@@ -1,0 +1,79 @@
+/* ── A luz mais antiga em três etapas (usa .mx como base) ── */
+.cmbj { gap: 16px; container-type: inline-size; container-name: cmbj; }
+
+/* etapas A · B · C */
+.cmbj-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; counter-reset: s; }
+.cmbj-steps button { width: 100%; min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--ink-2); font: 600 14.5px/1.25 var(--body); text-align: left; cursor: pointer; }
+.cmbj-n { display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); color: var(--ink-2); font: 700 13px var(--sans); }
+.cmbj-steps button[data-state='done'] .cmbj-n { background: color-mix(in srgb, var(--accent-2) 22%, var(--bg)); color: var(--accent-2); }
+.cmbj-steps button[aria-current='step'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.cmbj-steps button[aria-current='step'] .cmbj-n { background: var(--accent); color: var(--on-accent); }
+
+/* cena + painel */
+.cmbj-scene { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.cmbj-stage { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+.cmbj-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cmbj-legend { position: absolute; left: 10px; top: 10px; margin: 0; padding: 6px 10px; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: calc(100% - 20px); border-radius: 10px; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(4px); font: 600 12.5px/1.4 var(--body); color: var(--ink-2); }
+.cmbj-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.cmbj-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.cmbj-legend .k-light { background: var(--c-rad); width: 16px; height: 3px; border-radius: 2px; }
+.cmbj-legend .k-e { background: var(--accent-2); width: 6px; height: 6px; }
+.cmbj-legend .k-n { background: var(--accent); width: 8px; height: 8px; }
+.cmbj-legend .k-atom { background: radial-gradient(circle, var(--accent) 0 3px, transparent 3.5px); box-shadow: inset 0 0 0 1.5px var(--accent-2); width: 14px; height: 14px; }
+.cmbj-legend .k-grid { width: 14px; height: 14px; border-radius: 2px; background: linear-gradient(var(--line-strong), var(--line-strong)) center/1px 100% no-repeat, linear-gradient(var(--line-strong), var(--line-strong)) center/100% 1px no-repeat; }
+.cmbj-legend .k-wave { width: 18px; height: 8px; border-radius: 0; background: radial-gradient(circle at 25% 100%, transparent 4px, var(--ink) 4px 5.5px, transparent 6px) 0 0/9px 8px repeat-x; }
+.cmbj-tag { position: absolute; right: 10px; bottom: 8px; margin: 0; padding: 3px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 82%, transparent); font: 600 11.5px var(--body); color: var(--muted); }
+
+.cmbj-panel { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 10px 14px; padding: 12px 14px; border-radius: 16px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+.cmbj-panel > div { display: grid; gap: 2px; }
+.cmbj-panel dt { font: 700 11.5px/1.3 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cmbj-panel dd { margin: 0; font: 650 17px/1.3 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+.cmbj-spectrum { grid-column: 1 / -1; }
+.cmbj-spectrum dt span { display: block; margin-top: 3px; text-transform: none; letter-spacing: 0; font: 650 17px/1.3 var(--sans); color: var(--ink); }
+.cmbj-ruler { position: relative; display: grid; grid-template-columns: 9fr 46fr 45fr; height: 34px; margin-top: 8px; border-radius: 8px; overflow: visible; font: 600 10.5px/1 var(--body); }
+.cmbj-ruler > span:not(.cmbj-marker) { display: grid; place-items: center; text-align: center; padding: 0 2px; overflow: hidden; }
+.cmbj-ruler .b-vis { border-radius: 8px 0 0 8px; background: linear-gradient(90deg, #7b4fd6, #3f7be0, #3fb070, #e3c23a, #e0662f); color: #fff; font-size: 0; }
+.cmbj-ruler .b-ir { background: color-mix(in srgb, var(--accent) 16%, var(--bg)); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+.cmbj-ruler .b-mw { border-radius: 0 8px 8px 0; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); background: repeating-linear-gradient(135deg, var(--surface-2) 0 5px, var(--bg) 5px 10px); }
+.cmbj-ruler small { font-weight: 500; }
+.cmbj-marker { position: absolute; top: -6px; bottom: -6px; left: calc(var(--pos, 0) * 100%); width: 0; border-left: 2.5px solid var(--ink); transition: left .25s var(--ease); }
+.cmbj-marker span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 2px 7px; border-radius: 6px; background: var(--ink); color: var(--bg); font: 700 11px var(--body); }
+.cmbj .cmbj-note { margin: 30px 0 0; font: 500 12.5px/1.45 var(--body); color: var(--muted); }
+
+/* leitura da etapa */
+.cmbj-read { display: grid; gap: 6px; padding: 14px 16px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 7%, var(--bg)); }
+.cmbj-read h4 { margin: 0; font: 600 19px/1.3 var(--serif); color: var(--ink); }
+.cmbj .cmbj-read p { margin: 0; font-size: 16px; line-height: 1.55; color: var(--ink); }
+.cmbj-act { color: var(--ink-2) !important; }
+.cmbj-changed { opacity: 0; transform: translateY(4px); transition: opacity .4s var(--ease), transform .4s var(--ease); }
+.cmbj.show-changed .cmbj-changed { opacity: 1; transform: none; }
+.cmbj-transport { display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 1fr; }
+.cmbj-transport button { justify-content: center; }
+.cmbj-transport button:disabled { opacity: .45; cursor: default; }
+.cmbj-transport [data-cmbj-play] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.cmbj-transport [data-cmbj-play][aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.cmbj-ico { font-size: 12px; }
+.cmbj-more { margin: 0; }
+.cmbj-checks { display: grid; gap: 14px; padding-top: 4px; border-top: 1px solid var(--line); }
+.cmbj-checks .mx-check { display: grid; gap: 4px; }
+.cmbj-static { margin: 0; padding-left: 20px; display: grid; gap: 8px; line-height: 1.55; }
+.cmbj:not(.is-ready) .cmbj-stage { background: color-mix(in srgb, var(--c-rad) 16%, var(--bg)); }
+
+@container cmbj (max-width: 560px) {
+  .cmbj-panel { grid-template-columns: 1fr 1fr; }
+  .cmbj-panel > div:nth-child(3) { grid-column: 1 / -1; }
+}
+@container cmbj (max-width: 520px) {
+  .cmbj-stage { aspect-ratio: 4 / 4.2; }
+  .cmbj-steps button { flex-direction: column; justify-content: center; text-align: center; gap: 4px; padding: 8px 4px; font-size: 13px; }
+  .cmbj-legend { font-size: 12px; gap: 2px 10px; }
+  .cmbj-panel { padding: 12px; gap: 10px 12px; }
+  .cmbj-panel dd, .cmbj-spectrum { grid-column: 1 / -1; }
+.cmbj-spectrum dt span { font-size: 15.5px; }
+  .cmbj-transport { grid-template-columns: 1fr 1fr; }
+  .cmbj-read h4 { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cmbj-changed { transition: none; }
+  .cmbj-marker { transition: none; }
+}

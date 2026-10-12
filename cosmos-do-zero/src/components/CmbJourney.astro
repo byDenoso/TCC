@@ -1,0 +1,96 @@
+---
+import type { MicroSpec } from '../data/micro';
+import { STEP_TEXT, fmtTemp, T_DEC, T0 } from '../lib/cmb-journey';
+interface Props { spec: MicroSpec; id: string }
+const { spec, id } = Astro.props;
+const letters = 'ABCDE';
+// Perguntas depois da experiência: a antiga pergunta de palpite vira verificação, junto com a de transferência.
+const checks = [spec.guess, spec.check];
+---
+<div class="cmbj mx" data-cmbj data-section={id} data-step="quente" role="group" aria-labelledby={`${id}-cmbj-title`}>
+  <div class="mx-head">
+    <span class="meta">Experimente</span>
+    <h3 id={`${id}-cmbj-title`}>A luz mais antiga, em três etapas</h3>
+    <p class="mx-hint" data-cmbj-history hidden></p>
+  </div>
+
+  <ol class="cmbj-steps" aria-label="Etapas">
+    {STEP_TEXT.map((s, i) => (
+      <li><button type="button" data-cmbj-goto={i} aria-current={i === 0 ? 'step' : 'false'}><span class="cmbj-n" aria-hidden="true">{letters[i]}</span><span>{s.label}</span></button></li>
+    ))}
+  </ol>
+
+  <div class="cmbj-scene">
+    <div class="cmbj-stage" data-cmbj-stage>
+      <canvas data-cmbj-canvas aria-hidden="true"></canvas>
+      <ul class="cmbj-legend" aria-label="Legenda do desenho">
+        <li data-cmbj-legend="quente atomos"><i class="k-light" aria-hidden="true"></i>luz</li>
+        <li data-cmbj-legend="quente atomos"><i class="k-e" aria-hidden="true"></i>elétron</li>
+        <li data-cmbj-legend="quente atomos"><i class="k-n" aria-hidden="true"></i>núcleo</li>
+        <li data-cmbj-legend="atomos"><i class="k-atom" aria-hidden="true"></i>átomo</li>
+        <li data-cmbj-legend="expansao" hidden><i class="k-grid" aria-hidden="true"></i>grade: o próprio espaço</li>
+        <li data-cmbj-legend="expansao" hidden><i class="k-wave" aria-hidden="true"></i>onda da luz, ampliada</li>
+      </ul>
+      <p class="cmbj-tag">Ilustração · fora de escala</p>
+    </div>
+
+  <div class="cmbj-transport mx-transport" role="group" aria-label="Controle da experiência">
+      <button type="button" data-cmbj-prev disabled><span aria-hidden="true">←</span> Voltar</button>
+      <button type="button" data-cmbj-play aria-pressed="false"><span class="cmbj-ico" aria-hidden="true">▶</span><span data-cmbj-play-label>Começar</span></button>
+      <button type="button" data-cmbj-replay><span aria-hidden="true">↺</span> Repetir etapa</button>
+      <button type="button" data-cmbj-next>Avançar <span aria-hidden="true">→</span></button>
+    </div>
+
+    <dl class="cmbj-panel" aria-label="Valores da etapa">
+      <div><dt>Tempo desde o início</dt><dd data-cmbj-time>antes de ~380 mil anos</dd></div>
+      <div><dt>Temperatura da radiação</dt><dd data-cmbj-temp>acima de {fmtTemp(T_DEC)}</dd></div>
+      <div><dt>Tamanho do Universo em relação a hoje</dt><dd data-cmbj-scale>menor que 1/1.091</dd></div>
+      <div class="cmbj-spectrum">
+        <dt>Comprimento de onda típico <span data-cmbj-lambda>luz presa no meio</span></dt>
+        <dd>
+          <div class="cmbj-ruler" data-cmbj-ruler role="img" aria-label="Régua do espectro: visível, infravermelho, micro-ondas" aria-valuetext="sem valor nesta etapa">
+            <span class="b-vis">visível</span><span class="b-ir">infravermelho</span><span class="b-mw">micro-ondas <small>(invisível)</small></span>
+            <span class="cmbj-marker" data-cmbj-marker hidden><span data-cmbj-band>—</span></span>
+          </div>
+          <p class="cmbj-note">Régua em escala logarítmica, de 0,3 µm a 3 cm. Valores calculados de medidas: {fmtTemp(T0)} hoje, desvio para o vermelho de ≈ 1 090.</p>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="cmbj-read">
+    <h4 data-cmbj-ask>{STEP_TEXT[0].ask}</h4>
+    <p data-cmbj-say>{STEP_TEXT[0].say}</p>
+    <p class="cmbj-act"><strong>Observe:</strong> <span data-cmbj-act>{STEP_TEXT[0].act}</span></p>
+    <p class="cmbj-changed"><strong>O que mudou:</strong> <span data-cmbj-changed>{STEP_TEXT[0].changed}</span></p>
+  </div>
+
+
+  <p class="visually-hidden" role="status" data-cmbj-live></p>
+
+  <details class="depth-detail cmbj-more">
+    <summary>Entenda melhor</summary>
+    <p>A luz que vemos hoje como radiação cósmica de fundo já existia antes de 380 mil anos: ela só não conseguia ir longe. A transição foi gradual, ao longo de dezenas de milhares de anos; o desenho mostra os átomos se formando de uma vez para simplificar.</p>
+    <p>A expansão não é um movimento das coisas através de um espaço já existente: as distâncias entre pontos sem ligação gravitacional crescem, e o comprimento de onda da luz em viagem cresce na mesma proporção. Ela não começou nem terminou nessa etapa; o desenho mostra só o trecho entre a liberação da luz e hoje. O ponto que fica parado na tela é escolha do desenho: qualquer ponto da grade serve, e não há centro.</p>
+    <p><strong>Limite do desenho.</strong> {spec.limit} A onda e a grade crescem cerca de 5 vezes na tela, para caber; o crescimento real foi de cerca de 1 100 vezes, como mostram os números ao lado.</p>
+  </details>
+
+  <div class="cmbj-checks">
+    <p class="mx-label"><strong>Verifique.</strong> Depois de ver as três etapas, responda.</p>
+    {checks.map((c) => (
+      <div class="mx-check" data-cmbj-check data-right={c.right}>
+        <p class="mx-label">{c.q}</p>
+        <div class="mx-opts">
+          {c.options.map((o, i) => <button type="button" data-cmbj-opt={i}><span aria-hidden="true">{letters[i]}</span>{o}</button>)}
+        </div>
+        <div class="mx-verdict" data-cmbj-why data-why={c.why} hidden role="status"><p><strong></strong><span></span></p></div>
+      </div>
+    ))}
+  </div>
+
+  <noscript>
+    <ol class="cmbj-static">
+      {STEP_TEXT.map((s) => <li><strong>{s.label}.</strong> {s.say} {s.changed}</li>)}
+    </ol>
+  </noscript>
+</div>

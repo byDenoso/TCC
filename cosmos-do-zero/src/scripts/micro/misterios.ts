@@ -1,5 +1,6 @@
 import type { Scene, SceneMap } from './engine';
 import { C, W, arrow, clear, ease, el, fmt, g, lerp, rng, star, text } from './draw';
+import { vHalo, vLum, vTotal } from '../../lib/rotation';
 
 const metodo = (): Scene => {
   let layer: SVGGElement;
@@ -107,8 +108,6 @@ const cmb = (): Scene => {
 const rotacao = (): Scene => {
   let layer: SVGGElement;
   const radii = [26, 52, 80];
-  const pred = (r: number) => (r < 20 ? r * 3.6 : 72 * Math.sqrt(20 / r));
-  const obs = (r: number) => 72 * (1 - Math.exp(-r / 12));
   const caps = [
     'Previsão contando só o que brilha: quase toda a massa visível está no centro, então as estrelas de fora deveriam girar bem mais devagar.',
     'O que se mede: as estrelas de fora giram quase tão rápido quanto as de dentro. A curva fica quase plana.',
@@ -129,25 +128,31 @@ const rotacao = (): Scene => {
       el('ellipse', { cx, cy, rx: 18, ry: 18, fill: C.gold, opacity: 0.7 }, layer);
       radii.forEach((r) => {
         el('circle', { cx, cy, r, fill: 'none', stroke: C.line, 'stroke-dasharray': '3 4' }, layer);
-        const sp = v === 0 ? pred(r) : obs(r);
+        const sp = v === 0 ? vLum(r) : vTotal(r);
         const ang = (t * sp * 4.2) / r - Math.PI / 2;
         star(layer, cx + Math.cos(ang) * r, cy + Math.sin(ang) * r, 4, C.accent, false);
       });
       // gráfico
-      const X = (r: number) => 240 + r * 2.4, Y = (s: number) => 210 - s * 2.2;
+      const X = (r: number) => 240 + r * 2.4, Y = (s: number) => 210 - s * 2; // vTotal máx ≈ 82 cabe em y≈46
       el('line', { x1: 240, y1: 210, x2: 460, y2: 210, stroke: C.line, 'stroke-width': 1.5 }, layer);
       el('line', { x1: 240, y1: 40, x2: 240, y2: 210, stroke: C.line, 'stroke-width': 1.5 }, layer);
       text(layer, 350, 236, 'distância ao centro →', { class: 'mx-t small', 'text-anchor': 'middle' });
       text(layer, 232, 34, 'velocidade', { class: 'mx-t small' });
       let dp = '', dobs = '';
-      for (let r = 1; r <= 90; r += 2) { dp += `${dp ? 'L' : 'M'}${X(r)} ${Y(pred(r))}`; dobs += `${dobs ? 'L' : 'M'}${X(r)} ${Y(obs(r))}`; }
+      for (let r = 1; r <= 90; r += 2) { dp += `${dp ? 'L' : 'M'}${X(r)} ${Y(vLum(r))}`; dobs += `${dobs ? 'L' : 'M'}${X(r)} ${Y(vTotal(r))}`; }
       el('path', { d: dp, fill: 'none', stroke: C.muted, 'stroke-width': 2.5, 'stroke-dasharray': v === 0 ? '' : '6 5' }, layer);
-      text(layer, X(88), Y(pred(88)) + 18, 'previsão (só o visível)', { class: 'mx-t small', 'text-anchor': 'end' });
+      text(layer, X(88), Y(vLum(88)) + 18, 'previsão (só o visível)', { class: 'mx-t small', 'text-anchor': 'end' });
       if (v >= 1) {
-        for (let r = 8; r <= 88; r += 10) el('circle', { cx: X(r), cy: Y(obs(r) + Math.sin(r) * 1.5), r: 3.5, fill: C.accent }, layer);
-        text(layer, X(88), Y(obs(88)) - 10, 'medida', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
+        for (let r = 8; r <= 88; r += 10) el('circle', { cx: X(r), cy: Y(vTotal(r) + Math.sin(r) * 1.5), r: 3.5, fill: C.accent }, layer);
+        text(layer, X(88), Y(vTotal(88)) - 10, 'medida', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
       }
-      if (v === 2) el('path', { d: dobs, fill: 'none', stroke: C.dm, 'stroke-width': 2.5 }, layer);
+      if (v === 2) {
+        let dh = '';
+        for (let r = 1; r <= 90; r += 2) dh += `${dh ? 'L' : 'M'}${X(r)} ${Y(vHalo(r))}`;
+        el('path', { d: dh, fill: 'none', stroke: C.dm, 'stroke-width': 1.5, 'stroke-dasharray': '4 4', opacity: 0.6 }, layer);
+        text(layer, X(88), Y(vHalo(88)) + 14, 'só o halo', { class: 'mx-t small', 'text-anchor': 'end' });
+        el('path', { d: dobs, fill: 'none', stroke: C.dm, 'stroke-width': 2.5 }, layer);
+      }
       return caps[v];
     }
   };

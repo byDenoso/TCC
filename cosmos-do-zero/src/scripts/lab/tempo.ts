@@ -1,6 +1,7 @@
 import { PLANCK, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, lookbackGyr, observedWavelengthNm, zAcceleration } from '../../lib/cosmology';
 import { clear, duration, fmt, fmtAuto, initGuess, lightYears, q, qa, reduced, svg } from './common';
 import { getParam, setParams } from '../../lib/url-state';
+import type { Tempo3D } from './tempo3d';
 
 const Z_MAX = 1100;
 const LN = Math.log(1 + Z_MAX);
@@ -27,7 +28,7 @@ interface Epoch { from: number; title: string; kind: 'Observado' | 'Calculado pe
 const epochs: Epoch[] = [
   { from: 3400, title: 'Quente demais para existir átomo', kind: 'Calculado pelo modelo', text: () => 'Tudo é uma sopa muito quente de partículas e luz. Nesta fase a luz pesa mais que a matéria. Isso muda por volta dos 50 mil anos de idade.' },
   { from: 1200, title: 'Uma névoa que não deixa a luz passar', kind: 'Calculado pelo modelo', text: () => 'Ainda quente demais para os átomos se formarem. A luz bate o tempo todo nas partículas soltas, como farol na neblina: não dá para enxergar através.' },
-  { from: 900, title: 'O Universo fica transparente', kind: 'Observado', text: () => 'Os primeiros átomos se formam e a névoa se dissipa. A luz desse instante viaja até hoje e chega até nós: é a luz mais antiga que conseguimos observar diretamente. Antes disso já havia luz, mas ela não conseguia viajar longe. Saiu alaranjada, de um gás a uns 2.700 °C, e chegou esticada em micro-ondas.' },
+  { from: 900, title: 'O Universo fica transparente', kind: 'Observado', text: () => 'Os primeiros átomos se formam e a névoa se dissipa. A luz desse instante viaja até hoje e chega até nós: é a luz mais antiga que conseguimos observar diretamente. Antes disso já havia luz, mas ela não conseguia viajar longe. Saiu de um gás a uns 3.000 K (cerca de 2.700 °C), com a maior parte no infravermelho próximo; o comprimento de onda cresceu umas 1.100 vezes com a expansão, e hoje ela chega como micro-ondas.' },
   { from: 30, title: 'Idade das trevas', kind: 'Calculado pelo modelo', text: () => 'Ainda não existe nenhuma estrela. O gás esfria e a gravidade começa a juntar matéria em montinhos, que vão virar as primeiras galáxias.' },
   { from: 6, title: 'As primeiras estrelas e galáxias se acendem', kind: 'Observado', text: () => 'Surgem as primeiras estrelas e galáxias. O telescópio espacial James Webb já fotografou galáxias desta época.' },
   { from: 0.5, title: 'A época de mais estrelas', kind: 'Observado', text: () => 'As galáxias crescem e formam estrelas no ritmo mais intenso da história, quando o Universo tinha uns 3 bilhões de anos. Hoje esse ritmo é bem menor.' },
@@ -61,34 +62,56 @@ export function initTempo(root: HTMLElement): void {
   svg('text', { x: trackX + trackW, y: 102, 'text-anchor': 'end', class: 'obs-cap' }, svgEl, 'Hoje');
   const travelLabel = svg('text', { y: 102, 'text-anchor': 'middle', class: 'obs-cap warm' }, svgEl, '');
 
-  // quadrado do tamanho
-  const sqX = 30, sqBottom = 345, sqS = 170;
-  svg('text', { x: sqX, y: 142, class: 'obs-cap' }, svgEl, 'Distâncias entre galáxias');
-  svg('rect', { x: sqX, y: sqBottom - sqS, width: sqS, height: sqS, class: 'obs-today' }, svgEl);
-  const then = svg('rect', { x: sqX, y: sqBottom - 2, width: 2, height: 2, class: 'obs-then' }, svgEl);
-  const sqLabel = svg('text', { x: sqX, y: sqBottom + 24, class: 'obs-cap warm' }, svgEl, '');
-  svg('text', { x: sqX + sqS, y: sqBottom - sqS - 8, 'text-anchor': 'end', class: 'obs-cap' }, svgEl, 'hoje (contorno)');
-
-  // espectro (eixo logarítmico 250 nm → 1 mm)
-  const spX = 300, spW = 310, spY = 260;
-  const l0 = Math.log10(250), l1 = Math.log10(1e6);
-  const xOf = (nm: number) => spX + ((Math.log10(Math.max(250, Math.min(1e6, nm))) - l0) / (l1 - l0)) * spW;
-  svg('text', { x: spX, y: 142, class: 'obs-cap' }, svgEl, 'A cor da luz se estica');
+  // duas janelas: o mesmo pedaço de espaço quando a luz saiu e hoje. A grade é o próprio espaço;
+  // a onda acompanha a grade. Na tela o crescimento é comprimido (até ×6); o valor real aparece no texto.
+  const winY = 168, winW = 278, winH = 168, winL = 30, winR = 332;
+  const uid = Math.random().toString(36).slice(2, 7);
   const defs = svg('defs', {}, svgEl);
-  const grad = svg('linearGradient', { id: `vis-${Math.random().toString(36).slice(2, 7)}`, x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
-  [[0, '#7a3bd6'], [.18, '#3b6bff'], [.38, '#27d6ff'], [.55, '#3fe06f'], [.7, '#ffe14a'], [.84, '#ff9a2e'], [1, '#ff3b2e']].forEach(([o, c]) => svg('stop', { offset: o as number, 'stop-color': c as string }, grad));
-  svg('rect', { x: spX, y: spY, width: spW, height: 22, class: 'obs-spectrum' }, svgEl);
-  svg('rect', { x: xOf(380), y: spY, width: xOf(750) - xOf(380), height: 22, fill: `url(#${grad.id})` }, svgEl);
-  svg('text', { x: (xOf(380) + xOf(750)) / 2, y: spY + 46, 'text-anchor': 'middle', class: 'obs-cap small' }, svgEl, 'visível');
-  svg('text', { x: xOf(1e4), y: spY + 46, 'text-anchor': 'middle', class: 'obs-cap small hide-sm' }, svgEl, 'infravermelho');
-  svg('text', { x: spX + spW, y: spY + 46, 'text-anchor': 'end', class: 'obs-cap small' }, svgEl, 'micro-ondas');
-  const rest = svg('g', {}, svgEl);
-  svg('path', { d: `M${xOf(656.28)} ${spY - 3} l-5 -10 h10 Z`, class: 'obs-rest' }, rest);
-  svg('text', { x: xOf(656.28), y: spY - 18, 'text-anchor': 'middle', class: 'obs-cap small' }, rest, 'cor de saída');
-  const seen = svg('g', {}, svgEl);
-  const seenArrow = svg('path', { class: 'obs-seen' }, seen);
-  const seenText = svg('text', { y: spY + 84, 'text-anchor': 'middle', class: 'obs-cap warm' }, seen, '');
+  for (const [k, x] of [['l', winL], ['r', winR]] as const) {
+    const cp = svg('clipPath', { id: `win-${k}-${uid}` }, defs);
+    svg('rect', { x, y: winY, width: winW, height: winH, rx: 10 }, cp);
+  }
+  const winsG = svg('g', { class: 'obs-wins' }, svgEl);
+  const winTitleL = svg('text', { x: winL, y: winY - 12, class: 'obs-cap strong' }, winsG, 'Lá, quando a luz saiu');
+  svg('text', { x: winR, y: winY - 12, class: 'obs-cap strong' }, winsG, 'Aqui, hoje');
+  const winL_g = svg('g', { 'clip-path': `url(#win-l-${uid})` }, winsG);
+  const winR_g = svg('g', { 'clip-path': `url(#win-r-${uid})` }, winsG);
+  svg('rect', { x: winL, y: winY, width: winW, height: winH, rx: 10, class: 'obs-win' }, winsG);
+  svg('rect', { x: winR, y: winY, width: winW, height: winH, rx: 10, class: 'obs-win' }, winsG);
+  const capL = svg('text', { x: winL, y: winY + winH + 24, class: 'obs-cap' }, winsG, '');
+  const capR = svg('text', { x: winR, y: winY + winH + 24, class: 'obs-cap warm' }, winsG, '');
+  const capR2 = svg('text', { x: winR, y: winY + winH + 44, class: 'obs-cap small' }, winsG, '');
+  const note = svg('text', { x: 30, y: winY + winH + 72, class: 'obs-cap small' }, winsG, '');
+  void winTitleL;
+  const nodes: [number, number][] = [[-3, -1], [-1, 1], [1, -1], [2, 1], [-2, 0], [0, 2], [3, -2], [4, 0], [-4, 2], [5, 1], [-5, -2], [0, -2], [6, -1]];
+  const drawWindow = (gEl: SVGGElement, x0: number, cell: number, lam: number, color: string, dashed: boolean): void => {
+    clear(gEl);
+    const cx = x0 + winW / 2, cy = winY + winH / 2;
+    let d = '';
+    for (let x = cx - Math.ceil(winW / 2 / cell) * cell; x <= x0 + winW; x += cell) d += `M${x.toFixed(1)} ${winY}V${winY + winH}`;
+    for (let y = cy - Math.ceil(winH / 2 / cell) * cell; y <= winY + winH; y += cell) d += `M${x0} ${y.toFixed(1)}H${x0 + winW}`;
+    svg('path', { d, class: 'obs-grid-line' }, gEl);
+    for (const [i, j] of nodes) svg('circle', { cx: cx + i * cell, cy: cy + j * cell, r: 3.2, class: 'obs-gal' }, gEl);
+    let w = '';
+    for (let x = x0; x <= x0 + winW; x += 1.5) w += `${w ? 'L' : 'M'}${x.toFixed(1)} ${(cy - 18 * Math.sin(((x - x0) / lam) * Math.PI * 2)).toFixed(1)}`;
+    const wave = svg('path', { d: w, fill: 'none', 'stroke-width': 3, 'stroke-linecap': 'round', class: dashed ? 'obs-wave invisible' : 'obs-wave' }, gEl);
+    wave.style.stroke = color;
+  };
 
+  // cena 3D (Three.js) quando há WebGL e sem movimento reduzido; o SVG das janelas fica como alternativa
+  const host3d = root.querySelector<HTMLElement>('[data-t-3d]');
+  const note3d = root.querySelector<HTMLElement>('[data-t-3d-note]');
+  let view3d: Tempo3D | null = null;
+  const use2d = () => { if (host3d) host3d.hidden = true; if (note3d) note3d.hidden = true; winsG.removeAttribute('display'); svgEl.setAttribute('viewBox', '0 0 640 420'); };
+  if (host3d && !reduced()) {
+    import('./tempo3d').then((m) => m.mountTempo3D(host3d, reduced)).then((v) => {
+      if (!v) return;
+      view3d = v; host3d.hidden = false; if (note3d) note3d.hidden = false;
+      winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 120');
+      host3d.addEventListener('obs3d:lost', () => { view3d = null; use2d(); }, { once: true });
+      render();
+    }).catch(() => use2d());
+  }
   let exact: number | null = null;
   const render = (): void => {
     const z = exact ?? zOf(Number(range.value));
@@ -124,18 +147,18 @@ export function initTempo(root: HTMLElement): void {
     travelLabel.setAttribute('x', String((px + trackX + trackW) / 2));
     travelLabel.setAttribute('visibility', trackX + trackW - px > 130 ? 'visible' : 'hidden');
 
-    // tamanho
-    const s = Math.max(2, sqS * a);
-    then.setAttribute('width', String(s)); then.setAttribute('height', String(s)); then.setAttribute('y', String(sqBottom - s));
-    sqLabel.textContent = z < 0.005 ? 'mesmo tamanho' : `então: 1/${fmtAuto(1 + z)}`;
+    // janelas: crescimento real 1+z, comprimido na tela até ×6
+    const grow = Math.pow(1 + z, Math.log(6) / Math.log(1 + Z_MAX));
+    const cellR = 46, lamR = 30 * grow;
+    const visibleNow = lam < 750;
+    drawWindow(winL_g, winL, cellR / grow, 30, '#e5484d', false);
+    drawWindow(winR_g, winR, cellR, lamR, visibleNow ? '#e5484d' : 'var(--ink)', !visibleNow);
+    capL.textContent = 'luz vermelha · 656 nm';
+    capR.textContent = z < 0.005 ? 'luz vermelha · 656 nm' : `chega com ${lam < 1e3 ? `${Math.round(lam)} nm` : lam < 1e6 ? `${fmt(lam / 1e3, lam < 1e4 ? 1 : 0)} µm` : `${fmt(lam / 1e6, 1)} mm`}`;
+    capR2.textContent = z < 0.005 ? '' : visibleNow ? 'ainda visível, um pouco mais avermelhada' : `${bandShort(lam)} · invisível aos olhos`;
+    note.textContent = z < 0.005 ? 'Luz de agora: nada cresceu no caminho.' : `A grade é o próprio espaço. Distâncias e comprimento de onda cresceram ×${fmtAuto(1 + z)} (na tela, ×${fmt(grow, 1)}).`;
+    if (view3d) { view3d.set(z, lam); if (note3d) note3d.textContent = z < 0.005 ? 'Luz de agora: escolha um ponto de parada para ver a luz viajar enquanto o espaço cresce.' : `${capR.textContent}${capR2.textContent ? ' · ' + capR2.textContent : ''}. ${note.textContent}`; }
 
-    // espectro
-    const x = xOf(lam);
-    seenArrow.setAttribute('d', `M${x} ${spY - 3} l-5 -10 h10 Z`);
-    seenText.textContent = '';
-    seenText.setAttribute('x', String(Math.min(spX + spW - 40, Math.max(spX + 40, x))));
-    seenText.textContent = z < 0.005 ? '' : `chega como ${bandShort(lam)}`;
-    seenArrow.setAttribute('visibility', z < 0.005 ? 'hidden' : 'visible');
     if (z >= 1000) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'luz-antiga' } }));
     const ep = epochFor(z);
     q(epochBox, '[data-t-epoch-title]').textContent = ep.title;

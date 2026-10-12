@@ -41,11 +41,18 @@ const ext = ' (abre em outra aba)';
             <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>A luz mais antiga que conseguimos ver saiu quando o Universo tinha…</p>
             <div class="obs-guess-opts"><button type="button" data-opt="a">alguns segundos</button><button type="button" data-opt="b">uns 380 mil anos</button><button type="button" data-opt="c">uns 1 bilhão de anos</button></div>
             <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Uns 380 mil anos. Antes disso o Universo era uma névoa quente que não deixava a luz passar. Quando clareou, essa luz partiu e viaja até hoje. No caminho ela foi esticada tanto que virou micro-ondas, o mesmo tipo de onda do forno da sua cozinha (só que bem mais fraca).</p><button type="button" class="obs-go" data-t-go="1090">Ver na máquina do tempo</button></div>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Uns 380 mil anos. Antes disso o Universo era uma névoa quente que não deixava a luz passar. Quando clareou, essa luz partiu e viaja até hoje. No caminho, o comprimento de onda dela cresceu junto com o espaço, e hoje ela chega como micro-ondas, o mesmo tipo de onda do forno da sua cozinha (só que bem mais fraca).</p><button type="button" class="obs-go" data-t-go="1090">Ver na máquina do tempo</button></div>
           </div>
           <div class="obs-grid">
             <figure class="obs-viz">
-              <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo, tamanho do Universo e a cor da luz que chega. Os valores aparecem ao lado."></svg>
+              <div class="obs3d" data-t-3d hidden>
+                <span class="obs3d-label us" data-3d-us>nós · Via Láctea</span>
+                <span class="obs3d-label src" data-3d-src>galáxia de onde a luz saiu</span>
+                <span class="obs3d-label wave" data-3d-wave></span>
+                <p class="obs3d-tag">Ilustração · distâncias fora de escala · arraste para girar</p>
+              </div>
+              <p class="obs3d-note" data-t-3d-note hidden></p>
+              <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo e duas janelas do mesmo pedaço de espaço, quando a luz saiu e hoje: a grade e o comprimento de onda crescem juntos. Os valores aparecem ao lado."></svg>
             </figure>
             <div class="obs-panel">
               <h3>Máquina do tempo</h3>

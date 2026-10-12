@@ -198,3 +198,21 @@
 .obs-station.is-gated .obs-grid, .obs-station.is-gated .obs-epoch, .obs-station.is-gated .obs-tension { filter: blur(6px) saturate(.6); opacity: .42; transform: scale(.985); pointer-events: none; user-select: none; }
 .obs-station.is-gated .obs-grid:first-of-type::before { content: none; }
 @media (prefers-reduced-motion: reduce) { .obs-station .obs-grid, .obs-station .obs-epoch, .obs-station .obs-tension { transition: none; } }
+
+/* Máquina do tempo: duas janelas do mesmo pedaço de espaço (quando a luz saiu e hoje) */
+.obs-win { fill: none; stroke: var(--line-strong); }
+.obs-grid-line { fill: none; stroke: var(--line); stroke-width: 1; }
+.obs-gal { fill: var(--accent); }
+.obs-wave.invisible { stroke-dasharray: 7 6; }
+
+/* Máquina do tempo em 3D */
+.obs3d { position: relative; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; background: #05070f; margin-bottom: 10px; touch-action: pan-y; }
+.obs3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+.obs3d-canvas:active { cursor: grabbing; }
+.obs3d-label { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; padding: 3px 8px; border-radius: 999px; font: 650 12.5px/1.2 var(--body); color: #fff8e7; background: rgba(5, 7, 15, .72); box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); }
+.obs3d-label.us { color: #b9d1f5; }
+.obs3d-label.src { color: #ffcf9e; }
+.obs3d-label.wave { color: #fff8e7; background: rgba(200, 64, 30, .78); }
+.obs3d-tag { position: absolute; right: 10px; bottom: 8px; margin: 0; font: 600 11.5px var(--body); color: rgba(255, 248, 231, .7); }
+.obs3d-note { margin: 0 0 8px; font: 500 14.5px/1.5 var(--body); color: var(--ink-2); }
+@media (max-width: 600px) { .obs3d { aspect-ratio: 4 / 4.4; } .obs3d-label { font-size: 12px; } }

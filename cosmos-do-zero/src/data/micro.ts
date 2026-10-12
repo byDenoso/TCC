@@ -105,8 +105,8 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Antes de o Universo ficar transparente, havia luz?', options: ['Não, a luz nasceu ali', 'Sim, mas ela batia em tudo e não ia longe'], right: 1, why: 'Elétrons soltos desviavam a luz o tempo todo, como neblina.' },
     control: stages('Avançar no tempo', 'Névoa quente', 'Átomos se formam', 'Luz viaja livre', 'Chega hoje esticada'),
     alt: 'Na névoa, a luz ziguezagueia entre elétrons soltos. Quando os átomos se formam, ela segue reto e, com a expansão, chega hoje como micro-ondas.',
-    limit: 'Poucos fótons e elétrons desenhados; o esticamento real foi de cerca de mil vezes.',
-    check: { q: 'Por que essa luz antiga chega como micro-ondas?', options: ['Foi esticada pela expansão do espaço', 'Perdeu cor por cansaço', 'Sempre foi micro-ondas'], right: 0, why: 'Saiu alaranjada e foi esticada umas mil vezes.' }
+    limit: 'Poucos fótons e elétrons desenhados; a formação dos átomos foi gradual, ao longo de dezenas de milhares de anos.',
+    check: { q: 'Por que essa luz antiga chega como micro-ondas?', options: ['Seu comprimento de onda cresceu com a expansão do espaço', 'Ela perdeu energia batendo em poeira', 'Sempre foi micro-ondas'], right: 0, why: 'O comprimento de onda cresceu cerca de 1 100 vezes junto com as distâncias: do infravermelho próximo, a radiação passou às micro-ondas.' }
   },
   'origem-do-universo-primeiras-estruturas': {
     ask: 'Como um Universo quase liso virou galáxias?',

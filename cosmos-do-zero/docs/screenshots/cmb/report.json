@@ -1,0 +1,365 @@
+{
+  "base": "http://localhost:4322",
+  "browser": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "runs": [
+    {
+      "viewport": "desktop",
+      "scheme": "dark",
+      "steps": [
+        {
+          "step": "quente",
+          "url": "",
+          "time": "antes de ~380 mil anos",
+          "temp": "acima de 2 970 K",
+          "scale": "menor que 1/1.091",
+          "lambda": "luz presa no meio",
+          "band": "—",
+          "changedVisible": "0",
+          "fps": 152
+        },
+        {
+          "step": "atomos",
+          "url": "?luz=2",
+          "time": "≈ 380 mil anos",
+          "temp": "≈ 2 970 K",
+          "scale": "1/1.091",
+          "lambda": "pico em ≈ 1 µm",
+          "band": "infravermelho",
+          "changedVisible": "1",
+          "fps": 165
+        },
+        {
+          "step": "expansao",
+          "url": "?luz=3",
+          "time": "≈ 13,8 bilhões de anos (hoje)",
+          "temp": "2,7 K",
+          "scale": "1 (hoje)",
+          "lambda": "pico em ≈ 1,06 mm",
+          "band": "micro-ondas",
+          "changedVisible": "1",
+          "fps": 165
+        }
+      ],
+      "firstClick": {
+        "pressed": true,
+        "msToPaint": 114
+      },
+      "errors": []
+    },
+    {
+      "viewport": "desktop",
+      "scheme": "light",
+      "steps": [
+        {
+          "step": "quente",
+          "url": "",
+          "time": "antes de ~380 mil anos",
+          "temp": "acima de 2 970 K",
+          "scale": "menor que 1/1.091",
+          "lambda": "luz presa no meio",
+          "band": "—",
+          "changedVisible": "0",
+          "fps": 164
+        },
+        {
+          "step": "atomos",
+          "url": "?luz=2",
+          "time": "≈ 380 mil anos",
+          "temp": "≈ 2 970 K",
+          "scale": "1/1.091",
+          "lambda": "pico em ≈ 1 µm",
+          "band": "infravermelho",
+          "changedVisible": "1",
+          "fps": 165
+        },
+        {
+          "step": "expansao",
+          "url": "?luz=3",
+          "time": "≈ 13,8 bilhões de anos (hoje)",
+          "temp": "2,7 K",
+          "scale": "1 (hoje)",
+          "lambda": "pico em ≈ 1,06 mm",
+          "band": "micro-ondas",
+          "changedVisible": "1",
+          "fps": 165
+        }
+      ],
+      "firstClick": {
+        "pressed": true,
+        "msToPaint": 9
+      },
+      "errors": []
+    },
+    {
+      "viewport": "mobile",
+      "scheme": "dark",
+      "steps": [
+        {
+          "step": "quente",
+          "url": "",
+          "time": "antes de ~380 mil anos",
+          "temp": "acima de 2 970 K",
+          "scale": "menor que 1/1.091",
+          "lambda": "luz presa no meio",
+          "band": "—",
+          "changedVisible": "0",
+          "fps": 165
+        },
+        {
+          "step": "atomos",
+          "url": "?luz=2",
+          "time": "≈ 380 mil anos",
+          "temp": "≈ 2 970 K",
+          "scale": "1/1.091",
+          "lambda": "pico em ≈ 1 µm",
+          "band": "infravermelho",
+          "changedVisible": "1",
+          "fps": 165
+        },
+        {
+          "step": "expansao",
+          "url": "?luz=3",
+          "time": "≈ 13,8 bilhões de anos (hoje)",
+          "temp": "2,7 K",
+          "scale": "1 (hoje)",
+          "lambda": "pico em ≈ 1,06 mm",
+          "band": "micro-ondas",
+          "changedVisible": "1",
+          "fps": 165
+        }
+      ],
+      "firstClick": {
+        "pressed": true,
+        "msToPaint": 4
+      },
+      "errors": []
+    },
+    {
+      "viewport": "mobile",
+      "scheme": "light",
+      "steps": [
+        {
+          "step": "quente",
+          "url": "",
+          "time": "antes de ~380 mil anos",
+          "temp": "acima de 2 970 K",
+          "scale": "menor que 1/1.091",
+          "lambda": "luz presa no meio",
+          "band": "—",
+          "changedVisible": "0",
+          "fps": 165
+        },
+        {
+          "step": "atomos",
+          "url": "?luz=2",
+          "time": "≈ 380 mil anos",
+          "temp": "≈ 2 970 K",
+          "scale": "1/1.091",
+          "lambda": "pico em ≈ 1 µm",
+          "band": "infravermelho",
+          "changedVisible": "1",
+          "fps": 165
+        },
+        {
+          "step": "expansao",
+          "url": "?luz=3",
+          "time": "≈ 13,8 bilhões de anos (hoje)",
+          "temp": "2,7 K",
+          "scale": "1 (hoje)",
+          "lambda": "pico em ≈ 1,06 mm",
+          "band": "micro-ondas",
+          "changedVisible": "1",
+          "fps": 165
+        }
+      ],
+      "firstClick": {
+        "pressed": true,
+        "msToPaint": 4
+      },
+      "errors": []
+    }
+  ],
+  "checks": [
+    {
+      "name": "desktop/dark: URL da etapa 3",
+      "pass": true,
+      "detail": "?luz=3"
+    },
+    {
+      "name": "desktop/dark: hoje em micro-ondas",
+      "pass": true,
+      "detail": "2,7 K · pico em ≈ 1,06 mm · micro-ondas"
+    },
+    {
+      "name": "desktop/dark: etapa B no infravermelho a ~3 000 K",
+      "pass": true,
+      "detail": "≈ 2 970 K · pico em ≈ 1 µm"
+    },
+    {
+      "name": "desktop/dark: sem erros de console",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop/dark: primeiro clique responde",
+      "pass": true,
+      "detail": "114 ms até pintar"
+    },
+    {
+      "name": "desktop/dark: sem rolagem horizontal",
+      "pass": true,
+      "detail": "0px"
+    },
+    {
+      "name": "desktop/light: URL da etapa 3",
+      "pass": true,
+      "detail": "?luz=3"
+    },
+    {
+      "name": "desktop/light: hoje em micro-ondas",
+      "pass": true,
+      "detail": "2,7 K · pico em ≈ 1,06 mm · micro-ondas"
+    },
+    {
+      "name": "desktop/light: etapa B no infravermelho a ~3 000 K",
+      "pass": true,
+      "detail": "≈ 2 970 K · pico em ≈ 1 µm"
+    },
+    {
+      "name": "desktop/light: sem erros de console",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "desktop/light: primeiro clique responde",
+      "pass": true,
+      "detail": "9 ms até pintar"
+    },
+    {
+      "name": "desktop/light: sem rolagem horizontal",
+      "pass": true,
+      "detail": "0px"
+    },
+    {
+      "name": "mobile/dark: URL da etapa 3",
+      "pass": true,
+      "detail": "?luz=3"
+    },
+    {
+      "name": "mobile/dark: hoje em micro-ondas",
+      "pass": true,
+      "detail": "2,7 K · pico em ≈ 1,06 mm · micro-ondas"
+    },
+    {
+      "name": "mobile/dark: etapa B no infravermelho a ~3 000 K",
+      "pass": true,
+      "detail": "≈ 2 970 K · pico em ≈ 1 µm"
+    },
+    {
+      "name": "mobile/dark: sem erros de console",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile/dark: primeiro clique responde",
+      "pass": true,
+      "detail": "4 ms até pintar"
+    },
+    {
+      "name": "mobile/dark: sem rolagem horizontal",
+      "pass": true,
+      "detail": "0px"
+    },
+    {
+      "name": "mobile/light: URL da etapa 3",
+      "pass": true,
+      "detail": "?luz=3"
+    },
+    {
+      "name": "mobile/light: hoje em micro-ondas",
+      "pass": true,
+      "detail": "2,7 K · pico em ≈ 1,06 mm · micro-ondas"
+    },
+    {
+      "name": "mobile/light: etapa B no infravermelho a ~3 000 K",
+      "pass": true,
+      "detail": "≈ 2 970 K · pico em ≈ 1 µm"
+    },
+    {
+      "name": "mobile/light: sem erros de console",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "mobile/light: primeiro clique responde",
+      "pass": true,
+      "detail": "4 ms até pintar"
+    },
+    {
+      "name": "mobile/light: sem rolagem horizontal",
+      "pass": true,
+      "detail": "0px"
+    },
+    {
+      "name": "fora da tela: pausa sozinha",
+      "pass": true,
+      "detail": "false"
+    },
+    {
+      "name": "de volta à tela: retoma sozinha",
+      "pass": true,
+      "detail": "true"
+    },
+    {
+      "name": "pausa pelo botão: continua pausada ao voltar",
+      "pass": true,
+      "detail": "false"
+    },
+    {
+      "name": "movimento reduzido: abre direto na etapa da URL",
+      "pass": true,
+      "detail": "expansao"
+    },
+    {
+      "name": "movimento reduzido: não anima, mostra o estado final",
+      "pass": true,
+      "detail": "{\"step\":\"expansao\",\"playing\":\"false\",\"temp\":\"2,7 K\",\"changed\":\"1\"}"
+    },
+    {
+      "name": "teclado: seta para a direita avança a etapa e leva o foco",
+      "pass": true,
+      "detail": "{\"step\":\"atomos\",\"focus\":\"1\",\"outline\":\"solid\"}"
+    },
+    {
+      "name": "teclado: foco visível",
+      "pass": true,
+      "detail": "solid"
+    },
+    {
+      "name": "verificação: acertar as perguntas grava o progresso",
+      "pass": true,
+      "detail": "[\"origem-do-universo-primeira-luz\"]"
+    },
+    {
+      "name": "recarga: histórico de acerto anterior aparece",
+      "pass": true,
+      "detail": "Você acertou estas perguntas numa visita anterior. Elas começam de novo agora."
+    },
+    {
+      "name": "recarga: índice marca a seção praticada",
+      "pass": true,
+      "detail": "true"
+    },
+    {
+      "name": "histórico: voltar retorna à página anterior",
+      "pass": true,
+      "detail": "http://localhost:4322/"
+    },
+    {
+      "name": "histórico: avançar reabre a etapa da URL",
+      "pass": true,
+      "detail": "atomos"
+    }
+  ]
+}

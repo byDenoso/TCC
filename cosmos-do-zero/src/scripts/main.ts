@@ -15,10 +15,11 @@ import { initHeader } from './header';
 import { initMotion } from './motion';
 import { initSchool } from './school';
 import { initMicro } from './micro/engine';
+import { initCmbJourney } from './cmb-journey';
 
 /** Um único bundle: cada ilha só age se o seu elemento existir na página. */
 function boot(): void {
-  for (const init of [initTheme, initSchool, initHeader, initCmb, initNav, initProgress, initTimeline, initPlanets, initCompare, initStars, initQuizzes, initGlossary, initReader, initScenes, initLab, initMicro, initMotion]) {
+  for (const init of [initTheme, initSchool, initHeader, initCmb, initNav, initProgress, initTimeline, initPlanets, initCompare, initStars, initQuizzes, initGlossary, initReader, initScenes, initLab, initMicro, initCmbJourney, initMotion]) {
     try { init(); } catch (err) { console.error('[cosmos] falha ao iniciar', init.name, err); }
   }
 }
