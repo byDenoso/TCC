@@ -193,6 +193,8 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     """
     bundle = read_live_tower_bytes(raw)
     verify_live_tower(bundle)
+    from .control_compat import control_from_bundle, SOURCE_HEADER
+    control_from_bundle(bundle)
     root = Path(destination).resolve()
     root.mkdir(parents=True, exist_ok=True)
     # A reused materialization must not retain a retired CONTROL from its
@@ -228,8 +230,6 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
         target.write_text(data, encoding="utf-8")
     (root / LIVE_TOWER_NAME).write_bytes(raw)
 
-    from .control_compat import control_from_bundle, SOURCE_HEADER
-    control_from_bundle(bundle)
     # Ephemeral header cache in this isolated materialization; never packed.
     (root / SOURCE_HEADER).write_text(json.dumps({key: value for key, value in bundle.items() if key != "files"}), encoding="utf-8")
 

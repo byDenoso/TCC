@@ -218,7 +218,7 @@ def prepare_archive(raw: bytes, paths: list[str]) -> tuple[bytes, dict]:
 
 def verify_archive(raw: bytes, receipt: dict) -> dict[str, dict]:
     """Verify hashes, identities, limits and every member before restoration."""
-    if (receipt.get("contract") != ARCHIVE_CONTRACT or receipt.get("visibility") != "PRIVATE"
+    if (not isinstance(receipt, dict) or receipt.get("contract") != ARCHIVE_CONTRACT or receipt.get("visibility") != "PRIVATE"
             or receipt.get("mode") != "REHEARSAL_ONLY" or receipt.get("archive_sha256") != _hash(raw)
             or receipt.get("archive_bytes") != len(raw)):
         raise TowerGCError("GC_ARCHIVE_READBACK_MISMATCH")
@@ -272,6 +272,8 @@ def restore_entries(current_raw: bytes, archive_raw: bytes, receipt: dict, *, ex
     This is a prepared candidate, NOT a commit or an upload. A subsequent head
     check and readback through the sole Writer remain mandatory.
     """
+    if not isinstance(receipt, dict):
+        raise TowerGCError("GC_MANIFEST_INVALID")
     current, revision = _bundle(current_raw)
     if revision != expected_revision:
         raise TowerGCError("GC_CAS_CONFLICT")
@@ -308,7 +310,7 @@ def prepare_backup(raw: bytes) -> tuple[bytes, dict]:
 
 
 def restore_backup(packed: bytes, receipt: dict) -> bytes:
-    if (receipt.get("contract") != "TOWER_GC_BACKUP_V1" or receipt.get("visibility") != "PRIVATE"
+    if (not isinstance(receipt, dict) or receipt.get("contract") != "TOWER_GC_BACKUP_V1" or receipt.get("visibility") != "PRIVATE"
             or _hash(packed) != receipt.get("backup_sha256") or len(packed) != receipt.get("backup_bytes")):
         raise TowerGCError("GC_BACKUP_READBACK_MISMATCH")
     try:

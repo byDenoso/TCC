@@ -88,6 +88,54 @@ class MinimalContextTests(unittest.TestCase):
             self.assertFalse(any(row['outcome']=='APPLIED' for row in outcomes))
 
 
+class TargetContextPrivacyTests(unittest.TestCase):
+    base = MinimalContextTests.base
+    def test_target_board_contains_only_recipient_and_acl_authorized_posts(self):
+        with tempfile.TemporaryDirectory() as work:
+            _, bundle = self.base(work)
+            bundle['files']['evolution/board.json'] = {'encoding':'json','value':{'private_admin_note':'hidden','posts':[
+                {'id':'OWN','to':'ENGINEER','private':True,'text':'allowed'},
+                {'id':'OTHER','to':'EXECUTOR','private':True,'text':'other-private'},
+                {'id':'ACL','to':'ALL','allowed_roles':['EXECUTOR'],'text':'acl-private'},
+                {'id':'ALL','to':'ALL','text':'common'}]}}
+            path = Path(work)/'source.json';path.write_bytes(encode(bundle))
+            result = prepare_context(Snapshot.read(path),'ADVISOR',target_refs=['evolution/board.json'])
+            posts = result['changed']['evolution/board.json']['value']['value']['posts']
+            self.assertEqual({p['id'] for p in posts},{'OWN','ALL'})
+            serialized = json.dumps(result)
+            self.assertNotIn('other-private',serialized);self.assertNotIn('acl-private',serialized)
+            self.assertNotIn('private_admin_note',serialized)
+
+    def test_explicit_targets_cannot_bypass_ownership_acl_or_retained_authority(self):
+        with tempfile.TemporaryDirectory() as work:
+            _, bundle = self.base(work)
+            cases = {
+                'entities/work/OTHER.json':{'id':'OTHER','owner_role':'EXECUTOR','status':'READY'},
+                'entities/test/ACL.json':{'id':'ACL','allowed_roles':['EXECUTOR'],'data':[1,2]},
+                'entities/result/PRIVATE.json':{'id':'PRIVATE','private':True,'writer_role':'EXECUTOR'},
+                'events/day/OTHER.json':{'handoff_id':'OTHER','to_role':'EXECUTOR','state':'PENDING'},
+                'events/migrations/control-history.json':{'truth_owner':'TOWER_V06@GOOGLE_DRIVE_PRIVATE'},
+            }
+            for path, value in cases.items():bundle['files'][path]={'encoding':'json','value':value}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle));snapshot=Snapshot.read(path)
+            for target in [*cases,'CONTROL.json']:
+                with self.subTest(target=target):
+                    with self.assertRaisesRegex(ValueError,'CONTEXT_TARGET_FORBIDDEN'):
+                        prepare_context(snapshot,'ADVISOR',target_refs=[target])
+
+    def test_authorized_science_target_preserves_numbers_and_redacts_secrets(self):
+        with tempfile.TemporaryDirectory() as work:
+            _,bundle=self.base(work)
+            target='entities/test/OWN.json'
+            bundle['files'][target]={'encoding':'json','value':{'id':'OWN','allowed_roles':['ENGINEER'],
+                'result':[1.234,4.567],'contract':{'alpha':0.01},'private_key':'must-not-leak'}}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            result=prepare_context(Snapshot.read(path),'ADVISOR',target_refs=[target])
+            payload=result['changed'][target]['value']['value']
+            self.assertEqual(payload['result'],[1.234,4.567]);self.assertEqual(payload['contract'],{'alpha':0.01})
+            self.assertNotIn('must-not-leak',json.dumps(result))
+
+
 class HandoffDeltaTests(unittest.TestCase):
     def test_event_handoff_transitions_are_visible_in_role_deltas(self):
         with tempfile.TemporaryDirectory() as work:

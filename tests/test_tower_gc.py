@@ -191,3 +191,38 @@ class TowerGCTests(unittest.TestCase):
             self.assertEqual(tower.read_bytes(), self.raw)
             self.assertEqual(tower_gc_cli.main(['dry-run', str(tower), str(tower)]), 2)
             self.assertEqual(tower.read_bytes(), self.raw)
+
+    def test_restore_non_object_manifests_return_structured_failure(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            tower = root / 'tower.json'; tower.write_bytes(self.raw)
+            archive, receipt = gc.prepare_archive(self.raw, ['cache/a.json'])
+            (root / 'archive.zip').write_bytes(archive)
+            for value in ([], None, 'invalid', 7):
+                (root / 'manifest.json').write_text(json.dumps(value))
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    status = tower_gc_cli.main(['restore', str(tower), str(root / 'archive.zip'),
+                        str(root / 'manifest.json'), receipt['base_revision'], str(root / 'output.json')])
+                self.assertEqual(status, 2)
+                self.assertEqual(json.loads(output.getvalue())['status'], 'GC_FAILED')
+                self.assertFalse((root / 'output.json').exists())
+                self.assertEqual(tower.read_bytes(), self.raw)
+
+    def test_benchmark_refuses_input_aliases_before_any_report_write(self):
+        import os
+        import subprocess
+        import sys
+        script = Path(__file__).resolve().parents[1] / 'scripts/benchmark_tower_gc.py'
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work); tower = root / 'tower.json'; tower.write_bytes(self.raw)
+            symbolic = root / 'symbolic.json'; symbolic.symlink_to(tower)
+            hard = root / 'hard.json'; os.link(tower, hard)
+            for target in (tower, symbolic, hard):
+                result = subprocess.run([sys.executable, str(script), str(tower), str(target)],
+                                        capture_output=True, text=True)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn('report destination must be a new file', result.stderr)
+                self.assertEqual(tower.read_bytes(), self.raw)

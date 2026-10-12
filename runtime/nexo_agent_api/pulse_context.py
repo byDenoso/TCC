@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import PurePosixPath
 
-from .memory import Snapshot, digest
+from .memory import Snapshot, digest, clean
 from .control_compat import control_from_bundle, BOOTSTRAP_FIELDS
 
 SCHEMA = 'NEXO_ROLE_CONTEXT_DELTA_V1'
@@ -17,6 +17,47 @@ def _path(path):
             or any(part in {'','..','.'} for part in path.split('/'))):
         raise ValueError('CONTEXT_PATH_INVALID')
     return path
+
+
+def _acl_allows(value, aliases):
+    acl = value.get('allowed_roles')
+    if acl is None:
+        return True
+    if not isinstance(acl, list) or any(not isinstance(item, str) for item in acl):
+        raise ValueError('CONTEXT_ACL_INVALID')
+    return bool(aliases.intersection(item.upper() for item in acl))
+
+
+def _target_entry(path, entry, aliases):
+    value = entry.get('value')
+    if entry.get('encoding') != 'json' or not isinstance(value, dict):
+        raise ValueError('CONTEXT_TARGET_FORBIDDEN')
+    if path == 'evolution/board.json':
+        posts = [clean(post) for post in value.get('posts') or []
+                 if isinstance(post, dict) and str(post.get('to') or '').upper() in aliases | {'ALL'}
+                 and _acl_allows(post, aliases)]
+        return {'encoding': 'json', 'value': {'posts': posts}}
+    parts = path.split('/')
+    entity = len(parts) == 3 and parts[0] == 'entities' and parts[1] in {
+        'test', 'run', 'result', 'evidence', 'artifact', 'work', 'handoff', 'recipe'}
+    scientific = len(parts) == 3 and parts[:2] in [
+        ['runtime', 'runs'], ['runtime', 'results'], ['runtime', 'evidence'], ['runtime', 'artifacts']]
+    recipe = len(parts) == 2 and parts[0] == 'recipes'
+    handoff_event = path.startswith('events/') and bool(value.get('handoff_id'))
+    if not (entity or scientific or recipe or handoff_event) or not _acl_allows(value, aliases):
+        raise ValueError('CONTEXT_TARGET_FORBIDDEN')
+    recipient = str(value.get('to_role') or value.get('recipient_role') or value.get('recipient') or '').upper()
+    if handoff_event or entity and parts[1] == 'handoff':
+        if recipient not in aliases:
+            raise ValueError('CONTEXT_TARGET_FORBIDDEN')
+    elif entity and parts[1] == 'work':
+        if str(value.get('owner_role') or '').upper() not in aliases:
+            raise ValueError('CONTEXT_TARGET_FORBIDDEN')
+    elif value.get('private') is True:
+        recipient = str(value.get('to') or value.get('owner_role') or value.get('writer_role') or '').upper()
+        if recipient not in aliases:
+            raise ValueError('CONTEXT_TARGET_FORBIDDEN')
+    return {'encoding': 'json', 'value': clean(value)}
 
 
 def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None,
@@ -35,8 +76,8 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
         locations[path] = source_path or path
     board = files.get('evolution/board.json',{}).get('value',{})
     for post in board.get('posts') or []:
-        if isinstance(post,dict) and post.get('id') and str(post.get('to') or '').upper() in aliases | {'ALL'}:
-            add('board:'+str(post['id']),post,'evolution/board.json')
+        if isinstance(post,dict) and post.get('id') and str(post.get('to') or '').upper() in aliases | {'ALL'} and _acl_allows(post, aliases):
+            add('board:'+str(post['id']),clean(post),'evolution/board.json')
     for path in sorted(files):
         entry = files[path]
         if not isinstance(entry,dict) or entry.get('encoding')!='json' or not isinstance(entry.get('value'),dict):
@@ -46,23 +87,23 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
             handoffs[str(value['handoff_id'])] = (path,value)
         elif path.startswith('entities/handoff/'):
             recipient=str(value.get('recipient_role') or value.get('recipient') or '').upper()
-            if recipient in aliases:
+            if recipient in aliases and _acl_allows(value, aliases):
                 add(path,value)
         elif path.startswith('entities/work/') and str(value.get('owner_role') or '').upper() in aliases:
-            if value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY','VERIFIED'}:
+            if value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY','VERIFIED'} and _acl_allows(value, aliases):
                 add(path,value)
     # Canonical handoffs live in events, not just entity-shaped compatibility
     # records. Match the existing protocol's logical-path ordering and include
     # terminal changes so cursors cannot hide ACK/DONE/FAILED transitions.
     for identity,(source_path,value) in handoffs.items():
-        if str(value.get('to_role') or '').upper() in aliases:
+        if str(value.get('to_role') or '').upper() in aliases and _acl_allows(value, aliases):
             add('handoff:'+identity,value,source_path)
     for path in sorted(set(target_refs or [])):
         _path(path)
         entry=files.get(path)
         if not isinstance(entry,dict):
             raise ValueError('CONTEXT_TARGET_UNAVAILABLE')
-        add(path,entry)
+        add(path,_target_entry(path,entry,aliases))
     # This fingerprint invalidates deltas when security-relevant compatibility
     # fields or authority change; it does not authorize execution or a write.
     authority={key:control[key] for key in sorted(BOOTSTRAP_FIELDS | {'autonomy_mandate','revoked_autonomy_mandates'}) if key in control}

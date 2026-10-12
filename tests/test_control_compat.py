@@ -110,3 +110,18 @@ class ControlCompatTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'LOCAL_CHANGES_PRESENT'):
                 materialize_live_tower(result,root)
             self.assertEqual((root/'CONTROL.json').read_text(),'local unpublished edit')
+
+    def test_malformed_migration_leaves_reused_materialization_byte_identical(self):
+        raw = raw_tower(); migrated, _ = prepare_migration(raw_tower())
+        bundle = json.loads(migrated); bundle['files'].pop(POLICY_PATH)
+        import hashlib
+        revision = 'sha256:' + hashlib.sha256(json.dumps(bundle['files'],ensure_ascii=False,
+            sort_keys=True,separators=(',', ':')).encode()).hexdigest()
+        bundle.update(revision=revision,state_fingerprint=revision,file_count=len(bundle['files']))
+        invalid = json.dumps(bundle).encode()
+        with tempfile.TemporaryDirectory() as work:
+            root, _ = materialize_live_tower(raw, work)
+            before = {str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            with self.assertRaises(ControlCompatibilityError): materialize_live_tower(invalid, root)
+            after = {str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            self.assertEqual(before, after)
