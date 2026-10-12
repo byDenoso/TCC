@@ -153,7 +153,7 @@ def _apply_one_request(root: Path, item: dict, request: dict, *,
 
             publish_live_tower(root)
         return receipt
-    if str(item.get("_inbox_source") or "").upper() != "DRIVE":
+    if str(item.get("_inbox_source") or "").upper() not in {"DRIVE", "DRIVE_SHEET"}:
         return {"accepted": False, "issue": {"code": "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"}}
 
     from . import AgentService, TowerAgentIssue
@@ -1241,9 +1241,27 @@ def _main(argv: list[str]) -> int:
                 verified_capacity_observation = context.get("capacity_observation")
             except (ValueError, OSError, TypeError):
                 pass
+        # The private Sheet ingress is generated solely by the authenticated
+        # Writer workflow at its pinned local path, never from public gateway
+        # item metadata. A broken Sheet input affects only its own envelopes.
+        private_sheet_items = []
+        private_sheet_file = os.environ.get("NEXO_PRIVATE_SHEET_ITEMS", "")
+        if private_sheet_file:
+            try:
+                from .private_spool import validated_private_sheet_items
+                source = json.loads(Path(private_sheet_file).read_text(encoding="utf-8"))
+                private_sheet_items = validated_private_sheet_items(source)
+                print(json.dumps({"private_sheet_ingress": "VALIDATED",
+                                  "count": len(private_sheet_items)}))
+            except (OSError, ValueError, TypeError) as exc:
+                print(json.dumps({"private_sheet_ingress": "REJECTED",
+                                  "error_type": type(exc).__name__,
+                                  "code": str(exc)[:100]}))
+                private_sheet_items = []
         items = [{**entry["envelope"], "_inbox_source": "GATEWAY",
                   "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + str(entry["id"])}
                  for entry in gateway_entries]
+        items.extend(private_sheet_items)
         try:
             tower, inbox = DriveTower(write=True), DriveInbox(write=True)
         except Exception as exc:
