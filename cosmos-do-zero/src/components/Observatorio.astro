@@ -19,13 +19,11 @@ const ext = ' (abre em outra aba)';
   <div class="page-width">
     {variant === 'home' ? (
       <header class="obs-head">
-        <div class="section-id">Observatório · mexa e descubra</div>
         <h2 class="display" id={`${id}-title`}>Mexa nos botões<br /><em>do Universo.</em></h2>
-        <p>Quatro experimentos para quem nunca estudou o assunto. Faça um palpite, mexa e veja o que acontece. Por trás de cada botão estão as mesmas contas que os cientistas usam.</p>
+        <p>Faça um palpite, mexa e veja o que acontece. Por trás de cada botão estão as mesmas contas que os cientistas usam.</p>
       </header>
     ) : (
       <header class="obs-head compact">
-        <div class="section-id">Experimente antes de ler</div>
         <h2 id={`${id}-title`}>{stations.length === 1 ? meta[stations[0]].title : 'Mexa e descubra'}</h2>
       </header>
     )}
@@ -39,13 +37,17 @@ const ext = ' (abre em outra aba)';
     <div class="obs-stations">
       {stations.includes('tempo') && (
         <div class="obs-station" id={panelId('tempo')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('tempo') : undefined} data-station="tempo">
+          <div class="obs-guess" data-guess="b">
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>A luz mais antiga que conseguimos ver saiu quando o Universo tinha…</p>
+            <div class="obs-guess-opts"><button type="button" data-opt="a">alguns segundos</button><button type="button" data-opt="b">uns 380 mil anos</button><button type="button" data-opt="c">uns 1 bilhão de anos</button></div>
+            <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Uns 380 mil anos. Antes disso o Universo era uma névoa quente que não deixava a luz passar. Quando clareou, essa luz partiu e viaja até hoje. No caminho ela foi esticada tanto que virou micro-ondas, o mesmo tipo de onda do forno da sua cozinha (só que bem mais fraca).</p><button type="button" class="obs-go" data-t-go="1090">Ver na máquina do tempo</button></div>
+          </div>
           <div class="obs-grid">
             <figure class="obs-viz">
               <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo, tamanho do Universo e a cor da luz que chega. Os valores aparecem ao lado."></svg>
-              <figcaption>Desenho esquemático. Os números vêm do modelo que melhor descreve o Universo hoje.</figcaption>
             </figure>
             <div class="obs-panel">
-              <span class="obs-kicker">Experimento 01</span>
               <h3>Máquina do tempo</h3>
               <p class="obs-lede">A luz demora para viajar. Por isso, <strong>olhar para longe é olhar para o passado</strong>. Arraste e veja como era o Universo quando a luz saiu de lá.</p>
               <label class="obs-slider" for={`${id}-t-range`}>Olhar mais longe <output data-t-z for={`${id}-t-range`}>agora</output></label>
@@ -73,11 +75,6 @@ const ext = ' (abre em outra aba)';
             </div>
           </div>
           <article class="obs-epoch" data-t-epoch><span class="obs-tag" data-t-epoch-kind>Sabemos · observado</span><h4 data-t-epoch-title></h4><p data-t-epoch-text></p></article>
-          <div class="obs-guess" data-guess="b">
-            <p class="obs-guess-q"><span class="meta">Faça um palpite</span>A luz mais antiga que conseguimos ver saiu quando o Universo tinha…</p>
-            <div class="obs-guess-opts"><button type="button" data-opt="a">alguns segundos</button><button type="button" data-opt="b">uns 380 mil anos</button><button type="button" data-opt="c">uns 1 bilhão de anos</button></div>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Uns 380 mil anos. Antes disso o Universo era uma névoa quente que não deixava a luz passar. Quando clareou, essa luz partiu e viaja até hoje. No caminho ela foi esticada tanto que virou micro-ondas, o mesmo tipo de onda do forno da sua cozinha (só que bem mais fraca).</p><button type="button" class="obs-go" data-t-go="1090">Ver na máquina do tempo</button></div>
-          </div>
           <details class="obs-tech">
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
@@ -92,13 +89,17 @@ const ext = ' (abre em outra aba)';
 
       {stations.includes('expansao') && (
         <div class="obs-station" id={panelId('expansao')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('expansao') : undefined} data-station="expansao">
+          <div class="obs-guess" data-guess="c">
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Você mudou de galáxia. Onde fica o centro dessa expansão?</p>
+            <div class="obs-guess-opts"><button type="button" data-opt="a">Na galáxia de antes</button><button type="button" data-opt="b">Na galáxia onde estou agora</button><button type="button" data-opt="c">Em lugar nenhum</button></div>
+            <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Em lugar nenhum. De qualquer galáxia, você vê todas as outras se afastando, e as mais distantes mais depressa. Ninguém está no meio. É isso que os telescópios mostram em grande escala. Coisas presas pela gravidade, como o Sistema Solar ou a nossa galáxia, não crescem.</p></div>
+          </div>
           <div class="obs-grid">
             <figure class="obs-viz">
               <svg data-e-svg viewBox="0 0 640 400" role="group" aria-label="Grade de galáxias. Escolha uma galáxia para ver o Universo a partir dela."></svg>
-              <figcaption>Desenho simplificado: galáxias de verdade não ficam em fileiras. O espaço não tem borda; aqui você vê só um pedaço.</figcaption>
             </figure>
             <div class="obs-panel">
-              <span class="obs-kicker">Experimento 02</span>
               <h3>O espaço crescendo</h3>
               <p class="obs-lede">Cada ponto é uma galáxia. Pense em passas num bolo crescendo no forno: <strong>o bolo cresce e todas as passas se afastam umas das outras</strong>. Toque em qualquer galáxia para morar nela e depois deixe o espaço crescer.</p>
               <label class="obs-slider" for={`${id}-e-range`}>Quanto o espaço cresceu <output data-e-scale for={`${id}-e-range`}>1,00 ×</output></label>
@@ -111,11 +112,6 @@ const ext = ' (abre em outra aba)';
               <div class="obs-reading" data-e-reading></div>
               <figure class="obs-plot"><svg data-e-plot viewBox="0 0 560 230" role="img" aria-label="Gráfico: quanto mais longe a galáxia estava, mais ela se afastou, formando uma linha reta"></svg><figcaption>Cada ponto é uma galáxia. Todos caem na mesma linha reta: o dobro da distância, o dobro do afastamento.</figcaption></figure>
             </div>
-          </div>
-          <div class="obs-guess" data-guess="c">
-            <p class="obs-guess-q"><span class="meta">Faça um palpite</span>Você mudou de galáxia. Onde fica o centro dessa expansão?</p>
-            <div class="obs-guess-opts"><button type="button" data-opt="a">Na galáxia de antes</button><button type="button" data-opt="b">Na galáxia onde estou agora</button><button type="button" data-opt="c">Em lugar nenhum</button></div>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Em lugar nenhum. De qualquer galáxia, você vê todas as outras se afastando, e as mais distantes mais depressa. Ninguém está no meio. É isso que os telescópios mostram em grande escala. Coisas presas pela gravidade, como o Sistema Solar ou a nossa galáxia, não crescem.</p></div>
           </div>
           <details class="obs-tech">
             <summary>Para quem quer os nomes técnicos</summary>
@@ -130,13 +126,17 @@ const ext = ' (abre em outra aba)';
 
       {stations.includes('hubble') && (
         <div class="obs-station" id={panelId('hubble')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('hubble') : undefined} data-station="hubble">
+          <div class="obs-guess" data-guess="c">
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Antes de medir: as galáxias mais distantes se afastam…</p>
+            <div class="obs-guess-opts"><button type="button" data-opt="a">mais devagar</button><button type="button" data-opt="b">na mesma velocidade</button><button type="button" data-opt="c">mais depressa</button></div>
+            <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Mais depressa: o dobro da distância, mais ou menos o dobro da velocidade. A inclinação dessa reta diz o ritmo em que o Universo cresce hoje. Galáxias próximas atrapalham um pouco, porque elas também têm seus próprios movimentos.</p></div>
+          </div>
           <div class="obs-grid">
             <figure class="obs-viz">
               <svg data-h-sky viewBox="0 0 640 400" role="group" aria-label="Céu com galáxias inventadas. Escolha uma para medir."></svg>
-              <figcaption>Galáxias inventadas para o jogo, com erros de medida parecidos com os de verdade. Cada "céu novo" sorteia outras.</figcaption>
             </figure>
             <div class="obs-panel">
-              <span class="obs-kicker">Experimento 03</span>
               <h3>Meça como Hubble</h3>
               <p class="obs-lede">Em 1929, o astrônomo Edwin Hubble mediu galáxias e percebeu que <strong>as mais distantes se afastam mais depressa</strong>. Foi a pista de que o Universo cresce. Agora é a sua vez: toque nas galáxias para medir.</p>
               <div class="obs-actions">
@@ -160,11 +160,6 @@ const ext = ' (abre em outra aba)';
               <button type="button" class="obs-btn ghost" data-h-reveal hidden>Mostrar o valor certo do jogo</button>
             </div>
           </div>
-          <div class="obs-guess" data-guess="c">
-            <p class="obs-guess-q"><span class="meta">Faça um palpite</span>Antes de medir: as galáxias mais distantes se afastam…</p>
-            <div class="obs-guess-opts"><button type="button" data-opt="a">mais devagar</button><button type="button" data-opt="b">na mesma velocidade</button><button type="button" data-opt="c">mais depressa</button></div>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Mais depressa: o dobro da distância, mais ou menos o dobro da velocidade. A inclinação dessa reta diz o ritmo em que o Universo cresce hoje. Galáxias próximas atrapalham um pouco, porque elas também têm seus próprios movimentos.</p></div>
-          </div>
           <details class="obs-tech">
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
@@ -178,14 +173,18 @@ const ext = ' (abre em outra aba)';
 
       {stations.includes('receita') && (
         <div class="obs-station" id={panelId('receita')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('receita') : undefined} data-station="receita">
+          <div class="obs-guess" data-guess="b">
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Se o Universo tivesse só matéria, sem energia escura, a expansão…</p>
+            <div class="obs-guess-opts"><button type="button" data-opt="a">aceleraria</button><button type="button" data-opt="b">ia freando, sem nunca parar</button><button type="button" data-opt="c">pararia e tudo voltaria a encolher</button></div>
+            <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com a quantidade "certinha" de matéria, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Com matéria demais, pararia e voltaria a encolher. Mas o que vemos é outra coisa: hoje a expansão está acelerando. Por isso existe a ideia de energia escura.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
+          </div>
           <div class="obs-grid">
             <figure class="obs-viz" data-r-chartwrap>
               <svg data-r-chart viewBox="0 0 640 400" role="img" aria-label="Gráfico do tamanho do Universo ao longo do tempo para a receita escolhida, comparado com o nosso Universo. Os resultados aparecem ao lado."></svg>
               <p class="obs-warn" data-r-warn hidden role="status">Com essa receita o Universo nunca teria começado pequeno e quente. Não é o nosso caso. Ponha mais matéria ou menos energia escura.</p>
-              <figcaption>Linha contínua: a sua receita. Linha tracejada: o nosso Universo. As contas são as mesmas que os cosmólogos usam, numa versão simplificada.</figcaption>
             </figure>
             <div class="obs-panel">
-              <span class="obs-kicker">Experimento 04</span>
               <h3>Do que o Universo é feito</h3>
               <p class="obs-lede">O que existe no Universo decide o que acontece com ele. A <strong>matéria</strong> puxa tudo para junto e freia a expansão. A <strong>energia escura</strong>, algo que ainda não entendemos, faz a expansão acelerar. Mude a receita e veja o futuro mudar.</p>
               <div class="obs-chips" role="group" aria-label="Receitas prontas">
@@ -223,11 +222,6 @@ const ext = ' (abre em outra aba)';
               <p>Idade com esta receita: <strong data-r-t-local>—</strong></p>
             </div>
           </aside>
-          <div class="obs-guess" data-guess="b">
-            <p class="obs-guess-q"><span class="meta">Faça um palpite</span>Se o Universo tivesse só matéria, sem energia escura, a expansão…</p>
-            <div class="obs-guess-opts"><button type="button" data-opt="a">aceleraria</button><button type="button" data-opt="b">ia freando, sem nunca parar</button><button type="button" data-opt="c">pararia e tudo voltaria a encolher</button></div>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com a quantidade "certinha" de matéria, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Com matéria demais, pararia e voltaria a encolher. Mas o que vemos é outra coisa: hoje a expansão está acelerando. Por isso existe a ideia de energia escura.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
-          </div>
           <details class="obs-tech">
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>

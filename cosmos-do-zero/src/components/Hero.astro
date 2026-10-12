@@ -13,22 +13,19 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   <Header />
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
     <figure class="cmb-hero" data-cmb>
-      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da luz mais antiga do Universo, no estilo do satélite Planck. Use as setas do teclado para explorar as manchas mais quentes e mais frias.">
+      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa da luz mais antiga do Universo. Use as setas do teclado para explorar as manchas mais quentes e mais frias.">
         <canvas data-cmb-canvas width="480" height="240"></canvas>
         <span class="cmb-probe" data-cmb-probe hidden></span>
       </div>
       <figcaption>
         <p class="cmb-read" data-cmb-read aria-live="polite">Esta é a luz mais antiga do Universo. Passe o dedo ou o mouse sobre o mapa.</p>
         <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
-        <span class="cmb-note">Mapa simulado no estilo do satélite Planck, para explorar. Não é o mapa real.</span>
         <a class="cmb-go" href="?lab=tempo&amp;z=1090#observatorio">De onde vem essa luz? Viaje até ela →</a>
       </figcaption>
     </figure>
     <div class="hero-copy">
-      <div class="hero-overline"><span class="dash"></span><span>COSMOLOGIA PARA QUEM NUNCA ESTUDOU</span></div>
       <h1 id="hero-title">Toda luz é<br /><span class="serif">uma carta</span><br />do passado.</h1>
       <div class="hero-sub">
-        <span class="idx">01&nbsp;/&nbsp;04</span>
         <p>Tudo o que sabemos sobre o Universo chegou até nós como luz. A cosmologia aprende a ler essas cartas. Aqui você lê junto, mexendo nos instrumentos, sem precisar saber nada antes.</p>
       </div>
       <div class="hero-actions">
@@ -38,7 +35,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     </div>
   </section>
   <div class="hero-foot page-width">
-    <div class="hero-foot-left"><span class="rail"></span><span class="meta">Sabemos · Calculamos · Ainda não sabemos</span></div>
+    <div class="hero-foot-left"></div>
     <div class="hero-foot-center">
       <div><span class="number">13,8</span><span class="statcopy">bilhões de anos</span></div>
       <div><span class="number">1 : 100 mil</span><span class="statcopy">variação de temperatura</span></div>

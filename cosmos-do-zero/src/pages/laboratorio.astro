@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Timeline from '../components/Timeline.astro';
+import PlanetCatalog from '../components/PlanetCatalog.astro';
+import Lab from '../components/Lab.astro';
+import { extraRows } from '../data';
+import { chapterUrl } from '../lib/url';
+import '../styles/home.css';
+---
+<Base title="Mais experimentos · Cosmos do Zero" description="Linha do tempo do Universo, os oito planetas lado a lado e a vida das estrelas: experimentos para continuar explorando depois das aulas.">
+  <div id="topo"><Header variant="solid" /></div>
+  <main id="principal" class="subpage">
+    <header class="subpage-head page-width">
+      <h1 class="display">Continue<br /><em>por onde quiser.</em></h1>
+      <p>Linha do tempo do Universo, planetas lado a lado e a vida das estrelas. Cada parte funciona sozinha: escolha a que despertar mais curiosidade.</p>
+      <nav class="subpage-jump" aria-label="Nesta página">
+        <a href="#tempo">Linha do tempo</a><a href="#planetas">Os oito planetas</a><a href="#laboratorio">Comparar mundos e estrelas</a><a href="#leituras">Leituras extras</a>
+      </nav>
+    </header>
+    <Timeline />
+    <PlanetCatalog />
+    <Lab />
+    <section class="extra-section" id="leituras" aria-labelledby="extras-title">
+      <div class="page-width extra-intro"><h2 id="extras-title">Estrelas, planetas e a nossa casa</h2></div>
+      <div class="extra-reading-links page-width">{extraRows.map((r) => <a href={chapterUrl(r.id)}><span class="meta">Leitura complementar</span><h3>{r.title}</h3><p>{r.teaser}</p><span class="textlink">Abrir capítulo ↗</span></a>)}</div>
+    </section>
+  </main>
+</Base>

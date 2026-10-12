@@ -17,7 +17,7 @@
 .chapter-photo figcaption a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; margin-left: 6px; }
 .chapter-concept { position: relative; margin: 0; background: var(--bg-alt); color: var(--accent-ink); }
 .chapter-concept img { display: block; width: 100%; height: clamp(270px, 34vw, 460px); object-fit: cover; }
-.chapter-concept figcaption { padding: 15px var(--gutter); text-align: center; font-size: 10px; line-height: 1.65; letter-spacing: .09em; }
+.chapter-concept figcaption { padding: 15px var(--gutter); text-align: center; font-size: 12px; line-height: 1.65; letter-spacing: .09em; }
 .reader-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 90px; padding-block: 65px 20px; }
 .reader-aside { align-self: start; position: sticky; top: 25px; max-height: calc(100dvh - 50px); overflow: auto; }
 .reader-aside > .meta { color: var(--muted); }
@@ -25,19 +25,19 @@
 .reader-aside nav a { display: flex; gap: 14px; border-bottom: 1px solid color-mix(in srgb, var(--line) 20%, transparent); padding: 12px 0 12px 10px; margin-left: -10px; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); border-left: 2px solid transparent; transition: color 0.2s, border-color 0.2s, background 0.2s; }
 .reader-aside nav a:hover { color: var(--ink); }
 .reader-aside nav a[aria-current] { color: var(--ink); font-weight: 650; border-left-color: var(--accent); background: var(--surface); }
-.reader-aside nav span { color: var(--accent-ink); font-size: 10px; padding-top: 2px; font-weight: 800; letter-spacing: 0.08em; }
+.reader-aside nav span { color: var(--accent-ink); font-size: 12px; padding-top: 2px; font-weight: 800; letter-spacing: 0.08em; }
 .reader-note { font-size: 12px; line-height: 1.7; color: var(--muted); margin: 24px 0 12px; }
 .depth-controls { display: flex; flex-direction: column; gap: 7px; }
 .depth-controls button { border: 1px solid color-mix(in srgb, var(--line) 33%, transparent); color: var(--ink-2); background: none; text-align: left; min-height: 44px; padding: 12px; font-size: 12px; transition: background 0.2s, color 0.2s; }
 .depth-controls button:hover { background: var(--surface); }
 .depth-controls button[aria-pressed='true'] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
-.glossary-link { display: inline-block; margin-top: 24px; font-size: 12px; color: var(--accent-ink); border-bottom: 1px solid var(--accent); padding-bottom: 5px; }
+.glossary-link { display: inline-block; margin-top: 24px; font-size: 13px; color: var(--accent-ink); border-bottom: 1px solid var(--accent); padding-bottom: 5px; }
 .reader-content { min-width: 0; max-width: 850px; }
 .lesson-section { padding: 34px 0 40px; border-top: 1px solid color-mix(in srgb, var(--line) 33%, transparent); scroll-margin-top: 35px; }
 .lesson-section:first-child { padding-top: 0; border-top: 0; }
 .lesson-meta { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
 .lesson-meta > .meta { color: var(--accent-ink); }
-.evidence-label { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.04em; color: var(--ink-2); border: 1px solid var(--line-strong); padding: 6px 10px; }
+.evidence-label { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-2); border: 1px solid var(--line-strong); padding: 6px 10px; }
 .evidence-label::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
 .evidence-label[data-kind='Modelo físico']::before { background: var(--accent); border-radius: 1px; transform: rotate(45deg); }
 .evidence-label[data-kind='Questão aberta']::before { background: transparent; border: 1.5px dashed var(--line-strong); }
@@ -50,8 +50,8 @@
 .equation div { font-family: var(--serif); font-size: 29px; letter-spacing: -0.01em; text-align: center; color: var(--ink-2); }
 .equation figcaption { font-size: 12px; line-height: 1.7; color: var(--muted); margin-top: 17px; }
 .lesson-sources { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 20px; line-height: 1.8; }
-.lesson-sources span { font-size: 11px; color: var(--muted); }
-.lesson-sources a { font-size: 11px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.lesson-sources span { font-size: 12px; color: var(--muted); }
+.lesson-sources a { font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .chapter-check { padding: 45px 0 55px; border-top: 1px solid color-mix(in srgb, var(--line) 33%, transparent); }
 .chapter-check h2 { font-size: 36px; line-height: 1.15; letter-spacing: -0.022em; margin: 25px 0; }
 .chapter-check h2 em { color: var(--accent-ink); }
@@ -76,20 +76,20 @@
   .reader-opening h1 { font-size: clamp(40px, 11.6vw, 66px); }
   .reader-intro { font-size: 18px; line-height: 1.75; }
   .chapter-photo img { height: 240px; }
-  .chapter-photo figcaption { font-size: 11px; }
+  .chapter-photo figcaption { font-size: 12px; }
   .chapter-concept { min-height: 240px; }
 
   .reader-grid { grid-template-columns: 1fr; gap: 40px; padding-top: 35px; }
   .reader-aside { position: static; max-height: none; overflow: visible; }
   .reader-aside nav { display: grid; grid-template-columns: 1fr 1fr; gap: 0 15px; }
-  .reader-aside nav a { font-size: 11.5px; margin-left: 0; padding-left: 0; border-left: 0; }
+  .reader-aside nav a { font-size: 12px; margin-left: 0; padding-left: 0; border-left: 0; }
   .reader-aside nav a[aria-current] { background: none; }
   .depth-controls { flex-direction: row; flex-wrap: wrap; }
-  .depth-controls button { flex: 1 1 auto; min-width: 90px; font-size: 11.5px; padding: 12px 8px; }
+  .depth-controls button { flex: 1 1 auto; min-width: 90px; font-size: 12px; padding: 12px 8px; }
   .lesson-section h2 { font-size: 30px; }
   .lesson-section p { font-size: 16px; line-height: 1.85; }
   .lesson-meta { gap: 10px; }
-  .evidence-label { font-size: 10px; padding: 5px 8px; }
+  .evidence-label { font-size: 12px; padding: 5px 8px; }
   .equation { padding: 20px 13px; }
   .equation div { font-size: 22px; }
   .chapter-check h2 { font-size: 30px; }

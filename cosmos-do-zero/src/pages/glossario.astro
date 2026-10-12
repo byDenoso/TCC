@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import Glossary from '../components/Glossary.astro';
+import '../styles/home.css';
+---
+<Base title="Dicionário do cosmos · Cosmos do Zero" description="As palavras da cosmologia explicadas com exemplos do dia a dia: ano-luz, redshift, matéria escura, energia escura e outras.">
+  <div id="topo"><Header variant="solid" /></div>
+  <main id="principal" class="subpage"><Glossary /></main>
+</Base>

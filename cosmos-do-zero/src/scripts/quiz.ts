@@ -60,6 +60,7 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     next.focus({ preventScroll: true });
   };
   const renderResult = () => {
+    root.dispatchEvent(new CustomEvent('cosmos:quiz-done', { bubbles: true, detail: { chapter: opts.inChapter ? opts.chapter : '', hits: score(state), total: state.pool.length } }));
     const hits = score(state), total = state.pool.length, wrong = missed(state);
     counter.textContent = 'JORNADA DE PERGUNTAS CONCLUÍDA';
     question.replaceChildren();

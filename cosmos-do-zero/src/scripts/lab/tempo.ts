@@ -1,5 +1,5 @@
 import { PLANCK, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, lookbackGyr, observedWavelengthNm, zAcceleration } from '../../lib/cosmology';
-import { clear, duration, fmt, fmtAuto, initGuess, lightYears, q, qa, svg } from './common';
+import { clear, duration, fmt, fmtAuto, initGuess, lightYears, q, qa, reduced, svg } from './common';
 import { getParam, setParams } from '../../lib/url-state';
 
 const Z_MAX = 1100;
@@ -136,6 +136,7 @@ export function initTempo(root: HTMLElement): void {
     seenText.setAttribute('x', String(Math.min(spX + spW - 40, Math.max(spX + 40, x))));
     seenText.textContent = z < 0.005 ? '' : `chega como ${bandShort(lam)}`;
     seenArrow.setAttribute('visibility', z < 0.005 ? 'hidden' : 'visible');
+    if (z >= 1000) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'luz-antiga' } }));
     const ep = epochFor(z);
     q(epochBox, '[data-t-epoch-title]').textContent = ep.title;
     q(epochBox, '[data-t-epoch-text]').textContent = ep.text(z);
@@ -146,11 +147,27 @@ export function initTempo(root: HTMLElement): void {
     setParams({ z: z < 0.005 ? null : z < 10 ? z.toFixed(2) : String(Math.round(z)) });
   };
 
-  range.addEventListener('input', () => { exact = null; render(); });
-  presets.forEach((b) => b.addEventListener('click', () => { exact = Number(b.dataset.tPreset); range.value = String(pOf(exact)); render(); }));
+  range.addEventListener('input', () => { cancelAnimationFrame(tween); exact = null; render(); });
+  // Viagem animada até o ponto escolhido (em escala logarítmica, como o controle)
+  let tween = 0;
+  const travelTo = (z: number) => {
+    cancelAnimationFrame(tween);
+    const from = Number(range.value), to = pOf(z);
+    if (reduced() || from === to) { exact = z; range.value = String(to); render(); return; }
+    const t0 = performance.now(), dur = 700 + Math.min(900, Math.abs(to - from) * 1.4);
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+      range.value = String(Math.round(from + (to - from) * e));
+      exact = k >= 1 ? z : null;
+      render();
+      if (k < 1) tween = requestAnimationFrame(step);
+    };
+    tween = requestAnimationFrame(step);
+  };
+  presets.forEach((b) => b.addEventListener('click', () => travelTo(Number(b.dataset.tPreset))));
   const fromUrl = Number(getParam('z'));
   if (Number.isFinite(fromUrl) && fromUrl > 0 && fromUrl <= Z_MAX) { exact = fromUrl; range.value = String(pOf(fromUrl)); }
-  initGuess(root);
-  qa<HTMLButtonElement>(root, '[data-t-go]').forEach((b) => b.addEventListener('click', () => { exact = Number(b.dataset.tGo); range.value = String(pOf(exact)); render(); range.focus({ preventScroll: true }); }));
+  initGuess(root, { unlocked: Number.isFinite(fromUrl) && fromUrl > 0 });
+  qa<HTMLButtonElement>(root, '[data-t-go]').forEach((b) => b.addEventListener('click', () => { travelTo(Number(b.dataset.tGo)); range.focus({ preventScroll: true }); }));
   render();
 }

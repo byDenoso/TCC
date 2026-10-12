@@ -11,12 +11,23 @@ export function initScenes(): void {
     if (root.dataset.scene === 'scale') {
       const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scale-step]')];
       const panels = [...root.querySelectorAll<HTMLElement>('[data-scale-panel]')];
-      const visuals = [...root.querySelectorAll<HTMLImageElement>('[data-scale-visual]')];
+      const visuals = [...root.querySelectorAll<SVGGElement | HTMLElement>('[data-scale-visual]')];
+      let shown = 0;
       const select = (index: number) => {
         buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(i === index)));
         panels.forEach((p, i) => p.hidden = i !== index);
-        visuals.forEach((v,i) => v.dataset.hidden = String(i !== index));
-        status.textContent = `Escala ${index + 1} de 5: ${buttons[index].textContent?.split('·')[1]?.trim()}. ${panels[index].querySelector('.scene-unit')?.textContent}. Quadros conceituais; não é um zoom em escala contínua.`;
+        // Zoom: ao ir para uma escala maior, o quadro atual encolhe até virar um ponto e o próximo chega de perto
+        const from = visuals[shown], to = visuals[index], out = index > shown;
+        if (from && to && from !== to && !reduced.matches && 'animate' in to) {
+          const ease = 'cubic-bezier(0.2, 0.7, 0.2, 1)';
+          from.dataset.hidden = 'false';
+          from.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(${out ? 0.08 : 6})`, opacity: 0 }], { duration: 900, easing: ease }).finished.then(() => { if (shown !== visuals.indexOf(from)) from.dataset.hidden = 'true'; }).catch(() => {});
+          to.dataset.hidden = 'false';
+          to.animate([{ transform: `scale(${out ? 5 : 0.1})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, easing: ease });
+          visuals.forEach((v) => { if (v !== from && v !== to) v.dataset.hidden = 'true'; });
+        } else visuals.forEach((v,i) => v.dataset.hidden = String(i !== index));
+        shown = index;
+        status.textContent = `Escala ${index + 1} de 5: ${buttons[index].textContent?.split('·')[1]?.trim()}. ${panels[index].querySelector('.scene-unit')?.textContent}. Ilustração esquemática; não é um zoom em escala contínua.`;
       };
       buttons.forEach((b,i) => b.addEventListener('click', () => select(i)));
       select(0);

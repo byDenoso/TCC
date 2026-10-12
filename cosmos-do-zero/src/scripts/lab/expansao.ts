@@ -85,6 +85,7 @@ export function initExpansao(root: HTMLElement): void {
   const render = (): void => {
     const s = Number(range.value);
     out.textContent = `${fmt(s, 2)} ×`;
+    if (moved && s >= 1.5) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'sem-centro' } }));
     place(s);
     const near = 1, far = 4, k = s - 1;
     reading.innerHTML = '';
@@ -98,7 +99,8 @@ export function initExpansao(root: HTMLElement): void {
     live.textContent = `O espaço cresceu ${fmt(s, 2)} vezes. Você está na galáxia ${obs.i + 1}. ${k < 0.005 ? 'Nada se afastou ainda.' : `Quem estava a ${far} passos afastou-se ${fmt(k * far, 1)}; quem estava a ${near}, ${fmt(k * near, 1)}.`}`;
   };
 
-  const choose = (g: G): void => { if (!g.selectable) return; obs = g; render(); };
+  let moved = false;
+  const choose = (g: G): void => { if (!g.selectable) return; if (g !== obs) moved = true; obs = g; render(); };
   for (const g of selectables) {
     g.node.addEventListener('click', () => choose(g));
     g.node.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(g); } });

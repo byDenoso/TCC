@@ -14,7 +14,6 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
 ---
 <section class="lab-section dark" id="laboratorio" aria-labelledby="lab-title">
   <div class="page-width">
-    <div class="section-id">04 / Explore com as próprias perguntas</div>
     <div class="lab-intro">
       <h2 class="display" id="lab-title">Mude uma escolha.<br /><em>Descubra uma relação.</em></h2>
       <nav aria-label="Experiências">
@@ -93,7 +92,6 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         {star.steps.map((s, i) => <li><span>{String(i + 1).padStart(2, '0')}</span><p>{s}</p></li>)}
       </ol>
       <p class="experience-note" data-star-note>{star.note}</p>
-      <p class="experience-note">Render conceitual de estrela por IA, sem escala física. A imagem é fixa e não representa um resultado quantitativo: a massa, o percurso e os tempos didáticos estão descritos no texto.</p>
       <a class="textlink" href={chapterUrl('vida-das-estrelas')}>Entender o mecanismo por trás do caminho <span aria-hidden="true">↗</span></a>
     </section>
   </div>

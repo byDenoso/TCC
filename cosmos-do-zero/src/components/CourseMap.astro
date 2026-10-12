@@ -1,0 +1,26 @@
+---
+import { primaryRows, chapters } from '../data';
+import { chapterUrl, u } from '../lib/url';
+// Trilha do curso como uma constelação: cada aula é uma estrela; o desafio fecha a figura.
+const pos = [{ x: 12.5, y: 70 }, { x: 43, y: 42 }, { x: 75, y: 62 }];
+const nodes = primaryRows.map((row, i) => {
+  const ch = chapters.find((c) => c.id === row.id)!;
+  return { id: row.id, href: chapterUrl(row.id), label: `Aula ${i + 1} · ${ch.minutes} min`, title: row.title, ...pos[i] };
+});
+---
+<nav class="course-map" aria-label="Trilha do curso" data-course-map>
+  <svg class="course-lines" viewBox="0 0 1200 240" preserveAspectRatio="none" aria-hidden="true">
+    <path class="course-path-bg" d="M150 168 C 300 70, 400 70, 516 101 S 780 200, 900 149 S 1050 70, 1104 79" />
+    <path class="course-path" pathLength="1" d="M150 168 C 300 70, 400 70, 516 101 S 780 200, 900 149 S 1050 70, 1104 79" data-course-progress />
+  </svg>
+  <ol>
+    {nodes.map((n) => (
+      <li style={`--x:${n.x}%;--y:${n.y}%`} data-course-node={n.id} data-state="todo">
+        <a href={n.href}><span class="course-star" aria-hidden="true"></span><span class="course-label"><small>{n.label}</small><strong>{n.title}</strong><em data-course-state>Comece por aqui</em></span></a>
+      </li>
+    ))}
+    <li style="--x:92%;--y:33%" data-course-node="desafio" data-state="todo" class="is-final">
+      <a href={u('/#desafio')}><span class="course-star" aria-hidden="true"></span><span class="course-label"><small>Final</small><strong>Desafio</strong><em data-course-state>Teste o que aprendeu</em></span></a>
+    </li>
+  </ol>
+</nav>

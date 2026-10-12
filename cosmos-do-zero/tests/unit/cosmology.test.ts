@@ -58,3 +58,16 @@ describe('ajuste de Hubble', () => {
   });
   it('precisa de ≥ 2 pontos', () => expect(fitHubble([{ d: 1, v: 70 }])).toBeNull());
 });
+
+import { linkTerms } from '../../src/lib/terms';
+describe('termos no texto', () => {
+  const terms = [{ term: 'Galáxia', definition: 'd', example: 'e', chapter: 'galaxias-e-nebulosas' }, { term: 'Ano-luz', definition: 'd', example: 'e', chapter: 'galaxias-e-nebulosas' }] as never[];
+  it('marca só a primeira ocorrência, com plural e sem quebrar palavras', () => {
+    const used = new Set<string>();
+    const seg = linkTerms('As galáxias ficam a milhões de anos-luz; outra galáxia também.', terms, used);
+    const marked = seg.filter((s) => 'term' in s).map((s) => s.text);
+    expect(marked).toEqual(['galáxias', 'anos-luz']);
+    expect(seg.map((s) => s.text).join('')).toBe('As galáxias ficam a milhões de anos-luz; outra galáxia também.');
+    expect(linkTerms('Uma galáxia.', terms, used).every((s) => !('term' in s))).toBe(true);
+  });
+});

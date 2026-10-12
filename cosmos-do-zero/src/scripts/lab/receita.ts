@@ -25,6 +25,7 @@ export function initReceita(root: HTMLElement): void {
   const ref = scaleCurve(PLANCK, ageNow(PLANCK) + 45);
   const refAge = ageNow(PLANCK);
 
+  let drawNext = true;
   const params = (): Cosmos => ({ om: Number(sOm.value), ol: Number(sOl.value), h0: Number(sH0.value) });
   const set = (p: Cosmos): void => { sOm.value = String(p.om); sOl.value = String(p.ol); sH0.value = String(p.h0); render(); };
 
@@ -50,7 +51,8 @@ export function initReceita(root: HTMLElement): void {
     const g = svg('g', { 'clip-path': 'url(#r-clip)' }, chart);
     const path = (c: { t: number[]; a: number[] }, shift: number) => c.t.map((t, i) => `${i ? 'L' : 'M'}${X(t - shift).toFixed(1)} ${Y(c.a[i]).toFixed(1)}`).join('');
     svg('path', { d: path(ref, refAge), class: 'r-ref' }, g);
-    svg('path', { d: path(curve, age), class: 'r-curve' }, g);
+    svg('path', { d: path(curve, age), class: drawNext ? 'r-curve is-draw' : 'r-curve', pathLength: 1 }, g);
+    drawNext = false;
     svg('circle', { cx: X(0), cy: Y(1), r: 5, class: 'r-now' }, chart);
     svg('circle', { cx: X(-age), cy: Y(0), r: 4, class: 'r-bang' }, chart);
     svg('text', { x: Math.min(X(-age) + 8, W - 120), y: Y(0) - 8, class: 'obs-cap warm' }, chart, 'início (Big Bang)');
@@ -95,11 +97,12 @@ export function initReceita(root: HTMLElement): void {
   };
 
   [sOm, sOl, sH0].forEach((s) => s.addEventListener('input', render));
-  chips.forEach((b) => b.addEventListener('click', () => set(scenarios[b.dataset.rScenario!])));
+  const tried = new Set<string>();
+  chips.forEach((b) => b.addEventListener('click', () => { drawNext = true; set(scenarios[b.dataset.rScenario!]); tried.add(b.dataset.rScenario!); if (tried.size >= 3) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'receita' } })); }));
   qa<HTMLButtonElement>(root, '[data-r-h0set]').forEach((b) => b.addEventListener('click', () => { sH0.value = b.dataset.rH0set!; render(); }));
   const num = (k: string, lo: number, hi: number): number | null => { const v = Number(getParam(k)); return getParam(k) !== null && Number.isFinite(v) && v >= lo && v <= hi ? v : null; };
   const om = num('om', 0.05, 2), ol = num('ol', 0, 1.5), h0 = num('h0', 50, 90);
   set({ om: om ?? PLANCK.om, ol: ol ?? PLANCK.ol, h0: h0 ?? PLANCK.h0 });
-  initGuess(root);
+  initGuess(root, { unlocked: om !== null || ol !== null || h0 !== null });
   qa<HTMLButtonElement>(root, '[data-r-go]').forEach((b) => b.addEventListener('click', () => { set(scenarios[b.dataset.rGo!]); }));
 }

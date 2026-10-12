@@ -1,0 +1,16 @@
+---
+import { u } from '../lib/url';
+const cards = [
+  { href: '/laboratorio/', kicker: 'Mais experimentos', title: 'Linha do tempo, planetas e estrelas', text: 'Viaje pelos marcos do Universo, compare mundos e acompanhe a vida de uma estrela.' },
+  { href: '/glossario/', kicker: 'Dicionário', title: 'As palavras do cosmos, com exemplos', text: 'Ano-luz, redshift, matéria escura: cada termo explicado com uma comparação do dia a dia.' },
+  { href: '/fontes/', kicker: 'Fontes e imagens', title: 'De onde vem cada explicação', text: 'Referências, créditos e como separamos o que sabemos, o que calculamos e o que ainda não sabemos.' }
+];
+---
+<section class="continue-strip" id="continue" aria-labelledby="continue-title">
+  <div class="page-width">
+    <h2 class="visually-hidden" id="continue-title">Continue explorando</h2>
+    <div class="continue-cards">
+      {cards.map((c) => <a class="continue-card" href={u(c.href)}><span class="meta">{c.kicker}</span><h3>{c.title}</h3><p>{c.text}</p><span class="continue-arrow" aria-hidden="true">→</span></a>)}
+    </div>
+  </div>
+</section>

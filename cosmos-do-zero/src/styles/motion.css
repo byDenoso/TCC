@@ -1,0 +1,178 @@
+/* ───────────── Sistema de movimento ─────────────
+   Durações: --t-fast 180ms (respostas de toque), --t-mid 420ms (estado), --t-slow 900ms (entradas).
+   Uma curva para tudo: --ease. Quem prefere menos movimento recebe estados estáticos. */
+:root { --t-fast: 180ms; --t-mid: 420ms; --t-slow: 900ms; --ease-out-back: cubic-bezier(.3, 1.4, .5, 1); }
+
+/* Estrelas da abertura: visíveis nos dois temas */
+.star { background: var(--ink) !important; }
+[data-theme='dark'] .star { box-shadow: 0 0 4px color-mix(in srgb, var(--ink) 70%, transparent); }
+
+/* Toque: botões afundam levemente */
+button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap-highlight-color: transparent; }
+@media (prefers-reduced-motion: no-preference) {
+  button:active:not(:disabled), .cta:active, .obs-btn:active, .header-cta:active { transform: scale(.97); transition: transform var(--t-fast) var(--ease); }
+
+  /* Transição entre páginas (navegadores com View Transitions) */
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation: vt-out .32s var(--ease) both; }
+  ::view-transition-new(root) { animation: vt-in .5s var(--ease) both; }
+  .header-shell { view-transition-name: site-header; }
+
+  /* Entrada da abertura */
+  .hero-copy > * { animation: rise var(--t-slow) var(--ease) both; }
+  .hero-copy > :nth-child(2) { animation-delay: .08s; }
+  .hero-copy > :nth-child(3) { animation-delay: .18s; }
+  .hero-copy > :nth-child(4) { animation-delay: .28s; }
+  .cmb-hero { animation: rise-soft 1.2s var(--ease) .15s both; }
+  .cmb-frame canvas { animation: develop 1.8s var(--ease) .25s both; }
+  .cmb-frame::after { content: ''; position: absolute; inset: -20%; pointer-events: none; background: radial-gradient(closest-side, rgba(255,248,231,.38), transparent 70%); mix-blend-mode: soft-light; animation: drift 14s ease-in-out infinite alternate; }
+  .cmb-frame { animation: breathe 9s ease-in-out 2s infinite alternate; }
+  .hero-foot { animation: rise var(--t-slow) var(--ease) .45s both; }
+  .star { animation: twinkle 4.5s ease-in-out infinite alternate; }
+  .star:nth-child(3n) { animation-duration: 6.2s; animation-delay: -2s; }
+  .star:nth-child(4n+1) { animation-duration: 3.4s; animation-delay: -1s; }
+  .star:nth-child(5n+2) { animation-duration: 7.5s; animation-delay: -4s; }
+  .starfield { transition: transform 1.2s var(--ease); }
+
+  /* Revelação ao rolar (classe aplicada pelo script; sem JS tudo aparece) */
+  .rv { opacity: 0; transform: translateY(28px); transition: opacity var(--t-slow) var(--ease), transform var(--t-slow) var(--ease); transition-delay: var(--rv-delay, 0s); }
+  .rv.is-in { opacity: 1; transform: none; }
+  .rv.rv-scale { transform: translateY(18px) scale(.97); }
+  .rv.rv-scale.is-in { transform: none; }
+
+  /* Painéis do observatório trocam com um deslize */
+  .obs-station[role='tabpanel']:not([hidden]) { animation: rise var(--t-mid) var(--ease) both; }
+  .obs-tabs button { transition: background var(--t-mid) var(--ease), color var(--t-mid) var(--ease); }
+
+  /* Palpites e quiz: acerto comemora, erro balança */
+  .obs-guess-opts button[data-state='right'], .quiz-answer.correct { animation: pop .55s var(--ease-out-back) both; }
+  .obs-guess-opts button[data-state='wrong'], .quiz-answer.wrong { animation: shake .5s var(--ease) both; }
+  .obs-guess.is-right { position: relative; }
+  .obs-guess.is-right::after { content: '✦ ✧ ✦'; position: absolute; right: 26px; top: 18px; color: var(--accent); letter-spacing: .4em; font-size: 18px; animation: sparkle 1.2s var(--ease) both; pointer-events: none; }
+  [data-guess-result]:not([hidden]), .quiz-feedback:not([hidden]) { animation: rise var(--t-mid) var(--ease) both; }
+
+  /* Gráficos: pontos surgem, retas e curvas se desenham */
+  .h-pt.is-new { transform-box: fill-box; transform-origin: center; animation: pop .6s var(--ease-out-back) both; }
+  .h-fit.is-draw, .r-curve.is-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.1s var(--ease) forwards; }
+  .obs-pinhead { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 2.4s ease-in-out infinite; }
+  .obs-travel { animation: glow 2.6s ease-in-out infinite alternate; }
+  .e-galaxy.is-observer circle:first-child { transform-box: fill-box; transform-origin: center; animation: pulse 2.2s ease-in-out infinite; }
+  .h-gal:hover .h-body, .h-gal:focus-visible .h-body { transform-box: fill-box; transform-origin: center; transform: scale(1.25); transition: transform var(--t-mid) var(--ease-out-back); }
+
+  /* Acordeões: abrem deslizando onde o navegador permite */
+  :root { interpolate-size: allow-keywords; }
+  details::details-content { transition: block-size var(--t-mid) var(--ease), content-visibility var(--t-mid) allow-discrete; block-size: 0; overflow: clip; }
+  details[open]::details-content { block-size: auto; }
+
+  /* Cartões respiram ao passar o mouse */
+  .chapter-row .chapter-button, .preview-card, .extra-reading-links a { transition: transform var(--t-mid) var(--ease), background var(--t-mid) var(--ease); }
+  .chapter-row .chapter-button:hover { transform: translateX(6px); }
+}
+
+@keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes rise-soft { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
+@keyframes develop { from { clip-path: inset(0 100% 0 0); filter: saturate(0) brightness(1.4); } 60% { filter: saturate(.6) brightness(1.1); } to { clip-path: inset(0 0 0 0); filter: none; } }
+@keyframes breathe { from { filter: saturate(.95); } to { filter: saturate(1.12) brightness(1.03); } }
+@keyframes drift { from { transform: translate(-22%, -8%); } to { transform: translate(24%, 10%); } }
+@keyframes twinkle { from { opacity: .08; } to { opacity: .55; } }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-12px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
+@keyframes pop { 0% { transform: scale(.82); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes draw-dash { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+@keyframes sparkle { from { opacity: 0; transform: translateY(8px) scale(.6); } 50% { opacity: 1; } to { opacity: 0; transform: translateY(-14px) scale(1.1); } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes bob { 0%, 100% { transform: none; } 50% { transform: translateY(-4px); } }
+@keyframes glow { from { opacity: .75; } to { opacity: 1; } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+
+/* Quiz: acerto em azul (frio = certo), erro em laranja */
+.quiz-answer.correct { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); border-color: var(--accent-2); }
+.quiz-answer.correct .letter { color: var(--accent-2); }
+
+/* ───────────── Aula em passos ───────────── */
+.chapter-reader.is-stepped .lesson-section { border-bottom: 0; }
+.lesson-stepper { position: sticky; bottom: 14px; z-index: 20; display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 14px; margin: 26px 0 40px; padding: 12px 12px 12px 16px; border-radius: 999px; background: color-mix(in srgb, var(--surface) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 0 0 1px var(--line), 0 16px 40px var(--shadow); }
+.lesson-stepper button { min-height: 44px; border-radius: 999px; font: 700 14px/1 var(--body); cursor: pointer; }
+.step-prev { background: transparent; border: 1px solid var(--line-strong); color: var(--ink); padding: 0 16px; }
+.step-prev:disabled { opacity: .4; cursor: default; }
+.step-next { background: var(--accent); border: 1px solid var(--accent); color: var(--on-accent); padding: 0 20px; }
+.step-next:hover { background: var(--accent-strong); }
+.step-dots { display: flex; gap: 8px; align-items: center; justify-content: center; }
+.step-dot { width: 12px !important; height: 12px; min-height: 12px !important; padding: 0; border-radius: 50%; border: 2px solid var(--line-strong); background: transparent; transition: background var(--t-mid) var(--ease), transform var(--t-mid) var(--ease), border-color var(--t-mid); }
+.step-dot[data-done='true'] { background: var(--accent-2); border-color: var(--accent-2); }
+.step-dot[aria-current='true'] { background: var(--accent); border-color: var(--accent); transform: scale(1.35); }
+.step-count { font-size: 14px; color: var(--muted); white-space: nowrap; }
+.step-toggle { display: block; margin-top: 14px; background: none; border: 0; padding: 10px 0; color: var(--accent-ink); font: 700 14px var(--body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 44px; }
+@media (max-width: 760px) { .lesson-stepper { grid-template-columns: auto 1fr auto; border-radius: 22px; bottom: 10px; } .step-count { display: none; } .step-dots { gap: 6px; } .step-prev { padding: 0 12px; } .step-next { padding: 0 14px; } }
+@media (prefers-reduced-motion: no-preference) { .lesson-section.step-in { animation: rise .55s var(--ease) both; } }
+
+/* ───────────── Termos com definição ao toque ───────────── */
+.term { all: unset; cursor: help; color: inherit; border-bottom: 2px dotted var(--accent); transition: background var(--t-fast); border-radius: 2px; }
+.term:hover, .term:focus-visible { background: var(--accent-soft); }
+.term:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.term-pop { position: fixed; inset: auto 0 24px 0; margin: 0 auto; width: min(92vw, 460px); padding: 20px 22px; border: 0; border-radius: 18px; background: var(--surface); color: var(--ink-2); box-shadow: 0 0 0 1px var(--line), 0 24px 60px var(--shadow); font: 400 16px/1.65 var(--body); }
+.term-pop strong { display: block; font: 800 20px/1.2 var(--sans); color: var(--ink); margin-bottom: 6px; }
+.term-pop em { display: block; margin-top: 10px; font-style: normal; color: var(--muted); font-size: 15px; }
+.term-pop a { display: inline-block; margin-top: 12px; color: var(--accent-ink); font-weight: 700; font-size: 14px; }
+.term-pop::backdrop { background: color-mix(in srgb, var(--ink) 18%, transparent); }
+@media (prefers-reduced-motion: no-preference) { .term-pop:popover-open { animation: rise .35s var(--ease) both; } }
+
+/* ───────────── Selos ───────────── */
+.badges { margin-top: clamp(36px, 5vw, 60px); padding: clamp(20px, 3vw, 30px); border-radius: 22px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.badges-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+.badges-head .meta { color: var(--accent-ink); }
+.badges-count { font: 700 15px var(--sans); color: var(--ink); }
+.badges ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.badges li { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; background: var(--bg); transition: opacity var(--t-mid), filter var(--t-mid), transform var(--t-mid) var(--ease); }
+.badges li[data-earned='false'] { opacity: .5; filter: grayscale(1); }
+.badges li[data-earned='true'] { box-shadow: 0 0 0 1px var(--accent); }
+.badges li strong { display: block; font: 700 15px/1.3 var(--sans); color: var(--ink); }
+.badges li small { display: block; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.badge-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--c-ob), var(--accent-2)); color: #fff8e7; font: 800 17px var(--sans); }
+.badges li[data-earned='true'] .badge-icon { background: radial-gradient(circle at 35% 30%, #f7b267, var(--accent)); }
+.badges-note { margin: 14px 0 0; font-size: 13px; color: var(--muted); }
+.badge-toasts { position: fixed; left: 16px; bottom: 16px; z-index: 80; display: grid; gap: 10px; pointer-events: none; }
+.badge-toast { display: flex; gap: 12px; align-items: center; padding: 12px 18px 12px 12px; border-radius: 999px; background: var(--ink); color: var(--bg); box-shadow: 0 18px 44px var(--shadow); animation: toast-in .6s var(--ease-out-back) both; }
+.badge-toast .badge-icon { background: radial-gradient(circle at 35% 30%, #f7b267, var(--accent)); }
+.badge-toast small { display: block; font-size: 12px; opacity: .75; text-transform: uppercase; letter-spacing: .08em; }
+.badge-toast strong { font: 800 16px var(--sans); }
+.badge-toast.is-out { animation: toast-out .5s var(--ease) both; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(20px) scale(.9); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .badge-toast, .badge-toast.is-out { animation: none; } }
+
+/* ───────────── Trilha do curso (constelação) ───────────── */
+.course-map { position: relative; height: clamp(240px, 24vw, 300px); margin: clamp(26px, 4vw, 44px) 0 clamp(10px, 2vw, 20px); }
+.course-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.course-lines path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.course-path-bg { stroke: var(--line-strong); stroke-dasharray: 2 7; }
+.course-path { stroke: var(--accent); stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--ease); }
+.course-map ol { list-style: none; margin: 0; padding: 0; }
+.course-map li { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); }
+.course-map li a { display: grid; justify-items: center; gap: 10px; text-align: center; width: max-content; max-width: 220px; color: inherit; text-decoration: none; }
+.course-star { width: 22px; height: 22px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line-strong); box-shadow: 0 0 0 6px var(--bg); transition: transform var(--t-mid) var(--ease-out-back), background var(--t-mid), border-color var(--t-mid), box-shadow var(--t-mid); }
+.course-map li a:hover .course-star, .course-map li a:focus-visible .course-star { transform: scale(1.25); border-color: var(--accent); }
+.course-map li[data-state='done'] .course-star { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 6px var(--bg), 0 0 22px color-mix(in srgb, var(--accent) 60%, transparent); }
+.course-map li[data-state='next'] .course-star { background: var(--accent-2); border-color: var(--accent-2); }
+.course-label { display: grid; gap: 3px; }
+.course-label small { font: 700 12px/1.3 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); }
+.course-label strong { font: 800 clamp(17px, 1.6vw, 21px)/1.2 var(--sans); color: var(--ink); letter-spacing: -.01em; }
+.course-label em { font: 600 13px/1.3 var(--body); font-style: normal; color: var(--muted); }
+.course-map li[data-state='next'] .course-label em { color: var(--accent-2); }
+.course-map li.is-final .course-star { border-radius: 4px; transform: rotate(45deg); }
+.course-map li.is-final a:hover .course-star { transform: rotate(45deg) scale(1.25); }
+@media (prefers-reduced-motion: no-preference) {
+  .course-map li[data-state='next'] .course-star { animation: star-pulse 2.4s ease-in-out infinite; }
+  @keyframes star-pulse { 0%, 100% { box-shadow: 0 0 0 6px var(--bg), 0 0 0 7px color-mix(in srgb, var(--accent-2) 0%, transparent); } 50% { box-shadow: 0 0 0 6px var(--bg), 0 0 0 16px color-mix(in srgb, var(--accent-2) 22%, transparent); } }
+  .course-map.rv.is-in .course-path-bg { animation: draw-dash 1.8s var(--ease) both; }
+}
+@media (max-width: 760px) {
+  .course-map { height: auto; }
+  .course-lines { display: none; }
+  .course-map ol { display: grid; gap: 0; border-left: 2px dotted var(--line-strong); margin-left: 11px; }
+  .course-map li { position: relative; left: auto; top: auto; transform: none; padding: 12px 0 12px 24px; }
+  .course-map li a { justify-items: start; text-align: left; grid-template-columns: auto 1fr; align-items: center; max-width: none; }
+  .course-star { margin-left: -36px; }
+  .course-map li.is-final .course-star { margin-left: -36px; }
+}

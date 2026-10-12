@@ -22,19 +22,18 @@ const loaded = async selector => {
 try {
   const home = await page.goto(`${base}/`, { waitUntil: 'networkidle' });
   assert.ok(home?.ok(), `home retornou HTTP ${home?.status()}`);
-  for (let i = 1; i <= 3; i++) await loaded(`.preview-card:nth-child(${i}) img`);
   await page.goto(`${base}/capitulos/galaxias-e-nebulosas/`, { waitUntil: 'networkidle' });
   for (let i = 0; i < 5; i++) {
     await page.locator(`[data-scale-step="${i}"]`).click();
-    assert.equal(await page.locator('[data-scale-visual]:visible').count(), 1, `uma imagem visível na escala ${i}`);
-    await loaded(`[data-scale-visual="${i}"]`);
+    await page.waitForTimeout(1300);
+    assert.equal(await page.locator('[data-scale-visual]:visible').count(), 1, `uma ilustração visível na escala ${i}`);
   }
   await page.goto(`${base}/capitulos/misterios-do-cosmos/`, { waitUntil: 'networkidle' });
   for (let i = 0; i < 4; i++) {
     await page.locator(`[data-evidence-select="${i}"]`).click();
     await loaded(`[data-evidence-panel="${i}"] img`);
   }
-  await page.goto(`${base}/#tempo`, { waitUntil: 'networkidle' });
+  await page.goto(`${base}/laboratorio/#tempo`, { waitUntil: 'networkidle' });
   for (let i = 0; i < 10; i++) {
     await page.locator(`[data-era-index="${i}"]`).click();
     await loaded('[data-era-render]');

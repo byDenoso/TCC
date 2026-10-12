@@ -3,14 +3,16 @@ import { primaryRows, chapters } from '../data';
 import { chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
+import Badges from './Badges.astro';
+import CourseMap from './CourseMap.astro';
 ---
 <section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
   <div class="page-width">
-    <div class="section-id">01 / As perguntas que nos trouxeram até aqui</div>
     <div class="intro-head">
       <h2 class="display" id="chapters-title">Três perguntas.<br /><em>Um Universo inteiro.</em></h2>
-      <p>Comece pelo nosso lugar no cosmos, descubra a história da expansão e aprenda a ler as evidências. Cada jornada tem uma exploração visual, leitura em três níveis e perguntas com explicação.</p>
+      <p>Três aulas curtas, em passos. Cada uma começa com um experimento, avança uma ideia por vez e termina com perguntas. Siga a trilha ou escolha por onde começar.</p>
     </div>
+    <CourseMap />
     <div class="journey-status">
       <span data-progress-label>{progressLabel(0)}</span>
       <progress max="3" value="0" aria-label="Jornadas principais concluídas" data-progress-bar></progress>
@@ -46,5 +48,6 @@ import { progressLabel } from '../lib/progress';
         );
       })}
     </div>
+    <Badges />
   </div>
 </section>

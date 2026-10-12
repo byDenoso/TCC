@@ -18,7 +18,7 @@ export function initHubble(root: HTMLElement): void {
   const allBtn = q<HTMLButtonElement>(root, '[data-h-all]');
   const newBtn = q<HTMLButtonElement>(root, '[data-h-new]');
   const revealBtn = q<HTMLButtonElement>(root, '[data-h-reveal]');
-  let seed = 11, gals: Gal[] = [], trueH0 = 70, selected: Gal | null = null, revealed = false;
+  let seed = 11, gals: Gal[] = [], trueH0 = 70, selected: Gal | null = null, revealed = false, lastCount = 0;
 
   const make = (): void => {
     const r = rng(seed);
@@ -72,8 +72,9 @@ export function initHubble(root: HTMLElement): void {
     const pts = gals.filter((g) => g.done).map((g) => ({ d: g.dm, v: g.v, id: g.id }));
     if (revealed) svg('line', { x1: px(0), y1: py(0), x2: px(DMAX), y2: py(trueH0 * DMAX), class: 'h-true' }, plot);
     const f = fitHubble(pts);
-    if (f) svg('line', { x1: px(0), y1: py(0), x2: px(DMAX), y2: py(f.h0 * DMAX), class: 'h-fit' }, plot);
-    for (const p of pts) svg('circle', { cx: px(p.d), cy: py(p.v), r: p.id === selected?.id ? 5.5 : 3.8, class: p.id === selected?.id ? 'h-pt sel' : 'h-pt' }, plot);
+    if (f) svg('line', { x1: px(0), y1: py(0), x2: px(DMAX), y2: py(f.h0 * DMAX), class: pts.length !== lastCount ? 'h-fit is-draw' : 'h-fit', pathLength: 1 }, plot);
+    for (const p of pts) svg('circle', { cx: px(p.d), cy: py(p.v), r: p.id === selected?.id ? 5.5 : 3.8, class: `h-pt${p.id === selected?.id ? ' sel' : ''}${p.id === selected?.id && pts.length !== lastCount ? ' is-new' : ''}` }, plot);
+    lastCount = pts.length;
   };
 
   const drawSpec = (g: Gal | null): void => {
@@ -109,6 +110,7 @@ export function initHubble(root: HTMLElement): void {
     } else add('Como medir', 'Toque numa galáxia: o telescópio mede a distância e a velocidade dela.');
     drawSpec(selected);
     drawPlot();
+    if (done.length >= 8) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'hubble' } }));
     const f = fitHubble(done.map((g) => ({ d: g.dm, v: g.v })));
     nextBtn.disabled = allBtn.disabled = done.length >= N;
     revealBtn.hidden = done.length < 6 || revealed;

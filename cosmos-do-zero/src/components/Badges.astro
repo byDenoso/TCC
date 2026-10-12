@@ -1,0 +1,11 @@
+---
+import { BADGES } from '../scripts/school';
+---
+<div class="badges" data-badges>
+  <div class="badges-head"><span class="meta">Seus selos</span><span class="badges-count" data-badge-count>0 de {BADGES.length} selos</span></div>
+  <ul>
+    {BADGES.map((b) => (
+      <li data-badge={b.id} data-earned="false"><span class="badge-icon" aria-hidden="true">{b.icon}</span><span><strong>{b.title}</strong><small>{b.how}</small></span></li>
+    ))}
+  </ul>
+</div>

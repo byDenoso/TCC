@@ -3,18 +3,16 @@ import { u } from '../lib/url';
 interface Props { variant?: 'hero' | 'solid'; }
 const { variant = 'hero' } = Astro.props;
 const nav = [
-  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro instrumentos' },
-  { href: '/#capitulos', label: 'As três jornadas', mobile: 'As três jornadas' },
-  { href: '/#explorar', label: 'Explorar', mobile: 'Explorações do cosmos' },
-  { href: '/#extras', label: 'Ir além', mobile: 'Estrelas, planetas e experiências' }
+  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
+  { href: '/#capitulos', label: 'Aulas', mobile: 'As três aulas', spy: 'capitulos' },
+  { href: '/laboratorio/', label: 'Mais experimentos', mobile: 'Mais experimentos', spy: 'laboratorio' },
+  { href: '/glossario/', label: 'Dicionário', mobile: 'Dicionário do cosmos', spy: 'glossario' }
 ];
 const more = [
-  { href: '/#tempo', label: 'Linha do tempo' },
-  { href: '/#planetas', label: 'Os oito planetas' },
-  { href: '/#laboratorio', label: 'Comparar mundos e estrelas' },
-  { href: '/#desafio', label: 'Desafio científico' },
-  { href: '/#glossario', label: 'Glossário' },
-  { href: '/#fontes', label: 'Fontes e imagens' }
+  { href: '/laboratorio/#tempo', label: 'Linha do tempo' },
+  { href: '/laboratorio/#planetas', label: 'Os oito planetas' },
+  { href: '/#desafio', label: 'Desafio' },
+  { href: '/fontes/', label: 'Fontes e imagens' }
 ];
 ---
 <header class:list={['header-shell', variant === 'solid' && 'solid']}>
@@ -24,7 +22,7 @@ const more = [
       <span class="identity-name">COSMOS<small>DO ZERO</small></span>
     </a>
     <nav class="main-nav" aria-label="Navegação principal">
-      {nav.map((n) => <a href={u(n.href)} data-spy={n.href.slice(2)}>{n.label}</a>)}
+      {nav.map((n) => <a href={u(n.href)} data-spy={n.spy} aria-current={(Astro.url.pathname.replace(/\/$/, '').endsWith('/' + n.spy) ? 'page' : undefined)}>{n.label}</a>)}
     </nav>
     <div class="header-tools">
       <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Usar tema escuro">
@@ -32,7 +30,7 @@ const more = [
         <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></svg>
         <span class="theme-label" data-theme-label>Escuro</span>
       </button>
-      <a class="header-cta" href={u('/#glossario')}>Dicionário do cosmos <span aria-hidden="true">↗</span></a>
+      <a class="header-cta" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey><span data-start-label>Começar a aula</span> <span aria-hidden="true">→</span></a>
     </div>
     <details class="mobile-menu" data-mobile-menu>
       <summary aria-label="Abrir ou fechar a navegação">Menu <span aria-hidden="true">+</span></summary>
@@ -43,4 +41,5 @@ const more = [
       </nav>
     </details>
   </div>
+  <span class="header-progress" data-header-progress aria-hidden="true"></span>
 </header>

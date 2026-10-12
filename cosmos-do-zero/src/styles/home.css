@@ -27,7 +27,7 @@
 .chapter-body aside { font-size: 14px; color: var(--ink-2); line-height: 1.7; border-left: 2px solid var(--accent); padding-left: 21px; margin-bottom: 22px; }
 .chapter-toc { list-style: none; margin: 0; padding: 0; counter-reset: s; }
 .chapter-toc a { display: flex; gap: 14px; padding: 9px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 13%, transparent); font-size: 13px; line-height: 1.5; color: var(--ink-2); transition: color 0.2s, padding 0.2s var(--ease); }
-.chapter-toc a span { color: var(--accent-ink); font-size: 10px; font-weight: 800; letter-spacing: 0.1em; padding-top: 3px; }
+.chapter-toc a span { color: var(--accent-ink); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; padding-top: 3px; }
 .chapter-toc a:hover { color: var(--ink); padding-left: 6px; }
 .chapter-row[open] .chapter-body { animation: reveal 0.35s var(--ease); }
 @keyframes reveal { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
@@ -44,10 +44,10 @@
 .timeline-visual { border-right: 1px solid color-mix(in srgb, var(--line) 23%, transparent); position: relative; display: grid; place-items: center; overflow: hidden; min-height: 435px; }
 .timeline-visual { margin: 0; }
 .era-render { display: block; width: 100%; height: 100%; min-height: 435px; object-fit: cover; opacity: .85; }
-.era-number { z-index: 1; padding: 9px 12px; background: color-mix(in srgb, var(--bg-alt) 81%, transparent); position: absolute; left: 40px; top: 34px; color: var(--ink-2); font-size: 10px; letter-spacing: 0.16em; font-variant-numeric: tabular-nums; }
-.era-bottom { z-index: 1; right: 20px; padding: 9px 12px; background: color-mix(in srgb, var(--bg-alt) 92%, transparent); line-height: 1.65; position: absolute; bottom: 33px; left: 40px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; }
+.era-number { z-index: 1; padding: 9px 12px; background: color-mix(in srgb, var(--bg-alt) 81%, transparent); position: absolute; left: 40px; top: 34px; color: var(--ink-2); font-size: 12px; letter-spacing: 0.11em; font-variant-numeric: tabular-nums; }
+.era-bottom { z-index: 1; right: 20px; padding: 9px 12px; background: color-mix(in srgb, var(--bg-alt) 92%, transparent); line-height: 1.65; position: absolute; bottom: 33px; left: 40px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.11em; }
 .timeline-detail { padding: 51px 0 42px 70px; display: flex; flex-direction: column; justify-content: center; }
-.detail-kicker { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-ink); font-weight: 750; }
+.detail-kicker { font-size: 12px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--accent-ink); font-weight: 750; }
 .detail-time { font-size: 19px; font-weight: 500; color: var(--ink-2); margin-top: 28px; }
 .timeline-detail h3 { font-size: clamp(34px, 4vw, 56px); letter-spacing: -0.022em; line-height: 1.1; margin: 15px 0 20px; max-width: 525px; }
 .timeline-detail p { font-size: 17px; line-height: 1.76; color: var(--ink-2); max-width: 495px; margin: 0; }
@@ -57,7 +57,7 @@
 .time-event::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); position: absolute; top: 0; left: 0; transform: translateY(-50%); }
 .time-event:not(:nth-child(-n + 3))::before { display: none; }
 .time-event.active::before { background: var(--orange); box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 26%, transparent); }
-.time-event span { font-size: 10px; color: var(--ink-2); letter-spacing: 0.07em; display: block; line-height: 1.5; }
+.time-event span { font-size: 12px; color: var(--ink-2); letter-spacing: 0.07em; display: block; line-height: 1.5; }
 .time-event b { display: block; font-size: 14px; line-height: 1.35; color: var(--ink-2); max-width: 190px; margin-bottom: 7px; }
 .time-event.active b { color: var(--accent-ink); }
 .time-event:hover b { color: var(--accent-ink); }
@@ -65,7 +65,7 @@
 .timeline-controls button { background: none; color: var(--ink-2); border: 1px solid color-mix(in srgb, var(--line) 31%, transparent); min-height: 44px; padding: 10px 16px; transition: background 0.2s, border-color 0.2s; }
 .timeline-controls button:hover:not(:disabled) { background: color-mix(in srgb, var(--bg) 7%, transparent); border-color: color-mix(in srgb, var(--line) 60%, transparent); }
 .timeline-controls button:disabled { opacity: 0.38; cursor: default; }
-.timeline-controls span { letter-spacing: 0.15em; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.timeline-controls span { letter-spacing: 0.11em; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .timeline-footnote { color: var(--muted); font-size: 12px; margin: 20px 0 0; line-height: 1.6; max-width: 880px; }
 
 /* ═════════ 03 · Planetas ═════════ */
@@ -85,15 +85,15 @@
 .planet-img { display: block; width: min(360px, 74%); height: auto; position: relative; z-index: 2; filter: drop-shadow(-14px 20px 22px color-mix(in srgb, var(--ink) 20%, transparent)); transition: transform 0.45s var(--ease), opacity 0.25s; }
 .planet-img[data-planet='saturno'] { width: min(500px, 94%); }
 .planet-illustration.swap .planet-img { transform: scale(0.88); opacity: 0.4; }
-.illustration-note { position: absolute; left: 30px; bottom: 25px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; }
-.diagram-coord { position: absolute; top: 24px; left: 28px; color: var(--muted); font-size: 10px; letter-spacing: 0.14em; z-index: 3; }
+.illustration-note { position: absolute; left: 30px; bottom: 25px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; }
+.diagram-coord { position: absolute; top: 24px; left: 28px; color: var(--muted); font-size: 12px; letter-spacing: 0.14em; z-index: 3; }
 .planet-info { padding: 40px 48px 36px 63px; }
 .planet-info .detail-kicker { color: var(--accent-ink); }
 .planet-info h3 { margin: 17px 0 18px; font-size: clamp(50px, 5.2vw, 72px); letter-spacing: -0.022em; line-height: 1; }
 .planet-info > p { font-size: 16px; line-height: 1.75; color: var(--ink-2); max-width: 445px; margin: 0 0 28px; }
 .planet-facts { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid color-mix(in srgb, var(--line) 23%, transparent); gap: 17px 22px; padding-top: 24px; margin-top: 24px; }
 .planet-facts div { min-width: 0; }
-.planet-facts span { display: block; color: var(--muted); font-size: 10.5px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.5; margin-bottom: 6px; }
+.planet-facts span { display: block; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.5; margin-bottom: 6px; }
 .planet-facts strong { display: block; font-family: var(--sans); font-size: 18px; line-height: 1.35; letter-spacing: -0.02em; font-weight: 700; }
 .planet-physical { margin-top: 25px; border-top: 1px solid color-mix(in srgb, var(--line) 27%, transparent); }
 .planet-physical summary { padding: 16px 0; font-size: 13px; font-weight: 700; min-height: 44px; cursor: pointer; }
@@ -101,9 +101,9 @@
 .planet-physical dt { font-weight: 750; margin-top: 13px; }
 .planet-physical dd { margin: 0; color: var(--ink-2); }
 .planet-ruler { border-top: 1px solid color-mix(in srgb, var(--line) 27%, transparent); padding: 22px 28px 20px; }
-.ruler-label { display: block; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
+.ruler-label { display: block; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 18px; }
 .ruler-row { --max: 150px; display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
-.ruler-item { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; cursor: pointer; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.2s; }
+.ruler-item { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 10px; cursor: pointer; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.2s; }
 .ruler-item img { display: block; flex: none; --h: max(5px, calc(var(--max) * var(--size) / 100)); height: var(--h); width: var(--h); max-width: none; aspect-ratio: 1; object-fit: contain; opacity: 0.55; filter: grayscale(0.4); transition: opacity 0.25s, filter 0.25s, transform 0.3s var(--ease); }
 .ruler-item.active { color: var(--accent-ink); font-weight: 800; }
 .ruler-item.active img, .ruler-item:hover img { opacity: 1; filter: none; }
@@ -162,12 +162,12 @@
 .stellar-summary .star-timescale { font-size: 12px; color: var(--ink-2); margin-top: 16px; }
 .stellar-path { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0; margin: 35px 0 0; gap: 20px; }
 .stellar-path li { border-top: 2px solid var(--accent); padding-top: 15px; }
-.stellar-path li span { font-size: 11px; letter-spacing: 0.1em; color: var(--accent-ink); }
+.stellar-path li span { font-size: 12px; letter-spacing: 0.1em; color: var(--accent-ink); }
 .stellar-path li p { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 12px 0; }
 .stellar-section .textlink { color: var(--accent-ink); margin-top: 15px; }
 
 /* ═════════ 05 · Desafio ═════════ */
-.quiz-section { background: color-mix(in srgb, var(--accent-2) 12%, var(--bg)); color: var(--ink); padding: 126px 0 135px; }
+.quiz-section { background: var(--surface-2); color: var(--ink); padding: 126px 0 135px; }
 .quiz-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: start; }
 .quiz-section .section-id { color: var(--ink-2); }
 .quiz-copy h2 { font-size: clamp(54px, 6vw, 86px); line-height: 1; margin: 36px 0 29px; }
@@ -182,7 +182,7 @@
 .quiz-answers { display: grid; gap: 10px; }
 .quiz-answer { border: 1px solid color-mix(in srgb, var(--line) 53%, transparent); background: transparent; padding: 15px 17px; min-height: 52px; text-align: left; color: var(--ink-2); font-size: 14.5px; line-height: 1.45; display: flex; gap: 13px; align-items: baseline; transition: background 0.15s, border-color 0.15s; width: 100%; }
 .quiz-answer:hover:not(:disabled) { background: var(--surface); border-color: var(--line); }
-.quiz-answer .letter { color: var(--accent-ink); font-size: 11px; letter-spacing: 0.1em; font-weight: 800; }
+.quiz-answer .letter { color: var(--accent-ink); font-size: 12px; letter-spacing: 0.1em; font-weight: 800; }
 .quiz-answer.correct { background: var(--surface); border-color: var(--line-strong); }
 .quiz-answer.wrong { background: var(--accent-soft); border-color: var(--accent); }
 .quiz-answer.correct .letter { color: var(--ink-2); }
@@ -241,7 +241,7 @@
 .evidence-key p { font-size: 13px; line-height: 1.75; color: var(--ink-2); }
 .image-credits figure { margin: 0; padding: 30px 0; border-top: 1px solid color-mix(in srgb, var(--line) 22%, transparent); display: grid; grid-template-columns: 320px 1fr; gap: 34px; align-items: start; }
 .image-credits img { height: 200px; width: 320px; object-fit: cover; display: block; }
-.image-credits .meta { color: var(--accent-ink); font-size: 9px; }
+.image-credits .meta { color: var(--accent-ink); font-size: 12px; }
 .image-credits h3 { margin: 12px 0 10px; font-size: 23px; letter-spacing: -0.03em; }
 .image-credits p { font-size: 14px; line-height: 1.7; margin: 0 0 10px; color: var(--ink-2); max-width: 800px; }
 .image-credits .credit-line { font-size: 12px; color: var(--muted); }
@@ -279,14 +279,14 @@
   .intro-head { display: block; margin-top: 33px; margin-bottom: 37px; }
   .intro-head h2, .section-heading { font-size: clamp(42px, 11.4vw, 67px); }
   .intro-head p { margin-top: 25px; font-size: 15px; max-width: none; }
-  .journey-status { font-size: 11px; }
+  .journey-status { font-size: 12px; }
   .journey-status progress { width: 85px; }
   .chapter-button { grid-template-columns: 52px 1fr 37px; padding: 26px 0; gap: 12px; }
   .chapter-button:hover { padding-left: 0; padding-right: 0; background: none; }
   .chapter-teaser { display: none; }
   .chapter-title { font-size: clamp(23px, 6.2vw, 35px); }
   .chapter-icon { height: 34px; width: 34px; font-size: 21px; }
-  .chapter-index { font-size: 11px; }
+  .chapter-index { font-size: 12px; }
   .chapter-body { grid-template-columns: 1fr; padding: 20px 0 29px; gap: 22px; }
   .chapter-body p { font-size: 15px; }
   .chapter-body aside { font-size: 13px; }
@@ -326,10 +326,10 @@
   .planet-info > p { font-size: 15px; }
   .planet-facts { gap: 19px 12px; }
   .planet-facts strong { font-size: 16px; }
-  .planet-facts span { font-size: 10px; }
+  .planet-facts span { font-size: 12px; }
   .planet-ruler { padding: 20px 4px 18px; }
   .ruler-row { --max: 64px; gap: 8px; justify-content: space-around; align-items: flex-end; }
-  .ruler-item { font-size: 9px; letter-spacing: 0.06em; min-width: 0; }
+  .ruler-item { font-size: 12px; letter-spacing: 0.06em; min-width: 0; }
   .ruler-item:not(.active) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
   .lab-intro { display: block; }
@@ -349,14 +349,14 @@
   .comparison-table { font-size: 12px; min-width: 0; }
   .comparison-table th, .comparison-table td { padding: 13px 9px 13px 0; }
   .comparison-table th:first-child { width: 30%; }
-  .comparison-table tbody th { font-size: 11px; }
+  .comparison-table tbody th { font-size: 12px; }
   .stellar-exhibit { grid-template-columns: 1fr; padding: 35px 22px; gap: 30px; min-height: 0; }
   .stellar-summary h4 { font-size: 30px; }
   .stellar-path { grid-template-columns: 1fr; gap: 0; margin-top: 30px; }
   .stellar-path li { border-top: 0; border-left: 2px solid var(--accent); padding: 0 0 22px 18px; display: flex; gap: 15px; align-items: baseline; }
   .stellar-path li:last-child { padding-bottom: 0; }
   .stellar-path li p { margin: 0; font-size: 14px; }
-  .star-presets button { padding: 11px 12px; font-size: 11px; }
+  .star-presets button { padding: 11px 12px; font-size: 12px; }
 
   .quiz-section { padding: 88px 0 107px; }
   .quiz-layout { grid-template-columns: 1fr; gap: 38px; }
@@ -398,7 +398,7 @@
 .preview-card:hover { border-color: var(--accent); transform: translateY(-4px); }
 .preview-card .preview-render { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; background: var(--bg-alt); border-bottom: 1px solid var(--line-strong); }
 .preview-card > div { padding: 25px; display: flex; flex-direction: column; flex: 1; }
-.preview-card .meta { color: var(--accent-ink); font-size: 9px; line-height: 1.7; }
+.preview-card .meta { color: var(--accent-ink); font-size: 12px; line-height: 1.7; }
 .preview-card h3 { font-size: 27px; line-height: 1.15; margin: 20px 0 15px; letter-spacing: -.02em; }
 .preview-card p { font-size: 14px; line-height: 1.75; color: var(--ink-2); margin: 0 0 24px; }
 .preview-action { color: var(--accent-ink); font-size: 13px; margin-top: auto; }
@@ -418,4 +418,4 @@
 @media(max-width: 900px) { .preview-heading { gap: 25px; } .preview-cards { gap: 14px; } .preview-card > div { padding: 19px; } .preview-card h3 { font-size: 23px; } }
 @media(max-width: 760px) { .preview-heading, .preview-cards, .extra-reading-links { grid-template-columns: 1fr; } .preview-heading h2 { font-size: 44px; } .exploration-preview { padding: 75px 0; } .preview-card { display: grid; grid-template-columns: 1fr; } .preview-card .preview-render { max-height: 190px; } .extra-explorations > summary { gap: 15px; padding-block: 38px; } .extra-plus { width: 34px; height: 34px; font-size: 24px; } .extra-reading-links { gap: 24px; } }
 @media(max-width:760px) { .era-render { min-height: 250px; height: 270px; } }
-.preview-card .preview-image-note { font-size: 11px; line-height: 1.65; color: var(--accent-ink); margin-top: -10px; }
+.preview-card .preview-image-note { font-size: 12px; line-height: 1.65; color: var(--accent-ink); margin-top: -10px; }

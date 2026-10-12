@@ -13,7 +13,7 @@
 .scene-canvas { margin: 0; min-width: 0; background: var(--bg-alt); border: 1px solid var(--line); }
 .cosmos-scene svg { display: block; width: 100%; height: auto; overflow: hidden; }
 .cosmos-scene svg text { fill: var(--surface); font: 12px var(--body); }
-.cosmos-scene figcaption { font-size: 11px; line-height: 1.7; color: var(--ink-2); padding: 15px 18px; }
+.cosmos-scene figcaption { font-size: 12px; line-height: 1.7; color: var(--ink-2); padding: 15px 18px; }
 .scene-unit { color: var(--accent-ink); font-size: 12px; letter-spacing: .03em; }
 .scene-reading h3, .light-lab h3, .evidence-explanation h3 { font-size: 27px; line-height: 1.15; margin: 20px 0 12px; }
 .light-insight { border-left: 2px solid var(--accent); padding-left: 16px; }
@@ -33,11 +33,11 @@
 .expansion-insets figcaption strong { display: block; color: var(--accent-ink); margin-bottom: 6px; }
 .evidence-controls { display: grid; grid-template-columns: repeat(4, 1fr); }
 .evidence-controls button { text-align: left; }
-.evidence-controls span { display: block; margin-bottom: 8px; font-size: 10px; letter-spacing: .12em; }
+.evidence-controls span { display: block; margin-bottom: 8px; font-size: 12px; letter-spacing: .12em; }
 .evidence-panel { display: grid; grid-template-columns: 1fr 1.2fr; gap: 34px; align-items: center; margin-top: 24px; }
 .evidence-visual { margin: 0; background: var(--bg-alt); border: 1px solid var(--line); }
 .evidence-explanation dl { margin: 0; }
-.evidence-explanation dt { color: var(--accent-ink); text-transform: uppercase; font-size: 10px; letter-spacing: .12em; font-weight: 750; margin: 23px 0 8px; }
+.evidence-explanation dt { color: var(--accent-ink); text-transform: uppercase; font-size: 12px; letter-spacing: .12em; font-weight: 750; margin: 23px 0 8px; }
 .evidence-explanation dd { color: var(--ink-2); font-size: 14px; line-height: 1.75; margin: 0; }
 .scene-note { font-size: 13px; line-height: 1.6; color: var(--ink-2); }
 @media(max-width: 850px) { .scene-split, .light-lab, .evidence-panel { grid-template-columns: 1fr; gap: 20px; } .scene-reading h3 { font-size: 25px; } .cosmos-scene { margin-top: 24px; } .evidence-controls { grid-template-columns: 1fr 1fr; } }

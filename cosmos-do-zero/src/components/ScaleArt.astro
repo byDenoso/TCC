@@ -1,0 +1,74 @@
+---
+// Ilustrações vetoriais das cinco escalas (Terra → teia cósmica), na paleta do site.
+// Pontos gerados com semente fixa: o desenho é o mesmo em todo build. Esquemático, sem escala física.
+let seed = 4242;
+const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+const gauss = () => Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd());
+const f = (n: number) => n.toFixed(1);
+
+// 3 · Via Láctea: dois braços espirais de pontos + bojo
+const arms = Array.from({ length: 900 }, () => {
+  const arm = rnd() < 0.5 ? 0 : Math.PI, t = Math.pow(rnd(), 0.8) * 3.4;
+  const r = 14 + t * 46, a = arm + t * 1.55 + gauss() * 0.22;
+  return { x: 300 + r * Math.cos(a) + gauss() * 5, y: 200 + (r * Math.sin(a) + gauss() * 5) * 0.62, s: 0.6 + rnd() * 1.4, o: 0.35 + rnd() * 0.6 };
+});
+// 4 · Grupo Local: duas espirais pequenas + anãs
+const mini = (cx: number, cy: number, sc: number, tilt: number, n: number) => Array.from({ length: n }, () => {
+  const arm = rnd() < 0.5 ? 0 : Math.PI, t = Math.pow(rnd(), 0.8) * 3.2, r = (4 + t * 11) * sc, a = arm + t * 1.6 + gauss() * 0.25;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) * tilt, s: 0.5 + rnd(), o: 0.4 + rnd() * 0.5 };
+});
+const mw = mini(215, 230, 1, 0.55, 220), m31 = mini(410, 150, 1.4, 0.38, 300);
+const dwarfs = Array.from({ length: 22 }, () => ({ x: 120 + rnd() * 380, y: 70 + rnd() * 270, r: 1.2 + rnd() * 2.2 }));
+// 5 · Teia cósmica: nós e filamentos entre vizinhos
+const knots = Array.from({ length: 34 }, () => ({ x: 20 + rnd() * 560, y: 20 + rnd() * 360 }));
+knots[0] = { x: 250, y: 205 };
+const fil: [number, number][] = [];
+knots.forEach((k, i) => {
+  const near = knots.map((o, j) => ({ j, d: (o.x - k.x) ** 2 + (o.y - k.y) ** 2 })).filter((o) => o.j !== i).sort((a, b) => a.d - b.d).slice(0, 2);
+  near.forEach((o) => { if (!fil.some(([a, b]) => (a === o.j && b === i))) fil.push([i, o.j]); });
+});
+const webDots = fil.flatMap(([a, b]) => Array.from({ length: 16 }, () => { const t = rnd(); return { x: knots[a].x + (knots[b].x - knots[a].x) * t + gauss() * 3, y: knots[a].y + (knots[b].y - knots[a].y) * t + gauss() * 3, s: 0.5 + rnd() * 0.9 }; }));
+const orbits = [38, 58, 80, 104, 150, 190, 228, 262];
+const planetsAt = orbits.map((r, i) => { const a = 0.6 + i * 0.83; return { x: 110 + r * Math.cos(a), y: 200 + r * Math.sin(a) * 0.34, r: [2.4, 3.6, 3.8, 3, 8, 7, 5, 5][i] }; });
+const { hidden = [] } = Astro.props as { hidden?: boolean[] };
+---
+<defs>
+  <radialGradient id="sa-earth" cx="38%" cy="32%"><stop offset="0" stop-color="#8db3e8" /><stop offset=".55" stop-color="#2f5da8" /><stop offset="1" stop-color="#14213d" /></radialGradient>
+  <radialGradient id="sa-sun"><stop offset="0" stop-color="#fff4dc" /><stop offset=".35" stop-color="#f7b267" /><stop offset=".7" stop-color="#e2572b" stop-opacity=".55" /><stop offset="1" stop-color="#e2572b" stop-opacity="0" /></radialGradient>
+  <radialGradient id="sa-bulge"><stop offset="0" stop-color="#fff4dc" /><stop offset=".4" stop-color="#f7b267" stop-opacity=".8" /><stop offset="1" stop-color="#f7b267" stop-opacity="0" /></radialGradient>
+</defs>
+<g class="sa-level" data-scale-visual="0" data-hidden={hidden[0] ? 'true' : 'false'}>
+  <ellipse class="sa-orbit" cx="300" cy="200" rx="230" ry="64" />
+  <circle cx="300" cy="200" r="104" fill="url(#sa-earth)" />
+  <path class="sa-land" d="M245 150c18-14 44-12 52 2 7 12-6 22-2 34 5 14 22 12 26 26 5 16-14 30-30 24-12-5-12-20-26-24-16-4-30-14-28-30 1-12 4-24 8-32Zm88-30c14-6 34 0 38 12 4 10-6 16-2 26 4 9 16 10 16 20 0 12-18 16-28 8-8-7-6-18-16-22-10-5-18-14-14-26 1-6 2-14 6-18Zm-6 110c10-4 22 2 22 12s-12 16-22 12-8-20 0-24Z" />
+  <circle class="sa-atmo" cx="300" cy="200" r="110" />
+  <circle class="sa-moon" cx="520" cy="178" r="16" />
+  <text class="sa-label" x="520" y="214" text-anchor="middle">Lua</text>
+</g>
+<g class="sa-level" data-scale-visual="1" data-hidden={hidden[1] ? 'true' : 'false'}>
+  {orbits.map((r) => <ellipse class="sa-orbit" cx="110" cy="200" rx={r} ry={f(r * 0.34)} />)}
+  <circle cx="110" cy="200" r="70" fill="url(#sa-sun)" />
+  {planetsAt.map((p, i) => <circle class={i === 2 ? 'sa-planet sa-earth-dot' : 'sa-planet'} cx={f(p.x)} cy={f(p.y)} r={p.r} />)}
+  <text class="sa-label" x={f(planetsAt[2].x + 10)} y={f(planetsAt[2].y - 10)}>Terra</text>
+  <text class="sa-label" x="110" y="292" text-anchor="middle">Sol</text>
+</g>
+<g class="sa-level" data-scale-visual="2" data-hidden={hidden[2] ? 'true' : 'false'}>
+  <ellipse cx="300" cy="200" rx="60" ry="34" fill="url(#sa-bulge)" />
+  {arms.map((d) => <circle class="sa-star" cx={f(d.x)} cy={f(d.y)} r={d.s.toFixed(2)} opacity={d.o.toFixed(2)} />)}
+  <circle class="sa-here" cx="408" cy="236" r="6" />
+  <text class="sa-label strong" x="420" y="262">o Sol está aqui</text>
+</g>
+<g class="sa-level" data-scale-visual="3" data-hidden={hidden[3] ? 'true' : 'false'}>
+  {dwarfs.map((d) => <circle class="sa-dwarf" cx={f(d.x)} cy={f(d.y)} r={d.r.toFixed(1)} />)}
+  {mw.map((d) => <circle class="sa-star" cx={f(d.x)} cy={f(d.y)} r={d.s.toFixed(2)} opacity={d.o.toFixed(2)} />)}
+  {m31.map((d) => <circle class="sa-star warm" cx={f(d.x)} cy={f(d.y)} r={d.s.toFixed(2)} opacity={d.o.toFixed(2)} />)}
+  <text class="sa-label strong" x="215" y="282" text-anchor="middle">Via Láctea</text>
+  <text class="sa-label" x="410" y="206" text-anchor="middle">Andrômeda</text>
+</g>
+<g class="sa-level" data-scale-visual="4" data-hidden={hidden[4] ? 'true' : 'false'}>
+  {fil.map(([a, b]) => <line class="sa-filament" x1={f(knots[a].x)} y1={f(knots[a].y)} x2={f(knots[b].x)} y2={f(knots[b].y)} />)}
+  {webDots.map((d) => <circle class="sa-star" cx={f(d.x)} cy={f(d.y)} r={d.s.toFixed(2)} />)}
+  {knots.map((k) => <circle class="sa-knot" cx={f(k.x)} cy={f(k.y)} r="4" />)}
+  <circle class="sa-here" cx={f(knots[0].x)} cy={f(knots[0].y)} r="7" />
+  <text class="sa-label strong" x={f(knots[0].x + 12)} y={f(knots[0].y - 10)}>nosso Grupo Local</text>
+</g>

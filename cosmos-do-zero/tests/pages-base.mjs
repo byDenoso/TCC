@@ -35,7 +35,7 @@ function walk(dir) {
   }
 }
 walk(dist);
-assert.equal(html.length, 8, 'Esperadas home, seis capítulos e 404');
+assert.equal(html.length, 11, 'Esperadas home, seis capítulos, laboratório, dicionário, fontes e 404');
 
 for (const file of html) {
   const text = readFileSync(file, 'utf8');
@@ -77,7 +77,7 @@ for (const slug of ['', 'galaxias-e-nebulosas/', 'origem-do-universo/', 'misteri
   const path = slug ? `capitulos/${slug}` : '';
   assert.ok(xml.includes(`<loc>${expectedRoot}${path}</loc>`), `Sitemap sem ${path || '/'}`);
 }
-assert.equal((xml.match(/<loc>/g) ?? []).length, 7, 'Sitemap deve conter sete URLs públicas');
+assert.equal((xml.match(/<loc>/g) ?? []).length, 10, 'Sitemap deve conter dez URLs públicas');
 checks += 9;
 
 // A compilação de estilos pode incorporar fontes com url() relativo ou com o base.

@@ -5,7 +5,8 @@ import Header from '../../components/Header.astro';
 import QuizCard from '../../components/QuizCard.astro';
 import CosmosScene from '../../components/CosmosScene.astro';
 import Observatorio from '../../components/Observatorio.astro';
-import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits } from '../../data';
+import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
+import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
 import { chapterUrl, u } from '../../lib/url';
 import { pad2 } from '../../lib/format';
@@ -19,11 +20,12 @@ const ch = chapters.find((c) => c.id === id)!;
 const n = chapterNumber(ch.id);
 const isPrimary = chapterTrack(ch.id) === 'primary';
 const { prev, next } = adjacentChapters(ch.id);
-const conceptRender = ch.id === 'origem-do-universo' ? 'ancient-light' : ch.id === 'misterios-do-cosmos' ? 'cosmic-web' : 'solar-system';
 const photoKey = chapterPhotoKey[ch.id];
 const credit = photoKey ? imageCredits[['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'].indexOf(photoKey)] : undefined;
 const [checkA, checkB] = ch.checkTitle.split('|');
 const ext = ' (abre em outra aba)';
+const usedTerms = new Set<string>();
+const bodies = ch.sections.map((s) => linkTerms(s.body, terms, usedTerms));
 const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': ['expansao', 'receita'], 'misterios-do-cosmos': ['hubble', 'receita'] } as Record<string, ('tempo' | 'expansao' | 'hubble' | 'receita')[]>)[ch.id];
 ---
 <Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page">
@@ -32,8 +34,8 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
   <main id="principal">
     <article class="chapter-reader" data-reader={ch.id}>
       <div class="reader-opening page-width">
-        <a class="back-link" href={u(isPrimary ? '/#capitulos' : '/#extras')}>← {isPrimary ? 'As três jornadas' : 'Exploração livre'}</a>
-        <div class="section-id">{isPrimary ? 'Jornada principal' : 'Leitura complementar'} {pad2(n)} / 03 · {ch.minutes} min de leitura</div>
+        <a class="back-link" href={u(isPrimary ? '/#capitulos' : '/laboratorio/')}>← {isPrimary ? 'Todas as aulas' : 'Mais experimentos'}</a>
+        <div class="section-id">{isPrimary ? `Aula ${pad2(n)} de 03` : 'Leitura complementar'} · {ch.minutes} min · {ch.sections.length} passos</div>
         <h1>{ch.title}</h1>
         <p class="reader-intro">{ch.intro}</p>
         {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
@@ -47,9 +49,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
             <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>
           </figcaption>
         </figure>
-      ) : (
-        <figure class="chapter-concept"><img src={u(`/renders/${conceptRender}.webp`)} srcset={`${u(`/renders/${conceptRender}-small.webp`)} 600w, ${u(`/renders/${conceptRender}.webp`)} 1200w`} sizes="100vw" alt={`Representação artística para ${ch.title}, sem escala física e sem dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /><figcaption>RENDER CONCEITUAL POR IA · SEM ESCALA{ch.id === 'origem-do-universo' && ' · REPRESENTAÇÃO DA LUZ ANTIGA, NÃO É MAPA CMB'}</figcaption></figure>
-      )}
+      ) : null}
       {labStations && <Observatorio variant="chapter" stations={labStations} id={ch.experience === 'expansion' ? 'exploracao' : 'observatorio'} />}
       {ch.experience && ch.experience !== 'expansion' && <CosmosScene experience={ch.experience} />}
       <div class="reader-grid page-width">
@@ -58,13 +58,12 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           <nav aria-label="Seções do capítulo" data-toc>
             {ch.sections.map((s, i) => <a href={`#${s.id}`}><span>{pad2(i + 1)}</span>{s.title}</a>)}
           </nav>
-          <p class="reader-note">Escolha seu nível. O essencial mantém a história; os outros níveis acrescentam mecanismos, limites e equações.</p>
           <div class="depth-controls" role="group" aria-label="Nível de aprofundamento">
             <button type="button" data-depth="essential" aria-pressed="true">Essencial</button>
             <button type="button" data-depth="more" aria-pressed="false">Entenda melhor</button>
             <button type="button" data-depth="deep" aria-pressed="false">Aprofundamento</button>
           </div>
-          <a href={u('/#glossario')} class="glossary-link">Consultar o glossário ↗</a>
+          <a href={u('/glossario/')} class="glossary-link">Abrir o dicionário ↗</a>
         </aside>
         <div class="reader-content">
           {ch.sections.map((s, i) => (
@@ -74,7 +73,9 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
                 <span class="evidence-label" data-kind={s.evidence} title={s.evidence}>{({ 'Observação': 'Sabemos · observado', 'Modelo físico': 'Calculamos · modelo', 'Questão aberta': 'Ainda não sabemos' } as Record<string, string>)[s.evidence] ?? s.evidence}</span>
               </div>
               <h2>{s.title}</h2>
-              <p>{s.body}</p>
+              <p>{bodies[i].map((seg, k) => 'term' in seg ? (
+                <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u('/glossario/')}>Ver no dicionário →</a></span></>
+              ) : seg.text)}</p>
               {s.more && (
                 <details class="depth-detail" data-layer="more">
                   <summary>Entenda melhor</summary>
@@ -89,10 +90,6 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
                   {s.equation?.layer === 'deep' && <figure class="equation"><div>{s.equation.formula}</div><figcaption>{s.equation.caption}</figcaption></figure>}
                 </details>
               )}
-              <div class="lesson-sources">
-                <span>Referências</span>
-                {s.sources.map((r) => <a href={r.href} target="_blank" rel="noopener noreferrer">{r.title} <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>)}
-              </div>
             </section>
           ))}
           <section class="chapter-check" aria-labelledby="check-title">
@@ -109,11 +106,11 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
       </div>
       <div class="reader-finish page-width">
         <button class="cta" type="button" data-complete={ch.id} aria-pressed="false"><span data-complete-label>Concluir este capítulo</span> <span class="arrow" aria-hidden="true">✓</span></button>
-        <p data-complete-status role="status">Seu progresso fica neste navegador.</p>
+        <p data-complete-status role="status"></p>
       </div>
       <nav class="chapter-pagination page-width" aria-label="Continuar a jornada">
         {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}
-        {next ? <a class="textlink" href={chapterUrl(next.id)}>Próximo: {chapterTitleShort[next.id]} <span aria-hidden="true">↗</span></a> : <a class="textlink" href={u(isPrimary ? '/#desafio' : '/#extras')}>{isPrimary ? 'Fechar a jornada: testar as três ideias' : 'Voltar à exploração livre'} <span aria-hidden="true">↗</span></a>}
+        {next ? <a class="textlink" href={chapterUrl(next.id)}>Próximo: {chapterTitleShort[next.id]} <span aria-hidden="true">↗</span></a> : <a class="textlink" href={u(isPrimary ? '/#desafio' : '/laboratorio/')}>{isPrimary ? 'Fechar a jornada: testar as três ideias' : 'Voltar à exploração livre'} <span aria-hidden="true">↗</span></a>}
       </nav>
     </article>
   </main>

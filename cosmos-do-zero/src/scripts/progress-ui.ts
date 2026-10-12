@@ -20,6 +20,7 @@ function progressStatus(): HTMLElement | null {
 
 export function refreshProgress(): void {
   const done = store.read();
+  document.dispatchEvent(new CustomEvent('cosmos:progress', { detail: { done } }));
   const mainCount = mainCompletedCount(done);
   $$<HTMLProgressElement>('[data-progress-bar]').forEach((b) => (b.value = mainCount));
   $$('[data-progress-label]').forEach((n) => setText(n, progressLabel(mainCount)));
@@ -33,12 +34,12 @@ export function refreshProgress(): void {
     b.setAttribute('aria-pressed', String(isDone));
   });
   // Abertura: continuar de onde parou
-  const cta = $<HTMLAnchorElement>('[data-start-journey]');
-  if (cta) {
+  for (const cta of $$<HTMLAnchorElement>('[data-start-journey]')) {
     const next = nextUnfinished(done);
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
     cta.href = chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
-    setText($('[data-start-label]', cta), completed ? 'Revisar a jornada principal' : mainCount > 0 ? 'Continuar a jornada' : 'Começar a jornada');
+    const inHeader = !!cta.closest('.header');
+    setText($('[data-start-label]', cta), completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
   }
 }
 
@@ -66,4 +67,11 @@ export function initProgress(): void {
     }
   });
   window.addEventListener('storage', refreshProgress);
+  // Terminar o desafio da aula conclui a aula automaticamente
+  document.addEventListener('cosmos:quiz-done', (e) => {
+    const id = (e as CustomEvent<{ chapter: ChapterId | '' }>).detail.chapter;
+    if (!id) return;
+    const ids = store.read();
+    if (!ids.includes(id)) { store.write([...ids, id]); refreshProgress(); }
+  });
 }

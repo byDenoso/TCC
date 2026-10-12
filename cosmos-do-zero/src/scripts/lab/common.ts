@@ -46,19 +46,42 @@ export function lightYears(mpc: number): string {
 
 export const reduced = (): boolean => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** Palpite: o visitante escolhe antes de mexer; mostramos a resposta e a explicação. */
-export function initGuess(root: HTMLElement, onReveal?: (choice: string, right: boolean) => void): void {
+/**
+ * Palpite antes de mexer: o experimento fica embaçado até o visitante escolher uma resposta ou pular.
+ * Links diretos com valores na URL já abrem o experimento liberado.
+ */
+export function initGuess(root: HTMLElement, opts: { unlocked?: boolean; onReveal?: (choice: string, right: boolean) => void } = {}): void {
   const box = root.querySelector<HTMLElement>('[data-guess]');
   if (!box) return;
+  const name = root.dataset.station ?? 'lab';
+  const gated = qa<HTMLElement>(root, '.obs-grid, .obs-epoch, .obs-tension');
+  let remembered = false;
+  try { remembered = sessionStorage.getItem(`cosmos-palpite-${name}`) === '1'; } catch { /* sem armazenamento */ }
+  const unlock = (focus: boolean) => {
+    root.classList.add('is-unlocked');
+    root.classList.remove('is-gated');
+    gated.forEach((g) => g.removeAttribute('inert'));
+    try { sessionStorage.setItem(`cosmos-palpite-${name}`, '1'); } catch { /* sem armazenamento */ }
+    root.dispatchEvent(new CustomEvent('cosmos:unlock', { bubbles: true, detail: { station: name } }));
+    if (focus) root.querySelector<HTMLElement>('.obs-grid input, .obs-grid button')?.focus({ preventScroll: true });
+  };
+  if (opts.unlocked || remembered) unlock(false);
+  else { root.classList.add('is-gated'); gated.forEach((g) => g.setAttribute('inert', '')); }
   const right = box.dataset.guess!;
   const buttons = qa<HTMLButtonElement>(box, '[data-opt]');
   const out = q(box, '[data-guess-result]');
+  const skip = box.querySelector<HTMLButtonElement>('[data-guess-skip]');
+  skip?.addEventListener('click', () => { skip.hidden = true; unlock(true); });
   buttons.forEach((b) => b.addEventListener('click', () => {
     const ok = b.dataset.opt === right;
     buttons.forEach((x) => { x.disabled = true; x.dataset.state = x.dataset.opt === right ? 'right' : x === b ? 'wrong' : 'idle'; });
     out.hidden = false;
-    q(out, '[data-guess-verdict]').textContent = ok ? 'Você acertou. ' : 'Nem sempre é intuitivo. ';
-    onReveal?.(b.dataset.opt!, ok);
+    if (skip) skip.hidden = true;
+    q(out, '[data-guess-verdict]').textContent = ok ? 'Você acertou! ' : 'Boa tentativa. ';
+    box.classList.add(ok ? 'is-right' : 'is-wrong');
+    root.dispatchEvent(new CustomEvent('cosmos:guess', { bubbles: true, detail: { station: name, ok } }));
+    unlock(false);
+    opts.onReveal?.(b.dataset.opt!, ok);
   }));
 }
 

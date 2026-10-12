@@ -23,7 +23,6 @@ export function initTimeline(): void {
     image.srcset = `${src.replace(/\.webp$/, '-small.webp')} 600w, ${src} 1200w`;
     image.src = src;
     image.alt = `Representação artística para ${era.title}; sem escala física.`;
-    setText($('[data-era-render-note]', root), era.id === 'cmb' ? 'Render conceitual da luz antiga por IA · não é mapa CMB' : 'Render conceitual por IA · sem escala');
     const pos = `${pad2(selected + 1)} / ${pad2(eras.length)}`;
     setText($('[data-era-number]', root), pos); setText($('[data-era-position]', root), pos);
     setText($('[data-era-evidence]', root), era.evidence); setText($('[data-era-time]', root), era.time);
