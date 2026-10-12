@@ -4,11 +4,13 @@ import { u } from '../lib/url';
 /** Endereços antigos da página inicial que mudaram para páginas próprias. */
 const MOVED: Record<string, string> = { tempo: '/laboratorio/#tempo', planetas: '/laboratorio/#planetas', laboratorio: '/laboratorio/#laboratorio', comparador: '/laboratorio/#comparador', estrelas: '/laboratorio/#estrelas', extras: '/laboratorio/', glossario: '/glossario/', fontes: '/fontes/', explorar: '/#observatorio' };
 
+const hashId = (hash = location.hash): string => { try { return decodeURIComponent(hash.slice(1)); } catch { return ''; } };
+
 export function initNav(): void {
   const isHome = location.pathname === u('/') || location.pathname === u('/').replace(/\/$/, '');
-  const movedTo = isHome && location.hash ? MOVED[decodeURIComponent(location.hash.slice(1))] : undefined;
-  if (movedTo && !document.getElementById(location.hash.slice(1))) { location.replace(u(movedTo)); return; }
-  if (isHome) addEventListener('hashchange', () => { const to = MOVED[decodeURIComponent(location.hash.slice(1))]; if (to && !document.getElementById(location.hash.slice(1))) location.replace(u(to)); });
+  const movedTo = isHome && location.hash ? MOVED[hashId()] : undefined;
+  if (movedTo && !document.getElementById(hashId())) { location.replace(u(movedTo)); return; }
+  if (isHome) addEventListener('hashchange', () => { const to = MOVED[hashId()]; if (to && !document.getElementById(hashId())) location.replace(u(to)); });
   // Old deep links still reveal content inside the complementary explorer.
   const revealHash = () => {
     let target: HTMLElement | null = null;
@@ -28,7 +30,7 @@ export function initNav(): void {
     if (url.origin !== location.origin || url.pathname !== location.pathname) return;
     // Âncora na mesma página: nunca apagar o estado dos experimentos guardado na URL.
     if (!event.defaultPrevented && url.hash && !url.search && location.search && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && a.target !== '_blank') {
-      const id = decodeURIComponent(url.hash.slice(1));
+      const id = hashId(url.hash);
       const target = document.getElementById(id);
       if (target) {
         event.preventDefault();

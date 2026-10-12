@@ -23,12 +23,13 @@ export function initPlanets(): void {
     const p = planets[index];
     if (!p) return;
     tabs.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.planet === id)));
-    ruler.forEach((r) => r.classList.toggle('active', r.dataset.ruler === id));
+    ruler.forEach((r) => { const active = r.dataset.ruler === id; r.classList.toggle('active', active); r.setAttribute('aria-pressed', String(active)); });
     const a = art[id];
     if (a && img.dataset.planet !== id) {
       stage.classList.add('swap');
       const done = () => stage.classList.remove('swap');
       img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
       setTimeout(done, 400);
       img.src = a.src; img.width = a.w; img.height = a.h;
     }

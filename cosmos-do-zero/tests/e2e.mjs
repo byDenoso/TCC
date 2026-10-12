@@ -699,6 +699,33 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
   }
 }
 
+
+// Regressões da revisão de UX: armazenamento inválido e controles acessíveis.
+section('Leitura, busca e régua acessível');
+{
+  const p = await page(390, { reducedMotion: 'reduce' });
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.evaluate(() => localStorage.setItem('cosmos-v6-onde', 'null'));
+  await p.goto(BASE + '/#%E0%A4%A', { waitUntil: 'networkidle' });
+  ok('hash e posição inválidos não quebram navegação', p.errors.length === 0 && await p.locator('[data-start-journey]').first().isVisible());
+  await p.goto(BASE + '/glossario/?q=Ano-luz#termo-4', { waitUntil: 'networkidle' });
+  ok('link do dicionário abre o termo pedido', await p.locator('#termo-4').getAttribute('open') !== null);
+  await p.locator('[data-glossary-reset]').click();
+  ok('limpar busca preserva foco e recupera termos', await p.locator('[data-glossary-input]').inputValue() === '' && await p.locator('[data-term-index]:visible').count() === 26);
+  await p.goto(BASE + '/laboratorio/', { waitUntil: 'networkidle' });
+  const ruler = p.locator('[data-ruler="saturno"]');
+  await ruler.focus(); await p.keyboard.press('Enter');
+  ok('régua escolhe planeta pelo teclado', await ruler.getAttribute('aria-pressed') === 'true' && await p.locator('[data-planet-name]').innerText() === 'Saturno');
+  await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
+  await p.locator('.reader-entry .cta').click();
+  ok('atalho abre o primeiro passo da aula', p.url().includes('#origem-do-universo-o-universo') && await p.locator('.lesson-section').first().isVisible());
+  ok('alvos da trilha têm área útil de toque', await p.locator('[data-step-dot]').evaluateAll(nodes => nodes.every(n => { const r = n.getBoundingClientRect(); return r.width >= 24 && r.height >= 44; })));
+  await p.evaluate(() => sessionStorage.setItem(`cosmos-quiz:${location.pathname}:origem-do-universo`, JSON.stringify({ ids: ['big-bang'], position: -1, answered: true, choice: 99, history: [null], finished: false })));
+  await p.reload({ waitUntil: 'networkidle' });
+  ok('quiz inválido recupera a primeira pergunta sem erro', p.errors.length === 0);
+  await p.context().close();
+}
+
 await browser.close();
 console.log(`\n${pass} verificações OK, ${fails.length} falhas`);
 if (fails.length) { console.log(fails.map((f) => ' - ' + f).join('\n')); process.exit(1); }

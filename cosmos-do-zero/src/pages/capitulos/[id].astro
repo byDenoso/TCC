@@ -34,7 +34,6 @@ const bodies = ch.sections.map((s) => linkTerms(s.body, terms, usedTerms));
 const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': ['expansao', 'receita'], 'misterios-do-cosmos': ['hubble', 'receita'] } as Record<string, ('tempo' | 'expansao' | 'hubble' | 'receita')[]>)[ch.id];
 ---
 <Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page">
-  <div class="reading-bar" data-reading-bar aria-hidden="true"></div>
   <div id="topo"><Header variant="solid" /></div>
   <main id="principal">
     <article class="chapter-reader" data-reader={ch.id}>
@@ -45,6 +44,10 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
         <p class="reader-intro">{ch.intro}</p>
         {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
         <div class="reader-idea"><span class="meta">A ideia que conecta tudo</span><p>{ch.idea}</p></div>
+        <nav class="reader-entry" aria-label="Por onde começar esta aula">
+          <a class="cta" href={`#${ch.sections[0].id}`}>Começar a leitura <span aria-hidden="true">↓</span></a>
+          {labStations && <a class="textlink" href={`#${ch.experience === 'expansion' ? 'exploracao' : 'observatorio'}`}>Experimentar primeiro <span aria-hidden="true">↓</span></a>}
+        </nav>
       </div>
       {photoKey && credit ? (
         <figure class="chapter-photo">
@@ -79,7 +82,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               </div>
               <h2>{s.title}</h2>
               <p>{bodies[i].map((seg, k) => 'term' in seg ? (
-                <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u('/glossario/')}>Ver no dicionário →</a></span></>
+                <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u(`/glossario/?q=${encodeURIComponent(seg.term.term)}#termo-${seg.index}`)}>Ver no dicionário →</a></span></>
               ) : seg.text)}</p>
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.more && (
@@ -112,7 +115,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
       </div>
       <div class="reader-finish page-width">
         <button class="cta" type="button" data-complete={ch.id} aria-pressed="false"><span data-complete-label>Concluir este capítulo</span> <span class="arrow" aria-hidden="true">✓</span></button>
-        <p data-complete-status role="status"></p>
+        <p data-complete-status role="status">Seu progresso fica neste navegador.</p>
       </div>
       <nav class="chapter-pagination page-width" aria-label="Continuar a jornada">
         {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}

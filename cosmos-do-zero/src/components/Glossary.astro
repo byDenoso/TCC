@@ -14,7 +14,10 @@ const Title = Astro.props.headingLevel ?? 'h2';
     </div>
     <form class="glossary-search" role="search" onsubmit="return false">
       <label for="glossary-search">O que você quer entender?</label>
-      <input type="search" id="glossary-search" data-glossary-input placeholder="Ex.: ano-luz, gravidade, fusão…" autocomplete="off" spellcheck="false" />
+      <div class="glossary-input-wrap">
+        <input type="search" id="glossary-search" data-glossary-input placeholder="Ex.: ano-luz, gravidade, fusão…" autocomplete="off" spellcheck="false" />
+        <button type="button" class="glossary-reset" data-glossary-reset aria-label="Limpar o texto da busca" hidden>×</button>
+      </div>
       <span role="status" data-glossary-count>{countLabel(terms.length)}</span>
     </form>
     <div class="glossary-chips" role="group" aria-label="Filtrar por jornada">
@@ -23,7 +26,7 @@ const Title = Astro.props.headingLevel ?? 'h2';
     </div>
     <div class="glossary-list" data-glossary-list>
       {terms.map((t, i) => (
-        <details class="glossary-entry" data-term-index={i}>
+        <details class="glossary-entry" id={`termo-${i}`} data-term-index={i}>
           <summary>{t.term}<span aria-hidden="true">+</span></summary>
           <div>
             <p>{t.definition}</p>

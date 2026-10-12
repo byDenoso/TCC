@@ -117,7 +117,7 @@ const camadas = (): Scene => {
     draw(v) {
       clear(layer);
       const bands: [number, number, string, string][] = [[0, 12, 'troposfera', '#dfeaf5'], [12, 50, 'estratosfera', '#e8e4f2'], [50, 85, 'mesosfera', '#efe2ea'], [85, 120, 'termosfera', '#f5e3d6']];
-      for (const [a, b, n, col] of bands) { el('rect', { x: 10, y: Y(b), width: 460, height: Y(a) - Y(b), fill: col, opacity: 0.55 }, layer); text(layer, 16, Y(b) + 16, n, { class: 'mx-t small strong' }); }
+      for (const [a, b, n, col] of bands) { el('rect', { x: 10, y: Y(b), width: 460, height: Y(a) - Y(b), fill: `color-mix(in srgb, ${col} 14%, var(--bg))` }, layer); text(layer, 16, Y(b) + 16, n, { class: 'mx-t small strong' }); }
       // marcadores aproximados
       [[4, 'nuvens'], [25, 'ozônio'], [80, 'meteoros'], [110, 'auroras']].forEach(([h, n]) => text(layer, 140, Y(h as number) + 4, n as string, { class: 'mx-t small' }));
       el('rect', { x: 120, y: Y(35), width: 8, height: Y(15) - Y(35), fill: '#7a3bd6', opacity: 0.5 }, layer);

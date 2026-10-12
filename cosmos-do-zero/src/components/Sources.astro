@@ -9,11 +9,11 @@ const Title = Astro.props.headingLevel ?? 'h2';
 <section class="sources-section dark" id="fontes" aria-labelledby="sources-title">
   <div class="page-width">
     <Title class="display" id="sources-title">A beleza vem com<br /><em>uma legenda.</em></Title>
-    <p class="source-intro">Cada jornada associa suas explicações a referências. Fotografias, cores compostas e representações artísticas contam histórias de maneiras diferentes.</p>
+    <p class="source-intro">As explicações têm fontes que você pode consultar. Aqui também mostramos de onde vêm as imagens e o que suas cores representam.</p>
     <div class="evidence-key">
-      <div><strong>Sabemos</strong><p>Foi observado: medido por telescópios e instrumentos, com margens de erro conhecidas.</p></div>
-      <div><strong>Calculamos</strong><p>Vem de um modelo: uma explicação que liga as medidas e faz previsões que podem ser testadas.</p></div>
-      <div><strong>Ainda não sabemos</strong><p>Está em investigação. Uma hipótese não vira fato só porque ganhou uma imagem bonita.</p></div>
+      <div><strong>Sabemos</strong><p>São pistas medidas por telescópios e outros instrumentos. Toda medida tem alguma incerteza.</p></div>
+      <div><strong>Calculamos</strong><p>São explicações que conectam várias medidas e fazem previsões que podemos testar.</p></div>
+      <div><strong>Ainda não sabemos</strong><p>São perguntas que as observações ainda não resolveram. Novas pistas podem mudar as explicações.</p></div>
     </div>
     <div class="image-credits">
       {imageCredits.map((c, i) => (
@@ -29,6 +29,10 @@ const Title = Astro.props.headingLevel ?? 'h2';
         </figure>
       ))}
     </div>
+    <details class="reference-index">
+      <summary>Sobre as ilustrações e os experimentos</summary>
+      <p>Os planetas e as cenas do site são ilustrações artísticas ou simulações educativas. Parte das imagens foi gerada com IA. Elas ajudam a entender as ideias, sem representar fotografias, dados medidos ou reconstruções exatas do passado. As observações oficiais aparecem com autoria e links acima.</p>
+    </details>
     <details class="reference-index">
       <summary>Consultar todas as referências científicas · {referenceIndex.length}</summary>
       <ul>

@@ -23,8 +23,13 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     try {
       const raw = sessionStorage.getItem(key()); if (!raw) return false;
       const s = JSON.parse(raw) as { ids: string[]; position: number; answered: boolean; choice: number | null; history: QuizState['history']; finished: boolean };
+      if (!s || !Array.isArray(s.ids) || !Array.isArray(s.history) || !Number.isInteger(s.position) || s.position < 0 ||
+          typeof s.answered !== 'boolean' || typeof s.finished !== 'boolean') return false;
       const pool = s.ids.map((id) => questions.find((q) => q.id === id)).filter((q): q is (typeof questions)[number] => !!q);
-      if (pool.length !== s.ids.length || !pool.length || (!s.history.length && !s.finished)) return false;
+      if (pool.length !== s.ids.length || !pool.length || s.position >= pool.length || new Set(s.ids).size !== s.ids.length ||
+          !pool.every((q) => quizPool(chapterNow).some((allowed) => allowed.id === q.id)) || (!s.history.length && !s.finished)) return false;
+      if (s.answered && (!Number.isInteger(s.choice) || s.choice === null || s.choice < 0 || s.choice >= pool[s.position].answers.length)) return false;
+      if (s.history.some((h) => !h || !pool.some((q) => q.id === h.id && Number.isInteger(h.choice) && h.choice >= 0 && h.choice < q.answers.length && h.correct === (h.choice === q.correct)))) return false;
       state = { pool, position: Math.min(s.position, pool.length - 1), answered: false, choice: null, history: s.answered ? s.history.slice(0, -1) : s.history, finished: false };
       if (s.finished) { state = { ...state, history: s.history, answered: true, finished: true }; renderResult(false); return true; }
       renderQuestion();
@@ -104,7 +109,7 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     const activity = document.createElement('p');
     activity.dataset.quizActivity = '';
     activity.textContent = opts.inChapter
-      ? 'A atividade foi concluída e conta no seu progresso. A pontuação e os trechos de revisão mostram o que ainda pode ser praticado; o selo registra a conclusão, não o domínio de todas as ideias.'
+      ? 'Aula concluída! Seu progresso registra a participação. Use a pontuação e os trechos de revisão para escolher o que praticar de novo.'
       : 'Você concluiu esta tentativa. A pontuação e os trechos de revisão ajudam a escolher o que praticar de novo.';
     feedback.replaceChildren(p, activity); feedback.hidden = false;
     next.hidden = false; next.textContent = 'Tentar novamente ↻';

@@ -109,7 +109,9 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
 
   // rótulos em HTML (acompanham a rotação sem mexer no SVG da cena)
   const mk = (t: string) => { const e = document.createElement('span'); e.className = 'mx-gl-label'; e.textContent = t; e.hidden = true; stage.append(e); return e; };
-  const big = nodes.reduce((best, n, i) => (links.filter(([a, b]) => a === i || b === i).length > links.filter(([a, b]) => a === best || b === best).length ? i : best), 0);
+  const degrees = new Uint16Array(nodes.length);
+  for (const [a, b] of links) { degrees[a]++; degrees[b]++; }
+  const big = nodes.reduce((best, _n, i) => degrees[i] > degrees[best] ? i : best, 0);
   const [la, lb] = links.filter(([a, b]) => a !== big && b !== big).sort(([a, b], [c, d]) => nodes[d].distanceTo(nodes[c]) - nodes[b].distanceTo(nodes[a]))[0] ?? links[0];
   const lab = { node: mk('aglomerado'), fil: mk('filamento'), void: mk('vazio') };
   const anchor = { node: nodes[big], fil: new THREE.Vector3().lerpVectors(nodes[la], nodes[lb], 0.5), void: new THREE.Vector3() };

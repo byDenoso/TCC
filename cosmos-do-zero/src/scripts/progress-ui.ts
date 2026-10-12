@@ -2,7 +2,7 @@ import { $, $$, setText } from './dom';
 import { createLocalStore, mainCompletedCount, nextUnfinished, progressLabel } from '../lib/progress';
 import { PRIMARY_CHAPTER_IDS, type ChapterId } from '../types';
 import { chapterUrl } from '../lib/url';
-import { readPlace } from './reader';
+import { readPlace } from '../lib/reading-place';
 
 export const store = createLocalStore();
 
@@ -51,7 +51,13 @@ export function refreshProgress(): void {
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
     cta.href = resumeAt ? `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}` : chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
     const inHeader = !!cta.closest('.header');
-    setText($('[data-start-label]', cta), completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 || resumeAt ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
+    const reader = $('[data-reader]');
+    const samePage = inHeader && new URL(cta.href).pathname === location.pathname;
+    if (samePage && reader) {
+      const section = resumeAt?.section ?? $('.lesson-section', reader)?.id;
+      if (section) cta.hash = section;
+    }
+    setText($('[data-start-label]', cta), samePage ? 'Ir para a leitura' : completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 || resumeAt ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
   }
 }
 

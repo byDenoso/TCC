@@ -20,9 +20,14 @@ export function initMotion(): void {
     const i = seen.get(parent) ?? 0; seen.set(parent, i + 1);
     n.style.setProperty('--rv-delay', `${Math.min(i, 5) * 0.07}s`);
     n.classList.add('rv');
+    const rect = n.getBoundingClientRect();
+    if (rect.top < innerHeight && rect.bottom > 0) n.classList.add('is-in');
     if (n.matches('.continue-card, .quiz-card, .chapter-photo, .chapter-concept, .image-credits figure, .cosmos-scene')) n.classList.add('rv-scale');
     io.observe(n);
   }
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+    if (e.matches) { nodes.forEach((n) => n.classList.add('is-in')); io.disconnect(); }
+  });
 
   // Estrelas acompanham o ponteiro (profundidade)
   const field = document.querySelector<HTMLElement>('.starfield');

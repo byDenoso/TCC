@@ -1,6 +1,7 @@
 import { $, $$ } from './dom';
 import { getParam, setParams } from '../lib/url-state';
 import type { DepthLevel } from '../types';
+import { readPlace, rememberPlace, type Place } from '../lib/reading-place';
 
 const KEY = 'cosmos-v4-depth';
 const LEVELS: DepthLevel[] = ['essential', 'more', 'deep'];
@@ -26,20 +27,6 @@ export function initReader(): void {
   try { const s = localStorage.getItem(KEY) as DepthLevel | null; if (s && LEVELS.includes(s)) initial = s; } catch { /* ignora */ }
   const q = getParam('nivel'); if (q && FROM_URL[q]) initial = FROM_URL[q];
   apply(initial, false);
-
-  // Barra de leitura
-  const bar = $('[data-reading-bar]');
-  if (bar) {
-    let ticking = false;
-    const update = () => {
-      const doc = document.documentElement;
-      const total = doc.scrollHeight - doc.clientHeight;
-      bar.style.transform = `scaleX(${total > 0 ? Math.min(1, Math.max(0, doc.scrollTop / total)) : 0})`;
-      ticking = false;
-    };
-    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
-    update();
-  }
 
   // Seção atual no índice
   const links = new Map($$<HTMLAnchorElement>('[data-toc] a', root).map((a) => [a.hash.slice(1), a]));
@@ -85,7 +72,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
 
   const prev = $<HTMLButtonElement>('[data-step-prev]', bar)!, next = $<HTMLButtonElement>('[data-step-next]', bar)!;
   const dots = $$<HTMLButtonElement>('[data-step-dot]', bar), count = $('[data-step-count]', bar)!;
-  let whole = false, current = 0, reachedEnd = false;
+  let whole = false, current = 0, reachedEnd = false, initializing = true;
   try { whole = localStorage.getItem(WHOLE_KEY) === '1'; } catch { /* ignora */ }
 
   const show = (i: number, focus = false, syncUrl = false) => {
@@ -109,10 +96,11 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     prev.disabled = current === 0;
     const nextTitle = sections[current + 1]?.querySelector('h2')?.textContent?.trim();
     next.replaceChildren(...(current === sections.length - 1 ? ['Ir para o desafio da aula ↓'] : ['Próximo', Object.assign(document.createElement('span'), { className: 'step-next-title', textContent: `: ${nextTitle ?? 'passo seguinte'}` }), ' →']));
-    rememberPlace(chapter, current, sections.length, sections[current].id, sections[current].querySelector('h2')?.textContent?.trim() ?? '');
+    if (!initializing) rememberPlace({ chapter, step: current, total: sections.length, section: sections[current].id, title: sections[current].querySelector('h2')?.textContent?.trim() ?? '', at: Date.now() });
     links.forEach((a, id) => (id === sections[current].id ? a.setAttribute('aria-current', 'step') : a.removeAttribute('aria-current')));
     toggle.textContent = whole ? 'Ver em passos' : 'Ver a aula inteira';
     root.classList.toggle('is-stepped', !whole);
+    toggle.setAttribute('aria-pressed', String(whole));
     if (focus && !whole) {
       const h = sections[current].querySelector<HTMLElement>('h2');
       if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
@@ -151,6 +139,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     // Uma âncora compartilhada tem prioridade sobre a posição de outra visita.
     if (!location.hash && !whole && saved && saved.step > 0 && saved.step < sections.length) offerResume(root, bar, saved, (k) => show(k, true, true));
   }
+  initializing = false;
   document.addEventListener('keydown', (e) => {
     if (whole || (e.target as Element).closest('input, textarea, select, [contenteditable]')) return;
     // Alt + setas fica reservado ao histórico nativo do navegador.
@@ -160,23 +149,6 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   });
 }
 
-/** Onde o aluno parou em cada aula (neste navegador). */
-const PLACE_KEY = 'cosmos-v6-onde';
-export interface Place { chapter: string; step: number; total: number; section: string; title: string; at: number }
-function readAll(): Record<string, Place> { try { return JSON.parse(localStorage.getItem(PLACE_KEY) ?? '{}') as Record<string, Place>; } catch { return {}; } }
-export function readPlace(chapter?: string): Place | null {
-  const all = readAll();
-  if (chapter) return all[chapter] ?? null;
-  return Object.values(all).sort((a, b) => b.at - a.at)[0] ?? null;
-}
-let restoring = true;
-function rememberPlace(chapter: string, step: number, total: number, section: string, title: string): void {
-  if (!chapter || restoring) return;
-  const all = readAll();
-  all[chapter] = { chapter, step, total, section, title, at: Date.now() };
-  try { localStorage.setItem(PLACE_KEY, JSON.stringify(all)); localStorage.setItem(`${PLACE_KEY}-ultima`, chapter); } catch { /* sem armazenamento */ }
-}
-setTimeout(() => { restoring = false; }, 0);
 function offerResume(root: HTMLElement, bar: HTMLElement, place: Place, go: (k: number) => void): void {
   const box = document.createElement('div');
   box.className = 'lesson-resume';

@@ -11,6 +11,7 @@ export function initGlossary(): void {
   const entries = $$<HTMLDetailsElement>('[data-term-index]', root);
   const chips = $$<HTMLButtonElement>('[data-glossary-chip]', root);
   const empty = $('[data-glossary-empty]', root)!;
+  const reset = $<HTMLButtonElement>('[data-glossary-reset]', root);
   let chapter: ChapterId | '' = '';
   const render = (url = true) => {
     const hits = new Set(filterTerms(terms, input.value, chapter));
@@ -22,6 +23,7 @@ export function initGlossary(): void {
     chips.forEach((c) => c.setAttribute('aria-pressed', String((c.dataset.glossaryChip ?? '') === chapter)));
     setText($('[data-glossary-count]', root), countLabel(hits.size));
     empty.hidden = hits.size > 0;
+    if (reset) reset.hidden = !input.value;
     const box = $('[data-glossary-suggest]', root);
     if (box) {
       const list = hits.size ? [] : suggestTerms(terms, input.value);
@@ -31,6 +33,7 @@ export function initGlossary(): void {
     if (url) setParams({ q: input.value.trim() || null, jornada: chapter || null });
   };
   input.addEventListener('input', () => render());
+  reset?.addEventListener('click', () => { input.value = ''; render(); input.focus(); });
   input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.value) { input.value = ''; render(); } });
   chips.forEach((c) => c.addEventListener('click', () => { chapter = (c.dataset.glossaryChip ?? '') as ChapterId | ''; render(); }));
   $('[data-glossary-clear]', root)!.addEventListener('click', () => { input.value = ''; chapter = ''; render(); input.focus(); });
@@ -38,4 +41,10 @@ export function initGlossary(): void {
   if (q) input.value = q;
   if (j && (CHAPTER_IDS as readonly string[]).includes(j)) chapter = j as ChapterId;
   if (q || j) render(false);
+  window.addEventListener('popstate', () => {
+    input.value = getParam('q') ?? '';
+    const current = getParam('jornada');
+    chapter = current && (CHAPTER_IDS as readonly string[]).includes(current) ? current as ChapterId : '';
+    render(false);
+  });
 }

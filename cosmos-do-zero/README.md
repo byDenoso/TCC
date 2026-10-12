@@ -13,10 +13,10 @@ Astro 7 (saída estática) · TypeScript estrito · Vitest · Playwright · font
 ```bash
 npm ci
 npm run dev          # desenvolvimento em http://localhost:4321
-npm run build        # gera dist/ (8 páginas) + relatório de tamanho
+npm run build        # gera dist/ (11 páginas) + relatório de tamanho
 npm run preview      # serve dist/ via Astro      (alternativa: npm run serve)
 npm run check        # astro check (tipos)
-npm test             # 29 testes unitários (lógica em src/lib)
+npm test             # 115 testes unitários (lógica em src/lib)
 npm run test:http    # servidor estático: caminhos, métodos, MIME e erros
 npm run test:e2e     # Playwright contra http://localhost:4321 (suba o preview antes)
 npm run test:browsers # fluxo principal em Firefox e WebKit
@@ -37,7 +37,7 @@ src/
   lib/         lógica pura e testada: format, planets, stars, quiz, glossary, progress, url-state, url, images
   components/  seções da home (ChapterList, Timeline, PlanetCatalog, Lab, Quiz*, Glossary, Sources) + Header/Footer/Hero
   pages/       index, capitulos/[id], 404
-  scripts/     ilhas de interatividade (uma por seção) ligadas por atributos data-*; main.ts é o único bundle
+  scripts/     ilhas de interatividade (uma por seção) ligadas por atributos data-*; main.ts carrega somente as ilhas presentes em cada página
   styles/      global.css (tokens, hero, rodapé) · home.css · reader.css · fonts.css
   assets/      planetas (render procedural) e fotos oficiais reencodadas
 public/renders/ imagens conceituais prontas: WEBP responsivo e PNG transparente
@@ -57,9 +57,9 @@ Notas científicas e verificação dos dados: `SCIENCE_NOTES.md`. Decisões, pre
 
 ## Imagens renderizadas
 
-Eclipse, escalas cósmicas, evidências, linha do tempo e estrela usam imagens raster geradas previamente. Não há Three.js, WebGL, modelos 3D nem renderização 3D no navegador. Os controles didáticos continuam em JavaScript leve e SVG 2D: posição do observador, fator de escala, comprimento de onda e viagem da luz.
+Eclipse, escalas cósmicas, evidências, linha do tempo e estrela usam imagens raster geradas previamente. A teia cósmica e a Máquina do tempo também usam cenas Three.js/WebGL quando disponíveis. Esses módulos carregam sob demanda e pausam fora da tela; desenhos SVG preservam a explicação quando WebGL não está disponível ou há preferência por movimento reduzido. A formação dos átomos e a viagem da CMB usam Canvas 2D.
 
-Os dez renders novos foram gerados com a ferramenta integrada `image_gen`, em resoluções responsivas de 1200×800 e 600×400. A galáxia da malha usa PNG de 192×128 com transparência. As legendas distinguem arte conceitual de observações oficiais. A imagem de luz antiga não é um mapa medido da CMB; o halo azul de matéria escura é uma convenção visual.
+Os dez renders foram gerados com a ferramenta integrada `image_gen`, em resoluções responsivas de 1200×800 e 600×400. A galáxia da malha usa PNG de 192×128 com transparência. As legendas distinguem arte conceitual de observações oficiais. A imagem de luz antiga não é um mapa medido da CMB; o halo azul de matéria escura é uma convenção visual.
 
 ## Publicação em domínio próprio e fallback
 

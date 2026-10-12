@@ -3,7 +3,7 @@
   "id": "galaxias-e-nebulosas",
   "minutes": 7,
   "title": "Onde estamos no Universo?",
-  "intro": "A Terra faz parte do Sistema Solar; o Sol é uma das estrelas da Via Láctea; e a Via Láctea é uma entre muitas galáxias. Vamos seguir essas escalas e a luz que nos traz notícias do passado.",
+  "intro": "Você está na Terra, que gira em torno do Sol. O Sol faz parte da Via Láctea, uma entre muitas galáxias. Vamos descobrir como essas peças se encaixam e por que olhar para longe também é olhar para o passado.",
   "idea": "Nosso endereço cósmico vai da Terra ao Sistema Solar, à Via Láctea e ao Universo observável. A luz distante mostra épocas antigas.",
   "learningGoal": "Distinguir Sistema Solar, galáxia e Universo, e explicar por que a luz distante revela o passado.",
   "experience": "scale",
@@ -31,7 +31,7 @@
     "id": "galaxias-e-nebulosas-tipos",
     "evidence": "Observação",
     "title": "O que é uma galáxia?",
-    "body": "Uma galáxia é um grande sistema de estrelas, gás e poeira mantidos juntos pela gravidade. Ela também contém matéria escura, conhecida por seus efeitos gravitacionais. A Via Láctea é uma entre muitas galáxias.",
+    "body": "Uma galáxia reúne estrelas, gás e poeira, ligados pela gravidade. Ela também contém matéria escura: não a vemos diretamente, mas percebemos seus efeitos sobre o movimento e a luz. A Via Láctea é a galáxia onde vivemos.",
     "more": "Galáxias podem ter forma espiral, elíptica ou irregular. A aparência ajuda a descrevê-las, mas não conta sozinha toda a história de como se formaram.",
     "deep": "A Via Láctea pertence ao Grupo Local, um conjunto de galáxias que inclui Andrômeda. Grupos e aglomerados são estruturas maiores que uma galáxia.",
     "sources": [
@@ -49,7 +49,7 @@
     "id": "galaxias-e-nebulosas-teia-cosmica",
     "evidence": "Observação",
     "title": "Galáxias formam uma teia cósmica",
-    "body": "Em escalas enormes, galáxias aparecem em grupos, aglomerados e filamentos, com regiões menos densas entre eles. Essa distribuição recebe o nome de teia cósmica.",
+    "body": "Quando olhamos regiões muito grandes, vemos galáxias reunidas em grupos e conjuntos maiores, chamados aglomerados. Elas também se distribuem em longos fios, separados por regiões quase vazias. Esse desenho recebe o nome de teia cósmica.",
     "more": "A gravidade ajuda a reunir matéria em estruturas. Os vazios não são paredes vazias: são regiões com menos galáxias do que os filamentos e aglomerados ao redor.",
     "deep": "Levantamentos do céu medem posições e espectros de galáxias. Simulações ajudam a comparar essas medidas com modelos; uma visualização de teia cósmica pode ser uma simulação, não uma fotografia direta dos filamentos.",
     "sources": [
@@ -164,7 +164,7 @@
   "id": "origem-do-universo",
   "minutes": 8,
   "title": "Como o Universo evoluiu?",
-  "intro": "A luz de galáxias e o brilho fraco que chega de todas as direções guardam pistas de um Universo antigo mais quente e denso. Vamos acompanhar a expansão, os primeiros elementos e a radiação cósmica de fundo.",
+  "intro": "O Universo já foi muito mais quente e denso. A luz que chega até nós guarda pistas dessa história. Vamos acompanhar como o espaço cresceu, como surgiram os primeiros elementos e por que ainda recebemos luz daquela época.",
   "idea": "O modelo do Big Bang quente descreve como o Universo se expandiu e esfriou. Ele não estabelece uma causa confirmada para o início.",
   "learningGoal": "Explicar o que descreve o modelo do Big Bang quente, citar evidências importantes e reconhecer o que ainda não sabemos sobre a causa inicial.",
   "experience": "expansion",
@@ -192,7 +192,7 @@
     "id": "origem-do-universo-expansao",
     "evidence": "Observação",
     "title": "Como a luz indica a expansão?",
-    "body": "Quando a luz atravessa o espaço em expansão, seu comprimento de onda aumenta. Nos espectros de galáxias distantes, linhas conhecidas aparecem deslocadas para comprimentos de onda maiores; esse efeito é chamado desvio para o vermelho, ou redshift.",
+    "body": "A luz se comporta como uma onda. Enquanto ela atravessa o espaço em expansão, a distância entre suas cristas aumenta: seu comprimento de onda cresce. Ao separar a luz de galáxias distantes por cor, cientistas reconhecem esse alongamento. Ele é chamado desvio para o vermelho, ou redshift.",
     "more": "O redshift cosmológico é uma pista da expansão em grande escala. Movimentos locais e a gravidade também podem mudar a luz, então redshift sozinho não é uma medida de distância independente de modelo.",
     "deep": "Uma relação usada na cosmologia é 1 + z = a(hoje) / a(emissão). z é o redshift cosmológico e a é o fator de escala. Movimentos locais podem acrescentar outros efeitos ao redshift medido.",
     "equation": {
@@ -215,7 +215,7 @@
     "id": "origem-do-universo-fase-quente",
     "evidence": "Modelo físico",
     "title": "Os primeiros minutos formaram núcleos leves",
-    "body": "Nos primeiros minutos, prótons e nêutrons formaram alguns núcleos leves, sobretudo hélio. Muitos prótons permaneceram sozinhos e se tornaram núcleos de hidrogênio. Essa etapa é chamada nucleossíntese primordial.",
+    "body": "Nos primeiros minutos, partículas chamadas prótons e nêutrons se juntaram e formaram alguns núcleos, sobretudo de hélio. Muitos prótons ficaram sozinhos: cada um é um núcleo de hidrogênio. A formação desses primeiros núcleos recebe o nome de nucleossíntese primordial.",
     "more": "O Universo ainda estava quente demais para elétrons ficarem ligados aos núcleos. Por isso, núcleos de hidrogênio e hélio existiam antes de se formarem átomos completos.",
     "deep": "As quantidades de hidrogênio, hélio e outros elementos leves previstas pelo modelo podem ser comparadas com medidas astronômicas. Essa concordância é uma das linhas de evidência para a fase quente.",
     "sources": [
@@ -233,7 +233,7 @@
     "id": "origem-do-universo-primeira-luz",
     "evidence": "Observação",
     "title": "A radiação que vem do Universo jovem",
-    "body": "Cerca de 380 mil anos depois da fase quente, elétrons se ligaram a núcleos e o Universo ficou mais transparente à luz. Os fótons que então passaram a viajar por grandes distâncias são detectados hoje como radiação cósmica de fundo em micro-ondas, ou CMB.",
+    "body": "Quando o Universo tinha cerca de 380 mil anos, já havia esfriado o suficiente para elétrons se ligarem a núcleos e formarem átomos. A luz, que antes era desviada o tempo todo, passou a viajar por grandes distâncias. Hoje detectamos essa luz antiga como radiação cósmica de fundo, ou CMB, na faixa das micro-ondas.",
     "more": "A luz não nasceu nessa época. Ela já existia; com menos elétrons livres espalhando os fótons, pôde atravessar o espaço. A expansão alongou seus comprimentos de onda e a esfriou para cerca de 2,7 K.",
     "deep": "Mapas da CMB mostram pequenas diferenças de temperatura, com cores escolhidas para destacar variações minúsculas. A luz registrada é antiga; o mapa colorido é uma visualização de medidas, não uma fotografia de nuvens visíveis.",
     "sources": [
@@ -255,7 +255,7 @@
     "id": "origem-do-universo-primeiras-estruturas",
     "evidence": "Questão aberta",
     "title": "Do Universo transparente às primeiras galáxias",
-    "body": "Depois da CMB, ainda não havia estrelas. A gravidade reuniu gás em regiões mais densas; as primeiras estrelas e galáxias surgiram mais tarde, ao longo de centenas de milhões de anos. Telescópios observam galáxias distantes para reconstruir essa fase.",
+    "body": "Quando a luz da CMB começou a viajar livremente, ainda não havia estrelas. Aos poucos, a gravidade juntou gás em regiões mais densas. As primeiras estrelas e galáxias surgiram ao longo de centenas de milhões de anos. Suas imagens distantes ajudam a reconstruir essa fase.",
     "more": "A luz das primeiras estrelas ionizou parte do gás entre galáxias. A época exata das primeiras estrelas e os caminhos de formação das galáxias seguem em estudo.",
     "deep": "As estimativas combinam redshift, brilho observado, seleção das amostras e modelos da luz emitida pelas galáxias. Um objeto muito antigo desafia e refina a reconstrução, mas precisa ser interpretado com essas incertezas em conta.",
     "sources": [
@@ -330,8 +330,8 @@
   "id": "misterios-do-cosmos",
   "minutes": 8,
   "title": "Como sabemos disso?",
-  "intro": "No cosmos, quase tudo o que sabemos chega pela luz ou pelo movimento de objetos distantes. Vamos separar o que os instrumentos medem, o que os modelos inferem e o que continua sem resposta.",
-  "idea": "Uma evidência é uma medida; um modelo explica como várias medidas podem combinar. Algumas explicações ainda têm peças desconhecidas.",
+  "intro": "Como podemos saber tanto sobre lugares que nunca visitamos? A luz e o movimento de objetos distantes dão pistas. Vamos ver como os cientistas usam essas pistas para testar explicações e reconhecer o que ainda falta entender.",
+  "idea": "Uma medida dá uma pista. Um modelo reúne várias pistas numa explicação que podemos testar. Algumas dessas explicações ainda têm peças desconhecidas.",
   "learningGoal": "Distinguir observação, inferência e questão aberta ao examinar expansão, CMB, matéria escura e expansão acelerada.",
   "experience": "evidence",
   "concept": "mystery",
@@ -340,7 +340,7 @@
     "id": "misterios-do-cosmos-horizonte",
     "evidence": "Observação",
     "title": "Medida, modelo e pergunta aberta",
-    "body": "Um telescópio registra luz, espectros ou mudanças de brilho. Um modelo relaciona essas medidas a propriedades do Universo. Uma pergunta continua aberta quando mais de uma explicação ainda cabe nos dados.",
+    "body": "Um telescópio registra luz: quanto chega, quais cores ela contém e como o brilho muda. Um modelo usa essas medidas para explicar o que pode estar acontecendo. Uma pergunta continua aberta quando as pistas ainda não permitem escolher uma resposta.",
     "more": "Uma imagem colorida pode representar luz invisível aos olhos, e uma animação pode ser uma simulação. Legendas e métodos mostram o que foi medido e o que foi acrescentado para explicar os dados.",
     "deep": "Uma explicação fica mais forte quando combina observações independentes e sobrevive a testes de calibração, seleção e incerteza. Uma imagem ou um ajuste isolado raramente responde a tudo.",
     "sources": [
@@ -358,7 +358,7 @@
     "id": "misterios-do-cosmos-exoplanetas",
     "evidence": "Observação",
     "title": "Expansão: a luz muda enquanto viaja",
-    "body": "A expansão cósmica alonga a luz que atravessa grandes distâncias. Astrônomos reconhecem linhas nos espectros de galáxias e medem quanto elas mudaram de comprimento de onda: esse redshift ajuda a testar a expansão.",
+    "body": "A expansão do espaço alonga a luz que viaja por grandes distâncias. Ao separar essa luz por cor, astrônomos encontram marcas de elementos químicos e medem quanto elas se deslocaram. Esse desvio para o vermelho, ou redshift, ajuda a estudar a expansão.",
     "more": "Quando comparadas com medidas de distância, as observações mostram que galáxias distantes acompanham a expansão em grande escala. A distância inferida depende também do modelo cosmológico usado.",
     "deep": "Movimentos locais podem somar-se ao redshift cosmológico. Por isso, espectro, distância e outras informações são combinados para reconstruir a história da expansão.",
     "sources": [
@@ -376,7 +376,7 @@
     "id": "misterios-do-cosmos-vida",
     "evidence": "Observação",
     "title": "A CMB preserva pistas do Universo jovem",
-    "body": "A radiação cósmica de fundo, ou CMB, é luz antiga que viajou livremente desde quando o Universo tinha cerca de 380 mil anos. Medimos seu brilho e pequenas variações em todo o céu; esse padrão restringe modelos da história cósmica.",
+    "body": "A radiação cósmica de fundo, ou CMB, é luz que viaja quase livremente desde quando o Universo tinha cerca de 380 mil anos. Ela chega de todas as direções, com pequenas diferenças de temperatura. Esse padrão ajuda a testar explicações para a história do Universo.",
     "more": "Satélites como WMAP e Planck mapearam essas diferenças minúsculas. As cores dos mapas ajudam a mostrar os dados e não são a aparência visível de manchas no espaço.",
     "deep": "A interpretação combina estatística dos mapas, remoção de sinais da Via Láctea e modelos físicos. O resultado testa a história do Universo, mas não é uma imagem direta de galáxias que ainda não existiam.",
     "sources": [
@@ -398,7 +398,7 @@
     "id": "misterios-do-cosmos-materia-escura",
     "evidence": "Observação",
     "title": "Matéria escura: gravidade sem luz",
-    "body": "Estrelas e galáxias se movem como se houvesse mais gravidade do que a matéria que emite luz consegue explicar. Lentes gravitacionais, que dobram a luz de objetos ao fundo, também ajudam a mapear essa massa. Chamamos de matéria escura a componente inferida por esses efeitos.",
+    "body": "O movimento de estrelas e galáxias indica mais gravidade do que a matéria visível consegue explicar. A luz de objetos ao fundo também muda de caminho ao passar perto de grandes massas: é o efeito de lente gravitacional. Essas pistas apontam para matéria adicional, chamada matéria escura.",
     "more": "A evidência gravitacional é forte em diferentes escalas, mas a natureza da matéria escura segue desconhecida. Nenhuma partícula candidata foi confirmada como sua composição.",
     "deep": "Em ajustes cosmológicos padrão, matéria comum e matéria escura têm papéis distintos na densidade do Universo. As proporções dependem do modelo e dos dados usados; não são uma pesagem direta de amostras no laboratório.",
     "sources": [
@@ -420,7 +420,7 @@
     "id": "misterios-do-cosmos-energia-escura",
     "evidence": "Observação",
     "title": "A expansão acelerada e o nome energia escura",
-    "body": "Medições de supernovas distantes do tipo Ia, combinadas com outras observações, sustentam uma fase recente de expansão acelerada. Energia escura é o nome dado à componente ou propriedade que os modelos usam para explicar esse resultado; sua natureza física não foi estabelecida.",
+    "body": "Certas explosões de estrelas, chamadas supernovas do tipo Ia, ajudam a medir grandes distâncias. Essas medidas, combinadas com outras observações, indicam que a expansão passou a acelerar numa fase recente. Os modelos chamam de energia escura o que explica essa aceleração. Sua natureza física ainda é desconhecida.",
     "more": "Os astrônomos comparam o brilho e o redshift das supernovas com previsões para diferentes histórias de expansão. A poeira, a calibração e outras observações também precisam ser consideradas.",
     "deep": "A constante cosmológica é a descrição mais simples da energia escura no modelo ΛCDM. Outras possibilidades continuam em estudo; um bom ajuste não identifica sozinho a causa física da aceleração.",
     "sources": [
@@ -499,7 +499,7 @@
   "id": "vida-das-estrelas",
   "minutes": 9,
   "title": "A vida das estrelas",
-  "intro": "Estrelas transformam matéria e irradiam energia. A massa inicial é uma das chaves de sua história: ela muda o ritmo de consumo do combustível, o brilho e os caminhos possíveis depois da fase principal.",
+  "intro": "Por que o Sol brilha? E por que algumas estrelas vivem muito mais que outras? A quantidade de matéria com que uma estrela nasce ajuda a definir seu brilho, seu tempo de vida e o que pode restar no fim.",
   "idea": "Uma estrela vive pelo equilíbrio entre gravidade e pressão. Seu destino depende da massa e de sua história.",
   "concept": null,
   "sections": [
@@ -507,7 +507,7 @@
     "id": "vida-das-estrelas-colapso",
     "evidence": "Modelo físico",
     "title": "Uma estrela começa como uma nuvem",
-    "body": "Uma região de uma nuvem molecular pode se contrair pela gravidade. O centro fica mais denso e quente, formando uma protoestrela. Antes da fusão estável, a contração e a entrada de matéria fornecem boa parte de sua luminosidade.",
+    "body": "Uma estrela pode nascer quando uma região de uma nuvem de gás e poeira se contrai pela gravidade. O centro fica mais denso e quente, formando uma protoestrela: uma estrela ainda em formação. Nessa fase, a contração e a chegada de matéria já a fazem brilhar.",
     "more": "A nuvem tem movimento de rotação. Durante a contração, parte do material forma um disco ao redor da protoestrela. Jatos e ventos podem retirar matéria. É nesse ambiente que sistemas planetários também podem começar a se formar.",
     "deep": "O colapso depende da competição entre gravidade, pressão, turbulência e campos magnéticos. Objetos com massa insuficiente para sustentar fusão de hidrogênio são anãs marrons, não estrelas de sequência principal.",
     "sources": [
@@ -548,7 +548,7 @@
     "id": "vida-das-estrelas-sol",
     "evidence": "Observação",
     "title": "O Sol também tem uma história",
-    "body": "O Sol se formou há cerca de 4,6 bilhões de anos e está na sequência principal. Sua massa equivale a aproximadamente 333 mil Terras. A luz visível vem da fotosfera, com temperatura perto de 5.500 °C; o núcleo é muito mais quente.",
+    "body": "O Sol se formou há cerca de 4,6 bilhões de anos. Hoje está na sequência principal, a longa fase em que transforma hidrogênio em hélio no núcleo. Sua massa equivale a aproximadamente 333 mil Terras. A luz visível sai da fotosfera, sua camada aparente, perto de 5.500 °C; o núcleo é muito mais quente.",
     "more": "O Sol deverá permanecer na fase principal por bilhões de anos. Depois, se expandirá como gigante vermelha e perderá suas camadas externas. A evolução depende da estrutura do núcleo e das reações disponíveis.",
     "deep": "A temperatura superficial, a temperatura central e a cor de uma imagem solar são informações distintas. Fotografias em ultravioleta ou raios X usam cores atribuídas e mostram regiões diferentes da atmosfera solar.",
     "sources": [
@@ -667,7 +667,7 @@
   "id": "sistema-solar",
   "minutes": 8,
   "title": "O Sistema Solar",
-  "intro": "O Sistema Solar compartilha uma origem, mas não um único tipo de mundo. Distância ao Sol, composição, massa e história produzem uma diversidade que vai de superfícies rochosas a atmosferas profundas.",
+  "intro": "Os planetas nasceram do mesmo disco de gás e poeira, mas seguiram caminhos diferentes. Vamos entender por que alguns têm chão rochoso, outros têm atmosferas profundas e nenhum é uma cópia da Terra.",
   "idea": "Compare sempre a mesma grandeza e a mesma definição. Um planeta gigante não tem uma superfície como a Terra.",
   "concept": "solar",
   "sections": [
@@ -851,7 +851,7 @@
   "id": "terra-e-atmosfera",
   "minutes": 9,
   "title": "Terra e atmosfera",
-  "intro": "A Terra habitável de hoje resulta de uma história geológica e biológica. Seu interior, sua atmosfera e seus oceanos trocaram matéria e energia por bilhões de anos. A composição do ar que respiramos é parte dessa história.",
+  "intro": "A Terra nem sempre teve oceanos e ar como os de hoje. Rochas, gases, água e seres vivos transformaram o planeta ao longo de bilhões de anos. Vamos acompanhar algumas dessas mudanças e o que elas ensinam sobre a vida.",
   "idea": "Habitabilidade depende de vários processos conectados. A presença de água ou uma boa distância da estrela, sozinhas, não garantem vida.",
   "concept": null,
   "sections": [
@@ -859,7 +859,7 @@
     "id": "terra-e-atmosfera-formacao-da-terra",
     "evidence": "Modelo físico",
     "title": "Um planeta quente se diferencia",
-    "body": "A Terra cresceu por acreção de material no Sistema Solar jovem. Colisões e processos internos aqueceram o planeta. Materiais mais densos, especialmente ricos em ferro, se concentraram no núcleo; rochas formaram o manto e a crosta.",
+    "body": "A Terra cresceu à medida que pedaços de material se juntavam no Sistema Solar jovem. Colisões e processos internos aqueceram o planeta. Materiais mais densos, ricos em ferro, se concentraram no núcleo. As rochas formaram o manto e a crosta, as camadas externas.",
     "more": "A crosta é a camada externa; o manto ocupa grande parte do volume. O núcleo externo é líquido e o interno é sólido. O manto é principalmente sólido, mas pode fluir lentamente em escalas geológicas.",
     "deep": "As camadas internas são inferidas por ondas sísmicas, gravidade, magnetismo e experimentos. A pressão modifica o comportamento dos materiais: uma temperatura elevada não implica automaticamente que uma região esteja líquida.",
     "sources": [
@@ -921,7 +921,7 @@
     "id": "terra-e-atmosfera-camadas",
     "evidence": "Observação",
     "title": "Cinco camadas, fronteiras aproximadas",
-    "body": "A troposfera concentra a maior parte do tempo meteorológico. Acima ficam estratosfera, mesosfera, termosfera e exosfera. As camadas são definidas principalmente pela estrutura de temperatura, e seus limites variam.",
+    "body": "A maior parte das nuvens, da chuva e das mudanças do tempo acontece na troposfera, a camada mais próxima do chão. Acima ficam estratosfera, mesosfera, termosfera e exosfera. Essa divisão acompanha principalmente como a temperatura muda com a altura. As fronteiras variam.",
     "more": "Na estratosfera, o ozônio absorve radiação ultravioleta. Muitos meteoros luminosos ocorrem na mesosfera. Auroras acontecem na alta atmosfera. A termosfera pode ter alta temperatura cinética apesar da densidade muito baixa.",
     "deep": "Alturas típicas: troposfera até cerca de 6–20 km; estratosfera até cerca de 50 km; mesosfera até 85 km; termosfera até algumas centenas de quilômetros ou mais. A exosfera faz a transição gradual para o espaço. Não existe uma tampa física na linha de 100 km.",
     "sources": [
@@ -939,7 +939,7 @@
     "id": "terra-e-atmosfera-campo-magnetico",
     "evidence": "Observação",
     "title": "Um campo gerado no interior",
-    "body": "Movimentos do material condutor no núcleo externo ajudam a gerar o campo magnético terrestre. A região de sua influência no ambiente espacial é a magnetosfera. Ela interage com partículas do vento solar.",
+    "body": "O movimento de metal líquido no núcleo externo ajuda a gerar o campo magnético da Terra. Esse campo se estende pelo espaço numa região chamada magnetosfera. Ali, ele interage com as partículas que vêm do Sol, o vento solar.",
     "more": "Partículas podem ser desviadas, aprisionadas ou chegar a regiões polares, contribuindo para auroras. A atmosfera também absorve radiação e freia partículas. A proteção do ambiente terrestre depende de vários mecanismos.",
     "deep": "O campo muda no tempo e pode inverter sua polaridade. Ter um campo global não é uma condição única e suficiente para possuir atmosfera ou vida: Vênus, por exemplo, tem uma atmosfera densa sem um dínamo global semelhante ao terrestre.",
     "sources": [

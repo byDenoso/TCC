@@ -115,7 +115,6 @@ export function initTempo(root: HTMLElement): void {
   let exact: number | null = null;
   const render = (): void => {
     const z = exact ?? zOf(Number(range.value));
-    const a = 1 / (1 + z);
     const ageThen = ageAtRedshift(z, PLANCK);
     const look = lookbackGyr(z, PLANCK);
     const dc = comovingMpc(z, PLANCK);

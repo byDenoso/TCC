@@ -38,16 +38,19 @@ const art = Object.fromEntries(planets.map((p) => [p.id, { src: planetArt[p.id].
               <dt>Interior</dt><dd data-planet-composition>{def.composition}</dd>
               <dt>Atmosfera</dt><dd data-planet-atmosphere>{def.atmosphere}</dd>
               <dt>Como ler a temperatura</dt><dd data-planet-temperature-note>{def.temperatureNote}</dd>
+              <dt>O que é uma UA?</dt><dd>Uma unidade astronômica equivale a aproximadamente 150 milhões de quilômetros, perto da distância entre a Terra e o Sol.</dd>
+              <dt>Tamanho da órbita</dt><dd>O semieixo é metade da maior largura da órbita. Ele indica seu tamanho, enquanto a distância ao Sol varia ao longo do caminho.</dd>
+              <dt>Tempo para girar</dt><dd>A rotação sideral conta uma volta em relação às estrelas distantes. “Retrógrada” indica que o planeta gira no sentido oposto ao da maioria.</dd>
               <dt>Uma curiosidade</dt><dd data-planet-fact>{def.fact}</dd>
             </dl>
           </details>
         </div>
       </div>
-      <div class="planet-ruler" aria-hidden="true" data-planet-ruler>
+      <div class="planet-ruler" role="group" aria-label="Comparar tamanhos e selecionar um planeta" data-planet-ruler>
         <span class="ruler-label">Raios equatoriais na mesma escala</span>
         <div class="ruler-row">
           {planets.map((p) => (
-            <button type="button" tabindex="-1" data-ruler={p.id} class:list={['ruler-item', p.id === def.id && 'active']} style={`--size:${((p.radius / maxR) * 100).toFixed(3)}`}>
+            <button type="button" data-ruler={p.id} aria-label={`Selecionar ${p.name} na régua de tamanhos`} aria-pressed={p.id === def.id ? 'true' : 'false'} class:list={['ruler-item', p.id === def.id && 'active']} style={`--size:${((p.radius / maxR) * 100).toFixed(3)}`}>
               <img src={planetGlobe[p.id].src} alt="" width={planetGlobe[p.id].width} height={planetGlobe[p.id].height} loading="lazy" decoding="async" />
               <span>{p.name}</span>
             </button>

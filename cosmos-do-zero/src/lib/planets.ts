@@ -22,7 +22,7 @@ export const compareRows: { label: string; value: (p: Planet) => string }[] = [
   { label: 'Gravidade equatorial', value: (p) => `${format(p.gravity)} m/s²` },
   { label: 'Temperatura de referência', value: (p) => `${format(p.temperature)} °C` },
   { label: 'Onde é medida', value: (p) => (p.type === 'Rochoso' ? 'Superfície (média)' : 'Atmosfera (1 bar)') },
-  { label: 'Semieixo da órbita', value: (p) => `${format(p.distance, 3)} UA` },
+  { label: 'Tamanho da órbita (semieixo)', value: (p) => `${format(p.distance, 3)} UA` },
   { label: 'Período orbital tropical', value: (p) => `${format(p.orbit)} dias` },
   { label: 'Rotação sideral', value: (p) => rotationLabel(p, true) },
   { label: 'Composição principal', value: (p) => p.composition },
@@ -35,7 +35,7 @@ export const catalogFacts: { label: string; value: (p: Planet) => string }[] = [
   { label: 'Massa', value: (p) => mass(p.mass) },
   { label: 'Gravidade equatorial', value: (p) => `${format(p.gravity)} m/s²` },
   { label: 'Temperatura de referência', value: (p) => `${format(p.temperature)} °C` },
-  { label: 'Semieixo da órbita', value: (p) => `${format(p.distance, 3)} UA` },
+  { label: 'Tamanho da órbita (semieixo)', value: (p) => `${format(p.distance, 3)} UA` },
   { label: 'Período orbital', value: (p) => `${format(p.orbit)} dias` },
   { label: 'Rotação sideral', value: (p) => rotationLabel(p) },
   { label: 'Tipo', value: (p) => p.type }

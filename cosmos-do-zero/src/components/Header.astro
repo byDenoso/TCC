@@ -22,7 +22,7 @@ const more = [
       <span class="identity-name">COSMOS<small>DO ZERO</small></span>
     </a>
     <nav class="main-nav" aria-label="Navegação principal">
-      {nav.map((n) => <a href={u(n.href)} data-spy={n.spy} aria-current={(Astro.url.pathname.replace(/\/$/, '').endsWith('/' + n.spy) ? 'page' : undefined)}>{n.label}</a>)}
+      {nav.map((n) => <a href={u(n.href)} data-spy={n.spy} aria-current={(Astro.url.pathname.replace(/\/$/, '').endsWith('/' + n.spy) || (n.spy === 'capitulos' && Astro.url.pathname.includes('/capitulos/')) ? 'page' : undefined)}>{n.label}</a>)}
     </nav>
     <div class="header-tools">
       <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Usar tema escuro">

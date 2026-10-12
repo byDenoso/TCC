@@ -429,3 +429,11 @@
 @media(max-width: 760px) { .preview-heading, .preview-cards, .extra-reading-links { grid-template-columns: 1fr; } .preview-heading h2 { font-size: 44px; } .exploration-preview { padding: 75px 0; } .preview-card { display: grid; grid-template-columns: 1fr; } .preview-card .preview-render { max-height: 190px; } .extra-explorations > summary { gap: 15px; padding-block: 38px; } .extra-plus { width: 34px; height: 34px; font-size: 24px; } .extra-reading-links { gap: 24px; } }
 @media(max-width:760px) { .era-render { min-height: 250px; height: 270px; } }
 .preview-card .preview-image-note { font-size: 12px; line-height: 1.65; color: var(--accent-ink); margin-top: -10px; }
+
+.glossary-input-wrap { position: relative; min-width: 0; }
+.glossary-input-wrap input { width: 100%; padding-right: 48px; }
+.glossary-reset { position: absolute; right: 0; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--surface); color: var(--ink); font-size: 24px; }
+.glossary-reset:hover { background: var(--accent-soft); }
+.glossary-input-wrap input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.glossary-chips button { min-height: 44px; }
+.planet-ruler button { min-height: 44px; }

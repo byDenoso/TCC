@@ -1,6 +1,6 @@
 .reader-page { background: var(--paper); color: var(--ink); }
 .reader-page main { display: block; }
-.reading-bar { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: var(--orange); transform-origin: 0 50%; transform: scaleX(0); z-index: 100; pointer-events: none; }
+
 .reader-page .header-shell.solid { background: var(--bg-alt); color: var(--ink); }
 .reader-page .header { border-bottom: 0; }
 .reader-opening { padding: 50px 0 63px; }
@@ -19,7 +19,7 @@
 .chapter-concept img { display: block; width: 100%; height: clamp(270px, 34vw, 460px); object-fit: cover; }
 .chapter-concept figcaption { padding: 15px var(--gutter); text-align: center; font-size: 12px; line-height: 1.65; letter-spacing: .09em; }
 .reader-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 90px; padding-block: 65px 20px; }
-.reader-aside { align-self: start; position: sticky; top: 25px; max-height: calc(100dvh - 50px); overflow: auto; }
+.reader-aside { align-self: start; position: sticky; top: 88px; max-height: calc(100dvh - 112px); overflow: auto; }
 .reader-aside > .meta { color: var(--muted); }
 .reader-aside nav { display: flex; flex-direction: column; margin-top: 22px; }
 .reader-aside nav a { display: flex; gap: 14px; border-bottom: 1px solid color-mix(in srgb, var(--line) 20%, transparent); padding: 12px 0 12px 10px; margin-left: -10px; font-size: 12.5px; line-height: 1.55; color: var(--ink-2); border-left: 2px solid transparent; transition: color 0.2s, border-color 0.2s, background 0.2s; }
@@ -99,3 +99,9 @@
   .chapter-pagination { flex-direction: column; gap: 20px; padding-bottom: 45px; }
 }
 .reader-goal { margin: 24px 0 0; font-size: 15px; line-height: 1.7; color: var(--ink-2); max-width: 790px; }
+
+.reader-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 26px; margin-top: 28px; }
+.reader-entry .cta { min-height: 48px; }
+.reader-aside nav a { min-height: 44px; }
+.chapter-check, .reader-references, .reader-finish { scroll-margin-top: 90px; }
+.lesson-section > p { text-wrap: pretty; }
