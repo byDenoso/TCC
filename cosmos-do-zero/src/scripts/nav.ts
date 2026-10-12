@@ -16,6 +16,7 @@ export function initNav(): void {
     let target: HTMLElement | null = null;
     try { target = document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch { return; }
     if (!target) return;
+    if (target instanceof HTMLDetailsElement) target.open = true;
     for (let node = target.parentElement; node; node = node.parentElement) {
       if (node instanceof HTMLDetailsElement) node.open = true;
     }

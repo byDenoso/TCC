@@ -105,7 +105,7 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
 .step-dot[aria-current='true']::after { background: var(--accent); border-color: var(--accent); scale: 1.25; }
 .step-count { font-size: 14px; color: var(--muted); white-space: nowrap; }
 .step-toggle { display: block; margin-top: 14px; background: none; border: 0; padding: 10px 0; color: var(--accent-ink); font: 700 14px var(--body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 44px; }
-@media (max-width: 760px) { .lesson-stepper { grid-template-columns: auto 1fr auto; border-radius: 22px; bottom: 10px; } .step-count { display: none; } .step-dots { gap: 0; } .step-prev { padding: 0 12px; } .step-next { padding: 0 14px; } }
+@media (max-width: 1100px) { .lesson-stepper { grid-template-columns: auto minmax(0, 1fr) auto; border-radius: 22px; bottom: 10px; } .step-count { display: none; } .step-dots { gap: 0; } .step-prev { padding: 0 12px; } .step-next { padding: 0 14px; } }
 @media (prefers-reduced-motion: no-preference) { .lesson-section.step-in { animation: rise .55s var(--ease) both; } }
 
 /* ───────────── Termos com definição ao toque ───────────── */

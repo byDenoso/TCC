@@ -707,7 +707,7 @@ section('Leitura, busca e régua acessível');
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   await p.evaluate(() => localStorage.setItem('cosmos-v6-onde', 'null'));
   await p.goto(BASE + '/#%E0%A4%A', { waitUntil: 'networkidle' });
-  ok('hash e posição inválidos não quebram navegação', p.errors.length === 0 && await p.locator('[data-start-journey]').first().isVisible());
+  ok('hash e posição inválidos não quebram navegação', p.errors.length === 0 && await p.locator('.hero-actions [data-start-journey]').isVisible());
   await p.goto(BASE + '/glossario/?q=Ano-luz#termo-4', { waitUntil: 'networkidle' });
   ok('link do dicionário abre o termo pedido', await p.locator('#termo-4').getAttribute('open') !== null);
   await p.locator('[data-glossary-reset]').click();
