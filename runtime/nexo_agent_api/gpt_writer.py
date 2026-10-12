@@ -342,7 +342,8 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
     report: dict = {"before": before, "applied": [], "rejected": [], "receipts": [], "handled": [],
                     "operation_receipts": [], "public_operation_receipts": [],
                     "contracts": contract_versions}
-    with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
+    with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work, \
+            operation_receipts.receipt_transaction(Path(work) / "TOWER_V06") as receipt_index:
         root, _ = materialize_live_tower(tower_raw, Path(work) / "TOWER_V06")
         from . import autonomy
         if isinstance(verified_capacity_observation, dict):
@@ -477,6 +478,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 conversion_error = "PROPOSAL_HAS_NO_EFFECTS"
             source_revision = operation_receipts.dependency_context_revision(root, item, conversion_error)
             savepoint = (root / LIVE_TOWER_NAME).read_bytes()
+            savepoint_receipts = operation_receipts.receipt_savepoint(root)
             if conversion_error is not None:
                 prior = _existing_effect(root, intent=intent, request={}, payload=item, request_index=0,
                                          source_revision=source_revision, supersedes=supersedes)
@@ -604,6 +606,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             if failed:
                 shutil.rmtree(root)
                 root, _ = materialize_live_tower(savepoint, root)
+                operation_receipts.restore_receipt_savepoint(root, savepoint_receipts)
                 for _, receipt in receipts:
                     receipt["rolled_back"] = True
                 issue = failed[0].get("issue")
@@ -730,6 +733,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         from .execution_phase_reconciliation import build_reconciliation_plan
 
         phase_savepoint = (root / LIVE_TOWER_NAME).read_bytes()
+        phase_savepoint_receipts = operation_receipts.receipt_savepoint(root)
         phase_error = None
         try:
             phase_plan = build_reconciliation_plan(root)
@@ -755,6 +759,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         if phase_failed:
             shutil.rmtree(root)
             root, _ = materialize_live_tower(phase_savepoint, root)
+            operation_receipts.restore_receipt_savepoint(root, phase_savepoint_receipts)
             for receipt in phase_receipts:
                 receipt["rolled_back"] = True
             report["execution_phase_reconciliation"]["rolled_back"] = (
@@ -792,6 +797,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         # admission gate. Commit its repair WORK and private route together.
         from . import execution_recovery
         recovery_savepoint = (root / LIVE_TOWER_NAME).read_bytes()
+        recovery_savepoint_receipts = operation_receipts.receipt_savepoint(root)
         recovery_receipts = []
         routed = 0
         try:
@@ -808,6 +814,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         if recovery_failed:
             shutil.rmtree(root)
             root, _ = materialize_live_tower(recovery_savepoint, root)
+            operation_receipts.restore_receipt_savepoint(root, recovery_savepoint_receipts)
             for receipt in recovery_receipts:
                 receipt["rolled_back"] = True
             report["rejected"].append({"item": "execution-recovery", "reason": recovery_failed[0].get("issue")})
@@ -835,6 +842,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
 
         publish_live_tower(root)
         packed = (root / LIVE_TOWER_NAME).read_bytes()
+        report["receipt_index"] = {"full_scans": receipt_index.full_scans}
     after = verify_live_tower(read_live_tower_bytes(packed))
     report["after"] = after
     report["status"] = "NO_OP" if after == before else "READY_TO_UPLOAD"
@@ -1168,7 +1176,24 @@ def _runner_operational_updates(path: str) -> list[dict]:
     return result
 
 
+def _run_optional_gc(raw: bytes, report: dict) -> None:
+    import os
+    if os.environ.get("NEXO_TOWER_GC_DRY_RUN") != "1":
+        return
+    try:
+        from .tower_gc import opportunistic_dry_run
+        from .drive_transport import nexo_home
+        report["gc"] = opportunistic_dry_run(
+            raw, nexo_home() / "cache" / "tower-gc-dry-run.json",
+            max_bytes=int(os.environ.get("NEXO_TOWER_GC_MAX_BYTES", "0")))
+    except (ValueError, OSError, RuntimeError) as exc:
+        report["gc"] = {"status": "GC_FAILED", "error_type": type(exc).__name__}
+
+
 def _main(argv: list[str]) -> int:
+    if argv and argv[0] == "gc":
+        from .tower_gc_cli import main as gc_main
+        return gc_main(argv[1:])
     if argv and argv[0] == "continuity":
         from .continuity_cli import main as continuity_main
         return continuity_main(argv[1:])
@@ -1371,7 +1396,8 @@ def _main(argv: list[str]) -> int:
                 dispatched = [b["id"] for b in queued]
             if packed is None:
                 if not items:
-                    print(json.dumps({"status": "NO_OP", "pending": len(pending)}))
+                    _run_optional_gc(raw, report)
+                    print(json.dumps({"status": "NO_OP", "pending": len(pending), "gc": report.get("gc")}))
                     _emit_gateway_results(
                         report, gateway_ids, set(gateway_shadow),
                         path=os.environ.get("NEXO_OPERATION_RECEIPTS_OUT"),
@@ -1410,6 +1436,7 @@ def _main(argv: list[str]) -> int:
                 print(json.dumps({"status": "TOWER_TRANSPORT_UNAVAILABLE", "action": exc.action,
                                   "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
                 return 0
+        _run_optional_gc(packed or raw, report)
         by_name = {e.get("name"): e.get("id") for e in pending}
         applied_roots = {str(n) for n in report.get("handled", []) + report.get("applied", [])}
         for entry in github.seen:
@@ -1429,7 +1456,7 @@ def _main(argv: list[str]) -> int:
                     print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
         summary = {"status": report.get("status"), "before": report.get("before"), "after": report.get("after"),
                    "applied": len(report.get("applied", [])), "rejected": [r.get("item") for r in report.get("rejected", [])],
-                   "write": report.get("write")}
+                   "write": report.get("write"), "gc": report.get("gc")}
         print(json.dumps(summary, ensure_ascii=False))
         applied = applied_roots
         _emit_gateway_results(

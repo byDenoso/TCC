@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from bisect import bisect_right
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -350,7 +353,7 @@ def _receipt_paths(root: Path) -> list[Path]:
     return sorted(set(paths))
 
 
-def load_receipts(root: str | Path) -> list[dict]:
+def _load_receipts_uncached(root: str | Path) -> list[dict]:
     """Dual-read current and legacy receipt locations; unreadable ledgers are errors, never misses."""
     records: list[dict] = []
     for path in _receipt_paths(Path(root)):
@@ -382,6 +385,127 @@ def load_receipts(root: str | Path) -> list[dict]:
     return sorted(records, key=lambda row: (str(row.get("occurred_at") or ""), str(row.get("receipt_id") or "")))
 
 
+
+class ReceiptIndex:
+    """Transaction-owned index; never a process-wide cache or authority store."""
+
+    def __init__(self, root: str | Path):
+        self.root = Path(root).resolve()
+        self._rows = None
+        self.full_scans = 0
+        self._added = []
+        self._by_triplet = {}
+        self._by_intent = {}
+        self._terminal_intent = {}
+        self._terminal_effect = {}
+        self._terminal_id = {}
+
+    @staticmethod
+    def _key(row):
+        return str(row.get("occurred_at") or ""), str(row.get("receipt_id") or "")
+
+    def _insert(self, rows, row):
+        position = bisect_right([self._key(value) for value in rows], self._key(row))
+        rows.insert(position, row)
+
+    def _index(self, row):
+        triplet = row["intent_id"], row["payload_sha256"], row["effect_id"]
+        self._insert(self._by_triplet.setdefault(triplet, []), row)
+        self._insert(self._by_intent.setdefault(row["intent_id"], []), row)
+        if row["outcome"] == "REJECTED_TERMINAL":
+            self._insert(self._terminal_intent.setdefault(row["intent_id"], []), row)
+            self._insert(self._terminal_effect.setdefault(row["effect_id"], []), row)
+            self._insert(self._terminal_id.setdefault(row["receipt_id"], []), row)
+
+    def ensure_loaded(self):
+        if self._rows is None:
+            self.full_scans += 1
+            self._rows = _load_receipts_uncached(self.root)
+            for row in self._rows:
+                self._index(row)
+        return self
+
+    def rows(self):
+        self.ensure_loaded()
+        return list(self._rows)
+
+    def add(self, row):
+        # If no query has occurred, the first scan will include this file.
+        if self._rows is not None:
+            self._insert(self._rows, row)
+            self._index(row)
+            self._added.append(row)
+
+    def latest(self, intent, digest, effect):
+        self.ensure_loaded()
+        rows = self._by_triplet.get((intent, digest, effect), [])
+        return rows[-1] if rows else None
+
+    def envelopes(self, intent):
+        self.ensure_loaded()
+        effect = envelope_effect_id(intent)
+        return [row for row in self._by_intent.get(intent, []) if row["effect_id"] == effect]
+
+    def conflict(self, intent, digest, effect, supersedes):
+        self.ensure_loaded()
+        rows = [row for row in self._terminal_intent.get(intent, []) if row["payload_sha256"] != digest]
+        if rows:
+            return rows[-1]
+        if supersedes:
+            linked = self._terminal_id.get(supersedes, [])
+            row = linked[0] if linked else None
+            if row and row["intent_id"] != intent and row["payload_sha256"] != digest:
+                return None
+            return row or {"receipt_id": supersedes, "reason_code": "SUPERSEDES_RECEIPT_NOT_FOUND"}
+        rows = [row for row in self._terminal_effect.get(effect, []) if row["payload_sha256"] != digest]
+        return rows[-1] if rows else None
+
+
+_TRANSACTION_INDEX: ContextVar[ReceiptIndex | None] = ContextVar("nexo_receipt_transaction", default=None)
+
+
+def _transaction_index(root):
+    index = _TRANSACTION_INDEX.get()
+    return index if index is not None and index.root == Path(root).resolve() else None
+
+
+@contextmanager
+def receipt_transaction(root: str | Path):
+    """Use once around one materialized candidate; dispose on commit/CAS failure."""
+    index = ReceiptIndex(root)
+    token = _TRANSACTION_INDEX.set(index)
+    try:
+        yield index
+    finally:
+        _TRANSACTION_INDEX.reset(token)
+
+
+def receipt_savepoint(root: str | Path) -> int | None:
+    index = _transaction_index(root)
+    if index is None:
+        return None
+    index.ensure_loaded()
+    return len(index._added)
+
+
+def restore_receipt_savepoint(root: str | Path, savepoint: int | None) -> None:
+    index = _transaction_index(root)
+    if index is not None and savepoint is not None:
+        # The checkpoint is O(1); rebuild only on a real rollback, without I/O.
+        reverted = {id(row) for row in index._added[savepoint:]}
+        index._rows = [row for row in index._rows if id(row) not in reverted]
+        del index._added[savepoint:]
+        for table in (index._by_triplet, index._by_intent, index._terminal_intent,
+                      index._terminal_effect, index._terminal_id):
+            table.clear()
+        for row in index._rows:
+            index._index(row)
+
+
+def load_receipts(root: str | Path) -> list[dict]:
+    index = _transaction_index(root)
+    return index.rows() if index is not None else _load_receipts_uncached(root)
+
 def persist_receipt(root: str | Path, receipt: dict) -> Path:
     _validate(receipt)
     directory = Path(root) / RECEIPT_ROOT
@@ -395,16 +519,25 @@ def persist_receipt(root: str | Path, receipt: dict) -> Path:
     temporary = path.with_suffix(".json.tmp")
     temporary.write_text(body, encoding="utf-8")
     temporary.replace(path)
+    index = _transaction_index(root)
+    if index is not None:
+        index.add(receipt)
     return path
 
 
 def latest_receipt(root: str | Path, *, intent: str, payload_sha256: str, effect: str) -> dict | None:
+    index = _transaction_index(root)
+    if index is not None:
+        return index.latest(intent, payload_sha256, effect)
     matches = [row for row in load_receipts(root)
                if row["intent_id"] == intent and row["payload_sha256"] == payload_sha256 and row["effect_id"] == effect]
     return matches[-1] if matches else None
 
 
 def envelope_receipts(root: str | Path, *, intent: str) -> list[dict]:
+    index = _transaction_index(root)
+    if index is not None:
+        return index.envelopes(intent)
     effect = envelope_effect_id(intent)
     return [row for row in load_receipts(root)
             if row["intent_id"] == intent and row["effect_id"] == effect]
@@ -417,6 +550,9 @@ def latest_envelope_receipt(root: str | Path, *, intent: str, payload_sha256: st
 
 
 def terminal_payload_conflict(root: str | Path, *, intent: str, payload_sha256: str, effect: str, supersedes: str | None) -> dict | None:
+    index = _transaction_index(root)
+    if index is not None:
+        return index.conflict(intent, payload_sha256, effect, supersedes)
     rows = load_receipts(root)
     terminal = [row for row in rows if row["outcome"] == "REJECTED_TERMINAL"]
     same_identity = [row for row in terminal if row["intent_id"] == intent

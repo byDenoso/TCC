@@ -66,6 +66,7 @@ def build_live_tower_payload(
     *,
     updated_at: str | None = None,
     base: dict[str, Any] | None = None,
+    excluded_paths: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     """Pack the canonical files under ``root`` into one live Tower object.
 
@@ -73,6 +74,11 @@ def build_live_tower_payload(
     runtime, text entries, ...) are carried over unchanged, so repacking a
     downloaded Tower never drops state that the local scan does not own.
     """
+    # Trusted internal candidate argument, never read from a proposal or CONTROL.
+    # GC rehearsal must explicitly exclude paths in BOTH scan and base carryover.
+    for path in excluded_paths:
+        if not path or path.startswith("/") or "\\" in path or any(part in {"..", ".", ""} for part in path.split("/")):
+            raise ValueError("LIVE_TOWER_EXCLUSION_PATH_INVALID")
     root = Path(root)
     paths: set[Path] = set()
     for pattern in _JSON_SURFACES:
@@ -81,9 +87,11 @@ def build_live_tower_payload(
     files: dict[str, dict[str, Any]] = {
         key: value
         for key, value in ((base or {}).get("files") or {}).items()
-        if not _is_scanned_surface(key)
+        if not _is_scanned_surface(key) and key not in excluded_paths
     }
     for path in sorted(paths):
+        if logical_path(root, path) in excluded_paths:
+            continue
         files[logical_path(root, path)] = {
             "encoding": "json",
             "value": json.loads(path.read_text(encoding="utf-8")),
@@ -91,7 +99,7 @@ def build_live_tower_payload(
     # Contracts are carried from ``base`` but a local edit (writer document merge)
     # must win, otherwise contract updates are silently dropped on repack.
     for path in sorted(root.glob("contracts/**/*.json")):
-        if path.is_file():
+        if path.is_file() and logical_path(root, path) not in excluded_paths:
             try:
                 files[logical_path(root, path)] = {"encoding": "json", "value": json.loads(path.read_text(encoding="utf-8"))}
             except ValueError:
