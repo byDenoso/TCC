@@ -91,5 +91,16 @@ function paintCourse(done: string[]): void {
     if (label) label.textContent = state === 'done' ? 'Concluída ✓' : state === 'next' ? (done.length ? 'Próxima aula' : 'Comece por aqui') : id === 'desafio' ? 'Teste o que aprendeu' : 'Ainda não visitada';
   }
   const path = map.querySelector<SVGPathElement>('[data-course-progress]');
-  if (path) path.style.strokeDashoffset = String(1 - Math.min(1, lit / 3));
+  if (path) {
+    // fração do traçado até a última estrela acesa (as estrelas ficam sobre a curva)
+    const xs = [150, 516, 900, 1104];
+    let frac = 0;
+    if (lit > 0) {
+      const target = xs[Math.min(lit, 3)], total = path.getTotalLength();
+      let best = 0, err = Infinity;
+      for (let k = 0; k <= 200; k++) { const d = (total * k) / 200, e = Math.abs(path.getPointAtLength(d).x - target); if (e < err) { err = e; best = d; } }
+      frac = best / total;
+    }
+    path.style.strokeDashoffset = String(1 - frac);
+  }
 }

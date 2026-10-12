@@ -145,11 +145,12 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
 /* ───────────── Trilha do curso (constelação) ───────────── */
 .course-map { position: relative; height: clamp(240px, 24vw, 300px); margin: clamp(26px, 4vw, 44px) 0 clamp(10px, 2vw, 20px); }
 .course-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.course-lines path { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.course-lines path { fill: none; stroke-width: 2; }
+.course-path-bg { vector-effect: non-scaling-stroke; }
 .course-path-bg { stroke: var(--line-strong); stroke-dasharray: 2 7; }
-.course-path { stroke: var(--accent); stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--ease); }
+.course-path { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.6s var(--ease); }
 .course-map ol { list-style: none; margin: 0; padding: 0; }
-.course-map li { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); }
+.course-map li { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -11px); }
 .course-map li a { display: grid; justify-items: center; gap: 10px; text-align: center; width: max-content; max-width: 220px; color: inherit; text-decoration: none; }
 .course-star { width: 22px; height: 22px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line-strong); box-shadow: 0 0 0 6px var(--bg); transition: transform var(--t-mid) var(--ease-out-back), background var(--t-mid), border-color var(--t-mid), box-shadow var(--t-mid); }
 .course-map li a:hover .course-star, .course-map li a:focus-visible .course-star { transform: scale(1.25); border-color: var(--accent); }
