@@ -96,15 +96,22 @@ const gigantes = (): Scene => {
   };
 };
 
+const COMET_ORBIT = { a: 190, e: 0.8, cx: 260, cy: 135 };
+/** Posição e tangente na elipse; a fase cresce uniformemente no tempo. */
+export function cometPosition(f: number): [number, number, number, number] {
+  const { a, e, cx, cy } = COMET_ORBIT;
+  const b = a * Math.sqrt(1 - e * e);
+  const M = (((f % 1) + 1) % 1) * Math.PI * 2;
+  let E = M;
+  for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+  // O Sol desenhado está no foco esquerdo (cx − ae): E = 0 é o periélio.
+  return [cx - a * Math.cos(E), cy + b * Math.sin(E), a * Math.sin(E), b * Math.cos(E)];
+}
 const cometa = (): Scene => {
   let layer: SVGGElement;
-  const a = 190, e = 0.8, b = a * Math.sqrt(1 - e * e), cxE = 260, cy = 135, sunX = cxE - a * e;
-  const pos = (f: number): [number, number, number, number] => {
-    // anomalia média → excêntrica (Kepler), para o cometa acelerar perto do Sol
-    const M = f * Math.PI * 2; let E = M; for (let i = 0; i < 8; i++) E = E - (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
-    const x = cxE + a * Math.cos(E), y = cy + b * Math.sin(E);
-    return [x, y, -a * Math.sin(E), b * Math.cos(E)];
-  };
+  const { a, e, cx: cxE, cy } = COMET_ORBIT;
+  const b = a * Math.sqrt(1 - e * e), sunX = cxE - a * e;
+  const pos = cometPosition;
   return {
     init(svg) { layer = g(svg); },
     value: (v) => { const [x, y] = pos(v); const d = Math.hypot(x - sunX, y - cy); return d < 60 ? 'perto do Sol' : d < 200 ? 'a meio caminho' : 'longe do Sol'; },

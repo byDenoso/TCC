@@ -187,6 +187,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   const cBtns = [...cBox.querySelectorAll<HTMLButtonElement>('[data-mx-check]')];
   const cRight = Number(cBox.dataset.right);
   const section = root.closest<HTMLElement>('.lesson-section')?.id ?? id;
+  const history = root.querySelector<HTMLElement>('[data-mx-history]')!;
   cBtns.forEach((b, i) => b.addEventListener('click', () => {
     const ok = i === cRight;
     cBtns.forEach((x, j) => { x.dataset.state = j === cRight && ok ? 'right' : x === b ? (ok ? 'right' : 'wrong') : 'idle'; x.disabled = ok; });
@@ -195,11 +196,20 @@ function setup(root: HTMLElement, scene: Scene): void {
     outBox.hidden = false;
     outBox.querySelector('p')!.lastChild!.textContent = ok ? ` ${outBox.dataset.why ?? ''}` : '';
     live.textContent = ok ? `Correto. ${outBox.dataset.why ?? ''}` : 'Ainda não. Tente outra resposta.';
-    if (ok) { markPracticed(section); paintToc(); root.dispatchEvent(new CustomEvent('cosmos:micro', { bubbles: true, detail: { id: section } })); }
+    if (ok) {
+      markPracticed(section); paintToc(); root.dataset.practiced = 'true';
+      history.hidden = false;
+      history.textContent = 'Você acertou esta verificação nesta visita. Continue explorando a ideia em outras situações.';
+      root.dispatchEvent(new CustomEvent('cosmos:micro', { bubbles: true, detail: { id: section } }));
+    }
   }));
   const outBox = cBox.querySelector<HTMLElement>('[data-mx-check-out]')!;
   outBox.dataset.why = outBox.querySelector('p')!.lastChild!.textContent?.trim() ?? '';
-  if (practiced().has(section)) root.dataset.practiced = 'true';
+  if (practiced().has(section)) {
+    root.dataset.practiced = 'true';
+    history.hidden = false;
+    history.textContent = 'Você acertou esta verificação em uma visita anterior. Os controles e respostas desta visita começam de novo.';
+  }
 
   root.classList.add('is-ready');
   setPlaying(false);

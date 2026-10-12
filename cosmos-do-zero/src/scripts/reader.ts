@@ -88,8 +88,14 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   let whole = false, current = 0, reachedEnd = false;
   try { whole = localStorage.getItem(WHOLE_KEY) === '1'; } catch { /* ignora */ }
 
-  const show = (i: number, focus = false) => {
+  const show = (i: number, focus = false, syncUrl = false) => {
     current = Math.max(0, Math.min(sections.length - 1, i));
+    // Só uma escolha do aluno cria histórico; restaurar a URL não escreve nela.
+    if (syncUrl) {
+      const url = new URL(location.href);
+      url.hash = sections[current].id;
+      if (url.href !== location.href) history.pushState(history.state, '', url);
+    }
     if (current === sections.length - 1 && !reachedEnd) { reachedEnd = true; root.dispatchEvent(new CustomEvent('cosmos:lesson-end', { bubbles: true, detail: { chapter } })); }
     sections.forEach((s, k) => {
       const on = whole || k === current;
@@ -114,40 +120,43 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
       if (top < 80 || top > innerHeight * 0.6) sections[current].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
     }
   };
-  prev.addEventListener('click', () => show(current - 1, true));
+  prev.addEventListener('click', () => show(current - 1, true, true));
   next.addEventListener('click', () => {
     if (current === sections.length - 1) { $('.chapter-check', root)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); return; }
-    show(current + 1, true);
+    show(current + 1, true, true);
   });
-  dots.forEach((d, k) => d.addEventListener('click', () => show(k, true)));
+  dots.forEach((d, k) => d.addEventListener('click', () => show(k, true, true)));
   toggle.addEventListener('click', () => { whole = !whole; try { localStorage.setItem(WHOLE_KEY, whole ? '1' : '0'); } catch { /* ignora */ } show(current, !whole); });
   links.forEach((a, id) => a.addEventListener('click', (e) => {
-    if (whole) return;
+    if (whole || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     const k = sections.findIndex((s) => s.id === id);
-    if (location.hash !== `#${id}`) history.pushState(history.state, '', `#${id}`);
-    show(k, true);
+    if (k >= 0) show(k, true, true);
   }));
   // Passo que contém o alvo de uma âncora (seção ou algo dentro dela)
   const stepFor = (hash: string): number => { let t: HTMLElement | null = null; try { t = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; } catch { /* ignora */ } return t ? sections.findIndex((s) => s.contains(t)) : -1; };
   // Voltar/avançar do navegador percorre os passos visitados
   addEventListener('popstate', () => {
-    if (whole) return;
     const k = stepFor(location.hash);
-    show(k >= 0 ? k : 0, true);
+    if (k >= 0) show(k, true);
+    else if (!location.hash) show(0, true);
   });
   // Links internos (ex.: "rever o trecho" do desafio) abrem o passo certo
-  addEventListener('hashchange', () => { const k = stepFor(location.hash); if (!whole && k >= 0) show(k, true); });
+  addEventListener('hashchange', () => { const k = stepFor(location.hash); if (k >= 0 && k !== current) show(k, true); });
   const fromHash = stepFor(location.hash);
-  if (fromHash > 0) { for (let k = 0; k <= fromHash; k++) show(k); } else {
+  if (fromHash >= 0) show(fromHash);
+  else {
     show(0);
     const saved = readPlace(chapter);
-    if (!whole && saved && saved.step > 0 && saved.step < sections.length) offerResume(root, bar, saved, (k) => { for (let j = 0; j <= k; j++) show(j); show(k, true); });
+    // Uma âncora compartilhada tem prioridade sobre a posição de outra visita.
+    if (!location.hash && !whole && saved && saved.step > 0 && saved.step < sections.length) offerResume(root, bar, saved, (k) => show(k, true, true));
   }
   document.addEventListener('keydown', (e) => {
     if (whole || (e.target as Element).closest('input, textarea, select, [contenteditable]')) return;
-    if (e.key === 'ArrowRight' && (e.altKey || e.target === document.body)) show(current + 1, true);
-    if (e.key === 'ArrowLeft' && (e.altKey || e.target === document.body)) show(current - 1, true);
+    // Alt + setas fica reservado ao histórico nativo do navegador.
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.target !== document.body) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); show(current + 1, true, true); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1, true, true); }
   });
 }
 

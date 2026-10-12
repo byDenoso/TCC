@@ -15,6 +15,7 @@ assert.ok(existsSync(join(dist, 'index.html')), 'dist/index.html ausente');
 const expectedRoot = `${origin}${prefix}/`;
 const expectedMap = `${expectedRoot}sitemap.xml`;
 let checks = 0;
+let fragments = 0;
 const assertExists = (asset) => {
   const pathname = new URL(asset, origin).pathname;
   assert.ok(pathname === prefix || pathname.startsWith(`${prefix}/`), `Caminho escapou do base: ${asset}`);
@@ -27,6 +28,24 @@ const assertExists = (asset) => {
   checks++;
 };
 const html = [];
+const idsByFile = new Map();
+const idsIn = (file) => {
+  if (!idsByFile.has(file)) {
+    const ids = [...readFileSync(file, 'utf8').matchAll(/\sid\s*=\s*(["'])(.*?)\1/g)].map((m) => m[2]);
+    assert.equal(new Set(ids).size, ids.length, `IDs duplicados: ${relative(dist, file)}`);
+    idsByFile.set(file, new Set(ids));
+  }
+  return idsByFile.get(file);
+};
+const assertFragment = (url, source) => {
+  if (!url.hash) return;
+  const path = decodeURIComponent(url.pathname.slice(prefix.length)).replace(/^\//, '');
+  const file = resolve(dist, path || 'index.html');
+  const target = url.pathname.endsWith('/') && path ? join(file, 'index.html') : file;
+  assert.ok(existsSync(target), `Destino de fragmento inexistente: ${source} -> ${url.href}`);
+  assert.ok(idsIn(target).has(decodeURIComponent(url.hash.slice(1))), `Fragmento inexistente: ${source} -> ${url.href}`);
+  fragments++;
+};
 function walk(dir) {
   for (const name of readdirSync(dir)) {
     const f = join(dir, name);
@@ -42,6 +61,9 @@ for (const file of html) {
   const slug = relative(dist, file).split(sep).join('/');
   const pagePath = slug === 'index.html' ? '' : slug === '404.html' ? '404/' : slug.replace(/index\.html$/, '');
   const pageUrl = `${expectedRoot}${pagePath}`;
+  const navigationUrl = slug === '404.html' ? `${expectedRoot}404.html` : pageUrl;
+  assert.equal((text.match(/<h1(?=\s|>)/g) ?? []).length, 1, `Título principal h1 ausente ou repetido: ${slug}`);
+  idsIn(file);
   assert.ok(text.includes(`<link rel="canonical" href="${pageUrl}"`), `Canônica incorreta: ${slug}`);
   assert.ok(text.includes(`property="og:url" content="${pageUrl}"`), `og:url incorreto: ${slug}`);
   assert.ok(text.includes(`property="og:image" content="${expectedRoot}social-card.png"`), `og:image incorreto: ${slug}`);
@@ -56,10 +78,14 @@ for (const file of html) {
     const candidates = attr === 'srcset' ? value.split(',').map((v) => v.trim().split(/\s+/)[0]) : [value];
     for (const raw of candidates) {
       const u = raw.replace(/&amp;/g, '&');
-      if (!u || u.startsWith('#') || /^(mailto:|tel:|data:)/i.test(u)) continue;
+      if (!u || /^(mailto:|tel:|data:)/i.test(u)) continue;
       // A página 404 usa uma canônica sem arquivo index.html correspondente.
       if (slug === '404.html' && u === pageUrl) continue;
       assert.ok(!/^javascript:/i.test(u), `Link JavaScript proibido: ${slug}`);
+      if (attr === 'href') {
+        const url = new URL(u, navigationUrl);
+        if (url.origin === origin && url.hash) assertFragment(url, slug);
+      }
       if (u.startsWith('/')) assertExists(u);
       else if (/^https?:\/\//i.test(u) && new URL(u).origin === origin) assertExists(u);
       // URLs externas de fontes não são validadas por este teste offline.
@@ -99,4 +125,4 @@ function checkCss(directory) {
   }
 }
 checkCss(dist);
-console.log(`GitHub Pages: ${html.length} páginas, SEO/sitemap, ${checks} URLs e assets verificados no base ${prefix}/.`);
+console.log(`GitHub Pages: ${html.length} páginas, um h1 por página, ${fragments} fragmentos, SEO/sitemap, ${checks} URLs e assets verificados no base ${prefix}/.`);

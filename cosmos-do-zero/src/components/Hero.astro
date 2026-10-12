@@ -13,13 +13,14 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   <Header />
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
     <figure class="cmb-hero" data-cmb>
-      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa da luz mais antiga do Universo. Use as setas do teclado para explorar as manchas mais quentes e mais frias.">
+      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
         <canvas data-cmb-canvas width="480" height="240"></canvas>
         <span class="cmb-probe" data-cmb-probe hidden></span>
       </div>
       <figcaption>
-        <p class="cmb-read" data-cmb-read aria-live="polite">Esta é a luz mais antiga do Universo. Passe o dedo ou o mouse sobre o mapa.</p>
+        <p class="cmb-read" data-cmb-read aria-live="polite">A luz mais antiga que conseguimos observar diretamente vem da época em que o Universo ficou transparente. Explore a ilustração.</p>
         <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
+        <p class="cmb-note" id="cmb-provenance">Mapa simulado, inspirado na radiação cósmica de fundo. Cores e valores em milionésimos de kelvin são ilustrativos; não são medidas do céu nem dados do Planck.</p>
         <a class="cmb-go" href="?lab=tempo&amp;z=1090#observatorio">De onde vem essa luz? Viaje até ela →</a>
       </figcaption>
     </figure>

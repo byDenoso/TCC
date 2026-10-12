@@ -1,7 +1,7 @@
 ---
 import { planets } from '../data';
 import { planetGlobe } from '../lib/images';
-import { chapterUrl } from '../lib/url';
+import { chapterUrl, u } from '../lib/url';
 import { compareInsight, compareRows, comparison } from '../lib/planets';
 import { format } from '../lib/format';
 import { massLabel, stellarPath } from '../lib/stars';
@@ -20,7 +20,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
       <nav aria-label="Experiências">
         <a href="#comparador">01 Comparar mundos ↓</a>
         <a href="#estrelas">02 Seguir uma estrela ↓</a>
-        <a href="#desafio">03 Testar suas ideias ↓</a>
+        <a href={u('/#desafio')}>03 Testar suas ideias ↓</a>
       </nav>
     </div>
 

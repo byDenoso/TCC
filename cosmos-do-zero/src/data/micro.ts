@@ -31,7 +31,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'O Sol fica…', options: ['no centro da Via Láctea', 'num braço da galáxia, longe do centro', 'fora de qualquer galáxia'], right: 1, why: 'O Sol está num dos braços da Via Láctea, a uns 26 mil anos-luz do centro.' },
     control: stages('Afastar a câmera', 'Terra', 'Sistema Solar', 'Via Láctea', 'Grupo Local', 'Teia cósmica'),
     alt: 'Cinco degraus de zoom: Terra, Sistema Solar, Via Láctea, Grupo Local e teia cósmica. Em cada degrau, o anterior vira um ponto minúsculo.',
-    limit: 'Os degraus não estão em escala: cada um é milhares a milhões de vezes maior que o anterior.',
+    limit: 'Os degraus não estão em escala; o salto de tamanho varia entre eles.',
     check: { q: 'O que é maior?', options: ['A Via Láctea', 'O Grupo Local', 'O Sistema Solar'], right: 1, why: 'O Grupo Local reúne a Via Láctea, Andrômeda e dezenas de galáxias menores.' }
   },
   'galaxias-e-nebulosas-tipos': {
@@ -168,7 +168,7 @@ export const MICRO: Record<string, MicroSpec> = {
   },
   'misterios-do-cosmos-limites': {
     ask: 'O que faz uma conclusão mudar?',
-    guess: { q: 'Com mais medidas, a incerteza…', options: ['diminui', 'aumenta', 'não muda'], right: 0, why: 'Mais dados apertam a faixa de valores possíveis.' },
+    guess: { q: 'Com mais medidas independentes, com erros semelhantes, a incerteza aleatória tende a…', options: ['diminuir', 'aumentar', 'não mudar'], right: 0, why: 'A média fica mais precisa. Erros de calibração não somem só com mais medidas.' },
     control: range('Número de medidas', 3, 40, 1, 3),
     alt: 'Pontos de medida e a reta que melhor passa por eles. Com mais pontos, a faixa de incerteza em volta da reta fica mais estreita.',
     limit: 'Dados sorteados. Erros sistemáticos (de calibração) não somem só com mais dados.',

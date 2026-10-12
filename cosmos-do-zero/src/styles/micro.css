@@ -55,7 +55,7 @@
 
 /* índice: seções já praticadas */
 [data-toc] a[data-practiced='true']::after { content: ' ✓'; color: #2f8a4a; font-weight: 700; }
-.mx[data-practiced='true'] .mx-head .meta::after { content: ' · praticado ✓'; color: #2f8a4a; }
+.mx[data-practiced='true'] .mx-head .meta::after { content: ' · verificação acertada ✓'; color: #2f8a4a; }
 
 @media (max-width: 600px) {
   .mx { margin-inline: -6px; border-radius: 18px; gap: 16px; }

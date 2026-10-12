@@ -3,7 +3,7 @@
  * Campo aleatório gaussiano aproximado por soma de ondas planas com potência decrescente.
  * Não é o mapa real; serve para sentir o tamanho das diferenças de temperatura.
  */
-const SIGMA_UK = 70; // desvio típico das manchas, em milionésimos de kelvin (ordem de grandeza do CMB)
+const SIGMA_UK = 70; // escala ilustrativa em µK; não é uma calibração de dados observados
 const STOPS: [number, [number, number, number]][] = [
   [-3, [16, 42, 92]], [-2, [30, 79, 160]], [-1, [91, 147, 214]], [-0.35, [191, 216, 242]], [0, [255, 244, 220]],
   [0.35, [251, 211, 162]], [1, [243, 154, 85]], [2, [217, 81, 42]], [3, [143, 31, 16]]
@@ -60,8 +60,8 @@ export function initCmb(): void {
     const uK = Math.round(f(x, y * 0.5) * SIGMA_UK);
     const diff = Math.abs(uK);
     read.textContent = diff < 8
-      ? 'Aqui a temperatura está praticamente na média. O Universo jovem era quase igualzinho em toda parte.'
-      : `Aqui a luz é um tiquinho ${uK > 0 ? 'mais quente' : 'mais fria'} que a média: ${fmt(diff)} milionésimos de grau. Diferenças minúsculas assim foram as sementes das galáxias.`;
+      ? 'Neste mapa simulado, a temperatura está quase na média. A CMB observada também é muito uniforme, com pequenas variações.'
+      : `Neste mapa simulado, a luz está ${uK > 0 ? 'mais quente' : 'mais fria'} que a média: ${fmt(diff)} milionésimos de kelvin (valor ilustrativo). Na CMB observada, as variações trazem pistas das estruturas que deram origem às galáxias.`;
   };
   const fromEvent = (e: PointerEvent) => { const r = frame.getBoundingClientRect(); show((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
   frame.addEventListener('pointermove', fromEvent);

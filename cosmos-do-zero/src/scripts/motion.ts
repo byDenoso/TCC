@@ -1,4 +1,4 @@
-/** Movimento: revelação ao rolar, números que contam e estrelas que acompanham o ponteiro. */
+/** Movimento: revelação ao rolar e estrelas que acompanham o ponteiro. */
 const SELECTORS = [
   '.section-id', 'main .display', '.intro-head > p', '.obs-head > p', '.obs-tabs', '.chapter-row', '.journey-status', '.course-map', '.badges',
   '.continue-card', '.quiz-card', '.quiz-copy > p', '.quiz-filter-label', '.subpage-head > *', '.subpage-jump',
@@ -22,20 +22,6 @@ export function initMotion(): void {
     n.classList.add('rv');
     if (n.matches('.continue-card, .quiz-card, .chapter-photo, .chapter-concept, .image-credits figure, .cosmos-scene')) n.classList.add('rv-scale');
     io.observe(n);
-  }
-
-  // Números que contam (ex.: 13,8 bilhões de anos)
-  for (const el of document.querySelectorAll<HTMLElement>('.hero-foot-center .number')) {
-    const raw = el.textContent?.trim() ?? '';
-    if (!/^\d+(,\d+)?$/.test(raw)) continue;
-    const target = Number(raw.replace(',', '.')), digits = raw.includes(',') ? raw.split(',')[1].length : 0;
-    const t0 = performance.now(), dur = 1600;
-    const step = (now: number) => {
-      const k = Math.min(1, (now - t0) / dur), v = target * (1 - Math.pow(1 - k, 3));
-      el.textContent = v.toLocaleString('pt-BR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-      if (k < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
   }
 
   // Estrelas acompanham o ponteiro (profundidade)

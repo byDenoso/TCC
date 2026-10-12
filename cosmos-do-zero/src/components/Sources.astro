@@ -3,10 +3,12 @@ import { Image } from 'astro:assets';
 import { imageCredits, referenceIndex } from '../data';
 import { photos } from '../lib/images';
 const keys = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
+interface Props { headingLevel?: 'h1' | 'h2' }
+const Title = Astro.props.headingLevel ?? 'h2';
 ---
 <section class="sources-section dark" id="fontes" aria-labelledby="sources-title">
   <div class="page-width">
-    <h2 class="display" id="sources-title">A beleza vem com<br /><em>uma legenda.</em></h2>
+    <Title class="display" id="sources-title">A beleza vem com<br /><em>uma legenda.</em></Title>
     <p class="source-intro">Cada jornada associa suas explicações a referências. Fotografias, cores compostas e representações artísticas contam histórias de maneiras diferentes.</p>
     <div class="evidence-key">
       <div><strong>Sabemos</strong><p>Foi observado: medido por telescópios e instrumentos, com margens de erro conhecidas.</p></div>

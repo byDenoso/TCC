@@ -101,7 +101,12 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
       answers.append(h, ul);
     }
     const p = document.createElement('p'); p.textContent = verdict(total, hits);
-    feedback.replaceChildren(p); feedback.hidden = false;
+    const activity = document.createElement('p');
+    activity.dataset.quizActivity = '';
+    activity.textContent = opts.inChapter
+      ? 'A atividade foi concluída e conta no seu progresso. A pontuação e os trechos de revisão mostram o que ainda pode ser praticado; o selo registra a conclusão, não o domínio de todas as ideias.'
+      : 'Você concluiu esta tentativa. A pontuação e os trechos de revisão ajudam a escolher o que praticar de novo.';
+    feedback.replaceChildren(p, activity); feedback.hidden = false;
     next.hidden = false; next.textContent = 'Tentar novamente ↻';
     retry.hidden = wrong.length === 0;
     if (fresh) question.focus();

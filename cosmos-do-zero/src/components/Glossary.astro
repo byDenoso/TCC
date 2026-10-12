@@ -3,11 +3,13 @@ import { terms, chapterTitleShort } from '../data';
 import { chapterUrl } from '../lib/url';
 import { CHAPTER_IDS } from '../types';
 import { countLabel } from '../lib/glossary';
+interface Props { headingLevel?: 'h1' | 'h2' }
+const Title = Astro.props.headingLevel ?? 'h2';
 ---
 <section class="glossary-section paper" id="glossario" aria-labelledby="glossary-title" data-island="glossary">
   <div class="page-width">
     <div class="intro-head">
-      <h2 class="display" id="glossary-title">O dicionário<br /><em>da curiosidade.</em></h2>
+      <Title class="display" id="glossary-title">O dicionário<br /><em>da curiosidade.</em></Title>
       <p>Termos difíceis ficam melhores quando encontram um exemplo. Busque uma palavra ou uma ideia.</p>
     </div>
     <form class="glossary-search" role="search" onsubmit="return false">

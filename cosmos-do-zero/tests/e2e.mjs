@@ -34,7 +34,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
 section('Larguras × páginas');
 for (const w of WIDTHS) {
   const p = await page(w);
-  for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/404.html']) {
+  for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/laboratorio/', '/glossario/', '/fontes/', '/404.html']) {
     await p.goto(BASE + path, { waitUntil: 'networkidle' });
     ok(`sem rolagem horizontal ${w}px ${path}`, (await overflow(p)) <= 0, `(+${await overflow(p)}px)`);
     ok(`sem erros ${w}px ${path}`, p.errors.length === 0, p.errors.join(' | '));
@@ -333,7 +333,7 @@ section('Imagens, créditos e links');
   ok('abertura desenha o mapa da luz mais antiga', await p.locator('[data-cmb-canvas]').evaluate((c) => { const d = c.getContext('2d').getImageData(c.width / 2, c.height / 2, 1, 1).data; return d[3] === 255; }));
   const frame = p.locator('[data-cmb-frame]'); const box = await frame.boundingBox();
   await p.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.5);
-  ok('mapa responde ao ponteiro com temperatura', /milionésimos de grau|na média/.test(await p.locator('[data-cmb-read]').innerText()), await p.locator('[data-cmb-read]').innerText());
+  ok('mapa responde ao ponteiro com temperatura ilustrativa', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()) && /milionésimos de kelvin|na média/.test(await p.locator('[data-cmb-read]').innerText()), await p.locator('[data-cmb-read]').innerText());
   await frame.focus(); await p.keyboard.press('ArrowRight');
   ok('mapa explorável pelo teclado', !(await p.locator('[data-cmb-probe]').isHidden()));
   ok('home sem renders fotorrealistas de IA', await p.locator('img[src*="/renders/"]').count() === 0);
@@ -553,6 +553,133 @@ section('Tema claro e escuro');
   await q.locator('[data-theme-toggle]').click();
   ok('tema funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark' && q.errors.length===0, q.errors.join(' | '));
   await q.context().close();
+}
+
+section('Reauditoria: fragmentos e histórico das seis aulas');
+for (const chapter of CHAPTERS) {
+  const p = await page(1280);
+  const path = `${BASE}/capitulos/${chapter}/`;
+  await p.goto(path, { waitUntil: 'networkidle' });
+  const ids = await p.locator('.lesson-section').evaluateAll(nodes => nodes.map(n => n.id));
+  const active = () => p.locator('.lesson-section:visible').evaluateAll(nodes => nodes.map(n => n.id));
+  await p.goto(`${path}?nivel=profundo#${ids[0]}`, { waitUntil: 'networkidle' });
+  await p.locator('[data-step-dot]').last().focus();
+  await p.keyboard.press('Enter');
+  ok(`${chapter}: teclado seleciona o passo e sincroniza o hash`, new URL(p.url()).hash === `#${ids[5]}` && JSON.stringify(await active()) === JSON.stringify([ids[5]]));
+  ok(`${chapter}: passo preserva query`, new URL(p.url()).searchParams.get('nivel') === 'profundo');
+  await p.reload({ waitUntil: 'networkidle' });
+  ok(`${chapter}: recarga mantém a seção compartilhada`, JSON.stringify(await active()) === JSON.stringify([ids[5]]) && await p.locator('.lesson-resume').count() === 0);
+  await p.locator('[data-step-dot="1"]').click();
+  await p.goBack();
+  ok(`${chapter}: voltar restaura passo e URL`, new URL(p.url()).hash === `#${ids[5]}` && JSON.stringify(await active()) === JSON.stringify([ids[5]]));
+  await p.goForward();
+  ok(`${chapter}: avançar restaura passo e URL`, new URL(p.url()).hash === `#${ids[1]}` && JSON.stringify(await active()) === JSON.stringify([ids[1]]));
+  await p.locator('[data-step-next]').click();
+  ok(`${chapter}: próximo sincroniza URL`, new URL(p.url()).hash === `#${ids[2]}`);
+  await p.locator('[data-step-prev]').click();
+  ok(`${chapter}: anterior sincroniza URL`, new URL(p.url()).hash === `#${ids[1]}`);
+  await p.locator('[data-step-dot]').last().click();
+  await p.goto(`${path}#${ids[0]}`, { waitUntil: 'networkidle' });
+  ok(`${chapter}: âncora do passo 1 prevalece sobre retomada do 6`, JSON.stringify(await active()) === JSON.stringify([ids[0]]) && await p.locator('.lesson-resume').count() === 0);
+  await p.locator('[data-step-dot]').last().click();
+  await p.goto(path, { waitUntil: 'networkidle' });
+  ok(`${chapter}: sem âncora oferece retomada`, await p.locator('[data-resume-go]').isVisible());
+  await p.locator('[data-resume-go]').click();
+  ok(`${chapter}: retomar também produz URL compartilhável`, new URL(p.url()).hash === `#${ids[5]}`);
+  await p.goto(`${path}#${ids[2]}-mx-ask`, { waitUntil: 'networkidle' });
+  ok(`${chapter}: alvo interno abre seu passo sem reescrever o link`, JSON.stringify(await active()) === JSON.stringify([ids[2]]) && new URL(p.url()).hash === `#${ids[2]}-mx-ask`);
+  await p.locator('[data-step-toggle]').click();
+  await p.locator('[data-toc] a').nth(1).click();
+  await p.locator('[data-step-toggle]').click();
+  ok(`${chapter}: sair da aula inteira mantém a seção do índice`, JSON.stringify(await active()) === JSON.stringify([ids[1]]));
+  ok(`${chapter}: navegação sem erros`, p.errors.length === 0, p.errors.join(' | '));
+  await p.context().close();
+}
+
+section('Reauditoria: laboratório, títulos e procedência');
+{
+  const p = await page(390);
+  await p.goto(`${BASE}/laboratorio/?massa=30`, { waitUntil: 'networkidle' });
+  const challenge = p.getByRole('link', { name: '03 Testar suas ideias ↓', exact: true });
+  await challenge.focus(); await p.keyboard.press('Enter');
+  ok('laboratório: link por teclado chega ao desafio da home', new URL(p.url()).pathname === new URL(BASE + '/').pathname && new URL(p.url()).hash === '#desafio' && await p.locator('#desafio').isVisible());
+  for (const route of ['glossario', 'fontes']) {
+    await p.goto(`${BASE}/${route}/`, { waitUntil: 'networkidle' });
+    ok(`${route}: título principal único h1`, await p.locator('main h1').count() === 1);
+  }
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('CMB tem procedência simulada visível', /Mapa simulado/.test(await p.locator('#cmb-provenance').innerText()) && /não são medidas/.test(await p.locator('#cmb-provenance').innerText()));
+  await p.locator('[data-cmb-frame]').focus(); await p.keyboard.press('ArrowRight');
+  ok('CMB teclado informa que o valor é simulado', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()));
+  ok('idade permanece no valor científico', await p.locator('.hero-foot-center .number').first().innerText() === '13,8');
+  ok('ajustes secundários sem erros', p.errors.length === 0, p.errors.join(' | '));
+  await p.context().close();
+}
+
+section('36 microexperiências: mobile e alternativa sem movimento');
+for (const [width, reduced] of [[390, false], [1280, true]]) {
+  for (const chapter of CHAPTERS) {
+    const p = await page(width, { reducedMotion: reduced ? 'reduce' : 'no-preference' });
+    await p.goto(`${BASE}/capitulos/${chapter}/`, { waitUntil: 'networkidle' });
+    const ids = await p.locator('[data-mx]').evaluateAll(nodes => nodes.map(n => n.dataset.mx));
+    ok(`${chapter} ${width}px: seis mecanismos`, ids.length === 6);
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const failuresBefore = fails.length;
+      await p.locator(`[data-step-dot="${i}"]`).click();
+      const root = p.locator(`[data-mx="${id}"]`);
+      await root.scrollIntoViewIfNeeded();
+      await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), id);
+      const svg = root.locator('[data-mx-svg]');
+      const play = root.locator('[data-mx-play]');
+      await root.locator('[data-mx-reset]').click();
+      const initial = await svg.innerHTML();
+      ok(`${id} ${width}px: cena carregada e descrição acessível`, initial.length > 100 && (await svg.getAttribute('aria-label')).length > 20 && (await root.locator('.mx-limit').innerText()).length > 20);
+      const range = root.locator('[data-mx-range]');
+      if (await range.count()) {
+        await range.focus(); await p.keyboard.press('End');
+        ok(`${id} ${width}px: controle por teclado com valor descritivo`, (await range.inputValue()) === await range.getAttribute('max') && !!await range.getAttribute('aria-valuetext'));
+      } else {
+        await root.locator('[data-mx-opt]').last().focus(); await p.keyboard.press('Enter');
+        if (await play.getAttribute('aria-pressed') === 'true') await play.click();
+        ok(`${id} ${width}px: opção selecionada por teclado`, await root.locator('[data-mx-opt]').last().getAttribute('aria-pressed') === 'true');
+      }
+      ok(`${id} ${width}px: manipulação muda a representação`, await svg.innerHTML() !== initial);
+      ok(`${id} ${width}px: resultado textual e geometria finita`, (await root.locator('[data-mx-caption]').innerText()).length > 20 && !/NaN|Infinity|undefined/.test(await svg.innerHTML()));
+      await root.locator('[data-mx-reset]').click();
+      await play.click();
+      if (reduced) {
+        const still = await svg.innerHTML();
+        await p.waitForTimeout(80);
+        ok(`${id}: movimento reduzido avança sem animar`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === still);
+      } else {
+        await p.waitForTimeout(100);
+        ok(`${id}: iniciar explicita estado ativo`, await play.getAttribute('aria-pressed') === 'true');
+        await play.click();
+        const paused = await svg.innerHTML(); await p.waitForTimeout(80);
+        ok(`${id}: pausar interrompe o desenho`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === paused);
+      }
+      await root.locator('[data-mx-reset]').click();
+      ok(`${id} ${width}px: reiniciar recupera estado inicial`, await svg.innerHTML() === initial);
+      const box = root.locator('[data-mx-check-box]');
+      const right = Number(await box.getAttribute('data-right'));
+      const choices = box.locator('[data-mx-check]');
+      const wrong = (right + 1) % await choices.count();
+      await choices.nth(wrong).click();
+      ok(`${id} ${width}px: erro permite revisão e nova tentativa`, /Ainda não/.test(await box.locator('[data-mx-check-label]').innerText()) && await choices.nth(right).isEnabled());
+      await choices.nth(right).click();
+      ok(`${id} ${width}px: acerto registra esta verificação`, /nesta visita/.test(await root.locator('[data-mx-history]').innerText()));
+      console.log('MICRO_RESULT', JSON.stringify({ chapter, id, width, reducedMotion: reduced, passed: fails.length === failuresBefore }));
+    }
+    await p.reload({ waitUntil: 'networkidle' });
+    const last = p.locator(`[data-mx="${ids[5]}"]`);
+    await last.scrollIntoViewIfNeeded();
+    await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), ids[5]);
+    ok(`${chapter} ${width}px: histórico distingue visita anterior`, /visita anterior/.test(await last.locator('[data-mx-history]').innerText()) && await last.locator('[data-mx-check]').first().isEnabled());
+    ok(`${chapter} ${width}px: todas as cenas sem erros`, p.errors.length === 0, p.errors.join(' | '));
+    ok(`${chapter} ${width}px: cena sem overflow`, await overflow(p) <= 0);
+    await p.context().close();
+  }
 }
 
 await browser.close();
