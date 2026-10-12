@@ -47,7 +47,7 @@ export function initReceita(root: HTMLElement): void {
     svg('line', { x1: PL, y1: H - PB, x2: W - PR, y2: H - PB, class: 'obs-axis' }, chart);
     svg('line', { x1: PL, y1: PT, x2: PL, y2: H - PB, class: 'obs-axis' }, chart);
     svg('text', { x: (PL + W - PR) / 2, y: H - 6, 'text-anchor': 'middle', class: 'obs-cap small' }, chart, 'tempo a partir de hoje (bilhões de anos)');
-    svg('text', { x: 13, y: (PT + H - PB) / 2, 'text-anchor': 'middle', class: 'obs-cap small', transform: `rotate(-90 13 ${(PT + H - PB) / 2})` }, chart, 'tamanho do Universo (hoje = 1)');
+    svg('text', { x: 13, y: (PT + H - PB) / 2, 'text-anchor': 'middle', class: 'obs-cap small', transform: `rotate(-90 13 ${(PT + H - PB) / 2})` }, chart, 'distâncias entre galáxias (hoje = 1)');
     const g = svg('g', { 'clip-path': 'url(#r-clip)' }, chart);
     const path = (c: { t: number[]; a: number[] }, shift: number) => c.t.map((t, i) => `${i ? 'L' : 'M'}${X(t - shift).toFixed(1)} ${Y(c.a[i]).toFixed(1)}`).join('');
     svg('path', { d: path(ref, refAge), class: 'r-ref' }, g);

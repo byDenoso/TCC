@@ -119,7 +119,7 @@ export function initHubble(root: HTMLElement): void {
     result.innerHTML = '';
     const big = document.createElement('p'); big.className = 'h-big'; big.textContent = `Cerca de ${perMly(f.h0)} km/s mais rápido a cada milhão de anos-luz`;
     const small = document.createElement('p');
-    small.textContent = `Você mediu ${done.length} de ${N} galáxias. Quanto mais longe, mais rápido elas fogem, sempre na mesma proporção. Esse é o ritmo em que o Universo cresce hoje, e foi com medidas assim que descobrimos que ele tem uns 14 bilhões de anos.`;
+    small.textContent = `Você mediu ${done.length} de ${N} galáxias. Nesta amostra simulada, as mais distantes tendem a se afastar mais rápido. A inclinação da reta estima o ritmo da expansão hoje. Para calcular a idade do Universo, também precisamos de um modelo de como esse ritmo mudou ao longo do tempo.`;
     result.append(big, small);
     if (revealed) { const r = document.createElement('p'); r.className = 'h-reveal'; r.textContent = `O valor certo do jogo era ${perMly(trueH0)}. A pequena diferença vem dos erros de medida e do vaivém próprio de cada galáxia, que atrapalha mais nas mais próximas.`; result.append(r); }
     live.textContent = `${done.length} de ${N} galáxias medidas. Ritmo medido: ${perMly(f.h0)} quilômetros por segundo a mais a cada milhão de anos-luz.`;
