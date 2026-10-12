@@ -60,8 +60,35 @@ def _trusted_child_intent(item: dict) -> str | None:
     return child
 
 
+def private_operator_envelope(item: dict) -> bool:
+    """Authority changes stay private even when submitted by a public gateway.
+
+    A mixed batch must not export its parent identity or aggregate outcome.
+    Public siblings still retain their own ordinary per-envelope receipts.
+    """
+    pending, seen = [item], set()
+    while pending:
+        current = pending.pop()
+        if not isinstance(current, dict) or id(current) in seen:
+            continue
+        seen.add(id(current))
+        kind = str(current.get("kind") or "").strip().upper()
+        payload = current.get("payload")
+        if not isinstance(payload, dict):
+            continue
+        if kind == "OPERATOR_INTENT" and str(payload.get("action") or "").strip().upper() in {
+            "APPROVE_AUTONOMY_MANDATE", "REVOKE_AUTONOMY_MANDATE",
+        }:
+            return True
+        if kind == "BATCH" and isinstance(payload.get("items"), list):
+            pending.extend(payload["items"])
+    return False
+
+
 def public_gateway_envelope(item: dict, intent: str) -> bool:
     """Whether transport metadata identifies a canonical public gateway envelope."""
+    if private_operator_envelope(item):
+        return False
     if str(item.get("_inbox_source") or "").strip().upper() != "GATEWAY":
         return False
     if not isinstance(intent, str) or not intent.startswith("gateway:"):

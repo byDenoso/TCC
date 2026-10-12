@@ -188,8 +188,12 @@ def _apply_one_request(root: Path, item: dict, request: dict, *,
         return {"accepted": False, "issue": {"code": "HANDOFF_ENVELOPE_INVALID"}}
 
 
-def _append_effect_receipt(report: dict, receipt: dict) -> None:
+def _append_effect_receipt(report: dict, receipt: dict, *, item: dict) -> None:
     report["operation_receipts"].append(receipt)
+    # Legacy receipts may already be marked PUBLIC. Keep canonical history
+    # intact while checking the envelope again at this export boundary.
+    if operation_receipts.private_operator_envelope(item):
+        return
     public = operation_receipts.public_receipt(receipt)
     if public and not any(row.get("receipt_id") == public.get("receipt_id") for row in report["public_operation_receipts"]):
         report["public_operation_receipts"].append(public)
@@ -339,7 +343,12 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
         contract_versions["operational_canary"] = CANARY_CONTRACT
     except (ImportError, AttributeError):
         pass
+    private_gateway_ids = [str(item.get("_inbox_id") or "")[len("gateway:"):]
+                           for item in items
+                           if operation_receipts.private_operator_envelope(item)
+                           and str(item.get("_inbox_id") or "").startswith("gateway:")]
     report: dict = {"before": before, "applied": [], "rejected": [], "receipts": [], "handled": [],
+                    "private_gateway_ids": private_gateway_ids,
                     "operation_receipts": [], "public_operation_receipts": [],
                     "contracts": contract_versions}
     with tempfile.TemporaryDirectory(prefix="nexo-gpt-writer-") as work:
@@ -437,7 +446,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     pass  # Re-evaluate only after the recorded retry condition changed.
                 else:
                     confirmation = operation_receipts.replay_receipt(envelope_prior)
-                    _append_effect_receipt(report, confirmation)
+                    _append_effect_receipt(report, confirmation, item=item)
                     if confirmation["outcome"] in {"APPLIED", "ALREADY_APPLIED"}:
                         report["applied"].append(label)
                         report["handled"].append(label)
@@ -457,7 +466,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                         outcome="REJECTED_TERMINAL", reason_code="TERMINAL_PAYLOAD_CHANGED_WITHOUT_NEW_IDENTITY",
                         supersedes=prior["receipt_id"], result_revision=envelope_source,
                     )
-                    _append_effect_receipt(report, row)
+                    _append_effect_receipt(report, row, item=item)
                     changed_receipt_ledger = True
                     report["rejected"].append({"item": label, "reason": row["reason_code"]})
                     report["handled"].append(label)
@@ -481,7 +490,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 prior = _existing_effect(root, intent=intent, request={}, payload=item, request_index=0,
                                          source_revision=source_revision, supersedes=supersedes)
                 if prior:
-                    _append_effect_receipt(report, prior)
+                    _append_effect_receipt(report, prior, item=item)
                     if prior["outcome"] in {"APPLIED", "ALREADY_APPLIED"}:
                         report["applied"].append(label)
                         report["handled"].append(label)
@@ -506,7 +515,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     retry_condition={"kind": "SOURCE_REVISION_CHANGED", "source_revision": source_revision} if outcome == "DEFERRED_DEPENDENCY" else None,
                     supersedes=supersedes,
                 )
-                _append_effect_receipt(report, row)
+                _append_effect_receipt(report, row, item=item)
                 changed_receipt_ledger = True
                 envelope_row = _build_envelope_receipt(
                     root=root, item=item, intent=intent, source_revision=source_revision,
@@ -515,7 +524,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     if outcome == "DEFERRED_DEPENDENCY" else None,
                     supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
                 )
-                _append_effect_receipt(report, envelope_row)
+                _append_effect_receipt(report, envelope_row, item=item)
                 if outcome == "REJECTED_TERMINAL":
                     report["rejected"].append({"item": label, "reason": reason_code})
                     report["handled"].append(label)
@@ -549,14 +558,14 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 # unrecorded siblings after a partial or damaged ledger read.
                 for request_index, (request, prior) in enumerate(zip(requests, prior_rows)):
                     if prior is not None:
-                        _append_effect_receipt(report, prior)
+                        _append_effect_receipt(report, prior, item=item)
                         continue
                     row = _build_effect_receipt(
                         root=root, item=item, label=str(label), request=request, request_index=request_index,
                         intent=intent, source_revision=effect_sources[request_index], outcome="REJECTED_TERMINAL",
                         reason_code="ENVELOPE_ALREADY_TERMINAL", supersedes=terminal_prior["receipt_id"],
                     )
-                    _append_effect_receipt(report, row)
+                    _append_effect_receipt(report, row, item=item)
                     operation_receipts.persist_receipt(root, row)
                     changed_receipt_ledger = True
                 report["rejected"].append({"item": label, "reason": "ENVELOPE_ALREADY_TERMINAL"})
@@ -566,14 +575,14 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     outcome="REJECTED_TERMINAL", reason_code="ENVELOPE_ALREADY_TERMINAL",
                     supersedes=envelope_prior["receipt_id"] if envelope_prior else terminal_prior["receipt_id"],
                 )
-                _append_effect_receipt(report, envelope_row)
+                _append_effect_receipt(report, envelope_row, item=item)
                 changed_receipt_ledger = True
                 continue
 
             if not runnable_requests:
                 for prior in prior_rows:
                     if prior:
-                        _append_effect_receipt(report, prior)
+                        _append_effect_receipt(report, prior, item=item)
                 envelope_outcome = operation_receipts.public_outcome([row for row in prior_rows if row])
                 if envelope_outcome in {"APPLIED", "ALREADY_APPLIED"}:
                     report["applied"].append(label)
@@ -625,12 +634,12 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                         supersedes=prior["receipt_id"] if prior else None,
                         result_revision=source_tower_revision,
                     )
-                    _append_effect_receipt(report, row)
+                    _append_effect_receipt(report, row, item=item)
                     operation_receipts.persist_receipt(root, row)
                     changed_receipt_ledger = True
                 for prior in prior_rows:
                     if prior:
-                        _append_effect_receipt(report, prior)
+                        _append_effect_receipt(report, prior, item=item)
                 envelope_outcome = outcome
                 envelope_retry = None
                 if envelope_outcome == "DEFERRED_DEPENDENCY":
@@ -641,7 +650,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
                     result_revision=source_tower_revision,
                 )
-                _append_effect_receipt(report, envelope_row)
+                _append_effect_receipt(report, envelope_row, item=item)
                 changed_receipt_ledger = True
                 report["rejected"].append({"item": label, "reason": reason_code, "outcome": outcome})
                 if outcome == "REJECTED_TERMINAL":
@@ -654,7 +663,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 new_result_by_index = {idx: revision for (idx, _), revision in zip(receipts, result_revisions)}
                 for request_index, prior in enumerate(prior_rows):
                     if prior:
-                        _append_effect_receipt(report, prior)
+                        _append_effect_receipt(report, prior, item=item)
                         continue
                     request = requests[request_index]
                     if recorded_refusal:
@@ -669,7 +678,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                         supersedes=(retry_links[request_index]["receipt_id"] if retry_links[request_index] else supersedes),
                         result_revision=new_result_by_index.get(request_index, _root_revision(root)),
                     )
-                    _append_effect_receipt(report, row)
+                    _append_effect_receipt(report, row, item=item)
                     operation_receipts.persist_receipt(root, row)
                     changed_receipt_ledger = True
                 if recorded_refusal:
@@ -680,7 +689,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                         outcome="REJECTED_TERMINAL", reason_code=str(recorded_refusal),
                         supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
                     )
-                    _append_effect_receipt(report, envelope_row)
+                    _append_effect_receipt(report, envelope_row, item=item)
                     changed_receipt_ledger = True
                 else:
                     item_outcomes = []
@@ -698,7 +707,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                         if envelope_outcome in {"DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"} else None,
                         supersedes=envelope_prior["receipt_id"] if envelope_prior else None,
                     )
-                    _append_effect_receipt(report, envelope_row)
+                    _append_effect_receipt(report, envelope_row, item=item)
                     changed_receipt_ledger = True
                     if envelope_outcome not in {"APPLIED", "ALREADY_APPLIED"}:
                         report.setdefault("deferred", []).append({"item": label, "outcome": envelope_outcome or "UNRESOLVED"})
@@ -1019,6 +1028,8 @@ def _gateway_results(report: dict, gateway_ids: list[str], shadow_ids: set[str] 
                 if isinstance(row, dict) and (safe := operation_receipts.public_receipt(row))]
     result_items, reported, resolved = [], [], []
     for gateway_id in gateway_ids:
+        if gateway_id in (report.get("private_gateway_ids") or []):
+            continue
         if not operation_receipts.is_safe_gateway_id(gateway_id):
             continue
         intent = "gateway:" + str(gateway_id)
@@ -1067,12 +1078,15 @@ def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> di
     condition = getattr(exc, "retry_condition", None)
     if condition is None:
         condition = "RECONCILE_TOWER_BEFORE_REAPPLY" if type(exc).__name__ == "TowerConflict" else "AFTER_TRANSPORT_RECOVERY"
-    report = {"operation_receipts": [], "public_operation_receipts": []}
+    report = {"operation_receipts": [], "public_operation_receipts": [], "private_gateway_ids": []}
     for entry in gateway_entries:
         gateway_id = str(entry.get("id") or "")
         envelope = entry.get("envelope")
         if not gateway_id or not isinstance(envelope, dict):
             continue
+        private = operation_receipts.private_operator_envelope(envelope)
+        if private:
+            report["private_gateway_ids"].append(gateway_id)
         receipt = operation_receipts.build_receipt(
             intent="gateway:" + gateway_id,
             payload_sha256=operation_receipts.payload_hash(envelope, trusted_transport=True),
@@ -1082,7 +1096,7 @@ def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> di
             result_revision=None,
             reason_code="TOWER_TRANSPORT_UNAVAILABLE",
             retry_condition={"kind": condition},
-            visibility="PUBLIC",
+            visibility="PRIVATE" if private else "PUBLIC",
         )
         report["operation_receipts"].append(receipt)
         safe = operation_receipts.public_receipt(receipt)

@@ -133,14 +133,31 @@ def _owner(test: dict, work: list[dict]) -> tuple[str, str, list[str]]:
     return "ADVISOR", "OWNER_CONFLICT_TRIAGE" if len(owners) > 1 else "UNASSIGNED_TRIAGE", sorted(str(x["id"]) for x in associated)
 
 
-def _route(reasons: list[str]) -> tuple[str, str]:
+def _route(reasons: list[str], test: dict | None = None) -> tuple[str, str]:
     parameter_definition_errors = {
         "DATA_RELEASE_PARAM_MISMATCH", "UNSUPPORTED_COMPILATIONS", "UNSUPPORTED_DATA_RELEASE",
         "UNSUPPORTED_RECIPE_MODE", "UNSUPPORTED_RECIPE_PARAMS", "UNUSED_RECIPE_PARAMS",
         "RECIPE_PARAMS_INVALID", "RECIPE_PRIORS_INVALID", "RECIPE_HOLDOUTS_INVALID",
         "FROZEN_RECIPE_PARAMS_MISMATCH",
     }
-    if parameter_definition_errors.intersection(reasons):
+    test = test or {}
+    failure = test.get("last_runtime_failure") or {}
+    # These exact diagnostics come from the frozen multi-SN recipe. Fetching
+    # the same data again cannot repair an undersized frozen selection. Route
+    # its existing WORK to science without changing readiness or its contract.
+    frozen_selection_invalid = (
+        "BLOCKER_PRESENT" in reasons
+        and str(test.get("blocker") or "").startswith("RUNTIME_INPUT_UNAVAILABLE:")
+        and (test.get("execution_recipe") or test.get("recipe")) == "w0wa_bao_sn_multi"
+        and isinstance(failure, dict)
+        and failure.get("class") == "INPUT_UNAVAILABLE"
+        and failure.get("failure_stage") == "INPUT_OR_FIT_UNAVAILABLE"
+        and failure.get("detail") in (
+            "Holdout deixou menos de dez pontos de supernovas.",
+            "Amostra de supernovas com menos de dez pontos.",
+        )
+    )
+    if frozen_selection_invalid or parameter_definition_errors.intersection(reasons):
         return "LEARNER", "Preservar os parâmetros congelados e comparar a seleção ao contrato de dados; registrar a incompatibilidade e propor uma nova identidade científica se a seleção precisar mudar."
     if any(reason.startswith(("MISSING_", "FROZEN_", "CONFLICTING_")) for reason in reasons):
         return "LEARNER", "Recuperar a definição já congelada na linhagem e identificar a referência inequívoca; se houver conflito, registrar a decisão científica que falta."
@@ -245,7 +262,7 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
         else:
             changes["recovery_work_id"] = wid
             owner, owner_source, source_work = _owner(test, works)
-            target, action = _route(check["reasons"])
+            target, action = _route(check["reasons"], provisional)
             current_work = current_work or {"id": wid, "entity_version": 0}
             recovery = {**(current_work.get("recovery") or {}), "policy": POLICY, "fingerprint": fp,
                         "reasons": check["reasons"], "target_role": target, "candidate_artifact_refs": refs,

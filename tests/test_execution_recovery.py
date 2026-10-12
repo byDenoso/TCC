@@ -117,6 +117,39 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(work["recovery"]["owner_source"], "EXISTING_WORK_OWNER")
         self.assertNotIn("acceptance_source", work["recovery"])
 
+    def test_frozen_holdout_failure_routes_to_science_without_clearing_blocker(self):
+        self.test.update(
+            execution_recipe="w0wa_bao_sn_multi",
+            blocker="RUNTIME_INPUT_UNAVAILABLE:INPUT_OR_FIT_UNAVAILABLE",
+            last_runtime_failure={"class": "INPUT_UNAVAILABLE",
+                                  "failure_stage": "INPUT_OR_FIT_UNAVAILABLE",
+                                  "detail": "Holdout deixou menos de dez pontos de supernovas."},
+        )
+        self.put(self.test)
+        frozen = {key: self.test.get(key) for key in s.FROZEN}
+        self.reconcile()
+        work = self.works()[0]
+        self.assertEqual(work["recovery"]["target_role"], "LEARNER")
+        self.assertIn("nova identidade científica", work["next_action"])
+        current = s.entity(self.root, self.test["id"])
+        self.assertFalse(current["readiness"]["eligible"])
+        self.assertEqual(current["blocker"], self.test["blocker"])
+        self.assertEqual({key: current.get(key) for key in s.FROZEN}, frozen)
+        self.reconcile()
+        self.assertEqual([item["id"] for item in self.works()], [work["id"]])
+
+    def test_unknown_input_failure_does_not_infer_a_scientific_conflict(self):
+        for change in ({"detail": "synthetic download timeout"},
+                       {"class": "TRANSIENT"}, {"failure_stage": "INPUT_FETCH"}):
+            with self.subTest(change=change):
+                failure = {"class": "INPUT_UNAVAILABLE",
+                           "failure_stage": "INPUT_OR_FIT_UNAVAILABLE",
+                           "detail": "Holdout deixou menos de dez pontos de supernovas.", **change}
+                test = {"execution_recipe": "w0wa_bao_sn_multi",
+                        "blocker": "RUNTIME_INPUT_UNAVAILABLE:INPUT_OR_FIT_UNAVAILABLE",
+                        "last_runtime_failure": failure}
+                self.assertEqual(r._route(["BLOCKER_PRESENT"], test)[0], "EXECUTOR")
+
     def artifact(self, name, payload):
         save(self.root, "entities/artifact/" + name + ".json", {"id": name, "kind": "DATA_BINDING", "payload": payload})
 
