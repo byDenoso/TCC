@@ -37,7 +37,17 @@ for (const w of WIDTHS) {
   for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/laboratorio/', '/glossario/', '/fontes/', '/404.html']) {
     await p.goto(BASE + path, { waitUntil: 'networkidle' });
     ok(`sem rolagem horizontal ${w}px ${path}`, (await overflow(p)) <= 0, `(+${await overflow(p)}px)`);
-    if (await overflow(p) > 0) console.log('OVERFLOW_DETAIL', await p.evaluate(() => [...document.querySelectorAll('main *')].map(n => ({tag:n.tagName, class:n.className?.baseVal ?? n.className, right:n.getBoundingClientRect().right, width:n.getBoundingClientRect().width, minWidth:getComputedStyle(n).minWidth})).filter(n => n.right > innerWidth + 1 && n.width > 0).slice(0,15)));
+    if (await overflow(p) > 0) {
+      console.log('OVERFLOW_DETAIL', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('main *')].map(n => {
+        const box = n.getBoundingClientRect(), css = getComputedStyle(n);
+        let visibleRight = box.right;
+        for (let a = n.parentElement; a && a !== document.body; a = a.parentElement) {
+          if (/^(auto|scroll|hidden|clip)$/.test(getComputedStyle(a).overflowX)) visibleRight = Math.min(visibleRight, a.getBoundingClientRect().right);
+        }
+        return { tag:n.tagName, class:n.className?.baseVal ?? n.className, right:box.right, visibleRight, width:box.width, minWidth:css.minWidth, display:css.display, html:n.outerHTML.slice(0,200) };
+      }).filter(n => n.visibleRight > innerWidth + 1 && n.width > 0).slice(0,30))));
+      throw new Error(`Overflow real: ${w}px ${path}`);
+    }
     ok(`sem erros ${w}px ${path}`, p.errors.length === 0, p.errors.join(' | '));
     if (SHOTS && (path === '/' || PRIMARY.some(id => path.includes(id)) || path.includes('sistema-solar'))) {
       mkdirSync('docs/screenshots', { recursive: true });
