@@ -12,53 +12,59 @@ function spiral(seed: number, n: number, cx: number, cy: number, r: number, tilt
 }
 
 const viaLactea = (): Scene => {
-  let layer: SVGGElement, ruler: SVGTextElement;
+  // Cada degrau é um render (1200×800) recortado para 480×270; o ponto marcado no degrau seguinte
+  // é onde o degrau anterior "cabe". Afastar a câmera = a imagem anterior encolhe até esse ponto.
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   const levels = [
-    { ruler: 'Diâmetro: 12.700 km · a luz cruza em 0,04 s', cap: 'Terra: o planeta onde você está. Tudo o que vem a seguir a contém.' },
-    { ruler: 'Até Netuno: 4,5 bilhões de km · a luz leva 4 horas', cap: 'Sistema Solar: o Sol e tudo o que gira em volta dele. A Terra virou um ponto na terceira órbita.' },
-    { ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
-    { ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
-    { ruler: 'Bilhões de anos-luz', cap: 'Teia cósmica: grupos e aglomerados de galáxias ao longo de filamentos. O Grupo Local é um ponto num desses fios.' }
+    { img: 'earth', at: [240, 135], mark: null as null | [number, number], label: '', ruler: 'Diâmetro: 12.700 km · a luz cruza em 0,04 s', cap: 'Terra: o planeta onde você está. Tudo o que vem a seguir a contém.' },
+    { img: 'solar-system', at: [145, 130], mark: [145, 130], label: 'Terra', ruler: 'Até Netuno: 4,5 bilhões de km · a luz leva 4 horas', cap: 'Sistema Solar: o Sol e tudo o que gira em volta dele. A Terra virou um ponto na terceira órbita. Tamanhos e distâncias fora de escala.' },
+    { img: 'milky-way', at: [330, 185], mark: [330, 185], label: 'Sol', ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
+    { img: 'galaxies', at: [128, 62], mark: [128, 62], label: 'Via Láctea', ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
+    { img: 'cosmic-web', at: [123, 115], mark: [123, 115], label: 'Grupo Local', ruler: 'Bilhões de anos-luz', cap: 'Teia cósmica: grupos e aglomerados de galáxias ao longo de filamentos. O Grupo Local é um ponto num desses fios.' }
   ];
-  const here = (p: Element, x: number, y: number, label: string, right = true) => {
-    el('circle', { cx: x, cy: y, r: 9, fill: 'none', stroke: C.accent, 'stroke-width': 2.5 }, p);
-    el('line', { x1: x + (right ? 9 : -9), y1: y - 6, x2: x + (right ? 40 : -40), y2: y - 30, stroke: C.accent, 'stroke-width': 1.5 }, p);
-    text(p, x + (right ? 44 : -44), y - 32, label, { class: 'mx-t strong warm', 'text-anchor': right ? 'start' : 'end' });
+  let imgs: SVGImageElement[] = [], over: SVGGElement, ruler: SVGTextElement, prev = 0, from = 0;
+  const place = (im: SVGImageElement, s: number, cx: number, cy: number, op: number) => {
+    // escala s em torno do ponto (cx, cy) da tela
+    im.setAttribute('transform', `translate(${cx} ${cy}) scale(${s}) translate(${-cx} ${-cy})`);
+    im.setAttribute('opacity', String(op));
+    im.setAttribute('display', op > 0.001 ? 'inline' : 'none');
   };
   return {
-    duration: 1500,
-    init(svg) { layer = g(svg); ruler = text(svg, W / 2, H - 12, '', { class: 'mx-t', 'text-anchor': 'middle' }); },
+    duration: 1600,
+    init(svg) {
+      const root = g(svg);
+      el('rect', { x: 0, y: 0, width: W, height: H, fill: '#04060b' }, root);
+      imgs = levels.map((l) => el('image', { href: `${base}/renders/${l.img}.webp`, x: 0, y: -25, width: W, height: 320, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, root));
+      over = g(svg);
+      el('rect', { x: 0, y: H - 30, width: W, height: 30, fill: 'rgba(4,6,11,.72)' }, svg);
+      ruler = text(svg, W / 2, H - 11, '', { class: 'mx-t', 'text-anchor': 'middle', fill: '#f3f1ea', style: 'fill:#f3f1ea' });
+      text(svg, W - 8, H - 38, 'render artístico · fora de escala', { class: 'mx-t small', 'text-anchor': 'end', style: 'fill:rgba(243,241,234,.8);paint-order:stroke;stroke:#04060b;stroke-width:3px' });
+    },
     draw(v, t) {
-      clear(layer);
-      const s = lerp(3, 1, ease(t));
-      const inner = g(layer, { transform: `translate(${W / 2} 125) scale(${s}) translate(${-W / 2} -125)`, opacity: clamp(t * 2) });
-      if (v === 0) {
-        el('circle', { cx: W / 2, cy: 125, r: 88, fill: C.blue }, inner);
-        el('path', { d: 'M200 90 q30 -25 60 0 t50 30 q-20 30 -60 20 t-50 -50 Z M250 170 q30 10 40 -15 q20 15 0 35 q-30 10 -40 -20 Z', fill: C.gold, opacity: 0.85 }, inner);
-        text(inner, W / 2, 238, 'você está aqui', { class: 'mx-t strong warm', 'text-anchor': 'middle' });
-      } else if (v === 1) {
-        star(inner, W / 2, 125, 12, C.gold);
-        [30, 45, 62, 80, 112, 150, 185, 215].forEach((r) => el('ellipse', { cx: W / 2, cy: 125, rx: r, ry: r * 0.42, fill: 'none', stroke: C.line, 'stroke-width': 1 }, inner));
-        el('circle', { cx: W / 2 + 62, cy: 125, r: 3.5, fill: C.blue }, inner);
-        here(inner, W / 2 + 62, 125, 'Terra', true);
-      } else if (v === 2) {
-        el('ellipse', { cx: W / 2, cy: 125, rx: 26, ry: 13, fill: C.gold, opacity: 0.55 }, inner);
-        for (const [x, y, r] of spiral(7, 520, W / 2, 125, 190)) el('circle', { cx: x, cy: y, r, fill: C.ink2, opacity: 0.55 }, inner);
-        here(inner, W / 2 + 112, 152, 'Sol', true);
-      } else if (v === 3) {
-        const gal = (x: number, y: number, r: number, name: string, seed: number) => {
-          for (const [px, py, pr] of spiral(seed, 90, x, y, r, 0.5)) el('circle', { cx: px, cy: py, r: pr * 0.7, fill: C.ink2, opacity: 0.6 }, inner);
-          text(inner, x, y + r * 0.5 + 18, name, { class: 'mx-t small', 'text-anchor': 'middle' });
-        };
-        gal(165, 120, 48, 'Via Láctea', 3); gal(330, 95, 58, 'Andrômeda', 5); gal(300, 185, 22, 'Triângulo', 9);
-        const rnd = rng(11); for (let i = 0; i < 26; i++) el('circle', { cx: 60 + rnd() * 360, cy: 30 + rnd() * 190, r: 1.6, fill: C.muted }, inner);
-        here(inner, 165, 120, 'nós', false);
-      } else {
-        const rnd = rng(21), nodes: [number, number][] = [];
-        for (let i = 0; i < 14; i++) nodes.push([30 + rnd() * 420, 20 + rnd() * 200]);
-        nodes.forEach(([x, y], i) => nodes.slice(i + 1).forEach(([x2, y2]) => { if (Math.hypot(x2 - x, y2 - y) < 130) for (let k = 0; k < 18; k++) { const f = rnd(); el('circle', { cx: lerp(x, x2, f) + (rnd() - 0.5) * 8, cy: lerp(y, y2, f) + (rnd() - 0.5) * 8, r: 1.2, fill: C.ink2, opacity: 0.6 }, inner); } }));
-        nodes.forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, fill: C.accent, opacity: 0.7 }, inner));
-        here(inner, nodes[3][0], nodes[3][1], 'Grupo Local', nodes[3][0] < 300);
+      if (v !== prev) { from = prev; prev = v; }
+      if (t >= 1) from = v; // fim da transição: estado de repouso idêntico, venha de onde vier
+      const k = ease(t), L = levels[v], [mx, my] = L.at;
+      imgs.forEach((im, i) => { if (i !== v && i !== from) place(im, 1, mx, my, 0); });
+      if (from < v) {
+        // afastar: o degrau anterior encolhe até virar o ponto marcado; o novo entra de perto
+        place(imgs[v], lerp(2.4, 1, k), mx, my, clamp(k * 1.6));
+        if (from !== v) place(imgs[from], lerp(1, 0.04, k), mx, my, clamp(1 - k * 1.4));
+      } else if (from > v) {
+        // aproximar: o degrau de fora cresce em volta do ponto e some; o de dentro aparece
+        const [fx, fy] = levels[from].at;
+        place(imgs[from], lerp(1, 2.4, k), fx, fy, clamp(1 - k * 1.4));
+        place(imgs[v], lerp(0.04, 1, k), fx, fy, clamp(k * 1.6));
+      } else place(imgs[v], 1, mx, my, 1);
+      clear(over);
+      const op = clamp((t - 0.6) / 0.4);
+      if (L.mark && op > 0) {
+        const [x, y] = L.mark, right = x < 300, tg = g(over, { opacity: op });
+        el('circle', { cx: x, cy: y, r: 11, fill: 'none', stroke: '#ffd166', 'stroke-width': 2.5 }, tg);
+        el('line', { x1: x + (right ? 9 : -9), y1: y + 7, x2: x + (right ? 38 : -38), y2: y + 30, stroke: '#ffd166', 'stroke-width': 1.5 }, tg);
+        text(tg, x + (right ? 41 : -41), y + 42, L.label, { class: 'mx-t strong', 'text-anchor': right ? 'start' : 'end', style: 'fill:#ffd166;paint-order:stroke;stroke:#04060b;stroke-width:3px' });
+        if (v === 3) text(tg, 352, 196, 'Andrômeda', { class: 'mx-t', 'text-anchor': 'middle', style: 'fill:#f3f1ea;paint-order:stroke;stroke:#04060b;stroke-width:3px' });
+      } else if (!L.mark && op > 0) {
+        text(over, 14, 26, 'você está aqui', { class: 'mx-t strong', 'text-anchor': 'start', opacity: op, style: 'fill:#ffd166;paint-order:stroke;stroke:#04060b;stroke-width:3px' });
       }
       ruler.textContent = levels[v].ruler;
       return `Degrau ${v + 1} de 5. ${levels[v].cap}`;

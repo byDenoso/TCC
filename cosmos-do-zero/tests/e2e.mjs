@@ -634,12 +634,14 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
   for (const chapter of CHAPTERS) {
     const p = await page(width, { reducedMotion: reduced ? 'reduce' : 'no-preference' });
     await p.goto(`${BASE}/capitulos/${chapter}/`, { waitUntil: 'networkidle' });
-    const ids = await p.locator('[data-mx]').evaluateAll(nodes => nodes.map(n => n.dataset.mx));
-    ok(`${chapter} ${width}px: seis mecanismos`, ids.length === 6);
+    // a seção da primeira luz usa a jornada da CMB (tests/cmb-journey.mjs) no lugar da microcena
+    const found = await p.locator('[data-mx], [data-cmbj]').evaluateAll(nodes => nodes.map(n => ({ id: n.dataset.mx, dot: [...document.querySelectorAll('.lesson-section')].indexOf(n.closest('.lesson-section')) })));
+    const ids = found.filter((f) => f.id).map((f) => f.id), dots = found.filter((f) => f.id).map((f) => f.dot);
+    ok(`${chapter} ${width}px: seis mecanismos`, found.length === 6);
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const failuresBefore = fails.length;
-      await p.locator(`[data-step-dot="${i}"]`).click();
+      await p.locator(`[data-step-dot="${dots[i]}"]`).click();
       const root = p.locator(`[data-mx="${id}"]`);
       await root.scrollIntoViewIfNeeded();
       await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), id);
@@ -685,9 +687,10 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
       console.log('MICRO_RESULT', JSON.stringify({ chapter, id, width, reducedMotion: reduced, passed: fails.length === failuresBefore }));
     }
     await p.reload({ waitUntil: 'networkidle' });
-    const last = p.locator(`[data-mx="${ids[5]}"]`);
+    const lastId = ids[ids.length - 1];
+    const last = p.locator(`[data-mx="${lastId}"]`);
     await last.scrollIntoViewIfNeeded();
-    await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), ids[5]);
+    await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), lastId);
     ok(`${chapter} ${width}px: histórico distingue visita anterior`, /visita anterior/.test(await last.locator('[data-mx-history]').innerText()) && await last.locator('[data-mx-check]').first().isEnabled());
     ok(`${chapter} ${width}px: todas as cenas sem erros`, p.errors.length === 0, p.errors.join(' | '));
     ok(`${chapter} ${width}px: cena sem overflow`, await overflow(p) <= 0);

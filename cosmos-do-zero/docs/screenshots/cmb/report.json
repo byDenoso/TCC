@@ -16,7 +16,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 152
+          "fps": 129
         },
         {
           "step": "atomos",
@@ -27,7 +27,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 149
         },
         {
           "step": "expansao",
@@ -38,12 +38,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 143
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 114
+        "msToPaint": 141
       },
       "errors": []
     },
@@ -60,7 +60,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 164
+          "fps": 132
         },
         {
           "step": "atomos",
@@ -71,7 +71,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 120
         },
         {
           "step": "expansao",
@@ -82,7 +82,7 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 147
         }
       ],
       "firstClick": {
@@ -104,7 +104,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 165
+          "fps": 145
         },
         {
           "step": "atomos",
@@ -115,7 +115,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 155
         },
         {
           "step": "expansao",
@@ -126,12 +126,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 153
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 4
+        "msToPaint": 7
       },
       "errors": []
     },
@@ -148,7 +148,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 165
+          "fps": 151
         },
         {
           "step": "atomos",
@@ -159,7 +159,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 136
         },
         {
           "step": "expansao",
@@ -170,12 +170,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 153
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 4
+        "msToPaint": 6
       },
       "errors": []
     }
@@ -204,7 +204,7 @@
     {
       "name": "desktop/dark: primeiro clique responde",
       "pass": true,
-      "detail": "114 ms até pintar"
+      "detail": "141 ms até pintar"
     },
     {
       "name": "desktop/dark: sem rolagem horizontal",
@@ -264,7 +264,7 @@
     {
       "name": "mobile/dark: primeiro clique responde",
       "pass": true,
-      "detail": "4 ms até pintar"
+      "detail": "7 ms até pintar"
     },
     {
       "name": "mobile/dark: sem rolagem horizontal",
@@ -294,7 +294,7 @@
     {
       "name": "mobile/light: primeiro clique responde",
       "pass": true,
-      "detail": "4 ms até pintar"
+      "detail": "6 ms até pintar"
     },
     {
       "name": "mobile/light: sem rolagem horizontal",
