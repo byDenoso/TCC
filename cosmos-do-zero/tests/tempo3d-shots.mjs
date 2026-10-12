@@ -9,7 +9,7 @@ for (const [name, vp] of [['desktop', { width: 1280, height: 800 }], ['mobile', 
   const skip = await st.$('[data-guess-skip]'); if (skip && await skip.isVisible()) await skip.click();
   await p.waitForTimeout(1500);
   const has3d = await p.evaluate(() => { const h = document.querySelector('[data-t-3d]'); return { hidden: h?.hidden, canvas: !!h?.querySelector('canvas') }; });
-  for (const [preset, wait] of [['0.5', 3500], ['1090', 4200]]) {
+  for (const [preset, wait] of [['0.5', 3500], ['1090', 4200], ['0', 1500]]) {
     await st.$(`[data-t-preset="${preset}"]`).then((e) => e.click());
     await p.waitForTimeout(wait);
     await (await st.$('.obs-grid')).screenshot({ path: `docs/screenshots/cmb/tempo3d-${name}-z${preset}.png` });

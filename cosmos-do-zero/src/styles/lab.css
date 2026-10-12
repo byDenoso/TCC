@@ -206,7 +206,7 @@
 .obs-wave.invisible { stroke-dasharray: 7 6; }
 
 /* Máquina do tempo em 3D */
-.obs3d { position: relative; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; background: #05070f; margin-bottom: 10px; touch-action: pan-y; }
+.obs3d { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #05070f; touch-action: pan-y; }
 .obs3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
 .obs3d-canvas:active { cursor: grabbing; }
 .obs3d-label { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; padding: 3px 8px; border-radius: 999px; font: 650 12.5px/1.2 var(--body); color: #fff8e7; background: rgba(5, 7, 15, .72); box-shadow: 0 0 0 1px rgba(255, 255, 255, .14); }
@@ -214,5 +214,6 @@
 .obs3d-label.src { color: #ffcf9e; }
 .obs3d-label.wave { color: #fff8e7; background: rgba(200, 64, 30, .78); }
 .obs3d-tag { position: absolute; right: 10px; bottom: 8px; margin: 0; font: 600 11.5px var(--body); color: rgba(255, 248, 231, .7); }
-.obs3d-note { margin: 0 0 8px; font: 500 14.5px/1.5 var(--body); color: var(--ink-2); }
+/* recuo igual ao da linha do tempo abaixo (x = 30 de 640 no SVG) */
+.obs3d-note { margin: 0; padding: 14px 4.7% 0; font: 500 14.5px/1.5 var(--body); color: var(--ink-2); }
 @media (max-width: 600px) { .obs3d { aspect-ratio: 4 / 4.4; } .obs3d-label { font-size: 12px; } }

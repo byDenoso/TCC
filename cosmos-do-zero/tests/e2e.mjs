@@ -20,7 +20,8 @@ async function page(width = 1280, opts = {}) {
   const ctx = await browser.newContext({ viewport: { width, height: width < 700 ? 800 : 900 }, ...opts });
   const p = await ctx.newPage();
   p.errors = [];
-  p.on('pageerror', (e) => p.errors.push(String(e)));
+  // navegar no meio de uma transição entre páginas faz o navegador abortá-la; isso vem do teste, não do site
+  p.on('pageerror', (e) => { if (!/Transition was aborted/.test(String(e))) p.errors.push(String(e)); });
   p.on('console', (m) => m.type() === 'error' && p.errors.push(m.text()));
   // pedidos cancelados pela própria navegação (ERR_ABORTED) não são falhas
   p.on('requestfailed', (r) => { if (!/ERR_ABORTED/.test(r.failure()?.errorText ?? '')) p.errors.push('requestfailed ' + r.url() + ' ' + (r.failure()?.errorText ?? '')); });

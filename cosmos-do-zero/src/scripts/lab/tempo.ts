@@ -49,18 +49,18 @@ export function initTempo(root: HTMLElement): void {
   const age0 = ageNow(PLANCK);
 
   // ── desenho estático (eixos) ──
-  const W = 640;
-  const trackX = 30, trackW = 580, trackY = 62;
+  const trackX = 30, trackW = 580, trackY = 70;
   clear(svgEl);
   svg('text', { x: trackX, y: 22, class: 'obs-cap' }, svgEl, 'Do início até hoje · 13,8 bilhões de anos');
   svg('rect', { x: trackX, y: trackY, width: trackW, height: 14, rx: 2, class: 'obs-track' }, svgEl);
   const travel = svg('rect', { x: trackX, y: trackY, width: 0, height: 14, rx: 2, class: 'obs-travel' }, svgEl);
   const pin = svg('g', { class: 'obs-pin' }, svgEl);
   svg('path', { d: 'M0 0 L-7 -12 H7 Z', class: 'obs-pinhead' }, pin);
-  const pinText = svg('text', { y: -15, 'text-anchor': 'middle', class: 'obs-cap strong' }, pin, 'a luz sai');
-  svg('text', { x: trackX, y: 102, class: 'obs-cap' }, svgEl, 'Início');
-  svg('text', { x: trackX + trackW, y: 102, 'text-anchor': 'end', class: 'obs-cap' }, svgEl, 'Hoje');
-  const travelLabel = svg('text', { y: 102, 'text-anchor': 'middle', class: 'obs-cap warm' }, svgEl, '');
+  const pinText = svg('text', { y: -19, 'text-anchor': 'middle', class: 'obs-cap strong' }, pin, 'a luz sai');
+  svg('text', { x: trackX, y: 126, class: 'obs-cap' }, svgEl, 'Início');
+  svg('text', { x: trackX + trackW, y: 126, 'text-anchor': 'end', class: 'obs-cap' }, svgEl, 'Hoje');
+  // sob o trecho percorrido, numa linha própria para não encostar em Início/Hoje
+  const travelLabel = svg('text', { y: 104, 'text-anchor': 'middle', class: 'obs-cap warm' }, svgEl, '');
 
   // duas janelas: o mesmo pedaço de espaço quando a luz saiu e hoje. A grade é o próprio espaço;
   // a onda acompanha a grade. Na tela o crescimento é comprimido (até ×6); o valor real aparece no texto.
@@ -107,7 +107,7 @@ export function initTempo(root: HTMLElement): void {
     import('./tempo3d').then((m) => m.mountTempo3D(host3d, reduced)).then((v) => {
       if (!v) return;
       view3d = v; host3d.hidden = false; if (note3d) note3d.hidden = false;
-      winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 120');
+      winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 134');
       host3d.addEventListener('obs3d:lost', () => { view3d = null; use2d(); }, { once: true });
       render();
     }).catch(() => use2d());
@@ -140,12 +140,12 @@ export function initTempo(root: HTMLElement): void {
     const px = trackX + trackW * Math.min(1, ageThen / age0);
     travel.setAttribute('x', String(px)); travel.setAttribute('width', String(trackX + trackW - px));
     pin.setAttribute('transform', `translate(${px} ${trackY})`);
-    const anchor = px < 120 ? 'start' : px > W - 120 ? 'end' : 'middle';
-    pinText.setAttribute('text-anchor', anchor); pinText.setAttribute('x', anchor === 'start' ? '-6' : anchor === 'end' ? '6' : '0');
+    // textos centrados no ponto, empurrados para dentro da trilha (a fonte cresce no mobile)
+    const fit = (t: SVGTextElement, cx: number) => { const half = t.getComputedTextLength() / 2; return Math.min(Math.max(cx, trackX + half), trackX + trackW - half); };
     pinText.textContent = z < 0.005 ? 'agora' : `a luz sai · ${duration(ageThen)}`;
+    pinText.setAttribute('x', String(fit(pinText, px) - px));
     travelLabel.textContent = z < 0.005 ? '' : `a luz viajou ${duration(look)}`;
-    travelLabel.setAttribute('x', String((px + trackX + trackW) / 2));
-    travelLabel.setAttribute('visibility', trackX + trackW - px > 130 ? 'visible' : 'hidden');
+    travelLabel.setAttribute('x', String(fit(travelLabel, (px + trackX + trackW) / 2)));
 
     // janelas: crescimento real 1+z, comprimido na tela até ×6
     const grow = Math.pow(1 + z, Math.log(6) / Math.log(1 + Z_MAX));

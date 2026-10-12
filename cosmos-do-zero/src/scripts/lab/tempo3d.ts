@@ -119,12 +119,15 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   };
 
   const tmp = new THREE.Vector3();
-  const place = (el: HTMLElement, v: THREE_NS.Vector3, dy = 0) => {
+  // rótulo centrado no ponto (acima dele, ou abaixo com below), mantido dentro do quadro
+  const place = (el: HTMLElement, v: THREE_NS.Vector3, dy = 0, below = false) => {
     tmp.copy(v).project(camera);
-    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const w = canvas.clientWidth, h = canvas.clientHeight, ow = el.offsetWidth, oh = el.offsetHeight;
     const x = (tmp.x * 0.5 + 0.5) * w, y = (-tmp.y * 0.5 + 0.5) * h + dy;
-    el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`;
+    const left = Math.min(Math.max(x - ow / 2, 6), w - ow - 6), top = Math.min(Math.max(below ? y : y - oh, 6), h - oh - 26);
+    el.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px)`;
     el.hidden = tmp.z > 1;
+    return { left, top, ow, oh };
   };
 
   const render = () => {
@@ -165,12 +168,14 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     waveMat.opacity = invisible ? 0.55 + 0.25 * Math.sin(performance.now() / 300) : 0.95;
     controls.update();
     renderer.render(scene, camera);
-    place(labels.us, usMesh.position, -14);
-    place(labels.src, srcMesh.position, -14);
+    const a = place(labels.us, usMesh.position, -14);
+    const b = place(labels.src, srcMesh.position, -14);
+    // perto um do outro (tela estreita, luz mais antiga): a fonte sobe acima de "nós"
+    if (Math.abs(a.left + a.ow / 2 - b.left - b.ow / 2) < (a.ow + b.ow) / 2 + 4 && Math.abs(a.top - b.top) < a.oh + 4)
+      labels.src.style.transform = `translate(${b.left.toFixed(1)}px, ${Math.max(6, a.top - b.oh - 6).toFixed(1)}px)`;
     labels.src.hidden = labels.src.hidden || z < 0.005;
     const front = src.clone().addScaledVector(dir, Math.max(0.5, head));
-    place(labels.wave, front, 26);
-    labels.wave.style.transform += ' translate(0, 100%)';
+    place(labels.wave, front, 26, true);
     labels.wave.textContent = z < 0.005 ? '' : invisible ? 'luz (invisível aos olhos)' : 'luz vermelha';
     labels.wave.hidden = labels.wave.hidden || z < 0.005;
     void lam;
