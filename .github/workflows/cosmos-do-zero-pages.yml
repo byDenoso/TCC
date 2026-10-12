@@ -95,7 +95,7 @@ jobs:
       pages: write
       id-token: write
     environment:
-      name: github-pages
+      name: cosmos-do-zero-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Publicar artefato
