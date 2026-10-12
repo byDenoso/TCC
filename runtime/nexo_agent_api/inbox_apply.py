@@ -215,7 +215,10 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
                 or not all(expected[key] and reproducibility.get(key) == expected[key] for key in expected)):
             raise ProposalError("ACTIVE_EXECUTION_RESULT_PROOF_REQUIRED")
         changes["execution_phase"] = "COMPLETED"
-    if verdict in evolution.POSITIVE_VERDICTS and not current.get("review_state"):
+    if (verdict in evolution.POSITIVE_VERDICTS
+            and not current.get("contests_test_id")
+            and not body.get("contests_test_id")
+            and not current.get("review_state")):
         changes["review_state"] = "PENDING_REVIEW"  # a positive result must survive two referees to count
     version = 1 if created else int(current.get("entity_version") or 0)
     request_id = f"REQ-INBOX-RESULT-{_slug(str(item.get('_inbox_name') or test_id))}"
