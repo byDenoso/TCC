@@ -107,6 +107,10 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
   ok('movimento reduzido: abre direto na etapa da URL', st.step === 'expansao', st.step);
   ok('movimento reduzido: não anima, mostra o estado final', st.playing === 'false' && /2,7 K/.test(st.temp) && st.changed === '1', JSON.stringify(st));
   await (await page.$('[data-cmbj] .cmbj-scene')).screenshot({ path: `${OUT}/reduzido-3-expansao.png` });
+  // voltar de B para A sem animação: os elétrons têm de estar livres de novo
+  await page.click('[data-cmbj-goto="1"]'); const inB = await page.evaluate(() => Number(document.querySelector('[data-cmbj]').dataset.bound));
+  await page.click('[data-cmbj-goto="0"]'); const inA = await page.evaluate(() => Number(document.querySelector('[data-cmbj]').dataset.bound));
+  ok('movimento reduzido: B mostra átomos e A volta a ter elétrons livres', inB > 0 && inA === 0, `presos em B: ${inB}, em A: ${inA}`);
   await ctx.close();
 }
 
@@ -142,6 +146,7 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
   await page.goBack({ waitUntil: 'load' });
   ok('histórico: voltar retorna à página anterior', new URL(page.url()).pathname === '/', page.url());
   await page.goForward({ waitUntil: 'load' });
+  await page.waitForURL(/luz=2/); await page.waitForLoadState('load'); await page.waitForTimeout(300);
   await focusScene(page);
   const fwd = await page.evaluate(() => document.querySelector('[data-cmbj]').dataset.step);
   ok('histórico: avançar reabre a etapa da URL', fwd === 'atomos', fwd);

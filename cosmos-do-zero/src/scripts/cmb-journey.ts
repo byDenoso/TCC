@@ -111,6 +111,8 @@ function setup(root: HTMLElement): void {
   const live = q('[data-cmbj-live]');
   const fields = { ask: q('[data-cmbj-ask]'), say: q('[data-cmbj-say]'), act: q('[data-cmbj-act]'), changed: q('[data-cmbj-changed]') };
   const panel = { time: q('[data-cmbj-time]'), temp: q('[data-cmbj-temp]'), scale: q('[data-cmbj-scale]'), lambda: q('[data-cmbj-lambda]'), band: q('[data-cmbj-band]'), marker: q('[data-cmbj-marker]'), ruler: q('[data-cmbj-ruler]') };
+  // faixas da régua na mesma escala do marcador (o CSS tem os mesmos valores como reserva sem JS)
+  { const v = rulerPos(0.75), m = rulerPos(1000); panel.ruler.style.gridTemplateColumns = `${v}fr ${m - v}fr ${1 - m}fr`; }
   const legends = [...root.querySelectorAll<HTMLElement>('[data-cmbj-legend]')];
   if (!ctx) { root.classList.add('is-static'); return; }
 
@@ -230,6 +232,7 @@ function setup(root: HTMLElement): void {
   };
 
   const draw = () => {
+    root.dataset.bound = String(plasma.e.filter((e) => e.bound > 0.5).length); // elétrons presos (lido pelos testes)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
     const k = reduced.matches ? 1 : t;
@@ -290,9 +293,10 @@ function setup(root: HTMLElement): void {
   const pause = () => { cancelAnimationFrame(frame); setPlaying(false); draw(); };
   const go = (i: number, autoplay = true) => {
     step = clamp(i, 0, STEPS.length - 1); t = 0; done = false;
-    if (step === 1) { plasma.reset(plasma.h); warm(); }
+    if (step <= 1) { plasma.reset(plasma.h); warm(); } // A: elétrons livres; B: recomeça a captura
     setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) });
     announce();
+    draw(); // painel e etapa atualizados já no clique, sem esperar o próximo quadro
     if (autoplay && !reduced.matches) play(); else { pause(); }
   };
   btnPrev.addEventListener('click', () => go(step - 1));

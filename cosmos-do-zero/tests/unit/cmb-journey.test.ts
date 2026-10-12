@@ -45,3 +45,4 @@ describe('CMB: física do painel', () => {
     expect(all).toContain('380 mil anos');
   });
 });
+

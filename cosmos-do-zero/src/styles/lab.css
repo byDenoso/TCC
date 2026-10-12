@@ -213,7 +213,11 @@
 .obs3d-label.us { color: #b9d1f5; }
 .obs3d-label.src { color: #ffcf9e; }
 .obs3d-label.wave { color: #fff8e7; background: rgba(200, 64, 30, .78); }
-.obs3d-tag { position: absolute; right: 10px; bottom: 8px; margin: 0; font: 600 11.5px var(--body); color: rgba(255, 248, 231, .7); }
+.obs3d-label.wave.ir { color: #e6e9f2; background: rgba(60, 68, 92, .78); }
+.obs3d-play { position: absolute; left: 10px; bottom: 10px; z-index: 1; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .22); background: rgba(5, 7, 15, .78); color: #fff8e7; font: 650 13px var(--body); cursor: pointer; }
+.obs3d-play:hover { background: rgba(30, 36, 56, .9); }
+.obs3d-play:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.obs3d-tag { position: absolute; right: 10px; bottom: 8px; margin: 0; max-width: calc(100% - 150px); text-align: right; font: 600 11.5px var(--body); color: rgba(255, 248, 231, .7); }
 /* recuo igual ao da linha do tempo abaixo (x = 30 de 640 no SVG) */
 .obs3d-note { margin: 0; padding: 14px 4.7% 0; font: 500 14.5px/1.5 var(--body); color: var(--ink-2); }
 @media (max-width: 600px) { .obs3d { aspect-ratio: 4 / 4.4; } .obs3d-label { font-size: 12px; } }

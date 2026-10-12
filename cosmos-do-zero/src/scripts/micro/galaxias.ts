@@ -38,7 +38,7 @@ const viaLactea = (): Scene => {
       over = g(svg);
       el('rect', { x: 0, y: H - 30, width: W, height: 30, fill: 'rgba(4,6,11,.72)' }, svg);
       ruler = text(svg, W / 2, H - 11, '', { class: 'mx-t', 'text-anchor': 'middle', fill: '#f3f1ea', style: 'fill:#f3f1ea' });
-      text(svg, W - 8, H - 38, 'render artístico · fora de escala', { class: 'mx-t small', 'text-anchor': 'end', style: 'fill:rgba(243,241,234,.8);paint-order:stroke;stroke:#04060b;stroke-width:3px' });
+      text(svg, W - 8, 18, 'render artístico · fora de escala', { class: 'mx-t small', 'text-anchor': 'end', style: 'fill:rgba(243,241,234,.8);paint-order:stroke;stroke:#04060b;stroke-width:3px' });
     },
     draw(v, t) {
       if (v !== prev) { from = prev; prev = v; }
@@ -120,11 +120,19 @@ const teia = (): Scene => {
     else { const [a, b] = links[Math.floor(rnd() * links.length)]; const f = rnd(); end = [lerp(nodes[a][0], nodes[b][0], f) + (rnd() - 0.5) * 10, lerp(nodes[a][1], nodes[b][1], f) + (rnd() - 0.5) * 10]; }
     return { start, end };
   });
+  // Com WebGL a cena é 3D (web3d.ts) e os pontos SVG ficam escondidos por CSS; sem WebGL, o SVG é a cena.
+  let gl: { set(k: number): void } | null = null, lastV = 0;
   return {
-    init(svg) { layer = g(svg); },
+    init(svg) {
+      layer = g(svg, { class: 'mx-flat' });
+      const stage = svg.parentElement!;
+      const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+      import('./web3d').then((m) => m.mountWeb3D(stage, reduced)).then((w) => { gl = w; gl?.set(lastV); }).catch(() => {});
+    },
     value: (v) => (v < 0.05 ? 'quase liso' : v < 0.95 ? `${Math.round(v * 100)}%` : 'teia formada'),
     draw(v) {
       clear(layer);
+      lastV = v; gl?.set(v);
       const k = 1 - (1 - v) ** 2;
       for (const p of pts) el('circle', { cx: lerp(p.start[0], p.end[0], k), cy: lerp(p.start[1], p.end[1], k), r: 1.7, fill: C.ink2, opacity: 0.75 }, layer);
       if (v > 0.9) {

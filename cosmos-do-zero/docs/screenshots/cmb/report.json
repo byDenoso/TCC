@@ -1,7 +1,7 @@
 {
   "base": "http://localhost:4322",
-  "browser": "C:/Program Files/Google/Chrome/Application/chrome.exe",
-  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/154.0.0.0 Safari/537.36",
+  "browser": "playwright-chromium",
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
   "runs": [
     {
       "viewport": "desktop",
@@ -16,7 +16,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 152
+          "fps": 61
         },
         {
           "step": "atomos",
@@ -27,7 +27,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "expansao",
@@ -38,12 +38,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 126
+        "msToPaint": 12
       },
       "errors": []
     },
@@ -60,7 +60,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "atomos",
@@ -71,7 +71,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "expansao",
@@ -82,12 +82,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 10
+        "msToPaint": 12
       },
       "errors": []
     },
@@ -104,7 +104,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "atomos",
@@ -115,7 +115,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "expansao",
@@ -126,12 +126,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 5
+        "msToPaint": 26
       },
       "errors": []
     },
@@ -148,7 +148,7 @@
           "lambda": "luz presa no meio",
           "band": "—",
           "changedVisible": "0",
-          "fps": 165
+          "fps": 61
         },
         {
           "step": "atomos",
@@ -159,7 +159,7 @@
           "lambda": "pico em ≈ 1 µm",
           "band": "infravermelho",
           "changedVisible": "1",
-          "fps": 166
+          "fps": 61
         },
         {
           "step": "expansao",
@@ -170,12 +170,12 @@
           "lambda": "pico em ≈ 1,06 mm",
           "band": "micro-ondas",
           "changedVisible": "1",
-          "fps": 165
+          "fps": 61
         }
       ],
       "firstClick": {
         "pressed": true,
-        "msToPaint": 4
+        "msToPaint": 27
       },
       "errors": []
     }
@@ -204,7 +204,7 @@
     {
       "name": "desktop/dark: primeiro clique responde",
       "pass": true,
-      "detail": "126 ms até pintar"
+      "detail": "12 ms até pintar"
     },
     {
       "name": "desktop/dark: sem rolagem horizontal",
@@ -234,7 +234,7 @@
     {
       "name": "desktop/light: primeiro clique responde",
       "pass": true,
-      "detail": "10 ms até pintar"
+      "detail": "12 ms até pintar"
     },
     {
       "name": "desktop/light: sem rolagem horizontal",
@@ -264,7 +264,7 @@
     {
       "name": "mobile/dark: primeiro clique responde",
       "pass": true,
-      "detail": "5 ms até pintar"
+      "detail": "26 ms até pintar"
     },
     {
       "name": "mobile/dark: sem rolagem horizontal",
@@ -294,7 +294,7 @@
     {
       "name": "mobile/light: primeiro clique responde",
       "pass": true,
-      "detail": "4 ms até pintar"
+      "detail": "27 ms até pintar"
     },
     {
       "name": "mobile/light: sem rolagem horizontal",
@@ -325,6 +325,11 @@
       "name": "movimento reduzido: não anima, mostra o estado final",
       "pass": true,
       "detail": "{\"step\":\"expansao\",\"playing\":\"false\",\"temp\":\"2,7 K\",\"changed\":\"1\"}"
+    },
+    {
+      "name": "movimento reduzido: B mostra átomos e A volta a ter elétrons livres",
+      "pass": true,
+      "detail": "presos em B: 130, em A: 0"
     },
     {
       "name": "teclado: seta para a direita avança a etapa e leva o foco",

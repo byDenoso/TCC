@@ -157,7 +157,8 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     (waveGeo.getAttribute('position') as THREE_NS.BufferAttribute).needsUpdate = true;
     waveGeo.computeBoundingSphere();
     // cor: visível (vermelho) enquanto λ < 750 nm; depois, traço neutro e translúcido (invisível aos olhos)
-    const lamAt = 656.28 * s * G;
+    // λ físico neste instante: a tela cresce s·G de 1 a G; o espaço real, de 1 a 1+z, na mesma proporção logarítmica
+    const lamAt = 656.28 * (G > 1.0001 ? Math.pow(1 + z, Math.log(s * G) / Math.log(G)) : 1);
     const invisible = lamAt >= 750;
     // antes das primeiras galáxias (z > ~20) não havia galáxias: os pontos viram gás difuso
     const early = z > 20;
@@ -177,6 +178,7 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     const front = src.clone().addScaledVector(dir, Math.max(0.5, head));
     place(labels.wave, front, 26, true);
     labels.wave.textContent = z < 0.005 ? '' : invisible ? 'luz (invisível aos olhos)' : 'luz vermelha';
+    labels.wave.classList.toggle('ir', invisible);
     labels.wave.hidden = labels.wave.hidden || z < 0.005;
     void lam;
   };
@@ -205,10 +207,20 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   const ro = new ResizeObserver(resize); ro.observe(host);
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); alive = false; cancelAnimationFrame(frame); host.dataset.webgl = 'lost'; host.dispatchEvent(new CustomEvent('obs3d:lost', { bubbles: true })); });
   controls.addEventListener('start', () => { controls.autoRotate = false; });
+  // pausar/continuar a viagem da luz (a rotação acompanha)
+  const playBtn = host.querySelector<HTMLButtonElement>('[data-3d-play]');
+  const syncBtn = () => {
+    if (!playBtn) return;
+    playBtn.hidden = z < 0.005;
+    playBtn.setAttribute('aria-pressed', String(playing));
+    playBtn.firstElementChild!.textContent = playing ? '❚❚' : '▶';
+    playBtn.querySelector('[data-3d-play-label]')!.textContent = playing ? 'Pausar' : t > 0 && t < 1 ? 'Continuar' : 'Animar';
+  };
+  playBtn?.addEventListener('click', () => { playing = !playing; if (playing && t >= 1) t = 0; controls.autoRotate = playing && !reduced(); last = 0; syncBtn(); wake(); });
 
-  resize(); wake();
+  resize(); syncBtn(); wake();
   return {
-    set(zz, l) { z = zz; lam = l; t = reduced() ? 1 : 0; playing = !reduced(); controls.autoRotate = !reduced() && controls.autoRotate; render(); wake(); },
+    set(zz, l) { z = zz; lam = l; t = reduced() ? 1 : 0; playing = !reduced(); controls.autoRotate = !reduced() && controls.autoRotate; syncBtn(); render(); wake(); },
     dispose() { alive = false; cancelAnimationFrame(frame); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', onVis); controls.dispose(); renderer.dispose(); galGeo.dispose(); gridGeo.dispose(); waveGeo.dispose(); glowTex.dispose(); canvas.remove(); }
   };
 }
