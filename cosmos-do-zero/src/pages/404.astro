@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import { u } from '../lib/url';
+---
+<Base title="Página não encontrada · Cosmos do Zero" description="A página procurada não existe neste observatório." noindex>
+  <div id="topo"><Header variant="solid" /></div>
+  <main id="principal" class="paper" style="padding:110px 0 130px">
+    <div class="page-width" style="max-width:760px">
+      <div class="section-id">Erro 404</div>
+      <h1 class="display" style="font-size:clamp(46px,8vw,92px);margin:32px 0 24px">Essa região do céu<br /><em>ainda não foi mapeada.</em></h1>
+      <p style="font-size:18px;line-height:1.7;color:#4c5356;max-width:520px">O endereço não existe. Volte ao início ou escolha uma das seis jornadas.</p>
+      <p style="margin-top:34px;display:flex;gap:28px;flex-wrap:wrap;align-items:center"><a class="cta" href={u('/')}>Voltar ao início <span class="arrow" aria-hidden="true">↗</span></a><a class="textlink" href={u('/#capitulos')}>Ver as jornadas →</a></p>
+    </div>
+  </main>
+</Base>

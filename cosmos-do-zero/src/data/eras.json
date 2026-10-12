@@ -1,0 +1,102 @@
+[
+ {
+  "id": "primordial",
+  "title": "O Universo em fase quente",
+  "short": "≈13,8 bilhões de anos atrás",
+  "time": "Idade aproximada inferida pelo modelo cosmológico atual",
+  "text": "A expansão, os elementos leves e a radiação cósmica de fundo sustentam a reconstrução de uma fase antiga quente e densa. O modelo descreve a evolução inicial, não uma causa confirmada para a origem.",
+  "chapter": "origem-do-universo",
+  "visual": "cosmic",
+  "evidence": "Modelo ajustado a observações"
+ },
+ {
+  "id": "nucleosynthesis",
+  "title": "Formação dos primeiros núcleos",
+  "short": "Primeiros minutos",
+  "time": "Nos primeiros minutos após o início da fase quente",
+  "text": "Prótons e nêutrons formaram núcleos leves, sobretudo hélio. O Universo ainda estava quente demais para muitos elétrons ficarem ligados aos núcleos; átomos completos vieram depois.",
+  "chapter": "origem-do-universo",
+  "visual": "star",
+  "evidence": "Previsão testada por abundâncias observadas"
+ },
+ {
+  "id": "cmb",
+  "title": "A luz atravessa o Universo",
+  "short": "Cerca de 380 mil anos depois",
+  "time": "Cerca de 380 mil anos após a fase quente",
+  "text": "Elétrons se ligaram a núcleos e a luz passou a viajar por distâncias maiores. Os fótons que então se libertaram são observados hoje como radiação cósmica de fundo, alongada e resfriada pela expansão.",
+  "chapter": "origem-do-universo",
+  "visual": "cosmic",
+  "evidence": "Radiação observada; época inferida"
+ },
+ {
+  "id": "first-stars",
+  "title": "Formam-se as primeiras estrelas",
+  "short": "Centenas de milhões de anos depois",
+  "time": "Depois da CMB, em uma época estimada e ainda refinada por observações",
+  "text": "A gravidade concentrou gás em regiões densas, onde nasceram estrelas. A cronologia exata das primeiras estrelas continua em estudo; as observações de galáxias muito antigas ajudam a restringi-la.",
+  "chapter": "origem-do-universo",
+  "visual": "star",
+  "evidence": "Reconstrução observacional; data incerta"
+ },
+ {
+  "id": "galaxies",
+  "title": "As primeiras galáxias crescem",
+  "short": "Dentro do primeiro bilhão de anos",
+  "time": "Centenas de milhões de anos após a fase quente; início aproximado",
+  "text": "Telescópios observam galáxias distantes cuja luz partiu quando o Universo ainda era jovem. A idade e a formação de cada sistema são inferidas de seu espectro, brilho e de modelos.",
+  "chapter": "galaxias-e-nebulosas",
+  "visual": "galaxy",
+  "evidence": "Galáxias observadas; história reconstruída"
+ },
+ {
+  "id": "acceleration",
+  "title": "A expansão cósmica acelera",
+  "short": "Há cerca de 5 bilhões de anos",
+  "time": "Época aproximada inferida da história de expansão",
+  "text": "O brilho e o redshift de supernovas distantes indicam que a expansão cósmica acelerou ao longo do tempo. Energia escura é o nome de uma explicação usada em modelos; sua natureza física continua aberta.",
+  "chapter": "misterios-do-cosmos",
+  "visual": "mystery",
+  "evidence": "Supernovas e outras medidas; interpretação de modelo"
+ },
+ {
+  "id": "solar-system",
+  "title": "Forma-se o Sistema Solar",
+  "short": "Há cerca de 4,6 bilhões de anos",
+  "time": "Há aproximadamente 4,6 bilhões de anos",
+  "text": "O Sol se formou em uma nuvem de gás e poeira. O disco de material ao redor contribuiu para a formação dos planetas e de outros corpos; meteoritos ajudam a datar essa história.",
+  "chapter": "sistema-solar",
+  "visual": "solar",
+  "evidence": "Datação de meteoritos e modelos"
+ },
+ {
+  "id": "earth",
+  "title": "A Terra se forma",
+  "short": "Há cerca de 4,5 bilhões de anos",
+  "time": "Há aproximadamente 4,5 bilhões de anos",
+  "text": "A Terra cresceu pela união de corpos menores. Calor e diferenciação organizaram seu interior, enquanto superfície, atmosfera e água passaram por uma longa evolução.",
+  "chapter": "terra-e-atmosfera",
+  "visual": "earth",
+  "evidence": "Datação radiométrica e geologia"
+ },
+ {
+  "id": "oxygen",
+  "title": "Oxigênio se acumula na atmosfera",
+  "short": "Cerca de 2,4 bilhões de anos atrás",
+  "time": "Há aproximadamente 2,4 bilhões de anos; a mudança ocorreu em etapas",
+  "text": "A atividade de organismos e reações com rochas e oceanos mudaram o balanço de oxigênio. Registros em rochas indicam que sua acumulação na atmosfera aconteceu ao longo do tempo.",
+  "chapter": "terra-e-atmosfera",
+  "visual": "earth",
+  "evidence": "Registros geoquímicos"
+ },
+ {
+  "id": "present",
+  "title": "O Universo observado hoje",
+  "short": "Hoje",
+  "time": "O presente: uma história ainda em andamento",
+  "text": "Estrelas e galáxias continuam evoluindo. Observações apoiam a expansão cósmica e permitem testar perguntas sobre matéria escura, energia escura e a física do Universo primordial.",
+  "chapter": "misterios-do-cosmos",
+  "visual": "mystery",
+  "evidence": "Observações e pesquisas em andamento"
+ }
+]

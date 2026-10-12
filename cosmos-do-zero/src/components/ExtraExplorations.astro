@@ -1,0 +1,14 @@
+---
+import { extraRows } from '../data';
+import { chapterUrl } from '../lib/url';
+import Timeline from './Timeline.astro';
+import PlanetCatalog from './PlanetCatalog.astro';
+import Lab from './Lab.astro';
+---
+<section class="extra-section" id="extras" aria-labelledby="extras-title">
+  <details class="extra-explorations" data-extras>
+    <summary class="page-width"><span><span class="section-id">Continue por onde quiser</span><h2 id="extras-title">Estrelas, planetas e a nossa casa</h2><p>Abra a exploração livre: três leituras complementares, linha do tempo, planetas e experiências.</p></span><span class="extra-plus" aria-hidden="true">+</span></summary>
+    <div class="extra-reading-links page-width">{extraRows.map((r) => <a href={chapterUrl(r.id)}><span class="meta">Leitura complementar</span><h3>{r.title}</h3><p>{r.teaser}</p><span class="textlink">Abrir capítulo ↗</span></a>)}</div>
+    <Timeline /><PlanetCatalog /><Lab />
+  </details>
+</section>

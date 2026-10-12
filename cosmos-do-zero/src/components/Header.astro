@@ -1,0 +1,38 @@
+---
+import { u } from '../lib/url';
+interface Props { variant?: 'hero' | 'solid'; }
+const { variant = 'hero' } = Astro.props;
+const nav = [
+  { href: '/#capitulos', label: 'As três jornadas', mobile: 'As três jornadas' },
+  { href: '/#explorar', label: 'Explorar', mobile: 'Explorações do cosmos' },
+  { href: '/#extras', label: 'Ir além', mobile: 'Estrelas, planetas e experiências' }
+];
+const more = [
+  { href: '/#tempo', label: 'Linha do tempo' },
+  { href: '/#planetas', label: 'Os oito planetas' },
+  { href: '/#laboratorio', label: 'Comparar mundos e estrelas' },
+  { href: '/#desafio', label: 'Desafio científico' },
+  { href: '/#glossario', label: 'Glossário' },
+  { href: '/#fontes', label: 'Fontes e imagens' }
+];
+---
+<header class:list={['header-shell', variant === 'solid' && 'solid']}>
+  <div class="header page-width">
+    <a class="identity" href={u('/')} aria-label="Cosmos do Zero, início">
+      <span class="identity-mark" aria-hidden="true"></span>
+      <span class="identity-name">COSMOS<small>DO ZERO</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Navegação principal">
+      {nav.map((n) => <a href={u(n.href)} data-spy={n.href.slice(2)}>{n.label}</a>)}
+    </nav>
+    <a class="header-cta" href={u('/#glossario')}>Dicionário do cosmos <span aria-hidden="true">↗</span></a>
+    <details class="mobile-menu" data-mobile-menu>
+      <summary aria-label="Abrir ou fechar a navegação">Menu <span aria-hidden="true">+</span></summary>
+      <nav aria-label="Navegação móvel">
+        {[...nav.map((n) => ({ href: n.href, label: n.mobile })), ...more].map((n, i) => (
+          <a href={u(n.href)}><span>{String(i + 1).padStart(2, '0')}</span>{n.label}</a>
+        ))}
+      </nav>
+    </details>
+  </div>
+</header>

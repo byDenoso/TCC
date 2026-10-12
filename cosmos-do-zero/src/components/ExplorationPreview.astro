@@ -1,0 +1,15 @@
+---
+import { u, chapterUrl } from '../lib/url';
+const previewRenders = ['earth', 'galaxies', 'dark-matter'];
+const cards = [
+ { id: 'galaxias-e-nebulosas' as const, kind: 'scale', title: 'Encontre o seu endereço cósmico', action: 'Explore as escalas', text: 'Da Terra à teia cósmica. A luz transforma distância em uma janela para o passado.' },
+ { id: 'origem-do-universo' as const, kind: 'expansion', title: 'Expanda o espaço entre galáxias', action: 'Experimente a expansão', text: 'Mude a escala e escolha outro observador. A regra é a mesma em toda a malha.' },
+ { id: 'misterios-do-cosmos' as const, kind: 'evidence', title: 'Siga uma pista até seus limites', action: 'Investigue as evidências', text: 'Expansão, luz antiga, matéria escura e aceleração: o que vemos e o que permanece aberto.' }
+];
+---
+<section class="exploration-preview" id="explorar" aria-labelledby="explore-title"><div class="page-width">
+  <div class="section-id">Escolha por curiosidade</div><div class="preview-heading"><h2 class="display" id="explore-title">Mexa. Observe.<br /><em>Faça uma pergunta.</em></h2><p>As três explorações vivem dentro das jornadas. Você pode abrir qualquer uma e começar pelo que chama sua atenção.</p></div>
+  <div class="preview-cards">{cards.map((c,i) => <a class="preview-card" href={`${chapterUrl(c.id)}#exploracao`}>
+    <img class="preview-render" src={u(`/renders/${previewRenders[i]}.webp`)} srcset={`${u(`/renders/${previewRenders[i]}-small.webp`)} 600w, ${u(`/renders/${previewRenders[i]}.webp`)} 1200w`} sizes="(max-width: 760px) calc(100vw - 34px), (max-width: 1200px) 30vw, 420px" alt={`Render conceitual para a exploração: ${c.title}.`} width="1200" height="800" loading="lazy" decoding="async" /><div><span class="meta">Exploração {String(i+1).padStart(2,'0')} · render conceitual por IA</span><h3>{c.title}</h3><p>{c.text}</p>{i === 2 && <p class="preview-image-note">Halo e cor ilustram uma distribuição inferida; não representam luz emitida pela matéria escura.</p>}<span class="preview-action">{c.action} ↗</span></div>
+  </a>)}</div>
+</div></section>

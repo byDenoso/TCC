@@ -1,0 +1,68 @@
+---
+import { planets } from '../data';
+import { planetArt, planetGlobe } from '../lib/images';
+import { catalogFacts } from '../lib/planets';
+import { pad2 } from '../lib/format';
+const def = planets.find((p) => p.id === 'terra')!;
+const defIndex = planets.indexOf(def);
+const maxR = Math.max(...planets.map((p) => p.radius));
+const art = Object.fromEntries(planets.map((p) => [p.id, { src: planetArt[p.id].src, w: planetArt[p.id].width, h: planetArt[p.id].height, globe: planetGlobe[p.id].src }]));
+---
+<section class="planets-section" id="planetas" aria-labelledby="planets-title" data-island="planets">
+  <div class="page-width">
+    <div class="section-id">03 / Nossa vizinhança, mundo por mundo</div>
+    <div class="planets-head">
+      <h2 class="display" id="planets-title">Oito mundos.<br /><em>Nenhum igual.</em></h2>
+      <p>Selecione um planeta. Compare composição, atmosfera e os números que dão forma a cada mundo.</p>
+    </div>
+    <div class="planet-explore">
+      <div class="planet-tabs" role="group" aria-label="Selecionar um planeta" data-planet-tabs>
+        {planets.map((p) => <button class="planet-tab" type="button" data-planet={p.id} aria-pressed={p.id === def.id ? 'true' : 'false'}>{p.name}</button>)}
+      </div>
+      <div class="planet-content">
+        <div class="planet-illustration" data-planet-stage>
+          <span class="diagram-coord">CATÁLOGO PLANETÁRIO / <span data-planet-number>{pad2(defIndex + 1)}</span></span>
+          <div class="planet-ellipse" aria-hidden="true"></div>
+          <img class="planet-img" data-planet-img data-planet={def.id} src={planetArt[def.id].src} width={planetArt[def.id].width} height={planetArt[def.id].height} alt={`Ilustração artística da ${def.name}`} decoding="async" />
+          <span class="illustration-note">Ilustração artística · sem escala</span>
+        </div>
+        <div class="planet-info" aria-live="polite" aria-atomic="true">
+          <div class="detail-kicker" data-planet-kicker>{pad2(defIndex + 1)} / 08 · {def.type}</div>
+          <h3 data-planet-name>{def.name}</h3>
+          <p data-planet-description>{def.description}</p>
+          <div class="planet-facts">
+            {catalogFacts.map((f, i) => <div><span>{f.label}</span><strong data-fact={i}>{f.value(def)}</strong></div>)}
+          </div>
+          <details class="planet-physical">
+            <summary>O que compõe este mundo?</summary>
+            <dl>
+              <dt>Interior</dt><dd data-planet-composition>{def.composition}</dd>
+              <dt>Atmosfera</dt><dd data-planet-atmosphere>{def.atmosphere}</dd>
+              <dt>Como ler a temperatura</dt><dd data-planet-temperature-note>{def.temperatureNote}</dd>
+              <dt>Uma curiosidade</dt><dd data-planet-fact>{def.fact}</dd>
+            </dl>
+          </details>
+        </div>
+      </div>
+      <div class="planet-ruler" aria-hidden="true" data-planet-ruler>
+        <span class="ruler-label">Raios equatoriais na mesma escala</span>
+        <div class="ruler-row">
+          {planets.map((p) => (
+            <button type="button" tabindex="-1" data-ruler={p.id} class:list={['ruler-item', p.id === def.id && 'active']} style={`--size:${((p.radius / maxR) * 100).toFixed(3)}`}>
+              <img src={planetGlobe[p.id].src} alt="" width={planetGlobe[p.id].width} height={planetGlobe[p.id].height} loading="lazy" decoding="async" />
+              <span>{p.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+    <p class="planet-caption">
+      Ilustrações artísticas geradas por computação; não são fotografias nem trazem feições reais. Tamanhos e órbitas sem escala. Raios equatoriais; gravidade inclui o efeito da rotação. Gigantes: gravidade e temperatura no nível de 1 bar. Período orbital tropical; rotação sideral, com sinal negativo para rotação retrógrada. 1 UA ≈ 149,6 milhões de km.
+      <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noopener noreferrer">NASA / NSSDCA · Planetary Fact Sheet — unidades métricas <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>
+      <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html" target="_blank" rel="noopener noreferrer">NASA / NSSDCA · Definições e notas da tabela planetária <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>
+      <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html" target="_blank" rel="noopener noreferrer">NASA / NSSDCA · Dados planetários em unidades relativas à Terra <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>
+    </p>
+    <a class="textlink" href="#comparador">Colocar dois mundos lado a lado <span aria-hidden="true">↓</span></a>
+    <script is:inline type="application/json" id="planet-art-data" set:html={JSON.stringify(art)} />
+  </div>
+</section>

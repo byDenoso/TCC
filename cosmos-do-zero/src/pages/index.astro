@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import ChapterList from '../components/ChapterList.astro';
+import ExplorationPreview from '../components/ExplorationPreview.astro';
+import ExtraExplorations from '../components/ExtraExplorations.astro';
+import QuizSection from '../components/QuizSection.astro';
+import Glossary from '../components/Glossary.astro';
+import Sources from '../components/Sources.astro';
+import '../styles/home.css';
+---
+<Base title="Cosmos do Zero · Seu primeiro passo no Universo" description="Descubra nosso lugar no cosmos, a história da expansão e as evidências em três jornadas com explorações interativas, animações e fontes científicas.">
+  <Hero />
+  <main id="principal">
+    <ChapterList />
+    <ExplorationPreview />
+    <ExtraExplorations />
+    <QuizSection />
+    <Glossary />
+    <Sources />
+    <noscript><p class="noscript-note page-width">A leitura, os desenhos iniciais, as tabelas, o glossário e as fontes estão disponíveis sem JavaScript. Para mudar as experiências e responder aos quizzes, ative JavaScript.</p></noscript>
+  </main>
+</Base>

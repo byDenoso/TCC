@@ -1,0 +1,158 @@
+[
+ {
+  "term": "Universo observável",
+  "definition": "Região do Universo de onde sinais, como a luz, tiveram tempo de chegar até nós.",
+  "example": "Seu limite é um horizonte de observação, não uma borda física comprovada do Universo inteiro.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Sistema Solar",
+  "definition": "O Sol e os corpos que orbitam ao seu redor, como planetas, luas, asteroides e cometas.",
+  "example": "A Terra orbita o Sol e faz parte do Sistema Solar.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Galáxia",
+  "definition": "Grande sistema de estrelas, gás e poeira mantidos juntos pela gravidade; sua massa inclui componentes inferidos, como matéria escura.",
+  "example": "O Sol pertence à Via Láctea, uma galáxia espiral.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Teia cósmica",
+  "definition": "Rede em grande escala formada por galáxias, grupos e aglomerados ao longo de filamentos, com regiões menos densas entre eles.",
+  "example": "Mapas de galáxias mostram concentrações e vazios em vez de uma distribuição uniforme.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Ano-luz",
+  "definition": "Distância que a luz percorre no vácuo em um ano; não é uma medida de tempo.",
+  "example": "A luz de uma estrela a quatro anos-luz leva cerca de quatro anos para chegar até nós.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Big Bang quente",
+  "definition": "Modelo que descreve a expansão e o resfriamento de um Universo jovem muito quente e denso; não define uma causa inicial confirmada.",
+  "example": "A expansão, os elementos leves e a CMB podem ser comparados com as previsões do modelo.",
+  "chapter": "origem-do-universo"
+ },
+ {
+  "term": "Expansão do Universo",
+  "definition": "Aumento, em grandes escalas, das distâncias entre regiões que acompanham o fluxo cósmico, junto com o alongamento da luz que viaja pelo espaço.",
+  "example": "A luz de galáxias distantes pode chegar com comprimentos de onda maiores.",
+  "chapter": "origem-do-universo"
+ },
+ {
+  "term": "Radiação cósmica de fundo (CMB)",
+  "definition": "Luz antiga que passou a viajar livremente quando o Universo tinha cerca de 380 mil anos e hoje é detectada sobretudo em micro-ondas.",
+  "example": "Satélites mapearam pequenas variações dessa radiação em todo o céu.",
+  "chapter": "origem-do-universo"
+ },
+ {
+  "term": "Redshift",
+  "definition": "Deslocamento de linhas da luz para comprimentos de onda maiores; a expansão cósmica é uma causa importante em escalas grandes.",
+  "example": "Movimento local e gravidade também afetam a luz, então redshift não é uma medida de distância isolada.",
+  "chapter": "origem-do-universo"
+ },
+ {
+  "term": "Matéria escura",
+  "definition": "Componente de matéria inferida principalmente por efeitos gravitacionais; sua natureza e suas partículas ainda não foram identificadas.",
+  "example": "A distorção gravitacional da luz de galáxias ao fundo ajuda a mapear massa escura em aglomerados.",
+  "chapter": "misterios-do-cosmos"
+ },
+ {
+  "term": "Energia escura",
+  "definition": "Nome usado em modelos para a componente ou propriedade associada à expansão acelerada; sua natureza física continua desconhecida.",
+  "example": "A constante cosmológica é a descrição mais simples desse efeito no modelo ΛCDM.",
+  "chapter": "misterios-do-cosmos"
+ },
+ {
+  "term": "Gravidade",
+  "definition": "Interação associada à massa e à energia; na relatividade geral é descrita pela geometria do espaço-tempo.",
+  "example": "Ela participa da queda de um objeto, das órbitas e do colapso de nuvens.",
+  "chapter": "sistema-solar"
+ },
+ {
+  "term": "Nebulosa",
+  "definition": "Região de gás e poeira que pode ter diferentes origens e mecanismos de brilho.",
+  "example": "Algumas formam estrelas; outras são material expelido por estrelas.",
+  "chapter": "galaxias-e-nebulosas"
+ },
+ {
+  "term": "Fusão nuclear",
+  "definition": "Reações em que núcleos leves se combinam; certas reações liberam energia.",
+  "example": "No Sol, a cadeia de reações do hidrogênio produz hélio.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Protoestrela",
+  "definition": "Objeto em formação pelo colapso de gás, antes da fase estável de fusão de hidrogênio.",
+  "example": "Contração e acreção aquecem o objeto e seu entorno.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Sequência principal",
+  "definition": "Fase em que a estrela obtém sua energia principalmente da fusão de hidrogênio no núcleo.",
+  "example": "O Sol está nessa fase atualmente.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Anã branca",
+  "definition": "Remanescente estelar compacto, sustentado pela pressão de degenerescência dos elétrons.",
+  "example": "É o destino esperado do núcleo de uma estrela como o Sol.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Supernova",
+  "definition": "Uma explosão estelar muito energética; existem mecanismos diferentes para produzi-la.",
+  "example": "Colapso de núcleo e explosão de uma anã branca são caminhos distintos.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Estrela de nêutrons",
+  "definition": "Remanescente compacto de certos colapsos estelares, composto por matéria extremamente densa.",
+  "example": "Pulsares são estrelas de nêutrons observadas por pulsos regulares.",
+  "chapter": "vida-das-estrelas"
+ },
+ {
+  "term": "Unidade astronômica",
+  "definition": "Unidade de distância igual a 149.597.870,7 km, próxima da distância média Terra–Sol.",
+  "example": "Netuno orbita a cerca de 30 UA do Sol.",
+  "chapter": "sistema-solar"
+ },
+ {
+  "term": "Rotação sideral",
+  "definition": "Tempo para completar uma volta em relação a uma referência distante, como as estrelas.",
+  "example": "Na Terra, é ligeiramente menor que o dia solar de 24 horas.",
+  "chapter": "sistema-solar"
+ },
+ {
+  "term": "Efeito estufa",
+  "definition": "Mudança na troca de energia causada pela absorção e emissão de infravermelho pela atmosfera.",
+  "example": "Contribui para aquecer a superfície; em Vênus é extremo.",
+  "chapter": "terra-e-atmosfera"
+ },
+ {
+  "term": "Magnetosfera",
+  "definition": "Região do ambiente espacial influenciada pelo campo magnético de um corpo.",
+  "example": "A terrestre interage com o vento solar e participa da formação de auroras.",
+  "chapter": "terra-e-atmosfera"
+ },
+ {
+  "term": "Horizonte de eventos",
+  "definition": "Fronteira além da qual sinais não conseguem alcançar observadores externos distantes.",
+  "example": "A luz da região observada ao redor de um buraco negro vem de fora do horizonte.",
+  "chapter": "misterios-do-cosmos"
+ },
+ {
+  "term": "Exoplaneta",
+  "definition": "Planeta fora do Sistema Solar.",
+  "example": "Um trânsito pode reduzir um pouco o brilho observado de sua estrela.",
+  "chapter": "misterios-do-cosmos"
+ },
+ {
+  "term": "Zona habitável",
+  "definition": "Faixa de órbitas onde água líquida superficial pode ser possível sob certas condições.",
+  "example": "Estar nessa faixa não confirma atmosfera favorável nem vida.",
+  "chapter": "misterios-do-cosmos"
+ }
+]

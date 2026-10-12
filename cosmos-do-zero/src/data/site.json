@@ -1,0 +1,218 @@
+{
+ "rows": [
+  {
+   "id": "galaxias-e-nebulosas",
+   "title": "Onde estamos no Universo?",
+   "teaser": "Da Terra à Via Láctea, à teia cósmica e à luz do passado.",
+   "summary": "A Terra está no Sistema Solar, dentro da Via Láctea. Galáxias formam estruturas em escalas ainda maiores, e a luz distante nos conta como o cosmos era quando partiu.",
+   "aside": "A luz leva tempo para chegar: observar longe é estudar outra época."
+  },
+  {
+   "id": "origem-do-universo",
+   "title": "Como o Universo evoluiu?",
+   "teaser": "Expansão, fase quente, elementos leves e CMB.",
+   "summary": "A cosmologia combina a expansão, a abundância de elementos leves e a radiação cósmica de fundo para reconstruir a evolução de um Universo jovem quente e denso.",
+   "aside": "O Big Bang quente descreve essa evolução; uma causa inicial confirmada continua em aberto."
+  },
+  {
+   "id": "misterios-do-cosmos",
+   "title": "Como sabemos disso?",
+   "teaser": "Expansão, CMB, matéria escura e aceleração cósmica.",
+   "summary": "Compare o que os instrumentos medem, o que os modelos inferem e o que permanece desconhecido. A expansão, a CMB e a gravidade das estruturas oferecem pistas diferentes.",
+   "aside": "Evidências podem apoiar um modelo sem revelar a natureza de todos os seus componentes."
+  },
+  {
+   "id": "vida-das-estrelas",
+   "title": "Por que uma estrela brilha?",
+   "teaser": "Da nuvem à fusão, da massa ao destino.",
+   "summary": "Estrelas transformam matéria e irradiam energia. A massa inicial é uma das chaves de sua história: ela muda o ritmo de consumo do combustível, o brilho e os caminhos possíveis depois da fase principal.",
+   "aside": "Uma estrela vive pelo equilíbrio entre gravidade e pressão. Seu destino depende da massa e de sua história."
+  },
+  {
+   "id": "sistema-solar",
+   "title": "Como surgiram mundos tão diferentes?",
+   "teaser": "Uma estrela, oito planetas e muitos outros corpos.",
+   "summary": "O Sistema Solar compartilha uma origem, mas não um único tipo de mundo. Distância ao Sol, composição, massa e história produzem uma diversidade que vai de superfícies rochosas a atmosferas profundas.",
+   "aside": "Compare sempre a mesma grandeza e a mesma definição. Um planeta gigante não tem uma superfície como a Terra."
+  },
+  {
+   "id": "terra-e-atmosfera",
+   "title": "Como a Terra se tornou nossa casa?",
+   "teaser": "Rocha, água, ar e uma longa transformação.",
+   "summary": "A Terra habitável de hoje resulta de uma história geológica e biológica. Seu interior, sua atmosfera e seus oceanos trocaram matéria e energia por bilhões de anos. A composição do ar que respiramos é parte dessa história.",
+   "aside": "Habitabilidade depende de vários processos conectados. A presença de água ou uma boa distância da estrela, sozinhas, não garantem vida."
+  }
+ ],
+ "credits": [
+  {
+   "kind": "observação em cores compostas",
+   "title": "Nossa vizinha Andrômeda",
+   "caption": "Mosaico infravermelho de quatro detectores do WISE: 3,4 e 4,6 µm em azul; 12 µm em verde; 22 µm em vermelho. As cores são atribuídas aos comprimentos de onda; não representam cores visíveis.",
+   "credit": "NASA/JPL-Caltech/UCLA",
+   "href": "https://science.nasa.gov/photojournal/our-neighbor-andromeda/",
+   "alt": "Mosaico infravermelho de quatro detectores do WISE: 3,4 e 4,6 µm em azul; 12 µm em verde; 22 µm em vermelho. As cores são atribuídas aos comprimentos de onda; não representam cores visíveis."
+  },
+  {
+   "kind": "observação em cores compostas",
+   "title": "“Cosmic Cliffs” na Nebulosa de Carina (imagem composta NIRCam e MIRI)",
+   "caption": "Composição de exposições infravermelhas separadas dos instrumentos NIRCam e MIRI do Webb, com cores atribuídas a filtros distintos.",
+   "credit": "NASA, ESA, CSA, STScI",
+   "href": "https://science.nasa.gov/asset/webb/cosmic-cliffs-in-the-carina-nebula-nircam-and-miri-composite-image/",
+   "alt": "Composição de exposições infravermelhas separadas dos instrumentos NIRCam e MIRI do Webb, com cores atribuídas a filtros distintos."
+  },
+  {
+   "kind": "fotografia",
+   "title": "O nascer do Sol visto da estação espacial",
+   "caption": "Fotografia de astronauta ISS070-E-1178, feita em 29 set. 2023; a NASA informa que foi recortada, teve o contraste realçado e artefatos da lente removidos.",
+   "credit": "NASA / ISS Crew Earth Observations Facility / Earth Science and Remote Sensing Unit, Johnson Space Center; fotografia por membro da Expedição 70; legenda: Kathryn Hansen",
+   "href": "https://earthobservatory.nasa.gov/images/152259/sunrise-from-the-station",
+   "alt": "Fotografia de astronauta ISS070-E-1178, feita em 29 set. 2023; a NASA informa que foi recortada, teve o contraste realçado e artefatos da lente removidos."
+  }
+ ],
+ "refIndex": [
+  {
+   "title": "NASA · A história do Universo",
+   "href": "https://science.nasa.gov/universe/overview/"
+  },
+  {
+   "title": "NASA / WMAP · Radiação cósmica de fundo",
+   "href": "https://science.nasa.gov/universe/stories/quick-reads/what-can-we-learn-from-the-universes-baby-picture/"
+  },
+  {
+   "title": "ESA / Planck Collaboration · Planck 2018: parâmetros cosmológicos",
+   "href": "https://arxiv.org/abs/1807.06209"
+  },
+  {
+   "title": "NASA · Galáxias",
+   "href": "https://science.nasa.gov/universe/galaxies/"
+  },
+  {
+   "title": "NASA · Tipos de galáxias",
+   "href": "https://science.nasa.gov/universe/galaxies/types/"
+  },
+  {
+   "title": "NASA · Estruturas em grande escala",
+   "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+  },
+  {
+   "title": "NASA · Nascimento, vida e morte das estrelas",
+   "href": "https://science.nasa.gov/universe/stars/"
+  },
+  {
+   "title": "NASA · Tipos de estrelas",
+   "href": "https://science.nasa.gov/universe/stars/types/"
+  },
+  {
+   "title": "NASA · Fatos sobre o Sol",
+   "href": "https://science.nasa.gov/sun/facts/"
+  },
+  {
+   "title": "NASA · Fatos sobre o Sistema Solar",
+   "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+  },
+  {
+   "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+   "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+  },
+  {
+   "title": "NASA / NSSDCA · Definições e notas da tabela planetária",
+   "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html"
+  },
+  {
+   "title": "NASA · Asteroides, cometas e meteoros",
+   "href": "https://science.nasa.gov/asteroids-comets-meteors/"
+  },
+  {
+   "title": "NASA · Fatos sobre a Terra",
+   "href": "https://science.nasa.gov/earth/facts/"
+  },
+  {
+   "title": "NOAA / National Weather Service · Camadas da atmosfera",
+   "href": "https://www.noaa.gov/jetstream/atmosphere/layers-of-atmosphere"
+  },
+  {
+   "title": "NASA · A magnetosfera terrestre",
+   "href": "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/"
+  },
+  {
+   "title": "NASA · Fatos sobre Vênus",
+   "href": "https://science.nasa.gov/venus/venus-facts/"
+  },
+  {
+   "title": "NASA · Fatos sobre Marte",
+   "href": "https://science.nasa.gov/mars/facts/"
+  },
+  {
+   "title": "NASA · Buracos negros",
+   "href": "https://science.nasa.gov/universe/black-holes/"
+  },
+  {
+   "title": "NASA · Matéria escura",
+   "href": "https://science.nasa.gov/missions/hubble/shining-a-light-on-dark-matter/"
+  },
+  {
+   "title": "NASA · Energia escura e expansão acelerada",
+   "href": "https://science.nasa.gov/dark-energy/"
+  },
+  {
+   "title": "NASA · Exoplanetas",
+   "href": "https://science.nasa.gov/exoplanets/"
+  },
+  {
+   "title": "NASA / NSSDCA · Dados planetários em unidades relativas à Terra",
+   "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html"
+  },
+  {
+   "title": "NOAA / NASA JPL · Como a atmosfera terrestre se formou",
+   "href": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/how-did-earths-atmosphere-form"
+  },
+  {
+   "title": "NASA Astrobiology · Evidências da elevação inicial do oxigênio terrestre",
+   "href": "https://astrobiology.nasa.gov/nai/articles/2019/3/5/clues-of-earths-early-rise-of-oxygen/"
+  },
+  {
+   "title": "NASA · Meteoros e meteoritos",
+   "href": "https://science.nasa.gov/solar-system/meteors-meteorites/"
+  },
+  {
+   "title": "NASA · A busca de vida fora da Terra",
+   "href": "https://science.nasa.gov/exoplanets/can-we-find-life/"
+  },
+  {
+   "title": "NASA · Sistema Solar, galáxia e Universo",
+   "href": "https://science.nasa.gov/solar-system/skywatching/night-sky-network/solar-system-galaxy-universe-whats-the-difference/"
+  },
+  {
+   "title": "NASA · O que é o Universo?",
+   "href": "https://science.nasa.gov/exoplanets/what-is-the-universe/"
+  },
+  {
+   "title": "NASA · Observar a história cósmica pela luz",
+   "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/time-travel-observing-cosmic-history/"
+  },
+  {
+   "title": "NASA · O que é um ano-luz?",
+   "href": "https://science.nasa.gov/exoplanets/what-is-a-light-year/"
+  },
+  {
+   "title": "NASA · Redshift cosmológico observado pelo Hubble",
+   "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-cosmological-redshift/"
+  },
+  {
+   "title": "NASA · Evolução do Universo e radiação de fundo",
+   "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+  },
+  {
+   "title": "ESA · Destaques científicos da missão Planck",
+   "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+  },
+  {
+   "title": "NASA · Matéria escura",
+   "href": "https://science.nasa.gov/dark-matter/"
+  },
+  {
+   "title": "NASA · Galáxias ao longo do tempo",
+   "href": "https://science.nasa.gov/mission/webb/galaxies-over-time/"
+  }
+ ]
+}

@@ -1,0 +1,40 @@
+---
+import { terms, chapterTitleShort } from '../data';
+import { chapterUrl } from '../lib/url';
+import { CHAPTER_IDS } from '../types';
+import { countLabel } from '../lib/glossary';
+---
+<section class="glossary-section paper" id="glossario" aria-labelledby="glossary-title" data-island="glossary">
+  <div class="page-width">
+    <div class="section-id">06 / Uma palavra pode abrir uma janela</div>
+    <div class="intro-head">
+      <h2 class="display" id="glossary-title">O dicionário<br /><em>da curiosidade.</em></h2>
+      <p>Termos difíceis ficam melhores quando encontram um exemplo. Busque uma palavra ou uma ideia.</p>
+    </div>
+    <form class="glossary-search" role="search" onsubmit="return false">
+      <label for="glossary-search">O que você quer entender?</label>
+      <input type="search" id="glossary-search" data-glossary-input placeholder="Ex.: ano-luz, gravidade, fusão…" autocomplete="off" spellcheck="false" />
+      <span role="status" data-glossary-count>{countLabel(terms.length)}</span>
+    </form>
+    <div class="glossary-chips" role="group" aria-label="Filtrar por jornada">
+      <button type="button" data-glossary-chip="" aria-pressed="true">Todas</button>
+      {CHAPTER_IDS.map((id) => <button type="button" data-glossary-chip={id} aria-pressed="false">{chapterTitleShort[id]}</button>)}
+    </div>
+    <div class="glossary-list" data-glossary-list>
+      {terms.map((t, i) => (
+        <details class="glossary-entry" data-term-index={i}>
+          <summary>{t.term}<span aria-hidden="true">+</span></summary>
+          <div>
+            <p>{t.definition}</p>
+            <p class="glossary-example"><strong>Exemplo.</strong> {t.example}</p>
+            <a class="textlink" href={chapterUrl(t.chapter)}>Ver a ideia em contexto: {chapterTitleShort[t.chapter]} <span aria-hidden="true">↗</span></a>
+          </div>
+        </details>
+      ))}
+    </div>
+    <div class="glossary-empty" data-glossary-empty hidden>
+      <p>Nenhum termo encontrado. Tente outra palavra, como “luz” ou “estrela”.</p>
+      <button type="button" class="textlink" data-glossary-clear>Limpar a busca e ver todos os termos</button>
+    </div>
+  </div>
+</section>

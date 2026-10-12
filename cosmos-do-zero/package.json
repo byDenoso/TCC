@@ -1,0 +1,35 @@
+{
+  "name": "cosmos-do-zero",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && node scripts/postbuild.mjs",
+    "preview": "astro preview",
+    "check": "astro check",
+    "test": "vitest run",
+    "test:http": "node tests/http.mjs",
+    "test:e2e": "node tests/e2e.mjs",
+    "serve": "node scripts/serve-dist.mjs",
+    "test:browsers": "node tests/browser-smoke.mjs",
+    "test:renders": "node tests/renders.mjs",
+    "test:pages": "node tests/pages-base.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/inter-tight": "^5.3.0",
+    "astro": "^7.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "playwright": "^1.50.0",
+    "sharp": "0.35.5",
+    "typescript": "^5.6.0",
+    "vitest": "4.1.11"
+  }
+}

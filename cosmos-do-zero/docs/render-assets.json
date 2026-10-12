@@ -1,0 +1,82 @@
+[
+  {
+    "key": "hero-eclipse",
+    "prompt": "Use case: scientific-educational. Asset type: raster image for a Portuguese beginner cosmology website, replaces procedural 3D-like graphics. High quality cinematic scientific visualization, realistic materials, restrained navy blue, warm ivory and copper palette. Landscape 3:2 composition. No text, labels, diagram arrows, border, logo or watermark. Conceptual artwork, not a measured observation. Subject: a solar eclipse, black circular lunar silhouette in front of the Sun with a fine warm copper corona and physically plausible wispy white coronal light. Large centered disc, ample deep navy empty space around it, minimal faint stars, elegant editorial cover. Avoid planetary rings, orbit lines, glowing atmosphere around the Moon, fantasy nebula clutter.",
+    "output": "hero-eclipse.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-7d858a86-9946-490f-8ffa-4d1b5cc1f707.png"
+  },
+  {
+    "key": "earth",
+    "prompt": "Use case: scientific-educational. Asset type: raster image for a Portuguese beginner cosmology website, replaces procedural 3D-like graphics. High quality cinematic scientific visualization, realistic materials, restrained navy blue, warm ivory and copper palette. Landscape 3:2 composition. No text, labels, diagram arrows, border, logo or watermark. Conceptual artwork, not a measured observation. Subject: Earth from space, full sphere filling about 65 percent of the frame with deep blue oceans, recognizable Africa and Europe geography, realistic white cloud systems and thin blue atmospheric rim. Sunlight from upper left with a gentle terminator, navy black space and very sparse tiny stars. Centered educational view, no other planets, no satellite or spacecraft. Earth's continents must be geographically credible.",
+    "output": "earth.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-a02cdb89-9f32-4bca-9211-af78c55dcadf.png"
+  },
+  {
+    "key": "solar-system",
+    "prompt": "Use case: scientific-educational. Asset type: raster image for a Portuguese beginner cosmology website, replaces procedural 3D-like graphics. High quality cinematic scientific visualization, realistic materials, restrained navy blue, warm ivory and copper palette. Landscape 3:2 composition. No text, labels, diagram arrows, border, logo or watermark. Conceptual artwork, not a measured observation. Subject: conceptual Solar System visualization with the Sun at the left and exactly eight distinct planets arranged toward the right in order Mercury, Venus, Earth, Mars, Jupiter, Saturn with narrow rings, Uranus, Neptune. Rocky inner planets small, Jupiter and Saturn larger, cool blue outer planets. Perspective composition with faint orbital curves, spacious dark navy background. Explicit illustrative size and distance compression. No extra moons or duplicated planets. All eight planets visible separately. No text or labels.",
+    "output": "solar-system.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-a88924ff-0f75-412e-a277-827e7616b856.png"
+  },
+  {
+    "key": "milky-way",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High fidelity cinematic scientific illustration with restrained deep navy, copper, ivory and teal palette, landscape 3:2 composition. Conceptual artwork rather than measured data. No lettering, labels, arrows, plot axes, logo, watermark, border or collage. Subject: plausible artist's external view of the Milky Way, a barred spiral galaxy viewed at a moderate inclination. Broad luminous spiral arms made of countless tiny stars, warm central elongated bar and bulge, blue young stellar patches, dark dust lanes, restrained pink star-forming knots. Entire galaxy visible with dark space around it, no giant planets, no black hole accretion disc. An external conceptual reconstruction, not a photograph of our own galaxy.",
+    "output": "milky-way.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-2838a3c7-8496-492e-ac11-780a05618485.png"
+  },
+  {
+    "key": "galaxies",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High fidelity cinematic scientific illustration with restrained deep navy, copper, ivory and teal palette, landscape 3:2 composition. Conceptual artwork rather than measured data. No lettering, labels, arrows, plot axes, logo, watermark, border or collage. Subject: several separate galaxies in a spacious cosmic neighborhood: two large spiral galaxies and several much smaller faint dwarf galaxies, all separated by dark navy space. One warm spiral tilted slightly, one cooler spiral at a different angle, granular stellar detail and dust lanes. Clear variety of galaxy morphology. No foreground planets, no universal center, no directional burst or big bang explosion, no lines connecting them. Distances and sizes illustrative, not an exact map of the Local Group.",
+    "output": "galaxies.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-37b6c2bc-6bb7-4ea4-8843-67eb1436ac3d.png"
+  },
+  {
+    "key": "cosmic-web",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High fidelity cinematic scientific illustration with restrained deep navy, copper, ivory and teal palette, landscape 3:2 composition. Conceptual artwork rather than measured data. No lettering, labels, arrows, plot axes, logo, watermark, border or collage. Subject: three dimensional conceptual cosmic web, many delicately branching luminous filaments and compact cluster knots surrounding enormous dark voids. Filaments formed by numerous tiny points of galaxies, wispy pale cyan to warm ivory nodes, volumetric depth without excessive fog. Irregular scientifically plausible large scale network with many connections and no central origin, no geometric regular grid, no neuron cells, no massive individual foreground galaxy. Entire frame rich readable network.",
+    "output": "cosmic-web.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-d5038d73-2d83-4b45-a177-68d807a2dfd1.png"
+  },
+  {
+    "key": "dark-matter",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High quality editorial scientific illustration, landscape 3:2 composition, deep navy space with restrained warm ivory, copper and pale cyan. Conceptual artwork, not measured observation. No text, labels, arrows, plot axes, numbers, border, logo, watermark or collage. Subject: luminous spiral galaxy centered inside a broad diffuse translucent pale cyan spherical halo. The halo is a purely illustrative false-color visualization of a proposed matter distribution; it must appear subtle, airy and diagrammatic while the stellar galaxy is detailed warm and natural. Galaxy much smaller than the halo, slight inclination showing dust lanes. Many dark pixels, empty space, clear spherical extent. No black hole, no accretion disc, no solid blue planet or lens-shaped glass.",
+    "output": "dark-matter.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-7176a543-ddd3-4b78-beb3-6fdf01fd36c6.png"
+  },
+  {
+    "key": "ancient-light",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High quality editorial scientific illustration, landscape 3:2 composition, deep navy space with restrained warm ivory, copper and pale cyan. Conceptual artwork, not measured observation. No text, labels, arrows, plot axes, numbers, border, logo, watermark or collage. Subject: an abstract artistic representation of ancient radiation in the early Universe, a continuous warm luminous haze with very subtle irregular brightness variations, amber and pale cream fading into cool dark navy at edges. Soft volumetric mottled plasma, no stars or galaxies or planets. No oval full-sky map, no Planck or WMAP visual imitation, no detailed thermal color data pattern, no explosive center. Should read as an evocative conceptual texture of ancient light, never a measured CMB map.",
+    "output": "ancient-light.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-a1bcf3e5-f941-46d1-ab41-891d73b43a00.png"
+  },
+  {
+    "key": "star",
+    "prompt": "Use case: scientific-educational. Asset type: raster render for a beginner cosmology portal. High quality editorial scientific illustration, landscape 3:2 composition, deep navy space with restrained warm ivory, copper and pale cyan. Conceptual artwork, not measured observation. No text, labels, arrows, plot axes, numbers, border, logo, watermark or collage. Subject: a single orange-gold star seen from space, centered complete spherical photosphere with granular texture, subtle limb darkening, a fine restrained corona and a few small physically plausible prominence arcs along the edge. Sphere occupies 65 percent of frame width with dark navy space around it, sparse stars. Realistic educational astronomical render. No planet, no eclipse, no giant fantasy fire rays or exaggerated explosion.",
+    "output": "star.webp",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-a793d2b2-ff6d-4cf4-ac99-8a3a6fc033b1.png"
+  },
+  {
+    "key": "galaxy-marker",
+    "prompt": "Use case: scientific-educational. Asset type: transparent PNG cutout used repeatedly as tiny galaxy sprites in a two-dimensional teaching diagram. Render one isolated small barred spiral galaxy, viewed at a shallow inclination, oval silhouette with delicate cream and copper spiral arms, pale blue outer specks, warm central bulge. Horizontal composition, only one galaxy centered, complete outer arms visible with generous transparent margins. True transparent alpha background, no black rectangular background, no ground or cast shadow, no stars outside the galaxy, no text, no border or watermark. Clear high contrast shape that stays recognizable at 32 pixels wide.",
+    "output": "galaxy-marker.png",
+    "generator": "built-in image_gen",
+    "conceptual": true,
+    "source_file": "exec-10283a64-7841-462e-8512-a020cd49cb4a.png"
+  }
+]

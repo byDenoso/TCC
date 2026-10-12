@@ -1,0 +1,117 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import QuizCard from '../../components/QuizCard.astro';
+import CosmosScene from '../../components/CosmosScene.astro';
+import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits } from '../../data';
+import { photos } from '../../lib/images';
+import { chapterUrl, u } from '../../lib/url';
+import { pad2 } from '../../lib/format';
+import '../../styles/reader.css';
+
+export function getStaticPaths() {
+  return chapterOrder.map((id) => ({ params: { id }, props: { id } }));
+}
+const { id } = Astro.props;
+const ch = chapters.find((c) => c.id === id)!;
+const n = chapterNumber(ch.id);
+const isPrimary = chapterTrack(ch.id) === 'primary';
+const { prev, next } = adjacentChapters(ch.id);
+const conceptRender = ch.id === 'origem-do-universo' ? 'ancient-light' : ch.id === 'misterios-do-cosmos' ? 'cosmic-web' : 'solar-system';
+const photoKey = chapterPhotoKey[ch.id];
+const credit = photoKey ? imageCredits[['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'].indexOf(photoKey)] : undefined;
+const [checkA, checkB] = ch.checkTitle.split('|');
+const ext = ' (abre em outra aba)';
+---
+<Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page">
+  <div class="reading-bar" data-reading-bar aria-hidden="true"></div>
+  <div id="topo"><Header variant="solid" /></div>
+  <main id="principal">
+    <article class="chapter-reader" data-reader={ch.id}>
+      <div class="reader-opening page-width">
+        <a class="back-link" href={u(isPrimary ? '/#capitulos' : '/#extras')}>← {isPrimary ? 'As três jornadas' : 'Exploração livre'}</a>
+        <div class="section-id">{isPrimary ? 'Jornada principal' : 'Leitura complementar'} {pad2(n)} / 03 · {ch.minutes} min de leitura</div>
+        <h1>{ch.title}</h1>
+        <p class="reader-intro">{ch.intro}</p>
+        {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
+        <div class="reader-idea"><span class="meta">A ideia que conecta tudo</span><p>{ch.idea}</p></div>
+      </div>
+      {photoKey && credit ? (
+        <figure class="chapter-photo">
+          <Image src={photos[photoKey]} alt={credit.alt} widths={[640, 1000, 1600]} sizes="100vw" width={1600} height={480} fit="cover" position="center" format="webp" quality={80} loading="lazy" />
+          <figcaption class="page-width">
+            <strong>{credit.title}</strong> · <span>{credit.kind}</span> · {credit.credit}.
+            <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>
+          </figcaption>
+        </figure>
+      ) : (
+        <figure class="chapter-concept"><img src={u(`/renders/${conceptRender}.webp`)} srcset={`${u(`/renders/${conceptRender}-small.webp`)} 600w, ${u(`/renders/${conceptRender}.webp`)} 1200w`} sizes="100vw" alt={`Representação artística para ${ch.title}, sem escala física e sem dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /><figcaption>RENDER CONCEITUAL POR IA · SEM ESCALA{ch.id === 'origem-do-universo' && ' · REPRESENTAÇÃO DA LUZ ANTIGA, NÃO É MAPA CMB'}</figcaption></figure>
+      )}
+      {ch.experience && <CosmosScene experience={ch.experience} />}
+      <div class="reader-grid page-width">
+        <aside class="reader-aside">
+          <div class="meta">Neste capítulo</div>
+          <nav aria-label="Seções do capítulo" data-toc>
+            {ch.sections.map((s, i) => <a href={`#${s.id}`}><span>{pad2(i + 1)}</span>{s.title}</a>)}
+          </nav>
+          <p class="reader-note">Escolha seu nível. O essencial mantém a história; os outros níveis acrescentam mecanismos, limites e equações.</p>
+          <div class="depth-controls" role="group" aria-label="Nível de aprofundamento">
+            <button type="button" data-depth="essential" aria-pressed="true">Essencial</button>
+            <button type="button" data-depth="more" aria-pressed="false">Entenda melhor</button>
+            <button type="button" data-depth="deep" aria-pressed="false">Aprofundamento</button>
+          </div>
+          <a href={u('/#glossario')} class="glossary-link">Consultar o glossário ↗</a>
+        </aside>
+        <div class="reader-content">
+          {ch.sections.map((s, i) => (
+            <section class="lesson-section" id={s.id}>
+              <div class="lesson-meta">
+                <span class="meta">{pad2(i + 1)} / {pad2(ch.sections.length)}</span>
+                <span class="evidence-label" data-kind={s.evidence}>{s.evidence}</span>
+              </div>
+              <h2>{s.title}</h2>
+              <p>{s.body}</p>
+              {s.more && (
+                <details class="depth-detail" data-layer="more">
+                  <summary>Entenda melhor</summary>
+                  <p>{s.more}</p>
+                  {s.equation?.layer === 'more' && <figure class="equation"><div>{s.equation.formula}</div><figcaption>{s.equation.caption}</figcaption></figure>}
+                </details>
+              )}
+              {s.deep && (
+                <details class="depth-detail" data-layer="deep">
+                  <summary>Aprofundamento</summary>
+                  <p>{s.deep}</p>
+                  {s.equation?.layer === 'deep' && <figure class="equation"><div>{s.equation.formula}</div><figcaption>{s.equation.caption}</figcaption></figure>}
+                </details>
+              )}
+              <div class="lesson-sources">
+                <span>Referências</span>
+                {s.sources.map((r) => <a href={r.href} target="_blank" rel="noopener noreferrer">{r.title} <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>)}
+              </div>
+            </section>
+          ))}
+          <section class="chapter-check" aria-labelledby="check-title">
+            <div class="section-id">Pare um instante. O que ficou?</div>
+            <h2 id="check-title">{checkA}<br /><em>{checkB}</em></h2>
+            <QuizCard chapter={ch.id} />
+          </section>
+          <section class="reader-references" aria-labelledby={`refs-${ch.id}`}>
+            <h2 id={`refs-${ch.id}`}>{ch.refHeading}</h2>
+            <p>{ch.refNote}</p>
+            <ul>{ch.refs.map((r) => <li><a href={r.href} target="_blank" rel="noopener noreferrer">{r.title} <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a></li>)}</ul>
+          </section>
+        </div>
+      </div>
+      <div class="reader-finish page-width">
+        <button class="cta" type="button" data-complete={ch.id} aria-pressed="false"><span data-complete-label>Concluir este capítulo</span> <span class="arrow" aria-hidden="true">✓</span></button>
+        <p data-complete-status role="status">Seu progresso fica neste navegador.</p>
+      </div>
+      <nav class="chapter-pagination page-width" aria-label="Continuar a jornada">
+        {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}
+        {next ? <a class="textlink" href={chapterUrl(next.id)}>Próximo: {chapterTitleShort[next.id]} <span aria-hidden="true">↗</span></a> : <a class="textlink" href={u(isPrimary ? '/#desafio' : '/#extras')}>{isPrimary ? 'Fechar a jornada: testar as três ideias' : 'Voltar à exploração livre'} <span aria-hidden="true">↗</span></a>}
+      </nav>
+    </article>
+  </main>
+</Base>

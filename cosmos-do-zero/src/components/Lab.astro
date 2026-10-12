@@ -1,0 +1,100 @@
+---
+import { planets } from '../data';
+import { planetGlobe } from '../lib/images';
+import { u, chapterUrl } from '../lib/url';
+import { compareInsight, compareRows, comparison } from '../lib/planets';
+import { format } from '../lib/format';
+import { massLabel, stellarPath } from '../lib/stars';
+const A = planets.find((p) => p.id === 'terra')!;
+const B = planets.find((p) => p.id === 'jupiter')!;
+const cmp = comparison(A, B);
+const insight = compareInsight(A, B);
+const star = stellarPath(1);
+const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, selected: p.id === sel }));
+---
+<section class="lab-section dark" id="laboratorio" aria-labelledby="lab-title">
+  <div class="page-width">
+    <div class="section-id">04 / Explore com as próprias perguntas</div>
+    <div class="lab-intro">
+      <h2 class="display" id="lab-title">Mude uma escolha.<br /><em>Descubra uma relação.</em></h2>
+      <nav aria-label="Experiências">
+        <a href="#comparador">01 Comparar mundos ↓</a>
+        <a href="#estrelas">02 Seguir uma estrela ↓</a>
+        <a href="#desafio">03 Testar suas ideias ↓</a>
+      </nav>
+    </div>
+
+    <section id="comparador" class="compare-section" aria-labelledby="compare-title" data-island="compare">
+      <div class="experience-heading">
+        <span class="meta">EXPERIÊNCIA / 01</span>
+        <h3 id="compare-title">Dois mundos. A mesma régua.</h3>
+        <p>Escolha os planetas e veja o que muda quando tamanho, massa e gravidade deixam de ser a mesma coisa.</p>
+      </div>
+      <div class="compare-selectors">
+        <label for="compare-a">Planeta 1
+          <select id="compare-a" data-compare-a>{options('terra').map((o) => <option value={o.id} selected={o.selected}>{o.name}</option>)}</select>
+        </label>
+        <label for="compare-b">Planeta 2
+          <select id="compare-b" data-compare-b>{options('jupiter').map((o) => <option value={o.id} selected={o.selected}>{o.name}</option>)}</select>
+        </label>
+        <button type="button" data-compare-swap aria-label="Trocar os planetas de lado">Trocar <span aria-hidden="true">⇄</span></button>
+      </div>
+      <div class="compare-visual" role="img" aria-label={`${A.name} e ${B.name} em escala de raio equatorial. ${insight}`} data-compare-visual>
+        {[A, B].map((p, i) => (
+          <div class="compare-body">
+            <div class="scale-space">
+              <img data-compare-img={i === 0 ? 'a' : 'b'} src={planetGlobe[p.id].src} alt="" width={planetGlobe[p.id].width} height={planetGlobe[p.id].height} style={`width:${cmp.diameters[i].toFixed(3)}%`} loading="lazy" decoding="async" />
+            </div>
+            <strong data-compare-name={i === 0 ? 'a' : 'b'}>{p.name}</strong>
+          </div>
+        ))}
+      </div>
+      <p class="compare-insight" role="status" data-compare-insight>{insight}</p>
+      <div class="table-scroll">
+        <table class="comparison-table">
+          <caption>Propriedades físicas, com a mesma definição para ambos</caption>
+          <thead><tr><th scope="col">Propriedade</th><th scope="col" data-compare-col="a">{A.name}</th><th scope="col" data-compare-col="b">{B.name}</th></tr></thead>
+          <tbody data-compare-values>
+            {compareRows.map((r) => <tr><th scope="row">{r.label}</th><td>{r.value(A)}</td><td>{r.value(B)}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+      <p class="experience-note">Discos em escala de raio equatorial entre os dois selecionados, a partir de ilustrações artísticas. Anéis ficam fora da medida. Temperaturas de superfície e de atmosfera a 1 bar têm definições distintas, indicadas na tabela.</p>
+    </section>
+
+    <section id="estrelas" class="stellar-section" aria-labelledby="stellar-title" data-island="stars">
+      <div class="experience-heading">
+        <span class="meta">EXPERIÊNCIA / 02</span>
+        <h3 id="stellar-title">A massa escreve parte da história.</h3>
+        <p>Selecione uma massa inicial para acompanhar um caminho de evolução estelar. A composição e a história também importam.</p>
+      </div>
+      <div class="star-controls">
+        <label for="star-mass">Massa inicial: <output for="star-mass" data-star-value>{massLabel(1, (n) => format(n))}</output></label>
+        <input type="range" id="star-mass" data-star-mass min="0.2" max="30" step="0.1" value="1" aria-describedby="star-hint" />
+        <p class="visually-hidden" id="star-hint">Use as setas do teclado para ajustar a massa em passos de 0,1 massa solar.</p>
+        <div class="star-presets" role="group" aria-label="Exemplos de massas">
+          <button type="button" data-mass="0.3" aria-pressed="false">0,3 · anã vermelha</button>
+          <button type="button" data-mass="1" aria-pressed="true">1 · como o Sol</button>
+          <button type="button" data-mass="5" aria-pressed="false">5 · intermediária</button>
+          <button type="button" data-mass="15" aria-pressed="false">15 · massiva</button>
+          <button type="button" data-mass="30" aria-pressed="false">30 · muito massiva</button>
+        </div>
+      </div>
+      <div class="stellar-exhibit">
+        <img class="stellar-render" data-star-render src={u('/renders/star.webp')} srcset={`${u('/renders/star-small.webp')} 600w, ${u('/renders/star.webp')} 1200w`} sizes="290px" alt="Representação artística de uma estrela; não representa o tamanho ou a cor calculados para a massa selecionada." width="1200" height="800" loading="lazy" decoding="async" />
+        <div class="stellar-summary" aria-live="polite">
+          <span class="meta" data-star-class>ESTRELA {star.category}</span>
+          <h4 data-star-title>{star.title}</h4>
+          <p data-star-summary>{star.summary}</p>
+          <p class="star-timescale" data-star-time>{star.time}</p>
+        </div>
+      </div>
+      <ol class="stellar-path" aria-label="Caminho evolutivo" data-star-path>
+        {star.steps.map((s, i) => <li><span>{String(i + 1).padStart(2, '0')}</span><p>{s}</p></li>)}
+      </ol>
+      <p class="experience-note" data-star-note>{star.note}</p>
+      <p class="experience-note">Render conceitual de estrela por IA, sem escala física. A imagem é fixa e não representa um resultado quantitativo: a massa, o percurso e os tempos didáticos estão descritos no texto.</p>
+      <a class="textlink" href={chapterUrl('vida-das-estrelas')}>Entender o mecanismo por trás do caminho <span aria-hidden="true">↗</span></a>
+    </section>
+  </div>
+</section>

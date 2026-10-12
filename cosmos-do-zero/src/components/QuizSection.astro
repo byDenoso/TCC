@@ -1,0 +1,22 @@
+---
+import QuizCard from './QuizCard.astro';
+import { primaryRows, extraRows, questions, PRIMARY_CHAPTER_IDS } from '../data';
+import { pad2 } from '../lib/format';
+---
+<section class="quiz-section" id="desafio" aria-labelledby="quiz-title" data-island="quiz-home">
+  <div class="page-width quiz-layout">
+    <div class="quiz-copy">
+      <div class="section-id">05 / A curiosidade também se testa</div>
+      <h2 class="display" id="quiz-title">Agora é<br /><em>com você.</em></h2>
+      <p>Nove perguntas, três jornadas e uma explicação em cada resposta. Use o erro para descobrir o que ainda merece uma segunda olhada.</p>
+      <label class="quiz-filter-label" for="quiz-filter">Escolha o assunto
+        <select id="quiz-filter" data-quiz-filter>
+          <option value="">Três jornadas principais · {questions.filter(q => (PRIMARY_CHAPTER_IDS as readonly string[]).includes(q.chapter)).length} perguntas</option>
+          <optgroup label="Jornadas principais">{primaryRows.map((r, i) => <option value={r.id}>{pad2(i + 1)} · {r.title}</option>)}</optgroup>
+          <optgroup label="Leituras complementares">{extraRows.map(r => <option value={r.id}>{r.title}</option>)}</optgroup>
+        </select>
+      </label>
+    </div>
+    <QuizCard />
+  </div>
+</section>

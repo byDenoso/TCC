@@ -1,0 +1,24 @@
+---
+import { questions } from '../data';
+import { PRIMARY_CHAPTER_IDS, type ChapterId } from '../types';
+import { poolFor } from '../lib/quiz';
+interface Props { chapter?: ChapterId | ''; }
+const { chapter = '' } = Astro.props;
+const pool = poolFor(chapter ? questions : questions.filter(q => (PRIMARY_CHAPTER_IDS as readonly ChapterId[]).includes(q.chapter)), chapter);
+const q = pool[0];
+const total = pool.length;
+---
+<div class="quiz-card" data-quiz data-chapter-filter={chapter}>
+  <div class="meta" data-quiz-counter>PERGUNTA 01 / {String(total).padStart(2, '0')}</div>
+  <h3 data-quiz-question tabindex="-1">{q.question}</h3>
+  <div class="quiz-answers" data-quiz-answers>
+    {q.answers.map((a, i) => (
+      <button class="quiz-answer" type="button" data-answer={i}><span class="letter" aria-hidden="true">{String.fromCharCode(65 + i)}</span><span>{a}</span></button>
+    ))}
+  </div>
+  <div class="quiz-feedback" data-quiz-feedback role="status" hidden></div>
+  <div class="quiz-actions">
+    <button class="quiz-next" type="button" data-quiz-next hidden>Próxima pergunta ↗</button>
+    <button class="quiz-secondary" type="button" data-quiz-retry-missed hidden>Refazer só as que errei</button>
+  </div>
+</div>

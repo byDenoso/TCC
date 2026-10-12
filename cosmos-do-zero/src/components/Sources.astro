@@ -1,0 +1,39 @@
+---
+import { Image } from 'astro:assets';
+import { imageCredits, referenceIndex } from '../data';
+import { photos } from '../lib/images';
+const keys = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
+---
+<section class="sources-section dark" id="fontes" aria-labelledby="sources-title">
+  <div class="page-width">
+    <div class="section-id">07 / Olhar também é verificar</div>
+    <h2 class="display" id="sources-title">A beleza vem com<br /><em>uma legenda.</em></h2>
+    <p class="source-intro">Cada jornada associa suas explicações a referências. Fotografias, cores compostas e representações artísticas contam histórias de maneiras diferentes.</p>
+    <div class="evidence-key">
+      <div><strong>Observação</strong><p>Informação obtida por medidas e instrumentos, com limites e processamento.</p></div>
+      <div><strong>Modelo físico</strong><p>Uma explicação que conecta as medidas a mecanismos e previsões testáveis.</p></div>
+      <div><strong>Questão aberta</strong><p>Algo ainda em investigação; uma hipótese não vira fato por ganhar uma imagem.</p></div>
+    </div>
+    <div class="image-credits">
+      {imageCredits.map((c, i) => (
+        <figure>
+          <Image src={photos[keys[i]]} alt={c.alt} width={640} height={400} widths={[320, 640]} sizes="(max-width: 760px) 100vw, 320px" format="webp" quality={80} loading="lazy" fit="cover" position="center" />
+          <figcaption>
+            <span class="meta">{c.kind}</span>
+            <h3>{c.title}</h3>
+            <p>{c.caption}</p>
+            <p class="credit-line">{c.credit}</p>
+            <a href={c.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+    <details class="reference-index">
+      <summary>Consultar todas as referências científicas · {referenceIndex.length}</summary>
+      <ul>
+        {referenceIndex.map((r) => <li><a href={r.href} target="_blank" rel="noopener noreferrer">{r.title} <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a></li>)}
+      </ul>
+    </details>
+    <p class="source-policy">Eclipse, escalas, evidências, capas e imagens da linha do tempo e do laboratório usam renders conceituais gerados por IA, sem dados observacionais e sem escala física. As ilustrações dos planetas no catálogo e no comparador foram previamente renderizadas por computação neste projeto. As três fotografias e observações compostas acima são imagens oficiais, com créditos próprios, armazenadas com o projeto. <a href="https://www.nasa.gov/nasa-brand-center/images-and-media/" target="_blank" rel="noopener noreferrer">Condições de uso NASA <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>. Projeto independente, sem afiliação ou endosso institucional.</p>
+  </div>
+</section>

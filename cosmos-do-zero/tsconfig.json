@@ -1,0 +1,6 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "include": [".astro/types.d.ts", "src/**/*", "tests/**/*", "scripts/**/*.mjs"],
+  "exclude": ["dist", "dist-offline"],
+  "compilerOptions": { "resolveJsonModule": true, "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": [] }
+}

@@ -1,0 +1,50 @@
+---
+import { primaryRows, chapters } from '../data';
+import { chapterUrl } from '../lib/url';
+import { pad2 } from '../lib/format';
+import { progressLabel } from '../lib/progress';
+---
+<section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
+  <div class="page-width">
+    <div class="section-id">01 / As perguntas que nos trouxeram até aqui</div>
+    <div class="intro-head">
+      <h2 class="display" id="chapters-title">Três perguntas.<br /><em>Um Universo inteiro.</em></h2>
+      <p>Comece pelo nosso lugar no cosmos, descubra a história da expansão e aprenda a ler as evidências. Cada jornada tem uma exploração visual, leitura em três níveis e perguntas com explicação.</p>
+    </div>
+    <div class="journey-status">
+      <span data-progress-label>{progressLabel(0)}</span>
+      <progress max="3" value="0" aria-label="Jornadas principais concluídas" data-progress-bar></progress>
+      <button type="button" data-reset-progress hidden>Reiniciar progresso</button>
+    </div>
+    <div class="chapters">
+      {primaryRows.map((row, i) => {
+        const ch = chapters.find((c) => c.id === row.id)!;
+        return (
+          <details class="chapter-row" name="jornada" data-journey={row.id}>
+            <summary class="chapter-button">
+              <span class="chapter-index">{pad2(i + 1)} / 03<span class="completion-mark" hidden> <span aria-hidden="true">✓</span><span class="visually-hidden"> (concluído)</span></span></span>
+              <span class="chapter-title">{row.title}</span>
+              <span class="chapter-teaser">{row.teaser}</span>
+              <span class="chapter-icon" aria-hidden="true">+</span>
+            </summary>
+            <div class="chapter-body">
+              <div class="chapter-body-main">
+                <p>{row.summary}</p>
+                {ch.learningGoal && <p class="chapter-learning"><strong>Você vai conseguir:</strong> {ch.learningGoal}</p>}
+                <a class="textlink" href={chapterUrl(row.id)}>Ler a jornada · {ch.minutes} min <span aria-hidden="true">↗</span></a>
+              </div>
+              <div class="chapter-body-side">
+                <aside>{row.aside}</aside>
+                <ol class="chapter-toc" aria-label={`Seções de ${ch.title}`}>
+                  {ch.sections.map((s, j) => (
+                    <li><a href={`${chapterUrl(row.id)}#${s.id}`}><span>{pad2(j + 1)}</span>{s.title}</a></li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </details>
+        );
+      })}
+    </div>
+  </div>
+</section>

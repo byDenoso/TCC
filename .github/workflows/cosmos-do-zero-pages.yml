@@ -5,7 +5,22 @@ on:
     branches: [cosmos-do-zero]
     paths:
       - 'cosmos-do-zero/**'
+      - '.github/workflows/cosmos-do-zero-pages.yml'
   workflow_dispatch:
+    inputs:
+      target:
+        description: Destino do build (o domínio requer DNS e Pages preparados)
+        type: choice
+        options: [github, custom]
+        default: github
+      publish:
+        description: Publicar após todos os testes (substitui o site Pages de TCC)
+        type: boolean
+        default: false
+      domain_ready:
+        description: DNS e domínio do Pages conferidos para o destino selecionado
+        type: boolean
+        default: false
 
 concurrency:
   group: cosmos-do-zero-pages
@@ -14,8 +29,8 @@ concurrency:
 permissions: {}
 
 env:
-  SITE_URL: https://bydenoso.github.io
-  SITE_BASE: /TCC/cosmos-do-zero
+  SITE_URL: ${{ inputs.target == 'custom' && 'https://cosmos.denerpereira.com.br' || 'https://bydenoso.github.io' }}
+  SITE_BASE: ${{ inputs.target == 'custom' && '/' || '/TCC/cosmos-do-zero' }}
   SITE_PUBLIC: 'true'
 
 jobs:
@@ -29,6 +44,11 @@ jobs:
       run:
         working-directory: cosmos-do-zero
     steps:
+      - name: Exigir conferência antes de publicar
+        if: inputs.publish && !inputs.domain_ready
+        run: |
+          echo 'Confirme DNS e Settings > Pages antes da publicação.'
+          exit 1
       - name: Checkout da branch isolada
         uses: actions/checkout@v7
         with:
@@ -49,14 +69,13 @@ jobs:
         run: npm run test:http
       - name: Compilar site publico
         run: npm run build
-      - name: Validar links, recursos, canonicas, robots e sitemap
+      - name: Validar links, recursos, canônicas, robots e sitemap
         run: npm run test:pages
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
       - name: E2E e renders no preview com caminho base
-        env:
-          BASE_URL: http://127.0.0.1:4321/TCC/cosmos-do-zero
         run: |
+          export BASE_URL="http://127.0.0.1:4321${SITE_BASE%/}"
           set -euo pipefail
           npm run preview -- --host 127.0.0.1 --port 4321 > /tmp/cosmos-preview.log 2>&1 &
           preview_pid=$!
@@ -69,19 +88,32 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           npm run test:e2e
           npm run test:renders
-      - name: Empacotar site dentro do subcaminho de TCC
+      - name: Empacotar destino selecionado
+        run: node scripts/package-pages.mjs
+      - name: Guardar artefato para inspeção (sem publicar)
+        uses: actions/upload-artifact@v7
+        with:
+          name: cosmos-${{ inputs.target || 'github' }}-preview
+          path: cosmos-do-zero/pages-root
+          include-hidden-files: true
+      - name: Conferir domínio configurado no Pages antes do deploy
+        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && contains(github.event.head_commit.message, '[publish-cosmos-github]'))
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p pages-root/cosmos-do-zero
-          cp -a dist/. pages-root/cosmos-do-zero/
-          cat > pages-root/index.html <<'HTML'
-          <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cosmos do Zero</title><meta http-equiv="refresh" content="0; url=/TCC/cosmos-do-zero/"><link rel="canonical" href="https://bydenoso.github.io/TCC/cosmos-do-zero/"></head><body><a href="/TCC/cosmos-do-zero/">Acessar Cosmos do Zero</a></body></html>
-          HTML
-          touch pages-root/.nojekyll
-          test -f pages-root/cosmos-do-zero/index.html
-      - name: Configurar GitHub Pages (requer habilitacao previa em Settings > Pages)
+          actual="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '.cname // ""')"
+          expected=""
+          if [ "$SITE_URL" = 'https://cosmos.denerpereira.com.br' ]; then
+            expected='cosmos.denerpereira.com.br'
+            node --input-type=module -e 'import {resolveCname} from "node:dns/promises"; import assert from "node:assert/strict"; const records=await resolveCname("cosmos.denerpereira.com.br"); assert.ok(records.some(x=>x.toLowerCase().replace(/\.$/, "") === "bydenoso.github.io"), "CNAME DNS inesperado");'
+          fi
+          test "$actual" = "$expected" || { echo 'Domínio de Settings > Pages difere do destino; deploy recusado.'; exit 1; }
+      - name: Configurar Pages previamente habilitado
+        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && contains(github.event.head_commit.message, '[publish-cosmos-github]'))
         uses: actions/configure-pages@v6
-      - name: Upload do artefato publico
+      - name: Upload do artefato público
+        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && contains(github.event.head_commit.message, '[publish-cosmos-github]'))
         uses: actions/upload-pages-artifact@v5
         with:
           path: cosmos-do-zero/pages-root
@@ -89,7 +121,7 @@ jobs:
   deploy:
     name: Publicar no GitHub Pages
     needs: build
-    if: github.ref == 'refs/heads/cosmos-do-zero'
+    if: github.ref == 'refs/heads/cosmos-do-zero' && ((github.event_name == 'workflow_dispatch' && inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-cosmos-github]')))
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -111,8 +143,6 @@ jobs:
     defaults:
       run:
         working-directory: cosmos-do-zero
-    env:
-      BASE_URL: https://bydenoso.github.io/TCC/cosmos-do-zero
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -128,6 +158,8 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Definir URL de verificação
+        run: echo "BASE_URL=${SITE_URL}${SITE_BASE%/}" >> "$GITHUB_ENV"
       - name: URL publica e recursos
         run: |
           set -euo pipefail
@@ -137,8 +169,8 @@ jobs:
             sleep 10
           done
           test "$ready" -eq 1
-          curl -fLsS "$BASE_URL/robots.txt" | grep -F 'Allow: /TCC/cosmos-do-zero/'
-          curl -fLsS "$BASE_URL/sitemap.xml" | grep -F 'https://bydenoso.github.io/TCC/cosmos-do-zero/'
+          curl -fLsS "$BASE_URL/robots.txt" | grep -F "Allow: ${SITE_BASE%/}/"
+          curl -fLsS "$BASE_URL/sitemap.xml" | grep -F "$BASE_URL/"
           curl -fLsS "$BASE_URL/renders/hero-eclipse.webp" -o /tmp/cosmos-hero.webp
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
       - name: Jornada, escalas, interacoes, progresso e renders publicados

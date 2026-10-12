@@ -1,0 +1,1033 @@
+[
+ {
+  "id": "galaxias-e-nebulosas",
+  "minutes": 7,
+  "title": "Onde estamos no Universo?",
+  "intro": "A Terra faz parte do Sistema Solar; o Sol é uma das estrelas da Via Láctea; e a Via Láctea é uma entre muitas galáxias. Vamos seguir essas escalas e a luz que nos traz notícias do passado.",
+  "idea": "Nosso endereço cósmico vai da Terra ao Sistema Solar, à Via Láctea e ao Universo observável. A luz distante mostra épocas antigas.",
+  "learningGoal": "Distinguir Sistema Solar, galáxia e Universo, e explicar por que a luz distante revela o passado.",
+  "experience": "scale",
+  "concept": "cosmic",
+  "sections": [
+   {
+    "id": "galaxias-e-nebulosas-via-lactea",
+    "evidence": "Observação",
+    "title": "Nosso endereço cósmico",
+    "body": "A Terra orbita o Sol. O Sol e os corpos que giram ao redor dele formam o Sistema Solar. Esse sistema fica dentro da Via Láctea, a galáxia onde vivemos.",
+    "more": "A Via Láctea é uma galáxia espiral. Nosso Sol está no disco, longe do centro. A faixa leitosa que vemos no céu é o disco observado por dentro, com muitas estrelas alinhadas na mesma direção.",
+    "deep": "Desenhos da Via Láctea vista de fora são reconstruções feitas a partir de medições, ou ilustrações. Não temos uma fotografia tirada de fora da galáxia.",
+    "sources": [
+     {
+      "title": "NASA · Sistema Solar, galáxia e Universo",
+      "href": "https://science.nasa.gov/solar-system/skywatching/night-sky-network/solar-system-galaxy-universe-whats-the-difference/"
+     },
+     {
+      "title": "NASA · A Via Láctea e outras galáxias",
+      "href": "https://science.nasa.gov/universe/galaxies/"
+     }
+    ]
+   },
+   {
+    "id": "galaxias-e-nebulosas-tipos",
+    "evidence": "Observação",
+    "title": "O que é uma galáxia?",
+    "body": "Uma galáxia é um grande sistema de estrelas, gás e poeira mantidos juntos pela gravidade. Ela também contém matéria escura, conhecida por seus efeitos gravitacionais. A Via Láctea é uma entre muitas galáxias.",
+    "more": "Galáxias podem ter forma espiral, elíptica ou irregular. A aparência ajuda a descrevê-las, mas não conta sozinha toda a história de como se formaram.",
+    "deep": "A Via Láctea pertence ao Grupo Local, um conjunto de galáxias que inclui Andrômeda. Grupos e aglomerados são estruturas maiores que uma galáxia.",
+    "sources": [
+     {
+      "title": "NASA · Galáxias",
+      "href": "https://science.nasa.gov/universe/galaxies/"
+     },
+     {
+      "title": "NASA · Tipos de galáxias",
+      "href": "https://science.nasa.gov/universe/galaxies/types/"
+     }
+    ]
+   },
+   {
+    "id": "galaxias-e-nebulosas-teia-cosmica",
+    "evidence": "Observação",
+    "title": "Galáxias formam uma teia cósmica",
+    "body": "Em escalas enormes, galáxias aparecem em grupos, aglomerados e filamentos, com regiões menos densas entre eles. Essa distribuição recebe o nome de teia cósmica.",
+    "more": "A gravidade ajuda a reunir matéria em estruturas. Os vazios não são paredes vazias: são regiões com menos galáxias do que os filamentos e aglomerados ao redor.",
+    "deep": "Levantamentos do céu medem posições e espectros de galáxias. Simulações ajudam a comparar essas medidas com modelos; uma visualização de teia cósmica pode ser uma simulação, não uma fotografia direta dos filamentos.",
+    "sources": [
+     {
+      "title": "NASA · Estruturas em grande escala",
+      "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+     },
+     {
+      "title": "NASA · Galáxias",
+      "href": "https://science.nasa.gov/universe/galaxies/"
+     }
+    ]
+   },
+   {
+    "id": "galaxias-e-nebulosas-nebulosas",
+    "evidence": "Observação",
+    "title": "Nebulosas: nuvens dentro de galáxias",
+    "body": "Uma nebulosa é uma região de gás e poeira dentro de uma galáxia. Algumas nuvens podem dar origem a estrelas; outras são material lançado por estrelas em fases finais ou por explosões estelares.",
+    "more": "Nebulosas são muito menores que galáxias. Elas fazem parte do ambiente entre estrelas e podem brilhar, refletir luz ou bloquear a luz que vem de trás.",
+    "deep": "Imagens astronômicas podem juntar observações em diferentes comprimentos de onda. As cores atribuídas ajudam a mostrar esses dados, mas nem sempre correspondem às cores que o olho humano veria.",
+    "sources": [
+     {
+      "title": "NASA · Estrelas: nascimento, vida e morte",
+      "href": "https://science.nasa.gov/universe/stars/"
+     },
+     {
+      "title": "NASA · Galáxias",
+      "href": "https://science.nasa.gov/universe/galaxies/"
+     }
+    ]
+   },
+   {
+    "id": "galaxias-e-nebulosas-gas-e-estrelas",
+    "evidence": "Observação",
+    "title": "A luz leva tempo para chegar",
+    "body": "A luz não chega instantaneamente. Ela leva cerca de oito minutos do Sol até a Terra; por isso, vemos o Sol como era alguns minutos atrás. Quanto maior a distância, mais tempo a luz pode levar.",
+    "more": "Ano-luz é uma unidade de distância: é o quanto a luz percorre em um ano. A luz de uma estrela a quatro anos-luz, por exemplo, saiu dela cerca de quatro anos antes de chegar até nós.",
+    "deep": "Para galáxias muito distantes, a expansão do Universo também altera a relação entre distância atual, tempo de viagem da luz e redshift. A distância não pode ser lida apenas pelo tempo de viagem sem um modelo cosmológico.",
+    "sources": [
+     {
+      "title": "NASA · Observar a história cósmica pela luz",
+      "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/time-travel-observing-cosmic-history/"
+     },
+     {
+      "title": "NASA · O que é um ano-luz?",
+      "href": "https://science.nasa.gov/exoplanets/what-is-a-light-year/"
+     }
+    ]
+   },
+   {
+    "id": "galaxias-e-nebulosas-centros-galacticos",
+    "evidence": "Observação",
+    "title": "O Universo observável tem um horizonte",
+    "body": "O Universo observável é a região de onde sinais tiveram tempo de chegar até nós. Ele não é necessariamente o Universo inteiro, e o limite do que conseguimos observar não prova que exista uma borda física.",
+    "more": "Telescópios captam diferentes tipos de luz, inclusive infravermelho e rádio, invisíveis aos nossos olhos. A legenda informa se uma imagem é fotografia, composição de filtros ou ilustração.",
+    "deep": "A imagem de Andrômeda associada a este capítulo combina observações infravermelhas do WISE com cores atribuídas a filtros. Ela é uma observação em cores compostas, não uma visão humana em luz visível.",
+    "sources": [
+     {
+      "title": "NASA · O que é o Universo?",
+      "href": "https://science.nasa.gov/exoplanets/what-is-the-universe/"
+     },
+     {
+      "title": "NASA · Andrômeda em infravermelho pelo WISE",
+      "href": "https://science.nasa.gov/photojournal/our-neighbor-andromeda/"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · Sistema Solar, galáxia e Universo",
+    "href": "https://science.nasa.gov/solar-system/skywatching/night-sky-network/solar-system-galaxy-universe-whats-the-difference/"
+   },
+   {
+    "title": "NASA · Galáxias",
+    "href": "https://science.nasa.gov/universe/galaxies/"
+   },
+   {
+    "title": "NASA · Tipos de galáxias",
+    "href": "https://science.nasa.gov/universe/galaxies/types/"
+   },
+   {
+    "title": "NASA · Estruturas em grande escala",
+    "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+   },
+   {
+    "title": "NASA · Observar a história cósmica pela luz",
+    "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/time-travel-observing-cosmic-history/"
+   },
+   {
+    "title": "NASA · O que é um ano-luz?",
+    "href": "https://science.nasa.gov/exoplanets/what-is-a-light-year/"
+   },
+   {
+    "title": "NASA · O que é o Universo?",
+    "href": "https://science.nasa.gov/exoplanets/what-is-the-universe/"
+   },
+   {
+    "title": "NASA · Andrômeda em infravermelho pelo WISE",
+    "href": "https://science.nasa.gov/photojournal/our-neighbor-andromeda/"
+   }
+  ],
+  "refNote": "As fontes ajudam a distinguir observações, modelos e ilustrações. Imagens compostas e simulações precisam ser lidas com suas legendas.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Três perguntas|para fixar as escalas.",
+  "photo": {
+   "alt": "Mosaico infravermelho de quatro detectores do WISE: 3,4 e 4,6 µm em azul; 12 µm em verde; 22 µm em vermelho. As cores são atribuídas aos comprimentos de onda; não representam cores visíveis.",
+   "caption": "Nossa vizinha Andrômeda · observação em cores compostas · NASA/JPL-Caltech/UCLA"
+  }
+ },
+ {
+  "id": "origem-do-universo",
+  "minutes": 8,
+  "title": "Como o Universo evoluiu?",
+  "intro": "A luz de galáxias e o brilho fraco que chega de todas as direções guardam pistas de um Universo antigo mais quente e denso. Vamos acompanhar a expansão, os primeiros elementos e a radiação cósmica de fundo.",
+  "idea": "O modelo do Big Bang quente descreve como o Universo se expandiu e esfriou. Ele não estabelece uma causa confirmada para o início.",
+  "learningGoal": "Explicar o que descreve o modelo do Big Bang quente, citar evidências importantes e reconhecer o que ainda não sabemos sobre a causa inicial.",
+  "experience": "expansion",
+  "concept": "cosmic",
+  "sections": [
+   {
+    "id": "origem-do-universo-o-universo",
+    "evidence": "Modelo físico",
+    "title": "Big Bang: uma história de expansão",
+    "body": "O modelo do Big Bang quente descreve um Universo antigo muito quente e denso, que se expandiu e esfriou. Não foi uma explosão de matéria dentro de um espaço vazio já pronto: em grandes escalas, o próprio espaço se expande.",
+    "more": "Ao longo dessa expansão, a distância média entre galáxias que acompanham o fluxo cósmico aumenta. Sistemas ligados pela gravidade, como o Sistema Solar, não se expandem da mesma maneira.",
+    "deep": "A idade aproximada de 13,8 bilhões de anos é inferida a partir de observações dentro de modelos cosmológicos. Essa reconstrução descreve a evolução inicial; não identifica uma causa confirmada ou o que, se algo, veio antes.",
+    "sources": [
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "ESA · Destaques científicos da missão Planck",
+      "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+     }
+    ]
+   },
+   {
+    "id": "origem-do-universo-expansao",
+    "evidence": "Observação",
+    "title": "Como a luz indica a expansão?",
+    "body": "Quando a luz atravessa o espaço em expansão, seu comprimento de onda aumenta. Nos espectros de galáxias distantes, linhas conhecidas aparecem deslocadas para comprimentos de onda maiores; esse efeito é chamado desvio para o vermelho, ou redshift.",
+    "more": "O redshift cosmológico é uma pista da expansão em grande escala. Movimentos locais e a gravidade também podem mudar a luz, então redshift sozinho não é uma medida de distância independente de modelo.",
+    "deep": "Uma relação usada na cosmologia é 1 + z = a(hoje) / a(emissão). z é o redshift cosmológico e a é o fator de escala. Movimentos locais podem acrescentar outros efeitos ao redshift medido.",
+    "equation": {
+     "formula": "1 + z = a(hoje) / a(emissão)",
+     "caption": "No caso cosmológico, o comprimento de onda acompanha a expansão relativa do espaço.",
+     "layer": "deep"
+    },
+    "sources": [
+     {
+      "title": "NASA · Redshift cosmológico observado pelo Hubble",
+      "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-cosmological-redshift/"
+     },
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     }
+    ]
+   },
+   {
+    "id": "origem-do-universo-fase-quente",
+    "evidence": "Modelo físico",
+    "title": "Os primeiros minutos formaram núcleos leves",
+    "body": "Nos primeiros minutos, prótons e nêutrons formaram alguns núcleos leves, sobretudo hélio. Muitos prótons permaneceram sozinhos e se tornaram núcleos de hidrogênio. Essa etapa é chamada nucleossíntese primordial.",
+    "more": "O Universo ainda estava quente demais para elétrons ficarem ligados aos núcleos. Por isso, núcleos de hidrogênio e hélio existiam antes de se formarem átomos completos.",
+    "deep": "As quantidades de hidrogênio, hélio e outros elementos leves previstas pelo modelo podem ser comparadas com medidas astronômicas. Essa concordância é uma das linhas de evidência para a fase quente.",
+    "sources": [
+     {
+      "title": "NASA · Big Bang e nucleossíntese",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "NASA · Evolução do Universo e radiação de fundo",
+      "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+     }
+    ]
+   },
+   {
+    "id": "origem-do-universo-primeira-luz",
+    "evidence": "Observação",
+    "title": "A radiação que vem do Universo jovem",
+    "body": "Cerca de 380 mil anos depois da fase quente, elétrons se ligaram a núcleos e o Universo ficou mais transparente à luz. Os fótons que então passaram a viajar por grandes distâncias são detectados hoje como radiação cósmica de fundo em micro-ondas, ou CMB.",
+    "more": "A luz não nasceu nessa época. Ela já existia; com menos elétrons livres espalhando os fótons, pôde atravessar o espaço. A expansão alongou seus comprimentos de onda e a esfriou para cerca de 2,7 K.",
+    "deep": "Mapas da CMB mostram pequenas diferenças de temperatura, com cores escolhidas para destacar variações minúsculas. A luz registrada é antiga; o mapa colorido é uma visualização de medidas, não uma fotografia de nuvens visíveis.",
+    "sources": [
+     {
+      "title": "NASA · O que a imagem infantil do Universo pode revelar",
+      "href": "https://science.nasa.gov/universe/stories/quick-reads/what-can-we-learn-from-the-universes-baby-picture/"
+     },
+     {
+      "title": "ESA · Destaques científicos da missão Planck",
+      "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+     },
+     {
+      "title": "NASA · Evolução do Universo e radiação de fundo",
+      "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+     }
+    ]
+   },
+   {
+    "id": "origem-do-universo-primeiras-estruturas",
+    "evidence": "Questão aberta",
+    "title": "Do Universo transparente às primeiras galáxias",
+    "body": "Depois da CMB, ainda não havia estrelas. A gravidade reuniu gás em regiões mais densas; as primeiras estrelas e galáxias surgiram mais tarde, ao longo de centenas de milhões de anos. Telescópios observam galáxias distantes para reconstruir essa fase.",
+    "more": "A luz das primeiras estrelas ionizou parte do gás entre galáxias. A época exata das primeiras estrelas e os caminhos de formação das galáxias seguem em estudo.",
+    "deep": "As estimativas combinam redshift, brilho observado, seleção das amostras e modelos da luz emitida pelas galáxias. Um objeto muito antigo desafia e refina a reconstrução, mas precisa ser interpretado com essas incertezas em conta.",
+    "sources": [
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "NASA · Estruturas em grande escala",
+      "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+     },
+     {
+      "title": "NASA · Galáxias ao longo do tempo",
+      "href": "https://science.nasa.gov/mission/webb/galaxies-over-time/"
+     }
+    ]
+   },
+   {
+    "id": "origem-do-universo-nossa-epoca",
+    "evidence": "Questão aberta",
+    "title": "O que ainda não sabemos sobre o começo?",
+    "body": "O modelo descreve uma longa evolução a partir de um estado quente e denso, mas não confirma a causa inicial. A inflação cósmica é uma proposta de expansão muito rápida numa etapa primordial; o mecanismo físico que a produziria permanece desconhecido.",
+    "more": "As observações da CMB são compatíveis com algumas previsões da inflação, mas ainda não revelaram o processo físico que a teria impulsionado. Também não temos uma resposta confirmada sobre o que veio antes da fase quente, se essa pergunta se aplica.",
+    "deep": "Extrapolar equações para condições além do domínio testado não demonstra por si só uma singularidade física nem uma causa da origem. Modelos do Universo primordial continuam sendo comparados com observações.",
+    "sources": [
+     {
+      "title": "NASA · Evolução do Universo e hipótese de inflação",
+      "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+     },
+     {
+      "title": "NASA · Big Bang e perguntas em aberto",
+      "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-big-bang/"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · A história do Universo",
+    "href": "https://science.nasa.gov/universe/overview/"
+   },
+   {
+    "title": "NASA · Evolução do Universo e radiação de fundo",
+    "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+   },
+   {
+    "title": "NASA · Redshift cosmológico observado pelo Hubble",
+    "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-cosmological-redshift/"
+   },
+   {
+    "title": "NASA · O que a imagem infantil do Universo pode revelar",
+    "href": "https://science.nasa.gov/universe/stories/quick-reads/what-can-we-learn-from-the-universes-baby-picture/"
+   },
+   {
+    "title": "ESA · Destaques científicos da missão Planck",
+    "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+   },
+   {
+    "title": "NASA · Estruturas em grande escala",
+    "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+   },
+   {
+    "title": "NASA · Galáxias ao longo do tempo",
+    "href": "https://science.nasa.gov/mission/webb/galaxies-over-time/"
+   }
+  ],
+  "refNote": "As datas e os parâmetros cosmológicos são aproximados e dependem do modelo e dos dados. O modelo do Big Bang quente descreve a evolução inicial; a causa da origem não está estabelecida.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Três perguntas|para conectar as evidências."
+ },
+ {
+  "id": "misterios-do-cosmos",
+  "minutes": 8,
+  "title": "Como sabemos disso?",
+  "intro": "No cosmos, quase tudo o que sabemos chega pela luz ou pelo movimento de objetos distantes. Vamos separar o que os instrumentos medem, o que os modelos inferem e o que continua sem resposta.",
+  "idea": "Uma evidência é uma medida; um modelo explica como várias medidas podem combinar. Algumas explicações ainda têm peças desconhecidas.",
+  "learningGoal": "Distinguir observação, inferência e questão aberta ao examinar expansão, CMB, matéria escura e expansão acelerada.",
+  "experience": "evidence",
+  "concept": "mystery",
+  "sections": [
+   {
+    "id": "misterios-do-cosmos-horizonte",
+    "evidence": "Observação",
+    "title": "Medida, modelo e pergunta aberta",
+    "body": "Um telescópio registra luz, espectros ou mudanças de brilho. Um modelo relaciona essas medidas a propriedades do Universo. Uma pergunta continua aberta quando mais de uma explicação ainda cabe nos dados.",
+    "more": "Uma imagem colorida pode representar luz invisível aos olhos, e uma animação pode ser uma simulação. Legendas e métodos mostram o que foi medido e o que foi acrescentado para explicar os dados.",
+    "deep": "Uma explicação fica mais forte quando combina observações independentes e sobrevive a testes de calibração, seleção e incerteza. Uma imagem ou um ajuste isolado raramente responde a tudo.",
+    "sources": [
+     {
+      "title": "NASA · Como a astronomia observa o Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "NASA · Estruturas em grande escala",
+      "href": "https://science.nasa.gov/universe/galaxies/large-scale-structures/"
+     }
+    ]
+   },
+   {
+    "id": "misterios-do-cosmos-exoplanetas",
+    "evidence": "Observação",
+    "title": "Expansão: a luz muda enquanto viaja",
+    "body": "A expansão cósmica alonga a luz que atravessa grandes distâncias. Astrônomos reconhecem linhas nos espectros de galáxias e medem quanto elas mudaram de comprimento de onda: esse redshift ajuda a testar a expansão.",
+    "more": "Quando comparadas com medidas de distância, as observações mostram que galáxias distantes acompanham a expansão em grande escala. A distância inferida depende também do modelo cosmológico usado.",
+    "deep": "Movimentos locais podem somar-se ao redshift cosmológico. Por isso, espectro, distância e outras informações são combinados para reconstruir a história da expansão.",
+    "sources": [
+     {
+      "title": "NASA · Redshift cosmológico observado pelo Hubble",
+      "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-cosmological-redshift/"
+     },
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     }
+    ]
+   },
+   {
+    "id": "misterios-do-cosmos-vida",
+    "evidence": "Observação",
+    "title": "A CMB preserva pistas do Universo jovem",
+    "body": "A radiação cósmica de fundo, ou CMB, é luz antiga que viajou livremente desde quando o Universo tinha cerca de 380 mil anos. Medimos seu brilho e pequenas variações em todo o céu; esse padrão restringe modelos da história cósmica.",
+    "more": "Satélites como WMAP e Planck mapearam essas diferenças minúsculas. As cores dos mapas ajudam a mostrar os dados e não são a aparência visível de manchas no espaço.",
+    "deep": "A interpretação combina estatística dos mapas, remoção de sinais da Via Láctea e modelos físicos. O resultado testa a história do Universo, mas não é uma imagem direta de galáxias que ainda não existiam.",
+    "sources": [
+     {
+      "title": "NASA · O que a imagem infantil do Universo pode revelar",
+      "href": "https://science.nasa.gov/universe/stories/quick-reads/what-can-we-learn-from-the-universes-baby-picture/"
+     },
+     {
+      "title": "ESA · Destaques científicos da missão Planck",
+      "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+     },
+     {
+      "title": "NASA · Evolução do Universo e radiação de fundo",
+      "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+     }
+    ]
+   },
+   {
+    "id": "misterios-do-cosmos-materia-escura",
+    "evidence": "Observação",
+    "title": "Matéria escura: gravidade sem luz",
+    "body": "Estrelas e galáxias se movem como se houvesse mais gravidade do que a matéria que emite luz consegue explicar. Lentes gravitacionais, que dobram a luz de objetos ao fundo, também ajudam a mapear essa massa. Chamamos de matéria escura a componente inferida por esses efeitos.",
+    "more": "A evidência gravitacional é forte em diferentes escalas, mas a natureza da matéria escura segue desconhecida. Nenhuma partícula candidata foi confirmada como sua composição.",
+    "deep": "Em ajustes cosmológicos padrão, matéria comum e matéria escura têm papéis distintos na densidade do Universo. As proporções dependem do modelo e dos dados usados; não são uma pesagem direta de amostras no laboratório.",
+    "sources": [
+     {
+      "title": "NASA · Matéria escura",
+      "href": "https://science.nasa.gov/dark-matter/"
+     },
+     {
+      "title": "NASA · Lentes gravitacionais e matéria escura",
+      "href": "https://science.nasa.gov/mission/hubble/science/science-highlights/shining-a-light-on-dark-matter/"
+     },
+     {
+      "title": "ESA · Destaques científicos da missão Planck",
+      "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+     }
+    ]
+   },
+   {
+    "id": "misterios-do-cosmos-energia-escura",
+    "evidence": "Observação",
+    "title": "A expansão acelerada e o nome energia escura",
+    "body": "Medições de supernovas distantes do tipo Ia, combinadas com outras observações, sustentam uma fase recente de expansão acelerada. Energia escura é o nome dado à componente ou propriedade que os modelos usam para explicar esse resultado; sua natureza física não foi estabelecida.",
+    "more": "Os astrônomos comparam o brilho e o redshift das supernovas com previsões para diferentes histórias de expansão. A poeira, a calibração e outras observações também precisam ser consideradas.",
+    "deep": "A constante cosmológica é a descrição mais simples da energia escura no modelo ΛCDM. Outras possibilidades continuam em estudo; um bom ajuste não identifica sozinho a causa física da aceleração.",
+    "sources": [
+     {
+      "title": "NASA · Energia escura e expansão acelerada",
+      "href": "https://science.nasa.gov/dark-energy/"
+     },
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "ESA · Destaques científicos da missão Planck",
+      "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+     }
+    ]
+   },
+   {
+    "id": "misterios-do-cosmos-limites",
+    "evidence": "Questão aberta",
+    "title": "O que pode mudar uma conclusão?",
+    "body": "Uma conclusão científica pode ser refinada quando chegam novas medidas, melhores calibrações ou observações que testam previsões diferentes. Se resultados discordam, primeiro investigamos dados, instrumentos e hipóteses antes de escolher uma explicação.",
+    "more": "Expansão, CMB, abundâncias de elementos leves e lentes gravitacionais são pistas diferentes. Quando convergem, tornam uma história mais confiável; quando divergem, indicam onde olhar com mais cuidado.",
+    "deep": "A cosmologia atual não responde todas as perguntas sobre os componentes escuros, a inflação ou a causa da fase quente. Uma lacuna é um convite a novos testes, não uma licença para afirmar qualquer explicação.",
+    "sources": [
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "NASA · Evolução do Universo e hipótese de inflação",
+      "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+     },
+     {
+      "title": "NASA · Energia escura e expansão acelerada",
+      "href": "https://science.nasa.gov/dark-energy/"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · A história do Universo",
+    "href": "https://science.nasa.gov/universe/overview/"
+   },
+   {
+    "title": "NASA · Redshift cosmológico observado pelo Hubble",
+    "href": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-cosmological-redshift/"
+   },
+   {
+    "title": "NASA · Evolução do Universo e radiação de fundo",
+    "href": "https://science.nasa.gov/astrophysics/programs/physics-of-the-cosmos/big-bang-and-the-evolution-of-the-universe/"
+   },
+   {
+    "title": "ESA · Destaques científicos da missão Planck",
+    "href": "https://www.esa.int/Science_Exploration/Space_Science/Planck/Planck_science_highlights"
+   },
+   {
+    "title": "NASA · Matéria escura",
+    "href": "https://science.nasa.gov/dark-matter/"
+   },
+   {
+    "title": "NASA · Lentes gravitacionais e matéria escura",
+    "href": "https://science.nasa.gov/mission/hubble/science/science-highlights/shining-a-light-on-dark-matter/"
+   },
+   {
+    "title": "NASA · Energia escura e expansão acelerada",
+    "href": "https://science.nasa.gov/dark-energy/"
+   }
+  ],
+  "refNote": "As observações apoiam modelos, mas não revelam automaticamente a natureza de seus componentes. “Matéria escura” e “energia escura” descrevem problemas físicos diferentes.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Três perguntas|para avaliar evidências."
+ },
+ {
+  "id": "vida-das-estrelas",
+  "minutes": 9,
+  "title": "A vida das estrelas",
+  "intro": "Estrelas transformam matéria e irradiam energia. A massa inicial é uma das chaves de sua história: ela muda o ritmo de consumo do combustível, o brilho e os caminhos possíveis depois da fase principal.",
+  "idea": "Uma estrela vive pelo equilíbrio entre gravidade e pressão. Seu destino depende da massa e de sua história.",
+  "concept": null,
+  "sections": [
+   {
+    "id": "vida-das-estrelas-colapso",
+    "evidence": "Modelo físico",
+    "title": "Uma estrela começa como uma nuvem",
+    "body": "Uma região de uma nuvem molecular pode se contrair pela gravidade. O centro fica mais denso e quente, formando uma protoestrela. Antes da fusão estável, a contração e a entrada de matéria fornecem boa parte de sua luminosidade.",
+    "more": "A nuvem tem movimento de rotação. Durante a contração, parte do material forma um disco ao redor da protoestrela. Jatos e ventos podem retirar matéria. É nesse ambiente que sistemas planetários também podem começar a se formar.",
+    "deep": "O colapso depende da competição entre gravidade, pressão, turbulência e campos magnéticos. Objetos com massa insuficiente para sustentar fusão de hidrogênio são anãs marrons, não estrelas de sequência principal.",
+    "sources": [
+     {
+      "title": "NASA · Nascimento, vida e morte das estrelas",
+      "href": "https://science.nasa.gov/universe/stars/"
+     },
+     {
+      "title": "NASA · Tipos de estrelas",
+      "href": "https://science.nasa.gov/universe/stars/types/"
+     }
+    ]
+   },
+   {
+    "id": "vida-das-estrelas-fusao",
+    "evidence": "Modelo físico",
+    "title": "A energia vem da fusão nuclear",
+    "body": "No núcleo de uma estrela como o Sol, núcleos de hidrogênio participam de reações que produzem hélio. Uma pequena diferença de massa se transforma em energia. Essa energia se espalha pelo interior e parte dela é emitida como luz.",
+    "more": "A gravidade puxa para dentro; a pressão ajuda a sustentar a estrela. Durante a sequência principal, a fusão de hidrogênio fornece energia em uma configuração aproximadamente equilibrada. Se o núcleo muda, a estrutura inteira pode responder.",
+    "deep": "Na relação E = Δm c², Δm é a diferença de massa entre reagentes e produtos. Não é a massa inteira da estrela convertida de uma vez. Neutrinos também levam parte da energia e permitem investigar processos do interior solar.",
+    "equation": {
+     "formula": "E = Δm c²",
+     "caption": "Uma pequena diferença de massa Δm corresponde à energia liberada nas reações.",
+     "layer": "deep"
+    },
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre o Sol",
+      "href": "https://science.nasa.gov/sun/facts/"
+     },
+     {
+      "title": "NASA · Nascimento, vida e morte das estrelas",
+      "href": "https://science.nasa.gov/universe/stars/"
+     }
+    ]
+   },
+   {
+    "id": "vida-das-estrelas-sol",
+    "evidence": "Observação",
+    "title": "O Sol também tem uma história",
+    "body": "O Sol se formou há cerca de 4,6 bilhões de anos e está na sequência principal. Sua massa equivale a aproximadamente 333 mil Terras. A luz visível vem da fotosfera, com temperatura perto de 5.500 °C; o núcleo é muito mais quente.",
+    "more": "O Sol deverá permanecer na fase principal por bilhões de anos. Depois, se expandirá como gigante vermelha e perderá suas camadas externas. A evolução depende da estrutura do núcleo e das reações disponíveis.",
+    "deep": "A temperatura superficial, a temperatura central e a cor de uma imagem solar são informações distintas. Fotografias em ultravioleta ou raios X usam cores atribuídas e mostram regiões diferentes da atmosfera solar.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre o Sol",
+      "href": "https://science.nasa.gov/sun/facts/"
+     },
+     {
+      "title": "NASA · Fatos sobre o Sistema Solar",
+      "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+     }
+    ]
+   },
+   {
+    "id": "vida-das-estrelas-pequenas-e-medias",
+    "evidence": "Modelo físico",
+    "title": "O caminho de estrelas pequenas e médias",
+    "body": "Estrelas de baixa massa consomem seu combustível lentamente. Uma estrela semelhante ao Sol termina, após fases de gigante e perda de material, como uma anã branca: um núcleo compacto que esfria gradualmente.",
+    "more": "O material expelido pode formar uma nebulosa planetária. O nome é histórico e não indica a presença de planetas. Anãs vermelhas de massa muito baixa vivem tanto que o Universo ainda não tem idade suficiente para termos observado o fim normal de sua evolução.",
+    "deep": "Uma anã branca é sustentada principalmente pela pressão de degenerescência dos elétrons. Ela não continua a fusão estável de hidrogênio como o Sol. Em sistemas binários, transferência de massa pode abrir caminhos diferentes, inclusive supernovas do tipo Ia.",
+    "sources": [
+     {
+      "title": "NASA · Tipos de estrelas",
+      "href": "https://science.nasa.gov/universe/stars/types/"
+     },
+     {
+      "title": "NASA · Nascimento, vida e morte das estrelas",
+      "href": "https://science.nasa.gov/universe/stars/"
+     }
+    ]
+   },
+   {
+    "id": "vida-das-estrelas-massivas",
+    "evidence": "Modelo físico",
+    "title": "Estrelas massivas e o colapso do núcleo",
+    "body": "Estrelas mais massivas são muito luminosas e vivem menos. Podem produzir núcleos de elementos sucessivamente mais pesados. Quando o núcleo deixa de se sustentar, o colapso pode produzir uma supernova e um remanescente compacto.",
+    "more": "O remanescente pode ser uma estrela de nêutrons ou um buraco negro. Nem todo colapso precisa gerar uma explosão brilhante. Vento estelar, composição, rotação e interação com uma companheira alteram a massa que sobra.",
+    "deep": "A divisão em torno de oito massas solares é uma aproximação pedagógica para o início de caminhos de colapso, não uma fronteira universal. Não existe uma regra de massa inicial única que determine sem ambiguidade o remanescente.",
+    "sources": [
+     {
+      "title": "NASA · Nascimento, vida e morte das estrelas",
+      "href": "https://science.nasa.gov/universe/stars/"
+     },
+     {
+      "title": "NASA · Tipos de estrelas",
+      "href": "https://science.nasa.gov/universe/stars/types/"
+     },
+     {
+      "title": "NASA · Buracos negros",
+      "href": "https://science.nasa.gov/universe/black-holes/"
+     }
+    ]
+   },
+   {
+    "id": "vida-das-estrelas-elementos",
+    "evidence": "Modelo físico",
+    "title": "De onde vêm os elementos do seu corpo?",
+    "body": "Muito do carbono, oxigênio e outros elementos foi produzido em estrelas e distribuído pelo espaço. Os núcleos leves têm importante origem primordial. Novas estrelas e planetas podem incorporar material enriquecido por gerações anteriores.",
+    "more": "A fusão produz diferentes elementos em diferentes fases. Processos de captura de nêutrons em estrelas evoluídas e eventos extremos, como certas supernovas e fusões de estrelas de nêutrons, também têm papéis importantes.",
+    "deep": "A formação de todos os elementos não cabe em uma única estrela ou em um único tipo de explosão. As contribuições variam com elemento e isótopo; abundâncias observadas e modelos nucleares ajudam a reconstruir suas origens.",
+    "sources": [
+     {
+      "title": "NASA · A história do Universo",
+      "href": "https://science.nasa.gov/universe/overview/"
+     },
+     {
+      "title": "NASA · Nascimento, vida e morte das estrelas",
+      "href": "https://science.nasa.gov/universe/stars/"
+     },
+     {
+      "title": "NASA · Tipos de estrelas",
+      "href": "https://science.nasa.gov/universe/stars/types/"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · Nascimento, vida e morte das estrelas",
+    "href": "https://science.nasa.gov/universe/stars/"
+   },
+   {
+    "title": "NASA · Tipos de estrelas",
+    "href": "https://science.nasa.gov/universe/stars/types/"
+   },
+   {
+    "title": "NASA · Fatos sobre o Sol",
+    "href": "https://science.nasa.gov/sun/facts/"
+   },
+   {
+    "title": "NASA · Fatos sobre o Sistema Solar",
+    "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+   },
+   {
+    "title": "NASA · Buracos negros",
+    "href": "https://science.nasa.gov/universe/black-holes/"
+   },
+   {
+    "title": "NASA · A história do Universo",
+    "href": "https://science.nasa.gov/universe/overview/"
+   },
+   {
+    "title": "Página original",
+    "href": "https://science.nasa.gov/asset/webb/cosmic-cliffs-in-the-carina-nebula-nircam-and-miri-composite-image/"
+   }
+  ],
+  "refNote": "Fontes de consulta associadas às seções. Números são aproximados; a interpretação cosmológica e algumas trajetórias estelares dependem de modelos.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Duas perguntas|para conectar as ideias.",
+  "photo": {
+   "alt": "Composição de exposições infravermelhas separadas dos instrumentos NIRCam e MIRI do Webb, com cores atribuídas a filtros distintos.",
+   "caption": "“Cosmic Cliffs” na Nebulosa de Carina (imagem composta NIRCam e MIRI) · observação em cores compostas · NASA, ESA, CSA, STScI"
+  }
+ },
+ {
+  "id": "sistema-solar",
+  "minutes": 8,
+  "title": "O Sistema Solar",
+  "intro": "O Sistema Solar compartilha uma origem, mas não um único tipo de mundo. Distância ao Sol, composição, massa e história produzem uma diversidade que vai de superfícies rochosas a atmosferas profundas.",
+  "idea": "Compare sempre a mesma grandeza e a mesma definição. Um planeta gigante não tem uma superfície como a Terra.",
+  "concept": "solar",
+  "sections": [
+   {
+    "id": "sistema-solar-disco",
+    "evidence": "Modelo físico",
+    "title": "Um sistema nasce de um disco",
+    "body": "Há cerca de 4,6 bilhões de anos, uma nuvem de gás e poeira deu origem ao Sol e a um disco ao redor. Partículas se agregaram; corpos maiores cresceram por colisões e atração gravitacional. Parte do material foi dispersada.",
+    "more": "A temperatura no disco variava com a distância. Rochas e metais puderam sobreviver em regiões internas; materiais voláteis participaram mais da construção nas regiões frias. Migração orbital e colisões posteriores também mudaram o sistema.",
+    "deep": "A separação entre planetas rochosos e gigantes não depende apenas da distância atual. Modelos de acreção, dinâmica e interação com o disco são confrontados com meteoritos, planetas e sistemas extrasolares.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre o Sistema Solar",
+      "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+     },
+     {
+      "title": "NASA · Asteroides, cometas e meteoros",
+      "href": "https://science.nasa.gov/asteroids-comets-meteors/"
+     }
+    ]
+   },
+   {
+    "id": "sistema-solar-sol-e-planetas",
+    "evidence": "Observação",
+    "title": "O Sol e os quatro mundos rochosos",
+    "body": "O Sol contém a maior parte da massa do sistema e fornece energia pela fusão. Mercúrio, Vênus, Terra e Marte têm superfícies rochosas. Mesmo próximos entre si, possuem atmosferas e temperaturas muito diferentes.",
+    "more": "Mercúrio tem quase apenas uma exosfera. Vênus tem um efeito estufa extremo. A Terra mantém oceanos de água líquida e uma atmosfera alterada pela vida. Marte é frio, com ar rarefeito e sinais de água líquida no passado.",
+    "deep": "Distância ao Sol não basta para prever a temperatura de superfície: albedo, atmosfera, circulação e efeito estufa importam. Vênus é mais quente que Mercúrio apesar de estar mais longe do Sol.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre o Sol",
+      "href": "https://science.nasa.gov/sun/facts/"
+     },
+     {
+      "title": "NASA · Fatos sobre Vênus",
+      "href": "https://science.nasa.gov/venus/venus-facts/"
+     },
+     {
+      "title": "NASA · Fatos sobre Marte",
+      "href": "https://science.nasa.gov/mars/facts/"
+     },
+     {
+      "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+     }
+    ]
+   },
+   {
+    "id": "sistema-solar-gigantes",
+    "evidence": "Observação",
+    "title": "Gigantes gasosos e gigantes de gelo",
+    "body": "Júpiter e Saturno são gigantes gasosos, dominados por hidrogênio e hélio. Urano e Netuno têm maior proporção de materiais como água, amônia e metano e são classificados como gigantes de gelo.",
+    "more": "Esses planetas possuem atmosferas profundas e interiores sob enorme pressão. “Gelo” é um termo de composição; esses materiais não precisam estar sólidos no interior. Anéis existem em todos os quatro gigantes.",
+    "deep": "Para comparar temperaturas e gravidades, precisamos escolher um nível de referência. A tabela deste observatório usa a temperatura atmosférica a 1 bar para os gigantes. Ela não deve ser interpretada como temperatura de um chão sólido.",
+    "sources": [
+     {
+      "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+     },
+     {
+      "title": "NASA / NSSDCA · Definições e notas da tabela planetária",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html"
+     },
+     {
+      "title": "NASA / NSSDCA · Dados planetários em unidades relativas à Terra",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html"
+     }
+    ]
+   },
+   {
+    "id": "sistema-solar-pequenos-corpos",
+    "evidence": "Observação",
+    "title": "Luas, anéis, asteroides e cometas",
+    "body": "Luas são corpos que orbitam planetas ou outros pequenos mundos. Anéis são conjuntos de partículas. Asteroides costumam ser ricos em rocha e metal; cometas incluem materiais voláteis que podem liberar gás e poeira ao se aquecer.",
+    "more": "Muitos asteroides ficam entre Marte e Júpiter. O cinturão de Kuiper contém corpos gelados além de Netuno. Meteoros são os fenômenos luminosos de entrada na atmosfera; meteoritos são os fragmentos que chegam ao solo.",
+    "deep": "Os pequenos corpos guardam registros de materiais antigos e também sofreram colisões e aquecimento. A cauda de gás de um cometa é orientada pelo vento solar; sua direção não é simplesmente “para trás” em relação ao movimento.",
+    "sources": [
+     {
+      "title": "NASA · Asteroides, cometas e meteoros",
+      "href": "https://science.nasa.gov/asteroids-comets-meteors/"
+     },
+     {
+      "title": "NASA · Fatos sobre o Sistema Solar",
+      "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+     },
+     {
+      "title": "NASA · Meteoros e meteoritos",
+      "href": "https://science.nasa.gov/solar-system/meteors-meteorites/"
+     }
+    ]
+   },
+   {
+    "id": "sistema-solar-orbitas",
+    "evidence": "Modelo físico",
+    "title": "Por que um planeta não cai direto no Sol?",
+    "body": "Um planeta em órbita é atraído pela gravidade e também possui velocidade lateral. Sua trajetória resulta dessa combinação. Em uma descrição simples, ele está em queda contínua ao redor do Sol.",
+    "more": "Órbitas ligadas podem ser elípticas. O planeta se move mais rápido quando está mais perto do Sol. Corpos mais distantes costumam levar mais tempo para completar uma volta, como mostram os períodos dos oito planetas.",
+    "deep": "Para uma massa planetária pequena em relação ao Sol, a terceira lei de Kepler relaciona o período P ao semieixo maior a. Usando anos e unidades astronômicas no Sistema Solar, P² ≈ a³. Perturbações de outros corpos exigem uma descrição mais completa.",
+    "equation": {
+     "formula": "P² ≈ a³",
+     "caption": "P em anos terrestres e a em UA; aproximação para órbitas dominadas pela massa solar.",
+     "layer": "deep"
+    },
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre o Sistema Solar",
+      "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+     },
+     {
+      "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+     }
+    ]
+   },
+   {
+    "id": "sistema-solar-medindo-mundos",
+    "evidence": "Modelo físico",
+    "title": "O que significa comparar planetas?",
+    "body": "Raio, massa, gravidade, rotação e período orbital medem coisas diferentes. Um planeta grande não precisa ter uma gravidade proporcional ao tamanho. A densidade e a rotação também influenciam o que medimos.",
+    "more": "Uma unidade astronômica equivale a aproximadamente 149,6 milhões de quilômetros. No explorador, os raios são equatoriais e a rotação é sideral. O sinal negativo indica rotação retrógrada na convenção usada pela fonte.",
+    "deep": "O comparador usa a mesma escala de raio para os dois discos e informa a razão numérica. As ilustrações originais não têm escala e os anéis são ornamentação: a medida do planeta não inclui o sistema de anéis.",
+    "sources": [
+     {
+      "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+     },
+     {
+      "title": "NASA / NSSDCA · Definições e notas da tabela planetária",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html"
+     },
+     {
+      "title": "NASA / NSSDCA · Dados planetários em unidades relativas à Terra",
+      "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · Fatos sobre o Sistema Solar",
+    "href": "https://science.nasa.gov/solar-system/solar-system-facts/"
+   },
+   {
+    "title": "NASA · Asteroides, cometas e meteoros",
+    "href": "https://science.nasa.gov/asteroids-comets-meteors/"
+   },
+   {
+    "title": "NASA · Fatos sobre o Sol",
+    "href": "https://science.nasa.gov/sun/facts/"
+   },
+   {
+    "title": "NASA · Fatos sobre Vênus",
+    "href": "https://science.nasa.gov/venus/venus-facts/"
+   },
+   {
+    "title": "NASA · Fatos sobre Marte",
+    "href": "https://science.nasa.gov/mars/facts/"
+   },
+   {
+    "title": "NASA / NSSDCA · Planetary Fact Sheet — unidades métricas",
+    "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/"
+   },
+   {
+    "title": "NASA / NSSDCA · Definições e notas da tabela planetária",
+    "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html"
+   },
+   {
+    "title": "NASA / NSSDCA · Dados planetários em unidades relativas à Terra",
+    "href": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/planet_table_ratio.html"
+   },
+   {
+    "title": "NASA · Meteoros e meteoritos",
+    "href": "https://science.nasa.gov/solar-system/meteors-meteorites/"
+   }
+  ],
+  "refNote": "Fontes de consulta associadas às seções. Números são aproximados; a interpretação cosmológica e algumas trajetórias estelares dependem de modelos.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Duas perguntas|para conectar as ideias."
+ },
+ {
+  "id": "terra-e-atmosfera",
+  "minutes": 9,
+  "title": "Terra e atmosfera",
+  "intro": "A Terra habitável de hoje resulta de uma história geológica e biológica. Seu interior, sua atmosfera e seus oceanos trocaram matéria e energia por bilhões de anos. A composição do ar que respiramos é parte dessa história.",
+  "idea": "Habitabilidade depende de vários processos conectados. A presença de água ou uma boa distância da estrela, sozinhas, não garantem vida.",
+  "concept": null,
+  "sections": [
+   {
+    "id": "terra-e-atmosfera-formacao-da-terra",
+    "evidence": "Modelo físico",
+    "title": "Um planeta quente se diferencia",
+    "body": "A Terra cresceu por acreção de material no Sistema Solar jovem. Colisões e processos internos aqueceram o planeta. Materiais mais densos, especialmente ricos em ferro, se concentraram no núcleo; rochas formaram o manto e a crosta.",
+    "more": "A crosta é a camada externa; o manto ocupa grande parte do volume. O núcleo externo é líquido e o interno é sólido. O manto é principalmente sólido, mas pode fluir lentamente em escalas geológicas.",
+    "deep": "As camadas internas são inferidas por ondas sísmicas, gravidade, magnetismo e experimentos. A pressão modifica o comportamento dos materiais: uma temperatura elevada não implica automaticamente que uma região esteja líquida.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre a Terra",
+      "href": "https://science.nasa.gov/earth/facts/"
+     },
+     {
+      "title": "NASA · A magnetosfera terrestre",
+      "href": "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/"
+     }
+    ]
+   },
+   {
+    "id": "terra-e-atmosfera-atmosfera-primitiva",
+    "evidence": "Modelo físico",
+    "title": "O ar já foi muito diferente",
+    "body": "A atmosfera mudou pela perda de gases, liberação pelo interior, impactos e trocas com os oceanos. A Terra primitiva não tinha a mesma abundância de oxigênio livre que encontramos hoje.",
+    "more": "Organismos fotossintéticos passaram a produzir oxigênio. Inicialmente, parte dele reagiu com materiais dissolvidos e rochas. Sua acumulação atmosférica alterou profundamente o ambiente e permitiu a formação de uma camada de ozônio.",
+    "deep": "A composição exata das fases iniciais e a contribuição relativa das fontes de água e gases continuam estudadas. Água pode ter vindo de material incorporado durante a formação e de entregas posteriores. Uma origem única e perfeitamente estabelecida seria uma simplificação excessiva.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre a Terra",
+      "href": "https://science.nasa.gov/earth/facts/"
+     },
+     {
+      "title": "NOAA / NASA JPL · Como a atmosfera terrestre se formou",
+      "href": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/how-did-earths-atmosphere-form"
+     },
+     {
+      "title": "NASA Astrobiology · Evidências da elevação inicial do oxigênio terrestre",
+      "href": "https://astrobiology.nasa.gov/nai/articles/2019/3/5/clues-of-earths-early-rise-of-oxygen/"
+     }
+    ]
+   },
+   {
+    "id": "terra-e-atmosfera-ar-atual",
+    "evidence": "Observação",
+    "title": "O que há no ar de hoje?",
+    "body": "No ar seco próximo à superfície, cerca de 78% é nitrogênio e 21% é oxigênio. Argônio e outros gases compõem o restante. Vapor de água varia bastante. Gases em pequena proporção, como o CO₂, ainda têm efeitos físicos importantes.",
+    "more": "O efeito estufa natural ocorre porque certos gases absorvem e emitem radiação infravermelha. Isso muda a troca de energia entre superfície, atmosfera e espaço. Sem esse efeito, a temperatura média de superfície seria muito menor.",
+    "deep": "Concentração não é igual a importância radiativa. Absorção depende de comprimentos de onda, quantidade, pressão e sobreposição entre gases. O clima também envolve nuvens, oceanos, gelo, circulação e balanço de energia.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre a Terra",
+      "href": "https://science.nasa.gov/earth/facts/"
+     },
+     {
+      "title": "NOAA / National Weather Service · Camadas da atmosfera",
+      "href": "https://www.noaa.gov/jetstream/atmosphere/layers-of-atmosphere"
+     },
+     {
+      "title": "NASA · Fatos sobre Vênus",
+      "href": "https://science.nasa.gov/venus/venus-facts/"
+     }
+    ]
+   },
+   {
+    "id": "terra-e-atmosfera-camadas",
+    "evidence": "Observação",
+    "title": "Cinco camadas, fronteiras aproximadas",
+    "body": "A troposfera concentra a maior parte do tempo meteorológico. Acima ficam estratosfera, mesosfera, termosfera e exosfera. As camadas são definidas principalmente pela estrutura de temperatura, e seus limites variam.",
+    "more": "Na estratosfera, o ozônio absorve radiação ultravioleta. Muitos meteoros luminosos ocorrem na mesosfera. Auroras acontecem na alta atmosfera. A termosfera pode ter alta temperatura cinética apesar da densidade muito baixa.",
+    "deep": "Alturas típicas: troposfera até cerca de 6–20 km; estratosfera até cerca de 50 km; mesosfera até 85 km; termosfera até algumas centenas de quilômetros ou mais. A exosfera faz a transição gradual para o espaço. Não existe uma tampa física na linha de 100 km.",
+    "sources": [
+     {
+      "title": "NOAA / National Weather Service · Camadas da atmosfera",
+      "href": "https://www.noaa.gov/jetstream/atmosphere/layers-of-atmosphere"
+     },
+     {
+      "title": "NASA · A magnetosfera terrestre",
+      "href": "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/"
+     }
+    ]
+   },
+   {
+    "id": "terra-e-atmosfera-campo-magnetico",
+    "evidence": "Observação",
+    "title": "Um campo gerado no interior",
+    "body": "Movimentos do material condutor no núcleo externo ajudam a gerar o campo magnético terrestre. A região de sua influência no ambiente espacial é a magnetosfera. Ela interage com partículas do vento solar.",
+    "more": "Partículas podem ser desviadas, aprisionadas ou chegar a regiões polares, contribuindo para auroras. A atmosfera também absorve radiação e freia partículas. A proteção do ambiente terrestre depende de vários mecanismos.",
+    "deep": "O campo muda no tempo e pode inverter sua polaridade. Ter um campo global não é uma condição única e suficiente para possuir atmosfera ou vida: Vênus, por exemplo, tem uma atmosfera densa sem um dínamo global semelhante ao terrestre.",
+    "sources": [
+     {
+      "title": "NASA · A magnetosfera terrestre",
+      "href": "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/"
+     },
+     {
+      "title": "NASA · Fatos sobre Vênus",
+      "href": "https://science.nasa.gov/venus/venus-facts/"
+     }
+    ]
+   },
+   {
+    "id": "terra-e-atmosfera-habitabilidade",
+    "evidence": "Questão aberta",
+    "title": "Terra, Vênus e Marte: o que a comparação ensina?",
+    "body": "A Terra tem oceanos líquidos; Vênus tem uma superfície extremamente quente; Marte tem uma atmosfera rarefeita e fria. Suas diferenças resultam de energia recebida, massa, composição e histórias distintas.",
+    "more": "Água líquida requer condições adequadas de temperatura e pressão. Uma órbita na chamada zona habitável indica uma possibilidade sob certas condições atmosféricas. Não confirma oceanos, um clima estável ou vida.",
+    "deep": "Um mundo pode ter água sob gelo fora da faixa de habitabilidade superficial, como sugerem algumas luas. A busca de vida exige observar ambiente, química e possíveis sinais biológicos, considerando também explicações não biológicas.",
+    "sources": [
+     {
+      "title": "NASA · Fatos sobre Vênus",
+      "href": "https://science.nasa.gov/venus/venus-facts/"
+     },
+     {
+      "title": "NASA · Fatos sobre Marte",
+      "href": "https://science.nasa.gov/mars/facts/"
+     },
+     {
+      "title": "NASA · Exoplanetas",
+      "href": "https://science.nasa.gov/exoplanets/"
+     },
+     {
+      "title": "NASA · A busca de vida fora da Terra",
+      "href": "https://science.nasa.gov/exoplanets/can-we-find-life/"
+     }
+    ]
+   }
+  ],
+  "refs": [
+   {
+    "title": "NASA · Fatos sobre a Terra",
+    "href": "https://science.nasa.gov/earth/facts/"
+   },
+   {
+    "title": "NASA · A magnetosfera terrestre",
+    "href": "https://science.nasa.gov/heliophysics/focus-areas/magnetosphere-ionosphere/"
+   },
+   {
+    "title": "NOAA / NASA JPL · Como a atmosfera terrestre se formou",
+    "href": "https://www.nesdis.noaa.gov/about/k-12-education/atmosphere/how-did-earths-atmosphere-form"
+   },
+   {
+    "title": "NASA Astrobiology · Evidências da elevação inicial do oxigênio terrestre",
+    "href": "https://astrobiology.nasa.gov/nai/articles/2019/3/5/clues-of-earths-early-rise-of-oxygen/"
+   },
+   {
+    "title": "NOAA / National Weather Service · Camadas da atmosfera",
+    "href": "https://www.noaa.gov/jetstream/atmosphere/layers-of-atmosphere"
+   },
+   {
+    "title": "NASA · Fatos sobre Vênus",
+    "href": "https://science.nasa.gov/venus/venus-facts/"
+   },
+   {
+    "title": "NASA · Fatos sobre Marte",
+    "href": "https://science.nasa.gov/mars/facts/"
+   },
+   {
+    "title": "NASA · Exoplanetas",
+    "href": "https://science.nasa.gov/exoplanets/"
+   },
+   {
+    "title": "NASA · A busca de vida fora da Terra",
+    "href": "https://science.nasa.gov/exoplanets/can-we-find-life/"
+   },
+   {
+    "title": "Página original",
+    "href": "https://earthobservatory.nasa.gov/images/152259/sunrise-from-the-station"
+   }
+  ],
+  "refNote": "Fontes de consulta associadas às seções. Números são aproximados; a interpretação cosmológica e algumas trajetórias estelares dependem de modelos.",
+  "refHeading": "De onde vem o que você leu",
+  "checkTitle": "Duas perguntas|para conectar as ideias.",
+  "photo": {
+   "alt": "Fotografia de astronauta ISS070-E-1178, feita em 29 set. 2023; a NASA informa que foi recortada, teve o contraste realçado e artefatos da lente removidos.",
+   "caption": "O nascer do Sol visto da estação espacial · fotografia · NASA / ISS Crew Earth Observations Facility / Earth Science and Remote Sensing Unit, Johnson Space Center; fotografia por membro da Expedição 70; legenda: Kathryn Hansen"
+  }
+ }
+]

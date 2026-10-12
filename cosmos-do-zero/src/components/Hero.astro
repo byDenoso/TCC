@@ -1,0 +1,40 @@
+---
+import Header from './Header.astro';
+import { u } from '../lib/url';
+// Estrelas determinísticas (sem JS): mesma semente = mesma abertura em todo build.
+let seed = 235711;
+const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand() * 88, o: 0.12 + rand() * 0.38, big: rand() > 0.9 }));
+---
+<div class="hero-shell" id="topo">
+  <div class="starfield" aria-hidden="true">
+    {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
+  </div>
+  <Header />
+  <section class="hero-main page-width hero" aria-labelledby="hero-title">
+    <figure class="eclipse-scene" aria-hidden="true">
+      <img class="hero-render" src={u('/renders/hero-eclipse.webp')} srcset={`${u('/renders/hero-eclipse-small.webp')} 600w, ${u('/renders/hero-eclipse.webp')} 1200w`} sizes="(max-width: 760px) 534px, (max-width: 1020px) 590px, 720px" alt="" width="1200" height="800" loading="eager" fetchpriority="high" decoding="async" />
+      <figcaption>RENDER CONCEITUAL POR IA · SEM ESCALA</figcaption>
+    </figure>
+    <div class="hero-copy">
+      <div class="hero-overline"><span class="dash"></span><span>SEU PRIMEIRO PASSO NO UNIVERSO</span></div>
+      <h1 id="hero-title">O Universo.<br /><span class="serif">Seu lugar.</span><br />Suas perguntas.</h1>
+      <div class="hero-sub">
+        <span class="idx">01&nbsp;/&nbsp;03</span>
+        <p>Encontre nosso lugar no cosmos, descubra a história da expansão e siga as pistas que a luz traz. Comece do zero, no seu ritmo.</p>
+      </div>
+      <div class="hero-actions">
+        <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey><span data-start-label>Começar a jornada</span> <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="textlink" href="#explorar">Escolher uma exploração <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+  <div class="hero-foot page-width">
+    <div class="hero-foot-left"><span class="rail"></span><span class="meta">O espaço explicado para gente curiosa</span></div>
+    <div class="hero-foot-center">
+      <div><span class="number">13,8</span><span class="statcopy">bilhões de anos</span></div>
+      <div><span class="number">03</span><span class="statcopy">jornadas</span></div>
+    </div>
+    <a class="down" href="#capitulos">Descer <span aria-hidden="true">↓</span></a>
+  </div>
+</div>

@@ -1,0 +1,182 @@
+[
+ {
+  "id": "galaxy",
+  "chapter": "galaxias-e-nebulosas",
+  "question": "Qual sequência coloca cada escala no lugar certo, do menor para o maior?",
+  "answers": [
+   "Terra → Sistema Solar → Via Láctea → Universo",
+   "Terra → Via Láctea → Sistema Solar → Universo",
+   "Sistema Solar → Terra → Universo → Via Láctea"
+  ],
+  "correct": 0,
+  "explanation": "A Terra orbita o Sol no Sistema Solar; o Sol pertence à Via Láctea, que é uma galáxia dentro do Universo."
+ },
+ {
+  "id": "colors",
+  "chapter": "galaxias-e-nebulosas",
+  "question": "O que a legenda de uma imagem astronômica composta pode explicar?",
+  "answers": [
+   "Que as cores podem representar filtros e luz invisível aos nossos olhos",
+   "Que toda imagem mostra exatamente as cores que uma pessoa veria",
+   "Que o uso de cores torna a observação sem valor científico"
+  ],
+  "correct": 0,
+  "explanation": "Uma composição pode combinar observações em diferentes comprimentos de onda e atribuir cores para destacar os dados. A legenda informa como lê-la."
+ },
+ {
+  "id": "light-lookback",
+  "chapter": "galaxias-e-nebulosas",
+  "question": "Por que observar uma galáxia muito distante também é olhar para o passado?",
+  "answers": [
+   "Porque a galáxia deixa de existir quando fica longe",
+   "Porque a luz leva tempo para viajar e mostra como ela estava ao ser emitida",
+   "Porque os telescópios aceleram a luz até fazê-la voltar no tempo"
+  ],
+  "correct": 1,
+  "explanation": "A luz tem velocidade finita. Quanto maior o tempo de viagem, mais antiga é a informação que chega até nós."
+ },
+ {
+  "id": "big-bang",
+  "chapter": "origem-do-universo",
+  "question": "O que o modelo do Big Bang quente descreve?",
+  "answers": [
+   "Uma explosão de matéria dentro de um espaço vazio que já existia",
+   "A evolução de um Universo antigo muito quente e denso que se expandiu e esfriou",
+   "O nascimento do Sol e dos planetas"
+  ],
+  "correct": 1,
+  "explanation": "O modelo descreve a expansão e o resfriamento do Universo jovem. Ele não estabelece uma causa confirmada para o começo."
+ },
+ {
+  "id": "cmb",
+  "chapter": "origem-do-universo",
+  "question": "O que ocorreu quando o Universo ficou mais transparente, cerca de 380 mil anos após a fase quente?",
+  "answers": [
+   "Fótons que já existiam passaram a viajar por distâncias maiores e hoje observamos seu vestígio como CMB",
+   "Toda a luz do Universo foi criada pela primeira vez",
+   "As primeiras galáxias já haviam acabado de se formar"
+  ],
+  "correct": 0,
+  "explanation": "Quando muitos elétrons se ligaram a núcleos, houve menos espalhamento da luz. A expansão alongou esses fótons até as micro-ondas."
+ },
+ {
+  "id": "light-elements",
+  "chapter": "origem-do-universo",
+  "question": "O que se formou nos primeiros minutos da história cósmica?",
+  "answers": [
+   "Núcleos leves, sobretudo de hélio; átomos completos surgiram bem depois",
+   "Estrelas, planetas e galáxias prontas",
+   "Apenas átomos de carbono e oxigênio"
+  ],
+  "correct": 0,
+  "explanation": "A nucleossíntese primordial formou núcleos leves. O Universo ainda estava quente demais para os elétrons ficarem ligados a eles."
+ },
+ {
+  "id": "dark-matter",
+  "chapter": "misterios-do-cosmos",
+  "question": "Qual frase descreve melhor o que sabemos sobre matéria escura?",
+  "answers": [
+   "Sua partícula foi identificada e medida em laboratório",
+   "Há evidências de seus efeitos gravitacionais, mas sua natureza continua desconhecida",
+   "É o nome dado à luz que vemos em todas as galáxias"
+  ],
+  "correct": 1,
+  "explanation": "Movimentos de galáxias e lentes gravitacionais indicam massa que não vemos diretamente. Nenhuma partícula candidata foi confirmada."
+ },
+ {
+  "id": "evidence-lines",
+  "chapter": "misterios-do-cosmos",
+  "question": "Que conjunto de pistas sustenta o modelo de um Universo antigo quente e em expansão?",
+  "answers": [
+   "A expansão observada, as quantidades de elementos leves e a radiação cósmica de fundo",
+   "Uma fotografia direta do primeiro instante e uma amostra de energia escura",
+   "Somente o movimento dos planetas do Sistema Solar"
+  ],
+  "correct": 0,
+  "explanation": "São evidências independentes que podem ser comparadas com previsões do modelo. Nenhuma delas é uma fotografia da causa inicial."
+ },
+ {
+  "id": "dark-energy",
+  "chapter": "misterios-do-cosmos",
+  "question": "O que mostram as observações usadas para estudar a expansão acelerada?",
+  "answers": [
+   "Supernovas distantes do tipo Ia ajudaram a mostrar que a expansão acelerou; a natureza da energia escura segue aberta",
+   "A energia escura foi fotografada e sua partícula já foi identificada",
+   "A expansão do Universo parou quando as primeiras estrelas nasceram"
+  ],
+  "correct": 0,
+  "explanation": "Brilho e redshift de supernovas, combinados com outras medidas, sustentam a aceleração. Energia escura é o nome de uma explicação em modelos, não uma natureza já descoberta."
+ },
+ {
+  "id": "fusion",
+  "chapter": "vida-das-estrelas",
+  "question": "Qual processo fornece a energia principal do Sol hoje?",
+  "answers": [
+   "Combustão de oxigênio",
+   "Fricção com planetas em órbita",
+   "Fusão nuclear de hidrogênio"
+  ],
+  "correct": 2,
+  "explanation": "A fusão no núcleo transforma hidrogênio em hélio por uma cadeia de reações. A diferença de massa libera energia; o Sol está na sequência principal."
+ },
+ {
+  "id": "star-ending",
+  "chapter": "vida-das-estrelas",
+  "question": "Qual é o destino esperado de uma estrela como o Sol?",
+  "answers": [
+   "Um buraco negro supermassivo",
+   "Uma anã branca após fases de gigante e perda de material",
+   "Uma estrela de nêutrons em todos os casos"
+  ],
+  "correct": 1,
+  "explanation": "A massa do Sol não corresponde ao caminho típico de colapso de núcleo de uma estrela massiva. A massa e a história estelar mudam o destino."
+ },
+ {
+  "id": "venus",
+  "chapter": "sistema-solar",
+  "question": "Por que Vênus tem uma superfície mais quente que Mercúrio?",
+  "answers": [
+   "Seu intenso efeito estufa",
+   "Sua maior distância ao Sol",
+   "Porque Vênus é uma estrela"
+  ],
+  "correct": 0,
+  "explanation": "A atmosfera muito densa de Vênus dificulta a perda de energia da superfície. Distância à estrela é apenas um dos fatores da temperatura."
+ },
+ {
+  "id": "giants",
+  "chapter": "sistema-solar",
+  "question": "A temperatura de Júpiter mostrada no catálogo se refere a quê?",
+  "answers": [
+   "Ao centro do núcleo",
+   "À temperatura de uma superfície rochosa exposta",
+   "À atmosfera no nível de pressão de 1 bar"
+  ],
+  "correct": 2,
+  "explanation": "Gigantes não têm uma superfície sólida como a Terra. O nível de 1 bar permite uma comparação definida; níveis mais profundos são mais quentes."
+ },
+ {
+  "id": "air",
+  "chapter": "terra-e-atmosfera",
+  "question": "Qual é o gás mais abundante no ar seco da Terra?",
+  "answers": [
+   "Nitrogênio",
+   "Oxigênio",
+   "Dióxido de carbono"
+  ],
+  "correct": 0,
+  "explanation": "O nitrogênio corresponde a cerca de 78% do ar seco e o oxigênio a cerca de 21%. Vapor de água é variável."
+ },
+ {
+  "id": "atmosphere-layers",
+  "chapter": "terra-e-atmosfera",
+  "question": "Em qual camada ocorre a maior parte do tempo meteorológico?",
+  "answers": [
+   "Exosfera",
+   "Troposfera",
+   "Mesosfera"
+  ],
+  "correct": 1,
+  "explanation": "A troposfera é a camada mais baixa e concentra a maior parte do vapor de água. Seu limite superior varia com latitude e condições atmosféricas."
+ }
+]
