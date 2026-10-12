@@ -92,3 +92,21 @@ class ReceiptTransactionTests(unittest.TestCase):
             self.assertEqual(report['receipt_index']['full_scans'],1)
             self.assertEqual(len(report['rejected']),5)
             self.assertIsNotNone(packed)
+
+    def test_large_shared_intent_build_and_rollback_have_linear_key_work(self):
+        rows=[self.row(0,'REJECTED_TERMINAL',effect='effect-'+str(i),payload=i) for i in range(5000)]
+        rows.sort(key=receipts.ReceiptIndex._key)
+        with tempfile.TemporaryDirectory() as work:
+            root=Path(work)
+            with patch.object(receipts,'_load_receipts_uncached',return_value=rows.copy()), \
+                 patch.object(receipts.ReceiptIndex,'_key',wraps=receipts.ReceiptIndex._key) as keys, \
+                 receipts.receipt_transaction(root) as index:
+                checkpoint=receipts.receipt_savepoint(root)
+                self.assertEqual(index.rows(),rows)
+                self.assertEqual(index.conflict('same','different','unrelated',None),rows[-1])
+                added=self.row(1,payload='new')
+                index.add(added)
+                receipts.restore_receipt_savepoint(root,checkpoint)
+                self.assertEqual(index.rows(),rows)
+                self.assertLess(keys.call_count,3*len(rows))
+                self.assertEqual(index.full_scans,1)

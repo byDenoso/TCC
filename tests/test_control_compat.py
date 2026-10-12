@@ -8,7 +8,7 @@ from runtime.nexo_agent_api import autonomy
 from runtime.nexo_agent_api.control_compat import (
     AUTHORITY_PATH,POLICY_PATH,ControlCompatibilityError,control_from_bundle,
     prepare_migration,read_control_compat,inventory_consumers)
-from runtime.nexo_agent_api.live_tower import build_live_tower_payload,materialize_live_tower,verify_live_tower
+from runtime.nexo_agent_api.live_tower import build_live_tower_payload,materialize_live_tower,verify_live_tower,publish_live_tower
 from runtime.nexo_agent_api.memory import Snapshot,SourceError
 from runtime.nexo_agent_api.service import AgentService
 from runtime.nexo_agent_api.tower_apply import apply_document
@@ -141,3 +141,34 @@ class ControlCompatTests(unittest.TestCase):
                 materialize_live_tower(json.dumps(bundle).encode(),root)
             self.assertEqual(before,{str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()})
             self.assertFalse((Path(work)/'late.json').exists())
+
+    def test_migration_rollback_removes_only_verified_unedited_components(self):
+        raw=raw_tower();migrated,_=prepare_migration(raw)
+        with tempfile.TemporaryDirectory() as work:
+            root,_=materialize_live_tower(migrated,work)
+            materialize_live_tower(raw,root)
+            self.assertTrue((root/'CONTROL.json').exists())
+            self.assertFalse((root/POLICY_PATH).exists());self.assertFalse((root/AUTHORITY_PATH).exists())
+            self.assertEqual(read_control_compat(root),json.loads(raw)['files']['CONTROL.json']['value'])
+            repacked=build_live_tower_payload(root,base=json.loads(raw))
+            self.assertNotIn(POLICY_PATH,repacked['files']);self.assertNotIn(AUTHORITY_PATH,repacked['files'])
+        with tempfile.TemporaryDirectory() as work:
+            root,_=materialize_live_tower(migrated,work)
+            (root/AUTHORITY_PATH).write_text('unpublished authority edit')
+            before={str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            with self.assertRaisesRegex(ValueError,'LOCAL_CHANGES_PRESENT'):materialize_live_tower(raw,root)
+            self.assertEqual(before,{str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()})
+
+    def test_policy_repacked_from_disk_and_fresh_destination_preserves_carryover(self):
+        source=json.loads(raw_tower())
+        source['files']['unscanned/private-evidence.json']={'encoding':'json','value':{'result':[1.25,2.5]}}
+        import hashlib
+        revision='sha256:'+hashlib.sha256(json.dumps(source['files'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        source.update(revision=revision,state_fingerprint=revision,file_count=len(source['files']))
+        migrated,_=prepare_migration(json.dumps(source).encode())
+        with tempfile.TemporaryDirectory() as work:
+            root,_=materialize_live_tower(migrated,Path(work)/'root')
+            repacked=build_live_tower_payload(root)
+            self.assertEqual(control_from_bundle(repacked)['mode'],'ACTIVE')
+            target=Path(work)/'fresh.json';publish_live_tower(root,target=target)
+            self.assertEqual(json.loads(target.read_bytes())['files'],json.loads(migrated)['files'])

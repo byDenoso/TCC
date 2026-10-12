@@ -26,6 +26,7 @@ def read_live_tower_bytes(raw: bytes) -> dict[str, Any]:
 
 _JSON_SURFACES = (
     "CONTROL.json",
+    "runtime/executor_policy.json",
     "roadmaps/**/*.json",
     "entities/**/*.json",
     "indexes/**/*.json",
@@ -132,7 +133,8 @@ def publish_live_tower(
     destination = Path(target) if target is not None else root / LIVE_TOWER_NAME
     # The previous live object at the destination is the base: whatever the
     # local scan does not own survives the repack.
-    base = read_live_tower_bytes(destination.read_bytes()) if destination.is_file() else None
+    base_path = destination if destination.is_file() else root / LIVE_TOWER_NAME
+    base = read_live_tower_bytes(base_path.read_bytes()) if base_path.is_file() else None
     payload = build_live_tower_payload(root, updated_at=updated_at, base=base)
     raw = _canonical(payload) + b"\n"
 
@@ -206,22 +208,28 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
             raise ValueError('unsafe live Tower path')
         targets[relative] = target
     root.mkdir(parents=True, exist_ok=True)
-    # A reused materialization must not retain a retired CONTROL from its
-    # previous verified snapshot. Never delete an unknown or locally edited file.
-    old_control = root / "CONTROL.json"
-    if "CONTROL.json" not in bundle["files"] and old_control.exists():
+    # Preflight representation cleanup in both migration and rollback directions.
+    # No file is removed until every obsolete component is verified and unedited.
+    from .control_compat import POLICY_PATH, AUTHORITY_PATH
+    obsolete = (["CONTROL.json"] if "CONTROL.json" not in bundle['files']
+                else [POLICY_PATH, AUTHORITY_PATH])
+    obsolete = [relative for relative in obsolete if (root / relative).exists()]
+    if obsolete:
         previous_path = root / LIVE_TOWER_NAME
         if not previous_path.is_file():
-            raise ValueError("CONTROL_RETIREMENT_UNKNOWN_LOCAL_FILE")
+            raise ValueError("CONTROL_REPRESENTATION_UNKNOWN_LOCAL_FILE")
         previous = read_live_tower_bytes(previous_path.read_bytes())
         verify_live_tower(previous)
-        entry = previous["files"].get("CONTROL.json")
-        if not isinstance(entry, dict) or entry.get("encoding") != "json":
-            raise ValueError("CONTROL_RETIREMENT_UNKNOWN_LOCAL_FILE")
-        expected = (json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
-        if old_control.read_bytes() != expected:
-            raise ValueError("CONTROL_RETIREMENT_LOCAL_CHANGES_PRESENT")
-        old_control.unlink()
+        control_from_bundle(previous)
+        for relative in obsolete:
+            entry = previous['files'].get(relative)
+            if not isinstance(entry, dict) or entry.get('encoding') != 'json':
+                raise ValueError('CONTROL_REPRESENTATION_UNKNOWN_LOCAL_FILE')
+            expected = (json.dumps(entry['value'],ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode()
+            if (root / relative).read_bytes() != expected:
+                raise ValueError('CONTROL_REPRESENTATION_LOCAL_CHANGES_PRESENT')
+    for relative in obsolete:
+        (root / relative).unlink()
     for relative, entry in bundle["files"].items():
         if not isinstance(relative, str) or not isinstance(entry, dict):
             continue
