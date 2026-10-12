@@ -271,7 +271,7 @@ section('Imagens, créditos e links');
   ok('target=_blank com rel=noopener', unsafe === 0);
   // links internos
   const hrefs = await p.evaluate(() => [...new Set([...document.querySelectorAll('a[href^="/"]')].map((a) => a.getAttribute('href').split('#')[0].split('?')[0]))]);
-  for (const h of hrefs) { const r = await p.request.get(BASE + h); ok(`link interno ${h}`, r.ok(), String(r.status())); }
+  for (const h of hrefs) { const r = await p.request.get(new URL(h, BASE + "/").href); ok(`link interno ${h}`, r.ok(), String(r.status())); }
   for (const c of CHAPTERS) {
     await p.goto(`${BASE}/capitulos/${c}/`, { waitUntil: 'networkidle' });
     const refs = await p.locator('a[href^="http"]').count();
