@@ -66,8 +66,13 @@ Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONL
    prefixado por `sched-v1-`; nunca use a timestamp do pulso como nova
    identidade para repeticoes da mesma proposta.
 3. Confira pelo `stable_id` a coluna A da planilha e
-   `byDenoso/Pantheon@main:nexo-one/scheduled-spool-ack.json` (key `acked`);
-   confira tambem recibo/efeito canonico quando disponivel. Se ja existe
+   `byDenoso/Pantheon@main:nexo-one/scheduled-spool-ack.json` (key `acked`)
+   quando a proposta for publicavel por politica de recibos. **Recibos de
+   INTEGRITY_REPORT/BOARD_POST privados nao entram no ack publico**:
+   `gateway_resolved` pode ficar vazio mesmo quando a Tower aplicou o efeito.
+   Para esses tipos, use a entidade e o recibo **privados** na Tower; falta
+   no ack publico NAO e falha de escrita nem permissao para duplicar.
+   confira tambem recibo/efeito canonico sempre que ha acesso autorizado. Se ja existe
    mesmo ID, nao crie segunda linha; diferenca de bytes e CONFLITO,
    nao substituicao. Se busca/leitura for degradada, pare em UNKNOWN.
 4. Se a API nativa `batch_update_spreadsheet` estiver **realmente**
