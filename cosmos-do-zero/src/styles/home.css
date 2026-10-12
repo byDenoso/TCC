@@ -1,8 +1,8 @@
 /* ═════════ 01 · Jornadas ═════════ */
 .intro-section { padding: 137px 0 123px; }
 .intro-head { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 60px; margin-top: 42px; margin-bottom: 58px; align-items: end; }
-.intro-head h2, .section-heading { font-size: clamp(46px, 5.7vw, 82px); max-width: 810px; }
-.intro-head h2 em, .timeline-head h2 em, .planets-head h2 em, .lab-intro h2 em { color: var(--accent-ink); }
+.intro-head :is(h1, h2), .section-heading { font-size: clamp(46px, 5.7vw, 82px); max-width: 810px; }
+.intro-head :is(h1, h2) em, .timeline-head h2 em, .planets-head h2 em, .lab-intro h2 em { color: var(--accent-ink); }
 .intro-head p { font-size: 17px; line-height: 1.75; color: var(--ink-2); margin: 0 0 5px; max-width: 340px; }
 .journey-status { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; font-size: 12px; color: var(--ink-2); padding-bottom: 25px; }
 .journey-status progress { height: 5px; width: 120px; border: 0; border-radius: 0; background: var(--surface); accent-color: var(--accent-ink); appearance: none; }
@@ -160,7 +160,7 @@
 .stellar-summary h4 { font-size: 34px; line-height: 1.12; letter-spacing: -0.022em; margin: 16px 0; }
 .stellar-summary p { font-size: 15px; line-height: 1.7; color: var(--ink-2); margin: 0; }
 .stellar-summary .star-timescale { font-size: 12px; color: var(--ink-2); margin-top: 16px; }
-.stellar-scene { margin: 0; padding: 0; gap: 10px; background: none; box-shadow: none; width: 100%; max-width: 560px; justify-self: center; }
+.stellar-scene { margin: 0; padding: 0; gap: 10px; background: none; box-shadow: none; width: 100%; min-width: 0; max-width: 560px; justify-self: center; }
 .stellar-path li button { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; cursor: pointer; border-radius: 8px; }
 .stellar-path li button:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 .stellar-path li button[aria-pressed="true"] p { color: var(--ink); font-weight: 700; }
@@ -241,8 +241,8 @@
 
 /* ═════════ 07 · Fontes ═════════ */
 .sources-section { background: var(--bg-alt); padding: var(--space-section) 0; }
-.sources-section h2 { font-size: clamp(43px, 5vw, 73px); line-height: 1.1; margin: 34px 0 26px; }
-.sources-section h2 em { color: var(--accent-ink); }
+.sources-section :is(h1, h2) { font-size: clamp(43px, 5vw, 73px); line-height: 1.1; margin: 34px 0 26px; }
+.sources-section :is(h1, h2) em { color: var(--accent-ink); }
 .source-intro { font-size: 17px; line-height: 1.75; color: var(--ink-2); max-width: 680px; }
 .evidence-key { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; margin: 40px 0 50px; }
 .evidence-key > div { border-top: 1px solid color-mix(in srgb, var(--line) 22%, transparent); padding-top: 19px; }
@@ -286,7 +286,7 @@
 @media (max-width: 760px) {
   .intro-section { padding: 92px 0 98px; }
   .intro-head { display: block; margin-top: 33px; margin-bottom: 37px; }
-  .intro-head h2, .section-heading { font-size: clamp(42px, 11.4vw, 67px); }
+  .intro-head :is(h1, h2), .section-heading { font-size: clamp(42px, 11.4vw, 67px); }
   .intro-head p { margin-top: 25px; font-size: 15px; max-width: none; }
   .journey-status { font-size: 12px; }
   .journey-status progress { width: 85px; }
@@ -359,7 +359,7 @@
   .comparison-table th, .comparison-table td { padding: 13px 9px 13px 0; }
   .comparison-table th:first-child { width: 30%; }
   .comparison-table tbody th { font-size: 12px; }
-  .stellar-exhibit { grid-template-columns: 1fr; padding: 35px 22px; gap: 30px; min-height: 0; }
+  .stellar-exhibit { grid-template-columns: minmax(0, 1fr); padding: 35px 22px; gap: 30px; min-height: 0; }
   .stellar-summary h4 { font-size: 30px; }
   .stellar-path { grid-template-columns: 1fr; gap: 0; margin-top: 30px; }
   .stellar-path li { border-top: 0; border-left: 2px solid var(--accent); padding: 0 0 22px 18px; display: flex; gap: 15px; align-items: baseline; }
@@ -386,7 +386,7 @@
   .image-credits h3 { font-size: 22px; }
   .reference-index ul { columns: 1; }
   .source-intro { font-size: 16px; }
-  .sources-section h2 { font-size: clamp(40px, 10.6vw, 65px); }
+  .sources-section :is(h1, h2) { font-size: clamp(40px, 10.6vw, 65px); }
 }
 @media (max-width: 400px) {
   .chapter-button { grid-template-columns: 46px 1fr 30px; gap: 8px; }

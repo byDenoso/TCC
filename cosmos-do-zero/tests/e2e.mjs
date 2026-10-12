@@ -37,6 +37,7 @@ for (const w of WIDTHS) {
   for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/laboratorio/', '/glossario/', '/fontes/', '/404.html']) {
     await p.goto(BASE + path, { waitUntil: 'networkidle' });
     ok(`sem rolagem horizontal ${w}px ${path}`, (await overflow(p)) <= 0, `(+${await overflow(p)}px)`);
+    if (await overflow(p) > 0) console.log('OVERFLOW_DETAIL', await p.evaluate(() => [...document.querySelectorAll('main *')].map(n => ({tag:n.tagName, class:n.className?.baseVal ?? n.className, right:n.getBoundingClientRect().right, width:n.getBoundingClientRect().width, minWidth:getComputedStyle(n).minWidth})).filter(n => n.right > innerWidth + 1 && n.width > 0).slice(0,15)));
     ok(`sem erros ${w}px ${path}`, p.errors.length === 0, p.errors.join(' | '));
     if (SHOTS && (path === '/' || PRIMARY.some(id => path.includes(id)) || path.includes('sistema-solar'))) {
       mkdirSync('docs/screenshots', { recursive: true });
@@ -601,7 +602,9 @@ section('Reauditoria: laboratório, títulos e procedência');
   const p = await page(390);
   await p.goto(`${BASE}/laboratorio/?massa=30`, { waitUntil: 'networkidle' });
   const challenge = p.getByRole('link', { name: '03 Testar suas ideias ↓', exact: true });
-  await challenge.focus(); await p.keyboard.press('Enter');
+  await challenge.focus();
+  await Promise.all([p.waitForURL(url => url.pathname === new URL(BASE + '/').pathname && url.hash === '#desafio'), p.keyboard.press('Enter')]);
+  await p.locator('#desafio').waitFor({state:'visible'});
   ok('laboratório: link por teclado chega ao desafio da home', new URL(p.url()).pathname === new URL(BASE + '/').pathname && new URL(p.url()).hash === '#desafio' && await p.locator('#desafio').isVisible());
   for (const route of ['glossario', 'fontes']) {
     await p.goto(`${BASE}/${route}/`, { waitUntil: 'networkidle' });
