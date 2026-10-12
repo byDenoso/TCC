@@ -1,0 +1,157 @@
+name: Cosmos do Zero | GitHub Pages
+
+on:
+  push:
+    branches: [cosmos-do-zero]
+    paths:
+      - 'cosmos-do-zero/**'
+  workflow_dispatch:
+
+concurrency:
+  group: cosmos-do-zero-pages
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  SITE_URL: https://bydenoso.github.io
+  SITE_BASE: /TCC/cosmos-do-zero
+  SITE_PUBLIC: 'true'
+
+jobs:
+  build:
+    name: Analisar, testar e compilar
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    defaults:
+      run:
+        working-directory: cosmos-do-zero
+    steps:
+      - name: Checkout da branch isolada
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Node 24 + cache npm
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cosmos-do-zero/package-lock.json
+      - name: Instalar exatamente o lockfile
+        run: npm ci
+      - name: Astro e TypeScript
+        run: npm run check
+      - name: Testes unitarios
+        run: npm test
+      - name: Testes HTTP
+        run: npm run test:http
+      - name: Compilar site publico
+        run: npm run build
+      - name: Validar links, recursos, canonicas, robots e sitemap
+        run: npm run test:pages
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: E2E e renders no preview com caminho base
+        env:
+          BASE_URL: http://127.0.0.1:4321/TCC/cosmos-do-zero
+        run: |
+          set -euo pipefail
+          npm run preview -- --host 127.0.0.1 --port 4321 > /tmp/cosmos-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..40}; do
+            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
+          npm run test:e2e
+          npm run test:renders
+      - name: Empacotar site dentro do subcaminho de TCC
+        run: |
+          set -euo pipefail
+          mkdir -p pages-root/cosmos-do-zero
+          cp -a dist/. pages-root/cosmos-do-zero/
+          cat > pages-root/index.html <<'HTML'
+          <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Cosmos do Zero</title><meta http-equiv="refresh" content="0; url=/TCC/cosmos-do-zero/"><link rel="canonical" href="https://bydenoso.github.io/TCC/cosmos-do-zero/"></head><body><a href="/TCC/cosmos-do-zero/">Acessar Cosmos do Zero</a></body></html>
+          HTML
+          touch pages-root/.nojekyll
+          test -f pages-root/cosmos-do-zero/index.html
+      - name: Configurar GitHub Pages (requer habilitacao previa em Settings > Pages)
+        uses: actions/configure-pages@v6
+      - name: Upload do artefato publico
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: cosmos-do-zero/pages-root
+
+  deploy:
+    name: Publicar no GitHub Pages
+    needs: build
+    if: github.ref == 'refs/heads/cosmos-do-zero'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar artefato
+        id: deployment
+        uses: actions/deploy-pages@v5
+
+  verify:
+    name: Verificar site e capturar o publicado
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: cosmos-do-zero
+    env:
+      BASE_URL: https://bydenoso.github.io/TCC/cosmos-do-zero
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cosmos-do-zero/package-lock.json
+      - name: Dependencias do site e do Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: URL publica e recursos
+        run: |
+          set -euo pipefail
+          ready=0
+          for i in {1..30}; do
+            if curl -fLsS "$BASE_URL/" -o /tmp/cosmos-live.html && grep -q '<html' /tmp/cosmos-live.html; then ready=1; break; fi
+            sleep 10
+          done
+          test "$ready" -eq 1
+          curl -fLsS "$BASE_URL/robots.txt" | grep -F 'Allow: /TCC/cosmos-do-zero/'
+          curl -fLsS "$BASE_URL/sitemap.xml" | grep -F 'https://bydenoso.github.io/TCC/cosmos-do-zero/'
+          curl -fLsS "$BASE_URL/renders/hero-eclipse.webp" -o /tmp/cosmos-hero.webp
+          test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
+      - name: Jornada, escalas, interacoes, progresso e renders publicados
+        run: |
+          npm run test:e2e
+          npm run test:renders
+      - name: Capturas da URL real (desktop e mobile)
+        run: node scripts/capture-public.mjs
+      - name: Salvar capturas reais do Pages
+        uses: actions/upload-artifact@v7
+        with:
+          name: cosmos-do-zero-publicado
+          path: |
+            cosmos-do-zero/docs/screenshots/publicado-desktop.png
+            cosmos-do-zero/docs/screenshots/publicado-mobile.png
+          retention-days: 30
