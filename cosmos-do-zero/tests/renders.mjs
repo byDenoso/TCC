@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
-const base = process.env.BASE_URL ?? 'http://127.0.0.1:4321';
+const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
 const browser = await chromium.launch(process.env.CHROMIUM
   ? { executablePath: process.env.CHROMIUM, headless: true }
   : { headless: true });
@@ -20,7 +20,8 @@ const loaded = async selector => {
   checked++;
 };
 try {
-  await page.goto(base, { waitUntil: 'networkidle' });
+  const home = await page.goto(`${base}/`, { waitUntil: 'networkidle' });
+  assert.ok(home?.ok(), `home retornou HTTP ${home?.status()}`);
   await loaded('.hero-render');
   for (let i = 1; i <= 3; i++) await loaded(`.preview-card:nth-child(${i}) img`);
   await page.goto(`${base}/capitulos/galaxias-e-nebulosas/`, { waitUntil: 'networkidle' });
