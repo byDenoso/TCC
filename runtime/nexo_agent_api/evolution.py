@@ -838,8 +838,9 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
         by_id[post_id] = post
         unique.append(post)
     posts = unique
-    seen = {(p.get("from"), p.get("to"), " ".join(str(p.get("text") or "").split()).lower()) for p in old}
-    posts = [p for p in posts if (p["from"], p["to"], p["text"].lower()) not in seen]
+    # Equal text with different refs/reply/privacy is a distinct material note.
+    seen = {signature(p) for p in old}
+    posts = [p for p in posts if signature(p) not in seen]
     if not posts and not resolve:
         return NoOpRequests("BOARD_MESSAGE_ALREADY_RECORDED")
     request_identity = json.dumps({"post_ids": [p["id"] for p in posts], "resolve": sorted(resolve)},

@@ -1350,7 +1350,10 @@ def build_public_projection(
         observed_at = observed_at.replace(tzinfo=timezone.utc)
     generated_at = observed_at.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
     root = Path(root)
-    control = _read_json(root / "CONTROL.json", {}) or {}
+    from .control_compat import read_control_compat
+    # Preserve the legacy invalid preview for an entirely empty local root.
+    # A nonempty/partial canonical root must fail explicitly, never look empty.
+    control = {} if not any(root.iterdir()) else read_control_compat(root)
     snapshot = _read_json(root / "snapshot" / "latest.json", {}) or {}
     active_index = _read_json(root / "indexes" / "active-work.json", {}) or {}
 

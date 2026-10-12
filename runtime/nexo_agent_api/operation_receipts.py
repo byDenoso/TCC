@@ -394,6 +394,7 @@ class ReceiptIndex:
         self._rows = None
         self.full_scans = 0
         self._added = []
+        self.handoff_cache = {"entries": None, "written_paths": []}
         self._by_triplet = {}
         self._by_intent = {}
         self._terminal_intent = {}
@@ -475,6 +476,10 @@ def _transaction_index(root):
 @contextmanager
 def receipt_transaction(root: str | Path):
     """Use once around one materialized candidate; dispose on commit/CAS failure."""
+    existing = _transaction_index(root)
+    if existing is not None:
+        yield existing
+        return
     index = ReceiptIndex(root)
     token = _TRANSACTION_INDEX.set(index)
     try:
@@ -483,21 +488,26 @@ def receipt_transaction(root: str | Path):
         _TRANSACTION_INDEX.reset(token)
 
 
-def receipt_savepoint(root: str | Path) -> int | None:
+def receipt_savepoint(root: str | Path) -> tuple[int, int] | None:
     index = _transaction_index(root)
     if index is None:
         return None
     index.ensure_loaded()
-    return len(index._added)
+    return len(index._added), len(index.handoff_cache["written_paths"])
 
 
-def restore_receipt_savepoint(root: str | Path, savepoint: int | None) -> None:
+def restore_receipt_savepoint(root: str | Path, savepoint: tuple[int, int] | None) -> None:
     index = _transaction_index(root)
     if index is not None and savepoint is not None:
         # The checkpoint is O(1); rebuild only on a real rollback, without I/O.
-        reverted = {id(row) for row in index._added[savepoint:]}
+        receipt_position, handoff_position = savepoint
+        reverted_paths = set(index.handoff_cache["written_paths"][handoff_position:])
+        if index.handoff_cache["entries"] is not None:
+            index.handoff_cache["entries"] = [row for row in index.handoff_cache["entries"] if row[0] not in reverted_paths]
+        del index.handoff_cache["written_paths"][handoff_position:]
+        reverted = {id(row) for row in index._added[receipt_position:]}
         index._rows = [row for row in index._rows if id(row) not in reverted]
-        del index._added[savepoint:]
+        del index._added[receipt_position:]
         for table in (index._by_triplet, index._by_intent, index._terminal_intent,
                       index._terminal_effect, index._terminal_id):
             table.clear()

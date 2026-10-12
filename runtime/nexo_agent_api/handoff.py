@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from .service import TowerAgentIssue
-from .tower_paths import entity_path, json_file
+from .tower_paths import entity_path, json_file, logical_path
 
 RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT", "ENGINEER", "REFEREE_1", "REFUTADOR", "GUARDIAO"}
 ROLE_ALIASES = {"ADVISOR": "ENGINEER", "REFUTADOR": "REFEREE_1"}
@@ -74,15 +74,29 @@ def _write_event(root: Path, payload: dict) -> dict:
     event = dict(payload)
     event["event_id"] = event_id
     event["created_at"] = now.isoformat().replace("+00:00", "Z")
-    json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    path = json_file(event_dir, event_id)
+    path.write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    from .operation_receipts import _transaction_index
+    index = _transaction_index(root)
+    if index is not None and event.get("handoff_id"):
+        relative = logical_path(root, path)
+        index.handoff_cache["written_paths"].append(relative)
+        if index.handoff_cache["entries"] is not None:
+            index.handoff_cache["entries"].append((relative, event))
+            index.handoff_cache["entries"].sort(key=lambda row: row[0])
     return event
 
 
 def _handoff_events(root: Path) -> list[dict]:
+    from .operation_receipts import _transaction_index
+    index = _transaction_index(root)
+    if index is not None and index.handoff_cache["entries"] is not None:
+        return [row[1] for row in index.handoff_cache["entries"]]
     event_root = root / "events"
     if not event_root.exists():
         return []
     events = []
+    entries = []
     for path in sorted(event_root.rglob("*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -90,6 +104,9 @@ def _handoff_events(root: Path) -> list[dict]:
             continue
         if isinstance(payload, dict) and payload.get("handoff_id"):
             events.append(payload)
+            entries.append((logical_path(root, path), payload))
+    if index is not None:
+        index.handoff_cache["entries"] = entries
     return events
 
 

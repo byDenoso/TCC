@@ -11,6 +11,21 @@ from .tower_paths import fs_path
 _DOCUMENT_PREFIXES = ("roadmaps/", "indexes/", "contracts/", "manifests/", "evolution/")
 
 
+def board_effect_readback(root: Path, request: dict) -> bool:
+    """A document receipt cannot stand in for the actual intended board effect."""
+    if request.get("document") != "evolution/board.json":
+        return True
+    try:
+        board = json.loads((root / "evolution/board.json").read_text(encoding="utf-8"))
+        actual = {str(row["id"]): row for row in board.get("posts") or [] if isinstance(row, dict) and row.get("id")}
+        expected = (request.get("merge") or {}).get("posts") or []
+        return all(isinstance(row, dict) and str(row.get("id") or "") in actual
+                   and all(actual[str(row["id"])].get(key) == value for key, value in row.items())
+                   for row in expected)
+    except (OSError, ValueError, TypeError, KeyError):
+        return False
+
+
 def apply_document(root: Path, request: dict) -> dict:
     """Deep-merge ``request['merge']`` into a Tower document (roadmaps, indexes, ...).
 
@@ -106,6 +121,9 @@ def apply_document(root: Path, request: dict) -> dict:
         merged["posts"] = merged["posts"][-300:]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(merged, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+    if not board_effect_readback(root, request):
+        return {"request_id": request.get("request_id"), "accepted": False,
+                "issue": {"code": "BOARD_EFFECT_READBACK_MISSING"}}
     return {"request_id": request.get("request_id"), "accepted": True, "document": relative, "readback": "PASS"}
 
 
