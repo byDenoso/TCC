@@ -217,6 +217,21 @@ As dez Tasks carregam `gpt/skills/nexo-master-router-0.5.0.md` e
   apply/handoff`, upload direto da Tower, sediment/TXT bridge, `inbox done` ou edição
   manual de `tower-head.json` para promover uma simulação local a estado canônico.
 
+## Ponte restrita para falha local de arquivo no ChatGPT Tasks (12/10/2026)
+
+O Writer privado existente consome um `NEXO_SCHEDULED_SPOOL` em Google Sheets. Se a
+automacao estiver impedida somente de passar um arquivo exportado pelo runtime,
+ela pode entregar `BOARD_POST`, `INTEGRITY_REPORT` ou `LEARNING_SIGNAL` de
+baixo risco como quatro celulas por `appendCells`, mediante o contrato
+`gpt/skills/nexo-connectors-0.5.0.md`, secao `Ponte privada de celulas`.
+Validar identidade `sched-v1-...`, tipo, UTC, Base64URL, ACL, preflight contra
+duplicata, tamanho e readback; nunca reivindicar `APPLIED` sem recibo da Tower.
+O arquivo em `NEXO_INBOX` continua **obrigatorio** para HANDOFF/TRANSITION
+e qualquer operacao que exija origem DRIVE. A ponte Sheets nao converte
+GATEWAY em DRIVE. Recusa 403/ACL/politica, payload confidencial nao permitido,
+insuficiencia de readback ou ausencia de write Sheets resultam em LOCAL_ONLY,
+nao em tentativas via Git, Doc, token alternativo ou outro Writer.
+
 ## Inboxes consumidos por adapters locais e pelo Writer
 
 O leitor local `python scripts/nexo_tower.py inbox list` também conhece o inbox
