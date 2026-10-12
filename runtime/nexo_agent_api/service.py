@@ -350,10 +350,13 @@ class AgentService:
         )
 
     def continue_campaign(self, campaign_id: str) -> dict[str, Any]:
-        """Return one recovery-first continuation decision for a campaign.
+        """Choose one continuation without blocking on an unrelated candidate.
 
-        ACTIVE is the normal operational mode. SHADOW remains available only
-        when explicitly requested for diagnostics or staged rollout.
+        An active run must be reconciled before considering a new dispatch.
+        Independent READY tests outrank idle checkpoints, and a READY test
+        needing an adapter cannot hide another READY test whose existing
+        capability is resolved. This method recommends an action only: Writer
+        reservation, quota, and scientific contract checks remain mandatory.
         """
         requested_mode = str(os.getenv("NEXO_CAMPAIGN_CONTINUATION_MODE", "ACTIVE")).upper()
         mode = requested_mode if requested_mode in {"OFF", "SHADOW", "ACTIVE"} else "ACTIVE"
@@ -364,43 +367,63 @@ class AgentService:
         if frontier.get("terminal"):
             return {"campaign_id": campaign_id, "mode": mode, "action": "TERMINAL", "frontier": frontier}
 
+        active = list(frontier.get("active") or [])
         recoverable = list(frontier.get("recoverable") or [])
-        if recoverable:
+        ready = list(frontier.get("ready") or [])
+
+        if active:
+            # RUNNING is not a free slot. Never recommend a competing dispatch
+            # while an original run is still active or its outcome is uncertain.
             proposed = {
                 "campaign_id": campaign_id,
                 "mode": mode,
-                "action": "RECOVER",
-                "test_id": recoverable[0],
+                "action": "RESUME",
+                "test_id": active[0],
                 "frontier": frontier,
             }
         else:
-            active = list(frontier.get("active") or [])
-            if active:
-                proposed = {
-                    "campaign_id": campaign_id,
-                    "mode": mode,
-                    "action": "RESUME",
-                    "test_id": active[0],
-                    "frontier": frontier,
-                }
-            else:
-                ready = list(frontier.get("ready") or [])
-                if not ready:
-                    return {"campaign_id": campaign_id, "mode": mode, "action": "NO_OP", "frontier": frontier}
-
-                test_id = ready[0]
+            resolved = None
+            repair = None
+            fallback = None
+            for test_id in ready:
                 source = (frontier.get("sources") or {}).get(test_id)
                 test = self._campaign_item(campaign_id, test_id, source)
                 execution = self.resolve_test_execution(test)
-                execution_status = str(execution.get("status") or "")
-                if execution_status == "RESOLVED":
-                    action = "DISPATCH"
-                elif execution_status == "REPAIR_REQUIRED":
-                    action = "REPAIR_CAPABILITY"
-                elif execution_status == "BLOCKED":
-                    action = "BLOCKED"
-                else:
-                    action = "RESOLVE_CAPABILITY"
+                state = str(execution.get("status") or "").upper()
+                candidate = (test_id, execution)
+                if state == "RESOLVED":
+                    resolved = candidate
+                    break
+                if state == "REPAIR_REQUIRED" and repair is None:
+                    repair = candidate
+                if fallback is None:
+                    fallback = candidate
+
+            if resolved is not None:
+                test_id, execution = resolved
+                proposed = {
+                    "campaign_id": campaign_id,
+                    "mode": mode,
+                    "action": "DISPATCH",
+                    "test_id": test_id,
+                    "execution": execution,
+                    "frontier": frontier,
+                }
+            elif recoverable:
+                proposed = {
+                    "campaign_id": campaign_id,
+                    "mode": mode,
+                    "action": "RECOVER",
+                    "test_id": recoverable[0],
+                    "frontier": frontier,
+                }
+            elif repair is not None or fallback is not None:
+                test_id, execution = repair if repair is not None else fallback
+                state = str(execution.get("status") or "").upper()
+                action = (
+                    "REPAIR_CAPABILITY" if state == "REPAIR_REQUIRED" else
+                    "BLOCKED" if state == "BLOCKED" else "RESOLVE_CAPABILITY"
+                )
                 proposed = {
                     "campaign_id": campaign_id,
                     "mode": mode,
@@ -409,6 +432,8 @@ class AgentService:
                     "execution": execution,
                     "frontier": frontier,
                 }
+            else:
+                return {"campaign_id": campaign_id, "mode": mode, "action": "NO_OP", "frontier": frontier}
 
         if mode == "SHADOW":
             shadow = dict(proposed)

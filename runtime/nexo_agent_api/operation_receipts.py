@@ -404,25 +404,28 @@ class ReceiptIndex:
     def _key(row):
         return str(row.get("occurred_at") or ""), str(row.get("receipt_id") or "")
 
-    def _insert(self, rows, row):
-        position = bisect_right([self._key(value) for value in rows], self._key(row))
+    def _insert(self, rows, row, *, sorted_input=False):
+        if sorted_input:
+            rows.append(row)
+            return
+        position = bisect_right(rows, self._key(row), key=self._key)
         rows.insert(position, row)
 
-    def _index(self, row):
+    def _index(self, row, *, sorted_input=False):
         triplet = row["intent_id"], row["payload_sha256"], row["effect_id"]
-        self._insert(self._by_triplet.setdefault(triplet, []), row)
-        self._insert(self._by_intent.setdefault(row["intent_id"], []), row)
+        self._insert(self._by_triplet.setdefault(triplet, []), row, sorted_input=sorted_input)
+        self._insert(self._by_intent.setdefault(row["intent_id"], []), row, sorted_input=sorted_input)
         if row["outcome"] == "REJECTED_TERMINAL":
-            self._insert(self._terminal_intent.setdefault(row["intent_id"], []), row)
-            self._insert(self._terminal_effect.setdefault(row["effect_id"], []), row)
-            self._insert(self._terminal_id.setdefault(row["receipt_id"], []), row)
+            self._insert(self._terminal_intent.setdefault(row["intent_id"], []), row, sorted_input=sorted_input)
+            self._insert(self._terminal_effect.setdefault(row["effect_id"], []), row, sorted_input=sorted_input)
+            self._insert(self._terminal_id.setdefault(row["receipt_id"], []), row, sorted_input=sorted_input)
 
     def ensure_loaded(self):
         if self._rows is None:
             self.full_scans += 1
             self._rows = _load_receipts_uncached(self.root)
             for row in self._rows:
-                self._index(row)
+                self._index(row, sorted_input=True)
         return self
 
     def rows(self):
@@ -499,7 +502,7 @@ def restore_receipt_savepoint(root: str | Path, savepoint: int | None) -> None:
                       index._terminal_effect, index._terminal_id):
             table.clear()
         for row in index._rows:
-            index._index(row)
+            index._index(row, sorted_input=True)
 
 
 def load_receipts(root: str | Path) -> list[dict]:
