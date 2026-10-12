@@ -886,7 +886,8 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         return [{"nexo_operation": kind, "payload": dict(body), "role": item.get("source"),
                  "created_at": item.get("created_at")}]
     if kind in {"HANDOFF", "HANDOFF_TRANSITION"}:
-        if str(item.get("_inbox_source") or "").upper() != "DRIVE":
+        verified_private_source = str(item.get("_inbox_source") or "").upper()
+        if verified_private_source not in {"DRIVE", "DRIVE_SHEET"}:
             raise ProposalError("PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX")
         if kind == "HANDOFF":
             envelope = body.get("handoff") if isinstance(body.get("handoff"), dict) else body
@@ -905,7 +906,7 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             missing = [key for key in required if not isinstance(envelope.get(key), str) or not envelope[key].strip()]
             if missing:
                 raise ProposalError("HANDOFF_FIELDS_REQUIRED:" + ",".join(missing))
-            return [{"nexo_operation": "HANDOFF_CREATE", "_inbox_source": "DRIVE", "handoff": dict(envelope)}]
+            return [{"nexo_operation": "HANDOFF_CREATE", "_inbox_source": verified_private_source, "handoff": dict(envelope)}]
 
         transition = body.get("transition") if isinstance(body.get("transition"), dict) else body
         unknown = sorted(set(transition) - {"handoff_id", "state", "writer_role"})
@@ -921,7 +922,7 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         missing = [key for key in required if not isinstance(transition.get(key), str) or not transition[key].strip()]
         if missing:
             raise ProposalError("HANDOFF_TRANSITION_FIELDS_REQUIRED:" + ",".join(missing))
-        return [{"nexo_operation": "HANDOFF_TRANSITION", "_inbox_source": "DRIVE",
+        return [{"nexo_operation": "HANDOFF_TRANSITION", "_inbox_source": verified_private_source,
                  "transition": {"handoff_id": transition["handoff_id"], "state": state,
                                 "writer_role": transition["writer_role"]}}]
 
