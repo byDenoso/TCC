@@ -28,7 +28,7 @@ export function initNav(): void {
   // Destaque da seção atual no menu principal
   const links = new Map($$<HTMLAnchorElement>('.main-nav a[data-spy]').map((a) => [a.dataset.spy!, a]));
   if (!links.size) return;
-  const targets = ['capitulos', 'explorar', 'extras'].map((id) => document.getElementById(id)).filter((n): n is HTMLElement => !!n);
+  const targets = ['observatorio', 'capitulos', 'explorar', 'extras'].map((id) => document.getElementById(id)).filter((n): n is HTMLElement => !!n);
   if (!targets.length || !('IntersectionObserver' in window)) return;
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {

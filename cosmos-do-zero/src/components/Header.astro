@@ -3,6 +3,7 @@ import { u } from '../lib/url';
 interface Props { variant?: 'hero' | 'solid'; }
 const { variant = 'hero' } = Astro.props;
 const nav = [
+  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro instrumentos' },
   { href: '/#capitulos', label: 'As três jornadas', mobile: 'As três jornadas' },
   { href: '/#explorar', label: 'Explorar', mobile: 'Explorações do cosmos' },
   { href: '/#extras', label: 'Ir além', mobile: 'Estrelas, planetas e experiências' }
@@ -25,7 +26,14 @@ const more = [
     <nav class="main-nav" aria-label="Navegação principal">
       {nav.map((n) => <a href={u(n.href)} data-spy={n.href.slice(2)}>{n.label}</a>)}
     </nav>
-    <a class="header-cta" href={u('/#glossario')}>Dicionário do cosmos <span aria-hidden="true">↗</span></a>
+    <div class="header-tools">
+      <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Usar tema escuro">
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></svg>
+        <span class="theme-label" data-theme-label>Escuro</span>
+      </button>
+      <a class="header-cta" href={u('/#glossario')}>Dicionário do cosmos <span aria-hidden="true">↗</span></a>
+    </div>
     <details class="mobile-menu" data-mobile-menu>
       <summary aria-label="Abrir ou fechar a navegação">Menu <span aria-hidden="true">+</span></summary>
       <nav aria-label="Navegação móvel">

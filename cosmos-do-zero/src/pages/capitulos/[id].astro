@@ -4,6 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
 import QuizCard from '../../components/QuizCard.astro';
 import CosmosScene from '../../components/CosmosScene.astro';
+import Observatorio from '../../components/Observatorio.astro';
 import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits } from '../../data';
 import { photos } from '../../lib/images';
 import { chapterUrl, u } from '../../lib/url';
@@ -23,6 +24,7 @@ const photoKey = chapterPhotoKey[ch.id];
 const credit = photoKey ? imageCredits[['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'].indexOf(photoKey)] : undefined;
 const [checkA, checkB] = ch.checkTitle.split('|');
 const ext = ' (abre em outra aba)';
+const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': ['expansao', 'receita'], 'misterios-do-cosmos': ['hubble', 'receita'] } as Record<string, ('tempo' | 'expansao' | 'hubble' | 'receita')[]>)[ch.id];
 ---
 <Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page">
   <div class="reading-bar" data-reading-bar aria-hidden="true"></div>
@@ -48,7 +50,8 @@ const ext = ' (abre em outra aba)';
       ) : (
         <figure class="chapter-concept"><img src={u(`/renders/${conceptRender}.webp`)} srcset={`${u(`/renders/${conceptRender}-small.webp`)} 600w, ${u(`/renders/${conceptRender}.webp`)} 1200w`} sizes="100vw" alt={`Representação artística para ${ch.title}, sem escala física e sem dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /><figcaption>RENDER CONCEITUAL POR IA · SEM ESCALA{ch.id === 'origem-do-universo' && ' · REPRESENTAÇÃO DA LUZ ANTIGA, NÃO É MAPA CMB'}</figcaption></figure>
       )}
-      {ch.experience && <CosmosScene experience={ch.experience} />}
+      {labStations && <Observatorio variant="chapter" stations={labStations} id={ch.experience === 'expansion' ? 'exploracao' : 'observatorio'} />}
+      {ch.experience && ch.experience !== 'expansion' && <CosmosScene experience={ch.experience} />}
       <div class="reader-grid page-width">
         <aside class="reader-aside">
           <div class="meta">Neste capítulo</div>

@@ -340,28 +340,27 @@ section('Três jornadas e explorações');
   const stoppedX = await p.locator('[data-light-pulse]').getAttribute('cx');
   await p.waitForTimeout(160);
   ok('luz pausa sem continuar', (await p.locator('[data-light-pulse]').getAttribute('cx')) === stoppedX && (await light.getAttribute('aria-pressed'))==='false');
-  await light.click(); await p.evaluate(() => window.scrollTo(0,0)); await p.waitForTimeout(200);
+  await light.click(); await p.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' })); await p.waitForTimeout(250);
   ok('luz pausa fora da área visível', (await light.getAttribute('aria-pressed')) === 'false');
   await p.goto(BASE + '/capitulos/origem-do-universo/');
   ok('segunda jornada leva aos mistérios', /misterios-do-cosmos/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
-  const galaxies=p.locator('[data-expansion-galaxy]');
-  const initial=await galaxies.first().getAttribute('transform');
-  const bound=await p.locator('[data-bound-system]').getAttribute('src');
-  const boundSize=await p.locator('[data-bound-system]').evaluate(e => ({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}));
-  await p.locator('[data-expansion-scale]').fill('1.5');
-  ok('escala altera separação das galáxias', await galaxies.first().getAttribute('transform') !== initial);
-  ok('sistema ligado mantém imagem e tamanho', await p.locator('[data-bound-system]').getAttribute('src') === bound && JSON.stringify(await p.locator('[data-bound-system]').evaluate(e => ({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}))) === JSON.stringify(boundSize));
-  const observerBefore=await galaxies.evaluateAll(nodes => nodes.map(n => n.getAttribute('transform')));
-  await p.locator('[data-expansion-observer]').selectOption('11');
-  ok('trocar observador muda o referencial', JSON.stringify(observerBefore) !== JSON.stringify(await galaxies.evaluateAll(nodes => nodes.map(n => n.getAttribute('transform')))));
-  ok('observador escolhido permanece na origem do referencial', await p.locator('[data-galaxy-id="11"]').getAttribute('transform')==='translate(0 0)');
-  ok('imagem renderizada preservada ao trocar observador', /galaxy-marker\.png$/.test(await p.locator('[data-galaxy-id="11"] [data-galaxy-body]').getAttribute('href')) && await p.locator('[data-galaxy-id="11"]').getAttribute('data-observer') === 'true' && await p.locator('[data-galaxy-id="12"]').getAttribute('data-observer') === 'false');
-  ok('observador selecionado é destacado', await p.locator('[data-galaxy-id="11"] [data-observer-ring]').getAttribute('data-hidden') === 'false');
-  await p.locator('[data-expansion-play]').click(); await p.waitForTimeout(300);
-  ok('expansão inicia por ação explícita', (await p.locator('[data-expansion-play]').getAttribute('aria-pressed')) === 'true');
-  await p.locator('[data-expansion-play]').click();
-  const scale=await p.locator('[data-expansion-scale]').inputValue(); await p.waitForTimeout(160);
-  ok('expansão pausa sem continuar', await p.locator('[data-expansion-scale]').inputValue() === scale);
+  {
+    const st=p.locator('[data-station="expansao"]');
+    const galaxies=st.locator('.e-galaxy');
+    const before=await galaxies.nth(40).getAttribute('transform');
+    await st.locator('[data-e-range]').evaluate(e=>{e.value='1.5';e.dispatchEvent(new Event('input',{bubbles:true}))});
+    ok('expansão: escala altera a separação das galáxias', await galaxies.nth(40).getAttribute('transform') !== before);
+    ok('expansão: leitura explica a proporção', /4 vezes mais/.test(await st.locator('[data-e-reading]').innerText()));
+    const all=await galaxies.evaluateAll(n=>n.map(x=>x.getAttribute('transform')));
+    await st.locator('.e-galaxy[role=button]').nth(3).click({force:true});
+    ok('expansão: tocar numa galáxia muda o referencial', JSON.stringify(all)!==JSON.stringify(await galaxies.evaluateAll(n=>n.map(x=>x.getAttribute('transform')))));
+    ok('expansão: galáxia escolhida fica no centro', await st.locator('.e-galaxy.is-observer').getAttribute('transform')==='translate(320.00 200.00)');
+    await st.locator('[data-e-play]').click(); await p.waitForTimeout(300);
+    ok('expansão inicia por ação explícita', (await st.locator('[data-e-play]').getAttribute('aria-pressed')) === 'true');
+    await st.locator('[data-e-play]').click();
+    const scale=await st.locator('[data-e-range]').inputValue(); await p.waitForTimeout(160);
+    ok('expansão pausa sem continuar', await st.locator('[data-e-range]').inputValue() === scale);
+  }
   await p.goto(BASE + '/capitulos/misterios-do-cosmos/');
   ok('luz antiga não é rotulada como mapa CMB', /não é um mapa CMB/.test(await p.locator('[data-evidence-panel="1"] figcaption').textContent()));
   ok('terceira jornada fecha no quiz', /#desafio/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
@@ -378,16 +377,97 @@ section('Cenas sem movimento e sem JavaScript');
 {
   const p=await page(390,{reducedMotion:'reduce'});
   await p.goto(BASE + '/capitulos/origem-do-universo/');
-  await p.locator('[data-expansion-play]').click();
-  ok('movimento reduzido usa mudança estática', (await p.locator('[data-expansion-play]').getAttribute('aria-pressed'))==='false' && await p.locator('[data-expansion-scale]').inputValue()==='1.6');
+  await p.locator('[data-e-play]').click();
+  ok('movimento reduzido usa mudança estática', (await p.locator('[data-e-play]').getAttribute('aria-pressed'))==='false' && await p.locator('[data-e-range]').inputValue()==='2.5');
   await p.context().close();
   const n=await page(390,{javaScriptEnabled:false});
-  for(const [id,kind] of [['galaxias-e-nebulosas','scale'],['origem-do-universo','expansion'],['misterios-do-cosmos','evidence']]) {
+  for(const [id,kind] of [['galaxias-e-nebulosas','scale'],['misterios-do-cosmos','evidence']]) {
     await n.goto(BASE + '/capitulos/'+id+'/');
     ok(`cena ${kind} tem conteúdo declarativo`, (await n.locator('[data-scene]').innerText()).length>500 && await n.locator('[data-scene] img').count()>0);
     if(kind==='evidence') ok('quatro evidências legíveis sem JS', await n.locator('[data-evidence-panel]:visible').count()===4);
   }
+  await n.goto(BASE + '/');
+  ok('sem JS: observatório avisa que precisa de JavaScript', /precisam de JavaScript/.test(await n.locator('#observatorio').innerText()));
   await n.context().close();
+}
+
+section('Observatório');
+{
+  const p=await page(1280);
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  const tabs=p.locator('[data-obs-tab]');
+  ok('4 experimentos', await tabs.count()===4);
+  // máquina do tempo
+  const t=p.locator('[data-station="tempo"]');
+  await t.locator('[data-t-preset="1090"]').click();
+  ok('tempo: luz mais antiga sai aos ~370 mil anos', /37\d mil anos/.test(await t.locator('[data-t-out="age"]').innerText()), await t.locator('[data-t-out="age"]').innerText());
+  ok('tempo: viajou ~13,8 bilhões de anos', /13,8 bilhões/.test(await t.locator('[data-t-out="look"]').innerText()));
+  ok('tempo: chega como micro-ondas ou infravermelho', /infravermelho|micro-ondas/.test(await t.locator('[data-t-out="line"]').innerText()));
+  ok('tempo: URL guarda z', /z=1090/.test(p.url()));
+  ok('tempo: época muda para luz liberada', /transparente/.test(await t.locator('[data-t-epoch-title]').innerText()));
+  await t.locator('[data-t-preset="0"]').click();
+  ok('tempo: hoje sem z na URL', !/[?&]z=/.test(p.url()));
+  await t.locator('[data-opt="b"]').click();
+  ok('tempo: palpite revela explicação', await t.locator('[data-guess-result]').isVisible());
+  // teclado nas abas
+  await tabs.first().focus(); await p.keyboard.press('ArrowRight');
+  ok('abas: seta direita abre o próximo', await p.locator('[data-station="expansao"]').isVisible() && /lab=expansao/.test(p.url()));
+  await p.keyboard.press('End');
+  ok('abas: End abre o último', await p.locator('[data-station="receita"]').isVisible());
+  // receita
+  const r=p.locator('[data-station="receita"]');
+  ok('receita: idade padrão 13,8', /13,8 bilhões/.test(await r.locator('[data-r-out="age"]').innerText()));
+  ok('receita: nosso Universo acelera', /acelerando/.test(await r.locator('[data-r-out="accel"]').innerText()));
+  await r.locator('[data-r-scenario="crunch"]').click();
+  ok('receita: matéria demais colapsa', /colapsa/.test(await r.locator('[data-r-out="fate"]').innerText()));
+  await r.locator('[data-r-scenario="materia"]').click();
+  ok('receita: só matéria freia', /freando/.test(await r.locator('[data-r-out="accel"]').innerText()) && /mais devagar/.test(await r.locator('[data-r-out="fate"]').innerText()));
+  await r.locator('[data-r-ol]').evaluate(e=>{e.value='1.5';e.dispatchEvent(new Event('input',{bubbles:true}))});
+  await r.locator('[data-r-om]').evaluate(e=>{e.value='0.05';e.dispatchEvent(new Event('input',{bubbles:true}))});
+  ok('receita: receita sem Big Bang mostra aviso', await r.locator('[data-r-warn]').isVisible());
+  await r.locator('[data-r-scenario="nosso"]').click();
+  await r.locator('[data-r-h0set="73.04"]').click();
+  ok('receita: H0 local deixa o Universo mais novo', /12,7 bilhões/.test(await r.locator('[data-r-out="age"]').innerText()), await r.locator('[data-r-out="age"]').innerText());
+  // hubble
+  await p.locator('[data-obs-tab="hubble"]').click();
+  const h=p.locator('[data-station="hubble"]');
+  await h.locator('.h-gal').nth(2).click();
+  ok('hubble: medir mostra distância e velocidade', /anos-luz/.test(await h.locator('[data-h-reading]').innerText()) && /km por segundo/.test(await h.locator('[data-h-reading]').innerText()));
+  await h.locator('[data-h-all]').click();
+  const res=await h.locator('[data-h-result]').innerText();
+  const m=res.match(/\+(\d+),(\d) km\/s a cada milhão/);
+  ok('hubble: ritmo medido plausível (18–25 km/s por milhão de anos-luz)', m && Number(m[1]+'.'+m[2])>18 && Number(m[1]+'.'+m[2])<25, res.slice(0,80));
+  await h.locator('[data-h-reveal]').click();
+  ok('hubble: revelar mostra valor do jogo', /valor certo do jogo/.test(await h.locator('[data-h-result]').innerText()));
+  await h.locator('[data-h-new]').click();
+  ok('hubble: céu novo zera medidas', /Nenhuma medida/.test(await h.locator('[data-h-result]').innerText()));
+  ok('observatório sem erros', p.errors.length===0, p.errors.join(' | '));
+  // deep link
+  const d=await page(390);
+  await d.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
+  ok('link direto abre a receita com valores', await d.locator('[data-station="receita"]').isVisible() && /colapsa/.test(await d.locator('[data-r-out="fate"]').innerText()));
+  await d.context().close();
+  await p.context().close();
+}
+
+section('Tema claro e escuro');
+{
+  const p=await page(1280,{colorScheme:'dark'});
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('segue o sistema (escuro)', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark');
+  const bgDark=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
+  await p.locator('[data-theme-toggle]').click();
+  ok('botão troca para claro', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && bgDark!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor));
+  await p.reload({ waitUntil: 'networkidle' });
+  ok('escolha persiste ao recarregar', await p.evaluate(()=>document.documentElement.dataset.theme)==='light');
+  ok('botão anuncia a próxima ação', /escuro/i.test(await p.locator('[data-theme-toggle]').getAttribute('aria-label')));
+  await p.context().close();
+  const q=await page(1280,{colorScheme:'light'});
+  await q.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }); });
+  await q.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await q.locator('[data-theme-toggle]').click();
+  ok('tema funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark' && q.errors.length===0, q.errors.join(' | '));
+  await q.context().close();
 }
 
 await browser.close();
