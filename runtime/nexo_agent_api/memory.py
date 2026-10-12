@@ -836,9 +836,13 @@ def prepare_pulse(tower: str | Path, cache: str | Path, role: str, query: str, *
     packet["input_source_sha256"] = snapshot.raw_sha256
     from .control_compat import control_from_bundle, AUTHORITY_PATH
     control = control_from_bundle(snapshot.payload)
+    path = 'CONTROL.json' if 'CONTROL.json' in snapshot.payload['files'] else AUTHORITY_PATH
     packet["control_reference"] = {"source_id": snapshot.source_id,
-                                   "path": "CONTROL.json" if "CONTROL.json" in snapshot.payload["files"] else AUTHORITY_PATH,
-                                   "content_sha256": digest(control), "tower_revision": snapshot.revision}
+                                   "path": path,
+                                   "content_sha256": digest(snapshot.payload['files'][path]['value']),
+                                   "tower_revision": snapshot.revision}
+    if path != 'CONTROL.json':
+        packet['control_reference']['compatibility_view_sha256'] = digest(control)
     return packet
 
 

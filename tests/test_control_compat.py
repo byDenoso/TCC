@@ -172,3 +172,22 @@ class ControlCompatTests(unittest.TestCase):
             self.assertEqual(control_from_bundle(repacked)['mode'],'ACTIVE')
             target=Path(work)/'fresh.json';publish_live_tower(root,target=target)
             self.assertEqual(json.loads(target.read_bytes())['files'],json.loads(migrated)['files'])
+
+    def test_history_required_and_pulse_file_reference_hash_matches_its_source(self):
+        from runtime.nexo_agent_api.memory import prepare_pulse,digest
+        from unittest.mock import patch
+        raw,report=prepare_migration(raw_tower());bundle=json.loads(raw)
+        for entry in (None,{'encoding':'json','value':{'tampered':'history'}}):
+            bad=copy.deepcopy(bundle)
+            if entry is None:bad['files'].pop(report['retained_history'])
+            else:bad['files'][report['retained_history']]=entry
+            with self.assertRaisesRegex(ControlCompatibilityError,'HISTORY_INVALID'):control_from_bundle(bad)
+        with tempfile.TemporaryDirectory() as work:
+            path=Path(work)/'source.json';path.write_bytes(raw)
+            with patch('runtime.nexo_agent_api.memory.Memory') as cache:
+                cache.return_value.sync.return_value={}
+                cache.return_value.context.return_value={}
+                packet=prepare_pulse(path,Path(work)/'cache','ADVISOR','test')
+            ref=packet['control_reference']
+            self.assertEqual(ref['content_sha256'],digest(bundle['files'][ref['path']]['value']))
+            self.assertEqual(ref['compatibility_view_sha256'],digest(control_from_bundle(bundle)))

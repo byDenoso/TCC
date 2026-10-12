@@ -70,6 +70,14 @@ def _derived(header, policy, authority):
             **{key: copy.deepcopy(authority[key]) for key in AUTHORITY_FIELDS}}
 
 
+def _verify_history(entry, legacy_sha256):
+    if (not isinstance(entry, dict) or entry.get('encoding') != 'json'
+            or not isinstance(entry.get('value'), dict)
+            or hashlib.sha256(json.dumps(entry,ensure_ascii=False,sort_keys=True,
+                                         separators=(',', ':')).encode()).hexdigest() != legacy_sha256):
+        raise ControlCompatibilityError('CONTROL_COMPAT_HISTORY_INVALID')
+
+
 def control_from_bundle(bundle):
     files = bundle.get('files') or {}
     entry = files.get('CONTROL.json')
@@ -85,7 +93,11 @@ def control_from_bundle(bundle):
         if not isinstance(entry, dict) or entry.get('encoding') != 'json' or not isinstance(entry.get('value'), dict):
             raise ControlCompatibilityError('CONTROL_COMPAT_COMPONENT_MISSING')
         return entry['value']
-    return _derived(bundle, value(POLICY_PATH), value(AUTHORITY_PATH))
+    policy, authority = value(POLICY_PATH), value(AUTHORITY_PATH)
+    control = _derived(bundle, policy, authority)
+    historical = 'events/migrations/control-' + policy['legacy_sha256'] + '.json'
+    _verify_history(files.get(historical), policy['legacy_sha256'])
+    return control
 
 
 def read_control_compat(root):
@@ -95,7 +107,11 @@ def read_control_compat(root):
         if (root / AUTHORITY_PATH).exists() or (root / POLICY_PATH).exists():
             raise ControlCompatibilityError('CONTROL_COMPAT_DUAL_AUTHORITY')
         return _read(path)
-    return _derived(_read(root / SOURCE_HEADER), _read(root / POLICY_PATH), _read(root / AUTHORITY_PATH))
+    policy, authority = _read(root / POLICY_PATH), _read(root / AUTHORITY_PATH)
+    control = _derived(_read(root / SOURCE_HEADER), policy, authority)
+    historical = 'events/migrations/control-' + policy['legacy_sha256'] + '.json'
+    _verify_history({'encoding':'json','value':_read(root / historical)}, policy['legacy_sha256'])
+    return control
 
 
 def authority_document(root):
