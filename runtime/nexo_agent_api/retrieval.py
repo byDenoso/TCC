@@ -326,14 +326,18 @@ class Retrieval(Memory):
         if snapshot.revision != "sha256:" + digest(snapshot.payload.get("files")) or snapshot.source_id != snapshot.payload.get("stable_file_id"):
             raise SourceError("Snapshot changed after validation")
         payload = snapshot.payload
+        from .control_compat import control_from_bundle
+        try:
+            control_from_bundle(payload)
+        except ValueError as exc:
+            raise SourceError("Canonical authority components invalid") from exc
         if (payload.get("contract") != LIVE_TOWER_CONTRACT or payload.get("authority") != "TOWER_V06"
                 or snapshot.source_id != LIVE_TOWER_FILE_ID or payload.get("storage") != "GOOGLE_DRIVE_PRIVATE"
                 or payload.get("truth_owner") != "TOWER_V06@GOOGLE_DRIVE_PRIVATE"
                 or payload.get("write_model") != "IN_PLACE_FILE_REVISION_CAS_READBACK"
                 or payload.get("file_count") != len(payload["files"])
                 or payload.get("state_fingerprint") != snapshot.revision
-                or payload.get("updated_at") != snapshot.observed_at
-                or payload["files"].get("CONTROL.json", {}).get("value", {}).get("truth_owner") != payload.get("truth_owner")):
+                or payload.get("updated_at") != snapshot.observed_at):
             raise SourceError("Canonical authority validation failed")
         before = self.head()
         if before and before["source_id"] != snapshot.source_id:

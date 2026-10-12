@@ -148,6 +148,9 @@ def _apply_one_request(root: Path, item: dict, request: dict, *,
 
     if operation not in {"HANDOFF_CREATE", "HANDOFF_TRANSITION"}:
         receipt = apply_requests(root, [request])[0]
+        from .tower_apply import board_effect_readback
+        if receipt.get("accepted", True) and not receipt.get("issue") and not board_effect_readback(root, request):
+            return {"accepted": False, "issue": {"code": "BOARD_EFFECT_READBACK_MISSING"}}
         if receipt.get("accepted", True) and not receipt.get("issue"):
             from .live_tower import publish_live_tower
 
@@ -1191,6 +1194,9 @@ def _run_optional_gc(raw: bytes, report: dict) -> None:
 
 
 def _main(argv: list[str]) -> int:
+    if argv and argv[0] == "context":
+        from .pulse_context import main as context_main
+        return context_main(argv[1:])
     if argv and argv[0] == "gc":
         from .tower_gc_cli import main as gc_main
         return gc_main(argv[1:])

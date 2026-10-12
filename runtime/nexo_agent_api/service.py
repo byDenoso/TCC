@@ -420,12 +420,15 @@ class AgentService:
 
     def bootstrap(self, role: str) -> dict[str, Any]:
         role = role.upper()
-        control = self._read_json("CONTROL.json")
+        from .control_compat import bootstrap_control, authority_document
+        control = bootstrap_control(self.root)
         snapshot = self._read_json("snapshot/latest.json")
         queue = self.queue_for(role)
         view = {
             "role": role,
             "control": control,
+            "control_reference": {"mode": "DERIVED_COMPAT_VIEW", "authority_ref": authority_document(self.root),
+                                  "identity_ref": "LIVE_TOWER_HEADER"},
             "event_cursor": snapshot.get("event_cursor"),
             "queue": queue,
             "queue_count": len(queue),

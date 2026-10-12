@@ -13,6 +13,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
+from .control_compat import AUTHORITY_PATH, read_control_compat, authority_document
 
 SCHEMA = "NEXO_AUTONOMY_MANDATE_V1"
 FRAGMENT_SCHEMA = "NEXO_OPERATIONAL_PROMPT_FRAGMENT_V1"
@@ -43,6 +44,8 @@ def envelope_hash(item):
 
 
 def read(root, relative):
+    if relative == "CONTROL.json":
+        return read_control_compat(root)
     try:
         value = json.loads((Path(root) / relative).read_text(encoding="utf-8"))
         return value if isinstance(value, dict) else {}
@@ -152,7 +155,7 @@ def operator_requests(item, body, root):
     merge = {"autonomy_mandate": value}
     if action == "REVOKE_AUTONOMY_MANDATE":
         merge["revoked_autonomy_mandates"] = sorted(set((read(root, "CONTROL.json").get("revoked_autonomy_mandates") or []) + [mid]))
-    requests = [{"request_id": "REQ-AUTONOMY-" + proposal[:32], "document": "CONTROL.json", "merge": merge,
+    requests = [{"request_id": "REQ-AUTONOMY-" + proposal[:32], "document": authority_document(root), "merge": merge,
                  "expected_mandate_revision": revision, "_autonomy_authority": HUMAN_AUTHORITY}]
     if action == "APPROVE_AUTONOMY_MANDATE":
         requests.append({"request_id": "REQ-AUTONOMY-CAPACITY-" + proposal[:32], "document": CAPACITY_DOC,
@@ -167,10 +170,10 @@ def operator_requests(item, body, root):
 def guard_document(root, request):
     """Control and evaluated fragments cannot be changed by generic requests."""
     relative = request.get("document")
-    protected = relative in {"CONTROL.json", FRAGMENTS_DOC, CAPACITY_DOC, "evolution/public_campaign_approvals.json",
+    protected = relative in {"CONTROL.json", AUTHORITY_PATH, FRAGMENTS_DOC, CAPACITY_DOC, "evolution/public_campaign_approvals.json",
                              "evolution/autonomy_capacity_reviews.json"}
     token = request.get("_autonomy_authority")
-    allowed = token is HUMAN_AUTHORITY if relative == "CONTROL.json" else token is WRITER_AUTHORITY
+    allowed = token is HUMAN_AUTHORITY if relative in {"CONTROL.json", AUTHORITY_PATH} else token is WRITER_AUTHORITY
     if protected and not allowed:
         return {"accepted": False, "request_id": request.get("request_id"),
                 "issue": {"code": "AUTONOMY_PROTECTED_DOCUMENT"}}
@@ -181,7 +184,9 @@ def guard_document(root, request):
         for gene in (request.get("merge") or {}).get("genes") or []:
             if (evolvable(gene) or evolvable(existing.get(gene.get("id"), {}))) and token is not WRITER_AUTHORITY:
                 return {"accepted": False, "issue": {"code": "AUTONOMY_GENE_REQUIRES_EVALUATED_CONVERTER"}}
-    if relative == "CONTROL.json":
+    if relative in {"CONTROL.json", AUTHORITY_PATH}:
+        if relative != authority_document(root):
+            return {"accepted": False, "issue": {"code": "CONTROL_COMPAT_DUAL_AUTHORITY"}}
         if (set(request.get("merge") or {}) - {"autonomy_mandate", "revoked_autonomy_mandates"}
                 or request.get("expected_mandate_revision") != int(mandate(root).get("revision") or 0)):
             return {"accepted": False, "issue": {"code": "MANDATE_REVISION_OR_TARGET_CONFLICT"}}

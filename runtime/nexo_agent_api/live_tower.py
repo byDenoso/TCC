@@ -195,6 +195,22 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     verify_live_tower(bundle)
     root = Path(destination).resolve()
     root.mkdir(parents=True, exist_ok=True)
+    # A reused materialization must not retain a retired CONTROL from its
+    # previous verified snapshot. Never delete an unknown or locally edited file.
+    old_control = root / "CONTROL.json"
+    if "CONTROL.json" not in bundle["files"] and old_control.exists():
+        previous_path = root / LIVE_TOWER_NAME
+        if not previous_path.is_file():
+            raise ValueError("CONTROL_RETIREMENT_UNKNOWN_LOCAL_FILE")
+        previous = read_live_tower_bytes(previous_path.read_bytes())
+        verify_live_tower(previous)
+        entry = previous["files"].get("CONTROL.json")
+        if not isinstance(entry, dict) or entry.get("encoding") != "json":
+            raise ValueError("CONTROL_RETIREMENT_UNKNOWN_LOCAL_FILE")
+        expected = (json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode()
+        if old_control.read_bytes() != expected:
+            raise ValueError("CONTROL_RETIREMENT_LOCAL_CHANGES_PRESENT")
+        old_control.unlink()
     for relative, entry in bundle["files"].items():
         if not isinstance(relative, str) or not isinstance(entry, dict):
             continue
@@ -212,9 +228,10 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
         target.write_text(data, encoding="utf-8")
     (root / LIVE_TOWER_NAME).write_bytes(raw)
 
-    control = json.loads((root / "CONTROL.json").read_text(encoding="utf-8"))
-    if control.get("truth_owner") != bundle.get("truth_owner"):
-        raise ValueError("materialized CONTROL truth_owner differs from live Tower")
+    from .control_compat import control_from_bundle, SOURCE_HEADER
+    control_from_bundle(bundle)
+    # Ephemeral header cache in this isolated materialization; never packed.
+    (root / SOURCE_HEADER).write_text(json.dumps({key: value for key, value in bundle.items() if key != "files"}), encoding="utf-8")
 
     metadata = {
         "export_role": "PUBLIC_READ_ONLY_DERIVED_COPY",
