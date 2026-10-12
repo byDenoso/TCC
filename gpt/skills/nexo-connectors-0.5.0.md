@@ -40,6 +40,14 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 
 ### Escrita
 
+### Ponte de arquivo exportado (ChatGPT -> Drive)
+- Para JSON bruto gerado no ChatGPT, **prefira o snapshot de arquivo exportado**, não um caminho do contêiner. Na superfície Files, depois de obter o `file_id` real do artefato exportado (formato `file_...`), faça **uma** operação `files.manage_library` com `{"operations":[{"operation":"upload","source_file_ref":{"file_id":"<file_id observado>"},"destination_path":"<pasta privada NEXO_INBOX>/<nome imutável>.json"}]}`. A pasta deve ser descoberta e conferida no Drive/Library; nunca invente file_id.
+- Na superfície nativa Google Drive `upload_file`, use somente o `file_uri` retornado de uma exportação/ação de arquivo compatível, com `parent_folder_id` confirmado. Não passe `/mnt/data/...`, caminhos Windows, URL textual ou base64 no lugar de `file_uri`.
+- `container_path` no `files.manage_library` só é elegível quando a sessão desse contêiner estiver de fato vinculada à ferramenta Files. `container_session_unavailable` ("No active container session was found for container_path") é **falha da ponte local**, não negação Drive/ACL nem problema do Writer: não repita o mesmo argumento. Se existir snapshot exportado **do mesmo arquivo**, recupere pela referência exata; sem referência verificável, mantenha `PENDING_WRITE_LOCAL_ONLY`.
+- **Antes de enviar:** valide UTF-8/JSON, tamanho e SHA-256; procure identidade/nome em `NEXO_INBOX`, `processed` e recibos; presença, resultado parcial ou busca degradada exigem reconciliação, nunca nova identidade. A operação é create-only, com mesmo nome e bytes; não sobrescreva nem crie Google Doc de duas etapas. **Depois:** leia metadados e bytes brutos pelo ID de retorno, compare SHA-256, tamanho, MIME `application/json` e parent canônico. Só então marque `DELIVERED/PENDING_WRITE`; `APPLIED` exige recibos **e efeito real** na Tower.
+- Este procedimento reutiliza a **mesma** pasta/conta/permissão Drive autorizada; não é fallback de ACL. Não use Git público, serviço externo, Writer alternativo ou upload do snapshot inteiro da Tower como transporte.
+
+
 - Resolva alvo e parents atuais antes de mover ou renomear.
 - Arquivo nativo Google e editado pela API nativa; arquivo bruto usa operacao de arquivo. Nao converter tipo por acidente.
 - Create/update/move/share so contam apos readback pelo ID retornado e verificacao de conteudo/metadados.
