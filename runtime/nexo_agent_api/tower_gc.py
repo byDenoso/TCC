@@ -52,6 +52,8 @@ def _safe_path(path: str) -> str:
 
 def _bundle(raw: bytes) -> tuple[dict, str]:
     bundle = read_live_tower_bytes(raw)
+    if not isinstance(bundle, dict) or not isinstance(bundle.get('files'), dict):
+        raise TowerGCError('GC_TOWER_NOT_OBJECT')
     revision = verify_live_tower(bundle)
     for path, entry in bundle["files"].items():
         _safe_path(path)
