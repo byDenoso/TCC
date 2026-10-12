@@ -40,6 +40,53 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 
 ### Escrita
 
+
+### Ponte privada de celulas para automacoes sem arquivo exportavel
+
+**Autorizacao restrita, ja implementada no Writer existente (sem segundo Writer):**
+quando o runtime agendado NAO consegue vincular/exportar os bytes para o upload bruto
+por `container_session_unavailable`, `file_uri` indisponivel ou ausencia da capacidade
+de arquivo, um **BOARD_POST, INTEGRITY_REPORT ou LEARNING_SIGNAL** privado, sem
+anexo, segredo, dados brutos da Tower ou instrucoes privilegiadas pode usar
+exclusivamente o `NEXO_SCHEDULED_SPOOL` privado que o Writer ja consome:
+Google Sheets ID `1M2maKkuEjxumZRa145dzei7dEPFi2yKsKlUf7_scC-E`,
+aba `Sheet1`, ID numerico `1417054989`, colunas
+`stable_id | created_at | role | envelope_b64url`. O proprietario e o Writer
+sao os unicos destinatarios conhecidos da ACL observada em 12/10/2026.
+Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONLY.
+
+1. Classifique a falha original. `403`, escopo/ACL insuficiente, politica de seguranca,
+   erro de autenticacao, rejeicao do Writer, schema invalido e conflito de identidade
+   **NAO** habilitam essa ponte. Ela so evita a passagem de bytes pela sessao local.
+2. Prepare exatamente um envelope JSON UTF-8 privado permitido, com `kind`,
+   `source`, `created_at` UTC, `intent_id` estavel e `payload` conforme
+   `gpt/PROPOSAL_SCHEMA.md`. Codifique os **mesmos bytes** em Base64URL
+   sem quebra de linha e sem padding, limite total codificado a 24 KiB.
+   Gere um `stable_id` imutavel em `[a-z0-9-]`, 1-60 caracteres,
+   prefixado por `sched-v1-`; nunca use a timestamp do pulso como nova
+   identidade para repeticoes da mesma proposta.
+3. Confira pelo `stable_id` a coluna A da planilha e
+   `byDenoso/Pantheon@main:nexo-one/scheduled-spool-ack.json` (key `acked`);
+   confira tambem recibo/efeito canonico quando disponivel. Se ja existe
+   mesmo ID, nao crie segunda linha; diferenca de bytes e CONFLITO,
+   nao substituicao. Se busca/leitura for degradada, pare em UNKNOWN.
+4. Se a API nativa `batch_update_spreadsheet` estiver **realmente**
+   disponivel nesse runtime, use um unico `appendCells` de quatro campos
+   `stringValue` na aba verificada; nao use `create_file`, Google Doc,
+   scripts de terceiros, Git publico, outra conta ou permissao nova.
+5. Releia a linha e compare quatro celulas, identidade, data e Base64URL
+   byte a byte. Somente com match declare `DELIVERED_PENDING_WRITER`.
+   A prova `acked[stable_id]` nao substitui a leitura do efeito e receipt
+   na Tower para `APPLIED`. Se o runtime agendado nao expuser o Sheets
+   write, preserve `PENDING_WRITE_LOCAL_ONLY` e a proposta original.
+
+**Proibido nesta ponte:** `HANDOFF`, `HANDOFF_TRANSITION`, `OPERATOR_INTENT`,
+aprovar mandato, substituir CONTROL, criacao de TEST/RESULT, gravacao direta
+da Tower, publicacao, revisao cientifica, credencial/segredo e payload PEER
+destinado ao Atlas. Handoffs continuam exclusivamente no `NEXO_INBOX`
+create-only com proveniencia `DRIVE`. O Writer valida todos os envelopes
+e continua unico aplicador. Registro no spool nao e efeito canonico.
+
 ### Ponte de arquivo exportado (ChatGPT -> Drive)
 - Para JSON bruto gerado no ChatGPT, **prefira o snapshot de arquivo exportado**, não um caminho do contêiner. Na superfície Files, depois de obter o `file_id` real do artefato exportado (formato `file_...`), faça **uma** operação `files.manage_library` com `{"operations":[{"operation":"upload","source_file_ref":{"file_id":"<file_id observado>"},"destination_path":"<pasta privada NEXO_INBOX>/<nome imutável>.json"}]}`. A pasta deve ser descoberta e conferida no Drive/Library; nunca invente file_id.
 - Na superfície nativa Google Drive `upload_file`, use somente o `file_uri` retornado de uma exportação/ação de arquivo compatível, com `parent_folder_id` confirmado. Não passe `/mnt/data/...`, caminhos Windows, URL textual ou base64 no lugar de `file_uri`.
