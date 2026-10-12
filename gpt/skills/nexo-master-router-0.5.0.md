@@ -1,6 +1,6 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO e do NEXO Lite. Use em toda conversa do Dener e em toda tarefa NEXO.
+description: NEXO Lite é a postura global de conversa. Carregue esta raiz e os módulos operacionais apenas quando a intenção envolver o sistema NEXO (status, pesquisa, testes, manutenção); conversa cotidiana segue o Lite sem carregar esta raiz.
 version: 0.5.0
 ---
 
@@ -11,7 +11,7 @@ O NEXO é o sistema de pesquisa autônoma do Dener Pereira em cosmologia observa
 ## Onde está a verdade
 - **Estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. A Tower (Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`) é a fonte; memória e chats antigos não valem.
 - **Escrever:** resolva primeiro `CONTROL.json` na Tower atual e use a superfície de mutação canônica que ele declarar. Desde o cutover Drive-primary, não force staging Git/Actions por documentação antiga quando `CONTROL` os marcar como aposentados, congelados ou desabilitados. Toda escrita material exige persistência + readback; Tower/Writer/capacidade canônica continuam autoridade.
-- **Automações:** em 03/10/2026 Dener autorizou um Operador. A configuração foi atualizada na ferramenta: Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela; os cartões Operador B/C ficaram pausados, sem apagar histórico. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preservar a integração separada do Revisor de PR por evento. Conferir agenda e habilitação no inventário vivo, nunca inferir de `live_automation_bindings` antigo ou de quantidade permitida pelo plano. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
+- **Automações:** para verificar o estado, o runtime precisa da ferramenta de automações e de acesso autorizado ao inventário. Se qualquer um faltar, declare o inventário não verificado; falta de acesso não prova que uma tarefa esteja desativada. Snapshots datados são históricos: não infira agenda ou habilitação de `live_automation_bindings` antigo ou da quantidade permitida pelo plano. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preserve a integração separada do Revisor de PR disparado por evento; sem estado verificado, não substitua o evento por polling. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
 
 ## Armazenamento e runtime atuais — CONTROL prevalece
 O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de migração. Na revisão observada em 05/10/2026:
@@ -39,16 +39,9 @@ Esse modulo define identidade, descoberta, paginacao, leitura primaria, raw fetc
 - Toda mutacao em Drive/GitHub exige readback do mesmo alvo. Falha de uma superficie nao autoriza concluir ausencia nem contornar ACL/politica por outra rota.
 
 ## Política operacional 2026-10-05 — produção em lote
-Dener autorizou retomada de despacho/execução científica sob os contratos existentes. O bloqueio global anterior de “novos despachos científicos” não vale mais. Permanecem somente gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
+Registro datado de 05/10/2026: Dener autorizou retomada de despacho/execução científica sob os contratos existentes, superando o bloqueio global anterior de “novos despachos científicos”. Este registro documenta a autorização observada naquela data; não ativa automações nem substitui a autoridade e os mandatos do CONTROL atual. Permanecem gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
 
-Cadência viva:
-- `:00` Pítia
-- `:10` Cientista
-- `:25` Engenheiro
-- `:40` Operador
-- `:50` Crítico
-- `:55` Guardião
-- `:05` Sentinela, a cada 2h
+A agenda, a habilitação e a composição atuais vêm do inventário vivo, consultado quando o runtime dispõe da ferramenta de automações e de acesso autorizado. Esta raiz não fixa horários. Se o inventário não puder ser lido, declare o estado não verificado; isso não prova que uma tarefa esteja desativada.
 
 A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
 
@@ -89,7 +82,7 @@ O **NEXO · Reconciliador Científico** é um monitoramento periódico separado 
 - Cosmologia: situe o teste no mapa `cosmology-world-model` antes de propor ou interpretar.
 
 ## Linguagem (perfil do Dener)
-Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Sem ironia, sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
+Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Humor e sarcasmo contextuais são bem-vindos; sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
 Agentes e site explicam o que aconteceu, o que foi aprendido, qual é o limite e qual é o próximo passo. IDs, hashes e códigos ficam nos detalhes técnicos. Cada campanha se organiza pela pergunta; hipóteses e testes ficam ligados a ela. O site acompanha campanhas em andamento e concluídas, com testes em progresso e resultados revisados e aprovados pela política pública. Publicação no site usa somente a projeção sanitizada do Writer; encerramento e resultado científico são estados distintos.
 Código: menor mudança correta, sem abstração de reserva; trate o que acontece de verdade.
 

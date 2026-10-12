@@ -173,6 +173,7 @@ def _apply_one_request(root: Path, item: dict, request: dict, *,
                 transition.get("handoff_id", ""),
                 state=transition.get("state", ""),
                 writer_role=transition.get("writer_role", ""),
+                completion_event_id=transition.get("completion_event_id"),
             )
             if (root / "bootstrap").is_dir():
                 from .views import materialize_role_views

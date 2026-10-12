@@ -48,7 +48,9 @@ def test_new_role_handoff_has_real_event_receipts(root, recipient):
     receipt = service.emit_handoff(request_id="role-interface-" + recipient, from_role="LEARNER", to_role=recipient,
                                    handoff_type="REVIEW", entity_ref="WORK-GUARDIAO", thread_id="synthetic-topic",
                                    summary_plain="A preparação terminou.", why_it_matters="A pendência precisa de conferência.",
-                                   next_action="Confira a evidência e registre o próximo passo.")
+                                    next_action="Confira a evidência e registre o próximo passo.",
+                                    completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                                         "expected_changes": {"review_status": "ACCEPTED"}})
     assert service.inbox_for(recipient)[0]["handoff_id"] == receipt["handoff_id"]
     acknowledged = service.transition_handoff(receipt["handoff_id"], state="ACK", writer_role=recipient)
     assert acknowledged["state"] == "ACK" and acknowledged["to_role"] == recipient
@@ -60,7 +62,9 @@ def test_engineer_alias_keeps_original_offer_identity(root):
     receipt = service.emit_handoff(request_id="legacy-engineer-offer", from_role="LEARNER", to_role="ADVISOR",
                                    handoff_type="REVIEW", entity_ref="WORK-ADVISOR", thread_id="synthetic-topic",
                                    summary_plain="A infraestrutura aguarda conferência.", why_it_matters="A preparação depende dessa etapa.",
-                                   next_action="Confira o material preparado.")
+                                    next_action="Confira o material preparado.",
+                                    completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                                         "expected_changes": {"review_status": "ACCEPTED"}})
     assert service.inbox_for("ENGINEER")[0]["handoff_id"] == receipt["handoff_id"]
     acknowledged = service.transition_handoff(receipt["handoff_id"], state="ACK", writer_role="ENGINEER")
     assert acknowledged["to_role"] == "ADVISOR" and acknowledged["request_id"] == "legacy-engineer-offer"

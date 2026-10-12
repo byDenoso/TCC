@@ -29,10 +29,15 @@ class HandoffProtocolTests(unittest.TestCase):
         kwargs.setdefault("request_id", f"REQ-TEST-{kwargs.get('handoff_type')}-{kwargs.get('entity_ref')}")
         kwargs.setdefault("summary_plain", "Há uma atualização operacional pronta para o próximo papel.")
         kwargs.setdefault("why_it_matters", "A próxima etapa depende desta passagem de contexto.")
+        kwargs.setdefault("completion_contract", {
+            "schema": "NEXO_HANDOFF_EFFECT_V1", "expected_changes": {"fixture_state": "COMPLETED"},
+        })
         return service.emit_handoff(**kwargs)
 
     def test_director_handoff_routes_pending_ack_done(self):
         service = AgentService(self.root)
+        work = {"id": "WORK::GZ01-T02", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
         created = self.emit(service, 
             from_role="DIRECTOR",
             to_role="EXECUTOR",
@@ -40,6 +45,7 @@ class HandoffProtocolTests(unittest.TestCase):
             entity_ref="WORK::GZ01-T02",
             thread_id="THR::SCIENCE::GZ-01",
             next_action="execute",
+            completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1", "expected_changes": {"status": "RUNNING"}},
         )
         self.assertEqual(created["state"], "PENDING")
         self.assertEqual(service.inbox_for("ADVISOR"), [])
@@ -48,7 +54,10 @@ class HandoffProtocolTests(unittest.TestCase):
         service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
         self.assertEqual(service.inbox_for("EXECUTOR")[0]["state"], "ACK")
 
-        service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        application = service.mutate("work", work["id"], expected_version=1, changes={"status": "RUNNING"},
+                                     writer_role="EXECUTOR", event_type="AGENT_REQUEST_APPLIED")
+        service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                   completion_event_id=application["event_id"])
         self.assertEqual(service.inbox_for("EXECUTOR"), [])
         with self.assertRaises(TowerAgentIssue):
             service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
@@ -79,6 +88,8 @@ class HandoffProtocolTests(unittest.TestCase):
                 "uncertainty": "Não estabelece causalidade por si só.",
                 "next_test_impact": "Prioriza a comparação já pré-registrada.",
             }],
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
             "correlation_id": "CORR-DE-01",
         }
         first = service.emit_handoff(**payload)
@@ -95,8 +106,103 @@ class HandoffProtocolTests(unittest.TestCase):
             service.emit_handoff(**changed)
         self.assertEqual(conflict.exception.code, "HANDOFF_REQUEST_ID_CONFLICT")
 
+    def test_legacy_request_without_priority_keeps_its_idempotent_replay(self):
+        from runtime.nexo_agent_api import handoff as handoff_module
+
+        service = AgentService(self.root)
+        work = {"id": "WORK-LEGACY", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR",
+                "blocker": None}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
+        payload = {
+            "request_id": "REQ-LEGACY-PRIORITY",
+            "from_role": "ADVISOR", "to_role": "EXECUTOR", "handoff_type": "WORK_READY",
+            "entity_ref": "WORK-LEGACY", "thread_id": "THR-LEGACY",
+            "summary_plain": "Uma tarefa operacional precisa ser concluída.",
+            "why_it_matters": "A próxima função depende da aplicação correspondente.",
+            "next_action": "Aplicar o estado operacional indicado.",
+        }
+        created_payload = dict(payload, completion_contract={
+            "schema": "NEXO_HANDOFF_EFFECT_V1", "expected_changes": {"status": "RUNNING"},
+        })
+        created = service.emit_handoff(**created_payload)
+        legacy_fields = (
+            "request_id", "from_role", "to_role", "handoff_type", "entity_ref", "thread_id",
+            "summary_plain", "why_it_matters", "next_action", "objective_ref", "confidence_plain",
+            "evidence_refs", "source_links", "parent_handoff_id",
+        )
+        legacy_payload = {key: created[key] for key in legacy_fields}
+        created.pop("priority", None)
+        created.pop("completion_contract", None)
+        created["request_fingerprint"] = handoff_module._request_fingerprint(legacy_payload)
+        event_path = next((self.root / "events").rglob(created["event_id"] + ".json"))
+        event_path.write_text(json.dumps(created, sort_keys=True), encoding="utf-8")
+
+        replay = service.emit_handoff(**payload)
+        self.assertEqual(replay["event_id"], created["event_id"])
+        self.assertEqual(len(list((self.root / "events").rglob("*.json"))), 1)
+
+        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        unrelated = service.mutate("work", work["id"], expected_version=1,
+                                   changes={"blocker": "unrelated note"}, writer_role="EXECUTOR",
+                                   event_type="UNRELATED_NOTE_ADDED")
+        with self.assertRaises(TowerAgentIssue) as unproven_done:
+            service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                        completion_event_id=unrelated["event_id"])
+        self.assertEqual(unproven_done.exception.code, "HANDOFF_EFFECT_CONTRACT_REQUIRED")
+
+        changed = dict(payload, next_action="Aplicar outro efeito operacional.")
+        with self.assertRaises(TowerAgentIssue) as conflict:
+            service.emit_handoff(**changed)
+        self.assertEqual(conflict.exception.code, "HANDOFF_REQUEST_ID_CONFLICT")
+        with self.assertRaises(TowerAgentIssue) as priority_conflict:
+            service.emit_handoff(**dict(payload, priority="HIGH"))
+        self.assertEqual(priority_conflict.exception.code, "HANDOFF_REQUEST_ID_CONFLICT")
+
+    def test_new_non_recovery_handoff_requires_contract_before_persist(self):
+        service = AgentService(self.root)
+        with self.assertRaises(TowerAgentIssue) as exc:
+            service.emit_handoff(
+                request_id="REQ-MISSING-COMPLETION-CONTRACT", from_role="ADVISOR", to_role="EXECUTOR",
+                handoff_type="WORK_READY", entity_ref="WORK-MISSING-CONTRACT", thread_id="THR-MISSING-CONTRACT",
+                summary_plain="Uma tarefa operacional aguarda o próximo papel.",
+                why_it_matters="A passagem deve ter um efeito verificável.",
+                next_action="Aplicar a alteração autorizada.",
+            )
+        self.assertEqual(exc.exception.code, "HANDOFF_EFFECT_CONTRACT_REQUIRED")
+        self.assertEqual(list((self.root / "events").rglob("*.json")), [])
+
+    def test_done_requires_matching_structured_effect_and_changed_field(self):
+        service = AgentService(self.root)
+        work = {"id": "WORK-STRUCTURED-EFFECT", "entity_version": 1, "status": "READY",
+                "owner_role": "EXECUTOR", "blocker": None}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
+        created = self.emit(service, request_id="REQ-STRUCTURED-EFFECT", from_role="ADVISOR",
+                            to_role="EXECUTOR", handoff_type="WORK_READY", entity_ref=work["id"],
+                            thread_id="THR-STRUCTURED-EFFECT",
+                            next_action="Mudar o estado da tarefa para em execução.",
+                            completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                                "expected_changes": {"status": "RUNNING"}})
+        self.assertEqual(created["state"], "PENDING")
+        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        unrelated = service.mutate("work", work["id"], expected_version=1,
+                                   changes={"blocker": "unrelated note"}, writer_role="EXECUTOR",
+                                   event_type="UNRELATED_NOTE_ADDED")
+        with self.assertRaises(TowerAgentIssue) as unrelated_error:
+            service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                        completion_event_id=unrelated["event_id"])
+        self.assertEqual(unrelated_error.exception.code, "HANDOFF_EFFECT_NOT_APPLIED")
+
+        applied = service.mutate("work", work["id"], expected_version=2,
+                                 changes={"status": "RUNNING"}, writer_role="EXECUTOR",
+                                 event_type="UNRELATED_EVENT_NAME_BUT_CORRELATED_EFFECT")
+        done = service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                          completion_event_id=applied["event_id"])
+        self.assertEqual(done["completion_receipt"]["changed_fields"], ["status"])
+
     def test_only_recipient_transitions_and_citations_survive_terminal_events(self):
         service = AgentService(self.root)
+        work = {"id": "WORK::SCIENCE-01", "entity_version": 1, "status": "READY", "owner_role": "LEARNER"}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
         created = service.emit_handoff(
             request_id="REQ-HO-CITATION-001",
             from_role="EXECUTOR",
@@ -116,12 +222,18 @@ class HandoffProtocolTests(unittest.TestCase):
                 "uncertainty": "A fonte não substitui a análise do TEST.",
                 "next_test_impact": "Nenhum critério congelado é alterado.",
             }],
+            completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                 "expected_changes": {"learning_state": "LEARNED"}},
         )
         with self.assertRaises(TowerAgentIssue):
             service.transition_handoff(created["handoff_id"], state="ACK", writer_role="ADVISOR")
 
         ack = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="LEARNER")
-        done = service.transition_handoff(created["handoff_id"], state="DONE", writer_role="LEARNER")
+        application = service.mutate("work", work["id"], expected_version=1,
+                                     changes={"learning_state": "LEARNED"}, writer_role="LEARNER",
+                                     event_type="AGENT_REQUEST_APPLIED")
+        done = service.transition_handoff(created["handoff_id"], state="DONE", writer_role="LEARNER",
+                                          completion_event_id=application["event_id"])
         self.assertEqual(ack["source_links"], created["source_links"])
         self.assertEqual(done["evidence_refs"], created["evidence_refs"])
         self.assertEqual(service.inbox_for("LEARNER"), [])
@@ -166,6 +278,104 @@ class HandoffProtocolTests(unittest.TestCase):
         self.assertEqual(len(items), 12)
         self.assertEqual([x["entity_ref"] for x in items if x["state"] == "PENDING"], ["W9", "W10", "W11"])
         self.assertNotIn("W-OTHER", [x["entity_ref"] for x in items])
+
+    def test_role_queue_combines_owned_work_and_prioritized_handoffs_fairly(self):
+        from runtime.nexo_execution.core import TASK_REGISTRY
+
+        task_id = next(iter(TASK_REGISTRY))
+        work = {"id": "WORK-OWNED", "entity_version": 1, "status": "READY",
+                "owner_role": "EXECUTOR", "task_id": task_id, "priority": "HIGH"}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
+        service = AgentService(self.root)
+        for index in range(7):
+            self.emit(service, request_id=f"REQ-FAIR-{index}", from_role="ADVISOR",
+                      to_role="EXECUTOR", handoff_type="WORK_READY", entity_ref=f"WORK-INCOMING-{index}",
+                      thread_id="THR-FAIR", priority="CRITICAL" if index == 6 else "NORMAL",
+                      next_action="Conferir o pedido recebido e aplicar o trabalho autorizado.")
+
+        materialize_role_views(self.root)
+        view = json.loads((self.root / "bootstrap/executor.json").read_text())
+        queue = view["queue"]
+
+        self.assertEqual(view["queue_count"], 5)
+        self.assertTrue(any(item.get("queue_kind") == "WORK" and item["id"] == "WORK-OWNED" for item in queue))
+        self.assertTrue(any(item.get("queue_kind") == "INTER_AGENT_REQUEST" for item in queue))
+        self.assertEqual(queue[0]["priority"], "CRITICAL")
+        self.assertGreater(view["queue_total_count"], 5)
+
+    def test_blocked_own_work_does_not_hide_an_independent_incoming_request(self):
+        service = AgentService(self.root)
+        blocked = {"id": "WORK-BLOCKED", "entity_version": 1, "status": "BLOCKED",
+                   "owner_role": "EXECUTOR", "priority": "P0"}
+        entity_path(self.root, "work", blocked["id"]).write_text(json.dumps(blocked))
+        self.emit(service, request_id="REQ-INDEPENDENT", from_role="ADVISOR",
+                  to_role="EXECUTOR", handoff_type="WORK_READY", entity_ref="WORK-OTHER",
+                  thread_id="THR-INDEPENDENT", priority="NORMAL",
+                  next_action="Ler e aplicar o pedido independente se estiver autorizado.")
+
+        queue = service.bootstrap("EXECUTOR")["queue"]
+        self.assertTrue(any(item.get("queue_kind") == "INTER_AGENT_REQUEST" and
+                            item.get("request_id") == "REQ-INDEPENDENT" for item in queue))
+        self.assertNotIn("WORK-BLOCKED", [item["id"] for item in queue])
+
+    def test_parent_chain_rejects_repeated_request_edge(self):
+        service = AgentService(self.root)
+        first = self.emit(service, request_id="REQ-CYCLE-1", from_role="ADVISOR", to_role="EXECUTOR",
+                          handoff_type="WORK_READY", entity_ref="WORK-CYCLE", thread_id="THR-CYCLE",
+                          next_action="Executar o trabalho autorizado.")
+        second = self.emit(service, request_id="REQ-CYCLE-2", from_role="EXECUTOR", to_role="ADVISOR",
+                           handoff_type="REVIEW_RESULT", entity_ref="WORK-CYCLE", thread_id="THR-CYCLE",
+                           parent_handoff_id=first["handoff_id"],
+                           next_action="Revisar o resultado recebido.")
+        with self.assertRaises(TowerAgentIssue) as exc:
+            self.emit(service, request_id="REQ-CYCLE-3", from_role="ADVISOR", to_role="EXECUTOR",
+                      handoff_type="WORK_READY", entity_ref="WORK-CYCLE", thread_id="THR-CYCLE",
+                      parent_handoff_id=second["handoff_id"],
+                      next_action="Executar o trabalho autorizado.")
+        self.assertEqual(exc.exception.code, "HANDOFF_CYCLE_DETECTED")
+
+    def test_done_requires_applied_event_receipt_and_matching_canonical_readback(self):
+        service = AgentService(self.root)
+        work = {"id": "WORK-APPLY", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"}
+        path = entity_path(self.root, "work", work["id"])
+        path.write_text(json.dumps(work))
+        created = self.emit(service, request_id="REQ-APPLY", from_role="ADVISOR", to_role="EXECUTOR",
+                            handoff_type="WORK_READY", entity_ref=work["id"], thread_id="THR-APPLY",
+                            next_action="Aplicar a alteração operacional autorizada.",
+                            completion_contract={"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                                 "expected_changes": {"status": "RUNNING"}})
+        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+
+        with self.assertRaises(TowerAgentIssue) as missing:
+            service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.assertEqual(missing.exception.code, "HANDOFF_APPLICATION_RECEIPT_REQUIRED")
+
+        application = service.mutate("work", work["id"], expected_version=1,
+                                     changes={"status": "RUNNING"}, writer_role="EXECUTOR",
+                                     event_type="AGENT_REQUEST_APPLIED")
+        done = service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                          completion_event_id=application["event_id"])
+        self.assertEqual(done["completion_receipt"]["event_id"], application["event_id"])
+        self.assertEqual(done["completion_receipt"]["readback"], "PASS")
+        self.assertEqual(service.inbox_for("EXECUTOR"), [])
+
+    def test_done_rejects_receipt_for_another_entity_or_stale_version(self):
+        service = AgentService(self.root)
+        work = {"id": "WORK-RECEIPT", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"}
+        other = {"id": "WORK-OTHER-RECEIPT", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work))
+        entity_path(self.root, "work", other["id"]).write_text(json.dumps(other))
+        created = self.emit(service, request_id="REQ-RECEIPT", from_role="ADVISOR", to_role="EXECUTOR",
+                            handoff_type="WORK_READY", entity_ref=work["id"], thread_id="THR-RECEIPT",
+                            next_action="Aplicar a alteração autorizada.")
+        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+        wrong = service.mutate("work", other["id"], expected_version=1,
+                               changes={"status": "RUNNING"}, writer_role="EXECUTOR",
+                               event_type="AGENT_REQUEST_APPLIED")
+        with self.assertRaises(TowerAgentIssue) as exc:
+            service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                        completion_event_id=wrong["event_id"])
+        self.assertEqual(exc.exception.code, "HANDOFF_APPLICATION_READBACK_MISMATCH")
 
     def test_handoff_embeds_canonical_work_envelope_and_preserves_it_on_ack(self):
         work = {
@@ -294,31 +504,34 @@ class HandoffProtocolTests(unittest.TestCase):
                 self.assertEqual(exc.exception.code, "HANDOFF_STALE")
                 self.assertEqual(before, {p: p.read_bytes() for p in (self.root / "events").rglob("*.json")})
 
-    def test_stale_handoff_can_close_without_being_reopened(self):
+    def test_stale_handoff_can_be_failed_without_being_reopened(self):
         service = AgentService(self.root)
         for initial in ("PENDING", "ACK"):
-            for terminal in ("DONE", "FAILED"):
-                with self.subTest(initial=initial, terminal=terminal):
-                    work = {"id": f"WORK-CLOSE-{initial}-{terminal}", "entity_version": 1,
-                            "status": "READY", "owner_role": "EXECUTOR"}
-                    path = entity_path(self.root, "work", work["id"])
-                    path.write_text(json.dumps(work))
-                    created = self.emit(service, from_role="ADVISOR", to_role="EXECUTOR",
-                                        handoff_type="WORK_READY", entity_ref=work["id"],
-                                        thread_id="THR-STALE", next_action="Executar o trabalho definido.")
-                    if initial == "ACK":
-                        accepted = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
-                    path.write_text(json.dumps({**work, "entity_version": 2, "status": "DONE"}))
-                    if initial == "ACK":
-                        replay = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
-                        self.assertEqual(replay["event_id"], accepted["event_id"])
-                    closed = service.transition_handoff(created["handoff_id"], state=terminal, writer_role="EXECUTOR")
-                    self.assertEqual(closed["state"], terminal)
-                    before = len(list((self.root / "events").rglob("*.json")))
-                    with self.assertRaises(TowerAgentIssue) as exc:
-                        service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
-                    self.assertEqual(exc.exception.code, "HANDOFF_ILLEGAL_TRANSITION")
-                    self.assertEqual(len(list((self.root / "events").rglob("*.json"))), before)
+            with self.subTest(initial=initial):
+                work = {"id": f"WORK-CLOSE-{initial}", "entity_version": 1,
+                        "status": "READY", "owner_role": "EXECUTOR"}
+                path = entity_path(self.root, "work", work["id"])
+                path.write_text(json.dumps(work))
+                created = self.emit(service, from_role="ADVISOR", to_role="EXECUTOR",
+                                    handoff_type="WORK_READY", entity_ref=work["id"],
+                                    thread_id="THR-STALE", next_action="Executar o trabalho definido.")
+                if initial == "ACK":
+                    accepted = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                path.write_text(json.dumps({**work, "entity_version": 2, "status": "DONE"}))
+                if initial == "ACK":
+                    replay = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                    self.assertEqual(replay["event_id"], accepted["event_id"])
+                if initial == "PENDING":
+                    with self.assertRaises(TowerAgentIssue) as no_ack:
+                        service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+                    self.assertEqual(no_ack.exception.code, "HANDOFF_ACK_REQUIRED")
+                closed = service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")
+                self.assertEqual(closed["state"], "FAILED")
+                before = len(list((self.root / "events").rglob("*.json")))
+                with self.assertRaises(TowerAgentIssue) as exc:
+                    service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
+                self.assertEqual(exc.exception.code, "HANDOFF_ILLEGAL_TRANSITION")
+                self.assertEqual(len(list((self.root / "events").rglob("*.json"))), before)
 
     def test_closed_roadmap_contest_and_resumable_work_remain_ackable(self):
         from .frontier import roadmap_frontier
@@ -382,11 +595,11 @@ class RecoveryOwnershipTests(unittest.TestCase):
 
     def change_work(self, **changes):
         work = self.current_work()
-        self.service.mutate("work", work["id"], expected_version=work["entity_version"], changes=changes,
-                            writer_role="EXECUTOR", event_type="RECOVERY_TEST_CHANGE")
+        return self.service.mutate("work", work["id"], expected_version=work["entity_version"], changes=changes,
+                                   writer_role="EXECUTOR", event_type="RECOVERY_TEST_CHANGE")
 
     def complete_work(self):
-        self.change_work(status="DONE")
+        return self.change_work(status="DONE")
 
     def prepare_ready_test(self, status="READY"):
         from .evolution import prereg_hash
@@ -524,13 +737,14 @@ class RecoveryOwnershipTests(unittest.TestCase):
         self.complete_work()
         # A bare terminal label and cached validation never constitute evidence.
         work = self.current_work()
-        self.change_work(recovery={**work["recovery"], "validation": {"eligible": True}})
+        refreshed = self.change_work(recovery={**work["recovery"], "validation": {"eligible": True}})
         with self.assertRaises(TowerAgentIssue) as exc:
             self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
         self.assertEqual(exc.exception.code, "HANDOFF_RECOVERY_EVIDENCE_REQUIRED")
         self.assertEqual(self.service.inbox_for("EXECUTOR")[0]["state"], "ACK")
         self.prepare_ready_test()
-        done = self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        done = self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                               completion_event_id=refreshed["event_id"])
         self.assertTrue(done["completion_evidence"]["validation"]["eligible"])
         self.assertEqual(done["completion_evidence"]["test_version"], 3)
         self.assertEqual(self.service.inbox_for("EXECUTOR"), [])
@@ -538,7 +752,7 @@ class RecoveryOwnershipTests(unittest.TestCase):
     def test_done_ignores_reservation_but_never_frozen_science_validation(self):
         created = self.create()
         self.service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
-        self.complete_work()
+        completion = self.complete_work()
         path = self.prepare_ready_test(status="QUEUED")
         original = path.read_bytes()
         test = json.loads(original)
@@ -548,7 +762,8 @@ class RecoveryOwnershipTests(unittest.TestCase):
             self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
         self.assertIn("FROZEN_DESIGN_CHANGED", exc.exception.details["validation"]["reasons"])
         path.write_bytes(original)
-        self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        self.service.transition_handoff(created["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                        completion_event_id=completion["event_id"])
         self.assertEqual(path.read_bytes(), original)
 
     def test_failed_preserves_owner_before_and_after_acceptance(self):

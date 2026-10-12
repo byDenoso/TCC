@@ -37,6 +37,12 @@ class AgentServiceTests(unittest.TestCase):
         p=self.eligible(); p["entity_version"]=4; self.write_work("W2",p)
         q=AgentService(self.root).queue_for("EXECUTOR"); self.assertEqual((q[0]["id"],q[0]["entity_version"]),("W2",4))
 
+    def test_advisor_queue_recognizes_engineer_alias_but_filters_terminal_work(self):
+        self.write_work("engineer-ready", {"id": "W-ENG-READY", "status": "READY", "owner_role": "ENGINEER"})
+        self.write_work("engineer-done", {"id": "W-ENG-DONE", "status": "DONE", "owner_role": "ENGINEER"})
+        queue = AgentService(self.root).queue_for("ADVISOR")
+        self.assertEqual([item["id"] for item in queue], ["W-ENG-READY"])
+
     def test_bootstrap_is_single_hot_role_view_and_queue_is_stub(self):
         (self.root/"indexes").mkdir(); (self.root/"indexes/active-work.json").write_text(json.dumps({"work":[{"id":"W2"}]}))
         self.write_work("W2",self.eligible()); self.write_work("cold",{"id":"W-COLD","entity_version":1,"status":"BLOCKED","owner_role":"ADVISOR"})

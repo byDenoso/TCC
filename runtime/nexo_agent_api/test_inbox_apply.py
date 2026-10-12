@@ -457,12 +457,19 @@ class InboxApplyTests(unittest.TestCase):
             "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
             "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
             "next_action": "Compare as previsões da fonte com o teste já planejado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
 
         [request] = proposal_to_requests({"kind": "HANDOFF", "_inbox_source": "DRIVE", "payload": handoff}, self.root)
 
         self.assertEqual(request["nexo_operation"], "HANDOFF_CREATE")
         self.assertEqual(request["handoff"], handoff)
+
+        legacy_shape = dict(handoff)
+        legacy_shape.pop("completion_contract")
+        with self.assertRaisesRegex(ProposalError, "HANDOFF_EFFECT_CONTRACT_REQUIRED"):
+            proposal_to_requests({"kind": "HANDOFF", "_inbox_source": "DRIVE", "payload": legacy_shape}, self.root)
 
     def test_public_handoff_proposal_stays_in_inbox(self):
         with self.assertRaisesRegex(ProposalError, "PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX"):
@@ -517,6 +524,8 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
         from runtime.nexo_agent_api import AgentService, TowerAgentIssue
 
         service = AgentService(self.root)
+        work = {"id": "WORK::DE-CI", "entity_version": 1, "status": "READY", "owner_role": "EXECUTOR"}
+        entity_path(self.root, "work", work["id"]).write_text(json.dumps(work), encoding="utf-8")
         envelope = {
             "request_id": "REQ-CI-HANDOFF-001",
             "from_role": "ADVISOR",
@@ -540,6 +549,8 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
                 "uncertainty": "Não determina o veredito científico.",
                 "next_test_impact": "Prioriza o próximo discriminante sem reescrever critérios.",
             }],
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         first = service.emit_handoff(**envelope)
         replay = service.emit_handoff(**envelope)
@@ -551,7 +562,10 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
         self.assertEqual(wrong.exception.code, "HANDOFF_WRITER_MISMATCH")
 
         ack = service.transition_handoff(first["handoff_id"], state="ACK", writer_role="EXECUTOR")
-        done = service.transition_handoff(first["handoff_id"], state="DONE", writer_role="EXECUTOR")
+        application = service.mutate("work", work["id"], expected_version=1, changes={"status": "RUNNING"},
+                                     writer_role="EXECUTOR", event_type="AGENT_REQUEST_APPLIED")
+        done = service.transition_handoff(first["handoff_id"], state="DONE", writer_role="EXECUTOR",
+                                          completion_event_id=application["event_id"])
         self.assertEqual(ack["source_links"][0]["url"], "https://example.org/survey")
         self.assertEqual(done["evidence_refs"], envelope["evidence_refs"])
         self.assertEqual(service.inbox_for("EXECUTOR"), [])
@@ -572,6 +586,8 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
             "next_action": "Use a fonte citada no próximo teste já planejado e registre o efeito observado.",
             "confidence_plain": "Confiança moderada porque a fonte mede a quantidade necessária, mas ainda não decide qual explicação é correta.",
             "evidence_refs": [{"ref": "TEST::DE-LANGUAGE", "kind": "TEST"}],
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         created = service.emit_handoff(**base)
         self.assertEqual(created["evidence_refs"], [{"ref": "TEST::DE-LANGUAGE", "kind": "TEST"}])
@@ -611,6 +627,8 @@ class HandoffProtocolCIRegressionTests(unittest.TestCase):
             "summary_plain": "O resultado canônico está pronto.",
             "why_it_matters": "A aprendizagem depende deste resultado persistido.",
             "next_action": "Registrar a lição vinculada ao resultado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"learning_state": "LEARNED"}},
         }
         service.emit_handoff(**base)
         changed = dict(base, next_action="Executar uma ação materialmente diferente.")
@@ -775,6 +793,8 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
             "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
             "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
             "next_action": "Compare as previsões da fonte com o teste já planejado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
@@ -814,6 +834,8 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
             "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
             "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
             "next_action": "Compare as previsões da fonte com o teste já planejado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
@@ -851,6 +873,8 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
             "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
             "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
             "next_action": "Compare as previsões da fonte com o teste já planejado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / "source"
@@ -1019,6 +1043,8 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
                 "why_it_matters": "A próxima automação pode continuar sem reconstruir o contexto.",
                 "next_action": "Ler o resultado canônico e registrar a lição correspondente.",
                 "evidence_refs": [{"ref": "TEST::SCIENCE-CLI", "kind": "TEST"}],
+                "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                        "expected_changes": {"learning_state": "LEARNED"}},
                 "source_links": [{
                     "label": "Primary paper",
                     "url": "https://example.org/paper",
@@ -1109,6 +1135,8 @@ class HandoffCLIPersistenceTests(unittest.TestCase):
             "summary_plain": "Uma fonte nova ajuda a comparar duas explicações para a energia escura.",
             "why_it_matters": "A comparação pode mostrar qual hipótese merece o próximo teste.",
             "next_action": "Compare as previsões da fonte com o teste já planejado.",
+            "completion_contract": {"schema": "NEXO_HANDOFF_EFFECT_V1",
+                                    "expected_changes": {"status": "RUNNING"}},
         }
         output = io.StringIO()
         with tempfile.TemporaryDirectory() as tmp:

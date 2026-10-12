@@ -136,15 +136,19 @@ class AgentService:
     @classmethod
     def _advisor_routed(cls, item: dict[str, Any]) -> bool:
         terminal = {"DONE", "VERIFIED", "REJECTED", "FAILED"}
-        if item.get("status") in terminal:
+        status = str(item.get("status") or "").upper()
+        owner_role = str(item.get("owner_role") or "").upper()
+        kind = str(item.get("kind") or "").upper()
+        if status in terminal:
             return False
-        if item.get("owner_role") == "ADVISOR":
+        # ADVISOR and ENGINEER share one operational queue/capability alias.
+        if owner_role in {"ADVISOR", "ENGINEER"}:
             return True
-        if item.get("status") in {"SOURCE_BINDING_PENDING", "BINDING_INCOMPLETE"}:
+        if status in {"SOURCE_BINDING_PENDING", "BINDING_INCOMPLETE"}:
             return True
-        if item.get("owner_role"):
+        if owner_role:
             return False
-        return item.get("kind") in cls.LEGACY_ADVISOR_KINDS
+        return kind in cls.LEGACY_ADVISOR_KINDS
 
     @staticmethod
     def _queue_card(item: dict[str, Any], role: str) -> dict[str, Any]:
@@ -528,6 +532,11 @@ class AgentService:
             "entity_version": current_version + 1,
             "writer_role": writer_role.upper(),
             "material": material,
+            "readback": "PASS",
+            # Preserve the applied field set in the canonical receipt so a
+            # handoff can prove its declared effect rather than accepting any
+            # material mutation on the same entity.
+            "changed_fields": sorted(key for key, value in changes.items() if current.get(key) != value),
         }
         json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
         return {"accepted": True, "entity_version": current_version + 1, "readback": "PASS", "event_id": event_id}

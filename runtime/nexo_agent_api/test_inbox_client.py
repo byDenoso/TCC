@@ -168,22 +168,45 @@ class ClientTests(unittest.TestCase):
     def test_actual_writer_accepts_handoff_only_as_its_authorized_roles(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);(root/'CONTROL.json').write_text(json.dumps({'truth_owner':'TOWER_V06@GOOGLE_DRIVE_PRIVATE'}))
+            work_path=root/'entities'/'work'/'WORK-SYNTHETIC.json'
+            work_path.parent.mkdir(parents=True)
+            work_path.write_text(json.dumps({'id':'WORK-SYNTHETIC','entity_version':1,
+                                             'status':'READY','owner_role':'ADVISOR'}))
             raw=json.dumps(build_live_tower_payload(root)).encode()
             body={'request_id':'SYNTHETIC-HANDOFF','from_role':'ADVISOR','to_role':'EXECUTOR',
                   'handoff_type':'TASK','entity_ref':'WORK-SYNTHETIC','thread_id':'synthetic-thread',
                   'summary_plain':'Review the example','why_it_matters':'Check the role guard',
-                  'next_action':'Read the example'}
-            envelope={**ENV,'kind':'HANDOFF','source':'ADVISOR','payload':{'handoff':body}}
+                  'next_action':'Coloque a tarefa sintética em andamento',
+                  'completion_contract':{'schema':'NEXO_HANDOFF_EFFECT_V1',
+                                         'expected_changes':{'status':'RUNNING'}}}
+
+            missing_contract={**ENV,'kind':'HANDOFF','source':'ADVISOR',
+                              'intent_id':'SYNTHETIC-HANDOFF-MISSING-CONTRACT',
+                              'payload':{'handoff':{k:v for k,v in body.items()
+                                                    if k!='completion_contract'}}}
+            prepared=prepare(missing_contract,runtime_role='ADVISOR',allowed_kinds={'HANDOFF'})
+            item={**json.loads(prepared['raw']),'_inbox_source':'DRIVE','_inbox_id':'F0',
+                  '_inbox_name':prepared['filename']}
+            rejected_raw,rejected_report=apply_to_tower(raw,[item])
+            self.assertEqual(rejected_report['rejected'][0]['reason'],'HANDOFF_EFFECT_CONTRACT_REQUIRED')
+            rejected_tower=json.loads(rejected_raw)
+            self.assertFalse(any(entry['value'].get('event_type')=='HANDOFF_CREATED'
+                                 for path,entry in rejected_tower['files'].items()
+                                 if path.startswith('events/')))
+
+            envelope={**ENV,'kind':'HANDOFF','source':'ADVISOR',
+                      'intent_id':'SYNTHETIC-HANDOFF-WITH-CONTRACT','payload':{'handoff':body}}
             prepared=prepare(envelope,runtime_role='ADVISOR',allowed_kinds={'HANDOFF'})
             item={**json.loads(prepared['raw']),'_inbox_source':'DRIVE','_inbox_id':'F1','_inbox_name':prepared['filename']}
-            raw,report=apply_to_tower(raw,[item]);self.assertFalse(report['rejected'])
+            raw,report=apply_to_tower(rejected_raw,[item]);self.assertFalse(report['rejected'])
             tower=json.loads(raw)
             event=next(e['value'] for p,e in tower['files'].items()
                        if p.startswith('events/') and e['value'].get('event_type')=='HANDOFF_CREATED')
             self.assertEqual(event['from_role'],'ADVISOR')
-            transition={**ENV,'kind':'HANDOFF_DONE','source':'EXECUTOR','intent_id':'SYNTHETIC-DONE',
+            self.assertEqual(event['completion_contract'],body['completion_contract'])
+            transition={**ENV,'kind':'HANDOFF_ACK','source':'EXECUTOR','intent_id':'SYNTHETIC-ACK',
                         'payload':{'transition':{'handoff_id':event['handoff_id'],'writer_role':'EXECUTOR'}}}
-            prepared=prepare(transition,runtime_role='EXECUTOR',allowed_kinds={'HANDOFF_DONE'})
+            prepared=prepare(transition,runtime_role='EXECUTOR',allowed_kinds={'HANDOFF_ACK'})
             item={**json.loads(prepared['raw']),'_inbox_source':'DRIVE','_inbox_id':'F2','_inbox_name':prepared['filename']}
             raw,report=apply_to_tower(raw,[item]);self.assertFalse(report['rejected'])
             self.assertEqual(receipt_status(json.loads(raw),prepared)['stage'],'APPLIED')
@@ -262,19 +285,29 @@ class ClientTests(unittest.TestCase):
             item={**ENV,'_inbox_source':'DRIVE','_inbox_id':'FILE','_inbox_name':self.prepared['filename']}
             written,report=apply_to_tower(raw,[item]);self.assertFalse(report['rejected'])
             tower=json.loads(written);status=receipt_status(tower,self.prepared)
-            self.assertEqual(status['stage'],'APPLIED');self.assertTrue(status['entity_readback_required'])
+            self.assertEqual(status['stage'],'APPLIED');self.assertEqual(status['outcome'],'APPLIED')
+            self.assertTrue(status['entity_readback_required'])
             self.assertEqual(status['receipt']['intent_id'],self.prepared['intent_id'])
             transport=Transport();transport.can_write=False
-            self.assertEqual(deliver(self.prepared,transport,tower=tower,journal={})['stage'],'APPLIED')
+            delivery=deliver(self.prepared,transport,tower=tower,journal={})
+            self.assertEqual(delivery['stage'],'APPLIED');self.assertEqual(delivery['outcome'],'APPLIED')
             self.assertEqual(transport.calls,0)
             post=tower['files']['evolution/board.json']['value']['posts'][0];self.assertTrue(post['private']);self.assertEqual(post['id'],ENV['payload']['id'])
             replay_bytes,replay=apply_to_tower(written,[item]);self.assertIsNone(replay_bytes)
-            self.assertEqual(replay['operation_receipts'][0]['outcome'],'ALREADY_APPLIED')
+            replay_receipt=replay['operation_receipts'][0]
+            self.assertEqual(replay_receipt['stage'],'APPLIED')
+            self.assertEqual(replay_receipt['outcome'],'ALREADY_APPLIED')
             replay_tower=copy.deepcopy(tower)
             for entry in replay_tower['files'].values():
                 if entry.get('value',{}).get('receipt_id')==status['receipt']['receipt_id']:
-                    entry['value']['outcome']='ALREADY_APPLIED'
-            self.assertTrue(receipt_status(replay_tower,self.prepared)['entity_readback_required'])
+                    entry['value']=replay_receipt
+            replay_status=receipt_status(replay_tower,self.prepared)
+            self.assertEqual(replay_status['stage'],'APPLIED')
+            self.assertEqual(replay_status['outcome'],'ALREADY_APPLIED')
+            self.assertTrue(replay_status['entity_readback_required'])
+            replay_delivery=deliver(self.prepared,Transport(),tower=replay_tower,journal={})
+            self.assertEqual(replay_delivery['stage'],'APPLIED')
+            self.assertEqual(replay_delivery['outcome'],'ALREADY_APPLIED')
             modified={**item,'payload':{**item['payload'],'text':'changed'}}
             _,rejection=apply_to_tower(written,[modified]);self.assertTrue(rejection['rejected'])
     def test_authenticated_adapter_uses_one_raw_multipart_create_and_pinned_destination(self):

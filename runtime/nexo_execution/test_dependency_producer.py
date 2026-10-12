@@ -133,6 +133,27 @@ class DependencyProducerTests(unittest.TestCase):
         self.assertEqual(plan["status"], "READY_FOR_EVALUATOR")
         self.assertTrue(plan["evaluator_ready"])
 
+    def test_satisfied_legacy_state_alias_does_not_reblock_required_dependency(self):
+        test = _hydration_test()
+        for item in test["dependency_manifest"]:
+            if item["required"]:
+                item.pop("status")
+                item["state"] = "satisfied"
+        result = hydrate_test_dependencies(test, canonical_evidence={}, recipes={})
+        self.assertTrue(result["evaluator_ready"])
+        self.assertEqual(result["plan"]["status"], "READY_FOR_EVALUATOR")
+        self.assertTrue(all(item["status"] == "SATISFIED" for item in result["test"]["dependency_manifest"]
+                            if item["required"]))
+
+    def test_explicit_missing_status_remains_authoritative_over_legacy_satisfied_state(self):
+        test = _hydration_test()
+        dependency = test["dependency_manifest"][0]
+        dependency["status"] = "MISSING"
+        dependency["state"] = "SATISFIED"
+        plan = compile_hydration_plan(test, canonical_evidence={}, recipes={})
+        self.assertFalse(plan["evaluator_ready"])
+        self.assertEqual(plan["items"][0]["current_status"], "MISSING")
+
     def test_hydration_binds_reused_and_produced_evidence_without_optional_blocker_stopping_lane(self):
         implementation_id = "test_hydrate_emit_v1"
         previous = PRODUCER_IMPLEMENTATIONS.get(implementation_id)

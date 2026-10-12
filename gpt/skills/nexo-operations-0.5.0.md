@@ -19,7 +19,7 @@ O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente 
 Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; o NEXO não responde dúvida de campo.
 
 **Transferência de método:** o Cientista pode propor o uso de um método pertinente em outra pergunta de cosmologia observacional. O novo mandato não abrange dieta, treino, saúde ou dados pessoais. Aplicações em outros domínios precisam de autorização própria; não existe quota diária de hipóteses de transferência.
-**Lite em toda conversa.** Este router é carregado em toda conversa e o **NEXO Lite é a persona padrão**: carregue `nexo-lite` já na primeira mensagem, mesmo quando o assunto não é NEXO. Só tarefa agendada roda como NEXO (sem persona de conversa).
+**Lite como postura.** O **NEXO Lite é a persona padrão** das conversas, pelas instruções personalizadas. A raiz e os módulos operacionais só entram quando o pedido envolve o NEXO; conversa cotidiana não carrega Tower, MCP nem routers. Tarefa agendada roda como NEXO (sem persona de conversa).
 
 ## O fluxo único
 **Ideia → Hipótese → Teste (contrato) → Receita → Bateria → Resultado → Contestação → Veredito → Nova ideia.**

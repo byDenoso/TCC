@@ -218,16 +218,35 @@ def _deferred_by_active_p0(item: dict[str, Any], active_ids: set[str] | None) ->
 
 
 def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
-    return sorted(
-        queue,
-        key=lambda item: (
-            1 if str(item.get("status", "")) in PARKED_STATUSES else 0,
-            0 if item.get("owner_role") == role else 1,
-            PRIORITY_RANK.get(str(item.get("priority", "MEDIUM")), 9),
-            STATUS_RANK.get(str(item.get("status", "")), 9),
+    def sort_key(item: dict[str, Any]) -> tuple:
+        is_request = item.get("queue_kind") == "INTER_AGENT_REQUEST"
+        status = str(item.get("status", "")).upper()
+        return (
+            1 if not is_request and status in PARKED_STATUSES else 0,
+            PRIORITY_RANK.get(str(item.get("priority", "MEDIUM")).upper(), 9),
+            (0 if status == "PENDING" else 1) if is_request else 0,
+            0 if str(item.get("owner_role") or "").upper() == role else 1,
+            STATUS_RANK.get(status, 9),
+            str(item.get("opened_at", "")),
             str(item.get("id", "")),
-        ),
-    )[:ROLE_QUEUE_LIMIT]
+        )
+
+    ordered = sorted(queue, key=sort_key)
+    if len(ordered) <= ROLE_QUEUE_LIMIT:
+        return ordered
+
+    # Reserve one visible card for each independently actionable lane. Without
+    # this, a full function queue can hide every inter-agent request (or vice
+    # versa) behind the five-card projection.
+    work = [item for item in ordered if item.get("queue_kind") != "INTER_AGENT_REQUEST"]
+    requests = [item for item in ordered if item.get("queue_kind") == "INTER_AGENT_REQUEST"]
+    if not work or not requests:
+        return ordered[:ROLE_QUEUE_LIMIT]
+    selected = [work[0], requests[0]]
+    selected_ids = {str(item.get("id")) for item in selected}
+    selected.extend(item for item in ordered if str(item.get("id")) not in selected_ids
+                    and len(selected) < ROLE_QUEUE_LIMIT)
+    return sorted(selected, key=sort_key)
 
 
 def materialize_role_views(root: str | Path) -> dict[str, Any]:
@@ -242,7 +261,8 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
         view = service.bootstrap(role)
         queue = view["queue"]
         if active_ids is not None and role != "REFEREE_1":
-            queue = [item for item in queue if str(item.get("id")) in active_ids]
+            queue = [item for item in queue if item.get("queue_kind") == "INTER_AGENT_REQUEST"
+                     or str(item.get("id")) in active_ids]
             queue = [item for item in queue if not _deferred_by_active_p0(item, active_ids)]
         total_before_projection = len(queue)
         queue = _prioritize(queue, role)

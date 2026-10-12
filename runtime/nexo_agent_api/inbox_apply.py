@@ -893,7 +893,7 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             allowed = {
                 "request_id", "from_role", "to_role", "handoff_type", "entity_ref", "thread_id",
                 "summary_plain", "why_it_matters", "next_action", "objective_ref", "confidence_plain",
-                "evidence_refs", "source_links", "correlation_id", "parent_handoff_id",
+                "evidence_refs", "source_links", "priority", "completion_contract", "correlation_id", "parent_handoff_id",
             }
             unknown = sorted(set(envelope) - allowed)
             if unknown:
@@ -905,10 +905,13 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             missing = [key for key in required if not isinstance(envelope.get(key), str) or not envelope[key].strip()]
             if missing:
                 raise ProposalError("HANDOFF_FIELDS_REQUIRED:" + ",".join(missing))
+            if (str(envelope.get("handoff_type") or "").strip().upper() != "BLOCKER_RECOVERY"
+                    and not isinstance(envelope.get("completion_contract"), dict)):
+                raise ProposalError("HANDOFF_EFFECT_CONTRACT_REQUIRED")
             return [{"nexo_operation": "HANDOFF_CREATE", "_inbox_source": "DRIVE", "handoff": dict(envelope)}]
 
         transition = body.get("transition") if isinstance(body.get("transition"), dict) else body
-        unknown = sorted(set(transition) - {"handoff_id", "state", "writer_role"})
+        unknown = sorted(set(transition) - {"handoff_id", "state", "writer_role", "completion_event_id"})
         if unknown:
             raise ProposalError("HANDOFF_TRANSITION_FIELDS_UNSUPPORTED:" + ",".join(unknown))
         fixed_state = {"HANDOFF_ACK": "ACK", "HANDOFF_DONE": "DONE", "HANDOFF_FAILED": "FAILED"}.get(raw_kind)
@@ -923,7 +926,9 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
             raise ProposalError("HANDOFF_TRANSITION_FIELDS_REQUIRED:" + ",".join(missing))
         return [{"nexo_operation": "HANDOFF_TRANSITION", "_inbox_source": "DRIVE",
                  "transition": {"handoff_id": transition["handoff_id"], "state": state,
-                                "writer_role": transition["writer_role"]}}]
+                                "writer_role": transition["writer_role"],
+                                **({"completion_event_id": transition["completion_event_id"]}
+                                   if transition.get("completion_event_id") else {})}}]
 
     if kind == "OPERATIONAL_CANARY":
         # C01 is a single scoped Tower operation. The inbox envelope's source,
