@@ -127,7 +127,7 @@ class TargetContextPrivacyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as work:
             _,bundle=self.base(work)
             target='entities/test/OWN.json'
-            bundle['files'][target]={'encoding':'json','value':{'id':'OWN','allowed_roles':['ENGINEER'],
+            bundle['files'][target]={'encoding':'json','value':{'id':'OWN','private':True,'allowed_roles':['ENGINEER'],
                 'result':[1.234,4.567],'contract':{'alpha':0.01},'private_key':'must-not-leak'}}
             path=Path(work)/'source.json';path.write_bytes(encode(bundle))
             result=prepare_context(Snapshot.read(path),'ADVISOR',target_refs=[target])

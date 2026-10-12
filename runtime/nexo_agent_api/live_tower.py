@@ -196,6 +196,15 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     from .control_compat import control_from_bundle, SOURCE_HEADER
     control_from_bundle(bundle)
     root = Path(destination).resolve()
+    targets = {}
+    for relative, entry in bundle['files'].items():
+        if (not isinstance(relative, str) or not relative or not isinstance(entry, dict)
+                or '\\' in relative or any(part in {'', '.', '..'} for part in relative.split('/'))):
+            raise ValueError('unsafe live Tower path')
+        target = fs_path(root, relative).resolve()
+        if target == root or root not in target.parents:
+            raise ValueError('unsafe live Tower path')
+        targets[relative] = target
     root.mkdir(parents=True, exist_ok=True)
     # A reused materialization must not retain a retired CONTROL from its
     # previous verified snapshot. Never delete an unknown or locally edited file.
@@ -216,9 +225,7 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     for relative, entry in bundle["files"].items():
         if not isinstance(relative, str) or not isinstance(entry, dict):
             continue
-        target = fs_path(root, relative).resolve()
-        if target != root and root not in target.parents:
-            raise ValueError(f"unsafe live Tower path: {relative!r}")
+        target = targets[relative]
         encoding = entry.get("encoding")
         if encoding == "json":
             data = json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n"

@@ -53,7 +53,7 @@ def _target_entry(path, entry, aliases):
     elif entity and parts[1] == 'work':
         if str(value.get('owner_role') or '').upper() not in aliases:
             raise ValueError('CONTEXT_TARGET_FORBIDDEN')
-    elif value.get('private') is True:
+    elif value.get('private') is True and value.get('allowed_roles') is None:
         recipient = str(value.get('to') or value.get('owner_role') or value.get('writer_role') or '').upper()
         if recipient not in aliases:
             raise ValueError('CONTEXT_TARGET_FORBIDDEN')

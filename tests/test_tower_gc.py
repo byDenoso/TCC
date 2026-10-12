@@ -226,3 +226,28 @@ class TowerGCTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2)
                 self.assertIn('report destination must be a new file', result.stderr)
                 self.assertEqual(tower.read_bytes(), self.raw)
+
+    def test_corrupt_non_object_tower_returns_structured_failure(self):
+        import contextlib
+        with tempfile.TemporaryDirectory() as work:
+            root=Path(work);tower=root/'tower.json'
+            for value in ([],None,{'files':[]}):
+                tower.write_text(json.dumps(value))
+                output=io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    self.assertEqual(tower_gc_cli.main(['dry-run',str(tower),str(root/'report.json')]),2)
+                self.assertEqual(json.loads(output.getvalue())['status'],'GC_FAILED')
+                self.assertFalse((root/'report.json').exists())
+
+    def test_archive_pair_failure_rolls_back_its_new_files_and_is_retryable(self):
+        with tempfile.TemporaryDirectory() as work:
+            root=Path(work);tower=root/'tower.json';tower.write_bytes(self.raw)
+            archive=root/'backup.gz';manifest=root/'manifest.json'
+            same=['backup',str(tower),str(archive),str(archive)]
+            self.assertEqual(tower_gc_cli.main(same),2);self.assertFalse(archive.exists())
+            command=['backup',str(tower),str(archive),str(manifest)]
+            with patch.object(tower_gc_cli,'_write_json',side_effect=OSError('simulated manifest failure')):
+                self.assertEqual(tower_gc_cli.main(command),2)
+            self.assertFalse(archive.exists());self.assertFalse(manifest.exists())
+            self.assertEqual(tower.read_bytes(),self.raw)
+            self.assertEqual(tower_gc_cli.main(command),0)

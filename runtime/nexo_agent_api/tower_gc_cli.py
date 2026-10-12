@@ -18,8 +18,12 @@ def _write_private(path, raw):
     destination.parent.mkdir(parents=True, exist_ok=True)
     # Generated maintenance artifacts are private even in a permissive umask.
     fd = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-    with os.fdopen(fd, "wb") as handle:
-        handle.write(raw)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(raw)
+    except BaseException:
+        destination.unlink(missing_ok=True)
+        raise
 
 
 def main(argv):
@@ -51,6 +55,8 @@ def main(argv):
             _write_json(args.report, result)
             print(json.dumps({"status": "DRY_RUN", **result["summary"]}, sort_keys=True))
         elif args.command in {"backup", "archive"}:
+            if Path(args.archive).resolve() == Path(args.manifest).resolve():
+                raise tower_gc.TowerGCError('GC_OUTPUT_PATHS_ALIAS')
             if args.command == "backup":
                 packed, receipt = tower_gc.prepare_backup(raw)
             else:
@@ -62,13 +68,17 @@ def main(argv):
             if Path(args.manifest).exists() or Path(args.archive).exists():
                 raise tower_gc.TowerGCError("GC_OUTPUT_ALREADY_EXISTS")
             _write_private(args.archive, packed)
-            # Read back actual disk bytes, then emit the manifest.
-            actual = Path(args.archive).read_bytes()
-            if args.command == "backup":
-                tower_gc.restore_backup(actual, receipt)
-            else:
-                tower_gc.verify_archive(actual, receipt)
-            _write_json(args.manifest, receipt)
+            try:
+                # Read back actual disk bytes, then emit the manifest.
+                actual = Path(args.archive).read_bytes()
+                if args.command == "backup":
+                    tower_gc.restore_backup(actual, receipt)
+                else:
+                    tower_gc.verify_archive(actual, receipt)
+                _write_json(args.manifest, receipt)
+            except BaseException:
+                Path(args.archive).unlink(missing_ok=True)
+                raise
             print(json.dumps({"status": "REHEARSAL_ONLY", "archive_bytes": len(packed), "readback": "PASS"}))
         else:
             receipt = json.loads(Path(args.manifest).read_bytes())

@@ -125,3 +125,19 @@ class ControlCompatTests(unittest.TestCase):
             with self.assertRaises(ControlCompatibilityError): materialize_live_tower(invalid, root)
             after = {str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
             self.assertEqual(before, after)
+
+    def test_unsafe_path_rejected_before_retiring_control_or_writing_any_entry(self):
+        raw=raw_tower();migrated,_=prepare_migration(raw)
+        bundle=json.loads(migrated)
+        bundle['files']['../late.json']={'encoding':'json','value':{'invalid':'escape'}}
+        import hashlib
+        revision='sha256:'+hashlib.sha256(json.dumps(bundle['files'],ensure_ascii=False,
+            sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        bundle.update(revision=revision,state_fingerprint=revision,file_count=len(bundle['files']))
+        with tempfile.TemporaryDirectory() as work:
+            root,_=materialize_live_tower(raw,Path(work)/'tower')
+            before={str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()}
+            with self.assertRaisesRegex(ValueError,'unsafe live Tower path'):
+                materialize_live_tower(json.dumps(bundle).encode(),root)
+            self.assertEqual(before,{str(p.relative_to(root)):p.read_bytes() for p in root.rglob('*') if p.is_file()})
+            self.assertFalse((Path(work)/'late.json').exists())
