@@ -57,6 +57,53 @@ def test_identical_content_is_true_noop_and_preserves_old_provenance(tmp_path):
     assert persisted["manifest"]["tower_commit"] == "a" * 40
 
 
+@pytest.mark.parametrize("manifest_damage", ["missing", "invalid", "mismatched"])
+def test_identical_content_repairs_manifest_without_refreshing_provenance(tmp_path, manifest_damage):
+    root = _tower(tmp_path)
+    out = tmp_path / "public"
+    first = _build(root)
+    assert write_projection_if_changed(out, first) is True
+    before_projection = (out / "projection.json").read_bytes()
+    manifest_path = out / "manifest.json"
+    if manifest_damage == "missing":
+        manifest_path.unlink()
+    elif manifest_damage == "invalid":
+        manifest_path.write_text("not JSON", encoding="utf-8")
+    else:
+        manifest_path.write_text(json.dumps({**first["manifest"], "tower_commit": "c" * 40}), encoding="utf-8")
+
+    refresh = _build(root, commit="b" * 40, generated_at="2026-09-20T01:00:00Z")
+    assert write_projection_if_changed(out, refresh) is True
+    assert (out / "projection.json").read_bytes() == before_projection
+    assert json.loads(manifest_path.read_text(encoding="utf-8")) == first["manifest"]
+    assert write_projection_if_changed(out, refresh) is False
+
+
+@pytest.mark.parametrize("projection_damage", ["content", "manifest", "invalid", "wrong_type"])
+def test_declared_fingerprint_cannot_hide_corrupt_projection(tmp_path, projection_damage):
+    root = _tower(tmp_path)
+    out = tmp_path / "public"
+    first = _build(root)
+    assert write_projection_if_changed(out, first) is True
+    path = out / "projection.json"
+    damaged = json.loads(path.read_text(encoding="utf-8"))
+    if projection_damage == "content":
+        damaged["counts"]["active_work"] += 100
+    elif projection_damage == "manifest":
+        damaged["manifest"]["authority"] = "NOT_TOWER"
+    elif projection_damage == "wrong_type":
+        damaged = [damaged]
+    path.write_text("invalid JSON" if projection_damage == "invalid" else json.dumps(damaged), encoding="utf-8")
+
+    assert write_projection_if_changed(out, first) is True
+    persisted = json.loads(path.read_text(encoding="utf-8"))
+    ok, detail = verify_projection(persisted)
+    assert ok, detail
+    assert persisted == first
+    assert json.loads((out / "manifest.json").read_text(encoding="utf-8")) == first["manifest"]
+    assert write_projection_if_changed(out, first) is False
+
+
 def test_changed_canonical_content_replaces_projection_and_manifest_together(tmp_path):
     root = _tower(tmp_path)
     out = tmp_path / "public"
