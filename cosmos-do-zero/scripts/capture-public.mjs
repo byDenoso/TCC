@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 const base = (process.env.BASE_URL ?? '').replace(/\/$/, '');
-if (!/^https:\/\/bydenoso\.github\.io\/TCC\/cosmos-do-zero$/.test(base)) {
+if (!['https://bydenoso.github.io/TCC/cosmos-do-zero', 'https://cosmos.denerpereira.com.br'].includes(base)) {
   throw new Error('Capture precisa apontar para a URL publica real do Cosmos do Zero.');
 }
 const browser = await chromium.launch({ headless: true });
