@@ -219,7 +219,13 @@ As dez Tasks carregam `gpt/skills/nexo-master-router-0.5.0.md` e
 
 ## Ponte restrita para falha local de arquivo no ChatGPT Tasks (12/10/2026)
 
-O Writer privado existente consome um `NEXO_SCHEDULED_SPOOL` em Google Sheets. Se a
+O Writer privado existente consome um `NEXO_SCHEDULED_SPOOL` em Google Sheets.
+O `scheduled-spool-ack.json` no GitHub e **publico e intencionalmente
+parcial**: so recebe propostas elegiveis para recibo publico. Para o
+changelog/BOARD_POST privado, `ack` ausente pode coexistir com
+`APPLIED` canonico. Reconcile pelo `intent_id` e `entity` dentro da
+Tower privada antes de qualquer retransmissao; nunca publique digest, ID
+ou recibo privado para preencher o ack publico. Se a
 automacao estiver impedida somente de passar um arquivo exportado pelo runtime,
 ela pode entregar `BOARD_POST`, `INTEGRITY_REPORT` ou `LEARNING_SIGNAL` de
 baixo risco como quatro celulas por `appendCells`, mediante o contrato
