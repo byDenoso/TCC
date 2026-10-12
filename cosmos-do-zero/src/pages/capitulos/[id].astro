@@ -71,7 +71,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
             <section class="lesson-section" id={s.id}>
               <div class="lesson-meta">
                 <span class="meta">{pad2(i + 1)} / {pad2(ch.sections.length)}</span>
-                <span class="evidence-label" data-kind={s.evidence}>{s.evidence}</span>
+                <span class="evidence-label" data-kind={s.evidence} title={s.evidence}>{({ 'Observação': 'Sabemos · observado', 'Modelo físico': 'Calculamos · modelo', 'Questão aberta': 'Ainda não sabemos' } as Record<string, string>)[s.evidence] ?? s.evidence}</span>
               </div>
               <h2>{s.title}</h2>
               <p>{s.body}</p>

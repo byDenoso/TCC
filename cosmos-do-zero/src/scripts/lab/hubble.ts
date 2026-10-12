@@ -104,7 +104,7 @@ export function initHubble(root: HTMLElement): void {
       const z = selected.v / C_KMS;
       add('Galáxia', `nº ${selected.id}`);
       add('Distância', `${fmt(selected.dm * 3.261564, 0)} milhões de anos-luz`);
-      add('A luz chega mais avermelhada', `esticada ${fmt(z * 100, 1)}%`);
+      add('A cor da luz', z < 0.02 ? 'chega um pouquinho mais avermelhada' : z < 0.05 ? 'chega um pouco mais avermelhada' : 'chega bem mais avermelhada');
       add('Velocidade de afastamento', `${fmtAuto(selected.v)} km por segundo`);
     } else add('Como medir', 'Toque numa galáxia: o telescópio mede a distância e a velocidade dela.');
     drawSpec(selected);
@@ -112,17 +112,14 @@ export function initHubble(root: HTMLElement): void {
     const f = fitHubble(done.map((g) => ({ d: g.dm, v: g.v })));
     nextBtn.disabled = allBtn.disabled = done.length >= N;
     revealBtn.hidden = done.length < 6 || revealed;
-    const tech = root.querySelector('[data-h-tech]');
-    if (!f) { result.textContent = done.length ? 'Meça pelo menos mais uma galáxia para traçar a reta.' : 'Nenhuma medida ainda.'; live.textContent = `${done.length} de ${N} galáxias medidas.`; if (tech) tech.textContent = '—'; return; }
-    const age = 977.792 / f.h0;
-    const perMly = (h: number) => fmt(h / 3.261564, 1);
+    if (!f) { result.textContent = done.length ? 'Meça pelo menos mais uma galáxia para traçar a reta.' : 'Nenhuma medida ainda.'; live.textContent = `${done.length} de ${N} galáxias medidas.`; return; }
+    const perMly = (h: number) => fmt(h / 3.261564, 0);
     result.innerHTML = '';
-    const big = document.createElement('p'); big.className = 'h-big'; big.textContent = `+${perMly(f.h0)} km/s a cada milhão de anos-luz`;
+    const big = document.createElement('p'); big.className = 'h-big'; big.textContent = `Cerca de ${perMly(f.h0)} km/s mais rápido a cada milhão de anos-luz`;
     const small = document.createElement('p');
-    small.textContent = `Com ${done.length} de ${N} galáxias: cada milhão de anos-luz a mais de distância, a galáxia se afasta uns ${perMly(f.h0)} km por segundo mais rápido. Esse é o ritmo em que o Universo cresce hoje. Se ele tivesse sido sempre esse, o Universo teria uns ${fmt(age, 0)} bilhões de anos. A conta completa, com matéria e energia escura, dá 13,8.`;
+    small.textContent = `Você mediu ${done.length} de ${N} galáxias. Quanto mais longe, mais rápido elas fogem, sempre na mesma proporção. Esse é o ritmo em que o Universo cresce hoje, e foi com medidas assim que descobrimos que ele tem uns 14 bilhões de anos.`;
     result.append(big, small);
-    if (revealed) { const r = document.createElement('p'); r.className = 'h-reveal'; r.textContent = `O valor certo do jogo era +${perMly(trueH0)} km/s a cada milhão de anos-luz. A diferença vem dos erros de medida e dos movimentos próprios de cada galáxia, que atrapalham mais nas próximas.`; result.append(r); }
-    if (tech) tech.textContent = `H₀ ≈ ${fmt(f.h0, 1)} ± ${fmt(f.err, 1)} km/s/Mpc${revealed ? ` (valor do jogo: ${fmt(trueH0, 1)})` : ''}`;
+    if (revealed) { const r = document.createElement('p'); r.className = 'h-reveal'; r.textContent = `O valor certo do jogo era ${perMly(trueH0)}. A pequena diferença vem dos erros de medida e do vaivém próprio de cada galáxia, que atrapalha mais nas mais próximas.`; result.append(r); }
     live.textContent = `${done.length} de ${N} galáxias medidas. Ritmo medido: ${perMly(f.h0)} quilômetros por segundo a mais a cada milhão de anos-luz.`;
   };
 

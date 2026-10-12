@@ -61,9 +61,9 @@ export function initReceita(root: HTMLElement): void {
 
   const render = (): void => {
     const p = params();
-    const rel = (v: number, ref: number) => (v === 0 ? 'nenhuma' : Math.abs(v / ref - 1) < 0.03 ? 'igual ao nosso' : `${fmt(v / ref, v / ref < 1 ? 2 : 1)} × a do nosso`);
+    const rel = (v: number, ref: number) => { const r = v / ref; return v === 0 ? 'nenhuma' : Math.abs(r - 1) < 0.03 ? 'igual ao nosso' : r < 0.6 ? 'bem menos que no nosso' : r < 1 ? 'um pouco menos' : r < 1.6 ? 'um pouco mais' : r < 3 ? 'bem mais que no nosso' : 'muito mais que no nosso'; };
     oOm.textContent = rel(p.om, PLANCK.om); oOl.textContent = rel(p.ol, PLANCK.ol);
-    oH0.textContent = Math.abs(p.h0 - PLANCK.h0) < 0.05 ? 'igual ao nosso' : `${p.h0 > PLANCK.h0 ? '+' : '\u2212'}${fmt(Math.abs(p.h0 / PLANCK.h0 - 1) * 100, 0)}% ${p.h0 > PLANCK.h0 ? 'mais rápido' : 'mais lento'}`;
+    oH0.textContent = Math.abs(p.h0 - PLANCK.h0) < 0.05 ? 'igual ao nosso' : p.h0 > PLANCK.h0 ? (p.h0 / PLANCK.h0 > 1.15 ? 'bem mais rápido' : 'um pouco mais rápido') : (p.h0 / PLANCK.h0 < 0.85 ? 'bem mais lento' : 'um pouco mais lento');
     const bounce = hasBounce(p);
     warn.hidden = !bounce;
     q(root, '[data-r-chartwrap]').classList.toggle('is-off', bounce);
@@ -82,8 +82,6 @@ export function initReceita(root: HTMLElement): void {
     mix.forEach((s, i) => { s.style.flexBasis = `${(parts[i] / total) * 100}%`; s.hidden = parts[i] / total < 0.002; });
     const pc = (v: number) => `${fmt((v / total) * 100, 1)}%`;
     mixText.textContent = `Matéria comum ${pc(ob)} · matéria escura ${pc(dm)} · energia escura ${pc(de)}${ck > 0.003 ? ` · espaço curvo ${pc(ck)}` : ''}`;
-    const tech = root.querySelector('[data-r-tech]');
-    if (tech) tech.textContent = `Ωm = ${fmt(p.om, 3)} · ΩΛ = ${fmt(p.ol, 3)} · Ωk = ${fmt(ok2, 3)} · H₀ = ${fmt(p.h0, 1)} km/s/Mpc${f ? ` · q₀ = ${fmt(f.q0, 2)}` : ''}`;
     // tensão de Hubble com Ωm e ΩΛ atuais
     if (!bounce) {
       const aPl = ageNow({ ...p, h0: PLANCK.h0 }), aLo = ageNow({ ...p, h0: LOCAL_H0 });

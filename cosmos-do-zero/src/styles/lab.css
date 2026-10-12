@@ -73,7 +73,8 @@
 .obs-epoch p { margin: 0; color: var(--obs-mute); font-size: 15px; line-height: 1.75; max-width: 78ch; }
 .obs-tag { display: inline-block; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 750; padding: 5px 9px; border: 1px solid var(--line-strong); color: var(--ink-2); }
 .obs-tag[data-kind='Observado'] { border-color: var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
-[data-theme='dark'] .obs-tag[data-kind='Observado'] { border-color: var(--accent-2); color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 10%, transparent); }
+.obs-tag[data-kind='Observado'] { border-color: var(--accent-2); color: var(--accent-2); background: color-mix(in srgb, var(--accent-2) 10%, transparent); }
+.obs-tag[data-kind='aberto'] { border-style: dotted; border-color: var(--accent); color: var(--accent-ink); }
 .obs-tag[data-kind='Calculado pelo modelo'] { border-color: var(--line-strong); color: var(--ink-2); border-style: dashed; }
 
 .obs-guess { margin-top: clamp(22px, 3vw, 34px); border: 1px dashed var(--line-strong); padding: 20px 22px; }
@@ -184,3 +185,5 @@
 .obs-tech a { text-decoration: underline; text-underline-offset: 3px; color: var(--accent-ink); }
 .obs-small { font-size: 13px; line-height: 1.7; color: var(--muted); margin: 12px 0 0; }
 .obs-small strong { color: var(--ink); }
+
+.obs-btn.ghost[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

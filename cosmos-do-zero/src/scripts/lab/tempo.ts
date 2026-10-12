@@ -101,7 +101,6 @@ export function initTempo(root: HTMLElement): void {
     const f = densityFractions(z, PLANCK);
 
     zOut.textContent = z < 0.005 ? 'agora' : `há ${duration(look)}`;
-    q(root, '[data-t-ztech]').textContent = `z = ${z < 10 ? fmt(z, 2) : Math.round(z)}`;
     range.setAttribute('aria-valuetext', z < 0.005 ? 'agora' : `luz que saiu há ${duration(look)}, quando o Universo tinha ${duration(ageThen)}`);
     out.age.textContent = z < 0.005 ? '13,8 bilhões de anos (hoje)' : duration(ageThen);
     out.look.textContent = z < 0.005 ? 'nenhum: luz de agora' : duration(look);
@@ -141,7 +140,7 @@ export function initTempo(root: HTMLElement): void {
     q(epochBox, '[data-t-epoch-title]').textContent = ep.title;
     q(epochBox, '[data-t-epoch-text]').textContent = ep.text(z);
     const tag = q(epochBox, '[data-t-epoch-kind]');
-    tag.textContent = ep.kind; tag.dataset.kind = ep.kind;
+    tag.textContent = ep.kind === 'Observado' ? 'Sabemos · observado' : 'Calculamos · modelo'; tag.dataset.kind = ep.kind;
     live.textContent = z < 0.005 ? 'Agora.' : `A luz saiu quando o Universo tinha ${duration(ageThen)} e viajou ${duration(look)} até aqui. Temperatura então: ${Math.round(C)} graus Celsius. ${ep.title}.`;
     presets.forEach((b) => b.setAttribute('aria-pressed', String(Math.abs(Number(b.dataset.tPreset) - z) / Math.max(1, z) < 0.02 && Math.abs(Number(b.dataset.tPreset) - z) < 5)));
     setParams({ z: z < 0.005 ? null : z < 10 ? z.toFixed(2) : String(Math.round(z)) });

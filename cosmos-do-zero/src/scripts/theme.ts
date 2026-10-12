@@ -1,4 +1,4 @@
-/** Tema claro (branco + turquesa) ou escuro (preto + azul royal). Padrão: o do sistema; a escolha fica salva. */
+/** Tema claro (creme + azul-noite + laranja) ou escuro (céu noturno + creme + laranja). Padrão: o do sistema; a escolha fica salva. */
 const KEY = 'cosmos-theme';
 type Theme = 'light' | 'dark';
 const system = (): Theme => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');

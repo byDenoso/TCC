@@ -167,7 +167,7 @@
 .stellar-section .textlink { color: var(--accent-ink); margin-top: 15px; }
 
 /* ═════════ 05 · Desafio ═════════ */
-.quiz-section { background: var(--accent-soft); color: var(--ink); padding: 126px 0 135px; }
+.quiz-section { background: color-mix(in srgb, var(--accent-2) 12%, var(--bg)); color: var(--ink); padding: 126px 0 135px; }
 .quiz-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 90px; align-items: start; }
 .quiz-section .section-id { color: var(--ink-2); }
 .quiz-copy h2 { font-size: clamp(54px, 6vw, 86px); line-height: 1; margin: 36px 0 29px; }

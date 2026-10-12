@@ -12,16 +12,24 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   </div>
   <Header />
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
-    <figure class="eclipse-scene" aria-hidden="true">
-      <img class="hero-render" src={u('/renders/hero-eclipse.webp')} srcset={`${u('/renders/hero-eclipse-small.webp')} 600w, ${u('/renders/hero-eclipse.webp')} 1200w`} sizes="(max-width: 760px) 534px, (max-width: 1020px) 590px, 720px" alt="" width="1200" height="800" loading="eager" fetchpriority="high" decoding="async" />
-      <figcaption>RENDER CONCEITUAL POR IA · SEM ESCALA</figcaption>
+    <figure class="cmb-hero" data-cmb>
+      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da luz mais antiga do Universo, no estilo do satélite Planck. Use as setas do teclado para explorar as manchas mais quentes e mais frias.">
+        <canvas data-cmb-canvas width="480" height="240"></canvas>
+        <span class="cmb-probe" data-cmb-probe hidden></span>
+      </div>
+      <figcaption>
+        <p class="cmb-read" data-cmb-read aria-live="polite">Esta é a luz mais antiga do Universo. Passe o dedo ou o mouse sobre o mapa.</p>
+        <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
+        <span class="cmb-note">Mapa simulado no estilo do satélite Planck, para explorar. Não é o mapa real.</span>
+        <a class="cmb-go" href="?lab=tempo&amp;z=1090#observatorio">De onde vem essa luz? Viaje até ela →</a>
+      </figcaption>
     </figure>
     <div class="hero-copy">
-      <div class="hero-overline"><span class="dash"></span><span>COSMOLOGIA PARA CURIOSOS · COMECE DO ZERO</span></div>
-      <h1 id="hero-title">O Universo.<br /><span class="serif">Seu lugar.</span><br />Suas perguntas.</h1>
+      <div class="hero-overline"><span class="dash"></span><span>COSMOLOGIA PARA QUEM NUNCA ESTUDOU</span></div>
+      <h1 id="hero-title">Toda luz é<br /><span class="serif">uma carta</span><br />do passado.</h1>
       <div class="hero-sub">
         <span class="idx">01&nbsp;/&nbsp;04</span>
-        <p>Volte no tempo até a luz mais antiga, deixe o espaço se expandir, meça a velocidade da expansão e descubra do que o Universo é feito. Sem precisar saber nada antes.</p>
+        <p>Tudo o que sabemos sobre o Universo chegou até nós como luz. A cosmologia aprende a ler essas cartas. Aqui você lê junto, mexendo nos instrumentos, sem precisar saber nada antes.</p>
       </div>
       <div class="hero-actions">
         <a class="cta" href="#observatorio">Abrir o observatório <span class="arrow" aria-hidden="true">↗</span></a>
@@ -30,10 +38,10 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     </div>
   </section>
   <div class="hero-foot page-width">
-    <div class="hero-foot-left"><span class="rail"></span><span class="meta">O espaço explicado para gente curiosa</span></div>
+    <div class="hero-foot-left"><span class="rail"></span><span class="meta">Sabemos · Calculamos · Ainda não sabemos</span></div>
     <div class="hero-foot-center">
       <div><span class="number">13,8</span><span class="statcopy">bilhões de anos</span></div>
-      <div><span class="number">04</span><span class="statcopy">instrumentos</span></div>
+      <div><span class="number">1 : 100 mil</span><span class="statcopy">variação de temperatura</span></div>
     </div>
     <a class="down" href="#observatorio">Descer <span aria-hidden="true">↓</span></a>
   </div>

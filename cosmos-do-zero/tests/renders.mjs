@@ -22,7 +22,6 @@ const loaded = async selector => {
 try {
   const home = await page.goto(`${base}/`, { waitUntil: 'networkidle' });
   assert.ok(home?.ok(), `home retornou HTTP ${home?.status()}`);
-  await loaded('.hero-render');
   for (let i = 1; i <= 3; i++) await loaded(`.preview-card:nth-child(${i}) img`);
   await page.goto(`${base}/capitulos/galaxias-e-nebulosas/`, { waitUntil: 'networkidle' });
   for (let i = 0; i < 5; i++) {

@@ -1,33 +1,32 @@
 /* ───────────── Tokens ───────────── */
 :root {
-  /* Tema claro: branco + turquesa vivo (dourado nos dados) */
-  --bg: #ffffff;
-  --bg-alt: #eefcfb;
-  --surface: #f5fdfc;
-  --surface-2: #d9f6f3;
-  --ink: #08201f;
-  --ink-2: #21423f;
-  --muted: #486462;
-  --line: #cdeae7;
-  --line-strong: #7cc6c0;
-  --accent: #14d2c9;
-  --accent-strong: #0fbcb4;
-  --accent-ink: #00747a;
-  --accent-soft: #d2f8f5;
-  --on-accent: #022a28;
-  --accent-2: #e0a100;
-  --shadow: rgba(4, 50, 48, 0.14);
-  --focus: #00747a;
-  --hero-tint: grayscale(1) sepia(1) hue-rotate(128deg) saturate(3.2) brightness(1.05);
-  /* cores de dados (gráficos) */
-  --c-rad: #f0c419;
-  --c-mat: #12bdb7;
-  --c-ob: #7fe3de;
-  --c-dm: #08706d;
-  --c-de: #e0782a;
-  --c-k: #9aa9a8;
-  --glow-core: #064f4c;
-  --glow-mid: #14d2c9;
+  /* Identidade: as cores do mapa da luz mais antiga (Planck). Claro: creme "Cosmic Latte" + azul-noite + laranja quente */
+  --bg: #fff8e7;
+  --bg-alt: #f7eed8;
+  --surface: #fbf2de;
+  --surface-2: #f0e2c2;
+  --ink: #14213d;
+  --ink-2: #2b3a5c;
+  --muted: #56617a;
+  --line: #e6d7b6;
+  --line-strong: #b8a47c;
+  --accent: #c8401e;
+  --accent-strong: #a93415;
+  --accent-ink: #b2381a;
+  --accent-soft: #f8dcc8;
+  --on-accent: #fff8e7;
+  --accent-2: #2f5da8;
+  --shadow: rgba(20, 33, 61, 0.14);
+  --focus: #2f5da8;
+  /* cores de dados: frio (matéria) × quente (energia escura), como no mapa */
+  --c-rad: #e9a93a;
+  --c-mat: #2f5da8;
+  --c-ob: #8db3e8;
+  --c-dm: #1e3f7a;
+  --c-de: #c8401e;
+  --c-k: #a89b80;
+  --glow-core: #14213d;
+  --glow-mid: #2f5da8;
   color-scheme: light;
 
   /* nomes antigos → tokens do tema */
@@ -51,9 +50,9 @@
   --page: min(1332px, calc(100% - 2 * var(--gutter)));
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-/* Tema escuro: preto + azul royal */
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #030304; --bg-alt: #08090b; --surface: #0e0f12; --surface-2: #17191d; --ink: #f6f3ec; --ink-2: #d8d3c7; --muted: #a49e91; --line: #24262b; --line-strong: #4d4a42; --accent: #f2b632; --accent-strong: #ffc94d; --accent-ink: #ffd27a; --accent-soft: #2a2108; --on-accent: #1d1300; --accent-2: #2ee6dc; --shadow: rgba(0, 0, 0, 0.6); --focus: #ffd27a; --hero-tint: hue-rotate(14deg) saturate(1.05); --c-rad: #f4ecd8; --c-mat: #2ee6dc; --c-ob: #a5f5f0; --c-dm: #138f8a; --c-de: #f2b632; --c-k: #6f6b62; --glow-core: #fff6dc; --glow-mid: #f2b632; color-scheme: dark; } }
-:root[data-theme='dark'] { --bg: #030304; --bg-alt: #08090b; --surface: #0e0f12; --surface-2: #17191d; --ink: #f6f3ec; --ink-2: #d8d3c7; --muted: #a49e91; --line: #24262b; --line-strong: #4d4a42; --accent: #f2b632; --accent-strong: #ffc94d; --accent-ink: #ffd27a; --accent-soft: #2a2108; --on-accent: #1d1300; --accent-2: #2ee6dc; --shadow: rgba(0, 0, 0, 0.6); --focus: #ffd27a; --hero-tint: hue-rotate(14deg) saturate(1.05); --c-rad: #f4ecd8; --c-mat: #2ee6dc; --c-ob: #a5f5f0; --c-dm: #138f8a; --c-de: #f2b632; --c-k: #6f6b62; --glow-core: #fff6dc; --glow-mid: #f2b632; color-scheme: dark; }
+/* Tema escuro: céu noturno + creme + laranja */
+@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #070b18; --bg-alt: #0b1124; --surface: #10182f; --surface-2: #18223f; --ink: #fff8e7; --ink-2: #e6ddc8; --muted: #a7b0c6; --line: #222c48; --line-strong: #46527b; --accent: #f08a4b; --accent-strong: #f7a169; --accent-ink: #f7a169; --accent-soft: #3a1f12; --on-accent: #1a0d05; --accent-2: #8db3e8; --shadow: rgba(0, 0, 0, 0.55); --focus: #f7a169; --c-rad: #f5dfa6; --c-mat: #6e9be0; --c-ob: #b9d1f5; --c-dm: #3a62ae; --c-de: #f08a4b; --c-k: #6b7391; --glow-core: #fff8e7; --glow-mid: #f08a4b; color-scheme: dark; } }
+:root[data-theme='dark'] { --bg: #070b18; --bg-alt: #0b1124; --surface: #10182f; --surface-2: #18223f; --ink: #fff8e7; --ink-2: #e6ddc8; --muted: #a7b0c6; --line: #222c48; --line-strong: #46527b; --accent: #f08a4b; --accent-strong: #f7a169; --accent-ink: #f7a169; --accent-soft: #3a1f12; --on-accent: #1a0d05; --accent-2: #8db3e8; --shadow: rgba(0, 0, 0, 0.55); --focus: #f7a169; --c-rad: #f5dfa6; --c-mat: #6e9be0; --c-ob: #b9d1f5; --c-dm: #3a62ae; --c-de: #f08a4b; --c-k: #6b7391; --glow-core: #fff8e7; --glow-mid: #f08a4b; color-scheme: dark; }
 
 /* ───────────── Base ───────────── */
 *, *::before, *::after { box-sizing: border-box; }
@@ -189,7 +188,7 @@ em.serif, .serif-i, h1 em, h2 em, h3 em { font-family: var(--serif); font-style:
   .mobile-menu nav a { display: flex; gap: 16px; padding: 16px 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 11%, transparent); color: var(--ink); font-size: 16px; font-family: var(--sans); font-weight: 650; letter-spacing: -0.02em; }
   .mobile-menu nav a span { color: var(--orange); font-size: 11px; letter-spacing: 0.1em; padding-top: 4px; min-width: 22px; font-family: var(--body); }
   .hero-shell { min-height: 0; }
-  .hero-main { min-height: 0; padding-top: 128px; padding-bottom: 330px; align-items: flex-start; }
+  .hero-main { min-height: 0; padding-top: 128px; padding-bottom: 36px; align-items: flex-start; flex-direction: column; }
   .eclipse-scene { --u: 0.74; top: auto; bottom: -150px; right: 50%; transform: translateX(50%) scale(var(--u)); transform-origin: 50% 100%; opacity: 0.95; }
   .eclipse-scene figcaption { bottom: 100px; }
   .hero-shell::after { height: 150px; }
@@ -215,7 +214,7 @@ em.serif, .serif-i, h1 em, h2 em, h3 em { font-family: var(--serif); font-style:
   .footer-end { flex-direction: column; gap: 6px; }
 }
 @media (max-width: 400px) {
-  .hero-main { padding-top: 120px; padding-bottom: 310px; }
+  .hero-main { padding-top: 120px; padding-bottom: 30px; }
   .hero-overline { font-size: 9px; }
   .hero-sub p { font-size: 14px; }
   .hero-foot-center { gap: 14px; }
@@ -238,12 +237,26 @@ h1, h2, h3, h4 { word-spacing: 0.05em; }
 .theme-toggle .i-moon { fill: currentColor; stroke: none; }
 .theme-toggle .i-sun, .theme-toggle[data-current='dark'] .i-moon { display: none; }
 .theme-toggle[data-current='dark'] .i-sun { display: block; }
-.hero-render { filter: var(--hero-tint); }
-/* Tema claro: o eclipse vira a vista por uma janela redonda de observatório */
-[data-theme='light'] .hero-render { position: relative; width: 64%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 50%; margin: 13% 0 0 18%; mask-image: none; -webkit-mask-image: none; }
-[data-theme='light'] .eclipse-scene::before { content: ''; position: absolute; left: 18%; top: 13%; width: 64%; aspect-ratio: 1; border-radius: 50%; box-shadow: 0 0 0 12px var(--bg), 0 0 0 13px var(--line-strong), 0 0 0 44px color-mix(in srgb, var(--accent) 9%, transparent), 0 40px 90px var(--shadow); }
-@media (max-width: 760px) { [data-theme='light'] .hero-render { width: 56%; margin: 11% 0 0 22%; } [data-theme='light'] .eclipse-scene::before { width: 56%; left: 22%; top: 11%; } [data-theme='light'] .eclipse-scene figcaption { bottom: 150px; } }
-[data-theme='light'] .eclipse-scene figcaption { bottom: 120px; }
 
 @media (max-width: 1130px) { .theme-toggle .theme-label { display: none; } .theme-toggle { padding: 0 13px; } .main-nav a { white-space: nowrap; } }
 @media (max-width: 760px) { .theme-toggle { padding: 0 12px; } .header-tools { margin-left: auto; } }
+
+/* ───────────── Mapa da luz mais antiga (abertura) ───────────── */
+.cmb-hero { position: absolute; right: 0; top: 50%; transform: translateY(-46%); width: min(44vw, 640px); margin: 0; z-index: 5; }
+.cmb-frame { position: relative; aspect-ratio: 2 / 1; border-radius: 50%; overflow: hidden; background: radial-gradient(ellipse at 40% 45%, #f7b267 0, #fff1d6 30%, #8db3e8 62%, #1e3f7a 100%); box-shadow: 0 0 0 1px var(--line-strong), 0 0 0 10px var(--bg-alt), 0 0 0 11px var(--line), 0 30px 80px var(--shadow); cursor: crosshair; touch-action: pan-y; outline: none; }
+.cmb-frame:focus-visible { box-shadow: 0 0 0 3px var(--focus), 0 0 0 10px var(--bg-alt), 0 30px 80px var(--shadow); }
+.cmb-frame canvas { display: block; width: 100%; height: 100%; }
+.cmb-probe { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; border: 2px solid #fff8e7; box-shadow: 0 0 0 1px #14213d, 0 2px 10px rgba(0,0,0,.35); pointer-events: none; }
+.cmb-hero figcaption { margin-top: 26px; display: grid; gap: 6px; }
+.cmb-read { font: 650 15px/1.5 var(--sans); color: var(--ink); min-height: 3em; }
+.cmb-scale { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); }
+.cmb-scale i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #102a5c, #1e4fa0, #5b93d6, #bfd8f2, #fff4dc, #fbd3a2, #f39a55, #d9512a, #8f1f10); box-shadow: inset 0 0 0 1px var(--line); }
+.cmb-note { font-size: 11px; line-height: 1.6; color: var(--muted); }
+.cmb-go { width: fit-content; font-size: 13px; font-weight: 700; color: var(--accent-ink); border-bottom: 1px solid currentColor; padding: 8px 0 4px; }
+.hero-copy { width: 54%; }
+.hero h1 { font-size: clamp(56px, 6.4vw, 104px); }
+@media (max-width: 1130px) { .cmb-hero { width: 42vw; } .hero-copy { width: 56%; } .hero h1 { font-size: clamp(50px, 6.6vw, 80px); } }
+@media (max-width: 860px) and (min-width: 761px) { .cmb-hero { width: 40vw; } .hero-copy { width: 58%; } }
+@media (max-width: 760px) { .cmb-hero { order: 2; position: relative; transform: none; width: 100%; top: auto; right: auto; margin-top: 44px; } .hero-copy { width: 100%; } .hero h1 { font-size: clamp(46px, 13vw, 72px); } .eclipse-scene { display: none; } }
+
+.hero-foot-center .number { white-space: nowrap; }
