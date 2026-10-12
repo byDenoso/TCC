@@ -227,14 +227,19 @@ changelog/BOARD_POST privado, `ack` ausente pode coexistir com
 Tower privada antes de qualquer retransmissao; nunca publique digest, ID
 ou recibo privado para preencher o ack publico. Se a
 automacao estiver impedida somente de passar um arquivo exportado pelo runtime,
-ela pode entregar `BOARD_POST`, `INTEGRITY_REPORT` ou `LEARNING_SIGNAL` de
-baixo risco como quatro celulas por `appendCells`, mediante o contrato
+ela pode entregar recados, integridade, aprendizado e propostas cientificas
+de tipos governados pela allowlist `sched-v1` do nexo-connectors
+como quatro celulas por `appendCells`, mediante o contrato
 `gpt/skills/nexo-connectors-0.5.0.md`, secao `Ponte privada de celulas`.
 Validar identidade `sched-v1-...`, tipo, UTC, Base64URL, ACL, preflight contra
 duplicata, tamanho e readback; nunca reivindicar `APPLIED` sem recibo da Tower.
 O arquivo em `NEXO_INBOX` continua **obrigatorio** para HANDOFF/TRANSITION
 e qualquer operacao que exija origem DRIVE. A ponte Sheets nao converte
-GATEWAY em DRIVE. Recusa 403/ACL/politica, payload confidencial nao permitido,
+GATEWAY em DRIVE; portanto nao valida ACK/DONE de HANDOFF formal,
+aprovar mandato, TEST_BATTERY, FAMILY_CHARTER, FITNESS_REPORT ou
+qualquer alteracao cientifica fora das regras do Writer.
+A tarefa deve usar a capacidade Sheets de forma autonoma quando
+permitida, sem convocar Dener para corrigir falta de exportacao local. Recusa 403/ACL/politica, payload confidencial nao permitido,
 insuficiencia de readback ou ausencia de write Sheets resultam em LOCAL_ONLY,
 nao em tentativas via Git, Doc, token alternativo ou outro Writer.
 
@@ -250,4 +255,4 @@ Task recebe nova autorização por carregar este documento.
 O Writer aplica as operações admitidas e reconhece sua aplicação. Leitura de
 staging, receipt de transporte, fingerprint projetado localmente e coincidência
 de fingerprints de dados não comprovam escrita na Tower nem publicação de uma
-nova revisão de código. Não existe upload bridge ativo para as ChatGPT Tasks.
+nova revisão de código. A ponte de arquivo exportado depende de capacidade real do runtime agendado. A alternativa Sheets governada usa uma API nativa separada quando realmente disponivel; nenhum caminho cria outro Writer nem altera a Tower diretamente.
