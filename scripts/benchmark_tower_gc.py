@@ -25,6 +25,9 @@ def main():
     args = parser.parse_args()
     if args.repeats < 1 or args.queries < 1:
         parser.error('positive repeats/queries required')
+    import os
+    if os.path.lexists(args.report):
+        parser.error('report destination must be a new file')
     raw = Path(args.tower).read_bytes()
     original = hashlib.sha256(raw).hexdigest()
     with tempfile.TemporaryDirectory(prefix='nexo-gc-benchmark-') as work:
@@ -71,7 +74,8 @@ def main():
                          'consumer coverage and independent code review still required before activation']}
     target=Path(args.report)
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+    from runtime.nexo_agent_api.tower_gc_cli import _write_private
+    _write_private(target, (json.dumps(result, indent=2, sort_keys=True) + '\n').encode())
     print(json.dumps(result, sort_keys=True))
 
 
