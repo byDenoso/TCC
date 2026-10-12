@@ -42,7 +42,7 @@ try {
     assert.ok(state.srcset.includes(file.replace('.webp', '-small.webp')), `srcset da era ${i}`);
     assert.ok(state.current.includes(file.replace('.webp', '')), `imagem exibida da era ${i}`);
   }
-  await loaded('[data-star-render]');
+  assert.ok(await page.locator('[data-star-svg] circle').count() > 0, 'cena estelar desenhada');
   assert.deepEqual(problems, []);
   console.log(`${checked} imagens raster carregadas e decodificadas; srcsets da linha do tempo consistentes; zero erro HTTP de imagem.`);
 } finally {

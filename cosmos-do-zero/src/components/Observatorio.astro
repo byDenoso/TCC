@@ -62,8 +62,8 @@ const ext = ' (abre em outra aba)';
               <dl class="obs-readouts">
                 <div><dt>A luz saiu quando o Universo tinha</dt><dd data-t-out="age">—</dd></div>
                 <div><dt>Ela viajou durante</dt><dd data-t-out="look">—</dd></div>
-                <div><dt>O Universo era</dt><dd data-t-out="size">—</dd></div>
-                <div><dt>Temperatura do Universo</dt><dd data-t-out="temp">—</dd></div>
+                <div><dt>Distâncias entre galáxias eram</dt><dd data-t-out="size">—</dd></div>
+                <div><dt>Temperatura da luz de fundo</dt><dd data-t-out="temp">—</dd></div>
                 <div><dt>Onde está a fonte hoje</dt><dd data-t-out="dnow">—</dd></div>
                 <div><dt>Luz vermelha que saiu de lá chega como</dt><dd data-t-out="line">—</dd></div>
               </dl>
@@ -146,7 +146,7 @@ const ext = ' (abre em outra aba)';
               </div>
               <dl class="obs-readouts single" data-h-reading></dl>
               <svg class="obs-spec" data-h-spec viewBox="0 0 560 84" role="img" aria-label="Cor da luz do hidrogênio medida no laboratório e na galáxia"></svg>
-              <p class="obs-small">Como o telescópio mede: a <strong>distância</strong> vem do brilho de estrelas que explodem sempre com a mesma força (quanto mais fracas parecem, mais longe estão). A <strong>velocidade</strong> vem da cor: a luz de quem se afasta chega mais avermelhada.</p>
+              <p class="obs-small">Como o telescópio mede: a <strong>distância</strong> vem de um tipo de supernova cujo brilho real os astrônomos sabem calibrar (quanto mais fraca parece, mais longe está). A <strong>velocidade</strong> vem da cor: a luz de quem se afasta chega mais avermelhada.</p>
             </div>
           </div>
           <div class="obs-grid second">
@@ -164,7 +164,7 @@ const ext = ' (abre em outra aba)';
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
               <li>O ritmo de expansão se chama <strong>constante de Hubble</strong>.</li>
-              <li>As estrelas que explodem sempre com o mesmo brilho são <strong>supernovas do tipo Ia</strong>. Hubble publicou a descoberta em 1929 (<a href="https://doi.org/10.1073/pnas.15.3.168" target="_blank" rel="noopener noreferrer">artigo original<span class="visually-hidden">{ext}</span> ↗</a>); Georges Lemaître chegou à mesma ideia em 1927.</li>
+              <li>As supernovas usadas como régua são as <strong>do tipo Ia</strong>: não são idênticas, mas seu brilho pode ser calibrado. Hubble não tinha essa régua: em 1929 ele usou estrelas Cefeidas em galáxias bem mais próximas. Este jogo imita o método de hoje. Hubble publicou a descoberta em 1929 (<a href="https://doi.org/10.1073/pnas.15.3.168" target="_blank" rel="noopener noreferrer">artigo original<span class="visually-hidden">{ext}</span> ↗</a>); Georges Lemaître chegou à mesma ideia em 1927.</li>
             </ul>
           </details>
           <p class="obs-live visually-hidden" role="status" data-h-live></p>
@@ -174,10 +174,10 @@ const ext = ' (abre em outra aba)';
       {stations.includes('receita') && (
         <div class="obs-station" id={panelId('receita')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('receita') : undefined} data-station="receita">
           <div class="obs-guess" data-guess="b">
-            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Se o Universo tivesse só matéria, sem energia escura, a expansão…</p>
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Imagine um Universo só de matéria, sem energia escura, com a quantidade exata de matéria que deixa o espaço plano (a receita "Só matéria"). A expansão…</p>
             <div class="obs-guess-opts"><button type="button" data-opt="a">aceleraria</button><button type="button" data-opt="b">ia freando, sem nunca parar</button><button type="button" data-opt="c">pararia e tudo voltaria a encolher</button></div>
             <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com a quantidade "certinha" de matéria, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Com matéria demais, pararia e voltaria a encolher. Mas o que vemos é outra coisa: hoje a expansão está acelerando. Por isso existe a ideia de energia escura.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com essa quantidade exata, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Atenção: com matéria <em>demais</em> a resposta seria outra, e a expansão pararia e voltaria a encolher (teste a receita "Matéria demais"). Com matéria de menos, também nunca para. Mas o que vemos é outra coisa: hoje a expansão está acelerando. Por isso existe a ideia de energia escura.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
           </div>
           <div class="obs-grid">
             <figure class="obs-viz" data-r-chartwrap>
@@ -216,6 +216,7 @@ const ext = ' (abre em outra aba)';
             <div><span class="obs-tag" data-kind="aberto">Ainda não sabemos</span><h4>Duas réguas, dois números</h4>
               <p>Medindo o ritmo da expansão pela <strong>luz mais antiga do Universo</strong>, os cientistas chegam a cerca de <strong>67</strong>. Medindo por <strong>estrelas de galáxias próximas</strong>, chegam a cerca de <strong>73</strong>. A diferença parece pequena, mas as duas medidas são precisas demais para ser acaso. Pode ser um erro escondido em uma delas ou algo novo na física. Ninguém sabe ainda.</p></div>
             <div class="obs-tension-cmp">
+              <p class="obs-small">Os dois botões mudam só o ritmo de hoje. A matéria e a energia escura ficam como estão na receita.</p>
               <button type="button" class="obs-btn ghost" data-r-h0set="67.4" aria-pressed="false">Usar 67 (luz mais antiga)</button>
               <p>Idade com esta receita: <strong data-r-t-cmb>—</strong></p>
               <button type="button" class="obs-btn ghost" data-r-h0set="73.04" aria-pressed="false">Usar 73 (estrelas próximas)</button>

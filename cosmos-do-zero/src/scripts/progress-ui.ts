@@ -2,6 +2,7 @@ import { $, $$, setText } from './dom';
 import { createLocalStore, mainCompletedCount, nextUnfinished, progressLabel } from '../lib/progress';
 import { PRIMARY_CHAPTER_IDS, type ChapterId } from '../types';
 import { chapterUrl } from '../lib/url';
+import { readPlace } from './reader';
 
 export const store = createLocalStore();
 
@@ -33,13 +34,24 @@ export function refreshProgress(): void {
     if (label) setText(label, isDone ? 'Capítulo concluído' : 'Concluir este capítulo');
     b.setAttribute('aria-pressed', String(isDone));
   });
-  // Abertura: continuar de onde parou
+  // Abertura: continuar de onde parou (o último passo visitado de uma aula não concluída)
+  const place = readPlace();
+  const resumeAt = place && !done.includes(place.chapter as ChapterId) && place.step > 0 ? place : null;
+  for (const card of $$<HTMLAnchorElement>('[data-resume]')) {
+    card.hidden = !resumeAt;
+    if (!resumeAt) continue;
+    let titles: Record<string, string> = {};
+    try { titles = JSON.parse(card.dataset.titles ?? '{}'); } catch { /* ignora */ }
+    card.href = `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}`;
+    setText($('[data-resume-title]', card), titles[resumeAt.chapter] ?? 'Sua aula');
+    setText($('[data-resume-step]', card), `Passo ${resumeAt.step + 1} de ${resumeAt.total}: ${resumeAt.title}`);
+  }
   for (const cta of $$<HTMLAnchorElement>('[data-start-journey]')) {
     const next = nextUnfinished(done);
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
-    cta.href = chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
+    cta.href = resumeAt ? `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}` : chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
     const inHeader = !!cta.closest('.header');
-    setText($('[data-start-label]', cta), completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
+    setText($('[data-start-label]', cta), completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 || resumeAt ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
   }
 }
 

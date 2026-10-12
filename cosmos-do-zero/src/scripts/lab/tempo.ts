@@ -20,14 +20,14 @@ function tempNote(k: number): string {
   if (k < 320) return 'como um dia comum aqui na Terra';
   if (k < 1000) return 'quente como um forno';
   if (k < 2500) return 'quente como brasa';
-  return 'quente como a superfície de uma estrela';
+  return 'quente como a superfície de uma estrela fria (o Sol é mais quente)';
 }
 
 interface Epoch { from: number; title: string; kind: 'Observado' | 'Calculado pelo modelo'; text: (z: number) => string }
 const epochs: Epoch[] = [
   { from: 3400, title: 'Quente demais para existir átomo', kind: 'Calculado pelo modelo', text: () => 'Tudo é uma sopa muito quente de partículas e luz. Nesta fase a luz pesa mais que a matéria. Isso muda por volta dos 50 mil anos de idade.' },
   { from: 1200, title: 'Uma névoa que não deixa a luz passar', kind: 'Calculado pelo modelo', text: () => 'Ainda quente demais para os átomos se formarem. A luz bate o tempo todo nas partículas soltas, como farol na neblina: não dá para enxergar através.' },
-  { from: 900, title: 'O Universo fica transparente', kind: 'Observado', text: () => 'Os primeiros átomos se formam e a névoa se dissipa. A luz desse instante viaja até hoje e chega até nós: é a luz mais antiga que existe. Saiu alaranjada, de um gás a uns 2.700 °C, e chegou esticada em micro-ondas.' },
+  { from: 900, title: 'O Universo fica transparente', kind: 'Observado', text: () => 'Os primeiros átomos se formam e a névoa se dissipa. A luz desse instante viaja até hoje e chega até nós: é a luz mais antiga que conseguimos observar diretamente. Antes disso já havia luz, mas ela não conseguia viajar longe. Saiu alaranjada, de um gás a uns 2.700 °C, e chegou esticada em micro-ondas.' },
   { from: 30, title: 'Idade das trevas', kind: 'Calculado pelo modelo', text: () => 'Ainda não existe nenhuma estrela. O gás esfria e a gravidade começa a juntar matéria em montinhos, que vão virar as primeiras galáxias.' },
   { from: 6, title: 'As primeiras estrelas e galáxias se acendem', kind: 'Observado', text: () => 'Surgem as primeiras estrelas e galáxias. O telescópio espacial James Webb já fotografou galáxias desta época.' },
   { from: 0.5, title: 'A época de mais estrelas', kind: 'Observado', text: () => 'As galáxias crescem e formam estrelas no ritmo mais intenso da história, quando o Universo tinha uns 3 bilhões de anos. Hoje esse ritmo é bem menor.' },
@@ -63,7 +63,7 @@ export function initTempo(root: HTMLElement): void {
 
   // quadrado do tamanho
   const sqX = 30, sqBottom = 345, sqS = 170;
-  svg('text', { x: sqX, y: 142, class: 'obs-cap' }, svgEl, 'Tamanho do Universo');
+  svg('text', { x: sqX, y: 142, class: 'obs-cap' }, svgEl, 'Distâncias entre galáxias');
   svg('rect', { x: sqX, y: sqBottom - sqS, width: sqS, height: sqS, class: 'obs-today' }, svgEl);
   const then = svg('rect', { x: sqX, y: sqBottom - 2, width: 2, height: 2, class: 'obs-then' }, svgEl);
   const sqLabel = svg('text', { x: sqX, y: sqBottom + 24, class: 'obs-cap warm' }, svgEl, '');
@@ -102,10 +102,10 @@ export function initTempo(root: HTMLElement): void {
 
     zOut.textContent = z < 0.005 ? 'agora' : `há ${duration(look)}`;
     range.setAttribute('aria-valuetext', z < 0.005 ? 'agora' : `luz que saiu há ${duration(look)}, quando o Universo tinha ${duration(ageThen)}`);
-    out.age.textContent = z < 0.005 ? '13,8 bilhões de anos (hoje)' : duration(ageThen);
+    out.age.textContent = z < 0.005 ? '13,8 bilhões de anos (hoje)' : z > 800 ? `${duration(ageThen)} (aproximado: o valor muda um pouco com o modelo; costuma-se dizer uns 380 mil)` : duration(ageThen);
     out.look.textContent = z < 0.005 ? 'nenhum: luz de agora' : duration(look);
     out.dnow.textContent = z < 0.005 ? 'aqui perto' : `a ${lightYears(dc)}`;
-    out.size.textContent = z < 0.005 ? 'do tamanho de hoje' : `${fmtAuto(1 + z)} vezes menor`;
+    out.size.textContent = z < 0.005 ? 'do tamanho de hoje' : `${fmtAuto(1 + z)} vezes menores`;
     const C = T - 273.15;
     out.temp.textContent = `${Math.round(C).toLocaleString('pt-BR').replace('-', '\u2212')} °C · ${tempNote(T)}`;
     out.line.textContent = z < 0.005 ? 'vermelha, igual' : band(lam);

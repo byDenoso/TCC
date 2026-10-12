@@ -2,6 +2,7 @@
  {
   "id": "galaxy",
   "chapter": "galaxias-e-nebulosas",
+  "section": "galaxias-e-nebulosas-via-lactea",
   "question": "Qual sequência coloca cada escala no lugar certo, do menor para o maior?",
   "answers": [
    "Terra → Sistema Solar → Via Láctea → Universo",
@@ -14,6 +15,7 @@
  {
   "id": "colors",
   "chapter": "galaxias-e-nebulosas",
+  "section": "galaxias-e-nebulosas-nebulosas",
   "question": "O que a legenda de uma imagem astronômica composta pode explicar?",
   "answers": [
    "Que as cores podem representar filtros e luz invisível aos nossos olhos",
@@ -26,6 +28,7 @@
  {
   "id": "light-lookback",
   "chapter": "galaxias-e-nebulosas",
+  "section": "galaxias-e-nebulosas-gas-e-estrelas",
   "question": "Por que observar uma galáxia muito distante também é olhar para o passado?",
   "answers": [
    "Porque a galáxia deixa de existir quando fica longe",
@@ -38,6 +41,7 @@
  {
   "id": "big-bang",
   "chapter": "origem-do-universo",
+  "section": "origem-do-universo-o-universo",
   "question": "O que o modelo do Big Bang quente descreve?",
   "answers": [
    "Uma explosão de matéria dentro de um espaço vazio que já existia",
@@ -50,6 +54,7 @@
  {
   "id": "cmb",
   "chapter": "origem-do-universo",
+  "section": "origem-do-universo-primeira-luz",
   "question": "O que ocorreu quando o Universo ficou mais transparente, cerca de 380 mil anos após a fase quente?",
   "answers": [
    "Fótons que já existiam passaram a viajar por distâncias maiores e hoje observamos seu vestígio como CMB",
@@ -62,6 +67,7 @@
  {
   "id": "light-elements",
   "chapter": "origem-do-universo",
+  "section": "origem-do-universo-fase-quente",
   "question": "O que se formou nos primeiros minutos da história cósmica?",
   "answers": [
    "Núcleos leves, sobretudo de hélio; átomos completos surgiram bem depois",
@@ -74,6 +80,7 @@
  {
   "id": "dark-matter",
   "chapter": "misterios-do-cosmos",
+  "section": "misterios-do-cosmos-materia-escura",
   "question": "Qual frase descreve melhor o que sabemos sobre matéria escura?",
   "answers": [
    "Sua partícula foi identificada e medida em laboratório",
@@ -86,6 +93,7 @@
  {
   "id": "evidence-lines",
   "chapter": "misterios-do-cosmos",
+  "section": "misterios-do-cosmos-horizonte",
   "question": "Que conjunto de pistas sustenta o modelo de um Universo antigo quente e em expansão?",
   "answers": [
    "A expansão observada, as quantidades de elementos leves e a radiação cósmica de fundo",
@@ -98,6 +106,7 @@
  {
   "id": "dark-energy",
   "chapter": "misterios-do-cosmos",
+  "section": "misterios-do-cosmos-energia-escura",
   "question": "O que mostram as observações usadas para estudar a expansão acelerada?",
   "answers": [
    "Supernovas distantes do tipo Ia ajudaram a mostrar que a expansão acelerou; a natureza da energia escura segue aberta",
@@ -110,6 +119,7 @@
  {
   "id": "fusion",
   "chapter": "vida-das-estrelas",
+  "section": "vida-das-estrelas-fusao",
   "question": "Qual processo fornece a energia principal do Sol hoje?",
   "answers": [
    "Combustão de oxigênio",
@@ -122,6 +132,7 @@
  {
   "id": "star-ending",
   "chapter": "vida-das-estrelas",
+  "section": "vida-das-estrelas-pequenas-e-medias",
   "question": "Qual é o destino esperado de uma estrela como o Sol?",
   "answers": [
    "Um buraco negro supermassivo",
@@ -134,6 +145,7 @@
  {
   "id": "venus",
   "chapter": "sistema-solar",
+  "section": "sistema-solar-sol-e-planetas",
   "question": "Por que Vênus tem uma superfície mais quente que Mercúrio?",
   "answers": [
    "Seu intenso efeito estufa",
@@ -146,6 +158,7 @@
  {
   "id": "giants",
   "chapter": "sistema-solar",
+  "section": "sistema-solar-gigantes",
   "question": "A temperatura de Júpiter mostrada no catálogo se refere a quê?",
   "answers": [
    "Ao centro do núcleo",
@@ -158,6 +171,7 @@
  {
   "id": "air",
   "chapter": "terra-e-atmosfera",
+  "section": "terra-e-atmosfera-ar-atual",
   "question": "Qual é o gás mais abundante no ar seco da Terra?",
   "answers": [
    "Nitrogênio",
@@ -170,6 +184,7 @@
  {
   "id": "atmosphere-layers",
   "chapter": "terra-e-atmosfera",
+  "section": "terra-e-atmosfera-camadas",
   "question": "Em qual camada ocorre a maior parte do tempo meteorológico?",
   "answers": [
    "Exosfera",

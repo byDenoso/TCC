@@ -203,11 +203,77 @@ section('Evolução estelar');
   }
   ok('classes distintas por faixa de massa', new Set(classes).size >= 3, classes.join(' | '));
   await setMass('1');
-  const initialRender=await p.locator('[data-star-render]').getAttribute('src');
-  const initialWidth=await p.locator('[data-star-render]').evaluate(e => e.getBoundingClientRect().width);
+  const svgSun = await p.locator('[data-star-svg]').innerHTML();
   await setMass('30');
   ok('massa altera o dado didático', /30/.test(await p.locator('[data-star-value]').innerText()));
-  ok('render estelar permanece sem escala quantitativa', await p.locator('[data-star-render]').getAttribute('src') === initialRender && await p.locator('[data-star-render]').evaluate(e => e.getBoundingClientRect().width) === initialWidth && /star\.webp$/.test(initialRender));
+  ok('cena estelar muda com a massa', (await p.locator('[data-star-svg]').innerHTML()) !== svgSun);
+  await p.locator('[data-star-step="4"]').click();
+  ok('etapa final de estrela massiva diz "pode"', /caminhos possíveis/.test(await p.locator('[data-star-caption]').innerText()));
+  await setMass('0.3');
+  ok('fim de anã vermelha marcado como previsto', /Previsto/.test(await p.locator('[data-star-caption]').innerText()));
+  await p.locator('[data-star-next]').click();
+  ok('próxima etapa volta ao início do ciclo', (await p.locator('[data-star-step="0"]').getAttribute('aria-pressed')) === 'true');
+  await p.context().close();
+}
+
+// 7b — microexperiências, continuidade, links que preservam estado
+section('Microexperiências e continuidade');
+{
+  const p = await page(1280);
+  await p.addInitScript(() => localStorage.setItem('cosmos-v5-aula-inteira', '1'));
+  for (const ch of ['galaxias-e-nebulosas', 'origem-do-universo', 'misterios-do-cosmos', 'vida-das-estrelas', 'sistema-solar', 'terra-e-atmosfera']) {
+    await p.goto(BASE + `/capitulos/${ch}/`, { waitUntil: 'networkidle' });
+    const n = await p.locator('.lesson-section').count();
+    ok(`${ch}: uma cena por subseção`, (await p.locator('.lesson-section .mx').count()) === n, String(n));
+  }
+  await p.goto(BASE + '/capitulos/sistema-solar/#sistema-solar-orbitas', { waitUntil: 'networkidle' });
+  const mx = p.locator('#sistema-solar-orbitas .mx');
+  await mx.scrollIntoViewIfNeeded();
+  await p.waitForFunction(() => document.querySelector('#sistema-solar-orbitas .mx')?.classList.contains('is-ready'));
+  await mx.locator('[data-mx-guess="1"]').click();
+  ok('palpite espera a experiência', await mx.locator('[data-mx-guess-hint]').isVisible() && !(await mx.locator('[data-mx-verdict]').isVisible()));
+  const range = mx.locator('[data-mx-range]');
+  await range.evaluate((el) => { el.value = '0.2'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  ok('velocidade baixa: cai no Sol', /cai|acerta o Sol/.test(await mx.locator('[data-mx-caption]').innerText()));
+  ok('palpite revelado depois de mexer', await mx.locator('[data-mx-verdict]').isVisible());
+  await range.evaluate((el) => { el.value = '1'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  ok('velocidade de círculo: órbita', /órbita quase circular/.test(await mx.locator('[data-mx-caption]').innerText()));
+  await range.evaluate((el) => { el.value = '1.6'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  ok('velocidade alta: escapa', /escapa/.test(await mx.locator('[data-mx-caption]').innerText()));
+  await mx.locator('[data-mx-play]').click();
+  ok('animar mostra pausar', (await mx.locator('[data-mx-play]').getAttribute('aria-pressed')) === 'true');
+  await mx.locator('[data-mx-play]').click();
+  ok('pausar para', (await mx.locator('[data-mx-play]').getAttribute('aria-pressed')) === 'false');
+  await mx.locator('[data-mx-check="0"]').click();
+  ok('verificação certa marca a seção no índice', (await p.locator('[data-toc] a[href="#sistema-solar-orbitas"]').getAttribute('data-practiced')) === 'true');
+  await p.goto(BASE + '/capitulos/terra-e-atmosfera/#terra-e-atmosfera-camadas', { waitUntil: 'networkidle' });
+  const cam = p.locator('#terra-e-atmosfera-camadas .mx');
+  await cam.scrollIntoViewIfNeeded();
+  await p.waitForFunction(() => document.querySelector('#terra-e-atmosfera-camadas .mx')?.classList.contains('is-ready'));
+  await cam.locator('[data-mx-range]').evaluate((el) => { el.value = '30'; el.dispatchEvent(new Event('input', { bubbles: true })); });
+  ok('perfil da atmosfera: 30 km é estratosfera', /estratosfera/.test(await cam.locator('[data-mx-caption]').innerText()));
+  await p.context().close();
+}
+{
+  const p = await page(1280);
+  await p.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
+  await p.locator('.main-nav a[data-spy="observatorio"]').click();
+  await p.waitForTimeout(400);
+  ok('link do menu preserva o experimento', /om=2/.test(p.url()) && /lab=receita/.test(p.url()), p.url());
+  ok('receita continua com matéria demais', /colapsa/.test(await p.locator('[data-r-out="fate"]').innerText()));
+  await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
+  await p.locator('[data-step-next]').click(); await p.locator('[data-step-next]').click();
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('home oferece retomar a aula', await p.locator('[data-resume]').isVisible() && /#origem-do-universo-fase-quente/.test(await p.locator('[data-resume]').getAttribute('href')));
+  await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
+  await p.locator('[data-resume-go]').click();
+  ok('retomar abre o passo salvo', !(await p.locator('#origem-do-universo-fase-quente').isHidden()));
+  await p.goto(BASE + '/?assunto=terra-e-atmosfera#desafio', { waitUntil: 'networkidle' });
+  const quiz = p.locator('[data-quiz]').first();
+  await quiz.locator('[data-answer]').nth(0).click();
+  ok('revisão do quiz leva ao trecho exato', /#terra-e-atmosfera-/.test(await quiz.locator('.quiz-review-link').getAttribute('href')));
+  await p.goto(BASE + '/glossario/?q=ano%20luz', { waitUntil: 'networkidle' });
+  ok('glossário acha "ano luz"', /^1 termo/.test(await p.locator('[data-glossary-count]').innerText()) || !/^0/.test(await p.locator('[data-glossary-count]').innerText()));
   await p.context().close();
 }
 

@@ -154,12 +154,17 @@
 .star-presets button { background: none; border: 1px solid var(--line-strong); color: var(--ink-2); padding: 12px 15px; min-height: 44px; font-size: 12px; transition: background 0.2s; }
 .star-presets button:hover { background: color-mix(in srgb, var(--bg) 7%, transparent); }
 .star-presets button[aria-pressed='true'] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
-.stellar-exhibit { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 40px; margin: 30px 0; background: var(--surface); padding: 45px; align-items: center; min-height: 290px; }
+.stellar-exhibit { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 40px; margin: 30px 0; background: var(--surface); padding: 45px; align-items: center; min-height: 290px; }
 .stellar-render { display: block; justify-self: center; width: 100%; height: auto; max-width: 290px; aspect-ratio: 3 / 2; object-fit: cover; }
 .stellar-summary .meta { color: var(--accent-ink); line-height: 1.5; }
 .stellar-summary h4 { font-size: 34px; line-height: 1.12; letter-spacing: -0.022em; margin: 16px 0; }
 .stellar-summary p { font-size: 15px; line-height: 1.7; color: var(--ink-2); margin: 0; }
 .stellar-summary .star-timescale { font-size: 12px; color: var(--ink-2); margin-top: 16px; }
+.stellar-scene { margin: 0; padding: 0; gap: 10px; background: none; box-shadow: none; width: 100%; max-width: 560px; justify-self: center; }
+.stellar-path li button { all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; cursor: pointer; border-radius: 8px; }
+.stellar-path li button:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.stellar-path li button[aria-pressed="true"] p { color: var(--ink); font-weight: 700; }
+.stellar-path li:has(button[aria-pressed="true"]) { border-color: var(--ink); }
 .stellar-path { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0; margin: 35px 0 0; gap: 20px; }
 .stellar-path li { border-top: 2px solid var(--accent); padding-top: 15px; }
 .stellar-path li span { font-size: 12px; letter-spacing: 0.1em; color: var(--accent-ink); }
@@ -228,6 +233,10 @@
 .glossary-entry .glossary-example { color: var(--muted); font-size: 14px; margin-top: 12px; }
 .glossary-entry .textlink { margin-top: 16px; color: var(--accent-ink); }
 .glossary-empty { padding: 40px 0; font-size: 16px; color: var(--ink-2); }
+.glossary-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.glossary-suggest > div { display: contents; }
+.glossary-suggest-btn { min-height: 44px; padding: 8px 16px; border: 1px solid var(--line, currentColor); border-radius: 999px; background: var(--surface); color: var(--accent-ink); font: inherit; cursor: pointer; }
+.glossary-suggest-btn:hover, .glossary-suggest-btn:focus-visible { border-color: var(--accent); }
 .glossary-empty .textlink { background: none; border: 0; border-bottom: 1px solid currentColor; color: var(--accent-ink); margin-top: 8px; padding: 10px 0 8px; }
 
 /* ═════════ 07 · Fontes ═════════ */

@@ -1,10 +1,11 @@
 ---
 import { planets } from '../data';
 import { planetGlobe } from '../lib/images';
-import { u, chapterUrl } from '../lib/url';
+import { chapterUrl } from '../lib/url';
 import { compareInsight, compareRows, comparison } from '../lib/planets';
 import { format } from '../lib/format';
 import { massLabel, stellarPath } from '../lib/stars';
+import '../styles/micro.css';
 const A = planets.find((p) => p.id === 'terra')!;
 const B = planets.find((p) => p.id === 'jupiter')!;
 const cmp = comparison(A, B);
@@ -80,7 +81,15 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         </div>
       </div>
       <div class="stellar-exhibit">
-        <img class="stellar-render" data-star-render src={u('/renders/star.webp')} srcset={`${u('/renders/star-small.webp')} 600w, ${u('/renders/star.webp')} 1200w`} sizes="290px" alt="Representação artística de uma estrela; não representa o tamanho ou a cor calculados para a massa selecionada." width="1200" height="800" loading="lazy" decoding="async" />
+        <div class="mx stellar-scene is-ready" data-star-scene>
+          <div class="mx-stage"><svg data-star-svg viewBox="0 0 480 270" role="img" aria-label="Diagrama da evolução da estrela escolhida: desenho da etapa atual e a trilha de etapas. Tamanhos e cores ilustrativos."></svg></div>
+          <div class="mx-transport" role="group" aria-label="Avançar pelas etapas da vida da estrela">
+            <button type="button" data-star-play aria-pressed="false"><span class="mx-ico" aria-hidden="true">▶</span><span data-star-play-label>Animar a vida</span></button>
+            <button type="button" data-star-next><span class="mx-ico" aria-hidden="true">⏭</span>Próxima etapa</button>
+            <button type="button" data-star-reset><span class="mx-ico" aria-hidden="true">↺</span>Reiniciar</button>
+          </div>
+          <p class="mx-caption" data-star-caption aria-live="polite">Sequência principal. Etapa típica, observada em muitas estrelas.</p>
+        </div>
         <div class="stellar-summary" aria-live="polite">
           <span class="meta" data-star-class>ESTRELA {star.category}</span>
           <h4 data-star-title>{star.title}</h4>
@@ -89,7 +98,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         </div>
       </div>
       <ol class="stellar-path" aria-label="Caminho evolutivo" data-star-path>
-        {star.steps.map((s, i) => <li><span>{String(i + 1).padStart(2, '0')}</span><p>{s}</p></li>)}
+        {star.steps.map((s, i) => <li><button type="button" data-star-step={i} aria-pressed={i === 2 ? 'true' : 'false'}><span>{String(i + 1).padStart(2, '0')}</span><p>{s}</p></button></li>)}
       </ol>
       <p class="experience-note" data-star-note>{star.note}</p>
       <a class="textlink" href={chapterUrl('vida-das-estrelas')}>Entender o mecanismo por trás do caminho <span aria-hidden="true">↗</span></a>

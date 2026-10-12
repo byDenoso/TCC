@@ -5,12 +5,15 @@ import Header from '../../components/Header.astro';
 import QuizCard from '../../components/QuizCard.astro';
 import CosmosScene from '../../components/CosmosScene.astro';
 import Observatorio from '../../components/Observatorio.astro';
+import Micro from '../../components/Micro.astro';
+import { MICRO } from '../../data/micro';
 import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
 import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
 import { chapterUrl, u } from '../../lib/url';
 import { pad2 } from '../../lib/format';
 import '../../styles/reader.css';
+import '../../styles/micro.css';
 
 export function getStaticPaths() {
   return chapterOrder.map((id) => ({ params: { id }, props: { id } }));
@@ -76,6 +79,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               <p>{bodies[i].map((seg, k) => 'term' in seg ? (
                 <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u('/glossario/')}>Ver no dicionário →</a></span></>
               ) : seg.text)}</p>
+              {MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.more && (
                 <details class="depth-detail" data-layer="more">
                   <summary>Entenda melhor</summary>

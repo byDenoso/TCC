@@ -1,0 +1,57 @@
+---
+import type { MicroSpec } from '../data/micro';
+interface Props { spec: MicroSpec; id: string; chapter: string }
+const { spec, id, chapter } = Astro.props;
+const c = spec.control;
+const letters = 'ABCDE';
+---
+<div class="mx" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
+  <div class="mx-head">
+    <span class="meta">Experimente</span>
+    <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
+  </div>
+
+  <div class="mx-guess" data-mx-guess-box data-right={spec.guess.right}>
+    <p class="mx-label"><strong>1 · Palpite.</strong> {spec.guess.q}</p>
+    <div class="mx-opts">
+      {spec.guess.options.map((o, i) => <button type="button" data-mx-guess={i}><span aria-hidden="true">{letters[i]}</span>{o}</button>)}
+    </div>
+    <p class="mx-hint" data-mx-guess-hint hidden>Agora mexa na cena e veja se acertou.</p>
+    <div class="mx-verdict" data-mx-verdict hidden><p><strong data-mx-verdict-label></strong> {spec.guess.why}</p></div>
+  </div>
+
+  <div class="mx-lab">
+    <p class="mx-label"><strong>2 · Mexa e observe.</strong></p>
+    <div class="mx-stage">
+      <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
+    </div>
+    <div class="mx-controls">
+      {c.kind === 'range' ? (
+        <div class="mx-range">
+          <label for={`${id}-mx-range`}>{c.label} <output data-mx-out for={`${id}-mx-range`}></output></label>
+          <input id={`${id}-mx-range`} type="range" min={c.min} max={c.max} step={c.step} value={c.value} data-mx-range />
+        </div>
+      ) : (
+        <div class="mx-seg" role="group" aria-label={c.label}>
+          {c.options.map((o, i) => <button type="button" data-mx-opt={i} aria-pressed={i === 0 ? 'true' : 'false'}>{c.kind === 'stages' && <span aria-hidden="true">{i + 1}</span>}{o}</button>)}
+        </div>
+      )}
+      <div class="mx-transport" role="group" aria-label="Controle da animação">
+        <button type="button" data-mx-play aria-pressed="false"><span class="mx-ico" aria-hidden="true">▶</span><span data-mx-play-label>Animar</span></button>
+        <button type="button" data-mx-step><span class="mx-ico" aria-hidden="true">⏭</span>Passo</button>
+        <button type="button" data-mx-reset><span class="mx-ico" aria-hidden="true">↺</span>Reiniciar</button>
+      </div>
+    </div>
+    <p class="mx-caption" data-mx-caption>{spec.alt}</p>
+    <p class="visually-hidden" role="status" data-mx-live></p>
+    <p class="mx-limit"><strong>Limite do desenho.</strong> {spec.limit}</p>
+  </div>
+
+  <div class="mx-check" data-mx-check-box data-right={spec.check.right}>
+    <p class="mx-label"><strong>3 · Verifique.</strong> {spec.check.q}</p>
+    <div class="mx-opts">
+      {spec.check.options.map((o, i) => <button type="button" data-mx-check={i}><span aria-hidden="true">{letters[i]}</span>{o}</button>)}
+    </div>
+    <div class="mx-verdict" data-mx-check-out hidden role="status"><p><strong data-mx-check-label></strong> {spec.check.why}</p></div>
+  </div>
+</div>

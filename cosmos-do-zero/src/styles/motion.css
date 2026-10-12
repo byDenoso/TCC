@@ -177,3 +177,22 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   .course-star { margin-left: -36px; }
   .course-map li.is-final .course-star { margin-left: -36px; }
 }
+
+/* ── Continuidade: retomar a aula e próximo passo ── */
+.step-next { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
+.step-next-title { display: inline-block; max-width: 26ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+@media (max-width: 1100px) { .step-next-title { max-width: 14ch; } }
+@media (max-width: 900px) { .step-next-title { display: none; } .step-next { min-width: 0; } }
+.lesson-resume { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 22px; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
+.lesson-resume p { flex: 1 1 260px; margin: 0; color: var(--ink); font-size: 15px; line-height: 1.5; }
+.lesson-resume button { min-height: 44px; padding: 0 18px; border-radius: 999px; font: 700 14px/1 var(--body); cursor: pointer; }
+.lesson-resume .resume-go { background: var(--accent); border: 1px solid var(--accent); color: var(--on-accent); }
+.lesson-resume .resume-skip { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.resume-card { position: relative; display: grid; gap: 4px; margin: 0 0 28px; padding: 18px 56px 18px 22px; border-radius: 18px; background: var(--surface); color: var(--ink); text-decoration: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent), 0 10px 30px var(--shadow); transition: transform .3s var(--ease); }
+.resume-card[hidden] { display: none; }
+.resume-card .meta { color: var(--accent-ink); }
+.resume-card strong { font-size: 20px; line-height: 1.25; }
+.resume-card [data-resume-step] { color: var(--muted); font-size: 15px; }
+.resume-arrow { position: absolute; right: 22px; top: 50%; translate: 0 -50%; font-size: 22px; color: var(--accent-ink); transition: transform .3s var(--ease); }
+.resume-card:hover .resume-arrow, .resume-card:focus-visible .resume-arrow { transform: translateX(5px); }
+@media (prefers-reduced-motion: reduce) { .resume-card, .resume-arrow { transition: none; } }

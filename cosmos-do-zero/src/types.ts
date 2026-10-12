@@ -73,6 +73,8 @@ export interface Era {
 export interface Question {
   id: string;
   chapter: ChapterId;
+  /** id da subseção do capítulo que explica a pergunta */
+  section?: string;
   question: string;
   answers: string[];
   /** índice em `answers` */

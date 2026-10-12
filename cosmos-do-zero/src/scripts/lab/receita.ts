@@ -83,7 +83,9 @@ export function initReceita(root: HTMLElement): void {
     const parts = [ob, dm, de, ck], total = parts.reduce((s, v) => s + v, 0) || 1;
     mix.forEach((s, i) => { s.style.flexBasis = `${(parts[i] / total) * 100}%`; s.hidden = parts[i] / total < 0.002; });
     const pc = (v: number) => `${fmt((v / total) * 100, 1)}%`;
-    mixText.textContent = `Matéria comum ${pc(ob)} · matéria escura ${pc(dm)} · energia escura ${pc(de)}${ck > 0.003 ? ` · espaço curvo ${pc(ck)}` : ''}`;
+    const sum = p.om + p.ol;
+    const head = Math.abs(sum - 1) < 0.01 ? 'Divisão do total: ' : `Somando tudo, há ${fmt(sum, 2)} vez${sum >= 2 ? 'es' : ''} a quantidade que deixaria o espaço plano. ${sum > 1 ? 'A barra mostra só como esse total se divide: ' : 'O que falta vira curvatura do espaço. Divisão: '}`;
+    mixText.textContent = head + `Matéria comum ${pc(ob)} · matéria escura ${pc(dm)} · energia escura ${pc(de)}${ck > 0.003 ? ` · espaço curvo ${pc(ck)}` : ''}`;
     // tensão de Hubble com Ωm e ΩΛ atuais
     if (!bounce) {
       const aPl = ageNow({ ...p, h0: PLANCK.h0 }), aLo = ageNow({ ...p, h0: LOCAL_H0 });

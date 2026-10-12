@@ -1,6 +1,6 @@
 import { $, $$, setText } from './dom';
 import { terms } from '../data/client';
-import { countLabel, filterTerms } from '../lib/glossary';
+import { countLabel, filterTerms, suggestTerms } from '../lib/glossary';
 import { getParam, setParams } from '../lib/url-state';
 import { CHAPTER_IDS, type ChapterId } from '../types';
 
@@ -22,6 +22,12 @@ export function initGlossary(): void {
     chips.forEach((c) => c.setAttribute('aria-pressed', String((c.dataset.glossaryChip ?? '') === chapter)));
     setText($('[data-glossary-count]', root), countLabel(hits.size));
     empty.hidden = hits.size > 0;
+    const box = $('[data-glossary-suggest]', root);
+    if (box) {
+      const list = hits.size ? [] : suggestTerms(terms, input.value);
+      box.replaceChildren(...list.map((i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'glossary-suggest-btn'; b.textContent = terms[i].term; b.addEventListener('click', () => { input.value = terms[i].term; chapter = ''; render(); const entry = entries.find((e) => Number(e.dataset.termIndex) === i); if (entry) { entry.open = true; entry.querySelector('summary')?.focus(); } }); return b; }));
+      box.closest<HTMLElement>('[data-glossary-suggest-wrap]')!.hidden = list.length === 0;
+    }
     if (url) setParams({ q: input.value.trim() || null, jornada: chapter || null });
   };
   input.addEventListener('input', () => render());

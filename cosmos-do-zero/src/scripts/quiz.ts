@@ -15,10 +15,28 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
   const next = $<HTMLButtonElement>('[data-quiz-next]', root)!;
   const retry = $<HTMLButtonElement>('[data-quiz-retry-missed]', root)!;
   let state: QuizState = createQuiz(quizPool(opts.chapter));
+  let chapterNow = opts.chapter;
+  // A tentativa sobrevive a ir rever um trecho e voltar.
+  const key = () => `cosmos-quiz:${location.pathname}:${chapterNow}`;
+  const save = () => { try { sessionStorage.setItem(key(), JSON.stringify({ ids: state.pool.map((q) => q.id), position: state.position, answered: state.answered, choice: state.choice, history: state.history, finished: state.finished })); } catch { /* sem armazenamento */ } };
+  const restore = (): boolean => {
+    try {
+      const raw = sessionStorage.getItem(key()); if (!raw) return false;
+      const s = JSON.parse(raw) as { ids: string[]; position: number; answered: boolean; choice: number | null; history: QuizState['history']; finished: boolean };
+      const pool = s.ids.map((id) => questions.find((q) => q.id === id)).filter((q): q is (typeof questions)[number] => !!q);
+      if (pool.length !== s.ids.length || !pool.length || (!s.history.length && !s.finished)) return false;
+      state = { pool, position: Math.min(s.position, pool.length - 1), answered: false, choice: null, history: s.answered ? s.history.slice(0, -1) : s.history, finished: false };
+      if (s.finished) { state = { ...state, history: s.history, answered: true, finished: true }; renderResult(false); return true; }
+      renderQuestion();
+      if (s.answered && s.choice !== null) choose(s.choice, false);
+      return true;
+    } catch { return false; }
+  };
 
-  const reviewLink = (chapter: ChapterId, label: string) => {
+  const reviewHref = (q: { chapter: ChapterId; section?: string }) => (opts.inChapter ? '' : chapterUrl(q.chapter)) + (q.section ? `#${q.section}` : '');
+  const reviewLink = (q: { chapter: ChapterId; section?: string }, label: string) => {
     const a = document.createElement('a');
-    a.className = 'textlink'; a.textContent = label; a.href = chapterUrl(chapter);
+    a.className = 'textlink quiz-review-link'; a.textContent = label; a.href = reviewHref(q) || chapterUrl(q.chapter);
     return a;
   };
   const renderQuestion = (focus = false) => {
@@ -37,9 +55,10 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     }));
     if (focus) question.focus();
   };
-  const choose = (i: number) => {
+  const choose = (i: number, focusNext = true) => {
     if (state.answered) return;
     state = answer(state, i);
+    save();
     const q = state.pool[state.position];
     const correct = i === q.correct;
     $$<HTMLButtonElement>('button', answers).forEach((node, j) => {
@@ -53,28 +72,29 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     const v = document.createElement('span'); v.className = 'verdict'; v.textContent = correct ? 'Você acertou. ' : 'A resposta correta está indicada. ';
     p.append(v, q.explanation);
     feedback.replaceChildren(p);
-    if (!opts.inChapter) feedback.append(reviewLink(q.chapter, 'Revisitar a ideia no capítulo ↗'));
+    if (!opts.inChapter) feedback.append(reviewLink(q, correct ? 'Ver o trecho que explica isso ↗' : 'Ir direto ao trecho que explica isso ↗'));
+    else if (!correct && q.section) feedback.append(reviewLink(q, 'Rever o trecho que explica isso ↑'));
     feedback.hidden = false;
     next.hidden = false;
     next.textContent = state.position === state.pool.length - 1 ? 'Ver meu resultado ↗' : 'Próxima pergunta ↗';
-    next.focus({ preventScroll: true });
+    if (focusNext) next.focus({ preventScroll: true });
   };
-  const renderResult = () => {
-    root.dispatchEvent(new CustomEvent('cosmos:quiz-done', { bubbles: true, detail: { chapter: opts.inChapter ? opts.chapter : '', hits: score(state), total: state.pool.length } }));
+  const renderResult = (fresh = true) => {
+    save();
+    if (fresh) root.dispatchEvent(new CustomEvent('cosmos:quiz-done', { bubbles: true, detail: { chapter: opts.inChapter ? opts.chapter : '', hits: score(state), total: state.pool.length } }));
     const hits = score(state), total = state.pool.length, wrong = missed(state);
     counter.textContent = 'JORNADA DE PERGUNTAS CONCLUÍDA';
     question.replaceChildren();
-    const big = document.createElement('span'); big.className = 'quiz-score'; big.textContent = `${hits}/${total}`;
-    const txt = document.createElement('span'); txt.className = 'visually-hidden'; txt.textContent = `Você acertou ${hits} de ${total} perguntas. `;
+    const big = document.createElement('span'); big.className = 'quiz-score'; big.textContent = `${hits}/${total}`; big.setAttribute('aria-hidden', 'true');
     const line = document.createElement('span'); line.style.display = 'block'; line.style.marginTop = '12px'; line.textContent = `Você acertou ${hits} de ${total} ${total === 1 ? 'pergunta' : 'perguntas'}.`;
-    question.append(big, txt, line);
+    question.append(big, line);
     answers.replaceChildren();
     if (wrong.length) {
       const ul = document.createElement('ul'); ul.className = 'quiz-review';
       for (const q of wrong) {
         const li = document.createElement('li');
         li.append(`${q.question} `);
-        const a = document.createElement('a'); a.href = chapterUrl(q.chapter); a.textContent = 'Rever no capítulo'; li.append(a);
+        const a = reviewLink(q, opts.inChapter ? 'Rever o trecho' : 'Ir ao trecho que explica'); li.append(a);
         ul.append(li);
       }
       const h = document.createElement('p'); h.textContent = 'Para uma segunda olhada:'; h.style.margin = '0 0 10px'; h.style.fontWeight = '700';
@@ -84,22 +104,25 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
     feedback.replaceChildren(p); feedback.hidden = false;
     next.hidden = false; next.textContent = 'Tentar novamente ↻';
     retry.hidden = wrong.length === 0;
-    question.focus();
+    if (fresh) question.focus();
   };
   next.addEventListener('click', () => {
     const was = state;
     state = advance(state);
-    if (state.finished) renderResult(); else if (was.finished) renderQuestion(true); else renderQuestion(true);
+    if (state.finished) renderResult(); else { save(); renderQuestion(true); }
+    void was;
   });
   retry.addEventListener('click', () => {
     state = createQuiz(missed(state));
+    save();
     renderQuestion(true);
   });
-  renderQuestion(); // liga os eventos aos botões; o HTML estático já mostra a 1ª pergunta
+  if (!restore()) renderQuestion(); // liga os eventos aos botões; o HTML estático já mostra a 1ª pergunta
   return {
     setChapter(c) {
+      chapterNow = c;
       state = createQuiz(quizPool(c));
-      renderQuestion();
+      if (!restore()) renderQuestion();
     }
   };
 }

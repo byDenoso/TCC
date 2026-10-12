@@ -23,8 +23,28 @@ export function initNav(): void {
   window.addEventListener('hashchange', revealHash);
   document.addEventListener('click', (event) => {
     const a = (event.target as Element).closest<HTMLAnchorElement>('a[href]');
-    if (a && new URL(a.href).pathname === location.pathname && new URL(a.href).hash === location.hash) revealHash();
+    if (!a) return;
+    const url = new URL(a.href);
+    if (url.origin !== location.origin || url.pathname !== location.pathname) return;
+    // Âncora na mesma página: nunca apagar o estado dos experimentos guardado na URL.
+    if (!event.defaultPrevented && url.hash && !url.search && location.search && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && a.target !== '_blank') {
+      const id = decodeURIComponent(url.hash.slice(1));
+      const target = document.getElementById(id);
+      if (target) {
+        event.preventDefault();
+        const oldURL = location.href;
+        if (location.hash !== url.hash) { history.pushState(history.state, '', location.search + url.hash); dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL: location.href })); }
+        else revealHash();
+        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+        return;
+      }
+    }
+    if (url.hash === location.hash) revealHash();
   });
+  addEventListener('popstate', () => { if (location.hash) revealHash(); });
   const menu = $<HTMLDetailsElement>('[data-mobile-menu]');
   if (menu) {
     const close = (returnFocus = false) => { if (menu.open) { menu.open = false; if (returnFocus) $('summary', menu)?.focus(); } };

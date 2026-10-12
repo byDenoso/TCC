@@ -101,7 +101,9 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     dots.forEach((d, k) => { d.setAttribute('aria-current', String(k === current)); d.dataset.done = String(k < current || (reachedEnd && k <= current)); });
     count.textContent = `Passo ${current + 1} de ${sections.length}`;
     prev.disabled = current === 0;
-    next.textContent = current === sections.length - 1 ? 'Ir para o desafio da aula ↓' : 'Próximo passo →';
+    const nextTitle = sections[current + 1]?.querySelector('h2')?.textContent?.trim();
+    next.replaceChildren(...(current === sections.length - 1 ? ['Ir para o desafio da aula ↓'] : ['Próximo', Object.assign(document.createElement('span'), { className: 'step-next-title', textContent: `: ${nextTitle ?? 'passo seguinte'}` }), ' →']));
+    rememberPlace(chapter, current, sections.length, sections[current].id, sections[current].querySelector('h2')?.textContent?.trim() ?? '');
     links.forEach((a, id) => (id === sections[current].id ? a.setAttribute('aria-current', 'step') : a.removeAttribute('aria-current')));
     toggle.textContent = whole ? 'Ver em passos' : 'Ver a aula inteira';
     root.classList.toggle('is-stepped', !whole);
@@ -126,17 +128,60 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     if (location.hash !== `#${id}`) history.pushState(history.state, '', `#${id}`);
     show(k, true);
   }));
+  // Passo que contém o alvo de uma âncora (seção ou algo dentro dela)
+  const stepFor = (hash: string): number => { let t: HTMLElement | null = null; try { t = hash ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; } catch { /* ignora */ } return t ? sections.findIndex((s) => s.contains(t)) : -1; };
   // Voltar/avançar do navegador percorre os passos visitados
   addEventListener('popstate', () => {
     if (whole) return;
-    const k = sections.findIndex((s) => `#${s.id}` === location.hash);
+    const k = stepFor(location.hash);
     show(k >= 0 ? k : 0, true);
   });
-  const fromHash = sections.findIndex((s) => `#${s.id}` === location.hash);
-  if (fromHash > 0) { for (let k = 0; k <= fromHash; k++) show(k); } else show(0);
+  // Links internos (ex.: "rever o trecho" do desafio) abrem o passo certo
+  addEventListener('hashchange', () => { const k = stepFor(location.hash); if (!whole && k >= 0) show(k, true); });
+  const fromHash = stepFor(location.hash);
+  if (fromHash > 0) { for (let k = 0; k <= fromHash; k++) show(k); } else {
+    show(0);
+    const saved = readPlace(chapter);
+    if (!whole && saved && saved.step > 0 && saved.step < sections.length) offerResume(root, bar, saved, (k) => { for (let j = 0; j <= k; j++) show(j); show(k, true); });
+  }
   document.addEventListener('keydown', (e) => {
     if (whole || (e.target as Element).closest('input, textarea, select, [contenteditable]')) return;
     if (e.key === 'ArrowRight' && (e.altKey || e.target === document.body)) show(current + 1, true);
     if (e.key === 'ArrowLeft' && (e.altKey || e.target === document.body)) show(current - 1, true);
   });
+}
+
+/** Onde o aluno parou em cada aula (neste navegador). */
+const PLACE_KEY = 'cosmos-v6-onde';
+export interface Place { chapter: string; step: number; total: number; section: string; title: string; at: number }
+function readAll(): Record<string, Place> { try { return JSON.parse(localStorage.getItem(PLACE_KEY) ?? '{}') as Record<string, Place>; } catch { return {}; } }
+export function readPlace(chapter?: string): Place | null {
+  const all = readAll();
+  if (chapter) return all[chapter] ?? null;
+  return Object.values(all).sort((a, b) => b.at - a.at)[0] ?? null;
+}
+let restoring = true;
+function rememberPlace(chapter: string, step: number, total: number, section: string, title: string): void {
+  if (!chapter || restoring) return;
+  const all = readAll();
+  all[chapter] = { chapter, step, total, section, title, at: Date.now() };
+  try { localStorage.setItem(PLACE_KEY, JSON.stringify(all)); localStorage.setItem(`${PLACE_KEY}-ultima`, chapter); } catch { /* sem armazenamento */ }
+}
+setTimeout(() => { restoring = false; }, 0);
+function offerResume(root: HTMLElement, bar: HTMLElement, place: Place, go: (k: number) => void): void {
+  const box = document.createElement('div');
+  box.className = 'lesson-resume';
+  box.setAttribute('role', 'region');
+  box.setAttribute('aria-label', 'Retomar a aula');
+  const text = document.createElement('p');
+  text.append('Você parou no ', Object.assign(document.createElement('strong'), { textContent: `passo ${place.step + 1} de ${place.total}` }), `: ${place.title}.`);
+  const yes = Object.assign(document.createElement('button'), { type: 'button', className: 'resume-go', textContent: 'Continuar de onde parei →' });
+  const no = Object.assign(document.createElement('button'), { type: 'button', className: 'resume-skip', textContent: 'Começar do início' });
+  yes.dataset.resumeGo = '';
+  const close = () => box.remove();
+  yes.addEventListener('click', () => { close(); go(place.step); });
+  no.addEventListener('click', () => { close(); root.querySelector<HTMLElement>('.lesson-section h2')?.focus({ preventScroll: true }); });
+  box.append(text, yes, no);
+  const first = root.querySelector('.lesson-section');
+  (first ?? bar).before(box);
 }
