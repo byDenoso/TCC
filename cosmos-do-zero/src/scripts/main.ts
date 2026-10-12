@@ -4,6 +4,7 @@ import { initTheme } from './theme';
 import { initHeader } from './header';
 import { initMotion } from './motion';
 import { initSchool } from './school';
+import { initGuesses } from './lab/common';
 
 const instruments: [string, () => Promise<void>][] = [
   ['[data-cmb]', async () => (await import('./cmb')).initCmb()],
@@ -21,7 +22,7 @@ const instruments: [string, () => Promise<void>][] = [
 
 /** Carrega apenas os instrumentos presentes; o leitor prepara os passos antes das cenas. */
 async function boot(): Promise<void> {
-  for (const init of [initTheme, initSchool, initHeader, initNav, initProgress]) {
+  for (const init of [initTheme, initSchool, initHeader, initNav, initProgress, initGuesses]) {
     try { init(); } catch (err) { console.error('[cosmos] falha ao iniciar', init.name, err); }
   }
   if (document.querySelector('.chapter-reader')) {

@@ -1,4 +1,4 @@
-import { qa } from './common';
+import { qa, readyStation } from './common';
 import { getParam, setParams } from '../../lib/url-state';
 import { initTempo } from './tempo';
 import { initExpansao } from './expansao';
@@ -22,10 +22,11 @@ export function initLab(): void {
         if (started.has(name)) return;
         waiting.get(name)?.disconnect(); waiting.delete(name);
         started.add(name);
-        try { stations[name](panel); } catch (err) { console.error('[cosmos] falha no instrumento', name, err); }
+        try { stations[name](panel); readyStation(panel); } catch (err) { console.error('[cosmos] falha no instrumento', name, err); }
       };
       const rect = panel.getBoundingClientRect();
-      if (!('IntersectionObserver' in window) || (rect.top < innerHeight + 300 && rect.bottom > 0)) boot();
+      const shared = getParam('lab') === name || (name === 'tempo' && getParam('z') !== null) || (name === 'receita' && ['om', 'ol', 'h0'].some((key) => getParam(key) !== null));
+      if (shared || !('IntersectionObserver' in window) || (rect.top < innerHeight + 300 && rect.bottom > 0)) boot();
       else if (!waiting.has(name)) {
         const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) boot(); }, { rootMargin: '300px 0px' });
         waiting.set(name, io); io.observe(panel);

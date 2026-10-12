@@ -46,11 +46,23 @@ export function lightYears(mpc: number): string {
 
 export const reduced = (): boolean => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const guesses = new WeakMap<HTMLElement, (focus: boolean) => void>();
+/** O palpite funciona desde a abertura, mesmo quando o desenho ainda não foi carregado. */
+export function initGuesses(): void {
+  qa<HTMLElement>(document, '[data-station]').forEach((root) => initGuess(root));
+}
+export function readyStation(root: HTMLElement): void {
+  root.dataset.stationReady = 'true';
+  if (root.classList.contains('is-unlocked')) qa<HTMLElement>(root, '.obs-grid, .obs-epoch, .obs-tension').forEach((g) => g.removeAttribute('inert'));
+}
+
 /**
  * Palpite antes de mexer: o experimento fica embaçado até o visitante escolher uma resposta ou pular.
  * Links diretos com valores na URL já abrem o experimento liberado.
  */
 export function initGuess(root: HTMLElement, opts: { unlocked?: boolean; onReveal?: (choice: string, right: boolean) => void } = {}): void {
+  const existing = guesses.get(root);
+  if (existing) { if (opts.unlocked) existing(false); return; }
   const box = root.querySelector<HTMLElement>('[data-guess]');
   if (!box) return;
   const name = root.dataset.station ?? 'lab';
@@ -60,11 +72,12 @@ export function initGuess(root: HTMLElement, opts: { unlocked?: boolean; onRevea
   const unlock = (focus: boolean) => {
     root.classList.add('is-unlocked');
     root.classList.remove('is-gated');
-    gated.forEach((g) => g.removeAttribute('inert'));
+    gated.forEach((g) => root.dataset.stationReady === 'true' ? g.removeAttribute('inert') : g.setAttribute('inert', ''));
     try { sessionStorage.setItem(`cosmos-palpite-${name}`, '1'); } catch { /* sem armazenamento */ }
     root.dispatchEvent(new CustomEvent('cosmos:unlock', { bubbles: true, detail: { station: name } }));
     if (focus) root.querySelector<HTMLElement>('.obs-grid input, .obs-grid button')?.focus({ preventScroll: true });
   };
+  guesses.set(root, unlock);
   if (opts.unlocked || remembered) unlock(false);
   else { root.classList.add('is-gated'); gated.forEach((g) => g.setAttribute('inert', '')); }
   const right = box.dataset.guess!;
