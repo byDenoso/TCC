@@ -46,9 +46,18 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 **Autorizacao restrita, ja implementada no Writer existente (sem segundo Writer):**
 quando o runtime agendado NAO consegue vincular/exportar os bytes para o upload bruto
 por `container_session_unavailable`, `file_uri` indisponivel ou ausencia da capacidade
-de arquivo, um **BOARD_POST, INTEGRITY_REPORT ou LEARNING_SIGNAL** privado, sem
-anexo, segredo, dados brutos da Tower ou instrucoes privilegiadas pode usar
-exclusivamente o `NEXO_SCHEDULED_SPOOL` privado que o Writer ja consome:
+de arquivo, uma **proposta pequena de tipo governado pelo Writer** pode usar
+exclusivamente o `NEXO_SCHEDULED_SPOOL` privado que o Writer ja consome,
+sem novo Writer, credencial, ACL, dado bruto da Tower ou bypass de politica.
+
+**Tipos permitidos pela ingestao sched-v1:** BOARD_POST, INTEGRITY_REPORT,
+LEARNING_SIGNAL, HYPOTHESIS_PROPOSAL, LESSON_PROPOSAL, SEMANTIC_BACKFILL,
+DATA_BINDING, RECIPE_BIND, ROADMAP_ATTACH, ROADMAP_CHARTER,
+MUTATION_PROPOSAL, CONTEST, VERDICT_REVIEW e NEXO_THOUGHT.
+Cada envelope exige papel de origem real (`source`) e a coluna `role`
+idêntica. MUTATION_PROPOSAL somente por EXECUTOR; VERDICT_REVIEW
+somente REFEREE_1/REFUTADOR; CONTEST somente REFEREE_1/REFUTADOR/SENTINEL.
+Isso entrega uma proposta, não executa ciência nem concede autoridade nova:
 Google Sheets ID `1M2maKkuEjxumZRa145dzei7dEPFi2yKsKlUf7_scC-E`,
 aba `Sheet1`, ID numerico `1417054989`, colunas
 `stable_id | created_at | role | envelope_b64url`. O proprietario e o Writer
@@ -68,7 +77,7 @@ Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONL
 3. Confira pelo `stable_id` a coluna A da planilha e
    `byDenoso/Pantheon@main:nexo-one/scheduled-spool-ack.json` (key `acked`)
    quando a proposta for publicavel por politica de recibos. **Recibos de
-   INTEGRITY_REPORT/BOARD_POST privados nao entram no ack publico**:
+   propostas privadas podem nao entrar no ack publico**:
    `gateway_resolved` pode ficar vazio mesmo quando a Tower aplicou o efeito.
    Para esses tipos, use a entidade e o recibo **privados** na Tower; falta
    no ack publico NAO e falha de escrita nem permissao para duplicar.
@@ -85,12 +94,20 @@ Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONL
    na Tower para `APPLIED`. Se o runtime agendado nao expuser o Sheets
    write, preserve `PENDING_WRITE_LOCAL_ONLY` e a proposta original.
 
-**Proibido nesta ponte:** `HANDOFF`, `HANDOFF_TRANSITION`, `OPERATOR_INTENT`,
-aprovar mandato, substituir CONTROL, criacao de TEST/RESULT, gravacao direta
-da Tower, publicacao, revisao cientifica, credencial/segredo e payload PEER
-destinado ao Atlas. Handoffs continuam exclusivamente no `NEXO_INBOX`
-create-only com proveniencia `DRIVE`. O Writer valida todos os envelopes
-e continua unico aplicador. Registro no spool nao e efeito canonico.
+**Proibido nesta ponte:** HANDOFF, HANDOFF_TRANSITION, OPERATOR_INTENT,
+TEST_BATTERY, FAMILY_CHARTER, FITNESS_REPORT, aprovar mandato ou carta
+protegida, trocar CONTROL, iniciar Actions cientifico bloqueado,
+revisao independente forjada, alterar criterio congelado, credencial,
+segredo, publicar PEER no Atlas ou escrever a Tower diretamente.
+Handoffs formais continuam somente pelo NEXO_INBOX create-only com
+proveniencia DRIVE. BOARD_POST dirigido permite coordenacao privada
+enquanto o envio de HANDOFF formal estiver tecnicamente pendente,
+mas nao equivale a HANDOFF ACK/DONE.
+O Writer continua unico aplicador e valida cada proposta cientifica.
+Um erro LOCAL de exportacao nao exige acao rotineira do Dener: usar
+esta ponte quando a API de escrita Sheets estiver disponivel na
+automacao e continuar trabalho independente. Registro no spool
+nao comprova efeito canonico.
 
 ### Ponte de arquivo exportado (ChatGPT -> Drive)
 - Para JSON bruto gerado no ChatGPT, **prefira o snapshot de arquivo exportado**, não um caminho do contêiner. Na superfície Files, depois de obter o `file_id` real do artefato exportado (formato `file_...`), faça **uma** operação `files.manage_library` com `{"operations":[{"operation":"upload","source_file_ref":{"file_id":"<file_id observado>"},"destination_path":"<pasta privada NEXO_INBOX>/<nome imutável>.json"}]}`. A pasta deve ser descoberta e conferida no Drive/Library; nunca invente file_id.
