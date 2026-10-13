@@ -117,11 +117,25 @@ function setup(root: HTMLElement): void {
   if (!ctx) { root.classList.add('is-static'); return; }
 
   let step = stepFromParam(getParam(URL_PARAM));
-  let t = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false;
+  let t = 0, elapsed = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false;
   let pal = palette();
   let W = 0, H = 0, dpr = 1;
   const plasma = new Plasma(0.56);
   const r = rng(7);
+  const sprites = new Map<string, HTMLCanvasElement>();
+  const particle = (x: number, y: number, radius: number, color: string) => {
+    let sprite = sprites.get(color);
+    if (!sprite) {
+      sprite = document.createElement('canvas'); sprite.width = sprite.height = 64;
+      const c = sprite.getContext('2d')!;
+      const glow = c.createRadialGradient(30, 28, 0, 32, 32, 32);
+      glow.addColorStop(0, '#fff8e7'); glow.addColorStop(0.18, color);
+      glow.addColorStop(0.42, color); glow.addColorStop(0.43, `${color}70`); glow.addColorStop(1, `${color}00`);
+      c.fillStyle = glow; c.fillRect(0, 0, 64, 64); sprites.set(color, sprite);
+    }
+    const halo = radius * 2.3;
+    ctx.drawImage(sprite, x - halo, y - halo, halo * 2, halo * 2);
+  };
 
   const resize = () => {
     const box = stage.getBoundingClientRect();
@@ -147,7 +161,7 @@ function setup(root: HTMLElement): void {
     }
     // núcleos e átomos
     for (const nu of plasma.n) {
-      ctx.fillStyle = pal.n; ctx.beginPath(); ctx.arc(nu.x * s, nu.y * s, nu.he ? 4.6 : 3.4, 0, Math.PI * 2); ctx.fill();
+      particle(nu.x * s, nu.y * s, nu.he ? 4.6 : 3.4, pal.n);
     }
     // elétrons
     for (const el of plasma.e) {
@@ -157,13 +171,13 @@ function setup(root: HTMLElement): void {
         // trajetória até o núcleo (sem atravessar a borda periódica)
         let tx = nu.x, ty = nu.y;
         if (tx - el.x0 > 0.5) tx -= 1; if (tx - el.x0 < -0.5) tx += 1; if (ty - el.y0 > plasma.h / 2) ty -= plasma.h; if (ty - el.y0 < -plasma.h / 2) ty += plasma.h;
-        const ang = performance.now() / 600 + el.bindAt * 40;
+        const ang = elapsed / 600 + el.bindAt * 40;
         const orb = 9 / s;
         const x = el.x0 + (tx - el.x0) * k + Math.cos(ang) * orb * k, y = el.y0 + (ty - el.y0) * k + Math.sin(ang) * orb * k;
         if (k > 0.85) { ctx.strokeStyle = pal.e; ctx.globalAlpha = 0.45 * (k - 0.85) / 0.15; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(nu.x * s, nu.y * s, 9, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
-        ctx.fillStyle = pal.e; ctx.beginPath(); ctx.arc(((x % 1) + 1) % 1 * s, ((y % plasma.h) + plasma.h) % plasma.h * s, 2.1, 0, Math.PI * 2); ctx.fill();
+        particle(((x % 1) + 1) % 1 * s, ((y % plasma.h) + plasma.h) % plasma.h * s, 2.1, pal.e);
       } else {
-        ctx.fillStyle = pal.e; ctx.beginPath(); ctx.arc(el.x * s, el.y * s, 2.1, 0, Math.PI * 2); ctx.fill();
+        particle(el.x * s, el.y * s, 2.1, pal.e);
       }
     }
     // luz: trilhas com cauda que desbota; pontos de desvio marcados
@@ -183,7 +197,7 @@ function setup(root: HTMLElement): void {
       if (started) ctx.stroke();
       ctx.globalAlpha = 1;
       ctx.globalAlpha = lead ? 1 : 0.55;
-      ctx.fillStyle = pal.light; ctx.beginPath(); ctx.arc(ph.x * s, ph.y * s, lead ? 5 : 2.6, 0, Math.PI * 2); ctx.fill();
+      particle(ph.x * s, ph.y * s, lead ? 5 : 2.6, pal.light);
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
       if (lead && ph.flash > 0) { ctx.strokeStyle = pal.light; ctx.globalAlpha = ph.flash; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ph.x * s, ph.y * s, 6 + 12 * (1 - ph.flash), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
     });
@@ -280,6 +294,7 @@ function setup(root: HTMLElement): void {
   const tick = (now: number) => {
     if (!playing) return;
     const dt = last ? Math.min(now - last, 50) : 16; last = now;
+    elapsed += dt;
     t += dt / DUR[step];
     if (step !== 2) plasma.step(dt / 1000, step === 0 ? null : ease(clamp(t)), r);
     if (t >= 1) {
@@ -292,7 +307,7 @@ function setup(root: HTMLElement): void {
   const play = () => { if (!visible || document.hidden || reduced.matches) { if (!reduced.matches) autoPaused = true; draw(); return; } if (t >= 1) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
   const pause = () => { cancelAnimationFrame(frame); setPlaying(false); draw(); };
   const go = (i: number, autoplay = true) => {
-    step = clamp(i, 0, STEPS.length - 1); t = 0; done = false;
+    step = clamp(i, 0, STEPS.length - 1); t = 0; elapsed = 0; done = false;
     if (step <= 1) { plasma.reset(plasma.h); warm(); } // A: elétrons livres; B: recomeça a captura
     setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) });
     announce();
@@ -324,7 +339,7 @@ function setup(root: HTMLElement): void {
     else if (!document.hidden && autoPaused && visible) { autoPaused = false; play(); }
   });
   reduced.addEventListener('change', () => { pause(); });
-  const refreshPalette = () => { pal = palette(); draw(); };
+  const refreshPalette = () => { pal = palette(); sprites.clear(); draw(); };
   new MutationObserver(refreshPalette).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshPalette);
   new ResizeObserver(() => resize()).observe(stage);

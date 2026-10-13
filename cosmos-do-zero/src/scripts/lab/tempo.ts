@@ -31,8 +31,10 @@ const epochs: Epoch[] = [
   { from: 900, title: 'O Universo fica transparente', kind: 'Observado', text: () => 'Os primeiros átomos se formam e a névoa se dissipa. A luz desse instante viaja até hoje e chega até nós: é a luz mais antiga que conseguimos observar diretamente. Antes disso já havia luz, mas ela não conseguia viajar longe. Saiu de um gás a uns 3.000 K (cerca de 2.700 °C), com a maior parte no infravermelho próximo; o comprimento de onda cresceu umas 1.100 vezes com a expansão, e hoje ela chega como micro-ondas.' },
   { from: 30, title: 'Idade das trevas', kind: 'Calculado pelo modelo', text: () => 'Ainda não existe nenhuma estrela. O gás esfria e a gravidade começa a juntar matéria em montinhos, que vão virar as primeiras galáxias.' },
   { from: 6, title: 'As primeiras estrelas e galáxias se acendem', kind: 'Observado', text: () => 'Surgem as primeiras estrelas e galáxias. O telescópio espacial James Webb já fotografou galáxias desta época.' },
-  { from: 0.5, title: 'A época de mais estrelas', kind: 'Observado', text: () => 'As galáxias crescem e formam estrelas no ritmo mais intenso da história, quando o Universo tinha uns 3 bilhões de anos. Hoje esse ritmo é bem menor.' },
-  { from: 0.02, title: 'A energia escura entra em cena', kind: 'Calculado pelo modelo', text: () => `Há uns 6 bilhões de anos, a expansão parou de frear e começou a acelerar. Chamamos de "energia escura" o que causa isso, mas ainda não sabemos o que ela é. (No modelo, a aceleração começa quando a luz foi esticada ${fmt(1 + zAcceleration(PLANCK), 1)} vezes.)` },
+  { from: 3, title: 'As galáxias crescem', kind: 'Observado', text: (z) => `O Universo tinha ${duration(ageAtRedshift(z, PLANCK))}. As galáxias juntam gás e formam muitas estrelas. O auge desse ritmo ainda vem depois, quando o Universo tem cerca de 3 bilhões de anos.` },
+  { from: 1.5, title: 'Perto do auge da formação de estrelas', kind: 'Observado', text: (z) => `O Universo tinha ${duration(ageAtRedshift(z, PLANCK))}. Estamos perto da época em que as galáxias, juntas, formaram estrelas no ritmo mais intenso: o auge fica por volta de 3 bilhões de anos, e não acontece de uma vez em todas as galáxias.` },
+  { from: zAcceleration(PLANCK), title: 'Depois do auge da formação de estrelas', kind: 'Observado', text: (z) => `O Universo tinha ${duration(ageAtRedshift(z, PLANCK))}. As galáxias continuam formando estrelas, mas o ritmo médio já caiu em relação ao auge, por volta de 3 bilhões de anos. No modelo usado aqui, a expansão ainda está freando; a aceleração começa mais tarde.` },
+  { from: 0.02, title: 'Galáxias em um Universo que acelera', kind: 'Calculado pelo modelo', text: (z) => `O Universo tinha ${duration(ageAtRedshift(z, PLANCK))}. O auge da formação de estrelas já passou, mas novas estrelas continuam nascendo. Nesta época a expansão já acelera. Chamamos de "energia escura" o que explica essa aceleração no modelo, mas ainda não sabemos o que ela é.` },
   { from: 0, title: 'Nossa vizinhança', kind: 'Observado', text: () => 'Aqui a luz leva pouco tempo e a expansão quase não aparece. As galáxias vizinhas se movem mais por causa da gravidade umas das outras: Andrômeda, por exemplo, está vindo na nossa direção.' }
 ];
 const epochFor = (z: number): Epoch => epochs.find((e) => z >= e.from) ?? epochs[epochs.length - 1];
@@ -108,10 +110,13 @@ export function initTempo(root: HTMLElement): void {
       if (!v) return;
       view3d = v; host3d.hidden = false; if (note3d) note3d.hidden = false;
       winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 134');
-      host3d.addEventListener('obs3d:lost', () => { view3d = null; use2d(); }, { once: true });
+      host3d.addEventListener('obs3d:lost', () => { view3d?.dispose(); view3d = null; use2d(); }, { once: true });
       render();
     }).catch(() => use2d());
   }
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+    if (e.matches) { view3d?.dispose(); view3d = null; use2d(); }
+  });
   let exact: number | null = null;
   const render = (): void => {
     const z = exact ?? zOf(Number(range.value));
@@ -127,7 +132,7 @@ export function initTempo(root: HTMLElement): void {
     out.age.textContent = z < 0.005 ? '13,8 bilhões de anos (hoje)' : z > 800 ? `${duration(ageThen)} (aproximado: o valor muda um pouco com o modelo; costuma-se dizer uns 380 mil)` : duration(ageThen);
     out.look.textContent = z < 0.005 ? 'nenhum: luz de agora' : duration(look);
     out.dnow.textContent = z < 0.005 ? 'aqui perto' : `a ${lightYears(dc)}`;
-    out.size.textContent = z < 0.005 ? 'do tamanho de hoje' : `${fmtAuto(1 + z)} vezes menores`;
+    out.size.textContent = z < 0.005 ? 'iguais às de hoje' : `${fmtAuto(1 + z)} vezes menores`;
     const C = T - 273.15;
     out.temp.textContent = `${Math.round(C).toLocaleString('pt-BR').replace('-', '\u2212')} °C · ${tempNote(T)}`;
     out.line.textContent = z < 0.005 ? 'vermelha, igual' : band(lam);

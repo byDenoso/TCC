@@ -25,7 +25,7 @@
 
 /* cena e controles juntos */
 .mx-lab { display: grid; gap: 12px; }
-.mx-stage { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line); }
+.mx-stage { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: radial-gradient(ellipse at 40% 35%, color-mix(in srgb, var(--accent-2) 5%, var(--bg)), var(--bg) 75%); box-shadow: inset 0 0 0 1px var(--line); }
 .mx-stage svg { display: block; width: 100%; height: 100%; }
 .mx:not(.is-ready) .mx-stage::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--surface-2) 70%, transparent) 50%, transparent 70%); background-size: 200% 100%; animation: mx-shimmer 1.6s linear infinite; }
 @keyframes mx-shimmer { to { background-position: -200% 0; } }
@@ -74,7 +74,7 @@
 :root[data-theme='dark'] .mx-opts button[data-state='right'] { background: color-mix(in srgb, #2f8a4a 22%, var(--bg)); }
 
 /* cenas em WebGL (canvas atrás do SVG; o SVG fica só com textos) */
-.mx-stage--gl { background: #04060b; box-shadow: none; }
+.mx-stage--gl { background: #04060b; box-shadow: inset 0 0 0 1px rgba(255, 248, 231, .1); }
 .mx-gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: pan-y; }
 .mx-gl:active { cursor: grabbing; }
 .mx-stage--gl svg { position: relative; pointer-events: none; }

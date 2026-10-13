@@ -8,10 +8,9 @@ import type * as THREE_NS from 'three';
 
 export interface Web3D {
   set(k: number): void;
+  setPlaying(on: boolean): void;
   dispose(): void;
 }
-
-const N = 14000;
 
 export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Promise<Web3D | null> {
   const probe = document.createElement('canvas');
@@ -24,10 +23,15 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
   canvas.setAttribute('aria-hidden', 'true');
   stage.prepend(canvas);
   let renderer: THREE_NS.WebGLRenderer;
-  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'low-power' }); }
+  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' }); }
   catch { canvas.remove(); return null; }
   renderer.setClearColor(0x04060b, 1);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.1;
   stage.classList.add('mx-stage--gl');
+  // Mais amostras revelam filamentos contínuos; orçamento menor no celular.
+  const N = matchMedia('(max-width: 600px)').matches ? 24000 : 48000;
 
   // estrutura final: nós ligados aos 3 vizinhos mais próximos (semente fixa: mesmo desenho sempre)
   let s = 7;
@@ -67,7 +71,7 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
   geo.setAttribute('aDens', new THREE.BufferAttribute(dens, 1));
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
 
-  const uniforms = { uK: { value: 0 }, uPx: { value: 1 }, uTime: { value: 0 } };
+  const uniforms = { uK: { value: 0 }, uPx: { value: 1 } };
   const mat = new THREE.ShaderMaterial({
     uniforms,
     transparent: true,
@@ -75,7 +79,7 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
       attribute vec3 aStart; attribute float aDens; attribute float aSeed;
-      uniform float uK; uniform float uPx; uniform float uTime;
+      uniform float uK; uniform float uPx;
       varying vec3 vCol; varying float vA;
       void main() {
         // matéria cai devagar no começo e acelera (crescimento das diferenças)
@@ -83,18 +87,24 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
         vec3 p = mix(aStart, position, k);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        float tw = 0.85 + 0.15 * sin(uTime * 1.3 + aSeed * 40.0);
-        gl_PointSize = uPx * (2.0 + 2.4 * aDens * k) * tw * (3.2 / -mv.z);
+        // Galáxias não cintilam: núcleo e halo estáveis, com profundidade em perspectiva.
+        gl_PointSize = clamp(uPx * (2.4 + 3.8 * aDens * k) * (0.65 + aSeed * 0.5) * (3.2 / -mv.z), 1.0, 36.0);
         vec3 cold = vec3(0.45, 0.58, 0.85), fil = vec3(0.62, 0.78, 1.0), hot = vec3(1.0, 0.82, 0.55);
         vCol = mix(cold, mix(fil, hot, smoothstep(0.5, 1.0, aDens)), k);
-        vA = mix(0.8, 0.5 + 0.5 * aDens, k);
+        vA = mix(0.22, 0.12 + 0.3 * aDens, k);
+        vA *= 1.0 - 0.55 * smoothstep(2.0, 4.8, -mv.z);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 vCol; varying float vA;
       void main() {
-        vec2 q = gl_PointCoord - 0.5; float r = length(q);
-        float a = smoothstep(0.5, 0.0, r); a *= a;
-        gl_FragColor = vec4(vCol * a * vA, a * vA);
+        vec2 q = (gl_PointCoord - 0.5) * 2.0;
+        float rr = dot(q, q);
+        if (rr > 1.0) discard;
+        float halo = exp(-rr * 5.5) * (1.0 - smoothstep(0.5, 1.0, rr));
+        float core = exp(-rr * 42.0);
+        gl_FragColor = vec4(mix(vCol, vec3(1.0), core * 0.35), (halo * 0.6 + core * 0.4) * vA);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
       }`
   });
   const points = new THREE.Points(geo, mat);
@@ -104,8 +114,8 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
   const camera = new THREE.PerspectiveCamera(42, 16 / 9, 0.05, 50);
   camera.position.set(0.3, 0.7, 2.3);
   const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true; controls.enablePan = false; controls.enableZoom = false;
-  controls.autoRotate = !reduced(); controls.autoRotateSpeed = 0.45;
+  controls.enableDamping = false; controls.enablePan = false; controls.enableZoom = false;
+  controls.autoRotate = false; controls.autoRotateSpeed = 0.3;
 
   // rótulos em HTML (acompanham a rotação sem mexer no SVG da cena)
   const mk = (t: string) => { const e = document.createElement('span'); e.className = 'mx-gl-label'; e.textContent = t; e.hidden = true; stage.append(e); return e; };
@@ -132,20 +142,21 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
     e.hidden = !show || tmp.z > 1;
   };
 
-  let k = 0, frame = 0, visible = true, alive = true;
-  const render = (now: number) => {
-    uniforms.uK.value = k; uniforms.uTime.value = now / 1000;
-    controls.update();
+  let k = 0, frame = 0, visible = true, alive = true, playing = false, last = 0;
+  const render = () => {
+    uniforms.uK.value = k;
     renderer.render(scene, camera);
     const show = k > 0.9;
     place(lab.node, anchor.node, show); place(lab.fil, anchor.fil, show); place(lab.void, anchor.void, show);
   };
   const loop = (now: number) => {
-    if (!alive || !visible || document.hidden) { frame = 0; return; }
-    render(now);
+    if (!alive || !visible || document.hidden || !playing) { frame = 0; last = 0; return; }
+    const dt = last ? Math.min(50, now - last) / 1000 : 0; last = now;
+    controls.update(dt);
+    render();
     frame = requestAnimationFrame(loop);
   };
-  const wake = () => { if (!frame && alive) frame = requestAnimationFrame(loop); };
+  const wake = () => { if (!frame && alive && playing && visible && !document.hidden) { last = 0; frame = requestAnimationFrame(loop); } };
   const resize = () => {
     const w = stage.clientWidth, h = stage.clientHeight;
     if (!w || !h) return;
@@ -153,18 +164,28 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
     renderer.setSize(w, h, false);
     uniforms.uPx.value = renderer.getPixelRatio() * h / 300;
     camera.aspect = w / h; camera.position.setLength(2.3); camera.updateProjectionMatrix();
-    render(performance.now());
+    render();
   };
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) wake(); }, { threshold: 0.05 });
   io.observe(stage);
   const onVis = () => { if (!document.hidden) wake(); };
   document.addEventListener('visibilitychange', onVis);
   const ro = new ResizeObserver(resize); ro.observe(stage);
-  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); alive = false; cancelAnimationFrame(frame); stage.classList.remove('mx-stage--gl'); canvas.remove(); Object.values(lab).forEach((l) => l.remove()); stage.dispatchEvent(new CustomEvent('mx:gl-lost')); });
+  controls.addEventListener('change', () => { if (!playing && alive) render(); });
+  const dispose = () => {
+    alive = false; cancelAnimationFrame(frame); io.disconnect(); ro.disconnect();
+    document.removeEventListener('visibilitychange', onVis); controls.dispose(); renderer.dispose(); geo.dispose(); mat.dispose();
+    canvas.remove(); Object.values(lab).forEach((l) => l.remove()); stage.classList.remove('mx-stage--gl');
+  };
+  canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); dispose(); stage.dispatchEvent(new CustomEvent('mx:gl-lost')); });
   resize(); wake();
 
   return {
-    set(next) { k = next; if (!frame) render(performance.now()); },
-    dispose() { alive = false; cancelAnimationFrame(frame); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', onVis); controls.dispose(); renderer.dispose(); geo.dispose(); mat.dispose(); canvas.remove(); Object.values(lab).forEach((l) => l.remove()); stage.classList.remove('mx-stage--gl'); }
+    set(next) { k = next; render(); },
+    setPlaying(on) {
+      playing = on && !reduced(); controls.autoRotate = playing; controls.enableDamping = playing;
+      if (playing) wake(); else { cancelAnimationFrame(frame); frame = 0; last = 0; render(); }
+    },
+    dispose
   };
 }

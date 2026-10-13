@@ -84,7 +84,7 @@
 .planet-ellipse::after { content: ''; position: absolute; inset: 51px; border: 1px dashed color-mix(in srgb, var(--line-strong) 36%, transparent); border-radius: 50%; }
 .planet-img { display: block; width: min(360px, 74%); height: auto; position: relative; z-index: 2; filter: drop-shadow(-14px 20px 22px color-mix(in srgb, var(--ink) 20%, transparent)); transition: transform 0.45s var(--ease), opacity 0.25s; }
 .planet-img[data-planet='saturno'] { width: min(500px, 94%); }
-.planet-illustration.swap .planet-img { transform: scale(0.88); opacity: 0.4; }
+.planet-illustration.swap .planet-img { transform: scale(1.035); opacity: 0.25; }
 .illustration-note { position: absolute; left: 30px; bottom: 25px; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; }
 .diagram-coord { position: absolute; top: 24px; left: 28px; color: var(--muted); font-size: 12px; letter-spacing: 0.14em; z-index: 3; }
 .planet-info { padding: 40px 48px 36px 63px; }

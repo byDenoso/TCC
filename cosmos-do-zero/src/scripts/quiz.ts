@@ -1,11 +1,48 @@
 import { $, $$ } from './dom';
 import { questions } from '../data/client';
 import { advance, answer, createQuiz, missed, poolFor, score, verdict, type QuizState } from '../lib/quiz';
-import { chapterUrl } from '../lib/url';
+import { chapterUrl, u } from '../lib/url';
 import { getParam, setParams } from '../lib/url-state';
 import { pad2 } from '../lib/format';
 import { PRIMARY_CHAPTER_IDS, type ChapterId } from '../types';
 const quizPool = (chapter: ChapterId | '') => poolFor(chapter ? questions : questions.filter(q => (PRIMARY_CHAPTER_IDS as readonly ChapterId[]).includes(q.chapter)), chapter);
+const REVIEW_KEY = 'cosmos-quiz-review';
+type Review = { from: string; chapter: ChapterId; section?: string; question: string };
+
+/** Caminho de ida e volta explícito; o estado da tentativa continua no sessionStorage. */
+function offerQuizReturn(context?: Review): void {
+  let review: Review;
+  try {
+    review = context ?? JSON.parse(sessionStorage.getItem(REVIEW_KEY) ?? 'null') as Review;
+    if (!review || !questions.some(q => q.id === review.question && q.chapter === review.chapter && q.section === review.section)) return;
+    const from = new URL(review.from, location.origin);
+    if (from.origin !== location.origin || ![u('/'), chapterUrl(review.chapter)].includes(from.pathname)) return;
+    if (location.pathname !== chapterUrl(review.chapter)) return;
+  } catch { return; }
+  const target = review.section ? document.getElementById(review.section) : document.querySelector('.reader-opening');
+  if (!target) return;
+  document.querySelector('[data-quiz-return]')?.remove();
+  const a = document.createElement('a');
+  a.className = 'quiz-return'; a.dataset.quizReturn = ''; a.href = review.from;
+  a.textContent = '← Voltar à pergunta';
+  a.addEventListener('click', (e) => {
+    if (e.button || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    try { sessionStorage.removeItem(REVIEW_KEY); } catch { /* sem armazenamento */ }
+    if (new URL(a.href).pathname === location.pathname) {
+      e.preventDefault();
+      const question = document.querySelector<HTMLElement>('[data-quiz-question]');
+      const card = question?.closest<HTMLElement>('[data-quiz]');
+      if (card) {
+        const url = new URL(a.href); history.pushState(history.state, '', url);
+        card.closest<HTMLElement>('.chapter-check')?.removeAttribute('hidden');
+        card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+        question?.focus({ preventScroll: true });
+      }
+      a.remove();
+    }
+  });
+  target.prepend(a);
+}
 
 function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: boolean }): { setChapter(c: ChapterId | ''): void } {
   const counter = $('[data-quiz-counter]', root)!;
@@ -39,9 +76,17 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
   };
 
   const reviewHref = (q: { chapter: ChapterId; section?: string }) => (opts.inChapter ? '' : chapterUrl(q.chapter)) + (q.section ? `#${q.section}` : '');
-  const reviewLink = (q: { chapter: ChapterId; section?: string }, label: string) => {
+  const reviewLink = (q: { id: string; chapter: ChapterId; section?: string }, label: string) => {
     const a = document.createElement('a');
     a.className = 'textlink quiz-review-link'; a.textContent = label; a.href = reviewHref(q) || chapterUrl(q.chapter);
+    a.addEventListener('click', (e) => {
+      if (e.button || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      save();
+      const from = new URL(location.href); from.hash = opts.inChapter ? 'desafio-da-aula' : 'desafio';
+      const context: Review = { from: from.pathname + from.search + from.hash, chapter: q.chapter, section: q.section, question: q.id };
+      try { sessionStorage.setItem(REVIEW_KEY, JSON.stringify(context)); } catch { /* sem armazenamento */ }
+      if (opts.inChapter) offerQuizReturn(context);
+    });
     return a;
   };
   const renderQuestion = (focus = false) => {
@@ -138,6 +183,7 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
 }
 
 export function initQuizzes(): void {
+  offerQuizReturn();
   const cards = $$<HTMLElement>('[data-quiz]');
   cards.forEach((root) => {
     const inChapter = !!root.closest('.reader-page');
@@ -148,6 +194,11 @@ export function initQuizzes(): void {
       const fromUrl = getParam('assunto');
       if (fromUrl && [...select.options].some((o) => o.value === fromUrl)) { select.value = fromUrl; api.setChapter(fromUrl as ChapterId); }
       select.addEventListener('change', () => { api.setChapter(select.value as ChapterId | ''); setParams({ assunto: select.value || null }); });
+    }
+    if (location.hash === '#desafio' || location.hash === '#desafio-da-aula') {
+      const check = root.closest<HTMLElement>('.chapter-check');
+      if (check) { check.hidden = false; check.id = 'desafio-da-aula'; }
+      root.querySelector<HTMLElement>('[data-quiz-question]')?.focus({ preventScroll: true });
     }
   });
 }

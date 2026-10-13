@@ -48,7 +48,23 @@ export function arrow(parent: Element, x1: number, y1: number, x2: number, y2: n
   el('path', { d: `M${x2} ${y2} L${x2 - h * Math.cos(a - 0.45)} ${y2 - h * Math.sin(a - 0.45)} L${x2 - h * Math.cos(a + 0.45)} ${y2 - h * Math.sin(a + 0.45)} Z`, fill: color }, gg);
   return gg;
 }
-export const star = (parent: Element, x: number, y: number, r: number, color: string, glow = true): void => {
-  if (glow) el('circle', { cx: x, cy: y, r: r < 30 ? r * 2.2 : r + 14, fill: color, opacity: 0.18 }, parent);
-  el('circle', { cx: x, cy: y, r, fill: color }, parent);
-};
+/** Volume e halo analíticos, sem filtros de desfoque caros a cada quadro. IDs locais e determinísticos. */
+export function sphere(parent: Element, x: number, y: number, r: number, color: string, luminous = false): void {
+  const svg = parent.closest('svg')!;
+  const prefix = svg.closest<HTMLElement>('[data-mx]')?.dataset.mx ?? svg.getAttribute('data-star-svg') ?? 'stellar';
+  const id = `${prefix}-volume-${svg.querySelectorAll('[data-volume]').length}`;
+  const defs = el('defs', { 'data-volume': '' }, parent);
+  const body = el('radialGradient', { id, cx: '35%', cy: '30%', r: '75%' }, defs);
+  el('stop', { offset: '0%', 'stop-color': luminous ? `color-mix(in srgb, ${color} 42%, white)` : `color-mix(in srgb, ${color} 75%, white)` }, body);
+  el('stop', { offset: '50%', 'stop-color': color }, body);
+  el('stop', { offset: '100%', 'stop-color': `color-mix(in srgb, ${color} ${luminous ? 65 : 22}%, black)` }, body);
+  if (luminous) {
+    const halo = el('radialGradient', { id: `${id}-halo` }, defs);
+    el('stop', { offset: '25%', 'stop-color': color, 'stop-opacity': 0.3 }, halo);
+    el('stop', { offset: '60%', 'stop-color': color, 'stop-opacity': 0.12 }, halo);
+    el('stop', { offset: '100%', 'stop-color': color, 'stop-opacity': 0 }, halo);
+    el('circle', { cx: x, cy: y, r: r * 2.3, fill: `url(#${id}-halo)` }, parent);
+  }
+  el('circle', { cx: x, cy: y, r, fill: `url(#${id})` }, parent);
+}
+export const star = (parent: Element, x: number, y: number, r: number, color: string, glow = true): void => sphere(parent, x, y, r, color, glow);

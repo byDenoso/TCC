@@ -1,5 +1,5 @@
 import type { Scene, SceneMap } from './engine';
-import { C, arrow, bar, clamp, clear, ease, el, fmt, g, lerp, rng, star, text } from './draw';
+import { C, arrow, bar, clamp, clear, ease, el, fmt, g, lerp, rng, sphere, star, text } from './draw';
 
 const disco = (): Scene => {
   let layer: SVGGElement;
@@ -50,7 +50,7 @@ const rochosos = (): Scene => {
       clear(layer);
       const p = P[v], k = ease(t);
       el('circle', { cx: 80, cy: 125, r: 44 + 22 * p.atmW, fill: '#e8a85a', opacity: 0.12 + 0.35 * p.atmW }, layer);
-      el('circle', { cx: 80, cy: 125, r: 42, fill: p.col }, layer);
+      sphere(layer, 80, 125, 42, p.col);
       text(layer, 80, 200, p.n, { class: 'mx-t strong', 'text-anchor': 'middle' });
       bar(layer, 170, 50, 210, 7, p.light * k, 'luz do Sol recebida (Terra = 1)', fmt(p.light, 1), C.gold);
       bar(layer, 170, 115, 210, 1, p.atmW * k, 'atmosfera (pressão)', p.atm, C.blue);

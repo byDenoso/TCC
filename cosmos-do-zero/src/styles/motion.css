@@ -1,7 +1,7 @@
 /* ───────────── Sistema de movimento ─────────────
    Durações: --t-fast 180ms (respostas de toque), --t-mid 420ms (estado), --t-slow 600ms (entradas).
    Uma curva para tudo: --ease. Quem prefere menos movimento recebe estados estáticos. */
-:root { --t-fast: 180ms; --t-mid: 420ms; --t-slow: 600ms; --ease-out-back: cubic-bezier(.3, 1.4, .5, 1); }
+:root { --t-fast: 160ms; --t-mid: 440ms; --t-slow: 640ms; --ease-out-back: cubic-bezier(.16, 1, .3, 1); }
 
 /* Estrelas da abertura: visíveis nos dois temas */
 .star { background: var(--ink) !important; }
@@ -25,8 +25,6 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   .hero-copy > :nth-child(4) { animation-delay: .28s; }
   .cmb-hero { animation: rise-soft 1.2s var(--ease) .15s both; }
   .cmb-frame canvas { animation: develop 1.8s var(--ease) .25s both; }
-  .cmb-frame::after { content: ''; position: absolute; inset: -20%; pointer-events: none; background: radial-gradient(closest-side, rgba(255,248,231,.38), transparent 70%); mix-blend-mode: soft-light; animation: drift 14s ease-in-out infinite alternate; }
-  .cmb-frame { animation: breathe 9s ease-in-out 2s infinite alternate; }
   .hero-foot { animation: rise var(--t-slow) var(--ease) .45s both; }
   .star { animation: twinkle 4.5s ease-in-out infinite alternate; }
   .star:nth-child(3n) { animation-duration: 6.2s; animation-delay: -2s; }
@@ -54,9 +52,6 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   /* Gráficos: pontos surgem, retas e curvas se desenham */
   .h-pt.is-new { transform-box: fill-box; transform-origin: center; animation: pop .6s var(--ease-out-back) both; }
   .h-fit.is-draw, .r-curve.is-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.1s var(--ease) forwards; }
-  .obs-pinhead { transform-box: fill-box; transform-origin: 50% 100%; animation: bob 2.4s ease-in-out infinite; }
-  .obs-travel { animation: glow 2.6s ease-in-out infinite alternate; }
-  .e-galaxy.is-observer circle:first-child { transform-box: fill-box; transform-origin: center; animation: pulse 2.2s ease-in-out infinite; }
   .h-gal:hover .h-body, .h-gal:focus-visible .h-body { transform-box: fill-box; transform-origin: center; transform: scale(1.25); transition: transform var(--t-mid) var(--ease-out-back); }
 
   /* Acordeões: abrem deslizando onde o navegador permite */
@@ -72,23 +67,21 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
 @keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
 @keyframes rise-soft { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
 @keyframes develop { from { clip-path: inset(0 100% 0 0); filter: saturate(0) brightness(1.4); } 60% { filter: saturate(.6) brightness(1.1); } to { clip-path: inset(0 0 0 0); filter: none; } }
-@keyframes breathe { from { filter: saturate(.95); } to { filter: saturate(1.12) brightness(1.03); } }
-@keyframes drift { from { transform: translate(-22%, -8%); } to { transform: translate(24%, 10%); } }
 @keyframes twinkle { from { opacity: .08; } to { opacity: .55; } }
 @keyframes vt-out { to { opacity: 0; transform: translateY(-12px); } }
 @keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
-@keyframes pop { 0% { transform: scale(.82); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes pop { from { opacity: .65; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
 @keyframes draw-dash { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
-@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+@keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-2px); } 65% { transform: translateX(2px); } }
 @keyframes sparkle { from { opacity: 0; transform: translateY(8px) scale(.6); } 50% { opacity: 1; } to { opacity: 0; transform: translateY(-14px) scale(1.1); } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
-@keyframes bob { 0%, 100% { transform: none; } 50% { transform: translateY(-4px); } }
-@keyframes glow { from { opacity: .75; } to { opacity: 1; } }
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
 
 /* Quiz: acerto em azul (frio = certo), erro em laranja */
 .quiz-answer.correct { background: color-mix(in srgb, var(--accent-2) 14%, var(--surface)); border-color: var(--accent-2); }
 .quiz-answer.correct .letter { color: var(--accent-2); }
+.quiz-return { display: inline-flex; align-items: center; min-height: 44px; max-width: 100%; margin: 0 0 18px; padding: 10px 18px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--accent-ink); font: 700 14px/1.4 var(--body); text-decoration: none; }
+.quiz-return:hover { border-color: var(--accent); background: var(--accent-soft); }
+.quiz-card { scroll-margin-top: 100px; }
 
 /* ───────────── Aula em passos ───────────── */
 .chapter-reader.is-stepped .lesson-section { border-bottom: 0; }

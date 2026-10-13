@@ -1,5 +1,5 @@
 import type { Scene, SceneMap } from './engine';
-import { C, arrow, bar, clear, ease, el, fmt, g, lerp, rng, star, text } from './draw';
+import { C, arrow, bar, clear, ease, el, fmt, g, lerp, rng, sphere, star, text } from './draw';
 
 const formacao = (): Scene => {
   let layer: SVGGElement;
@@ -153,7 +153,7 @@ const campo = (): Scene => {
       if (v === 0) for (const s of [1, 1.6, 2.3]) { el('ellipse', { cx: ex - 20 * s, cy: ey, rx: 34 * s, ry: 44 * s, fill: 'none', stroke: C.blue, 'stroke-width': 1.3, opacity: 0.6 }, layer); el('ellipse', { cx: ex + 20 * s, cy: ey, rx: 34 * s, ry: 44 * s, fill: 'none', stroke: C.blue, 'stroke-width': 1.3, opacity: 0.6 }, layer); }
       el('circle', { cx: ex, cy: ey, r: 40, fill: C.blue, opacity: 0.18 }, layer);
       text(layer, ex, ey + 62, 'atmosfera', { class: 'mx-t small', 'text-anchor': 'middle' });
-      el('circle', { cx: ex, cy: ey, r: 32, fill: '#3d7cc9' }, layer);
+      sphere(layer, ex, ey, 32, '#3d7cc9');
       star(layer, 20, ey, 16, C.gold);
       text(layer, 30, 22, 'vento solar →', { class: 'mx-t small strong' });
       parts.forEach(([off, y], i) => {
@@ -186,7 +186,7 @@ const habitavel = (): Scene => {
     draw(v, t) {
       clear(layer);
       const p = P[v], k = ease(t);
-      el('circle', { cx: 80, cy: 120, r: 46, fill: p.col }, layer);
+      sphere(layer, 80, 120, 46, p.col);
       text(layer, 80, 196, p.n.length > 12 ? 'Terra hipotética' : p.n, { class: 'mx-t strong', 'text-anchor': 'middle' });
       if (v === 3) text(layer, 80, 216, '(sem efeito estufa)', { class: 'mx-t small warm', 'text-anchor': 'middle' });
       bar(layer, 170, 50, 200, 3, (Math.log10(p.p) + 2.5) / 2 * k, 'pressão do ar (escala comprimida)', p.pt, C.blue);

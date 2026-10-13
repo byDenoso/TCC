@@ -121,14 +121,16 @@ const teia = (): Scene => {
     return { start, end };
   });
   // Com WebGL a cena é 3D (web3d.ts) e os pontos SVG ficam escondidos por CSS; sem WebGL, o SVG é a cena.
-  let gl: { set(k: number): void } | null = null, lastV = 0;
+  let gl: { set(k: number): void; setPlaying(on: boolean): void } | null = null, lastV = 0, playing = false;
   return {
     init(svg) {
       layer = g(svg, { class: 'mx-flat' });
       const stage = svg.parentElement!;
+      stage.addEventListener('mx:gl-lost', () => { gl = null; }, { once: true });
       const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-      import('./web3d').then((m) => m.mountWeb3D(stage, reduced)).then((w) => { gl = w; gl?.set(lastV); }).catch(() => {});
+      import('./web3d').then((m) => m.mountWeb3D(stage, reduced)).then((w) => { gl = w; gl?.set(lastV); gl?.setPlaying(playing); }).catch(() => {});
     },
+    setPlaying(on) { playing = on; gl?.setPlaying(on); },
     value: (v) => (v < 0.05 ? 'quase liso' : v < 0.95 ? `${Math.round(v * 100)}%` : 'teia formada'),
     draw(v) {
       clear(layer);

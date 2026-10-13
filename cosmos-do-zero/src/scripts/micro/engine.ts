@@ -14,6 +14,8 @@ export interface Scene {
   duration?: number;
   /** Controle deslizante: 'sweep' (padrão) anima o valor; 'time' anima o movimento no valor escolhido. */
   animate?: 'sweep' | 'time';
+  /** Sincroniza movimentos auxiliares (como a câmera 3D) com o transporte da cena. */
+  setPlaying?(playing: boolean): void;
 }
 export type SceneMap = Record<string, () => Scene>;
 
@@ -103,6 +105,7 @@ function setup(root: HTMLElement, scene: Scene): void {
     playLabel.textContent = on ? 'Pausar' : reducedQuery.matches ? 'Avançar' : 'Animar';
     play.querySelector('.mx-ico')!.textContent = on ? '❚❚' : '▶';
     root.classList.toggle('is-playing', on);
+    scene.setPlaying?.(on);
   };
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(); };
   const runner: Runner = { stop };

@@ -21,6 +21,7 @@ npm run test:http    # servidor estático: caminhos, métodos, MIME e erros
 npm run test:e2e     # Playwright contra http://localhost:4321 (suba o preview antes)
 npm run test:browsers # fluxo principal em Firefox e WebKit
 npm run test:renders # carregamento e troca das imagens renderizadas em Chrome
+npm run test:graphics # shaders WebGL em 390/1440 px, pausa, retomada e perda de contexto
 SHOTS=1 npm run test:e2e   # idem, salvando capturas em docs/screenshots
 ```
 
@@ -70,3 +71,13 @@ Push executa testes sem publicar. O workflow manual separa build e publicação.
 Leia `docs/PUBLICACAO_PAGES.md` para acesso, migração e rollback; o domínio
 não foi configurado por esta preparação. Resultados desta execução ficam no
 relatório anexo ao pacote, não nas validações históricas da versão original.
+
+## Refinamento dos renders
+
+A direção visual usa [NASA Eyes](https://science.nasa.gov/eyes/) e o [acervo do ESO](https://www.eso.org/public/images/) como referências de profundidade, contraste e luz, preservando a identidade do Cosmos. Os desenhos continuam ilustrativos: nenhum novo shader representa uma medição do céu.
+
+A teia usa 24 mil partículas no celular e 48 mil em telas maiores, com núcleos e halos gaussianos, perspectiva e atenuação por profundidade. A Máquina do tempo usa galáxias elípticas e uma fita de luz com bordas suaves (480/720 segmentos). Ambos usam ACES e saída sRGB; os movimentos obedecem à pausa, à visibilidade e à preferência de movimento reduzido. Perda de contexto devolve a cena à alternativa SVG.
+
+Estrelas e mundos esquemáticos recebem volumes e halos em gradientes SVG. A CMB usa partículas Canvas em cache e um relógio de animação que congela junto com a experiência. As transições ficam mais contidas; a cor do mapa de temperatura não muda por efeitos decorativos.
+
+Os cartões da Máquina do tempo acompanham a idade do painel, e o fator de escala é descrito como escala das distâncias. A revisão de uma pergunta oferece retorno explícito à tentativa, com resposta, posição e foco preservados. A pipeline verifica esses fluxos no celular e no desktop antes de publicar e novamente no domínio oficial.

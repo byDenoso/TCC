@@ -36,21 +36,25 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'low-power' }); }
   catch { canvas.remove(); return null; }
   renderer.setClearColor(0x05070f, 1);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x05070f, 0.035);
   const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
   camera.position.set(2, 6.5, 21);
   const controls = new OrbitControls(camera, canvas);
-  controls.enableDamping = true; controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 34;
-  controls.autoRotate = !reduced(); controls.autoRotateSpeed = 0.35;
+  controls.enableDamping = !reduced(); controls.enablePan = false; controls.minDistance = 12; controls.maxDistance = 34;
+  controls.autoRotate = !reduced(); controls.autoRotateSpeed = 0.22;
   controls.target.set(-2, 0, 0);
 
   // textura de brilho circular para as galáxias
   const glowTex = (() => {
-    const c = document.createElement('canvas'); c.width = c.height = 64;
-    const g = c.getContext('2d')!; const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.25, 'rgba(255,220,180,.85)'); grd.addColorStop(1, 'rgba(255,200,150,0)');
-    g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+    const c = document.createElement('canvas'); c.width = c.height = 128;
+    const g = c.getContext('2d')!; const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.08, 'rgba(255,244,223,.95)');
+    grd.addColorStop(0.3, 'rgba(255,220,180,.3)'); grd.addColorStop(1, 'rgba(255,200,150,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, 128, 128);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   })();
 
@@ -68,7 +72,33 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   const galGeo = new THREE.BufferGeometry();
   galGeo.setAttribute('position', posAttr);
   galGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-  const galMat = new THREE.PointsMaterial({ size: 0.6, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true });
+  galGeo.setAttribute('aAngle', new THREE.Float32BufferAttribute(Array.from({ length: n }, () => rnd() * Math.PI), 1));
+  const galUniforms = { uPx: { value: 1 }, uEarly: { value: 0 } };
+  const galMat = new THREE.ShaderMaterial({
+    uniforms: galUniforms, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: /* glsl */ `
+      attribute float aAngle; uniform float uPx; uniform float uEarly;
+      varying vec3 vColor; varying float vAngle;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = clamp(uPx * mix(105.0, 165.0, uEarly) / -mv.z, 2.0, 54.0);
+        vColor = mix(color, vec3(0.48, 0.62, 0.86), uEarly); vAngle = aAngle;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform float uEarly; varying vec3 vColor; varying float vAngle;
+      void main() {
+        vec2 p = (gl_PointCoord - 0.5) * 2.0;
+        vec2 q = mat2(cos(vAngle), -sin(vAngle), sin(vAngle), cos(vAngle)) * p;
+        float rr = dot(p, p); if (rr > 1.0) discard;
+        q.y *= mix(1.6, 1.0, uEarly);
+        float halo = exp(-dot(q, q) * 5.0) * (1.0 - smoothstep(0.55, 1.0, rr));
+        float core = exp(-dot(q, q) * 55.0) * (1.0 - uEarly);
+        gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.6), (halo * 0.5 + core * 0.5) * mix(0.95, 0.45, uEarly));
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  });
   const galaxies = new THREE.Points(galGeo, galMat);
   scene.add(galaxies);
 
@@ -92,18 +122,34 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   srcMesh.scale.setScalar(1.5); scene.add(srcMesh);
 
   // onda da luz: fita (malha fina) ao longo do caminho fonte → nós
-  const SEG = 420;
+  const SEG = matchMedia('(max-width: 600px)').matches ? 480 : 720;
   const waveGeo = new THREE.BufferGeometry();
   const wavePos = new Float32Array((SEG + 1) * 2 * 3);
   waveGeo.setAttribute('position', new THREE.BufferAttribute(wavePos, 3));
+  const waveUV = new Float32Array((SEG + 1) * 4);
+  for (let i = 0; i <= SEG; i++) waveUV.set([i / SEG, 0, i / SEG, 1], i * 4);
+  waveGeo.setAttribute('uv', new THREE.BufferAttribute(waveUV, 2));
   const idx: number[] = [];
   for (let i = 0; i < SEG; i++) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
   waveGeo.setIndex(idx);
-  const waveMat = new THREE.MeshBasicMaterial({ color: 0xff5a4f, transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false });
+  const waveUniforms = { uColor: { value: new THREE.Color(0xff5a4f) }, uOpacity: { value: 0.95 } };
+  const waveMat = new THREE.ShaderMaterial({
+    uniforms: waveUniforms, transparent: true, side: THREE.DoubleSide, depthWrite: false,
+    vertexShader: /* glsl */ `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: /* glsl */ `
+      varying vec2 vUv; uniform vec3 uColor; uniform float uOpacity;
+      void main() {
+        float edge = 1.0 - abs(vUv.y * 2.0 - 1.0);
+        float core = pow(edge, 5.0);
+        float ends = smoothstep(0.0, 0.035, vUv.x) * (1.0 - smoothstep(0.96, 1.0, vUv.x));
+        gl_FragColor = vec4(mix(uColor, vec3(1.0), core * 0.38), edge * ends * uOpacity);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`
+  });
   const waveMesh = new THREE.Mesh(waveGeo, waveMat);
   scene.add(waveMesh);
 
-  let prevVC = true;
   let z = 0, lam = 656.28, t = 0, playing = !reduced(), frame = 0, last = 0, visible = true, alive = true;
   const growOf = (zz: number) => Math.pow(1 + zz, Math.log(6) / Math.log(1 + Z_MAX));
 
@@ -146,7 +192,7 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     const lamScene = 0.7 * (G * s); // comprimento de onda na tela cresce junto com a rede
     const head = z < 0.005 ? len : len * ease;
     const tail = Math.max(0, head - len);
-    const amp = 0.62, halfW = 0.085;
+    const amp = 0.62, halfW = 0.14;
     for (let i = 0; i <= SEG; i++) {
       const d = tail + ((head - tail) * i) / SEG;
       const env = Math.min(1, (d - tail) / 1.2) * Math.min(1, (head - d) / 0.6 + 0.02);
@@ -162,12 +208,10 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     const invisible = lamAt >= 750;
     // antes das primeiras galáxias (z > ~20) não havia galáxias: os pontos viram gás difuso
     const early = z > 20;
-    galMat.size = early ? 1.25 : 0.6; galMat.opacity = early ? 0.6 : 1; galMat.color.set(early ? 0x9fb8e6 : 0xffffff);
-    galMat.vertexColors = !early; galMat.needsUpdate = galMat.vertexColors !== prevVC; prevVC = galMat.vertexColors;
+    galUniforms.uEarly.value = early ? 1 : 0;
     labels.src.textContent = early ? 'região de onde a luz saiu' : 'galáxia de onde a luz saiu';
-    waveMat.color.set(invisible ? 0xd9dde8 : 0xff5a4f);
-    waveMat.opacity = invisible ? 0.55 + 0.25 * Math.sin(performance.now() / 300) : 0.95;
-    controls.update();
+    waveUniforms.uColor.value.set(invisible ? 0xd9dde8 : 0xff5a4f);
+    waveUniforms.uOpacity.value = invisible ? 0.65 : 0.95;
     renderer.render(scene, camera);
     const a = place(labels.us, usMesh.position, -14);
     const b = place(labels.src, srcMesh.position, -14);
@@ -187,19 +231,21 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     const w = host.clientWidth, h = Math.max(220, host.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w < 600 ? 1.5 : 2));
     renderer.setSize(w, h, false);
+    galUniforms.uPx.value = renderer.getPixelRatio() * h / 300;
     camera.aspect = w / h;
     camera.position.setLength(w < 520 ? 16.5 : 21);
     camera.updateProjectionMatrix();
     render();
   };
   const tick = (now: number) => {
-    if (!alive) return;
+    if (!alive || !playing || !visible || document.hidden) { frame = 0; last = 0; return; }
     const dt = last ? Math.min(now - last, 50) : 16; last = now;
     if (playing && z >= 0.005) { t += dt / 5200; if (t > 1.35) t = 0; } // viagem de ~5 s, pausa e repete
+    controls.update(dt / 1000);
     render();
     frame = visible && !document.hidden ? requestAnimationFrame(tick) : 0;
   };
-  const wake = () => { if (!frame && alive && visible && !document.hidden) { last = 0; frame = requestAnimationFrame(tick); } };
+  const wake = () => { if (!frame && alive && playing && visible && !document.hidden) { last = 0; frame = requestAnimationFrame(tick); } };
   const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) wake(); }, { threshold: 0.1 });
   io.observe(host);
   const onVis = () => wake();
@@ -207,6 +253,7 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
   const ro = new ResizeObserver(resize); ro.observe(host);
   canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); alive = false; cancelAnimationFrame(frame); host.dataset.webgl = 'lost'; host.dispatchEvent(new CustomEvent('obs3d:lost', { bubbles: true })); });
   controls.addEventListener('start', () => { controls.autoRotate = false; });
+  controls.addEventListener('change', () => { if (!playing && alive) render(); });
   // pausar/continuar a viagem da luz (a rotação acompanha)
   const playBtn = host.querySelector<HTMLButtonElement>('[data-3d-play]');
   const syncBtn = () => {
@@ -216,11 +263,16 @@ export async function mountTempo3D(host: HTMLElement, reduced: () => boolean): P
     playBtn.firstElementChild!.textContent = playing ? '❚❚' : '▶';
     playBtn.querySelector('[data-3d-play-label]')!.textContent = playing ? 'Pausar' : t > 0 && t < 1 ? 'Continuar' : 'Animar';
   };
-  playBtn?.addEventListener('click', () => { playing = !playing; if (playing && t >= 1) t = 0; controls.autoRotate = playing && !reduced(); last = 0; syncBtn(); wake(); });
+  const syncMotion = () => {
+    controls.autoRotate = playing && !reduced(); controls.enableDamping = playing && !reduced();
+    if (!playing) { cancelAnimationFrame(frame); frame = 0; }
+    last = 0; syncBtn(); render(); wake();
+  };
+  playBtn?.addEventListener('click', () => { playing = !playing; syncMotion(); });
 
   resize(); syncBtn(); wake();
   return {
-    set(zz, l) { z = zz; lam = l; t = reduced() ? 1 : 0; playing = !reduced(); controls.autoRotate = !reduced() && controls.autoRotate; syncBtn(); render(); wake(); },
-    dispose() { alive = false; cancelAnimationFrame(frame); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', onVis); controls.dispose(); renderer.dispose(); galGeo.dispose(); gridGeo.dispose(); waveGeo.dispose(); glowTex.dispose(); canvas.remove(); }
+    set(zz, l) { z = zz; lam = l; t = reduced() ? 1 : 0; playing = !reduced() && z >= 0.005; syncMotion(); },
+    dispose() { alive = false; cancelAnimationFrame(frame); io.disconnect(); ro.disconnect(); document.removeEventListener('visibilitychange', onVis); controls.dispose(); renderer.dispose(); galGeo.dispose(); gridGeo.dispose(); waveGeo.dispose(); galMat.dispose(); waveMat.dispose(); (grid.material as THREE_NS.Material).dispose(); usMesh.material.dispose(); srcMesh.material.dispose(); glowTex.dispose(); canvas.remove(); }
   };
 }

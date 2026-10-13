@@ -30,7 +30,7 @@ export function initStars(): void {
     setText($('[data-star-play-label]', play), on ? 'Pausar' : reduced.matches ? 'Avançar' : 'Animar a vida');
     $('.mx-ico', play)!.textContent = on ? '❚❚' : '▶';
   };
-  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); t = 1; paint(); };
+  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); paint(); };
   const tick = (now: number) => {
     if (!playing) return;
     t = Math.min(1, t + (last ? Math.min(64, now - last) : 16) / 1500); last = now;
@@ -64,13 +64,15 @@ export function initStars(): void {
   play?.addEventListener('click', () => {
     if (playing) { stop(); return; }
     if (reduced.matches) { next(); return; }
-    if (step >= 4) step = 0;
-    t = 0; last = 0; setPlaying(true); frame = requestAnimationFrame(tick);
+    if (step >= 4 && t >= 1) step = 0;
+    if (t >= 1) t = 0;
+    last = 0; setPlaying(true); frame = requestAnimationFrame(tick);
   });
   $('[data-star-next]', root)?.addEventListener('click', next);
   $('[data-star-reset]', root)?.addEventListener('click', () => { stop(); step = 2; t = 1; paint(); });
   if (svg && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!e.isIntersecting) stop(); }).observe(svg);
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } });
   const q = getParam('massa');
   if (q) slider.value = String(clampMass(Number(q.replace(',', '.'))));
   setPlaying(false);

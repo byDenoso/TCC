@@ -88,6 +88,7 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           npm run test:e2e
           npm run test:renders
+          npm run test:graphics
       - name: Empacotar destino selecionado
         run: node scripts/package-pages.mjs
       - name: Guardar artefato para inspeção (sem publicar)
@@ -177,6 +178,7 @@ jobs:
         run: |
           npm run test:e2e
           npm run test:renders
+          npm run test:graphics
       - name: Capturas da URL real (desktop e mobile)
         run: node scripts/capture-public.mjs
       - name: Salvar capturas reais do Pages
@@ -186,4 +188,5 @@ jobs:
           path: |
             cosmos-do-zero/docs/screenshots/publicado-desktop.png
             cosmos-do-zero/docs/screenshots/publicado-mobile.png
+            cosmos-do-zero/docs/screenshots/render-*.png
           retention-days: 30

@@ -630,6 +630,40 @@ section('Reauditoria: laboratório, títulos e procedência');
   await p.context().close();
 }
 
+section('Épocas coerentes e retorno ao desafio');
+for (const width of [390, 1440]) {
+  const p = await page(width, { reducedMotion: 'reduce' });
+  await p.goto(`${BASE}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
+  const age = await p.locator('[data-t-out="age"]').innerText();
+  ok(`época ${width}: texto usa a idade do painel`, (await p.locator('[data-t-epoch-text]').innerText()).includes(age));
+  ok(`época ${width}: z=0,5 já passou pelo auge`, /já passou/.test(await p.locator('[data-t-epoch-text]').innerText()) && !/época de mais estrelas/i.test(await p.locator('[data-t-epoch-title]').innerText()));
+  await p.goto(`${BASE}/?lab=tempo&z=2#observatorio`, { waitUntil: 'networkidle' });
+  ok(`época ${width}: z=2 perto do auge`, /auge/.test(await p.locator('[data-t-epoch-title]').innerText()));
+  for (const chapterQuiz of [false, true]) {
+    await p.goto(BASE + (chapterQuiz ? '/capitulos/galaxias-e-nebulosas/' : '/#desafio'), { waitUntil: 'networkidle' });
+    if (chapterQuiz) await toLessonEnd(p);
+    const quiz = p.locator('[data-quiz]');
+    await quiz.locator('[data-answer]').nth(1).click();
+    const question = await quiz.locator('[data-quiz-question]').innerText();
+    const counter = await quiz.locator('[data-quiz-counter]').innerText();
+    await quiz.locator('.quiz-review-link').first().click();
+    const back = p.locator('[data-quiz-return]');
+    await back.waitFor({ state: 'visible' });
+    ok(`quiz ${width}/${chapterQuiz}: revisão oferece retorno explícito`, await back.isVisible());
+    await back.focus(); await p.keyboard.press('Enter');
+    await p.locator('[data-quiz]').waitFor({ state: 'visible' });
+    ok(`quiz ${width}/${chapterQuiz}: pergunta e posição preservadas`, await p.locator('[data-quiz-question]').innerText() === question && await p.locator('[data-quiz-counter]').innerText() === counter);
+    ok(`quiz ${width}/${chapterQuiz}: resposta e foco preservados`, await p.locator('[data-quiz-answers] button:disabled').count() > 0 && await p.locator('[data-quiz-question]').evaluate(n => n === document.activeElement));
+    await p.locator('[data-quiz-next]').click();
+    ok(`quiz ${width}/${chapterQuiz}: tentativa continua`, /02 \/ /.test(await p.locator('[data-quiz-counter]').innerText()));
+  }
+  await p.goto(BASE + '/capitulos/origem-do-universo/#origem-do-universo-primeira-luz', { waitUntil: 'networkidle' });
+  await p.locator('[data-cmbj]').scrollIntoViewIfNeeded();
+  ok(`CMB ${width}: fator de escala tem rótulo preciso`, /Escala das distâncias/.test(await p.locator('.cmbj-panel').innerText()));
+  ok(`regressões ${width}: sem erros e sem overflow`, p.errors.length === 0 && await overflow(p) <= 0, p.errors.join(' | '));
+  await p.context().close();
+}
+
 section('36 microexperiências: mobile e alternativa sem movimento');
 for (const [width, reduced] of [[390, false], [1280, true]]) {
   for (const chapter of CHAPTERS) {
