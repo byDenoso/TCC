@@ -57,6 +57,12 @@ def test_scientific_guards_remain(tmp_path):
     assert 'FROZEN_DESIGN_CHANGED' in integrity.readiness(tmp_path, changed)['reasons']
 
 
+def test_empty_recipe_params_are_not_a_gate(tmp_path):
+    test = _fixture(tmp_path)
+    test['recipe_params'] = {}
+    assert integrity.readiness(tmp_path, test)['eligible']
+
+
 def test_legacy_recipe_still_required(tmp_path):
     test = _fixture(tmp_path)
     (tmp_path / 'CONTROL.json').write_text(json.dumps({
