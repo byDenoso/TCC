@@ -53,11 +53,11 @@ export function initGuesses(): void {
 }
 export function readyStation(root: HTMLElement): void {
   root.dataset.stationReady = 'true';
-  if (root.classList.contains('is-unlocked')) qa<HTMLElement>(root, '.obs-grid, .obs-epoch, .obs-tension').forEach((g) => g.removeAttribute('inert'));
+  qa<HTMLElement>(root, '.obs-grid, .obs-epoch, .obs-tension').forEach((g) => g.removeAttribute('inert'));
 }
 
 /**
- * Palpite antes de mexer: o experimento fica embaçado até o visitante escolher uma resposta ou pular.
+ * Palpite opcional: o visitante pode escolher uma resposta ou experimentar diretamente.
  * Links diretos com valores na URL já abrem o experimento liberado.
  */
 export function initGuess(root: HTMLElement, opts: { unlocked?: boolean; onReveal?: (choice: string, right: boolean) => void } = {}): void {
@@ -79,7 +79,7 @@ export function initGuess(root: HTMLElement, opts: { unlocked?: boolean; onRevea
   };
   guesses.set(root, unlock);
   if (opts.unlocked || remembered) unlock(false);
-  else { root.classList.add('is-gated'); gated.forEach((g) => g.setAttribute('inert', '')); }
+  else { root.classList.add('is-gated'); }
   const right = box.dataset.guess!;
   const buttons = qa<HTMLButtonElement>(box, '[data-opt]');
   const out = q(box, '[data-guess-result]');
@@ -106,7 +106,7 @@ export function rng(seed: number): { next(): number; gauss(): number } {
 }
 
 /** Faz uma animação com requestAnimationFrame que para quando a aba some ou o elemento sai da tela. */
-export function animator(host: Element, step: (dt: number) => boolean): { start(): void; stop(): void; running(): boolean } {
+export function animator(host: Element, step: (dt: number) => boolean): { start(): void; stop(): void; running(): boolean; dispose():void } {
   let frame = 0, last = 0, on = false, visible = true;
   const stop = () => { on = false; cancelAnimationFrame(frame); last = 0; };
   const loop = (now: number) => {
@@ -115,7 +115,9 @@ export function animator(host: Element, step: (dt: number) => boolean): { start(
     if (!step(dt)) { stop(); return; }
     frame = requestAnimationFrame(loop);
   };
-  document.addEventListener('visibilitychange', () => document.hidden && stop());
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible) stop(); }).observe(host);
-  return { start() { if (on || !visible) return; on = true; frame = requestAnimationFrame(loop); }, stop, running: () => on };
+  const pause=()=>{const wasOn=on;stop();if(wasOn)host.dispatchEvent(new CustomEvent('cosmos:autopause'));};
+  const hidden=()=>{if(document.hidden)pause();};document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',pause);
+  let io:IntersectionObserver|null=null;
+  if ('IntersectionObserver' in window){io=new IntersectionObserver(([e])=>{visible=e.isIntersecting;if(!visible)pause();});io.observe(host);}
+  return { start() { const rect=host.getBoundingClientRect();visible=rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth&&!host.closest('[hidden]');if (on || !visible || document.hidden) return; on = true; frame = requestAnimationFrame(loop); }, stop, running: () => on,dispose(){stop();io?.disconnect();document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',pause);} };
 }

@@ -1,0 +1,29 @@
+/* Mais espaço para a experiência, leitura fora do palco e detalhes sob demanda. */
+html { scroll-padding-top: 96px; }
+.lesson-section, .obs-station, .lens-experiment, .solar-experiment, .mx { scroll-margin-top: 96px; }
+.reader-page .mx { padding: clamp(18px,3vw,30px); gap: 22px; box-shadow: none; }
+.reader-page .mx-head h3 { font: 500 clamp(25px,3vw,34px)/1.2 var(--serif); letter-spacing: -.025em; }
+.reader-page .mx-caption { font-size: 16px; line-height: 1.75; padding: 16px 18px; }
+.reader-page .mx-limit { font-size: 13px; line-height: 1.6; }
+.reader-page .mx-guess, .reader-page .mx-check { padding-block: 8px; }
+.reader-page .mx-stage { box-shadow: none; }
+.reader-page .mx-controls { gap: 14px; }
+.reader-page .lesson-section { padding-top: 44px; }
+.reader-page .lesson-section h2 { font-weight: 600; max-width: 22ch; }
+.obs-viz { border-radius: 24px; overflow: hidden; }
+.obs-tabs { gap: 8px; border: 0; background: transparent; }
+.obs-tabs button { border: 1px solid var(--line-strong); border-radius: 14px; }
+.obs-grid .obs-panel h3 { font-weight: 600; letter-spacing: -.035em; }
+.glossary-entry { padding-block: 10px; }
+.hero-actions { flex-wrap: wrap; row-gap: 18px; }
+[data-home-continue][hidden] { display: none !important; }
+.cosmos-view-options { margin-block: 4px; }
+@media(max-width:600px) {
+ .reader-page .mx { padding: 16px; gap: 18px; }
+ .reader-page .mx-caption { padding: 12px; font-size: 15px; }
+ .obs-expansion-grid { gap: 12px; }
+ .obs-expansion-grid .obs-lede, .obs-expansion-grid .obs-reading, .obs-expansion-grid .cosmos-view-options { margin: 0; }
+ .obs-expansion-grid .obs-actions { margin-top: 0; }
+ .lens-experiment h3, .solar-experiment h3 { font-size: 29px; }
+ .hero-actions .cta { width: 100%; justify-content: space-between; }
+}

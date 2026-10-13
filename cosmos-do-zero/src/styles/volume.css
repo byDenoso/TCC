@@ -1,0 +1,110 @@
+/* Palcos astronômicos delimitados; a leitura continua usando o tema da escola. */
+.expansion-stage { position: relative; width: 100%; aspect-ratio: 4 / 3; min-height: 280px; overflow: hidden; border-radius: 24px; }
+.cosmos-volume { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; touch-action: pan-y; }
+.cosmos-volume-ready { background: #070c18 !important; }
+.cosmos-volume-ready > svg { visibility: hidden; }
+.cosmos-view-tools { display: flex; gap: 8px; flex-wrap: wrap; padding: 14px 0; }
+.cosmos-view-options > summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: 13px; color: var(--ink-2); padding-inline: 14px; }
+.cosmos-object-label { position: absolute; width:max-content; max-width:calc(100% - 24px); transform: translateX(-50%); padding: 3px 9px; border-radius: 20px; color: #f6d9bd; background: #071021cc; font: 600 12px var(--body); pointer-events: none; }
+.cosmos-view-tools button, .cosmos-view-tools select { min-height: 44px; min-width:44px; padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: 500 13px var(--body); }
+.cosmos-view-tools button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+.obs-viz > figcaption { padding: 8px 0; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+.lens-experiment { padding-top: 36px; margin-top: 40px; }
+.solar-experiment { margin-top: 48px; }
+.solar-experiment h3 { font: 500 32px/1.2 var(--serif); }
+.solar-stage { margin-top: 18px; }
+.solar-stage { position:relative; overflow:hidden; background:#070c18; }
+.solar-experiment .solar-stage { height:420px; aspect-ratio:auto; }
+.solar-poster { position:absolute; height:95%; width:95%; object-fit:contain; inset:2.5%; }
+.solar-stage.cosmos-volume-ready .solar-poster,.planet-illustration.cosmos-volume-ready .planet-img,.compare-visual.cosmos-volume-ready .compare-body { visibility:hidden; }
+.solar-ruler { width:100%; min-height:108px; margin-block:20px; }
+.solar-ruler-scroll { overflow-x:auto; overscroll-behavior-x:contain; }
+.solar-ruler-scroll .solar-ruler { min-width:640px; display:block; }
+.planet-illustration.solar-stage { margin:0; border:0; min-height:450px; padding:0; }
+.planet-illustration.solar-stage .planet-ellipse { display:none; }
+.planet-illustration.solar-stage .diagram-coord,.planet-illustration.solar-stage .illustration-note { z-index:3; color:#bbc7d5; }
+.compare-visual.solar-stage { margin-top:25px; min-height:360px; }
+.solar-credits { margin-block:20px; font-size:14px; line-height:1.7; }
+@media(max-width:600px){.solar-experiment .solar-stage { height:360px; aspect-ratio:auto!important; }.planet-illustration.solar-stage { min-height:360px; }.solar-ruler { min-width:540px; }.solar-experiment { overflow-x:clip; }.compare-visual.solar-stage { min-height:300px; }}
+.solar-planets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.solar-planets button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.solar-planets button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
+.lens-experiment h3 { font-family: var(--serif); font-size: 30px; }
+.lens-controls { display: grid; gap: 16px; margin-block: 18px; }
+.lens-controls label { display: grid; grid-template-columns: 1fr auto; align-items: center; font-size: 15px; }
+.lens-controls input { grid-column: 1 / -1; width: 100%; min-height: 44px; accent-color: var(--accent); }
+.lens-controls button { justify-self: start; min-height: 44px; padding: 10px 18px; color: var(--on-accent); background: var(--accent); border: 0; border-radius: 10px; }
+.lens-dashboard { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; align-items: center; }
+.lens-image { margin: 0; display: grid; gap: 12px; }
+.lens-image canvas { max-width: 280px; }
+.lens-geometry summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; padding-block: 12px; }
+.lens-geometry { margin-top: 16px; }
+.lens-image canvas { width: 100%; border-radius: 20px; }
+.lens-image figcaption { font-size: 16px; line-height: 1.65; }
+.lens-image figcaption p { font-size: 15px; }
+@media(max-width: 600px) {
+  .lens-dashboard { grid-template-columns: 1fr; gap: 8px; }
+  .lens-image { text-align: center; }
+  .mx-stage.cosmos-volume-ready { aspect-ratio: 4/3; }
+  .lens-image { grid-template-columns: 1fr; }
+  .lens-image canvas { max-width: 240px; margin-inline: auto; }
+  .expansion-stage { aspect-ratio: 1; min-height: 0; border-radius: 18px; }
+  .cosmos-view-tools { gap: 6px; }
+  .cosmos-view-tools select { width: 100%; }
+  .obs-expansion-grid { display: flex; flex-direction: column; }
+  .obs-expansion-grid > figure, .obs-expansion-grid > .obs-panel { display: contents; }
+  .obs-expansion-grid .obs-panel h3 { order: 0; margin: 0; }
+  .obs-expansion-grid .expansion-stage { order: 1; }
+  .obs-expansion-grid .obs-slider { order: 2; margin: 0; }
+  .obs-expansion-grid [data-e-range] { order: 3; }
+  .obs-expansion-grid .obs-actions { order: 4; }
+  .obs-expansion-grid .obs-chips { order: 5; }
+  .obs-expansion-grid .obs-reading { order: 6; }
+  .obs-expansion-grid .obs-lede { order: 7; }
+  .obs-expansion-grid .cosmos-view-options { order: 8; }
+  .obs-expansion-grid > figure > figcaption { order: 9; }
+  .obs-expansion-grid .obs-plot { order: 10; }
+}
+/* Expansão piloto V2: um campo amplo, sem uma moldura para cada bloco. */
+.obs-expansion-grid { grid-template-columns: 1fr; gap: 24px; }
+.obs-expansion-grid > .obs-viz { position: relative !important; top: auto !important; border: 0; background: transparent; border-radius: 0; }
+.obs-expansion-grid .expansion-stage { aspect-ratio: auto; height: 510px; border-radius: 4px; }
+.obs-expansion-grid > .obs-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 36px; }
+.obs-expansion-grid .obs-panel h3 { font-size: 40px; font-weight: 400; margin: 0; }
+.obs-expansion-grid .obs-lede { grid-column: 1; grid-row: 2 / 5; margin: 0; }
+.obs-expansion-grid .obs-chips { grid-column: 2; grid-row: 1; margin: 0; }
+.obs-expansion-grid .obs-slider,.obs-expansion-grid [data-e-range],.obs-expansion-grid .obs-actions { grid-column: 2; margin: 0; }
+.obs-expansion-grid .obs-reading,.obs-expansion-grid .obs-plot { grid-column: 1 / -1; }
+@media(max-width:600px) {
+ .obs-expansion-grid { gap: 12px; }
+ .obs-expansion-grid > .obs-panel { display: contents; }
+ .obs-expansion-grid .expansion-stage { height: 360px; border-radius: 2px; }
+ .obs-expansion-grid .obs-panel h3 { font-size: 32px; }
+}
+.observatory .obs-expansion-grid { display: grid; grid-template-columns: 1fr; }
+.observatory .obs-expansion-grid .obs-panel h3 { font-size: 40px; font-weight: 400; }
+@media(max-width:600px) {
+ .observatory .obs-expansion-grid { display: flex; flex-direction: column; }
+ .observatory .obs-expansion-grid > .obs-viz,.observatory .obs-expansion-grid > .obs-panel { display: contents; }
+ .observatory .obs-expansion-grid .obs-panel h3 { font-size: 32px; }
+}
+.observatory .obs-expansion-grid > .obs-pilot-title { margin: 0; font-size: 40px; font-weight: 400; letter-spacing: -.035em; }
+.observatory .obs-expansion-grid .obs-panel { gap: 8px 36px; }
+.observatory .obs-expansion-grid .obs-lede { grid-row: 1 / 5; }
+.observatory .obs-expansion-grid .cosmos-view-options { grid-column: 1 / -1; }
+.observatory .obs-expansion-grid > .obs-viz > figcaption { border: 0; padding: 10px 0 0; }
+@media(max-width:600px) {
+ .observatory .obs-expansion-grid > .obs-pilot-title { order: 0; font-size: 32px; }
+}
+/* V3: o campo de luz encontra o fundo editorial com uma transição suave. */
+.observatory .obs-expansion-grid .expansion-stage { background: transparent !important; border-radius: 0; }
+.observatory .obs-expansion-grid .cosmos-volume {
+ mask-image: linear-gradient(to right,transparent,#000 7%,#000 93%,transparent),linear-gradient(to bottom,transparent,#000 7%,#000 91%,transparent);
+ mask-composite: intersect;
+}
+html[data-theme='light'] .observatory .obs-expansion-grid .cosmos-volume { mask-image: none; }
+html[data-theme='light'] .observatory .obs-expansion-grid .expansion-stage { border-radius: 16px; }
+
+.solar-ruler-hint{display:none;font-size:13px;color:var(--ink-2);}@media(max-width:600px){.solar-ruler-hint{display:block;}}
+
+.cosmos-preview{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;}

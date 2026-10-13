@@ -3,6 +3,7 @@ import { planets } from '../data';
 import { planetArt, planetGlobe } from '../lib/images';
 import { catalogFacts } from '../lib/planets';
 import { pad2 } from '../lib/format';
+import SolarCredits from './SolarCredits.astro';
 const def = planets.find((p) => p.id === 'terra')!;
 const defIndex = planets.indexOf(def);
 const maxR = Math.max(...planets.map((p) => p.radius));
@@ -19,7 +20,7 @@ const art = Object.fromEntries(planets.map((p) => [p.id, { src: planetArt[p.id].
         {planets.map((p) => <button class="planet-tab" type="button" data-planet={p.id} aria-pressed={p.id === def.id ? 'true' : 'false'}>{p.name}</button>)}
       </div>
       <div class="planet-content">
-        <div class="planet-illustration" data-planet-stage>
+        <div class="planet-illustration solar-stage" data-planet-stage>
           <span class="diagram-coord">CATÁLOGO PLANETÁRIO / <span data-planet-number>{pad2(defIndex + 1)}</span></span>
           <div class="planet-ellipse" aria-hidden="true"></div>
           <img class="planet-img" data-planet-img data-planet={def.id} src={planetArt[def.id].src} width={planetArt[def.id].width} height={planetArt[def.id].height} alt={`Ilustração artística da ${def.name}`} decoding="async" />
@@ -58,6 +59,7 @@ const art = Object.fromEntries(planets.map((p) => [p.id, { src: planetArt[p.id].
         </div>
       </div>
     </div>
+    <SolarCredits/>
     <p class="planet-caption">
       <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/" target="_blank" rel="noopener noreferrer">NASA / NSSDCA · Planetary Fact Sheet — unidades métricas <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>
       <a href="https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html" target="_blank" rel="noopener noreferrer">NASA / NSSDCA · Definições e notas da tabela planetária <span aria-hidden="true">↗</span><span class="visually-hidden"> (abre em outra aba)</span></a>

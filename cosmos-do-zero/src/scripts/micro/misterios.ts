@@ -1,3 +1,4 @@
+import {deltaMagnitude,linearFit} from '../../lib/teaching-numerics';
 import type { Scene, SceneMap } from './engine';
 import { C, W, arrow, clear, ease, el, fmt, g, lerp, rng, star, text } from './draw';
 import { vHalo, vLum, vTotal } from '../../lib/rotation';
@@ -110,8 +111,8 @@ const rotacao = (): Scene => {
   const radii = [26, 52, 80];
   const caps = [
     'Previsão contando só o que brilha: quase toda a massa visível está no centro, então as estrelas de fora deveriam girar bem mais devagar.',
-    'O que se mede: as estrelas de fora giram quase tão rápido quanto as de dentro. A curva fica quase plana.',
-    'Com um halo de massa invisível em volta, a conta bate com a medida. Chamamos essa massa de matéria escura. Conhecemos o efeito, não a partícula.'
+    'Neste exemplo sintético, as estrelas de fora giram quase tão rápido quanto as de dentro. O formato ilustra curvas de rotação observadas; estes pontos não são medições.',
+    'Com um halo de massa invisível em volta, o modelo acompanha a curva sintética. Chamamos essa massa de matéria escura. Conhecemos o efeito, não a partícula.'
   ];
   return {
     duration: 3000,
@@ -144,7 +145,7 @@ const rotacao = (): Scene => {
       text(layer, X(88), Y(vLum(88)) + 18, 'previsão (só o visível)', { class: 'mx-t small', 'text-anchor': 'end' });
       if (v >= 1) {
         for (let r = 8; r <= 88; r += 10) el('circle', { cx: X(r), cy: Y(vTotal(r) + Math.sin(r) * 1.5), r: 3.5, fill: C.accent }, layer);
-        text(layer, X(88), Y(vTotal(88)) - 10, 'medida', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
+        text(layer, X(88), Y(vTotal(88)) - 10, 'exemplo sintético', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
       }
       if (v === 2) {
         let dh = '';
@@ -158,20 +159,16 @@ const rotacao = (): Scene => {
   };
 };
 
-/** Diferença de "quão fraca parece" (magnitudes) entre um Universo acelerando e um só de matéria. */
-function deltaMag(z: number): number {
-  const dl = (om: number, ol: number) => { let s = 0; const n = 60; for (let i = 0; i < n; i++) { const zz = ((i + 0.5) / n) * z; s += 1 / Math.sqrt(om * (1 + zz) ** 3 + ol); } return (1 + z) * (s * z) / n; };
-  return 5 * Math.log10(dl(0.315, 0.685) / dl(1, 0));
-}
 const supernovas = (): Scene => {
+  const cached=new Map<number,number>();const deltaMag=(z:number)=>{if(!cached.has(z))cached.set(z,deltaMagnitude(z));return cached.get(z)!;};
   let layer: SVGGElement;
   const rnd = rng(8);
   const data = Array.from({ length: 22 }, () => { const z = 0.05 + rnd() * 1.1; const n = (rnd() + rnd() + rnd() - 1.5) * 0.18; return [z, deltaMag(z) + n, 0.12 + rnd() * 0.12] as [number, number, number]; });
   const X = (z: number) => 60 + z * 330, Y = (d: number) => 150 - d * 190;
   const caps = [
-    'Cada ponto é uma supernova, com barra de erro. O eixo vertical mostra o quanto ela parece mais fraca do que num Universo só de matéria, freando.',
-    'Se a expansão estivesse só freando, os pontos ficariam em volta desta linha. Eles ficam acima: as supernovas parecem mais fracas, mais longe do que o esperado.',
-    'O modelo com aceleração (energia escura) passa no meio dos pontos. Nenhum ponto sozinho decide; o conjunto decide.'
+    'Cada ponto sintético representa uma supernova neste exercício, com barra de erro atribuída. O eixo vertical mostra o quanto ela parece mais fraca do que num Universo só de matéria, freando.',
+    'Se a expansão estivesse só freando, os pontos ficariam em volta desta linha. Neste conjunto gerado, eles ficam acima: representam supernovas mais fracas do que essa referência.',
+    'A curva do modelo foi usada para gerar estes pontos com dispersão. Isso ensina uma comparação; não confirma o modelo contra observações.'
   ];
   return {
     duration: 1400,
@@ -213,20 +210,16 @@ const ajuste = (): Scene => {
     draw(v) {
       clear(layer);
       const n = Math.round(v), pts = all.slice(0, n);
-      const mx = pts.reduce((s, p) => s + p[0], 0) / n, my = pts.reduce((s, p) => s + p[1], 0) / n;
-      const sxx = pts.reduce((s, p) => s + (p[0] - mx) ** 2, 0), sxy = pts.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0);
-      const b = sxy / sxx, a = my - b * mx;
-      const res = pts.reduce((s, p) => s + (p[1] - a - b * p[0]) ** 2, 0) / Math.max(1, n - 2);
-      const seb = Math.sqrt(res / sxx);
+      const fit=linearFit(pts);if(!fit)return 'Escolha ao menos3 pontos com distâncias distintas.';const {a,b,slopeSE:seb}=fit;
       el('line', { x1: 50, y1: 235, x2: 460, y2: 235, stroke: C.line, 'stroke-width': 1.5 }, layer);
       el('line', { x1: 50, y1: 15, x2: 50, y2: 235, stroke: C.line, 'stroke-width': 1.5 }, layer);
       let up = '', lo = '';
-      for (let x = 0; x <= 10.2; x += 0.3) { const se = Math.sqrt(res * (1 / n + (x - mx) ** 2 / sxx)) * 2; up += `${up ? 'L' : 'M'}${X(x)} ${Y(a + b * x + se)}`; lo = `L${X(x)} ${Y(a + b * x - se)}` + lo; }
+      for (let x = 0; x <= 10.2; x += 0.3) { const se = fit.meanSE(x) * 2; up += `${up ? 'L' : 'M'}${X(x)} ${Y(a + b * x + se)}`; lo = `L${X(x)} ${Y(a + b * x - se)}` + lo; }
       el('path', { d: `${up}${lo}Z`, fill: C.accent, opacity: 0.15 }, layer);
       el('line', { x1: X(0), y1: Y(a), x2: X(10.2), y2: Y(a + b * 10.2), stroke: C.accent, 'stroke-width': 2.5 }, layer);
       for (const [x, y] of pts) el('circle', { cx: X(x), cy: Y(y), r: 4, fill: C.ink }, layer);
       text(layer, 60, 30, `inclinação estimada: ${fmt(b, 2)} ± ${fmt(seb, 2)}`, { class: 'mx-t strong' });
-      return `Com ${n} medidas, a inclinação fica entre ${fmt(b - 2 * seb, 1)} e ${fmt(b + 2 * seb, 1)} (faixa colorida). ${n < 10 ? 'Poucos pontos: a faixa é larga, cabem várias conclusões.' : n < 25 ? 'A faixa estreita: o valor fica mais confiável.' : 'Faixa estreita. Mas atenção: um erro de calibração que desloca todos os pontos juntos não some com mais dados.'}`;
+      return `Com ${n} medidas, a inclinação fica entre ${fmt(b - 2 * seb, 1)} e ${fmt(b + 2 * seb, 1)} (±2 erros padrão aproximados, sem afirmar cobertura de 95%). A faixa colorida representa a incerteza da média da reta em cada distância, não esse intervalo da inclinação. ${n < 10 ? 'Poucos pontos: a faixa é larga, cabem várias conclusões.' : n < 25 ? 'A faixa estreita: o valor fica mais confiável.' : 'Faixa estreita. Mas atenção: um erro de calibração que desloca todos os pontos juntos não some com mais dados.'}`;
     }
   };
 };

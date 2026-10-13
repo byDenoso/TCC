@@ -1,3 +1,4 @@
+import { planets } from '../../data/client';
 import type { Scene, SceneMap } from './engine';
 import { C, arrow, bar, clamp, clear, ease, el, fmt, g, lerp, rng, sphere, star, text } from './draw';
 
@@ -82,14 +83,8 @@ const gigantes = (): Scene => {
       text(layer, x - 14, y1bar + 5, '1 bar', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
       const py = top + v * h;
       el('path', { d: `M${x + w / 2} ${py} l-10 -16 h20 Z`, fill: C.accent }, layer);
-      const pressure = v < 0.13 ? lerp(0.2, 1, v / 0.13) : Math.pow(10, lerp(0, 7.5, (v - 0.13) / 0.87));
-      const temp = v < 0.13 ? lerp(-150, -110, v / 0.13) : lerp(-110, 20000, Math.pow((v - 0.13) / 0.87, 1.6));
-      const pTxt = pressure < 10 ? `${fmt(pressure, 1)} bar` : pressure < 1e6 ? `${fmt(pressure)} bar` : `${fmt(pressure / 1e6, 1)} milhões de bar`;
-      el('rect', { x: 300, y: 196, width: 172, height: 64, rx: 10, fill: C.surface, stroke: C.line }, layer);
-      text(layer, 310, 220, `pressão ≈ ${pTxt}`, { class: 'mx-t small strong' });
-      text(layer, 310, 246, `temperatura ≈ ${fmt(Math.round(temp / (temp > 1000 ? 1000 : 10)) * (temp > 1000 ? 1000 : 10))} °C`, { class: 'mx-t small strong warm' });
       return v < 0.12 ? 'Topo das nuvens de Júpiter: muito frio. Não há chão para pousar.'
-        : v < 0.15 ? 'Nível de 1 bar: a mesma pressão do ar ao nível do mar na Terra. É aqui que o catálogo mede a temperatura e a gravidade dos gigantes. Ainda é só gás.'
+        : v < 0.15 ? 'Nível de 1 bar: a mesma pressão do ar ao nível do mar na Terra. É o nível de referência usado para os valores do catálogo; a posição dele no desenho é esquemática. Ainda é só gás.'
         : v < 0.75 ? 'O gás fica cada vez mais denso e quente até virar líquido, sem nenhuma superfície no meio do caminho.'
         : 'Lá no fundo, a pressão é de milhões de vezes a da Terra. O hidrogênio conduz eletricidade como metal. O núcleo ainda é estudado (valores aproximados).';
     }
@@ -136,22 +131,32 @@ const cometa = (): Scene => {
 };
 
 /** Órbita por integração numérica simples (salto de rã), só o Sol puxando. */
-function trajectory(v: number): { pts: [number, number][]; kind: 'cai' | 'orbita' | 'escapa' | 'longe' } {
+export const ORBIT_DRAWN_CENTRAL_RADIUS=.14;
+export interface OrbitPath { pts:[number,number][]; times:number[]; kind:'cai'|'orbita'|'escapa'|'longe' }
+export function trajectory(v: number): OrbitPath {
+  if(!Number.isFinite(v)||v<0)throw new RangeError('Velocidade inválida.');
   let x = 1, y = 0, vx = 0, vy = v;
   const pts: [number, number][] = [[x, y]];
-  let ang = 0, prevA = 0;
+  const times=[0];let elapsed=0; let ang = 0, prevA = 0;
   for (let i = 0; i < 6000; i++) {
     const r = Math.hypot(x, y), dt = 0.004 * Math.max(0.2, r) ** 1.5;
     const ax = -x / r ** 3, ay = -y / r ** 3;
     vx += ax * dt / 2; vy += ay * dt / 2; x += vx * dt; y += vy * dt;
     const r2 = Math.hypot(x, y); vx += (-x / r2 ** 3) * dt / 2; vy += (-y / r2 ** 3) * dt / 2;
-    if (i % 3 === 0) pts.push([x, y]);
+    elapsed+=dt; if (i % 3 === 0) {pts.push([x, y]);times.push(elapsed);}
     const a = Math.atan2(y, x); let da = a - prevA; if (da < -Math.PI) da += 2 * Math.PI; if (da > Math.PI) da -= 2 * Math.PI; ang += da; prevA = a;
-    if (r2 < 0.14) { pts.push([x, y]); return { pts, kind: 'cai' }; }
-    if (r2 > 3.4) return { pts, kind: v * v >= 2 ? 'escapa' : 'longe' };
-    if (Math.abs(ang) >= Math.PI * 2) { pts.push(pts[0]); return { pts, kind: 'orbita' }; }
+    if (r2 < ORBIT_DRAWN_CENTRAL_RADIUS) { pts.push([x, y]);times.push(elapsed); return { pts,times, kind: 'cai' }; }
+    if (r2 > 3.4) return { pts,times, kind: v * v >= 2 ? 'escapa' : 'longe' };
+    if (Math.abs(ang) >= Math.PI * 2) { pts.push(pts[0]);times.push(elapsed); return { pts,times, kind: 'orbita' }; }
   }
-  return { pts, kind: 'orbita' };
+  return { pts,times, kind: 'orbita' };
+}
+/** Interpola por tempo acumulado, preservando aceleração na elipse. */
+export function trajectoryAt(path:OrbitPath,phase:number):{position:[number,number];index:number}{
+ const time=Math.max(0,Math.min(1,Number.isFinite(phase)?phase:0))*path.times.at(-1)!;
+ let lo=0,hi=path.times.length-1;while(hi-lo>1){const mid=(lo+hi)>>1;if(path.times[mid]<time)lo=mid;else hi=mid;}
+ const k=(time-path.times[lo])/(path.times[hi]-path.times[lo]||1),a=path.pts[lo],b=path.pts[hi];
+ return {position:[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k],index:lo};
 }
 const orbitas = (): Scene => {
   let layer: SVGGElement;
@@ -170,9 +175,9 @@ const orbitas = (): Scene => {
       text(layer, cx, cy + 30, 'Sol', { class: 'mx-t small', 'text-anchor': 'middle' });
       const pts = cache.pts.map(P);
       el('polyline', { points: pts.map((p) => p.join(',')).join(' '), fill: 'none', stroke: C.line, 'stroke-width': 2, 'stroke-dasharray': '4 4' }, layer);
-      const n = Math.max(1, Math.min(pts.length - 1, Math.floor(t * (pts.length - 1))));
-      el('polyline', { points: pts.slice(0, n + 1).map((p) => p.join(',')).join(' '), fill: 'none', stroke: C.accent, 'stroke-width': 2.5 }, layer);
-      const [bx, by] = pts[n], [px, py] = pts[Math.max(0, n - 1)];
+      const sample=trajectoryAt(cache,t);const n=sample.index;
+      el('polyline', { points: pts.slice(0, n + 1).concat([P(sample.position)]).map((p) => p.join(',')).join(' '), fill: 'none', stroke: C.accent, 'stroke-width': 2.5 }, layer);
+      const [bx, by] = P(sample.position), [px, py] = pts[Math.max(0, n - 1)];
       // vetores: velocidade (direção do movimento) e gravidade (sempre para o Sol)
       const dvx = bx - px || 0, dvy = by - py || (n === 1 ? -1 : 0), dl = Math.hypot(dvx, dvy) || 1;
       if (v > 0.01) arrow(layer, bx, by, bx + (dvx / dl) * 40 * Math.max(0.4, v), by + (dvy / dl) * 40 * Math.max(0.4, v), C.blue, 2.2);
@@ -182,8 +187,8 @@ const orbitas = (): Scene => {
       text(layer, 14, 24, 'azul: movimento · vermelho: gravidade', { class: 'mx-t small' });
       const [sx, sy] = P([1, 0]); text(layer, sx + 10, sy + 22, 'lançamento', { class: 'mx-t small' });
       const kind = cache.kind;
-      return v < 0.02 ? 'Sem velocidade lateral, o corpo só cai em linha reta até o Sol.'
-        : kind === 'cai' ? 'Devagar demais: ele cai em curva, mas a curva acerta o Sol.'
+      return v < 0.02 ? 'Sem velocidade lateral, o corpo cai até o limite central ampliado do desenho.'
+        : kind === 'cai' ? 'Neste modelo, a trajetória cruza o limite central ampliado. Isso não indica uma colisão com o Sol em uma órbita real.'
         : kind === 'orbita' && Math.abs(v - 1) < 0.04 ? 'Na velocidade certa, ele cai na direção do Sol o tempo todo e erra o Sol o tempo todo: uma órbita quase circular. Nenhum motor empurra para frente.'
         : kind === 'orbita' ? `Órbita elíptica: ${v < 1 ? 'mais lento que o de círculo, ele se aproxima do Sol, acelera e volta' : 'mais rápido que o de círculo, ele se afasta, perde velocidade e volta'}. A gravidade sempre aponta para o Sol.`
         : kind === 'longe' ? 'Rápido: a órbita fica tão alongada que sai do desenho, mas ainda volta um dia.'
@@ -194,16 +199,15 @@ const orbitas = (): Scene => {
 
 const comparar = (): Scene => {
   let layer: SVGGElement;
-  const P = [
-    { n: 'Terra', r: 6378, m: 1, d: 5.51, g: 9.8, col: '#3d7cc9' },
-    { n: 'Júpiter', r: 71492, m: 318, d: 1.33, g: 24.8, col: '#d9b27a' },
-    { n: 'Saturno', r: 60268, m: 95, d: 0.69, g: 10.4, col: '#e8cf9a' }
-  ];
+  const earth=planets.find(p=>p.id==='terra')!;
+  const density=[5.51,1.33,.69],colors=['#3d7cc9','#d9b27a','#e8cf9a'];
+  const P=['terra','jupiter','saturno'].map((id,i)=>{const p=planets.find(p=>p.id===id)!;return {n:p.name,r:p.radius,m:p.mass/earth.mass,d:density[i],g:p.gravity,col:colors[i]};});
+
   const props = [
     { k: 'r' as const, max: 75000, f: (x: number) => `${fmt(x)} km`, cap: 'Raio (no equador): Júpiter é 11 vezes maior que a Terra. Saturno, quase 10.' },
     { k: 'm' as const, max: 330, f: (x: number) => `${fmt(x)} Terras`, cap: 'Massa: Júpiter tem 318 vezes a massa da Terra; Saturno, 95.' },
     { k: 'd' as const, max: 6, f: (x: number) => `${fmt(x, 2)} g/cm³`, cap: 'Densidade: a Terra é rocha e metal, a mais densa. Saturno é menos denso que a água (1 g/cm³).' },
-    { k: 'g' as const, max: 26, f: (x: number) => `${fmt(x, 1)} m/s²`, cap: 'Gravidade (gigantes no nível de 1 bar): Saturno, com 95 vezes a massa, tem gravidade parecida com a da Terra, porque a massa está espalhada num raio enorme.' }
+    { k: 'g' as const, max: 26, f: (x: number) => `${fmt(x, 1)} m/s²`, cap: 'Gravidade equatorial efetiva, incluindo rotação (gigantes no nível de 1 bar): Saturno, com 95 vezes a massa, tem gravidade parecida com a da Terra, porque a massa está espalhada num raio enorme.' }
   ];
   return {
     duration: 900,
@@ -229,3 +233,4 @@ export const scenes: SceneMap = {
   'sistema-solar-orbitas': orbitas,
   'sistema-solar-medindo-mundos': comparar
 };
+

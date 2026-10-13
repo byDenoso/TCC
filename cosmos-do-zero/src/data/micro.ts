@@ -31,7 +31,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'O Sol fica…', options: ['no centro da Via Láctea', 'num braço da galáxia, longe do centro', 'fora de qualquer galáxia'], right: 1, why: 'O Sol está num dos braços da Via Láctea, a uns 26 mil anos-luz do centro.' },
     control: stages('Afastar a câmera', 'Terra', 'Sistema Solar', 'Via Láctea', 'Grupo Local', 'Teia cósmica'),
     alt: 'Cinco degraus de zoom: Terra, Sistema Solar, Via Láctea, Grupo Local e teia cósmica. Em cada degrau, o anterior vira um ponto minúsculo.',
-    limit: 'Os degraus não estão em escala; o salto de tamanho varia entre eles.',
+    limit: 'Os degraus não estão em escala; o salto de tamanho varia entre eles. A posição angular marcada para o Sistema Solar e as cores galácticas são ilustrativas.',
     check: { q: 'O que é maior?', options: ['A Via Láctea', 'O Grupo Local', 'O Sistema Solar'], right: 1, why: 'O Grupo Local reúne a Via Láctea, Andrômeda e dezenas de galáxias menores.' }
   },
   'galaxias-e-nebulosas-tipos': {
@@ -55,7 +55,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Uma nuvem de gás e poeira pode…', options: ['só brilhar', 'só escurecer', 'brilhar ou escurecer, conforme a luz e a posição'], right: 2, why: 'Depende de onde está a estrela e de onde está você.' },
     control: choice('Tipo de nebulosa', 'Emissão', 'Reflexão', 'Escura'),
     alt: 'Três situações: uma estrela quente faz o gás brilhar com luz própria; a poeira rebate a luz de uma estrela; uma nuvem na frente esconde as estrelas de trás.',
-    limit: 'Cores e tamanhos simplificados. Nebulosas reais misturam os três efeitos.',
+    limit: 'Densidade artística tridimensional, com cavidade; cores atribuídas, sem reconstruir uma nebulosa específica. Nebulosas reais podem misturar os três efeitos.',
     check: { q: 'Uma nuvem escura na frente de muitas estrelas aparece como…', options: ['uma mancha escura no céu estrelado', 'uma estrela muito brilhante', 'um arco-íris'], right: 0, why: 'A poeira bloqueia a luz de trás.' }
   },
   'galaxias-e-nebulosas-gas-e-estrelas': {
@@ -63,7 +63,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Quando você olha o Sol, vê ele…', options: ['exatamente agora', 'como era há uns 8 minutos', 'como era há 8 anos'], right: 1, why: 'A luz do Sol leva cerca de 8 minutos e 20 segundos para chegar.' },
     control: choice('De onde vem a luz', 'Lua', 'Sol', 'Estrela vizinha'),
     alt: 'Um pulso de luz sai da fonte e chega até você. Lua: 1,3 segundo. Sol: 8 minutos e 20 segundos. Estrela mais próxima: 4,2 anos.',
-    limit: 'O pulso anda em poucos segundos na tela; os tempos reais estão no texto. Distâncias fora de escala.',
+    limit: 'O pulso anda em poucos segundos na tela; os tempos reais estão no texto. Tamanhos e distâncias fora de escala.',
     check: { q: 'A luz de uma estrela a 100 anos-luz que chega hoje saiu há…', options: ['100 anos', '100 dias', '1 ano'], right: 0, why: 'Ano-luz é distância: 100 anos-luz = 100 anos de viagem da luz.' }
   },
   'galaxias-e-nebulosas-centros-galacticos': {
@@ -71,7 +71,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'O limite do que conseguimos ver é…', options: ['uma parede onde o Universo acaba', 'até onde a luz teve tempo de chegar até nós', 'a borda da Via Láctea'], right: 1, why: 'É um horizonte: depende de onde está quem observa.' },
     control: choice('Onde está o observador', 'Nós', 'Galáxia à direita', 'Galáxia acima'),
     alt: 'O círculo do horizonte acompanha o observador. Quando o observador muda de galáxia, o círculo muda junto; as galáxias continuam além dele.',
-    limit: 'O círculo é muito menor que o real, e o desenho é plano. Não sabemos se o Universo inteiro tem fim.',
+    limit: 'O círculo é um corte ilustrativo do horizonte, muito menor que o real; não é uma parede material. Não sabemos se o Universo inteiro tem fim.',
     check: { q: 'Um observador numa galáxia muito distante teria…', options: ['o mesmo horizonte que nós', 'o próprio horizonte, centrado nele', 'nenhum horizonte'], right: 1, why: 'Cada observador tem seu horizonte, como cada barco no mar vê até a própria linha do horizonte.' }
   },
 
@@ -80,8 +80,8 @@ export const MICRO: Record<string, MicroSpec> = {
     ask: 'Se tudo se afasta, existe um centro?',
     guess: { q: 'Quando o espaço cresce, o Sistema Solar…', options: ['cresce junto', 'fica do mesmo tamanho, preso pela gravidade', 'encolhe'], right: 1, why: 'Sistemas presos pela gravidade não acompanham a expansão.' },
     control: range('Quanto o espaço cresceu', 1, 2, 0.01, 1),
-    alt: 'Uma malha de galáxias cresce: todas se afastam umas das outras. Um sistema preso pela gravidade, no canto, continua do mesmo tamanho.',
-    limit: 'Malha plana e regular para facilitar. O Universo real é tridimensional e as galáxias também têm movimentos próprios.',
+    alt: 'O espaço entre galáxias cresce em todas as direções; galáxias e sistemas ligados pela gravidade mantêm seu tamanho físico.',
+    limit: 'Catálogo tridimensional ilustrativo; posições, cores e formas não são observações. As leituras usam separações em 3D; o esquema plano é uma projeção. As galáxias também têm movimentos próprios, omitidos aqui.',
     check: { q: 'De qualquer galáxia, um observador veria…', options: ['as outras se afastando, como nós vemos', 'tudo vindo na direção dele', 'que ele está no centro, e só ele'], right: 0, why: 'Não há centro: cada ponto vê o mesmo padrão.' }
   },
   'origem-do-universo-expansao': {
@@ -113,7 +113,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'O que veio primeiro?', options: ['O Universo ficar transparente', 'As primeiras estrelas', 'As galáxias de hoje'], right: 0, why: 'Primeiro a luz se soltou (380 mil anos); estrelas vieram dezenas a centenas de milhões de anos depois.' },
     control: range('Tempo depois do Big Bang', 0, 1, 0.01, 0),
     alt: 'Regiões um pouco mais densas crescem, juntam gás, acendem as primeiras estrelas e abrem bolhas de gás ionizado ao redor.',
-    limit: 'As datas das primeiras estrelas ainda são incertas; a faixa no eixo mostra essa incerteza.',
+    limit: 'As datas das primeiras estrelas ainda são incertas; a faixa no eixo mostra essa incerteza. O volume é uma sequência artística de densidade e ionização, sem integração gravitacional ou transporte radiativo.',
     check: { q: 'A ordem certa é…', options: ['transparência → primeiras estrelas → galáxias maiores', 'galáxias → transparência → estrelas', 'estrelas → Big Bang → transparência'], right: 0, why: 'A gravidade precisou de tempo para juntar matéria.' }
   },
   'origem-do-universo-nossa-epoca': {
@@ -153,24 +153,24 @@ export const MICRO: Record<string, MicroSpec> = {
   'misterios-do-cosmos-materia-escura': {
     ask: 'Como sabemos que há massa que não brilha?',
     guess: { q: 'Estrelas longe do centro de uma galáxia giram…', options: ['bem mais devagar, como prevê a matéria que brilha', 'quase tão rápido quanto as de dentro'], right: 1, why: 'Esse é o sinal: precisa de mais massa do que vemos.' },
-    control: stages('Comparar', 'Previsão: só o que brilha', 'O que se mede', 'Com massa invisível'),
-    alt: 'Gráfico de velocidade contra distância ao centro: a previsão cai, a medida fica quase plana. Um halo de massa invisível explica a diferença.',
-    limit: 'Curvas suavizadas. A matéria escura é inferida pela gravidade; a partícula ainda não foi identificada.',
+    control: stages('Comparar', 'Previsão: só o que brilha', 'Curva ilustrada', 'Com massa invisível'),
+    alt: 'Gráfico de velocidade contra distância ao centro: a previsão cai, a curva sintética fica quase plana. Um halo de massa invisível explica a diferença.',
+    limit: 'Curvas didáticas calculadas, sem medições de uma galáxia específica. A matéria escura é inferida pela gravidade; a partícula ainda não foi identificada.',
     check: { q: 'Já sabemos de que partícula é feita a matéria escura?', options: ['Sim', 'Não, só conhecemos o efeito gravitacional'], right: 1, why: 'É uma das grandes perguntas abertas.' }
   },
   'misterios-do-cosmos-energia-escura': {
     ask: 'Como se descobriu que a expansão acelera?',
     guess: { q: 'Supernovas distantes pareceram…', options: ['mais fracas do que um Universo freando previa', 'mais brilhantes do que o previsto', 'iguais ao previsto'], right: 0, why: 'Mais fracas = mais longe = a expansão acelerou.' },
-    control: stages('Montar o gráfico', 'Medidas', 'Modelo freando', 'Modelo acelerando'),
-    alt: 'Pontos com barras de erro comparados a dois modelos. Sozinho, um ponto não decide; juntos, ficam mais perto do modelo com aceleração.',
-    limit: 'Dados inventados no formato dos reais, para mostrar a ideia.',
+    control: stages('Montar o gráfico', 'Exemplo sintético', 'Modelo freando', 'Modelo acelerando'),
+    alt: 'Pontos sintéticos com barras de erro atribuídas comparados a dois modelos. Sozinho, um ponto não decide; juntos, ficam mais perto do modelo com aceleração.',
+    limit: 'Exemplo sintético, com barras de erro atribuídas para ensinar a comparação; estes pontos não são observações de supernovas.',
     check: { q: 'Por que uma só supernova não basta?', options: ['Cada medida tem erro; muitas juntas mostram a tendência', 'Supernovas mentem', 'Basta, sim'], right: 0, why: 'A conclusão vem do conjunto.' }
   },
   'misterios-do-cosmos-limites': {
     ask: 'O que faz uma conclusão mudar?',
     guess: { q: 'Com mais medidas independentes, com erros semelhantes, a incerteza aleatória tende a…', options: ['diminuir', 'aumentar', 'não mudar'], right: 0, why: 'A média fica mais precisa. Erros de calibração não somem só com mais medidas.' },
     control: range('Número de medidas', 3, 40, 1, 3),
-    alt: 'Pontos de medida e a reta que melhor passa por eles. Com mais pontos, a faixa de incerteza em volta da reta fica mais estreita.',
+    alt: 'Pontos sintéticos e a reta que melhor passa por eles. Com mais pontos, a faixa de incerteza em volta da reta fica mais estreita.',
     limit: 'Dados sorteados. Erros sistemáticos (de calibração) não somem só com mais dados.',
     check: { q: 'Novos dados ajustarem um valor significa que…', options: ['a ciência se refinou', 'tudo estava errado', 'qualquer opinião vale igual'], right: 0, why: 'Refinar faz parte do método; não iguala todas as opiniões.' }
   },
@@ -197,7 +197,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Onde o Sol é mais quente?', options: ['Na superfície', 'No núcleo'], right: 1, why: 'Núcleo: cerca de 15 milhões °C. Superfície: cerca de 5.500 °C.' },
     control: stages('Seguir a energia', 'Núcleo', 'Zona radiativa', 'Zona convectiva', 'Superfície'),
     alt: 'Corte do Sol: no núcleo nasce a energia; ela é rebatida muitas vezes na zona radiativa, sobe em bolhas na convectiva e sai pela superfície.',
-    limit: 'Camadas e cores ilustrativas; a luz leva milhares de anos para sair do núcleo.',
+    limit: 'Raios aproximados, cores e texturas do corte atribuídas. Granulação ampliada na fotosfera e fluxo de energia esquemático: não calculam o caminho nem o tempo de um fóton.',
     check: { q: 'A cor "amarela" do Sol nas figuras…', options: ['é atribuída; a luz do Sol é quase branca', 'mostra a temperatura do núcleo'], right: 0, why: 'Visto do espaço, o Sol é branco.' }
   },
   'vida-das-estrelas-pequenas-e-medias': {
@@ -213,7 +213,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Uma estrela massiva sempre…', options: ['vira buraco negro', 'vira estrela de nêutrons', 'pode ter mais de um destino'], right: 2, why: 'Massa, rotação, composição e companheiras mudam o fim.' },
     control: stages('Avançar', 'Sequência principal', 'Supergigante', 'Núcleo colapsa', 'Destinos possíveis'),
     alt: 'Uma estrela massiva incha, o núcleo de ferro colapsa e o caminho se divide: explosão com estrela de nêutrons, ou buraco negro, às vezes sem explosão brilhante.',
-    limit: 'Os ramos são qualitativos; não há um corte exato de massa que decida o destino.',
+    limit: 'Ramos qualitativos; a massa sozinha não decide o destino. Horizonte e disco são ilustrativos, sem cálculo da sombra relativística.',
     check: { q: 'Uma supernova brilhante é obrigatória no fim de uma estrela massiva?', options: ['Sim', 'Não: algumas podem colapsar quase sem explosão'], right: 1, why: 'Por isso o diagrama diz "pode".' }
   },
   'vida-das-estrelas-elementos': {
@@ -247,7 +247,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'Descendo em Júpiter, você encontra…', options: ['um chão de rocha logo abaixo das nuvens', 'gás cada vez mais denso, sem chão definido'], right: 1, why: 'O gás vai ficando mais denso e quente; não há superfície para pousar.' },
     control: range('Descer na atmosfera', 0, 1, 0.01, 0),
     alt: 'Uma descida em Júpiter: nuvens, o nível de referência de 1 bar, hidrogênio cada vez mais comprimido e, muito fundo, um núcleo.',
-    limit: 'Profundidades esquemáticas; o interior de Júpiter ainda é estudado.',
+    limit: 'Corte e profundidades esquemáticos, sem cálculo da pressão. A coloração indica compressão; não são superfícies sólidas. O núcleo pode ser difuso e continua em estudo.',
     check: { q: 'A temperatura de Júpiter no catálogo é medida…', options: ['no chão', 'no nível de 1 bar da atmosfera'], right: 1, why: 'É um nível de pressão escolhido como referência.' }
   },
   'sistema-solar-pequenos-corpos': {
@@ -262,8 +262,8 @@ export const MICRO: Record<string, MicroSpec> = {
     ask: 'Por que um planeta não cai no Sol?',
     guess: { q: 'Um planeta não cai no Sol porque…', options: ['um empurrão contínuo o leva para frente', 'ele se move de lado rápido o bastante: cai e erra o Sol o tempo todo', 'não existe gravidade no espaço'], right: 1, why: 'Órbita é queda contínua com velocidade lateral.' },
     control: range('Velocidade lateral do lançamento', 0, 1.6, 0.01, 0.5),
-    alt: 'Um corpo lançado de lado: devagar, cai no Sol; com a velocidade certa, dá voltas; rápido demais, escapa. A seta da gravidade sempre aponta para o Sol.',
-    limit: 'Sem atrito e só com o Sol puxando. Escala e velocidades ilustrativas.',
+    alt: 'Um corpo lançado de lado: devagar, atinge o limite central ampliado; com a velocidade certa, dá voltas; rápido demais, escapa. A seta da gravidade sempre aponta para o Sol.',
+    limit: 'Modelo de dois corpos normalizado: GM=1 e distância inicial=1, sem atrito. O limite central tem raio ilustrativo 0,14; não representa o raio físico do Sol em uma órbita de 1 UA.',
     check: { q: 'Se a Terra parasse de se mover de lado, ela…', options: ['cairia em direção ao Sol', 'ficaria parada no lugar', 'sairia voando'], right: 0, why: 'Sem velocidade lateral, só sobra a queda.' }
   },
   'sistema-solar-medindo-mundos': {
@@ -313,7 +313,7 @@ export const MICRO: Record<string, MicroSpec> = {
     guess: { q: 'O campo magnético da Terra…', options: ['é a mesma coisa que a atmosfera', 'é outra coisa: desvia partículas do Sol'], right: 1, why: 'Ele nasce do ferro líquido em movimento no núcleo externo.' },
     control: choice('Cenário', 'Com campo', 'Sem campo'),
     alt: 'Partículas do vento solar chegam à Terra. Com campo magnético, são desviadas e algumas descem nos polos (auroras). Sem campo, atingem a atmosfera direto.',
-    limit: 'Linhas de campo simplificadas; perder atmosfera depende também de gravidade e temperatura.',
+    limit: 'Dipolo deformado, trajetórias e auroras ilustrativos, sem cálculo de plasma ou MHD. Linhas representam o campo, não uma parede; perder atmosfera depende também de gravidade e temperatura.',
     check: { q: 'Ter campo magnético garante vida?', options: ['Sim', 'Não: ajuda, mas não basta'], right: 1, why: 'Muitos fatores juntos tornam um planeta habitável.' }
   },
   'terra-e-atmosfera-habitabilidade': {
@@ -325,3 +325,5 @@ export const MICRO: Record<string, MicroSpec> = {
     check: { q: 'Encontrar água num planeta prova que há vida?', options: ['Sim', 'Não'], right: 1, why: 'Água é condição importante, não prova.' }
   }
 };
+
+

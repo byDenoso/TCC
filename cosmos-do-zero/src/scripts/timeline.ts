@@ -22,7 +22,7 @@ export function initTimeline(): void {
     const src = buttons[selected].dataset.renderSrc!;
     image.srcset = `${src.replace(/\.webp$/, '-small.webp')} 600w, ${src} 1200w`;
     image.src = src;
-    image.alt = `Representação artística para ${era.title}; sem escala física.`;
+    image.alt = buttons[selected].dataset.renderAlt!;
     const pos = `${pad2(selected + 1)} / ${pad2(eras.length)}`;
     setText($('[data-era-number]', root), pos); setText($('[data-era-position]', root), pos);
     setText($('[data-era-evidence]', root), era.evidence); setText($('[data-era-time]', root), era.time);

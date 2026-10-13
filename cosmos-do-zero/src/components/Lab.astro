@@ -1,5 +1,6 @@
 ---
 import { planets } from '../data';
+import SolarCredits from './SolarCredits.astro';
 import { planetGlobe } from '../lib/images';
 import { chapterUrl, u } from '../lib/url';
 import { compareInsight, compareRows, comparison } from '../lib/planets';
@@ -39,7 +40,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         </label>
         <button type="button" data-compare-swap aria-label="Trocar os planetas de lado">Trocar <span aria-hidden="true">⇄</span></button>
       </div>
-      <div class="compare-visual" role="img" aria-label={`${A.name} e ${B.name} em escala de raio equatorial. ${insight}`} data-compare-visual>
+      <div class="compare-visual solar-stage" role="img" aria-label={`${A.name} e ${B.name} em escala de raio equatorial. ${insight}`} data-compare-visual>
         {[A, B].map((p, i) => (
           <div class="compare-body">
             <div class="scale-space">
@@ -49,6 +50,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
           </div>
         ))}
       </div>
+      <SolarCredits/>
       <p class="compare-insight" role="status" data-compare-insight>{insight}</p>
       <div class="table-scroll">
         <table class="comparison-table">

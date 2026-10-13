@@ -1,83 +1,45 @@
 # Cosmos do Zero
 
-Portal educativo de cosmologia em pt-BR para quem começa do zero. Três jornadas principais — nosso lugar no Universo, sua evolução e as evidências — com três capítulos complementares de astronomia. Inclui exploração de escalas, expansão e luz, linha do tempo, planetas, evolução estelar, quiz, glossário e progresso local.
+Escola estática de cosmologia em português: três jornadas principais e três aulas complementares, Laboratório, Dicionário, Fontes e404. Astro 7, TypeScript eThree.js. Conteúdo e cálculos executam no navegador; não há banco de dados ou serviço pago. Mapas, fontes e modelos são arquivos do próprio site.
 
-**Estático e local:** todo o conteúdo vive em `src/data/*.json`; não há servidor, banco de dados nem chamadas de rede em tempo de execução (só links externos para fontes). Ver `HANDOFF_BACKEND.md`.
+## Executar
 
-## Stack
+Node >= 22.12; implementação/QA em Node 24.19.0. Instale com `npm ci`, execute `npm run dev` ou gere `npm run build`. A saída estática é `dist/`; `npm run serve` oferece o servidor local. Para homologação privada use `SITE_PUBLIC=false`, `SITE_BASE=/` e a URL privada em `SITE_URL`.
 
-Astro 7 (saída estática) · TypeScript estrito · Vitest · Playwright · fontes locais (Inter Tight, Inter, Fraunces — subconjunto latin). Node ≥ 22.12; implementação executada com Node 24.19.0. Publicação preparada para GitHub Pages, com Node 24 no GitHub Actions.
+Links, modelos e posters passam por `u()` para funcionar na raiz e em `/TCC/cosmos-do-zero/`. Os dois destinos foram validados somente em builds locais; essa revisão não publicou produção nem alterou o domínio.
 
-## Comandos
+## Experiências
 
-```bash
-npm ci
-npm run dev          # desenvolvimento em http://localhost:4321
-npm run build        # gera dist/ (11 páginas) + relatório de tamanho
-npm run preview      # serve dist/ via Astro      (alternativa: npm run serve)
-npm run check        # astro check (tipos)
-npm test             # 115 testes unitários (lógica em src/lib)
-npm run test:http    # servidor estático: caminhos, métodos, MIME e erros
-npm run test:e2e     # Playwright contra http://localhost:4321 (suba o preview antes)
-npm run test:browsers # fluxo principal em Firefox e WebKit
-npm run test:renders # carregamento e troca das imagens renderizadas em Chrome
-npm run test:graphics # shaders WebGL em 390/1440 px, pausa, retomada e perda de contexto
-SHOTS=1 npm run test:e2e   # idem, salvando capturas em docs/screenshots
-```
+As 36 subseções preservam IDs, âncoras, quizzes e retomada:20 palcos 3D com alternativaSVG,15 microexperiências 2D e1 CmbJourney 2D. Gráficos de composição, Hubble, espectros, rotação, supernovas, ajuste e atmosfera permanecem2D onde favorecem a comparação.
 
-Para publicar em subcaminho, defina `base` em `astro.config.mjs`; todos os links internos passam por `u()` (`src/lib/url.ts`).
+Um runtime compartilhado controla montagem, estado, pausa, câmera, resize, qualidade e descarte. Só um contexto WebGL fica ativo por documento. Assets são carregados perto do palco/na seleção. Ao sair da tela, o desenho para; controles abertos ou focados continuam utilizáveis. Perda de contexto, falha de asset ou falta de WebGL mantém a experiência funcional em 2D/poster. A câmera requer ação explícita; toque comum preserva a rolagem. Botões/teclado permitem girar, aproximar e restaurar visão.
 
-Os E2E precisam de um navegador Playwright instalado. Para usar um Chrome existente, defina `CHROMIUM` com o caminho do executável; alternativamente, instale o Chromium do Playwright com `npx playwright install chromium`. `test:renders` usa o Chromium instalado pelo Playwright ou o executável definido em `CHROMIUM`. `test:browsers` requer as versões Firefox/WebKit do Playwright; o resultado registra separadamente cada navegador.
+Qualidade ajustada à largura/DPR: mapas galácticos 1536 no desktop e 768 no mobile; modo Econômico 512. Os mundos selecionados usam mapas até 2048/1024/512 e restauram a fonte original após trocas. A preferência por palco é preservada ao remontar. Essas resoluções não são uma promessa de FPS em qualquer dispositivo.
 
-## Estrutura
+## Materiais e proveniência
 
-```
-src/
-  data/        conteúdo (JSON) + index.ts (gateway tipado) + client.ts (subconjunto leve p/ o navegador)
-  types.ts     tipos e IDs canônicos (CHAPTER_IDS, PLANET_IDS)
-  lib/         lógica pura e testada: format, planets, stars, quiz, glossary, progress, url-state, url, images
-  components/  seções da home (ChapterList, Timeline, PlanetCatalog, Lab, Quiz*, Glossary, Sources) + Header/Footer/Hero
-  pages/       index, capitulos/[id], 404
-  scripts/     ilhas de interatividade (uma por seção) ligadas por atributos data-*; main.ts carrega somente as ilhas presentes em cada página
-  styles/      global.css (tokens, hero, rodapé) · home.css · reader.css · fonts.css
-  assets/      planetas (render procedural) e fotos oficiais reencodadas
-public/renders/ imagens conceituais prontas: WEBP responsivo e PNG transparente
-scripts/       render_planets.py (gera as ilustrações), extract_legacy.py (extração única do HTML legado), postbuild, serve-dist
-tests/         unit/lib.test.ts · e2e.mjs
-```
+Terra: composição MODIS/Blue Marble de julho2004. Lua: mosaico LROC 2025, com tratamento de cor declarado pela fonte, e relevo LOLA. Júpiter: Hubble/OPAL 2015. Marte: mosaico Viking/USGS. Mercúrio: MESSENGER em cores realçadas. Mapas de Saturno/Netuno da coleção NASA são ilustrativos; Vênus/Urano usam authoring original de nuvens. Geometria, iluminação, espessura de atmosfera, anéis e relevos visuais são aproximações explícitas.
 
-## Princípios
+As seis morfologias galácticas são assets originais com emissão/poeira/estrelas sintetizadas; não correspondem a mapas observacionais de galáxias específicas. A nebulosa combina densidade original e detalhe Hubble/Orion creditado; a profundidade e as cores são artísticas. Estrelas usam granulação original. BH ilustra horizonte/disco, sem calcular sombra ou ray tracing relativístico. Lente calcula imagem 2D pelo modelo de lente fina, com geometria 3D coerente e limites declarados.
 
-- **Melhoria progressiva:** o HTML já traz o estado inicial (comparação Terra × Júpiter, percurso estelar de 1 M☉, 1ª pergunta do quiz, lista do glossário). O JS liga os controles.
-- **Estado em URL:** `?marco=`, `?planeta=`, `?a=&b=`, `?massa=`, `?assunto=`, `?q=&jornada=`, `?nivel=entender|profundo`.
-- **Progresso:** `localStorage` (`cosmos-v3-progress`, preservada do legado) com fallback em memória se o armazenamento estiver bloqueado.
-- **Rotulagem de imagens:** fotografia · observação em cores compostas · ilustração conceitual/artística, sempre com legenda e crédito.
-- **Movimento reduzido:** `prefers-reduced-motion` desliga animações contínuas.
+Posters atuais derivam das cenas/mapas creditados: plasma/núcleos sem estrelas e mapaCMB sintético identificado. Imagens oficiais da escola mantêm seus créditos. Recursos antigos e versões reprovadas permanecem como histórico de autoria no código-fonte; o pós-build exclui mapas antigos ePNGeditáveis do artefato servido.
 
-Notas científicas e verificação dos dados: `SCIENCE_NOTES.md`. Decisões, preparação de publicação e limitações: `docs/IMPLEMENTACAO.md`. Resultados da versão consolidada: `docs/VALIDACAO.md`. Prompts e origem dos renders: `docs/render-assets.json`.
+Fontes/creditos aparecem junto às experiências e em `/fontes/`. Manifests: `assets/source/manifest.json`, `assets/source/solar-materials/manifest.json`, `public/models/galaxies-v4/manifest.json`, `public/models/stellar/manifest.json`, `public/posters/manifest.json`. Não há licença CC0 genérica para recursos NASA/terceiros.
 
-## Imagens renderizadas
+## Fonte editável e reprodução
 
-Eclipse, escalas cósmicas, evidências, linha do tempo e estrela usam imagens raster geradas previamente. A teia cósmica e a Máquina do tempo também usam cenas Three.js/WebGL quando disponíveis. Esses módulos carregam sob demanda e pausam fora da tela; desenhos SVG preservam a explicação quando WebGL não está disponível ou há preferência por movimento reduzido. A formação dos átomos e a viagem da CMB usam Canvas 2D.
+`assets/source/mundos.blend` contém o authoring solar. `assets/source/build_worlds.py` reproduz o GLB e os portraits com Blender 4.5.9 LTS. Os scripts `prepare_solar_materials.py`, `build_galaxies_v4.py`, `build_stellar_materials.py` e `build_posters.py` documentam os processamentos; originais/PNG/.npy ficam junto às fontes. Consulte as dependências no cabeçalho de cada script. Nenhum poster estático substitui a câmera interativa.
 
-Os dez renders foram gerados com a ferramenta integrada `image_gen`, em resoluções responsivas de 1200×800 e 600×400. A galáxia da malha usa PNG de 192×128 com transparência. As legendas distinguem arte conceitual de observações oficiais. A imagem de luz antiga não é um mapa medido da CMB; o halo azul de matéria escura é uma convenção visual.
+## Verificação
 
-## Publicação em domínio próprio e fallback
+`npm run check`, `npm test`, `npm run test:http`, `npm run test:e2e`, `npm run test:renders`, `npm run test:graphics`, `npm run test:browsers`. `test:pages` valida a saída local com variáveis dos dois destinos autorizados; não envia arquivos para eles.
 
-Domínio final: https://cosmos.denerpereira.com.br/ (`SITE_BASE=/`).
-Fallback: https://bydenoso.github.io/TCC/cosmos-do-zero/ (`SITE_BASE=/TCC/cosmos-do-zero`).
-Apenas a branch `cosmos-do-zero` de `byDenoso/TCC` recebe o projeto.
-Push executa testes sem publicar. O workflow manual separa build e publicação.
-Leia `docs/PUBLICACAO_PAGES.md` para acesso, migração e rollback; o domínio
-não foi configurado por esta preparação. Resultados desta execução ficam no
-relatório anexo ao pacote, não nas validações históricas da versão original.
+Testes dedicados incluem60/120 Hz da expansão, navegação/progresso/storage bloqueado, BFCache real, perda de contexto/falha de asset, pausa exata, seleção rápida, remount de qualidade,20 trocas e medição de memória. Registros e capturas estão no pacote de homologação; resultados históricos de outras revisões não são resultados desta execução.
 
-## Refinamento dos renders
+Ilustrações e pontos gerados são TOY_MODEL. Testes numéricos verificam implementação e aproximações; não confirmam modelos contra dados.390/360 são emulação de viewport, sem teste em celular físico. Bytes de texturas/buffers submetidos não são VRAM física. A máquina é compartilhada e sua atividade comum não foi controlada.
 
-A direção visual usa [NASA Eyes](https://science.nasa.gov/eyes/) e o [acervo do ESO](https://www.eso.org/public/images/) como referências de profundidade, contraste e luz, preservando a identidade do Cosmos. Os desenhos continuam ilustrativos: nenhum novo shader representa uma medição do céu.
+## Persistência e reversão
 
-A teia usa 24 mil partículas no celular e 48 mil em telas maiores, com núcleos e halos gaussianos, perspectiva e atenuação por profundidade. A Máquina do tempo usa galáxias elípticas e uma fita de luz com bordas suaves (480/720 segmentos). Ambos usam ACES e saída sRGB; os movimentos obedecem à pausa, à visibilidade e à preferência de movimento reduzido. Perda de contexto devolve a cena à alternativa SVG.
+Preservados `cosmos-v3-progress`, `cosmos-v5-selos`, `cosmos-v6-praticado`, `cosmos-v6-onde`, `cosmos-quiz:${pathname}:${chapter}` e `cosmos-quiz-review`. Reiniciar experimento/restaurar câmera não apaga conquistas. A origem privada mantém progresso separado da produção; QA usa fixtures artificiais.
 
-Estrelas e mundos esquemáticos recebem volumes e halos em gradientes SVG. A CMB usa partículas Canvas em cache e um relógio de animação que congela junto com a experiência. As transições ficam mais contidas; a cor do mapa de temperatura não muda por efeitos decorativos.
-
-Os cartões da Máquina do tempo acompanham a idade do painel, e o fator de escala é descrito como escala das distâncias. A revisão de uma pergunta oferece retorno explícito à tentativa, com resposta, posição e foco preservados. A pipeline verifica esses fluxos no celular e no desktop antes de publicar e novamente no domínio oficial.
+Base de reversão: commit67a467f242fae92a638ec01884ef8ee6c81c3dcf da branch cosmos-do-zero. Homologação ocorre em branch/ambiente separados; nenhuma reversão exige apagar dados do aluno. Para reverter a prévia, publique uma versão privada previamente registrada ou reconstrua essa base em outro checkout. A produção exige autorização futura específica do Dener.

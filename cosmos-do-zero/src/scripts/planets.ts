@@ -41,6 +41,7 @@ export function initPlanets(): void {
     setText($('[data-planet-composition]', root), p.composition); setText($('[data-planet-atmosphere]', root), p.atmosphere);
     setText($('[data-planet-temperature-note]', root), p.temperatureNote); setText($('[data-planet-fact]', root), p.fact);
     if (o.url !== false) setParams({ planeta: id === 'terra' ? null : id });
+    root.dispatchEvent(new CustomEvent('cosmos:worldselection'));
   };
   tabs.forEach((b, i) => {
     b.addEventListener('click', () => { preload(); render(b.dataset.planet as PlanetId); });
@@ -57,4 +58,5 @@ export function initPlanets(): void {
   if (fromUrl && planets.some((p) => p.id === fromUrl)) render(fromUrl as PlanetId, { url: false });
   // Deep link vindo de outras partes da página (ex.: ?planeta=saturno#planetas)
   window.addEventListener('popstate', () => { const q = getParam('planeta'); render((q && planets.some((p) => p.id === q) ? q : 'terra') as PlanetId, { url: false }); });
+  void import('./visual/world-view').then(m=>m.initCatalogWorld(root,stage,()=>[img.dataset.planet??'terra']));
 }

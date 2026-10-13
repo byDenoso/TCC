@@ -16,6 +16,7 @@ export interface Scene {
   animate?: 'sweep' | 'time';
   /** Sincroniza movimentos auxiliares (como a câmera 3D) com o transporte da cena. */
   setPlaying?(playing: boolean): void;
+  dispose?(): void;
 }
 export type SceneMap = Record<string, () => Scene>;
 
@@ -37,8 +38,9 @@ function markPracticed(id: string): void {
   try { localStorage.setItem(DONE_KEY, JSON.stringify([...s])); } catch { /* sem armazenamento */ }
 }
 
-interface Runner { stop(): void }
+interface Runner { stop(): void; dispose(): void }
 let running: Runner | null = null;
+const mounted = new Set<Runner>();
 const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
 
 export function initMicro(): void {
@@ -58,6 +60,10 @@ export function initMicro(): void {
   }, { rootMargin: '500px 0px' });
   roots.forEach((r) => io.observe(r));
   document.addEventListener('visibilitychange', () => { if (document.hidden) running?.stop(); });
+  window.addEventListener('pagehide', (event) => {
+    if (event.persisted) { mounted.forEach((r) => r.stop()); return; }
+    mounted.forEach((r) => r.dispose()); mounted.clear(); io.disconnect();
+  });
 }
 
 /** Marca no índice do capítulo as seções cuja verificação já foi acertada. */
@@ -90,10 +96,32 @@ function setup(root: HTMLElement, scene: Scene): void {
 
   let v = initial, t = 1, playing = false, frame = 0, last = 0, interacted = false, visible = true;
   scene.init(svg);
+  let volume: import('../visual/runtime').MountedScene | null = null;
+  let visualStage = svg.parentElement!;
+  let alive = true;
+  import('../visual/exhibits').then(async ({ visualCatalog }) => {
+    const spec = visualCatalog[id]; if (!spec || !alive) return;
+    if(spec.legend&&!root.querySelector('[data-visual-legend]')){const note=document.createElement('p');note.dataset.visualLegend='true';note.className='mx-caption';note.textContent=spec.legend;root.querySelector('.mx-caption')!.before(note);}
+    if (spec.assets) await (await import('../visual/assets')).prepareWorlds();
+    if(spec.galaxies){const {prepareEmissionGalaxies,prepareStarsOnly,emissionSize}=await import('../visual/galaxy-emission');const size=emissionSize(visualStage.clientWidth,visualStage.dataset.cosmosQuality==='low'?'low':'auto');await Promise.all([prepareEmissionGalaxies(size),...(spec.galaxyStars?[prepareStarsOnly(size)]:[])]);visualStage.dataset.galaxySeedSize=String(size);}
+    if(spec.stellar)await(await import('../visual/stellar-materials')).prepareStellarMaterials(spec.stellar);
+    if (!alive) return;
+    if (spec.preserveSvg) {
+      const preparedStage = visualStage;
+      visualStage = document.createElement('div'); visualStage.className = 'mx-stage mx-volume-stage';
+      if(preparedStage.dataset.galaxySeedSize)visualStage.dataset.galaxySeedSize=preparedStage.dataset.galaxySeedSize;
+      if(preparedStage.dataset.cosmosQuality)visualStage.dataset.cosmosQuality=preparedStage.dataset.cosmosQuality;
+      svg.parentElement!.before(visualStage);
+      const useFlat=()=>{visualStage.hidden=true;visualStage.style.display='none';};visualStage.addEventListener('cosmos:contextlost',useFlat);visualStage.addEventListener('cosmos:unavailable',useFlat);
+    }
+    const { observeScene } = await import('../visual/runtime');
+    volume = observeScene(visualStage, ()=>spec.make(visualStage)); volume.state({ value:v, phase:t });
+  }).catch(() => { root.dataset.visualFallback='true'; });
 
   let liveTimer = 0;
   const render = (announce = true) => {
     const text = scene.draw(v, t);
+    volume?.state({ value:v, phase:t });
     caption.textContent = text;
     if (range) { range.value = String(v); const val = scene.value?.(v) ?? String(v); if (out) out.textContent = val; range.setAttribute('aria-valuetext', val); }
     opts.forEach((b, i) => b.setAttribute('aria-pressed', String(i === Math.round(v))));
@@ -108,7 +136,10 @@ function setup(root: HTMLElement, scene: Scene): void {
     scene.setPlaying?.(on);
   };
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(); };
-  const runner: Runner = { stop };
+  let visibleObserver: IntersectionObserver | null = null;
+  const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } };
+  const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); visibleObserver?.disconnect(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
+  mounted.add(runner);
 
   const touched = () => {
     if (interacted) return;
@@ -160,8 +191,8 @@ function setup(root: HTMLElement, scene: Scene): void {
     if (kind === 'choice' && !reducedQuery.matches) { t = 0; running = runner; last = 0; setPlaying(true); frame = requestAnimationFrame(tick); render(false); }
     else { t = 1; render(); }
   }));
-  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible) stop(); }, { threshold: 0.15 }).observe(svg);
-  reducedQuery.addEventListener('change', () => { if (reducedQuery.matches) { stop(); t = 1; render(); } });
+  if ('IntersectionObserver' in window) { visibleObserver = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible) stop(); }, { threshold: 0.05 }); visibleObserver.observe(root.querySelector('.mx-lab')!); }
+  reducedQuery.addEventListener('change', reducedChange);
 
   // ── palpite ──
   const gBox = root.querySelector<HTMLElement>('[data-mx-guess-box]')!;

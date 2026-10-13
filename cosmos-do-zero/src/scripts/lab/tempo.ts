@@ -64,8 +64,8 @@ export function initTempo(root: HTMLElement): void {
   // sob o trecho percorrido, numa linha própria para não encostar em Início/Hoje
   const travelLabel = svg('text', { y: 104, 'text-anchor': 'middle', class: 'obs-cap warm' }, svgEl, '');
 
-  // duas janelas: o mesmo pedaço de espaço quando a luz saiu e hoje. A grade é o próprio espaço;
-  // a onda acompanha a grade. Na tela o crescimento é comprimido (até ×6); o valor real aparece no texto.
+  // duas janelas: o mesmo pedaço de espaço quando a luz saiu e hoje. os marcadores indicam separações de referência;
+  // a onda acompanha a expansão dessas separações. Na tela o crescimento é comprimido (até ×6); o valor real aparece no texto.
   const winY = 168, winW = 278, winH = 168, winL = 30, winR = 332;
   const uid = Math.random().toString(36).slice(2, 7);
   const defs = svg('defs', {}, svgEl);
@@ -89,10 +89,6 @@ export function initTempo(root: HTMLElement): void {
   const drawWindow = (gEl: SVGGElement, x0: number, cell: number, lam: number, color: string, dashed: boolean): void => {
     clear(gEl);
     const cx = x0 + winW / 2, cy = winY + winH / 2;
-    let d = '';
-    for (let x = cx - Math.ceil(winW / 2 / cell) * cell; x <= x0 + winW; x += cell) d += `M${x.toFixed(1)} ${winY}V${winY + winH}`;
-    for (let y = cy - Math.ceil(winH / 2 / cell) * cell; y <= winY + winH; y += cell) d += `M${x0} ${y.toFixed(1)}H${x0 + winW}`;
-    svg('path', { d, class: 'obs-grid-line' }, gEl);
     for (const [i, j] of nodes) svg('circle', { cx: cx + i * cell, cy: cy + j * cell, r: 3.2, class: 'obs-gal' }, gEl);
     let w = '';
     for (let x = x0; x <= x0 + winW; x += 1.5) w += `${w ? 'L' : 'M'}${x.toFixed(1)} ${(cy - 18 * Math.sin(((x - x0) / lam) * Math.PI * 2)).toFixed(1)}`;
@@ -107,7 +103,7 @@ export function initTempo(root: HTMLElement): void {
   const use2d = () => { if (host3d) host3d.hidden = true; if (note3d) note3d.hidden = true; winsG.removeAttribute('display'); svgEl.setAttribute('viewBox', '0 0 640 420'); };
   if (host3d && !reduced()) {
     import('./tempo3d').then((m) => m.mountTempo3D(host3d, reduced)).then((v) => {
-      if (!v) return;
+      if (!v) {use2d();return;}
       view3d = v; host3d.hidden = false; if (note3d) note3d.hidden = false;
       winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 134');
       host3d.addEventListener('obs3d:lost', () => { view3d?.dispose(); view3d = null; use2d(); }, { once: true });
@@ -160,7 +156,7 @@ export function initTempo(root: HTMLElement): void {
     capL.textContent = 'luz vermelha · 656 nm';
     capR.textContent = z < 0.005 ? 'luz vermelha · 656 nm' : `chega com ${lam < 1e3 ? `${Math.round(lam)} nm` : lam < 1e6 ? `${fmt(lam / 1e3, lam < 1e4 ? 1 : 0)} µm` : `${fmt(lam / 1e6, 1)} mm`}`;
     capR2.textContent = z < 0.005 ? '' : visibleNow ? 'ainda visível, um pouco mais avermelhada' : `${bandShort(lam)} · invisível aos olhos`;
-    note.textContent = z < 0.005 ? 'Luz de agora: nada cresceu no caminho.' : `A grade é o próprio espaço. Distâncias e comprimento de onda cresceram ×${fmtAuto(1 + z)} (na tela, ×${fmt(grow, 1)}).`;
+    note.textContent = z < 0.005 ? 'Luz de agora: nada cresceu no caminho.' : `As separações entre pontos de referência e o comprimento de onda cresceram ×${fmtAuto(1 + z)} (na tela, ×${fmt(grow, 1)}).`;
     if (view3d) { view3d.set(z, lam); if (note3d) note3d.textContent = z < 0.005 ? 'Luz de agora: escolha um ponto de parada para ver a luz viajar enquanto o espaço cresce.' : `${capR.textContent}${capR2.textContent ? ' · ' + capR2.textContent : ''}. ${note.textContent}`; }
 
     if (z >= 1000) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'luz-antiga' } }));

@@ -6,7 +6,7 @@ interface Props { experience: 'scale' | 'expansion' | 'evidence'; }
 const { experience } = Astro.props;
 const scales = [
   { name: 'Terra', unit: '12.742 km de diâmetro médio', title: 'Nossa casa tem endereço.', body: 'A Terra é um planeta em órbita do Sol. Seu diâmetro é pequeno diante das distâncias que separam as estrelas.', light: 'A luz da Lua leva cerca de 1,3 segundo para chegar aqui.' },
-  { name: 'Sistema Solar', unit: '1 UA ≈ 150 milhões de km', title: 'O Sol é a nossa estrela.', body: 'Uma unidade astronômica (UA) é aproximadamente a distância média entre a Terra e o Sol. O Sistema Solar inclui planetas e regiões muito além de Netuno.', light: 'A luz do Sol leva cerca de 8 minutos e 20 segundos para chegar à Terra.' },
+  { name: 'Sistema Solar', unit: '1 UA ≈ 150 milhões de km', title: 'O Sol é a nossa estrela.', body: 'Uma unidade astronômica (UA) é aproximadamente o semieixo maior da órbita da Terra. O Sistema Solar inclui planetas e regiões muito além de Netuno.', light: 'A luz do Sol leva cerca de 8 minutos e 20 segundos para chegar à Terra.' },
   { name: 'Via Láctea', unit: 'Disco estelar: cerca de 100 mil anos-luz', title: 'Vivemos dentro de uma galáxia.', body: 'O Sol é uma entre centenas de bilhões de estrelas da Via Láctea. Um ano-luz mede distância: o caminho que a luz percorre em um ano.', light: 'A luz de uma estrela a 100 anos-luz mostra como ela era há 100 anos.' },
   { name: 'Outras galáxias', unit: 'Andrômeda: cerca de 2,5 milhões de anos-luz', title: 'Nossa galáxia tem vizinhas.', body: 'A Via Láctea e Andrômeda pertencem ao Grupo Local. Galáxias podem formar grupos e aglomerados unidos pela gravidade.', light: 'Vemos Andrômeda como era há cerca de 2,5 milhões de anos.' },
   { name: 'Teia cósmica', unit: 'Estruturas com milhões de anos-luz', title: 'A matéria forma uma grande rede.', body: 'Em escalas maiores, galáxias se distribuem em filamentos e aglomerados, separados por vazios. Esta representação artística ilustra essa organização.', light: 'Em distâncias cosmológicas, a expansão também participa da relação entre distância e tempo de viagem da luz.' }
@@ -17,7 +17,7 @@ const evidence = [
   { name: 'Matéria escura', key: 'matter', observation: 'Movimentos de estrelas e galáxias, lentes gravitacionais e padrões do fundo cósmico indicam gravidade além da matéria luminosa.', explanation: 'O modelo cosmológico usa matéria que exerce gravidade e interage pouco com a luz para reunir essas evidências.', uncertainty: 'A identidade microscópica dessa matéria ainda é desconhecida. Não houve identificação confirmada de sua partícula.' },
   { name: 'Expansão acelerada', key: 'acceleration', observation: 'Distâncias de supernovas do tipo Ia, combinadas com outras observações, sustentam uma expansão acelerada recente.', explanation: 'A constante cosmológica é a descrição mais simples da energia escura no modelo padrão.', uncertainty: 'Sua natureza física permanece aberta. Estudar possíveis variações exige combinar dados, erros e hipóteses do modelo.' }
 ];
-const evidenceRenders = ['galaxies', 'ancient-light', 'dark-matter', 'cosmic-web'];
+const evidenceRenders = ['galaxies', 'cmb', 'galaxies', 'cosmic-web'];
 const grid = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 - 2) * 58, y: (Math.floor(i / 5) - 2) * 48, id: i }));
 ---
 <section class="cosmos-scene page-width" id="exploracao" data-scene={experience} aria-labelledby="scene-title">
@@ -25,7 +25,7 @@ const grid = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 - 2) * 58, y: (Ma
   {experience === 'scale' && <>
     <div class="scene-controls" role="group" aria-label="Escolher escala">{scales.map((s, i) => <button type="button" data-scale-step={i} aria-pressed={i === 0 ? 'true' : 'false'}>{String(i + 1).padStart(2, '0')} · {s.name}</button>)}</div>
     <div class="scene-split">
-      <figure class="scene-canvas scale-canvas">
+      <figure class="scene-canvas scale-canvas mx-stage" data-scale-stage>
         <svg class="scale-svg" viewBox="0 0 600 400" role="img" aria-label="Ilustração da escala escolhida: Terra, Sistema Solar, Via Láctea, galáxias vizinhas ou teia cósmica." data-scale-svg><ScaleArt hidden={scales.map((_, i) => i !== 0)} /></svg>
       </figure>
       <div class="scene-reading">{scales.map((s, i) => <article data-scale-panel={i} class="scene-panel"><span class="scene-unit">{s.unit}</span><h3>{s.title}</h3><p>{s.body}</p><p class="light-insight">{s.light}</p></article>)}</div>
@@ -41,7 +41,7 @@ const grid = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 - 2) * 58, y: (Ma
   {experience === 'evidence' && <>
     <div class="scene-controls evidence-controls" role="group" aria-label="Escolher evidência">{evidence.map((e,i) => <button type="button" data-evidence-select={i} aria-pressed={i === 0 ? 'true' : 'false'}><span>{String(i+1).padStart(2,'0')}</span>{e.name}</button>)}</div>
     {evidence.map((e,i) => <article class="evidence-panel" data-evidence-panel={i}>
-      <figure class="evidence-visual"><img class="scene-render" src={u(`/renders/${evidenceRenders[i]}.webp`)} srcset={`${u(`/renders/${evidenceRenders[i]}-small.webp`)} 600w, ${u(`/renders/${evidenceRenders[i]}.webp`)} 1200w`} sizes="(max-width: 850px) calc(100vw - 90px), 40vw" alt={i === 1 ? 'Representação artística da luz antiga do Universo; não é mapa da radiação cósmica de fundo.' : `Representação artística para a ideia de ${e.name.toLowerCase()}; não contém dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /></figure>
+      <figure class="evidence-visual"><img class="scene-render" src={u(`/posters/${evidenceRenders[i]}.webp`)} srcset={`${u(`/posters/${evidenceRenders[i]}-small.webp`)} 600w, ${u(`/posters/${evidenceRenders[i]}.webp`)} 1200w`} sizes="(max-width: 850px) calc(100vw - 90px), 40vw" alt={i === 1 ? 'Mapa ilustrativo do céu na CMB: contraste ampliado, sem dados observacionais.' : `Ilustração para a ideia de ${e.name.toLowerCase()}; não mostra matéria invisível nem contém dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /></figure>
       <div class="evidence-explanation"><h3>{e.name}</h3><dl><dt>O que observamos</dt><dd>{e.observation}</dd><dt>Como explicamos</dt><dd>{e.explanation}</dd><dt>O que segue aberto</dt><dd>{e.uncertainty}</dd></dl></div>
     </article>)}
   </>}

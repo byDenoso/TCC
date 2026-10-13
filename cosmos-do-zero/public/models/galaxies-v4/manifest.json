@@ -1,0 +1,84 @@
+{
+  "version": 4,
+  "author": "Cosmos do Zero original mathematical artwork",
+  "license": "CC0-1.0",
+  "method": "High resolution integrated stellar density, smooth multi-scale gas, asymmetric absorption lanes, variable pitch and radial bulge profiles",
+  "interpretation": "Original illustration, no observed data, no N-body calculation",
+  "source": "assets/source/build_galaxies_v4.py",
+  "assets": [
+    {
+      "file": "grand-spiral.png",
+      "bytes": 2380118,
+      "sha256": "ca8cce07e3801b2491f1e7275e166ef812481d917829c55ed5ff8895ccc4a2cb"
+    },
+    {
+      "file": "barred-spiral.png",
+      "bytes": 2638353,
+      "sha256": "92672a948b506fc445465daf365567e0c54f8354ff60b9f5d4934a48b4aa7b29"
+    },
+    {
+      "file": "many-arms.png",
+      "bytes": 2620604,
+      "sha256": "c2edd31b9bc0ecab35cf3a394303023d2e8128ac6e49b53ea28c1157ac315a6a"
+    },
+    {
+      "file": "lenticular.png",
+      "bytes": 2402061,
+      "sha256": "06bf080e12208aee1862acc78b9fcb61c45ebf2e6ca76b6d83d200bfe0872ffb"
+    },
+    {
+      "file": "elliptical.png",
+      "bytes": 1803565,
+      "sha256": "052e238cd51bbd67d5f0d9e84aa67acd0001fc8f38b40cf1a3bbafc9988fecc1"
+    },
+    {
+      "file": "irregular.png",
+      "bytes": 1840860,
+      "sha256": "f4db668e8b33c27149bd41baba1bdab522abd591d9582cb0ea11cbc94cb1df5d"
+    },
+    {
+      "file": "stars-only.png",
+      "role": "stars-only comparison without dust absorption",
+      "bytes": 2471376,
+      "sha256": "66b5dc89bdc7f7c964983bfe554d81eef7cf397a1bfee54492ae0d035d729489"
+    }
+  ],
+  "runtime_assets": [
+    {
+      "file": "grand-spiral.webp",
+      "bytes": 635824,
+      "sha256": "0d28d368a735238987b244d9c3c238b026ec82d38ee87c7ab18feeb3ced4ce34"
+    },
+    {
+      "file": "barred-spiral.webp",
+      "bytes": 691392,
+      "sha256": "f06efb112215ed5e92ca5a2cf28e046bafb406c38ef1883ffbd80f80e8e5405b"
+    },
+    {
+      "file": "many-arms.webp",
+      "bytes": 683288,
+      "sha256": "b48a538ca8d5cfb2f662b6bc3d7dbb6fe3b0b8967c4b83c2d7160f8ec173b319"
+    },
+    {
+      "file": "lenticular.webp",
+      "bytes": 683524,
+      "sha256": "4e962fe13758c61ab9d4d05fee3179f1f3e58065287645be1ad8e69974811803"
+    },
+    {
+      "file": "elliptical.webp",
+      "bytes": 489304,
+      "sha256": "093149f90d61160be5ec03f7417b76f0f766a2db3b8cb13701155b52951ecb3d"
+    },
+    {
+      "file": "irregular.webp",
+      "bytes": 524444,
+      "sha256": "124a320faeab4441b5dc4985d06a775d8bd5403b3dd706cf98773536fe008775"
+    },
+    {
+      "file": "stars-only.webp",
+      "role": "stars-only comparison without dust absorption",
+      "bytes": 660456,
+      "sha256": "8735a27bb3c8201e87a60acb369bef0386eec7bca0713372eb6fb47f537fa235"
+    }
+  ]
+}

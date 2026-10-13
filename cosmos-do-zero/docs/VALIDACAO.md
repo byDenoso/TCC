@@ -1,3 +1,5 @@
+> Registro histórico anterior à homologação integrada de13/10/2026. Os resultados e instruções abaixo pertencem à revisão indicada no próprio documento; não aprovam o build atual nem autorizam publicação. Consulte o relatório deQA, código versionado e prévia privada da entrega atual.
+
 # Validação da versão com renders — 11/10/2026
 
 Resultado local: versão consolidada compilada e navegável em http://127.0.0.1:4321/. Sem implantação pública concluída.

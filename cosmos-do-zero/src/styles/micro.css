@@ -43,7 +43,7 @@
 .mx-transport [data-mx-play][aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
 .mx-ico { font-size: 12px; line-height: 1; }
 .mx-caption { margin: 0; min-height: 3.2em; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 7%, var(--bg)); font-size: 16px; line-height: 1.55; color: var(--ink); }
-.mx-limit { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.mx-limit,.mx-detail-note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
 .mx-limit strong { color: var(--ink-2); }
 
 /* texto dentro das cenas */

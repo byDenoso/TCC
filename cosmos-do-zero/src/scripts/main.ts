@@ -7,6 +7,8 @@ import { initSchool } from './school';
 import { initGuesses } from './lab/common';
 
 const instruments: [string, () => Promise<void>][] = [
+  ['[data-lens]', async () => (await import('./visual/lensing')).initLensing()],
+  ['[data-solar-studio]', async () => (await import('./visual/solar-studio')).initSolarStudio()],
   ['[data-cmb]', async () => (await import('./cmb')).initCmb()],
   ['[data-island="timeline"]', async () => (await import('./timeline')).initTimeline()],
   ['[data-island="planets"]', async () => (await import('./planets')).initPlanets()],

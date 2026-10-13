@@ -47,6 +47,7 @@ export function refreshProgress(): void {
     setText($('[data-resume-step]', card), `Passo ${resumeAt.step + 1} de ${resumeAt.total}: ${resumeAt.title}`);
   }
   for (const cta of $$<HTMLAnchorElement>('[data-start-journey]')) {
+    if(cta.hasAttribute('data-home-continue'))cta.hidden=mainCount===0&&!resumeAt;
     const next = nextUnfinished(done);
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
     cta.href = resumeAt ? `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}` : chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);

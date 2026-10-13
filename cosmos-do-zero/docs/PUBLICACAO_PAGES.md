@@ -1,3 +1,5 @@
+> Registro histórico anterior à homologação integrada de13/10/2026. Os resultados e instruções abaixo pertencem à revisão indicada no próprio documento; não aprovam o build atual nem autorizam publicação. Consulte o relatório deQA, código versionado e prévia privada da entrega atual.
+
 # Publicação preparada: Cosmos do Zero
 
 Preparação local em 12/10/2026. Nenhum push, deploy, alteração em Pages ou DNS foi realizado nesta adaptação. O ZIP original foi preservado. Os estados remotos descritos no pacote anterior são históricos e precisam ser reconferidos.

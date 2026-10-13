@@ -53,7 +53,7 @@ const ext = ' (abre em outra aba)';
                 <p class="obs3d-tag">Ilustração · distâncias fora de escala · arraste para girar</p>
               </div>
               <p class="obs3d-note" data-t-3d-note hidden></p>
-              <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo e duas janelas do mesmo pedaço de espaço, quando a luz saiu e hoje: a grade e o comprimento de onda crescem juntos. Os valores aparecem ao lado."></svg>
+              <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo e percurso da luz entre a fonte e o observador. As distâncias entre galáxias e o comprimento de onda aumentam com a expansão. A alternativa em duas dimensões compara o mesmo trecho de espaço na emissão e hoje. Os valores aparecem ao lado."></svg>
             </figure>
             <div class="obs-panel">
               <h3>Máquina do tempo</h3>
@@ -98,24 +98,32 @@ const ext = ' (abre em outra aba)';
       {stations.includes('expansao') && (
         <div class="obs-station" id={panelId('expansao')} role={tabs ? 'tabpanel' : undefined} aria-labelledby={tabs ? tabId('expansao') : undefined} data-station="expansao">
           <div class="obs-guess" data-guess="c">
-            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Você mudou de galáxia. Onde fica o centro dessa expansão?</p>
+            <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Se você observar de outra galáxia, onde ficará o centro da expansão?</p>
             <div class="obs-guess-opts"><button type="button" data-opt="a">Na galáxia de antes</button><button type="button" data-opt="b">Na galáxia onde estou agora</button><button type="button" data-opt="c">Em lugar nenhum</button></div>
             <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
             <div data-guess-result hidden><p><strong data-guess-verdict></strong>Em lugar nenhum. De qualquer galáxia, você vê todas as outras se afastando, e as mais distantes mais depressa. Ninguém está no meio. É isso que os telescópios mostram em grande escala. Coisas presas pela gravidade, como o Sistema Solar ou a nossa galáxia, não crescem.</p></div>
           </div>
-          <div class="obs-grid">
+          <div class="obs-grid obs-expansion-grid">
+            <h3 class="obs-pilot-title">O espaço crescendo</h3>
             <figure class="obs-viz">
-              <svg data-e-svg viewBox="0 0 640 400" role="group" aria-label="Grade de galáxias. Escolha uma galáxia para ver o Universo a partir dela."></svg>
+              <div class="expansion-stage" data-e-volume>
+                <svg data-e-svg viewBox="0 0 640 400" role="group" aria-label="Galáxias vistas de uma posição escolhida. Use os botões de observador para mudar de galáxia."></svg>
+              </div>
+              <figcaption>Galáxias mantêm seu tamanho. O espaço entre elas cresce. Formas e distâncias são ilustrativas.</figcaption>
             </figure>
             <div class="obs-panel">
-              <h3>O espaço crescendo</h3>
-              <p class="obs-lede">Cada ponto é uma galáxia. Pense em passas num bolo crescendo no forno: <strong>o bolo cresce e todas as passas se afastam umas das outras</strong>. Toque em qualquer galáxia para morar nela e depois deixe o espaço crescer.</p>
+              <p class="obs-lede">Escolha de onde olhar e aumente as distâncias. <strong>As galáxias continuam do mesmo tamanho.</strong> De qualquer uma delas, as mais distantes se afastam mais.</p>
+              <div class="obs-chips" role="group" aria-label="Sua galáxia observadora">
+                <button type="button" data-e-observer="0" aria-pressed="true">Galáxia A</button>
+                <button type="button" data-e-observer="1" aria-pressed="false">Galáxia B</button>
+                <button type="button" data-e-observer="2" aria-pressed="false">Galáxia C</button>
+              </div>
               <label class="obs-slider" for={`${id}-e-range`}>Quanto o espaço cresceu <output data-e-scale for={`${id}-e-range`}>1,00 ×</output></label>
               <input id={`${id}-e-range`} type="range" min="1" max="2.5" step="0.01" value="1" data-e-range />
               <div class="obs-actions">
                 <button type="button" class="obs-btn" data-e-play aria-pressed="false">Deixar o espaço crescer</button>
                 <button type="button" class="obs-btn ghost" data-e-reset>Voltar ao início</button>
-                <label class="obs-check"><input type="checkbox" data-e-arrows checked /> Mostrar o caminho de cada galáxia</label>
+                <label class="obs-check"><input type="checkbox" data-e-arrows /> Mostrar o caminho de cada galáxia</label>
               </div>
               <div class="obs-reading" data-e-reading></div>
               <figure class="obs-plot"><svg data-e-plot viewBox="0 0 560 230" role="img" aria-label="Gráfico: quanto mais longe a galáxia estava, mais ela se afastou, formando uma linha reta"></svg><figcaption>Cada ponto é uma galáxia. Todos caem na mesma linha reta: o dobro da distância, o dobro do afastamento.</figcaption></figure>

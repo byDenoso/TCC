@@ -34,11 +34,13 @@ export function initCompare(): void {
       return tr;
     }));
     if (url) setParams({ a: a.value === 'terra' ? null : a.value, b: b.value === 'jupiter' ? null : b.value });
+    root.dispatchEvent(new CustomEvent('cosmos:worldselection'));
   };
   const ok = (v: string | null) => (v && find(v) ? v : null);
   a.value = ok(getParam('a')) ?? a.value; b.value = ok(getParam('b')) ?? b.value;
   a.addEventListener('change', () => render()); b.addEventListener('change', () => render());
   $('[data-compare-swap]', root)!.addEventListener('click', () => { [a.value, b.value] = [b.value, a.value]; render(); });
   if (getParam('a') || getParam('b')) render(false);
+  void import('./visual/world-view').then(m=>m.initCatalogWorld(root,$('[data-compare-visual]',root)!,()=>[a.value,b.value],()=>[find(a.value)!.radius,find(b.value)!.radius]));
   void $$;
 }

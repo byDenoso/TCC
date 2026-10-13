@@ -1,17 +1,11 @@
+import {expansionPositions,separation} from '../../lib/expansion';
 import type { Scene, SceneMap } from './engine';
 import { C, H, W, arrow, clear, ease, el, fmt, g, lerp, rng, star, text } from './draw';
 
 const expansao = (): Scene => {
   let layer: SVGGElement;
-  const rnd = rng(9);
-  const base: [number, number][] = [];
-  for (let i = -3; i <= 3; i++) for (let j = -2; j <= 2; j++) base.push([i * 46 + (rnd() - 0.5) * 14, j * 42 + (rnd() - 0.5) * 12]);
-  const me = 9, cx = 205, cy = 130;
-  const dist = (i: number) => Math.hypot(base[i][0] - base[me][0], base[i][1] - base[me][1]);
-  const others = base.map((_, i) => i).filter((i) => i !== me);
-  // vizinha imediata e uma galáxia distante que continua dentro do quadro quando o espaço dobra
-  const nearI = 14, farI = 22;
-  void others; void dist;
+  const base=expansionPositions.map(p=>[p[0]*30,p[2]*26-p[1]*12] as [number,number]);
+  const me=0,cx=225,cy=130,nearI=1,farI=2;
   return {
     init(svg) { layer = g(svg); },
     value: (v) => `${fmt(v, 2)} ×`,
@@ -23,17 +17,17 @@ const expansao = (): Scene => {
       const near = nearI, far = farI;
       for (const n of [near, far]) arrow(layer, pos[me][0], pos[me][1], pos[n][0], pos[n][1], C.accent, 1.6);
       pos.forEach(([x, y], i) => el('ellipse', { cx: x, cy: y, rx: i === me ? 7 : 5, ry: i === me ? 4.5 : 3, fill: i === me ? C.accent : C.ink2 }, layer));
-      text(layer, pos[me][0] - 8, pos[me][1] - 10, 'você', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
+      text(layer, pos[me][0] - 8, pos[me][1] - 10, 'A · observador', { class: 'mx-t small strong warm', 'text-anchor': 'end' });
       // sistema preso pela gravidade: não cresce
       el('rect', { x: 372, y: 8, width: 100, height: 92, rx: 10, fill: C.surface, stroke: C.line }, layer);
       star(layer, 422, 50, 7, C.gold, false);
       el('circle', { cx: 422, cy: 50, r: 26, fill: 'none', stroke: C.line }, layer);
       el('circle', { cx: 448, cy: 50, r: 3.5, fill: C.blue }, layer);
       text(layer, 422, 92, 'Sol e Terra', { class: 'mx-t small', 'text-anchor': 'middle' });
-      const dn = Math.hypot(base[near][0] - mx, base[near][1] - my), df = Math.hypot(base[far][0] - mx, base[far][1] - my);
+      const dn=separation(near,me),df=separation(far,me);
       text(layer, 12, H - 30, `vizinha: ${fmt(1, 1)} → ${fmt(v, 2)}   ·   distante: ${fmt(df / dn, 1)} → ${fmt((df / dn) * v, 1)}`, { class: 'mx-t small' });
       return v < 1.02 ? 'Todas as distâncias entre galáxias vão crescer pelo mesmo fator. Mexa no controle.'
-        : `As distâncias cresceram ${fmt(v, 2)} vezes. A vizinha ganhou ${fmt(v - 1, 2)} unidade; a distante ganhou ${fmt((df / dn) * (v - 1), 1)}. Quem está mais longe se afasta mais depressa, de qualquer galáxia que você olhe. O Sol e a Terra, presos pela gravidade, não cresceram.`;
+        : `As distâncias entre galáxias cresceram ${fmt(v, 2)} vezes; seus tamanhos continuam iguais. Quem começa mais longe ganha uma distância maior, na mesma proporção. Sistemas ligados pela gravidade, como o Sistema Solar, não acompanham essa expansão.`;
     }
   };
 };

@@ -29,3 +29,6 @@ Thumbs.db
 pages-root/
 
 /node_modules
+
+# Blender local recovery backups; primary .blend source remains versioned.
+assets/source/*.blend1

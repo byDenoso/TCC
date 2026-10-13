@@ -1,0 +1,1 @@
+Licenças de dependências/fontes usadas no runtime. Os recursos NASA/Hubble e a arte original seguem seus manifests individuais e créditos visíveis em /fontes/. Não aplicar estas licenças a mapas de terceiros. Os manifests e hashes da entrega identificam original, processamento e variante.

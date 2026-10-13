@@ -1,0 +1,7 @@
+import {describe,it,expect} from 'vitest';
+import {deltaMagnitude,linearFit,atmosphereTemperatureC as T} from '../../src/lib/teaching-numerics';
+describe('teaching numerics against independent references',()=>{
+ it('FLRW magnitudes agree with independent scipy.quad references, flat Planck plus radiation vs analytical EdS',()=>{for(const [z,expected] of [[.1,.10301833588732548],[.5,.38743519132686854],[1,.5784916557534759],[1.2,.6277834943633286]])expect(deltaMagnitude(z)).toBeCloseTo(expected,9);expect(deltaMagnitude(0)).toBe(0);expect(()=>deltaMagnitude(-1)).toThrow();});
+ it('OLS solves analytical centered example and separates mean SE from slope SE',()=>{const f=linearFit([[-1,-1],[0,2],[1,3]])!;expect(f.a).toBeCloseTo(4/3,12);expect(f.b).toBeCloseTo(2,12);expect(f.slopeSE).toBeCloseTo(Math.sqrt(1/3),12);expect(f.meanSE(0)).toBeCloseTo(Math.sqrt(2/9),12);expect(f.meanSE(1)).toBeGreaterThan(f.meanSE(0));expect(linearFit([[1,2],[1,3],[1,4]])).toBeNull();expect(linearFit([[0,1],[1,2]])).toBeNull();});
+ it('USSA1976 primary temperature reference levels and K to C, with geometric altitude',()=>{expect(T(0)).toBeCloseTo(15,10);expect(T(11.019)).toBeCloseTo(-56.5,2);expect(T(86)).toBeCloseTo(-86.2827,6);expect(T(91)).toBeCloseTo(-86.2827,6);expect(T(110)).toBeCloseTo(-33.15,10);expect(T(120)).toBeCloseTo(86.85,10);for(const z of [86,91,110])expect(Math.abs(T(z-1e-6)-T(z+1e-6))).toBeLessThan(.001);expect(()=>T(121)).toThrow();});
+});

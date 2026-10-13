@@ -1,0 +1,224 @@
+{
+  "materials": [
+    {
+      "world": "terra",
+      "original": "assets/source/observed/earth-bmng-200407.jpg",
+      "source_url": "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/",
+      "credit": "NASA Earth Observatory / Blue Marble: Next Generation / MODIS",
+      "status": "Observed monthly composite, July2004, not current weather",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "lua",
+      "original": "assets/source/observed/moon-lroc-color-2025.jpg",
+      "source_url": "https://svs.gsfc.nasa.gov/4720/",
+      "credit": "NASA Scientific Visualization Studio / Ernie Wright (USRA), Noah Petro (NASA/GSFC); LRO/LOLA/LROC/ASU",
+      "status": "Observed LROC mosaic, December2025 rendering-optimized colors; polar gaps filled by source authors",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "jupiter",
+      "original": "assets/source/observed/jupiter-hubble-opal-2015.tif",
+      "source_url": "https://svs.gsfc.nasa.gov/12021/",
+      "credit": "NASA Goddard Space Flight Center / Space Telescope Science Institute; Amy Simon, Michael Wong, Glenn Orton",
+      "status": "Hubble WFC3 OPAL observed global color composite, 2015; unobserved polar strips filled visually, not data",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "marte",
+      "original": "assets/source/observed/mars-nasa.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/mars/",
+      "credit": "NASA/Jet Propulsion Laboratory & Caltech; Viking/USGS",
+      "status": "Viking composite texture processed at USGS",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "saturno",
+      "original": "assets/source/observed/saturn-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/saturn/",
+      "credit": "JPL/Caltech planetary-map collection",
+      "status": "Fictional/illustrative map as classified by NASA",
+      "modification": "Illustrative NASA map desaturated for cream atmospheric appearance; resize and recompression; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "netuno",
+      "original": "assets/source/observed/neptune-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/neptune/",
+      "credit": "Don Davis & JPL/Caltech",
+      "status": "Fictional/illustrative map as classified by NASA; not an observed globe map",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied"
+    },
+    {
+      "world": "venus",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original illustrative optical cloud layer, no radar surface",
+      "source": "assets/source/prepare_solar_materials.py"
+    },
+    {
+      "world": "urano",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original illustrative atmospheric colors, not observed global texture",
+      "source": "assets/source/prepare_solar_materials.py"
+    },
+    {
+      "world": "terra-clouds",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original weather/cloud illustration, not satellite weather data",
+      "source": "assets/source/prepare_solar_materials.py"
+    },
+    {
+      "world": "terra-roughness",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Visual land/ocean roughness inferred from color composition; not a scientific surface mask",
+      "source": "assets/source/prepare_solar_materials.py"
+    },
+    {
+      "world": "mercurio",
+      "original": "assets/source/observed/mercury-messenger-enhanced.jpg",
+      "source_url": "https://science.nasa.gov/resource/enhanced-color-mercury-map/",
+      "credit": "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
+      "status": "MESSENGER PIA17386 enhanced-color global map; not human-eye colors",
+      "modification": "Resize and recompression; colors enhanced by source authors, not recolored by Cosmos; normalized sphere and lighting illustrative",
+      "license": "NASA resource usage policy; retain listed credit"
+    }
+  ],
+  "files": [
+    {
+      "path": "assets/source/solar-materials/jupiter.jpg",
+      "bytes": 350330,
+      "sha256": "2187fb79a0f92b4952dcf16433760550a556d17511fd480903777bc68b4efc6f"
+    },
+    {
+      "path": "assets/source/solar-materials/lua-normal.png",
+      "bytes": 885911,
+      "sha256": "9fd97ffc06193f260a1a8e9cf5d3176c2a006748069b87e3c9e5647469232e67"
+    },
+    {
+      "path": "assets/source/solar-materials/lua.jpg",
+      "bytes": 636815,
+      "sha256": "4f751f4af594a75021e63cc503bc334e3a71d680fe7d8679ae268b1c2f703679"
+    },
+    {
+      "path": "assets/source/solar-materials/marte.jpg",
+      "bytes": 365745,
+      "sha256": "2bca94e9ab668026fee51d6137d422d7056da83055042c8177f1d23c3300fab8"
+    },
+    {
+      "path": "assets/source/solar-materials/mercurio-normal.png",
+      "bytes": 196222,
+      "sha256": "ad218bc8de2ed6e3a4524d74ca60bf43ac14708504b459f8e062f5c5043e5df6"
+    },
+    {
+      "path": "assets/source/solar-materials/mercurio.jpg",
+      "bytes": 907093,
+      "sha256": "04258b35c1c80a8bff6b6dc20af955a478e4fdacd30a4e3c12bad9d2bc1202d8"
+    },
+    {
+      "path": "assets/source/solar-materials/netuno.jpg",
+      "bytes": 76067,
+      "sha256": "f6e327aa909561a1eb098d906c633eaf3175c830bcf45a72c788c67f5c7e84be"
+    },
+    {
+      "path": "assets/source/solar-materials/saturno-rings.png",
+      "bytes": 1701,
+      "sha256": "d8091bd14524d4dfeb63bb211d9649597f65b09f64121e262ade7a049d2ca88c"
+    },
+    {
+      "path": "assets/source/solar-materials/saturno.jpg",
+      "bytes": 72080,
+      "sha256": "1c00a57fd208ae28b994363854d1930e91a72ef28e96945f483d681d2d558aae"
+    },
+    {
+      "path": "assets/source/solar-materials/terra-clouds.png",
+      "bytes": 141342,
+      "sha256": "a05ae77f8a0e00ff00f6ed8deb64ae06c7bc15bfaff06575663a1211769d089b"
+    },
+    {
+      "path": "assets/source/solar-materials/terra-roughness.png",
+      "bytes": 10793,
+      "sha256": "b6f8fa9583949398faf38c8ec72dcd1533fcae96bceec8ccba7e0566abf8ca8d"
+    },
+    {
+      "path": "assets/source/solar-materials/terra.jpg",
+      "bytes": 368644,
+      "sha256": "6bd138fc923a381c3fa7a77ae80bf9ef376a02ec25432ba3eb5cbb16f4167cf7"
+    },
+    {
+      "path": "assets/source/solar-materials/urano.jpg",
+      "bytes": 32938,
+      "sha256": "2d1de43e2c69c2680ca806759ba69cddafad83ee0f77b96e58ff974793e242fd"
+    },
+    {
+      "path": "assets/source/solar-materials/venus.jpg",
+      "bytes": 46372,
+      "sha256": "96616e8720921976ab07d2dde0f029e2d03d61e0fbb37609a5f75dddf9e01e40"
+    },
+    {
+      "path": "assets/source/observed/earth-bmng-200407.jpg",
+      "bytes": 1617810,
+      "sha256": "f55226d46d27e05511f2118dc6aa24f5dbf9b6b2cddc87cc6e0e7dd067c00b11"
+    },
+    {
+      "path": "assets/source/observed/jupiter-hubble-opal-2015.tif",
+      "bytes": 19461484,
+      "sha256": "c3b915227ef88899a07a2b62584d9303d77d3491b9bb7de8824fb6df4a52f7b2"
+    },
+    {
+      "path": "assets/source/observed/jupiter-voyager.jpg",
+      "bytes": 225878,
+      "sha256": "ac2d387f8ea56a59f45dea37993c779a730f49d7d9fdbc8d36c307a351b1f1a1"
+    },
+    {
+      "path": "assets/source/observed/mars-nasa.jpg",
+      "bytes": 972896,
+      "sha256": "12ec6bf02ebd42a246edc778cb2ce8c595b4d9f0892badf0bfff8abb2303c780"
+    },
+    {
+      "path": "assets/source/observed/mercury-messenger-enhanced.jpg",
+      "bytes": 1302017,
+      "sha256": "95b5d222f842dc0a46ca9eb6928af7a2f4a3b43345be49ef798047279139a2df"
+    },
+    {
+      "path": "assets/source/observed/mercury-vtad-0.png",
+      "bytes": 2964107,
+      "sha256": "fadf06aa5c8e6846f79a53167a528e6e91ab55142404f89df83fc858d94482f0"
+    },
+    {
+      "path": "assets/source/observed/mercury-vtad.glb",
+      "bytes": 3048920,
+      "sha256": "0222fa976a5bb3ae3222eeddaaa7150656837a97c515f065eb855e0b1dd2ab94"
+    },
+    {
+      "path": "assets/source/observed/moon-lola-height.jpg",
+      "bytes": 111552,
+      "sha256": "6d93f887e7d8bedfe35ab89ba785e5e3ca12381bd092a5e6abe2c707dda8bb98"
+    },
+    {
+      "path": "assets/source/observed/moon-lroc-color-2025.jpg",
+      "bytes": 457942,
+      "sha256": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170"
+    },
+    {
+      "path": "assets/source/observed/neptune-nasa-illustrative.jpg",
+      "bytes": 210528,
+      "sha256": "e9bb2b7bcfb98d3f1adc6f2e20e833a00c11e9677238d8a00ae7431214ca70aa"
+    },
+    {
+      "path": "assets/source/observed/saturn-nasa-illustrative.jpg",
+      "bytes": 275735,
+      "sha256": "d959a239e3d87630daf08e2a688dcbf315fe01b1fd474e55522770108f40aca7"
+    }
+  ],
+  "policy_url": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+  "note": "Lighting, atmosphere thickness, normal strength and ring density are illustrative. No shared CC0 claim for NASA/third-party maps."
+}

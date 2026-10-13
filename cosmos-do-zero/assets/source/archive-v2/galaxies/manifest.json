@@ -1,0 +1,39 @@
+{
+  "author": "Cosmos do Zero original mathematical artwork",
+  "license": "CC0-1.0",
+  "method": "Continuous emission fields with log-spiral arms, smooth gas turbulence, absorption lanes and Gaussian nucleus",
+  "interpretation": "Illustration; no observed data and no physical dynamical simulation",
+  "source": "assets/source/build_galaxies.py",
+  "assets": [
+    {
+      "file": "grand-spiral.png",
+      "bytes": 253425,
+      "sha256": "90bd9317c3cada8a38238675430a919295f12842ec573a7ad7e12ac87eb6a6a7"
+    },
+    {
+      "file": "barred-spiral.png",
+      "bytes": 253274,
+      "sha256": "ecc9d7a6cef90909d2dd2292b68299c01bb0ef53274976d9ec5152fe9acf0009"
+    },
+    {
+      "file": "many-arms.png",
+      "bytes": 327717,
+      "sha256": "cc577931116b442715d505d58e4939e60a117fd1b665e82dd7075447e90c2f9a"
+    },
+    {
+      "file": "lenticular.png",
+      "bytes": 195475,
+      "sha256": "b4436ce777034f9287d4c42f5adec3ab50ca2ecd0b189f0a86c505048da9326e"
+    },
+    {
+      "file": "elliptical.png",
+      "bytes": 91373,
+      "sha256": "da5a967a30eb603ece1a4d01a2718c30edd61ba77a0957d28867c6af2884b1a3"
+    },
+    {
+      "file": "irregular.png",
+      "bytes": 148680,
+      "sha256": "5acc2913878d247a801f22b554fc44709ee5a565f46896166147021bd3380601"
+    }
+  ]
+}

@@ -44,8 +44,14 @@ const letters = 'ABCDE';
       </div>
     </div>
     <p class="mx-caption" data-mx-caption>{spec.alt}</p>
+    {id === 'galaxias-e-nebulosas-nebulosas' && <p class="mx-detail-note">Detalhe de luz: <a href="https://esahubble.org/images/heic0601a/">composição Hubble de Orion</a>, <a href="https://esahubble.org/copyright/">CC BY 4.0</a>. Crédito: NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team. Imagem reduzida e filtrada; profundidade e cores por mecanismo atribuídas nesta ilustração, sem reconstruir Orion em 3D.</p>}
+
+
+    {['terra-e-atmosfera-formacao-da-terra','terra-e-atmosfera-camadas','terra-e-atmosfera-campo-magnetico'].includes(id) && <p class="mx-detail-note">Superfície: <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/">NASA Earth Observatory · Blue Marble / MODIS, julho de 2004</a>, reduzida e comprimida. Nuvens, iluminação, cortes e cores internas são ilustrações originais; a crosta é ampliada para aparecer. <a href="https://science.nasa.gov/earth/facts/">NASA · Estrutura e campo da Terra</a>.</p>}
+    {id === 'terra-e-atmosfera-campo-magnetico' && <p class="mx-detail-note">Comparação ilustrativa, sem prever quanto ar se perde. Gravidade, radiação, composição e campos induzidos também importam: <a href="https://science.nasa.gov/venus/venus-facts/">Vênus mantém uma atmosfera densa e tem um campo induzido na ionosfera</a>, embora não tenha dínamo interno como a Terra.</p>}
+    {id === 'terra-e-atmosfera-camadas' && <p class="mx-detail-note">O controle cobre 0–120 km: as quatro camadas inferiores e a parte inicial da termosfera. A exosfera fica acima, fora desta faixa. As espessuras 3D estão ampliadas cerca de dez vezes; o perfil de temperatura continua no diagrama 2D.</p>}
     <p class="visually-hidden" role="status" data-mx-live></p>
-    <p class="mx-limit"><strong>Limite do desenho.</strong> {spec.limit}</p>
+    <p class="mx-limit"><strong>Como interpretar esta experiência.</strong> {spec.limit}</p>
   </div>
 
   <div class="mx-check" data-mx-check-box data-right={spec.check.right}>

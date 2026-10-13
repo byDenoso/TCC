@@ -195,7 +195,7 @@
 .obs-skip { background: none; border: 0; padding: 10px 0 0; min-height: 44px; color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .obs-skip:hover { color: var(--accent-ink); }
 .obs-station .obs-grid, .obs-station .obs-epoch, .obs-station .obs-tension { transition: filter .7s var(--ease), opacity .7s var(--ease), transform .7s var(--ease); }
-.obs-station.is-gated .obs-grid, .obs-station.is-gated .obs-epoch, .obs-station.is-gated .obs-tension { filter: blur(6px) saturate(.6); opacity: .42; transform: scale(.985); pointer-events: none; user-select: none; }
+.obs-station.is-gated .obs-grid, .obs-station.is-gated .obs-epoch, .obs-station.is-gated .obs-tension { pointer-events: auto; }
 .obs-station.is-gated .obs-grid:first-of-type::before { content: none; }
 @media (prefers-reduced-motion: reduce) { .obs-station .obs-grid, .obs-station .obs-epoch, .obs-station .obs-tension { transition: none; } }
 

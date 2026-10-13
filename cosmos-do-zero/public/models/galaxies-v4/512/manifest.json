@@ -1,0 +1,41 @@
+{
+  "size": 512,
+  "source": "../manifest.json",
+  "assets": [
+    {
+      "file": "grand-spiral.webp",
+      "bytes": 66812,
+      "sha256": "fa1ea65c6b1718028bc6f679ce7557577d0eb6d8a0cef0fee642fbb352fa6a0f"
+    },
+    {
+      "file": "barred-spiral.webp",
+      "bytes": 70820,
+      "sha256": "6f008f74c2332d0be81d0e5c986d5e8f985c14543aecbbb34f6e37eef1e305d0"
+    },
+    {
+      "file": "many-arms.webp",
+      "bytes": 69812,
+      "sha256": "d991ef0f0ce46e556bab4005b6bf38625418653e6b2efb7d758df52fc4e02f9a"
+    },
+    {
+      "file": "lenticular.webp",
+      "bytes": 70438,
+      "sha256": "5fea3eacb9e1ead3f4e4420855ed8f7d2aac279092fb541042eb4a40dc04cdc3"
+    },
+    {
+      "file": "elliptical.webp",
+      "bytes": 49942,
+      "sha256": "1477cd8ced71d487ab402bd8da647fc45e982f27944d5a445741025510e202df"
+    },
+    {
+      "file": "irregular.webp",
+      "bytes": 56484,
+      "sha256": "515a148113154365f2d48752d836f44020e779d0a4a2aa7a8d61a1f508e0cf70"
+    },
+    {
+      "file": "stars-only.webp",
+      "bytes": 68554,
+      "sha256": "e1306e8e7b1456c84803fbc9b2a31a71ee86692ea2a72b1387c442071581d2b6"
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "method": "Real captures of interactive scenes plus explicitly synthetic full-sky map",
+  "source": "assets/source/build_posters.py",
+  "assets": [
+    {
+      "name": "plasma",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Plasma primordial · esquema com luz, elétrons e núcleos · sem estrelas",
+      "files": [
+        {
+          "file": "plasma.webp",
+          "bytes": 29796,
+          "sha256": "dfbbcde3df03e76e988d38bc0b94f04601e5a83a37a16604b17ba9b06d32a86b"
+        },
+        {
+          "file": "plasma-small.webp",
+          "bytes": 11212,
+          "sha256": "36c7916ea47deed968abcd2a3144d0bceaed56e4ceadb292f60ac98d4ecb36f6"
+        }
+      ]
+    },
+    {
+      "name": "nuclei",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Primeiros núcleos · partículas ampliadas · ilustração",
+      "files": [
+        {
+          "file": "nuclei.webp",
+          "bytes": 9398,
+          "sha256": "3d015550b7bff501d4742323c129d41e33aa0c742c0d0401d031e512a71dc27e"
+        },
+        {
+          "file": "nuclei-small.webp",
+          "bytes": 3608,
+          "sha256": "44b25511a166e385e0f4dd98531b965eb4999c018bea1ba2112579b47a6081b2"
+        }
+      ]
+    },
+    {
+      "name": "star",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Superfície estelar · granulação ampliada · ilustração",
+      "files": [
+        {
+          "file": "star.webp",
+          "bytes": 19420,
+          "sha256": "e2f379fc1aa4da89c377d3b53b0668220b368c9b6cf87072e2dbb633a40f41da"
+        },
+        {
+          "file": "star-small.webp",
+          "bytes": 4752,
+          "sha256": "971c9be97dd6582e3ded076f811cdf5deca2d20756d00385692968f4de8b5a0e"
+        }
+      ]
+    },
+    {
+      "name": "galaxies",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Galáxia ilustrativa · estrelas e poeira sintetizadas",
+      "files": [
+        {
+          "file": "galaxies.webp",
+          "bytes": 43072,
+          "sha256": "f1b697a27d458b86180b59ddf157ee742101934772bf6f3cd56b1e2f0b7ad60d"
+        },
+        {
+          "file": "galaxies-small.webp",
+          "bytes": 7890,
+          "sha256": "8fc4bab88729f458c65f094b2c6df5ae666953d129275e6af21d7dc99a5bac62"
+        }
+      ]
+    },
+    {
+      "name": "group-local",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Grupo Local · posição e morfologia ilustrativas",
+      "files": [
+        {
+          "file": "group-local.webp",
+          "bytes": 9830,
+          "sha256": "1dfb13dc0a148cc72e39f873210f7662602f5ebb606430407ee55218b0e7c0e3"
+        },
+        {
+          "file": "group-local-small.webp",
+          "bytes": 3072,
+          "sha256": "c3fff723e032e4edb152d3fc5bc0b9d3e68a443a1662f3f6082d5d9c5bf3f5cd"
+        }
+      ]
+    },
+    {
+      "name": "solar-system",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Sistema Solar · tamanhos e separações ilustrativos",
+      "files": [
+        {
+          "file": "solar-system.webp",
+          "bytes": 8802,
+          "sha256": "299c5da4444b02996732220161aeb95760ff65d80029d157d433fc0ad9d5305a"
+        },
+        {
+          "file": "solar-system-small.webp",
+          "bytes": 3090,
+          "sha256": "89e26e5ae527d76774fe0c75065b3c282ad901b3f7b0d76bfc866aa6185f390b"
+        }
+      ]
+    },
+    {
+      "name": "cosmic-web",
+      "origin": "Capture of the corresponding interactive scene; capture.json specifies route and state",
+      "license": "CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest",
+      "caption": "Distribuição artística · filamentos, aglomerações e vazios",
+      "files": [
+        {
+          "file": "cosmic-web.webp",
+          "bytes": 24052,
+          "sha256": "9f9214afd1e897067006a059861bdab0c0d631f3353feaf907134a85b57f7ac2"
+        },
+        {
+          "file": "cosmic-web-small.webp",
+          "bytes": 6580,
+          "sha256": "07af87506dba9c1707836e11f24eabe53f5279c6a81253c1986830a019f1d07d"
+        }
+      ]
+    },
+    {
+      "name": "earth",
+      "origin": "NASA Earth Observatory Blue Marble Next Generation July2004, rendered original Blender model",
+      "license": "NASA media policy; official credits preserved in solar-materials manifest",
+      "caption": "Terra · composição MODIS e geometria/iluminação ilustrativas",
+      "files": [
+        {
+          "file": "earth.webp",
+          "bytes": 29216,
+          "sha256": "09d56ab2965e3e68907447c7a1d3fde687ffe8f6d2edfeee71f50641a69d1d5e"
+        },
+        {
+          "file": "earth-small.webp",
+          "bytes": 9368,
+          "sha256": "9cb0757f1ef09de28addb749788d232093450f3fe2c383d23f965ffcf2d9e29a"
+        }
+      ]
+    },
+    {
+      "name": "cmb",
+      "origin": "Original angular-field illustration; not Planck/WMAP data or a material shell",
+      "license": "CC0-1.0",
+      "caption": "CMB · mapa ilustrativo do céu · contraste ampliado · não são dados",
+      "files": [
+        {
+          "file": "cmb.webp",
+          "bytes": 60656,
+          "sha256": "5a0b93ca2665949a379d59705a9972ddda919fc63b63a4d3aaba735f5e39adad"
+        },
+        {
+          "file": "cmb-small.webp",
+          "bytes": 22758,
+          "sha256": "513267cd60262f242d433692f2bd8d2d0b11ef096773f0a7849aab89360a5ee9"
+        }
+      ]
+    }
+  ]
+}

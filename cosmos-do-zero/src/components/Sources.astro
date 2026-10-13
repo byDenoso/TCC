@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import { imageCredits, referenceIndex } from '../data';
 import { photos } from '../lib/images';
+import SolarCredits from './SolarCredits.astro';
 const keys = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
 interface Props { headingLevel?: 'h1' | 'h2' }
 const Title = Astro.props.headingLevel ?? 'h2';
@@ -31,8 +32,16 @@ const Title = Astro.props.headingLevel ?? 'h2';
     </div>
     <details class="reference-index">
       <summary>Sobre as ilustrações e os experimentos</summary>
-      <p>Os planetas e as cenas do site são ilustrações artísticas ou simulações educativas. Parte das imagens foi gerada com IA. Elas ajudam a entender as ideias, sem representar fotografias, dados medidos ou reconstruções exatas do passado. As observações oficiais aparecem com autoria e links acima.</p>
+      <p>A escola combina mapas de origem observacional, materiais artísticos originais e cálculos educativos. A Terra usa uma composição MODIS mensal; a Lua, um mosaico LROC e relevo LOLA; Júpiter, um mapa Hubble/OPAL de 2015; Marte, um mosaico Viking. As fontes e as modificações de cada material aparecem abaixo. A geometria, a iluminação e as escalas visuais são ilustrativas.</p>
+      <p>As seis morfologias da expansão foram produzidas para esta escola: emissão, estrelas e poeira sintetizadas em mapas editáveis, com camadas em três dimensões. Elas não são fotografias de galáxias específicas nem um cálculo de formação de estruturas. O fator de escala e as leituras numéricas usam o modelo cosmológico declarado no instrumento.</p>
     </details>
+    <SolarCredits/>
+    <div class="reference-index"><h3>Modelos e gráficos educativos</h3><p>As distâncias e magnitudes usam as relações de <a href="https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html">Hogg, Distance Measures in Cosmology</a>, com os parâmetros declarados. O exercício de supernovas compara FLRW com uma referência só de matéria (EdS, sem radiação); seus pontos são gerados e não confirmam um modelo contra observações.</p><p>A reta e seus erros padrão seguem <a href="https://www.itl.nist.gov/div898/handbook/pmd/section4/pmd431.htm">mínimos quadrados ordinários (NIST)</a>. A faixa desenhada é ±2 erros padrão da média ajustada, sem garantia de cobertura de 95%.</p><p>O perfil térmico idealizado vem da <a href="https://ntrs.nasa.gov/citations/19770009539">U.S. Standard Atmosphere 1976, NASA/NOAA</a>, parte 1, tabelas 4/8 e equações 23/27/29. A entrada é altitude geométrica; abaixo de 86 km há conversão geopotencial. O recorte termina em 120 km e não retrata o clima atual.</p><p>Os novos posters derivam das cenas interativas e dos mapas planetários creditados. Plasma e núcleos não têm estrelas; a CMB usa um mapa de céu sintético, claramente identificado, e não uma casca material ao redor do observador.</p></div>
+    <div class="reference-index">
+      <h3>Nuvens e estrelas: o que vem do telescópio</h3>
+      <p>A microexperiência de nebulosas usa o detalhe da <a href="https://esahubble.org/images/heic0601a/">composição Hubble de Orion</a>. Crédito: NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team. Licença <a href="https://esahubble.org/copyright/">CC BY 4.0</a>. Reduzimos e filtramos a imagem; a projeção, a profundidade e as cores por mecanismo são artísticas e não reconstroem Orion em três dimensões.</p>
+      <p>A densidade das nuvens, a cavidade, a granulação ampliada das estrelas e os cortes internos foram produzidos para a escola. São ilustrações com fontes e scripts editáveis; não são cálculos de hidrodinâmica, transferência radiativa ou do caminho de um fóton. Guias visuais: <a href="https://svs.gsfc.nasa.gov/30957/">estrutura de Orion</a> e <a href="https://svs.gsfc.nasa.gov/3412/">granulação observada por Hinode</a>.</p>
+    </div>
     <details class="reference-index">
       <summary>Consultar todas as referências científicas · {referenceIndex.length}</summary>
       <ul>

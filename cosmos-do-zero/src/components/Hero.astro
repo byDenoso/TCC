@@ -31,8 +31,9 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
         <p>A luz traz notícias de lugares e épocas distantes. A cosmologia usa essas pistas para entender o Universo. Aqui você começa do zero, com aulas curtas e experimentos para explorar.</p>
       </div>
       <div class="hero-actions">
-        <a class="cta" href="#observatorio">Abrir o observatório <span class="arrow" aria-hidden="true">↗</span></a>
-        <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey><span data-start-label>Começar a jornada</span> <span aria-hidden="true">→</span></a>
+        <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')}>Começar do zero <span class="arrow" aria-hidden="true">↗</span></a>
+        <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> <span aria-hidden="true">→</span></a>
+        <a class="textlink" href="#observatorio">Explorar uma pergunta <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </section>

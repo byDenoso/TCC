@@ -18,7 +18,8 @@ export const WIEN_NM_K = 2.897771955e6;
 export const HALPHA_NM = 656.28;
 
 /** Parâmetros de referência do modelo ΛCDM plano ajustado pelo Planck 2018 (TT,TE,EE+lowE+lensing). */
-export const PLANCK: Cosmos = { h0: 67.4, om: 0.315, ol: 0.685 };
+// ΩΛ é exibida arredondada a 0,685; internamente desconta Ωr para fechamento plano.
+export const PLANCK: Cosmos = { h0: 67.4, om: 0.315, ol: 0.685 - OR_H2 / (67.4 / 100) ** 2 };
 /** Valor local de H0 (escada de distâncias com Cefeidas e supernovas Ia, SH0ES 2022), com o mesmo Ωm. */
 export const LOCAL_H0 = 73.04;
 /** Fração de matéria comum (bárions), Planck 2018: Ωb ≈ 0,0493. */
@@ -28,8 +29,8 @@ export const omegaR = (p: Cosmos): number => OR_H2 / (p.h0 / 100) ** 2;
 export const omegaK = (p: Cosmos): number => 1 - p.om - p.ol - omegaR(p);
 export const E2 = (a: number, p: Cosmos): number => omegaR(p) * a ** -4 + p.om * a ** -3 + omegaK(p) * a ** -2 + p.ol;
 
-/** Universo plano com a matéria escolhida (ΩΛ = 1 − Ωm). */
-export const flat = (h0: number, om: number): Cosmos => ({ h0, om, ol: 1 - om });
+/** Universo plano: Ωm + ΩΛ + Ωr = 1. A radiação entra também no fechamento. */
+export const flat = (h0: number, om: number): Cosmos => ({ h0, om, ol: 1 - om - OR_H2 / (h0 / 100) ** 2 });
 
 /** Há um instante em que E² ≤ 0 antes de hoje? Então o modelo não tem Big Bang quente (descartado pelas observações). */
 export function hasBounce(p: Cosmos): boolean {

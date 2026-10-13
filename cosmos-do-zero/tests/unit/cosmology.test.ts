@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PLANCK, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, fate, fitHubble, flat, hasBounce, lookbackGyr, maxScale, observedWavelengthNm, scaleCurve, wienPeakNm, zAcceleration, zEquality, zLambdaMatter } from '../../src/lib/cosmology';
+import { PLANCK, omegaK, omegaR, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, fate, fitHubble, flat, hasBounce, lookbackGyr, maxScale, observedWavelengthNm, scaleCurve, wienPeakNm, zAcceleration, zEquality, zLambdaMatter } from '../../src/lib/cosmology';
 
 const near = (v: number, ref: number, tol: number) => expect(Math.abs(v - ref)).toBeLessThanOrEqual(tol);
 
@@ -48,7 +48,14 @@ describe('destino do Universo', () => {
     expect(c.a.at(-1)!).toBeLessThan(1e-3);
     near(c.t.at(-1)!, fate(p).crunchGyr!, 1);
   });
-  it('universo plano com Ωm=0,3 equivale a ΩΛ=0,7', () => near(flat(70, 0.3).ol, 0.7, 1e-12));
+  it('universo plano inclui radiação no fechamento das densidades', () => {
+    for (const h0 of [50, 67.4, 70, 100]) {
+      const p = flat(h0, 0.3);
+      near(omegaK(p), 0, 1e-15);
+      near(p.om + p.ol + omegaR(p), 1, 1e-15);
+      near(p.ol, 0.7, 0.0002);
+    }
+  });
 });
 
 describe('ajuste de Hubble', () => {

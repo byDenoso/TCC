@@ -1,3 +1,4 @@
+import {atmosphereProfile as PROFILE,atmosphereTemperatureC as tempAt,atmosphereLayer as layerAt} from '../../lib/teaching-numerics';
 import type { Scene, SceneMap } from './engine';
 import { C, arrow, bar, clear, ease, el, fmt, g, lerp, rng, sphere, star, text } from './draw';
 
@@ -103,9 +104,6 @@ const ar = (): Scene => {
 };
 
 /** Perfil médio de temperatura (°C) com a altitude (km), aproximado. */
-const PROFILE: [number, number][] = [[0, 15], [11, -56], [20, -56], [32, -44], [47, -2], [51, -2], [71, -58], [85, -86], [90, -86], [100, -78], [110, -33], [120, 87]];
-const tempAt = (h: number): number => { for (let i = 1; i < PROFILE.length; i++) if (h <= PROFILE[i][0]) { const [h0, t0] = PROFILE[i - 1], [h1, t1] = PROFILE[i]; return lerp(t0, t1, (h - h0) / (h1 - h0)); } return PROFILE[PROFILE.length - 1][1]; };
-const layerAt = (h: number): string => (h < 12 ? 'troposfera' : h < 50 ? 'estratosfera' : h < 85 ? 'mesosfera' : 'termosfera');
 const camadas = (): Scene => {
   let layer: SVGGElement;
   const Y = (h: number) => 250 - (h / 120) * 230, X = (tc: number) => 230 + ((tc + 100) / 200) * 230;
@@ -124,7 +122,7 @@ const camadas = (): Scene => {
       el('line', { x1: X(0), x2: X(0), y1: 20, y2: 250, stroke: C.line, 'stroke-dasharray': '3 4' }, layer);
       text(layer, X(0), 268, '0 °C', { class: 'mx-t small', 'text-anchor': 'middle' });
       text(layer, X(-100), 268, '−100', { class: 'mx-t small', 'text-anchor': 'middle' });
-      text(layer, X(100), 268, '+100', { class: 'mx-t small', 'text-anchor': 'middle' });
+      text(layer, X(100), 268, '+100 °C', { class: 'mx-t small', 'text-anchor': 'end' });
       el('polyline', { points: PROFILE.map(([h, tc]) => `${X(tc)},${Y(h)}`).join(' '), fill: 'none', stroke: C.accent, 'stroke-width': 3 }, layer);
       const tc = tempAt(v);
       el('line', { x1: 10, x2: 470, y1: Y(v), y2: Y(v), stroke: C.ink, 'stroke-width': 1, 'stroke-dasharray': '2 4' }, layer);
@@ -135,7 +133,7 @@ const camadas = (): Scene => {
         : name === 'estratosfera' ? 'A temperatura volta a subir: a camada de ozônio absorve ultravioleta do Sol e esquenta o ar.'
         : name === 'mesosfera' ? 'Volta a esfriar: é a região mais fria. Muitos meteoros se queimam por aqui.'
         : 'Termosfera: o ar é rarefeito e esquenta muito ao absorver radiação do Sol. Auroras acontecem nesta altura. Acima, ela se estende por centenas de km até a exosfera.';
-      return `${Math.round(v)} km, ${name}, cerca de ${fmt(Math.round(tc))} °C. ${why} As fronteiras são aproximadas e variam com o lugar e a estação.`;
+      return `${Math.round(v)} km, ${name}, cerca de ${fmt(Math.round(tc))} °C. ${why} Perfil idealizado adaptado da U.S. Standard Atmosphere 1976, não o clima medido hoje. Altitude geométrica; fronteiras aproximadas e variáveis. A faixa termina em 120 km e não inclui a exosfera.`;
     }
   };
 };
@@ -167,7 +165,7 @@ const campo = (): Scene => {
       if (v === 1) for (let i = 0; i < 6; i++) el('circle', { cx: lerp(ex - 40, ex - 140 - i * 10, ease(t)), cy: ey - 40 + i * 16, r: 2, fill: C.blue, opacity: 1 - t }, layer);
       return v === 0
         ? 'Com campo magnético: as partículas do vento solar são desviadas em volta do planeta. Algumas descem perto dos polos e fazem auroras (verde). A atmosfera é outra camada, por dentro.'
-        : 'Sem campo: o vento solar bate direto no alto da atmosfera e pode arrancar gás aos poucos, ao longo de muito tempo. Isso ajuda a explicar parte da história de Marte. Ter campo ajuda, mas não garante vida.';
+        : 'Sem o campo interno deste esquema, as partículas alcançam a atmosfera diretamente. Isto não prevê a perda de ar: gravidade, radiação, composição e campos induzidos também importam. Vênus tem atmosfera densa e campo induzido, sem um dínamo como o da Terra.';
     }
   };
 };

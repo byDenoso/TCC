@@ -1,15 +1,19 @@
-# Notas científicas
+# Notas científicas da revisão integrada
 
-Nenhum valor numérico, texto científico, ID ou unidade foi alterado em relação ao conteúdo legado (`src/data/*.json` foi extraído do HTML original por `scripts/extract_legacy.py`).
+IDs/rotas e dados planetários principais foram preservados. A linguagem e os modelos educativos foram revisados; a afirmação antiga de que nenhum número/texto científico fora alterado não descreve esta revisão.
 
-## Verificado
+- FLRW central: PLANCK H0=67.4km/s/Mpc, Ωm=.315, ΩΛ=1−Ωm−Ωr, com radiação declarada. Modelos planos fecham exatamente as densidades. Distância/tempo da luz são calculados por parâmetro/tabela; o desenho comprime distâncias e não faz objetos ligados crescerem.
+- Expansão: um catálogo comóvel ilustrativo14objetos alimenta SVG,3D, gráfico e observador. Nenhuma galáxia ocupa centro espacial privilegiado. Posições/morfologias são artísticas, sem N-body.
+- Órbitas: integração dois corpos normalizadaGM=r0=1, tempo cumulativo/interpolação. Limite de impactoR=.14é ilustrativo; não é o raio físico do Sol em 1 UA. Referência analítica rperi=v²/(2−v²); limiar sqrt(2R/(1+R)). Setas mostram direções, não intensidades proporcionais.
+- Planetas: distância do catálogo significa semieixo maior. Gravidade comparada usa definição equatorial efetiva, com rotação, a1 bar nos gigantes, conforme notas NSSDCA. Não misturarGM/R²esférico com esses valores. Temperatura superficial/nível de referência segue legenda do catálogo; valores legados não foram todos reconferidos linha a linha.
+- Evolução estelar: caminhos/tempos aproximados dependem de massa, composição e perda de gás. Limites pedagógicos não são destino determinista. WD fria é previsão de futuro; não observação de uma anã negra.
+- Lente: distâncias angulares positivas, fonte/lente ordenadas pela geometria do exercício; imagem calculada centrada na lente. Modelo de lente fina, sem ray tracing GR completo.
+- BH: horizonte é fronteira, não superfície material. Marcador não é sombra calculada; disco esquemático começa fora de 3 Rs no caso não rotativo ilustrado. NS OU BH representam caminhos possíveis distintos.
+- CMB: mapa sintético educativo; transparência/espalhamento/expansão, sem casca material centrada no observador. Posters de primeiros minutos não contêm estrelas/galáxias.
+- Supernovas/rotação: pontos/curvas gerados identificados como sintéticos. deltaMagnitude compara FLRWcentral com EdS analítico com o mesmo H0 e sem radiação na referência. Hogg/NED, seções 4/7; numeração de equações varia entreHTML/PDF.
+- OLS: erro padrão da inclinação distinto do erro da média ajustada. Banda ±2 EP da média é aproximação educativa, sem garantia95%, sobretudo em n pequeno. NIST, Handbook, least squares.
+- Atmosfera: perfil idealizado USSA 1976, domínio altitude geométrica 0–120 km; geopotencial abaixo de 86 km, ajuste de massa molar 86–91 km e funções declaradas acima. Não é clima medido hoje nem cobre exosfera. Campo/dínamo é uma influência entre outras na atmosfera; Vênus tem campo induzido e atmosfera densa.
 
-- Colunas de distância ao Sol e período orbital dos planetas conferidas em 12/10/2026 contra a tabela principal da NASA/NSSDCA *Planetary Fact Sheet* (https://nssdc.gsfc.nasa.gov/planetary/factsheet/): Júpiter 778,5 ×10⁶ km / 4331 d; Marte 228,0 / 687,0; Saturno 1432,0 / 10 747; Urano 2867,0 / 30 589; Netuno 4515,0 / 59 800. Convertidos a UA (÷149,6) coincidem com o arquivo (9,57; 19,17; 30,18).
-- Demais colunas (raio, massa, gravidade, temperatura, rotação) **não** foram reconferidas linha a linha nesta entrega; os valores seguem o legado e as três páginas NASA listadas sob o catálogo.
+Referências/fontes de imagens e limites aparecem em `/fontes/` e junto às cenas. Manifests guardam origem, processamento, créditos e hashes. Os testes unitários independentes incluem limites/analíticos/fixtures QUADPACK e páginas primárias USSA. O parent reproduziu independentemente as fixtures FLRW e revisou o perfil USSA; isso verifica o cálculo educativo, não faz inferência observacional.
 
-## Observações para revisão editorial (nada foi alterado)
-
-1. **"Semieixo da órbita"** — a tabela principal da NASA rotula a coluna como *Distance from Sun* (média). A interface usa "semieixo", que é a leitura das notas da NASA (https://nssdc.gsfc.nasa.gov/planetary/factsheet/planetfact_notes.html). Se quiser o rótulo literal: "Distância média ao Sol".
-2. **Temperaturas** — superfície (média) para rochosos, 1 bar para gigantes. A interface já explicita isso na linha "Onde é medida"; manter.
-3. **Ilustrações dos planetas** são geradas proceduralmente (`scripts/render_planets.py`), rotuladas "Ilustração artística · sem escala". Não representam feições reais; substituir por fotos/composições oficiais exigiria nova curadoria de créditos.
-4. **Percursos estelares** — corte em 8 M☉ é pedagógico (já dito na própria nota da interface). A esfera ilustrativa usa raio de sequência principal aproximado (R ∝ M^0,9 abaixo de 1 M☉, M^0,6 acima) apenas para dar ideia de tamanho; não é dado do conteúdo.
+Status científico das ilustrações: TOY_MODEL. Não há likelihood, priors, covariância ou inferência nesta escola; esses critérios são N/A. Nenhum conteúdo PEER/Atlas foi incorporado.

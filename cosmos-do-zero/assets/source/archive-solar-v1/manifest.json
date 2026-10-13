@@ -1,0 +1,64 @@
+{
+  "author": "Cosmos do Zero / original procedural authoring",
+  "license": "CC0-1.0",
+  "scientific_status": "Illustrative materials, normalized spheres; no observed terrain data. Sizes are set by the lesson, not the mesh.",
+  "blender": "4.5.9 LTS",
+  "reproduction": "blender --background --python assets/source/build_worlds.py",
+  "files": [
+    {
+      "path": "assets/source/mundos.blend",
+      "bytes": 2164301,
+      "sha256": "5d790da50c336e3bc71cbb519003235c046110760d17aa00b3ee04441fb8c59f"
+    },
+    {
+      "path": "public/models/mundos.glb",
+      "bytes": 1214440,
+      "sha256": "c04413937249db5934cfbd0675ed23b9cc187d2f9031dca8f8acf1be3cf21862"
+    },
+    {
+      "path": "assets/source/jupiter.png",
+      "bytes": 98923,
+      "sha256": "da82dc588922c508cc6f06643d59b18a99b1608d1804ef2fdf9b26c9318a7c61"
+    },
+    {
+      "path": "assets/source/lua.png",
+      "bytes": 116690,
+      "sha256": "96d3ea4270f32e2d4dc4dcdeb84ffdbcc2883557dacf4cb59a5d023fa108f706"
+    },
+    {
+      "path": "assets/source/marte.png",
+      "bytes": 115090,
+      "sha256": "6a63317ce820179214a05cde4cdef6c6a6a5b5681cfdc0814bf07d04e445d1ab"
+    },
+    {
+      "path": "assets/source/mercurio.png",
+      "bytes": 116121,
+      "sha256": "48a062e0cff486bb05b14e90a064273233f795f3b099f465c78013ea02a364f8"
+    },
+    {
+      "path": "assets/source/netuno.png",
+      "bytes": 89088,
+      "sha256": "a1dcd244686fc6932d2c9e9501f9a3dd9d99dd03b9d0b879c5e0d3e65a8dce13"
+    },
+    {
+      "path": "assets/source/saturno.png",
+      "bytes": 99070,
+      "sha256": "47d07c580183e92e63695b49b9240ac5abb537716f585699f8669f047459761b"
+    },
+    {
+      "path": "assets/source/terra.png",
+      "bytes": 88025,
+      "sha256": "100f92e8984983c2db2e5f912ffaeb5608ae2f357f486d334b0092fc399a749d"
+    },
+    {
+      "path": "assets/source/urano.png",
+      "bytes": 99453,
+      "sha256": "be2c9d31dbf031f3e3c22b9fcba8410db7658220189492d8b4425b8f05dfddef"
+    },
+    {
+      "path": "assets/source/venus.png",
+      "bytes": 132259,
+      "sha256": "0911dd8b41b2b856f422a9dd3c2b952e92bcb8ab82c3e305cc522e4713fef4e5"
+    }
+  ]
+}

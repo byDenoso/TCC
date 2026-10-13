@@ -1,0 +1,5 @@
+import {chromium} from 'playwright';
+const b=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const p=await b.newPage({viewport:{width:1280,height:900}});p.on('pageerror',e=>console.log('PAGEERROR',String(e)));p.on('console',m=>{if(m.type()==='error'||m.type()==='warning')console.log('CONSOLE',m.type(),m.text());});await p.addInitScript(()=>localStorage.setItem('cosmos-v5-aula-inteira','1'));
+await p.goto('http://127.0.0.1:4350/capitulos/sistema-solar/#sistema-solar-orbitas',{waitUntil:'networkidle'});const root=p.locator('#sistema-solar-orbitas .mx');await root.scrollIntoViewIfNeeded();await p.waitForFunction(()=>document.querySelector('#sistema-solar-orbitas .mx').classList.contains('is-ready'));
+for(const v of [.2,1,1.6]){await root.locator('[data-mx-range]').evaluate((e,v)=>{e.value=String(v);e.dispatchEvent(new Event('input',{bubbles:true}));},v);console.log(v,await root.locator('[data-mx-range]').inputValue(),await root.locator('[data-mx-caption]').innerText());}await b.close();
+

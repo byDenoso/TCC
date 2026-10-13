@@ -6,6 +6,8 @@ import QuizCard from '../../components/QuizCard.astro';
 import CosmosScene from '../../components/CosmosScene.astro';
 import Observatorio from '../../components/Observatorio.astro';
 import Micro from '../../components/Micro.astro';
+import Lensing from '../../components/Lensing.astro';
+import SolarStudio from '../../components/SolarStudio.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
 import { MICRO } from '../../data/micro';
 import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
@@ -85,6 +87,8 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
                 <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u(`/glossario/?q=${encodeURIComponent(seg.term.term)}#termo-${seg.index}`)}>Ver no dicionário →</a></span></>
               ) : seg.text)}</p>
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
+              {s.id === 'misterios-do-cosmos-materia-escura' && <Lensing id={s.id} />}
+              {s.id === 'sistema-solar-sol-e-planetas' && <SolarStudio id={s.id} />}
               {s.more && (
                 <details class="depth-detail" data-layer="more">
                   <summary>Entenda melhor</summary>

@@ -1,0 +1,55 @@
+[
+  {
+    "name": "cosmic-web",
+    "chapter": "galaxias-e-nebulosas",
+    "id": "teia-cosmica",
+    "value": 1,
+    "errors": []
+  },
+  {
+    "name": "galaxies",
+    "chapter": "galaxias-e-nebulosas",
+    "id": "via-lactea",
+    "value": 2,
+    "errors": []
+  },
+  {
+    "name": "solar-system",
+    "chapter": "galaxias-e-nebulosas",
+    "id": "via-lactea",
+    "value": 1,
+    "errors": []
+  },
+  {
+    "name": "group-local",
+    "chapter": "galaxias-e-nebulosas",
+    "id": "via-lactea",
+    "value": 3,
+    "errors": []
+  },
+  {
+    "name": "star",
+    "chapter": "vida-das-estrelas",
+    "id": "sol",
+    "value": 3,
+    "errors": []
+  },
+  {
+    "name": "earth",
+    "chapter": "terra-e-atmosfera",
+    "id": "formacao-da-terra",
+    "value": 3,
+    "errors": []
+  },
+  {
+    "name": "nuclei",
+    "chapter": "origem-do-universo",
+    "id": "fase-quente",
+    "value": 1,
+    "errors": []
+  },
+  {
+    "name": "plasma",
+    "source": "CmbJourney initial plasma canvas; illustration without stars"
+  }
+]

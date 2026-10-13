@@ -1,0 +1,33 @@
+{
+  "author": "Cosmos do Zero",
+  "license": "CC0-1.0 (original generated assets only)",
+  "scientific_status": "Original illustrations: cloud density/cavity and spherical granulation, not observations or hydrodynamic calculations. Granules enlarged for display.",
+  "guides": [
+    "https://svs.gsfc.nasa.gov/30957/",
+    "https://svs.gsfc.nasa.gov/3412/"
+  ],
+  "reproduction": "python assets/source/build_stellar_materials.py",
+  "observational_material": {
+    "source": "https://esahubble.org/images/heic0601a/",
+    "license": "CC-BY-4.0",
+    "credit": "NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team",
+    "modifications": "Reduced to 1024 px, median-filtered, projected into an artistic volume. Assigned depth and mechanism colours are not an observational 3D reconstruction."
+  },
+  "files": [
+    {
+      "path": "public/models/stellar/cloud-density-128.bin",
+      "bytes": 2097152,
+      "sha256": "4bd8f4119983b29ac5c2ec07838217f9ead276c9f2448a62bed2a14f0b30dd22"
+    },
+    {
+      "path": "public/models/stellar/granulation.png",
+      "bytes": 419346,
+      "sha256": "065012ce328a0066b4ff4f4133007e8328ab2a40a6fdd221299d983550c2b5ee"
+    },
+    {
+      "path": "public/models/stellar/orion-detail.webp",
+      "bytes": 74726,
+      "sha256": "445d7e5f15cb9735f8a50cc9aab6ca13c98805fb71c3d96549fd5ff9d1e601a6"
+    }
+  ]
+}

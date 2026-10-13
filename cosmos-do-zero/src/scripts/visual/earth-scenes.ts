@@ -1,0 +1,44 @@
+import * as THREE from 'three';
+import type {Exhibit} from './runtime';
+import {createWorldFactory} from './assets';
+import {styleEarth} from './world-view';
+const light={ambient:.30,key:3.4,fill:.07,exposure:1.18,neutral:true,keyPosition:[4,3,6] as [number,number,number]};
+function rockMaterial(color:THREE.ColorRepresentation){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const c=canvas.getContext('2d')!,img=c.createImageData(256,256);let seed=917;for(let i=0;i<256*256;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const n=185+Math.floor(seed/4294967296*70);img.data.set([n,n,n,255],i*4);}c.putImageData(img,0,0);const map=new THREE.CanvasTexture(canvas);return new THREE.MeshStandardMaterial({color,map,bumpMap:map,bumpScale:.015,roughness:1,side:THREE.DoubleSide});
+}
+export function earthLayersScene():Exhibit{
+ const make=createWorldFactory(),group=new THREE.Group(),earth=make('terra');
+ earth.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){const original=m.geometry,geometry=original.clone(),position=geometry.getAttribute('position'),index=geometry.index,kept:number[]=[];for(let i=0;i<(index?.count??position.count);i+=3){const ids=[0,1,2].map(k=>index?index.getX(i+k):i+k),x=ids.reduce((sum,id)=>sum+position.getX(id),0),z=ids.reduce((sum,id)=>sum+position.getZ(id),0);if(!(x<0&&z>0))kept.push(...ids);}geometry.setIndex(kept);original.dispose();m.geometry=geometry;}});styleEarth(earth,true);group.add(earth);
+ const shell=new THREE.Mesh(new THREE.SphereGeometry(1,64,32,Math.PI/2,Math.PI*1.5),rockMaterial(0x81634e));group.add(shell);
+ const faces=new THREE.Group();group.add(faces);const radii=[0,.19,.55,.97,1],colors=[0xe4ca93,0xb97846,0x8d634b,0x5b5b52];
+ for(let i=0;i<4;i++)for(const phi of[Math.PI/2,Math.PI*2]){const mesh=new THREE.Mesh(new THREE.RingGeometry(radii[i],radii[i+1],80,8,-Math.PI/2,Math.PI),rockMaterial(colors[i]));mesh.rotation.y=phi+Math.PI;faces.add(mesh);}
+ const mixed=new THREE.Mesh(new THREE.SphereGeometry(.965,64,32,Math.PI/2,Math.PI*1.5),rockMaterial(0xb47a45));group.add(mixed);
+ for(const phi of[Math.PI/2,Math.PI*2]){const m=new THREE.Mesh(new THREE.CircleGeometry(.965,80, -Math.PI/2,Math.PI),rockMaterial(0xb47a45));m.rotation.y=phi+Math.PI;mixed.add(m);}
+ const iron=new THREE.Group();group.add(iron);const geometry=new THREE.SphereGeometry(.028,12,8),material=new THREE.MeshStandardMaterial({color:0x5a3028,roughness:.45,metalness:.25});
+ const drops=Array.from({length:36},(_,i)=>{const d=new THREE.Mesh(geometry,material);iron.add(d);const r=.72*Math.sqrt((i+.5)/36),a=i*2.399;return{d,start:new THREE.Vector3(-r*Math.abs(Math.sin(a)),r*Math.cos(a),r*Math.abs(Math.cos(a)))};});
+ const labels=[{text:'mistura quente · cores atribuídas',position:new THREE.Vector3(0,-1.02,0)}];
+ return {group,lighting:light,labels,camera:[-1.8,1.25,3.9],cameraForAspect:a=>a<1.4?[-1.5,1.1,4.2]:[-1.8,1.25,3.9],quality(mode,width){make.quality(mode==='low'?512:width<600?1024:2048);},update({value,phase}){const v=Math.round(value);earth.visible=v===3;shell.visible=v<3;mixed.visible=iron.visible=v<2;faces.visible=v>=2;faces.children.slice(0,2).forEach(o=>(o as THREE.Mesh<THREE.BufferGeometry,THREE.MeshStandardMaterial>).material.color.set(v===3?colors[0]:colors[1]));drops.forEach(({d,start})=>d.position.copy(start).multiplyScalar(v===1?1-phase*.72:1));labels[0].text=v<2?'ferro escuro + rochas · mistura quente':v===2?'núcleo + manto + crosta':'núcleo interno sólido · externo líquido';}};
+}
+export function atmosphereScene():Exhibit{
+ const make=createWorldFactory(),group=new THREE.Group(),earth=make('terra');earth.rotation.y=-1.8;styleEarth(earth);group.add(earth);
+ const km=[12,50,85,120],colors=[0x77b2d6,0x9b8ec5,0xc49cad,0xd8b284];
+ const shells=km.map((h,i)=>{const shell=new THREE.Mesh(new THREE.SphereGeometry(1+h/6371*10,48,24),new THREE.MeshBasicMaterial({color:colors[i],transparent:true,opacity:.08,side:THREE.BackSide,depthWrite:false}));group.add(shell);return shell;});
+ const marker=new THREE.Mesh(new THREE.SphereGeometry(.025,16,10),new THREE.MeshBasicMaterial({color:0xffdab0}));group.add(marker);const label={text:'',position:new THREE.Vector3()};
+ return {group,labels:[label,{text:'espessuras ampliadas cerca de 10×',position:new THREE.Vector3(0,-1.23,0)}],lighting:light,camera:[0,.7,4.6],quality(mode,width){make.quality(mode==='low'?512:width<600?1024:2048);},update({value}){const radius=1+value/6371*10,index=value<12?0:value<50?1:value<85?2:3;marker.position.set(radius*.8,radius*.6,.06);label.position.copy(marker.position);label.text=Math.round(value)+' km · '+['troposfera','estratosfera','mesosfera','termosfera'][index];shells.forEach((s,i)=>(s.material as THREE.MeshBasicMaterial).opacity=i===index?.20:.04);}};
+}
+function curtain(sign:number){
+ const positions:number[]=[],uvs:number[]=[],indices:number[]=[];
+ for(let i=0;i<=96;i++){const a=i/96*Math.PI*2,r=.25+.012*Math.sin(a*9)+.009*Math.sin(a*23);for(let j=0;j<2;j++){const y=sign*(.50+j*(.08+.035*Math.sin(a*7)**2));positions.push(Math.cos(a)*r,y,Math.sin(a)*r);uvs.push(i/96,j);}if(i<96){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}}
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geo.setIndex(indices);
+ return new THREE.Mesh(geo,new THREE.ShaderMaterial({side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,uniforms:{uPhase:{value:1}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform float uPhase;varying vec2 vUv;void main(){float rays=.60+.40*sin(vUv.x*370.+uPhase*3.);float a=(1.-vUv.y)*rays*.7;gl_FragColor=vec4(mix(vec3(.11,.8,.36),vec3(.46,.18,.76),vUv.y),a);}'}));
+}
+export function magnetosphereScene():Exhibit{
+ const make=createWorldFactory(),group=new THREE.Group(),earth=make('terra');earth.rotation.y=-1.8;styleEarth(earth);earth.scale.setScalar(.55);group.add(earth);
+ const field=new THREE.Group();group.add(field);for(const L of[1.15,1.65,2.15])for(let i=0;i<4;i++){const az=i/4*Math.PI*2,theta0=Math.asin(Math.sqrt(.55/L)),pts=[];for(let j=0;j<=64;j++){const theta=theta0+(Math.PI-2*theta0)*j/64,r=L*Math.sin(theta)**2,x=r*Math.sin(theta)*Math.cos(az);pts.push(new THREE.Vector3(x*(x<0?1-.35*(r-.55)/1.6:1+.65*(r-.55)/1.6),r*Math.cos(theta),r*Math.sin(theta)*Math.sin(az)));}field.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x5e9cbf,transparent:true,opacity:.35})));}
+ const north=curtain(1),south=curtain(-1);group.add(north,south);
+ const trajectories=Array.from({length:48},(_,i)=>{const sign=i%4===0?(Math.floor(i/4)%2?1:-1):(i%2?1:-1),y=Math.sin(i*5.7)*1.1,z=Math.cos(i*3.2)*.5;const start=new THREE.Vector3(-3.1,y,z);return {y,z,field:i%4===0?new THREE.CubicBezierCurve3(start,new THREE.Vector3(-1.6,sign*1.1,z),new THREE.Vector3(-.55,sign*1.1,.12),new THREE.Vector3(.20,sign*.51,.06)):new THREE.CubicBezierCurve3(start,new THREE.Vector3(-1.3,sign*1.7,z),new THREE.Vector3(1.5,sign*1.6,z),new THREE.Vector3(3.8,sign*1.1,z))};});
+ const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(48*3),3));
+ const dots=new THREE.Points(geo,new THREE.ShaderMaterial({transparent:true,depthWrite:false,toneMapped:false,vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_PointSize=3.;}',fragmentShader:'void main(){float a=exp(-dot(gl_PointCoord-.5,gl_PointCoord-.5)*25.);gl_FragColor=vec4(.95,.74,.39,a);}'}));group.add(dots);
+ const auroraLabel={text:'auroras nos polos',position:new THREE.Vector3(0,.65,0),visible:()=>field.visible};
+ return {group,views:[{label:'Ver polo norte de perto',camera:[.65,1.3,2.1]}],inspect(){return {windPositions:Array.from((geo.getAttribute('position') as THREE.BufferAttribute).array),fieldOn:field.visible};},labels:[{text:'vento solar →',position:new THREE.Vector3(-2.3,.2,0)},auroraLabel,{text:'linhas didáticas · não são uma parede',position:new THREE.Vector3(.5,-1.65,0),visible:()=>field.visible}],lighting:light,camera:[0,2.4,6.3],cameraForAspect:a=>a<1.4?[0,2.9,7.8]:[0,2.4,6.3],quality(mode,width){make.quality(mode==='low'?512:width<600?1024:2048);},update({value,phase}){field.visible=north.visible=south.visible=value===0;for(const aurora of[north,south])(aurora.material as THREE.ShaderMaterial).uniforms.uPhase.value=phase;const positions=geo.getAttribute('position') as THREE.BufferAttribute;trajectories.forEach((path,i)=>{const t=(phase+i/48)%1,p=value===0?path.field.getPoint(t):new THREE.Vector3(-3.1+t*6.8,path.y,path.z);const r2=p.y*p.y+p.z*p.z;if(value!==0&&r2<.55*.55){const contact=-Math.sqrt(.55*.55-r2);p.x=Math.min(p.x,contact);}positions.setXYZ(i,p.x,p.y,p.z);});positions.needsUpdate=true;}};
+}

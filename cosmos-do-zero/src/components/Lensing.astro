@@ -1,0 +1,18 @@
+---
+interface Props { id?:string }
+const {id='lente'}=Astro.props;
+---
+<section class="lens-experiment" data-lens aria-labelledby={`${id}-title`}>
+ <span class="meta">Outra pista da gravidade</span><h3 id={`${id}-title`}>A luz muda de caminho.</h3>
+ <p>Uma massa entre a fonte e você pode produzir arcos ou um anel. Mova a fonte e a lente e observe a imagem calculada.</p>
+ <div class="lens-dashboard">
+  <figure class="lens-image"><canvas width="240" height="240" data-lens-image role="img" aria-label="Imagem calculada de lente fina: anel no alinhamento, arcos quando a fonte se desloca."></canvas><figcaption><strong>O que o observador veria neste modelo</strong><p data-lens-caption role="status"></p></figcaption></figure>
+  <div class="lens-controls">
+   <label for={`${id}-source`}>Mover a fonte <output data-lens-source-out>0,00</output><input id={`${id}-source`} type="range" min="-1" max="1" step="0.02" value="0" data-lens-source /></label>
+   <label for={`${id}-lens`}>Mover a lente <output data-lens-lens-out>0,00</output><input id={`${id}-lens`} type="range" min="-0.5" max="0.5" step="0.02" value="0" data-lens-lens /></label>
+   <button type="button" data-lens-reset>Alinhar de novo</button>
+  </div>
+ </div>
+ <details class="lens-geometry" data-lens-geometry><summary>Ver o alinhamento em 3D</summary><div class="lens-stage mx-stage" data-lens-stage><svg data-lens-fallback viewBox="0 0 480 270" role="img" aria-label="Fonte, lente e observador. A geometria da lente muda ao deslocar a fonte e a massa."></svg></div></details>
+ <details class="depth-detail"><summary>Como interpretar o cálculo</summary><p>A imagem usa a equação de lente fina para uma massa pontual, com uma fonte de brilho gaussiano ilustrativa. Posições angulares estão em unidades do raio de Einstein (θE = 1). A geometria 3D apenas explica o alinhamento; não está em escala nem integra relatividade geral completa. Galáxias reais têm massa distribuída e podem gerar imagens mais complexas. A presença de uma lente mede gravidade; sozinha não identifica uma partícula de matéria escura.</p><p><a href="https://www.esa.int/ESA_Multimedia/Images/2025/02/Einstein_ring_explained" target="_blank" rel="noopener noreferrer">ESA · Como se forma um anel de Einstein ↗</a></p></details>
+</section>

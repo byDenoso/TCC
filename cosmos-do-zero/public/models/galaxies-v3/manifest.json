@@ -1,0 +1,147 @@
+{
+  "version": 3,
+  "author": "Cosmos do Zero original mathematical artwork",
+  "license": "CC0-1.0",
+  "method": "High resolution integrated stellar density, smooth multi-scale gas, asymmetric absorption lanes, variable pitch and radial bulge profiles",
+  "interpretation": "Original illustration, no observed data, no N-body calculation",
+  "source": "assets/source/build_galaxies_v3.py",
+  "assets": [
+    {
+      "file": "grand-spiral.png",
+      "bytes": 2646528,
+      "sha256": "5b5de3ddcece018d58946f3a3cc7ca0bbe0cd4b6b5baa799625db4c37a215e12"
+    },
+    {
+      "file": "barred-spiral.png",
+      "bytes": 2694134,
+      "sha256": "20f0f7524c9f85bc1bf2932b8bc7ac02339478f89c0c84359e4a62b451b1e9f3"
+    },
+    {
+      "file": "many-arms.png",
+      "bytes": 2782607,
+      "sha256": "a9e11cc35c1796415e6dcc139511f59dbd66265f771862388c5d65c212f1aa78"
+    },
+    {
+      "file": "lenticular.png",
+      "bytes": 2720114,
+      "sha256": "5078840e40c7af1d6d5ce4bf223793c9457da1edf27bd63ac2703d90bbc852b6"
+    },
+    {
+      "file": "elliptical.png",
+      "bytes": 1979964,
+      "sha256": "1c214b4be341ba90ec8ed2cdbd51664443836edc7b05ef7ae4afd36c42db85cd"
+    },
+    {
+      "file": "irregular.png",
+      "bytes": 2166771,
+      "sha256": "9c81fb4f262bfeffb70ebc69a1dbb5d0d237bf0a92aa58ab3a2c0f1e46385a7f"
+    }
+  ],
+  "runtime_assets": [
+    {
+      "file": "grand-spiral.webp",
+      "bytes": 648560,
+      "sha256": "14c09ca2af9eed85debdc7c2279f2b3044cf8d5f83b7b8db4aa326f3d988588b"
+    },
+    {
+      "file": "barred-spiral.webp",
+      "bytes": 619076,
+      "sha256": "505a3b58b9694e6f74427bc33409516b9e63242d0f69eed1eb8a0f8f481261dc"
+    },
+    {
+      "file": "many-arms.webp",
+      "bytes": 676620,
+      "sha256": "158317008db8b9cb3418a82509f9a8cdbb98bebebfb0829d4782b13a233cfb23"
+    },
+    {
+      "file": "lenticular.webp",
+      "bytes": 659430,
+      "sha256": "ffd72d354ba8691db038778f46120e649f4e385665bd026f211d5300799f48b3"
+    },
+    {
+      "file": "elliptical.webp",
+      "bytes": 480680,
+      "sha256": "d91c8355c7a042a9eb30a9d673119919e9d501d32d21b5c905f3f8c245c25d74"
+    },
+    {
+      "file": "irregular.webp",
+      "bytes": 535170,
+      "sha256": "e1dff4785b706731a5241e032be61eb5b60c5a6abf0ff90c2a1c2a6a819db855"
+    }
+  ],
+  "quality_variants": [
+    {
+      "size": 768,
+      "file": "768/grand-spiral.webp",
+      "bytes": 183982,
+      "sha256": "956b7f3c39f0ade43ca6bc738f93390bd2978609bcac00f287f3e6009a351293"
+    },
+    {
+      "size": 768,
+      "file": "768/barred-spiral.webp",
+      "bytes": 180792,
+      "sha256": "3fbc5289831117792c39a4f1e178029cde6d891df9c97b550fe950c0ece89b64"
+    },
+    {
+      "size": 768,
+      "file": "768/many-arms.webp",
+      "bytes": 189194,
+      "sha256": "c49796d40c30caa01544488e078cf157b89e427500ef8b02c3e51aab9bc7dfbf"
+    },
+    {
+      "size": 768,
+      "file": "768/lenticular.webp",
+      "bytes": 188966,
+      "sha256": "228e66df63096eee922ef41c1868d456dd12a2c574993add3d74b93de4eda092"
+    },
+    {
+      "size": 768,
+      "file": "768/elliptical.webp",
+      "bytes": 138298,
+      "sha256": "bc9a2377eea24a16e201c67cf51041b234c58b33d193b6010f1b0cacc9d765b2"
+    },
+    {
+      "size": 768,
+      "file": "768/irregular.webp",
+      "bytes": 161024,
+      "sha256": "de3ef4658bf02cb817afc829d4004899b3a2c07317ef5344b9d682e42a46b55a"
+    },
+    {
+      "size": 512,
+      "file": "512/grand-spiral.webp",
+      "bytes": 75596,
+      "sha256": "b40d5c2275b70533f38e3414df3ea44a62df6934dcfdb6aa983c44fa83fff00b"
+    },
+    {
+      "size": 512,
+      "file": "512/barred-spiral.webp",
+      "bytes": 75634,
+      "sha256": "28770fc9693cd19a7a9de605139ef4833fad7d18ce2915c4ccb820e5dd1d76c4"
+    },
+    {
+      "size": 512,
+      "file": "512/many-arms.webp",
+      "bytes": 78104,
+      "sha256": "30d95d06a439bfd9a892d0c155eab0421103a28f15d0c8fe8adf07b926cc68cc"
+    },
+    {
+      "size": 512,
+      "file": "512/lenticular.webp",
+      "bytes": 78416,
+      "sha256": "40627ee9875e3a7402fed9782b02ccb92d23c7f92a91e6187f3376c516e1c782"
+    },
+    {
+      "size": 512,
+      "file": "512/elliptical.webp",
+      "bytes": 57134,
+      "sha256": "d1130796127762c7d71a088714c06dbec400f6325eafb71e20e1c6621d0d1111"
+    },
+    {
+      "size": 512,
+      "file": "512/irregular.webp",
+      "bytes": 67978,
+      "sha256": "28a61d165c7d41bfd047fd968a9315f052ab9f13d40a234b1e5b4f88d3434f7f"
+    }
+  ],
+  "quality_export": "assets/source/export_galaxy_quality.py"
+}

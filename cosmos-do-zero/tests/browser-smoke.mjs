@@ -9,7 +9,7 @@ let checks = 0;
 const failures = [];
 const check = (name, condition) => { assert.ok(condition, name); checks++; };
 
-for (const [name, engine] of Object.entries({ firefox, webkit })) {
+for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])=>!process.env.BROWSER_ENGINES||process.env.BROWSER_ENGINES.split(',').includes(name))) {
   let browser;
   try {
     browser = await engine.launch({ headless: true });
@@ -18,10 +18,10 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto(base, { waitUntil: 'networkidle' });
-    check(`${name}: primeira etapa`, (await page.locator('[data-start-journey]').getAttribute('href')).includes(first));
+    check(`${name}: primeira etapa`, (await page.locator('.hero-actions .cta').getAttribute('href')).includes(first));
     check(`${name}: três etapas principais`, await page.locator('#capitulos [data-journey]').count() === 3);
     check(`${name}: sem rolagem horizontal no celular`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
-    await page.locator('[data-start-journey]').click();
+    await page.locator('.hero-actions .cta').click();
     await page.locator('[data-scene="scale"]').waitFor();
     await page.locator('[data-scale-step="3"]').click();
     check(`${name}: contexto da escala selecionada`, /2,5 milhões/.test(await page.locator('[data-scale-panel="3"]').innerText()));
@@ -30,6 +30,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
     check(`${name}: viagem da luz iniciada`, await light.getAttribute('aria-pressed') === 'true');
     await light.click();
     check(`${name}: viagem da luz pausada`, await light.getAttribute('aria-pressed') === 'false');
+    const stepDots=page.locator('[data-step-dot]');await stepDots.last().click();
     const quiz = page.locator('.chapter-check [data-quiz]');
     for (let i = 0; i < 3; i++) {
       await quiz.locator('[data-answer]').first().click();
@@ -38,7 +39,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
       if (await next.isVisible()) await next.click();
     }
     check(`${name}: resultado das três perguntas`, /\d+\s*(de|\/)\s*3/.test(await quiz.innerText()));
-    await page.locator('[data-complete]').click();
+    check(`${name}: quiz conclui automaticamente a aula`,await page.locator('[data-complete]').getAttribute('aria-pressed')==='true');
     await page.goto(base, { waitUntil: 'networkidle' });
     check(`${name}: progresso após navegar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.reload({ waitUntil: 'networkidle' });
@@ -47,7 +48,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
     const exp = page.locator('[data-station="expansao"]');
     const snapshot = () => exp.locator('.e-galaxy').evaluateAll((n) => n.map((x) => x.getAttribute('transform')).join('|'));
     const before = await snapshot();
-    await exp.locator('.e-galaxy[role=button]').nth(3).click({ force: true });
+    await exp.locator('[data-e-observer="1"]').click();
     check(`${name}: trocar observador muda o referencial`, await snapshot() !== before);
     check(`${name}: observador fica no centro`, await exp.locator('.e-galaxy.is-observer').getAttribute('transform') === 'translate(320.00 200.00)');
     await exp.locator('[data-e-range]').evaluate((input) => { input.value = '1.4'; input.dispatchEvent(new Event('input', { bubbles: true })); });
@@ -67,7 +68,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
       localStorage.setItem('cosmos-v3-progress', '[]');
       Object.defineProperty(Storage.prototype, 'setItem', { value() { throw new DOMException('quota', 'QuotaExceededError'); } });
     });
-    await blocked.goto(base + first, { waitUntil: 'networkidle' });
+    await blocked.goto(base + first, { waitUntil: 'networkidle' });await blocked.locator('[data-step-dot]').last().click();
     await blocked.locator('[data-complete]').click();
     check(`${name}: leitura antiga não apaga gravação que falhou`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'true');
     check(`${name}: aviso de progresso da sessão`, /sessão/.test(await blocked.locator('[data-complete-status]').innerText()));
@@ -85,4 +86,4 @@ for (const [name, engine] of Object.entries({ firefox, webkit })) {
 if (failures.length) {
   console.error(`${checks} verificações concluídas; ${failures.length} navegador(es) com falha ou bloqueio.`);
   process.exitCode = 1;
-} else console.log(`${checks} verificações de Firefox/WebKit passaram.`);
+} else console.log(`${checks} verificações passaram nos engines solicitados: ${process.env.BROWSER_ENGINES||'firefox,webkit'}.`);

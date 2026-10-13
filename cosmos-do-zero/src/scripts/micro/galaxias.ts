@@ -12,15 +12,15 @@ function spiral(seed: number, n: number, cx: number, cy: number, r: number, tilt
 }
 
 const viaLactea = (): Scene => {
-  // Cada degrau é um render (1200×800) recortado para 480×270; o ponto marcado no degrau seguinte
+  // Cada degrau é um poster das cenas atuais (1200×800), recortado para480×270; o ponto marcado no degrau seguinte
   // é onde o degrau anterior "cabe". Afastar a câmera = a imagem anterior encolhe até esse ponto.
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   const levels = [
     { img: 'earth', at: [240, 135], mark: null as null | [number, number], label: '', ruler: 'Diâmetro: 12.700 km · a luz cruza em 0,04 s', cap: 'Terra: o planeta onde você está. Tudo o que vem a seguir a contém.' },
-    { img: 'solar-system', at: [145, 130], mark: [145, 130], label: 'Terra', ruler: 'Até Netuno: 4,5 bilhões de km · a luz leva 4 horas', cap: 'Sistema Solar: o Sol e tudo o que gira em volta dele. A Terra virou um ponto na terceira órbita. Tamanhos e distâncias fora de escala.' },
-    { img: 'milky-way', at: [330, 185], mark: [330, 185], label: 'Sol', ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
-    { img: 'galaxies', at: [128, 62], mark: [128, 62], label: 'Via Láctea', ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
-    { img: 'cosmic-web', at: [123, 115], mark: [123, 115], label: 'Grupo Local', ruler: 'Bilhões de anos-luz', cap: 'Teia cósmica: grupos e aglomerados de galáxias ao longo de filamentos. O Grupo Local é um ponto num desses fios.' }
+    { img: 'solar-system', at: [145, 130], mark: null, label: 'Terra', ruler: 'Até Netuno: 4,5 bilhões de km · a luz leva 4 horas', cap: 'Sistema Solar: o Sol e tudo o que gira em volta dele. Os planetas aparecem ampliados para leitura. Tamanhos e distâncias fora de escala.' },
+    { img: 'galaxies', at: [330, 185], mark: null, label: 'Sol', ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: a circunferência marca uma posição ilustrativa para o Sistema Solar. Centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
+    { img: 'group-local', at: [240,135], mark: null, label: 'Via Láctea', ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
+    { img: 'cosmic-web', at: [123, 115], mark: null, label: 'Grupo Local', ruler: 'Filamentos com milhões de anos-luz', cap: 'Teia cósmica: grupos e aglomerados de galáxias ao longo de filamentos. O Grupo Local é um ponto num desses fios.' }
   ];
   let imgs: SVGImageElement[] = [], over: SVGGElement, ruler: SVGTextElement, prev = 0, from = 0;
   const place = (im: SVGImageElement, s: number, cx: number, cy: number, op: number) => {
@@ -34,7 +34,7 @@ const viaLactea = (): Scene => {
     init(svg) {
       const root = g(svg);
       el('rect', { x: 0, y: 0, width: W, height: H, fill: '#04060b' }, root);
-      imgs = levels.map((l) => el('image', { href: `${base}/renders/${l.img}.webp`, x: 0, y: -25, width: W, height: 320, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, root));
+      imgs = levels.map((l) => el('image', { href: `${base}/posters/${l.img}.webp`, x: 0, y: -25, width: W, height: 320, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, root));
       over = g(svg);
       el('rect', { x: 0, y: H - 30, width: W, height: 30, fill: 'rgba(4,6,11,.72)' }, svg);
       ruler = text(svg, W / 2, H - 11, '', { class: 'mx-t', 'text-anchor': 'middle', fill: '#f3f1ea', style: 'fill:#f3f1ea' });
@@ -120,21 +120,12 @@ const teia = (): Scene => {
     else { const [a, b] = links[Math.floor(rnd() * links.length)]; const f = rnd(); end = [lerp(nodes[a][0], nodes[b][0], f) + (rnd() - 0.5) * 10, lerp(nodes[a][1], nodes[b][1], f) + (rnd() - 0.5) * 10]; }
     return { start, end };
   });
-  // Com WebGL a cena é 3D (web3d.ts) e os pontos SVG ficam escondidos por CSS; sem WebGL, o SVG é a cena.
-  let gl: { set(k: number): void; setPlaying(on: boolean): void } | null = null, lastV = 0, playing = false;
   return {
-    init(svg) {
-      layer = g(svg, { class: 'mx-flat' });
-      const stage = svg.parentElement!;
-      stage.addEventListener('mx:gl-lost', () => { gl = null; }, { once: true });
-      const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-      import('./web3d').then((m) => m.mountWeb3D(stage, reduced)).then((w) => { gl = w; gl?.set(lastV); gl?.setPlaying(playing); }).catch(() => {});
-    },
-    setPlaying(on) { playing = on; gl?.setPlaying(on); },
+    init(svg) { layer = g(svg, { class: 'mx-flat' }); },
     value: (v) => (v < 0.05 ? 'quase liso' : v < 0.95 ? `${Math.round(v * 100)}%` : 'teia formada'),
     draw(v) {
       clear(layer);
-      lastV = v; gl?.set(v);
+
       const k = 1 - (1 - v) ** 2;
       for (const p of pts) el('circle', { cx: lerp(p.start[0], p.end[0], k), cy: lerp(p.start[1], p.end[1], k), r: 1.7, fill: C.ink2, opacity: 0.75 }, layer);
       if (v > 0.9) {
@@ -251,3 +242,5 @@ export const scenes: SceneMap = {
   'galaxias-e-nebulosas-gas-e-estrelas': luz,
   'galaxias-e-nebulosas-centros-galacticos': horizonte
 };
+
+

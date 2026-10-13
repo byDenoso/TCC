@@ -3,7 +3,8 @@ import { eras } from '../data';
 import { u, chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 const first = eras[0];
-const eraRenders: Record<string, string> = { 'primordial': 'ancient-light', 'nucleosynthesis': 'ancient-light', 'cmb': 'ancient-light', 'first-stars': 'star', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'earth', 'present': 'cosmic-web' };
+const eraRenders: Record<string, string> = { 'primordial': 'plasma', 'nucleosynthesis': 'nuclei', 'cmb': 'cmb', 'first-stars': 'star', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'earth', 'present': 'cosmic-web' };
+const eraAlt=(id:string,title:string)=>id==='cmb'?'Mapa ilustrativo do céu na CMB; contraste ampliado, sem dados observacionais.':id==='primordial'?'Esquema de plasma primordial: luz, elétrons e núcleos; sem estrelas ou galáxias.':id==='nucleosynthesis'?'Esquema dos primeiros núcleos; partículas ampliadas, sem átomos completos ou estrelas.':`Representação ilustrativa para ${title}; sem escala física.`;
 const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
 ---
 <section class="timeline-section dark" id="tempo" aria-labelledby="timeline-title" data-island="timeline">
@@ -14,7 +15,7 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
     </div>
     <div class="timeline-window">
       <figure class={`timeline-visual ${first.visual}`} data-era="0" data-timeline-visual>
-        <img class="era-render" data-era-render src={u(`/renders/${eraRender(first.id)}.webp`)} srcset={`${u(`/renders/${eraRender(first.id)}-small.webp`)} 600w, ${u(`/renders/${eraRender(first.id)}.webp`)} 1200w`} sizes="(max-width: 760px) calc(100vw - 34px), 45vw" alt={`Representação artística para ${first.title}; sem escala física.`} width="1200" height="800" loading="lazy" decoding="async" />
+        <img class="era-render" data-era-render src={u(`/posters/${eraRender(first.id)}.webp`)} srcset={`${u(`/posters/${eraRender(first.id)}-small.webp`)} 600w, ${u(`/posters/${eraRender(first.id)}.webp`)} 1200w`} sizes="(max-width: 760px) calc(100vw - 34px), 45vw" alt={eraAlt(first.id,first.title)} width="1200" height="800" loading="lazy" decoding="async" />
         <span class="era-number" data-era-number>01 / {pad2(eras.length)}</span>
         
       </figure>
@@ -28,7 +29,7 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
     </div>
     <div class="time-nav" role="group" aria-label="Marcos da história do Universo" data-era-nav>
       {eras.map((e, i) => (
-        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-render-src={u(`/renders/${eraRender(e.id)}.webp`)} aria-pressed={i === 0 ? 'true' : 'false'}>
+        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-render-alt={eraAlt(e.id,e.title)} data-render-src={u(`/posters/${eraRender(e.id)}.webp`)} aria-pressed={i === 0 ? 'true' : 'false'}>
           <b>{e.title}</b><span>{e.short}</span>
         </button>
       ))}

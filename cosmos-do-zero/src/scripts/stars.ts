@@ -17,10 +17,17 @@ export function initStars(): void {
   const layer = svg ? document.createElementNS('http://www.w3.org/2000/svg', 'g') : null;
   if (svg && layer) svg.append(layer);
   let step = 2, t = 1, playing = false, frame = 0, last = 0;
+  let volume:import('./visual/runtime').MountedScene|null=null;
+  if(svg)import('./visual/exhibits').then(async({stellarMass})=>{
+    await(await import('./visual/stellar-materials')).prepareStellarMaterials();
+    const {observeScene}=await import('./visual/runtime');
+    volume=observeScene(svg.parentElement!,()=>stellarMass(()=>clampMass(Number(slider.value))));volume.state({value:step,phase:t});
+  }).catch(()=>{});
 
   const paint = () => {
     const m = clampMass(Number(slider.value));
     if (layer && caption) caption.textContent = drawStellar(layer, m, step, t);
+    volume?.state({value:step,phase:t});
     $$<HTMLButtonElement>('[data-star-step]', root).forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.starStep) === step)));
   };
   const setPlaying = (on: boolean) => {
@@ -70,7 +77,8 @@ export function initStars(): void {
   });
   $('[data-star-next]', root)?.addEventListener('click', next);
   $('[data-star-reset]', root)?.addEventListener('click', () => { stop(); step = 2; t = 1; paint(); });
-  if (svg && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!e.isIntersecting) stop(); }).observe(svg);
+  if (svg && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!e.isIntersecting) stop(); }).observe(svg.parentElement!);
+  window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted)volume?.dispose();});
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
   reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } });
   const q = getParam('massa');

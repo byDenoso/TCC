@@ -1,0 +1,19 @@
+---
+import { planets } from '../data';
+import SolarCredits from './SolarCredits.astro';
+import { u } from '../lib/url';
+interface Props { id?:string }
+const {id='regua-solar'}=Astro.props;
+---
+<section class="solar-experiment" data-solar-studio aria-labelledby={`${id}-title`}>
+ <span class="meta">Troque a régua</span><h3 id={`${id}-title`}>Tamanho e distância precisam de duas imagens.</h3>
+ <p>O Sistema Solar é espaçoso demais para mostrar planetas grandes e distâncias corretas no mesmo quadro. Escolha o que comparar.</p>
+
+ <p class="meta solar-close-note" data-solar-close-note>Terra · detalhe ampliado, fora da escala da fila</p>
+ <div class="mx-stage solar-stage" data-solar-stage><img class="solar-poster" data-solar-poster src={u('/models/portraits/terra.webp')} width="768" height="768" alt="Terra: mapa MODIS em geometria e iluminação ilustrativas."/><svg viewBox="0 0 640 360" data-solar-fallback aria-hidden="true"></svg></div>
+ <div class="solar-planets" role="group" aria-label="Escolher planeta">{planets.map((p,i)=><button type="button" data-solar-planet={i} aria-pressed={i===2?'true':'false'}>{p.name}</button>)}<button type="button" data-solar-moon>Lua · satélite da Terra</button></div>
+ <div class="mx-transport"><button type="button" data-solar-play aria-pressed="false">Ver rotação</button><button type="button" data-solar-reset>Reiniciar rotação</button></div><p class="mx-caption" data-solar-caption role="status"></p> <div class="mx-seg" role="group" aria-label="O que comparar"><button type="button" data-solar-mode="sizes" aria-pressed="true">Tamanhos dos planetas</button><button type="button" data-solar-mode="distances" aria-pressed="false">Distâncias ao Sol</button></div>
+ <p class="solar-ruler-hint">Na tela estreita, role a régua para ver os oito planetas na mesma escala.</p><div class="solar-ruler-scroll" tabindex="0" aria-label="Régua proporcional; role na horizontal para ver todos os planetas"><svg class="solar-ruler" data-solar-ruler viewBox="0 0 640 108" role="img" aria-label="Régua separada: tamanhos ou distâncias proporcionais."></svg></div><p class="mx-limit" data-solar-limit></p>
+ <details class="depth-detail"><summary>Uma órbita calculada com dois corpos</summary><p data-solar-period></p><p>A conta usa o semieixo maior e a soma das massas do Sol e do planeta (terceira lei de Kepler, forma de Newton). Desconsidera os outros corpos, excentricidade na ilustração e perturbações. A régua usa os valores do catálogo da escola.</p><a href="https://science.nasa.gov/solar-system/orbits-and-keplers-laws/" target="_blank" rel="noopener noreferrer">NASA · Órbitas e leis de Kepler ↗</a></details>
+ <SolarCredits/>
+</section>

@@ -12,7 +12,9 @@ export function initScenes(): void {
       const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scale-step]')];
       const panels = [...root.querySelectorAll<HTMLElement>('[data-scale-panel]')];
       const visuals = [...root.querySelectorAll<SVGGElement | HTMLElement>('[data-scale-visual]')];
-      let shown = 0;
+      let shown = 0,alive=true;let view:import('./visual/runtime').MountedScene|null=null;
+      const stage=root.querySelector<HTMLElement>('[data-scale-stage]');if(stage)(async()=>{const{whenNear}=await import('./visual/runtime');if(!await whenNear(stage,()=>alive))return;const assets=await import('./visual/assets'),maps=await import('./visual/galaxy-emission');const size=maps.emissionSize(stage.clientWidth);await Promise.all([assets.prepareWorlds(),maps.prepareEmissionGalaxies(size)]);if(!alive)return;const{address}=await import('./visual/exhibits'),{observeScene}=await import('./visual/runtime');view=observeScene(stage,()=>address(size));view.state({value:shown});})().catch(()=>{if(stage)stage.dataset.visualFallback='true';});
+      window.addEventListener('pagehide',e=>{if(!e.persisted){alive=false;view?.dispose();}});
       const select = (index: number) => {
         buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(i === index)));
         panels.forEach((p, i) => p.hidden = i !== index);
@@ -26,7 +28,7 @@ export function initScenes(): void {
           to.animate([{ transform: `scale(${out ? 5 : 0.1})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, easing: ease });
           visuals.forEach((v) => { if (v !== from && v !== to) v.dataset.hidden = 'true'; });
         } else visuals.forEach((v,i) => v.dataset.hidden = String(i !== index));
-        shown = index;
+        shown = index;view?.state({value:index});
         status.textContent = `Escala ${index + 1} de 5: ${buttons[index].textContent?.split('·')[1]?.trim()}. ${panels[index].querySelector('.scene-unit')?.textContent}. Ilustração esquemática; não é um zoom em escala contínua.`;
       };
       buttons.forEach((b,i) => b.addEventListener('click', () => select(i)));
