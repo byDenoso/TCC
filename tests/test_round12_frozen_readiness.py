@@ -58,7 +58,7 @@ class Round12FrozenReadinessTests(unittest.TestCase):
         view = _readiness_contract_view(self.test, self.root)
         self.assertEqual(view["null"], self.test["frozen_test"]["null"])
         self.assertEqual(view["rival"], self.test["frozen_test"]["rival"])
-        self.assertEqual(view["method"], self.test["frozen_test"]["method"])
+        self.assertEqual(view["method"]["declared_method"], self.test["frozen_test"]["method"])
         self.assertEqual(view["dataset_and_selection"]["selection"], self.test["frozen_test"]["selection"])
         self.assertEqual(view["question"]["specific_objective"], self.contract["tests"][0]["objective"])
         self.assertEqual(view["success_criteria"], self.test["frozen_test"]["success_criteria"])
