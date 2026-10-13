@@ -30,17 +30,21 @@ def latest_handoffs(files):
     return latest
 
 
-def derive_work_queue(files, *, handoffs=None):
+def derive_work_queue(files, *, handoffs=None, work_files=None):
     """One obligation per WORK; parallel offers cannot override valid acceptance.
 
     Exact dependencies and recorded readiness reasons are preserved. A terminal
     recovery WORK stays terminal even when its TEST is READY: these are separate
     obligations, and this function does not dispatch TESTs.
     """
-    works = {path: entry['value'] for path, entry in files.items()
-             if path.startswith('entities/work/') and isinstance(entry, dict)
-             and entry.get('encoding') == 'json' and isinstance(entry.get('value'), dict)
-             and entry['value'].get('id')}
+    # Role context already indexes the same revision; reuse that index instead
+    # of traversing every Tower file a second time. Standalone callers retain
+    # the exact same view and validation of entity-shaped inputs.
+    works = ({path: entry['value'] for path, entry in files.items()
+              if path.startswith('entities/work/') and isinstance(entry, dict)
+              and entry.get('encoding') == 'json' and isinstance(entry.get('value'), dict)
+              and entry['value'].get('id')} if work_files is None else
+             {path:value for path,value in work_files.items() if value.get('id')})
     by_id = {str(value['id']): value for _, value in sorted(works.items())}
     identity_counts = Counter(str(value['id']) for value in works.values())
     events = latest_handoffs(files) if handoffs is None else handoffs

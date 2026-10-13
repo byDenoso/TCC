@@ -6,7 +6,7 @@ Aplicar [`ROLE_CONTRACT_V1.md`](ROLE_CONTRACT_V1.md). Esta função permanece at
 
 ## Fontes e limites antes de cada rodada
 1. Ler ou reutilizar, se a revisão não mudou, a revisão vigente de `gpt/skills/nexo-master-router-0.5.0.md`, `gpt/skills/nexo-workspace/SKILL.md`, `gpt/skills/nexo-connectors-0.5.0.md`, `gpt/PROPOSAL_SCHEMA.md`, `gpt/skills/nexo-shared-mural-v1.md` se implantado e `nexo-reporting/SKILL.md` do Drive. Na Tower Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`, verificar identidade, revisão, file_count, CONTROL e bootstrap atual antes de interpretar ciência ou enviar propostas.
-2. Se `CONTROL.github_actions_science_role=DISABLED_BUDGET_EXHAUSTED`, jamais disparar Actions científico, runner ou trabalho cobrado. O mandato prospectivo não se presume. Sem escritor/autorização/transportes válidos, a comparação pode continuar em leitura; persistência e publicação permanecem bloqueadas.
+2. Se CONTROL atual desabilita o runner científico, não disparar ciência antes de habilitação canônica correspondente. Preparar Actions público sem custo adicional está autorizado; preparo não é execução nem habilitação. Não iniciar trabalho cobrado. O mandato prospectivo não se presume. Sem escritor/autorização/transportes válidos, a comparação pode continuar em leitura; persistência e publicação permanecem bloqueadas.
 3. Reconciliar as próprias entregas científicas/editoriais pendentes pela identidade exata, recibo privado e efeito na Tower. Falha de transporte de outro papel vai ao Guardião com refs; não iniciar varredura global de PENDING_WRITE. `DELIVERED` não é `APPLIED`; um recibo parcial não prova todo o lote. Nunca reidentificar um envelope para refazer tentativa.
 4. Nunca extrair, incluir nem divulgar PEER, Olympus, dados pessoais ou conteúdo privado nas projeções do Atlas **público ou privado**. A política PEER é exclusão em ambas, não uma simples sanitização. Antes de qualquer alteração canônica que possa refletir na projeção, conferir isolamento fail-closed efetivo. PR/branch ou teste local não bastam.
 
@@ -36,4 +36,9 @@ A automação periódica é `condition_watch`. Notificar Dener **somente** quand
 A plataforma de tarefas é responsável pelo push/e-mail quando notificações do usuário estiverem ativadas. Nunca afirmar que uma notificação externa ou e-mail foi enviado sem evidência da plataforma. Não enviar dados científicos privados em links públicos, anexos ou títulos da notificação.
 
 ## Verificação e saída
-Registrar: Tower/revisão e cursor; quantidade lida e modificada por classe e alcance do recorte; perguntas reconciliadas; estatísticas e identidade de revisão dos claims; literatura primária verificada; fichas/fields realmente enviados/aplicados e leitura do Atlas derivado; figuras reais vs. apenas propostas; alertas novos vs. suprimidos; bloqueios/primeira transição indisponível/owner. Se não houver delta nem exceção, silêncio. Nada aqui concede nova aprovação humana, gestão de agenda, orçamento ou autoridade canônica.
+Registrar no artefato científico a revisão/cursor e refs que sustentam fichas realmente
+alteradas; literatura e limites pertinentes. Não exigir inventário, contagens globais,
+painel de alertas ou relatório paralelo em cada sessão. Entregar somente delta
+científico/editorial material com estágio comprovado e lacuna/dono quando existir.
+Sem delta nem trabalho elegível, silêncio. Nada aqui concede gestão de agenda,
+orçamento, autoridade canônica ou publicação.
