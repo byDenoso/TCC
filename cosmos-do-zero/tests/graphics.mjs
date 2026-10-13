@@ -50,11 +50,22 @@ try {
     await root.scrollIntoViewIfNeeded();
     const web = root.locator('.mx-gl');
     await web.waitFor({ state: 'visible' });
+    await root.locator('[data-mx-range]').focus(); await page.keyboard.press('End');
+    for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowLeft');
     await root.locator('[data-mx-play]').click();
     await page.waitForTimeout(350);
     await root.locator('[data-mx-play]').click();
     await still(web, `teia ${width}`);
     await root.locator('[data-mx-range]').focus(); await page.keyboard.press('End');
+    const { data, info } = await sharp(await web.screenshot()).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    let clipped = 0, colored = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      if (Math.min(r, g, b) > 245) clipped++;
+      if (Math.max(r, g, b) > 25 && Math.max(r, g, b) - Math.min(r, g, b) > 15) colored++;
+    }
+    assert.ok(clipped / (info.width * info.height) < 0.01, 'aglomerados preservam textura sem áreas brancas estouradas'); checked++;
+    assert.ok(colored > 100, 'cores dos filamentos e aglomerados permanecem visíveis'); checked++;
     await root.locator('.mx-stage').screenshot({ path: `docs/screenshots/render-teia-${width}.png` });
     await web.evaluate(c => c.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
     await page.waitForFunction(() => !document.querySelector('[data-mx="galaxias-e-nebulosas-teia-cosmica"] .mx-stage').classList.contains('mx-stage--gl'));
@@ -62,5 +73,5 @@ try {
     assert.deepEqual(errors, [], `sem erros de shader ${width}`); checked++;
     await page.context().close();
   }
-  console.log(`${checked} verificações WebGL: shaders, pausa completa, retomada e perda de contexto; 390 e 1440 px.`);
+  console.log(`${checked} verificações WebGL: shaders, pausa completa, retomada, cor, saturação e perda de contexto; 390 e 1440 px.`);
 } finally { await browser.close(); }

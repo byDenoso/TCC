@@ -71,7 +71,7 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
   geo.setAttribute('aDens', new THREE.BufferAttribute(dens, 1));
   geo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
 
-  const uniforms = { uK: { value: 0 }, uPx: { value: 1 } };
+  const uniforms = { uK: { value: 0 }, uPx: { value: 1 }, uGain: { value: 24000 / N } };
   const mat = new THREE.ShaderMaterial({
     uniforms,
     transparent: true,
@@ -79,7 +79,7 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
       attribute vec3 aStart; attribute float aDens; attribute float aSeed;
-      uniform float uK; uniform float uPx;
+      uniform float uK; uniform float uPx; uniform float uGain;
       varying vec3 vCol; varying float vA;
       void main() {
         // matéria cai devagar no começo e acelera (crescimento das diferenças)
@@ -93,6 +93,10 @@ export async function mountWeb3D(stage: HTMLElement, reduced: () => boolean): Pr
         vCol = mix(cold, mix(fil, hot, smoothstep(0.5, 1.0, aDens)), k);
         vA = mix(0.22, 0.12 + 0.3 * aDens, k);
         vA *= 1.0 - 0.55 * smoothstep(2.0, 4.8, -mv.z);
+        // Mais amostras refinam a textura, sem multiplicar o brilho acumulado dos aglomerados.
+        float structureGain = mix(0.22, 0.45, smoothstep(0.15, 0.55, aDens));
+        structureGain = mix(structureGain, 0.12, smoothstep(0.55, 1.0, aDens));
+        vA *= uGain * mix(0.18, structureGain, k);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 vCol; varying float vA;
