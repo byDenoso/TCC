@@ -345,7 +345,8 @@ class HandoffProtocolTests(unittest.TestCase):
                                     thread_id="THR-CLOSED", next_action="Executar o trabalho definido.")
                 path.write_text(json.dumps({**work, "entity_version": 2}))
                 frontier = roadmap_frontier(self.root)
-                self.assertIn(test["id"], [row["test_id"] for row in frontier["ready"] + frontier["resumable"]])
+                self.assertIn(test["id"], [row["test_id"] for row in
+                                            frontier["ready"] + frontier["resume_candidates"]])
                 accepted = service.transition_handoff(created["handoff_id"], state="ACK", writer_role="EXECUTOR")
                 self.assertEqual(accepted["state"], "ACK")
                 service.transition_handoff(created["handoff_id"], state="FAILED", writer_role="EXECUTOR")

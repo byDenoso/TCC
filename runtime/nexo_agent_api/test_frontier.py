@@ -74,19 +74,22 @@ class FrontierTests(unittest.TestCase):
         self.assertEqual(frontier["state"], "EXECUTE_READY")
         self.assertEqual(frontier["next"]["test_id"], "TEST::X")
         self.assertEqual(frontier["batch"][0]["test_id"], "TEST::X")
-        self.assertEqual(frontier["resumable"][0]["test_id"], "TEST::Y")
+        self.assertEqual(frontier["resumable"], [])
+        self.assertEqual(frontier["resume_candidates"][0]["test_id"], "TEST::Y")
         self.assertEqual(frontier["skipped_roadmaps"][0]["reason"], "ACTIVE_ROADMAP_WITHOUT_TESTS")
 
 
-    def test_running_still_beats_ready(self):
+    def test_unverified_running_does_not_beat_ready(self):
         self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
         self._roadmap("RM-A", frontier_refs=["T-RUN", "T-READY"])
         self._test("T-RUN", "RUNNING")
         self._test("T-READY", "READY")
         frontier = roadmap_frontier(self.root)
-        self.assertEqual(frontier["state"], "RESUME_EXISTING")
-        self.assertEqual(frontier["next"]["test_id"], "T-RUN")
-        self.assertEqual(frontier["batch"][0]["test_id"], "T-RUN")
+        self.assertEqual(frontier["state"], "EXECUTE_READY")
+        self.assertEqual(frontier["next"]["test_id"], "T-READY")
+        self.assertEqual(frontier["batch"][0]["test_id"], "T-READY")
+        self.assertEqual(frontier["resumable"], [])
+        self.assertEqual(frontier["resume_candidates"][0]["test_id"], "T-RUN")
 
     def test_status_lists_non_closed_roadmaps_not_only_chartered(self):
         self._roadmap("RM-PROPOSED", state="ACTIVE", campaign_id="CAMP-P", charter={"status": "PROPOSED"}, frontier_refs=["T-P"])
@@ -197,7 +200,8 @@ class FrontierTests(unittest.TestCase):
         self._test("T-READY", "READY", roadmap_id="RM-A")
         self._test("T-ORPHAN-CKPT", "CHECKPOINTED", roadmap_id="RM-A")
         frontier = roadmap_frontier(self.root)
-        self.assertIn("T-ORPHAN-CKPT", [r["test_id"] for r in frontier["resumable"]])
+        self.assertIn("T-ORPHAN-CKPT", [r["test_id"] for r in frontier["resume_candidates"]])
+        self.assertNotIn("T-ORPHAN-CKPT", [r["test_id"] for r in frontier["resumable"]])
 
     def test_materialized_ready_outside_active_roadmap_waits(self):
         self._index({"roadmap_id": "RM-A", "state": "ACTIVE", "priority": "P0", "relative_path": "roadmaps/RM-A.json"})
