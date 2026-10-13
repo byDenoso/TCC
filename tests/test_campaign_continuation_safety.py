@@ -9,11 +9,14 @@ from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class CampaignContinuationSafetyTests(TestCase):
-    def resolve(self, *, campaign=None, tests=None):
+    def resolve(self, *, campaign=None, campaign_entity=None, tests=None):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             self.store(root, 'test_group', 'CAMP-SYNTHETIC',
                        {'id':'CAMP-SYNTHETIC', 'status':'ACTIVE', **(campaign or {})})
+            if campaign_entity is not None:
+                self.store(root, 'campaign', 'CAMP-SYNTHETIC',
+                           {'id':'CAMP-SYNTHETIC', 'status':'ACTIVE', **campaign_entity})
             for test in tests or []:
                 self.store(root, 'test', test['id'],
                            {'campaign_id':'CAMP-SYNTHETIC', **test})
@@ -64,6 +67,29 @@ class CampaignContinuationSafetyTests(TestCase):
         self.assertEqual(result['unresolved_declared_tests'], ['MISSING'])
         self.assertFalse(result['terminal'])
 
+    def test_test_group_members_are_required_even_when_entity_is_missing(self):
+        result = self.resolve(campaign={'test_ids':['T1','MISSING']}, tests=[
+            {'id':'T1','status':'DONE','review_state':'CONFIRMED'}])
+        self.assertFalse(result['execution_complete'])
+        self.assertFalse(result['review_complete'])
+        self.assertEqual(result['unresolved_declared_tests'], ['MISSING'])
+
+    def test_test_group_members_remain_required_when_campaign_entity_coexists(self):
+        result = self.resolve(
+            campaign={'test_ids':['T1','MISSING']},
+            campaign_entity={},
+            tests=[{'id':'T1','status':'DONE','review_state':'CONFIRMED'}],
+        )
+        self.assertEqual(result['campaign_source'], 'campaign')
+        self.assertFalse(result['execution_complete'])
+        self.assertFalse(result['review_complete'])
+        self.assertEqual(result['unresolved_declared_tests'], ['MISSING'])
+
+    def test_text_execution_order_is_not_split_into_test_ids(self):
+        result = self.resolve(campaign={'execution_order':'BA'}, tests=[
+            {'id':'A','status':'READY'}, {'id':'B','status':'READY'}])
+        self.assertEqual(result['next_test_ids'], ['A','B'])
+
     def test_empty_campaign_has_no_vacuous_completion(self):
         result = self.resolve()
         self.assertFalse(result['execution_complete'])
@@ -73,3 +99,4 @@ class CampaignContinuationSafetyTests(TestCase):
 
 if __name__ == '__main__':
     main()
+
