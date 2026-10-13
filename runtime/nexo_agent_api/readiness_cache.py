@@ -294,6 +294,7 @@ class ReadinessContextEpoch:
     def capture(self, revision: str, identity: str,
                 builder: Callable[[dict[str, Any]], ReadinessCacheContext]
                 ) -> tuple[ReadinessCacheContext, dict[str, Any]]:
+        started = time.perf_counter()
         if not revision or not identity:
             raise ReadinessContextUnavailable("IMMUTABLE_EPOCH_IDENTITY_MISSING")
         with self._lock:
@@ -305,11 +306,10 @@ class ReadinessContextEpoch:
                 return cached, {
                     "context_read_calls": 0,
                     "context_bytes_read": 0,
-                    "context_elapsed_ms": 0.0,
+                    "context_elapsed_ms": (time.perf_counter() - started) * 1_000,
                     "context_cache_hit": True,
                 }
             metrics: dict[str, Any] = {}
-            started = time.perf_counter()
             context = builder(metrics)
             metrics.setdefault("context_elapsed_ms", (time.perf_counter() - started) * 1_000)
             metrics.setdefault("context_read_calls", 0)

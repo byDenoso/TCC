@@ -863,6 +863,14 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         raise ProposalError("proposal is not a JSON object")
     body = item.get("payload") if isinstance(item.get("payload"), dict) else {k: v for k, v in item.items() if not k.startswith("_")}
     raw_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    nested_kind = str(body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    if body is not item and item.get("kind") and nested_kind in _KIND_ALIASES:
+        if _KIND_ALIASES.get(raw_kind, raw_kind) != _KIND_ALIASES[nested_kind]:
+            raise ProposalError("PROPOSAL_KIND_AMBIGUOUS")
+    if nested_kind in _KIND_ALIASES and isinstance(body.get("payload"), dict):
+        # A transport wrapper is not a proposal payload. Guessing a second
+        # dispatch level used to acknowledge an INBOX_RECORD as BOARD_POST.
+        raise ProposalError("NESTED_PROPOSAL_ENVELOPE")
     if raw_kind == "BATCH":
         # Several envelopes in one inbox file (bootstrap, multi-kind runs): each is applied on its own.
         requests = []
@@ -973,6 +981,11 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         if kind == "ROADMAP_ATTACH":
             return _attach_requests(item, body, root)
         if kind in _EVOLUTION:
+            if kind == "BOARD_POST" and str(item.get("_inbox_source") or "").upper() == "SHEET_PRIVATE":
+                body = {**body, "private": True}
+                if isinstance(body.get("entries"), list):
+                    body["entries"] = [{**entry, "private": True} if isinstance(entry, dict) else entry
+                                       for entry in body["entries"]]
             requests = _EVOLUTION[kind](item, body, root)
             # Nothing to do (duplicate, spine gene, closed roadmap...) -> keep the proposal as a record, never fail.
             if not requests and kind == "BATTERY_STATUS":

@@ -112,6 +112,27 @@ class ReadinessCacheTests(unittest.TestCase):
         self.assertFalse(changed_metrics["context_cache_hit"])
         self.assertEqual(len(builds), 2)
 
+    def test_epoch_reports_real_capture_reads_and_rebuilds_after_revision_change(self):
+        epoch = ReadinessContextEpoch()
+
+        def builder(metrics):
+            return ReadinessCacheContext.from_runtime(
+                self.root, self.test, access_scope='PUBLIC', authorization_revision='auth-v1',
+                manifest_revision='tower-r1', manifest_sha256='a' * 64,
+                validator=scientific_integrity.readiness, validator_version='fixture',
+                recipe_root=self.recipe_root, metrics_out=metrics)
+
+        first, initial = epoch.capture('r1', 'test', builder)
+        _, reused = epoch.capture('r1', 'test', builder)
+        self.assertGreater(initial['context_read_calls'], 0)
+        self.assertGreater(initial['context_bytes_read'], 0)
+        self.assertEqual(reused['context_read_calls'], 0)
+        self.assertEqual(reused['context_bytes_read'], 0)
+        (self.recipe_root / 'R-CACHE.py').write_text('VALUE = 2\n', encoding='utf-8')
+        updated, rebuilt = epoch.capture('r2', 'test', builder)
+        self.assertNotEqual(first.key, updated.key)
+        self.assertGreater(rebuilt['context_read_calls'], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

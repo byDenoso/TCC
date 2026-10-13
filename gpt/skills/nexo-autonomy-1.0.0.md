@@ -16,13 +16,15 @@ O mandato é contínuo até `REVOKE_AUTONOMY_MANDATE`, limitado a `OBSERVATIONAL
 
 As primeiras 168 horas são uma avaliação após um ciclo científico completo e revisado. Um smoke ou CI aprovado não é esse ciclo. Preservar contratos e critérios científicos congelados, Writer único, CAS/readback, ACL, núcleo dos prompts, agendas, modelos, estados das tarefas e execuções protegidas. Nested Watch, Pítia, Sentinela, Revisor por evento e cartões antigos não fazem parte desta atualização. Artigos e submissões externas continuam com Dener.
 
-## Cinco funções
+## Cinco funções do pacote prospectivo
+
+A cardinalidade deste pacote continua prospectiva e não substitui o inventário vivo. Para a divisão operacional de receitas, aplicar `automations/ROLE_CONTRACT_V1.md`: Engenheiro materializa quando necessário; Operador reutiliza/prepara deterministicamente e executa, sem barreira por TEST para receita/adapter fiel existente. Isso não altera o mandato, seus critérios, runner, orçamento ou o prompt pack congelado, nem comprova ativação/migração.
 
 | Função | Source público | Responsabilidade |
 |---|---|---|
 | Cientista | LEARNER | Perguntas, hipóteses, literatura, busca interna de antecedentes, contratos prospectivos e independência. |
-| Operador | EXECUTOR | Código das receitas, inputs, dependências, preflight, smoke, execução e recibos. |
-| Engenheiro | ENGINEER | Infraestrutura, transporte, dependências compartilhadas e recuperação de falhas. |
+| Operador | EXECUTOR | Reutilização de receitas, preparação determinística de inputs/dependências, preflight, smoke, execução e recibos. |
+| Engenheiro | ENGINEER | Materialização/reparo de receitas fiéis ao contrato congelado, infraestrutura, transporte, dependências compartilhadas e recuperação de falhas. |
 | Crítico | REFEREE_1 | Revisão independente, contestação executada e limites da conclusão. |
 | Guardião | GUARDIAO | Mandato, orçamento, integridade, continuidade e política pública. |
 

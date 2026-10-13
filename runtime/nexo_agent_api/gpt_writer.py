@@ -27,9 +27,13 @@ from pathlib import Path
 
 from . import evolution
 from . import operation_receipts as operation_receipts
-from .inbox_apply import ProposalError, proposal_to_requests
+from .inbox_apply import ProposalError, proposal_to_requests, _KIND_ALIASES
 from .live_tower import LIVE_TOWER_NAME, materialize_live_tower, read_live_tower_bytes, verify_live_tower
 from .tower_apply import apply_requests
+
+# Collector must negotiate this capability with the selected (possibly older)
+# Drive bundle before offering private Sheet envelopes to the singleton Writer.
+PRIVATE_SHEET_SPOOL_CONTRACT = "NEXO_PRIVATE_SHEET_SPOOL_V1"
 
 
 def _is_request(item: dict) -> bool:
@@ -397,7 +401,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 base = item.get("_inbox_name") or "batch"
                 parent_id = str(item.get("_inbox_id") or "").strip()
                 child_intents = []
-                if (str(item.get("_inbox_source") or "").upper() == "GATEWAY"
+                if (str(item.get("_inbox_source") or "").upper() in {"GATEWAY", "SHEET_PRIVATE"}
                         and parent_id.startswith("gateway:")):
                     gateway_id = parent_id[len("gateway:"):]
                     child_intents = [f"{parent_id}.batch-{i}" for i, sub in enumerate(payload["items"])
@@ -469,6 +473,17 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             try:
                 raw_request = _is_request(item)
                 requests = [item] if raw_request else proposal_to_requests(item, root)
+                body = item.get("payload") if isinstance(item.get("payload"), dict) else item
+                declared_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+                if not raw_request and _KIND_ALIASES.get(declared_kind) == "BOARD_POST":
+                    if any(request.get("document") != "evolution/board.json" for request in requests):
+                        # The tolerant converter keeps legacy diagnostic records.
+                        # Their persistence cannot acknowledge the requested post.
+                        diagnostic = ((requests[0].get("changes") or {}).get("payload") or {})
+                        if diagnostic.get("_noop_reason") == "BOARD_MESSAGE_ALREADY_RECORDED":
+                            requests = []  # Existing effect still needs its durable receipt.
+                        else:
+                            raise ProposalError(diagnostic.get("_not_applied_reason") or "BOARD_POST_EFFECT_REQUIRED")
                 operational_receipt_validated = (
                     not raw_request and str(item.get("kind") or "").upper() == "OPERATIONAL_RECEIPT"
                 )
@@ -1080,6 +1095,8 @@ def _transport_gateway_report(gateway_entries: list[dict], exc: Exception) -> di
         condition = "RECONCILE_TOWER_BEFORE_REAPPLY" if type(exc).__name__ == "TowerConflict" else "AFTER_TRANSPORT_RECOVERY"
     report = {"operation_receipts": [], "public_operation_receipts": []}
     for entry in gateway_entries:
+        if entry.get("source") == "SHEET_PRIVATE":
+            continue  # Private spool receipts never enter the public export.
         gateway_id = str(entry.get("id") or "")
         envelope = entry.get("envelope")
         if not gateway_id or not isinstance(envelope, dict):
@@ -1258,7 +1275,7 @@ def _main(argv: list[str]) -> int:
         gateway_entries = [entry for entry in gateway_entries
                            if isinstance(entry, dict) and isinstance(entry.get("envelope"), dict)
                            and operation_receipts.is_safe_gateway_id(entry.get("id"))]
-        gateway_ids = [str(entry["id"]) for entry in gateway_entries]
+        gateway_ids = [str(entry["id"]) for entry in gateway_entries if entry.get("source") != "SHEET_PRIVATE"]
         # This file is produced by the robot's protected HMAC/OIDC verifier,
         # never from client metadata or the raw Drive/GitHub inbox.
         verified_human_intents = frozenset()
@@ -1272,7 +1289,7 @@ def _main(argv: list[str]) -> int:
                 verified_capacity_observation = context.get("capacity_observation")
             except (ValueError, OSError, TypeError):
                 pass
-        items = [{**entry["envelope"], "_inbox_source": "GATEWAY",
+        items = [{**entry["envelope"], "_inbox_source": ("SHEET_PRIVATE" if entry.get("source") == "SHEET_PRIVATE" else "GATEWAY"),
                   "_inbox_name": f"gw-{entry['id']}", "_inbox_id": "gateway:" + str(entry["id"])}
                  for entry in gateway_entries]
         try:

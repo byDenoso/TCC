@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import json
+import re
+import time
 from pathlib import PurePosixPath
 
 from .memory import Snapshot, digest, clean
 from .control_compat import control_from_bundle, BOOTSTRAP_FIELDS
+from .work_queue import derive_work_queue
 
 SCHEMA = 'NEXO_ROLE_CONTEXT_DELTA_V1'
 ALIASES = {'ENGINEER':'ADVISOR','REFEREE_1':'REFUTADOR'}
@@ -62,6 +65,7 @@ def _target_entry(path, entry, aliases):
 
 def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None,
                     target_refs: list[str] | None = None) -> dict:
+    started = time.perf_counter()
     role = role.upper()
     if role not in ROLES:
         raise ValueError('CONTEXT_ROLE_INVALID')
@@ -90,7 +94,7 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
             if recipient in aliases and _acl_allows(value, aliases):
                 add(path,value)
         elif path.startswith('entities/work/') and str(value.get('owner_role') or '').upper() in aliases:
-            if value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY','VERIFIED'} and _acl_allows(value, aliases):
+            if value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY'} and _acl_allows(value, aliases):
                 add(path,value)
     # Canonical handoffs live in events, not just entity-shaped compatibility
     # records. Match the existing protocol's logical-path ordering and include
@@ -98,6 +102,37 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
     for identity,(source_path,value) in handoffs.items():
         if str(value.get('to_role') or '').upper() in aliases and _acl_allows(value, aliases):
             add('handoff:'+identity,value,source_path)
+    # WORK entities outlive board retention. Derive obligations once with a
+    # shared policy, then apply the same ownership and ACL boundary as context.
+    event_by_id = {identity: value for identity, (_, value) in handoffs.items()}
+    work_by_id = {str(entry['value'].get('id')):entry['value'] for path,entry in files.items()
+                  if path.startswith('entities/work/') and isinstance(entry,dict)
+                  and entry.get('encoding')=='json' and isinstance(entry.get('value'),dict)}
+    for row in derive_work_queue(files, handoffs=handoffs):
+        # Terminal rows remain available in the shared audit view, but their
+        # removal from role cursors closes the obligation without reloading
+        # all historic DONE/VERIFIED work on every recovery/bootstrap.
+        if row['first_exclusion_reason']=='WORK_TERMINAL':
+            continue
+        work = files[row['source_path']]['value']
+        recovery = work.get('recovery') or {}
+        target = str(recovery.get('target_role') or '').upper() if isinstance(recovery,dict) else ''
+        if (str(work.get('owner_role') or '').upper() in aliases or target in aliases) and _acl_allows(work, aliases):
+            accepted_ids = row['accepted_handoff_ids']
+            row['accepted_handoff_ids'] = [identity for identity in accepted_ids if _acl_allows(event_by_id[identity], aliases)]
+            if accepted_ids and not row['accepted_handoff_ids']:
+                row['acceptance']='UNAVAILABLE'
+                row.update(actionable=False,first_exclusion_reason='ACCEPTANCE_CONTEXT_UNAVAILABLE')
+            dependencies=[]
+            for dependency in row['dependencies']:
+                linked=work_by_id.get(dependency['ref'])
+                if linked and (str(linked.get('owner_role') or '').upper() not in aliases or not _acl_allows(linked,aliases)):
+                    dependencies.append({'visibility':'WITHHELD','satisfied':False})
+                    row.update(actionable=False,first_exclusion_reason='DEPENDENCY_CONTEXT_UNAVAILABLE')
+                else:
+                    dependencies.append(dependency)
+            row['dependencies']=dependencies
+            add('work_queue:'+row['id'], clean(row), row['source_path'])
     for path in sorted(set(target_refs or [])):
         _path(path)
         entry=files.get(path)
@@ -113,7 +148,10 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
     cursor_valid=(isinstance(cursor,dict) and cursor.get('schema')==SCHEMA
                   and cursor.get('source_id')==snapshot.source_id and cursor.get('scope')==scope
                   and cursor.get('authority_sha256')==digest(authority)
-                  and isinstance(cursor.get('hashes'),dict))
+                  and isinstance(cursor.get('hashes'),dict)
+                  and all(isinstance(key,str) and isinstance(value,str) and re.fullmatch('[0-9a-f]{64}',value)
+                          for key,value in cursor['hashes'].items())
+                  and cursor.get('cursor_sha256')==digest({key:value for key,value in cursor.items() if key!='cursor_sha256'}))
     if cursor_valid:
         prior=cursor['hashes']
     changed={}
@@ -135,11 +173,17 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
     removed=sorted(set(prior)-set(hashes))
     next_cursor={'schema':SCHEMA,'source_id':snapshot.source_id,'scope':scope,
                  'authority_sha256':digest(authority),'hashes':hashes}
+    next_cursor['cursor_sha256']=digest(next_cursor)
     return {'schema':SCHEMA,'visibility':'PRIVATE','role':role,'source_id':snapshot.source_id,
             'tower_revision':snapshot.revision,'changed':changed,'removed':removed,
             'cursor_reset':not cursor_valid,'cursor':next_cursor,
             'control_reference':{'source':'CANONICAL_COMPAT_VIEW','authority_sha256':digest(authority)},
             'context_changed':bool(changed or removed or not cursor_valid),
+            'metrics':{'source_files':len(files),'selected_items':len(selected),
+                       'changed_items':len(changed),
+                       'selected_bytes':len(json.dumps(selected,ensure_ascii=False,sort_keys=True).encode('utf-8')),
+                       'changed_bytes':len(json.dumps(changed,ensure_ascii=False,sort_keys=True).encode('utf-8')),
+                       'context_elapsed_ms':(time.perf_counter()-started)*1000},
             'execution_authorization':False,'absence_proof':False,
             'mcp_required':False,'writes_canonical_state':False}
 
