@@ -203,6 +203,18 @@ class CampaignFrontierResolver:
         campaign_state = _status(campaign)
         terminal_ids = _declared_ids(campaign.get("terminal_test_ids"))
         declared_test_ids = _declared_ids(campaign.get("test_ids"))
+        # During migration both entity kinds may coexist. ``campaign`` remains
+        # the authoritative source for state, but TEST_GROUP declarations are
+        # still contractual membership and must fail closed.  Ignoring them can
+        # make a campaign appear complete while declared TESTs are unresolved.
+        test_group = self._entity("test_group", campaign_id)
+        if test_group is not None and campaign_source == "campaign":
+            terminal_ids = list(dict.fromkeys(
+                terminal_ids + _declared_ids(test_group.get("terminal_test_ids"))
+            ))
+            declared_test_ids = list(dict.fromkeys(
+                declared_test_ids + _declared_ids(test_group.get("test_ids"))
+            ))
         # Treat terminal_test_ids as an additional dependency, not permission to
         # skip other declared comparisons or independent reviews.
         required_ids = set(tests) | set(terminal_ids) | set(declared_test_ids)
