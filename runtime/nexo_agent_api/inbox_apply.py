@@ -888,6 +888,9 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
     batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
     first = batch[0] if batch and isinstance(batch[0], dict) else {}
     kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"
+    if kind == 'OPERATOR_INTENT' and body.get('action') == 'SET_MCP_ROUTE':
+        from .mcp_routing import operator_requests as mcp_route_requests
+        return mcp_route_requests(item,body,root)
     if kind in {"ENXAME_EVENT", "ENXAME_REGISTER_TEST", "NEXO_MEMORY_ENTRY", "NEXO_PROJECT_EVENT"}:
         if str(item.get("_inbox_source") or "").upper() != "DRIVE":
             raise ProposalError("PRIVATE_CONTINUITY_REQUIRES_DRIVE_INBOX")

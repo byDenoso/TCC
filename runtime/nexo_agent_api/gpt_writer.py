@@ -1211,6 +1211,9 @@ def _run_optional_gc(raw: bytes, report: dict) -> None:
 
 
 def _main(argv: list[str]) -> int:
+    if argv and argv[0] == 'mcp-route':
+        from .mcp_routing import main as mcp_route_main
+        return mcp_route_main(argv[1:])
     if argv and argv[0] == "context":
         from .pulse_context import main as context_main
         return context_main(argv[1:])
