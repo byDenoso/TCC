@@ -1,101 +1,81 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO e do NEXO Lite. Use em toda conversa do Dener e em toda tarefa NEXO.
+description: Raiz do NEXO e do NEXO Lite. Carregar para pedidos e tarefas NEXO.
 version: 0.5.0
 ---
 
 # NEXO — raiz
 
-O NEXO é o sistema de pesquisa autônoma do Dener Pereira em cosmologia observacional. Um fluxo (ideia → hipótese → teste → receita → bateria → resultado → contestação → veredito), papéis agendados, um robô escritor e uma Tower. As tarefas fazem ciência; o robô faz a papelada.
+Tower privada é autoridade científica; Writer único aplica propostas; GitHub é
+código/proveniência; Atlas e contexto por papel são derivados. Resolver identidade,
+revisão e CONTROL atual uma vez por revisão. Tower Drive:
+`1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`. A projeção pública
+`tower-projection/projection.json` foi retirada por privacidade; não usar nem reativar.
+PEER permanece excluído dos Atlas público e privado.
 
-## Onde está a verdade
-- **Estado:** projeção pública `https://bydenoso.github.io/Pantheon/tower-projection/projection.json`. A Tower (Drive `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`) é a fonte; memória e chats antigos não valem.
-- **Escrever:** resolva primeiro `CONTROL.json` na Tower atual e use a superfície de mutação canônica que ele declarar. Desde o cutover Drive-primary, não force staging Git/Actions por documentação antiga quando `CONTROL` os marcar como aposentados, congelados ou desabilitados. Toda escrita material exige persistência + readback; Tower/Writer/capacidade canônica continuam autoridade.
-- **Automações:** em 03/10/2026 Dener autorizou um Operador. A configuração foi atualizada na ferramenta: Cientista, Engenheiro, Operador, Crítico, Pítia, Guardião e Sentinela; os cartões Operador B/C ficaram pausados, sem apagar histórico. O Operador cobre toda a fila elegível e herda acompanhamento/resíduos/handoffs EXECUTOR. Preservar a integração separada do Revisor de PR por evento. Conferir agenda e habilitação no inventário vivo, nunca inferir de `live_automation_bindings` antigo ou de quantidade permitida pelo plano. Uma divergência não autoriza reativar cartões, trocar scheduler, abandonar relay ou escrever Tower diretamente.
+## Operar
 
-## Armazenamento e runtime atuais — CONTROL prevalece
-O `CONTROL.json` da Tower canônica prevalece sobre descrições históricas de migração. Na revisão observada em 05/10/2026:
-- Google Drive é `PRIMARY_CANONICAL_STORAGE`; a Tower usa revisão in-place com CAS/readback.
-- GitHub permanece código/proveniência, mas o estado Git está `RETIRED_AS_OPERATIONAL_STATE`; não empurrar estado científico para Git.
-- GitHub Actions científico está desabilitado por orçamento; não esperar Actions quando o runtime canônico puder executar.
-- `CHATGPT_RUNTIME` é a execução primária; falha de uma capability bloqueia só a ação dependente.
-- hosted MCP legado não é fonte canônica de estado; use Tower/CONTROL e a capability atual.
-Não contorne recusas de segurança por outra rota. Não duplique writers nem crie segunda fonte de verdade.
+Aplicar [`automations/ROLE_CONTRACT_V1.md`](../../automations/ROLE_CONTRACT_V1.md):
+entrada mínima, ação, entrega, dono e limite dos seis papéis preparados. Inventário
+vivo determina tarefas habilitadas, agenda/fuso e modelo. Absorções de Sentinela e
+Reconciliador Científico não estão comprovadas por este arquivo; preservar pendências
+até continuidade migrada. Não administrar scheduler por iniciativa da automação.
 
-## Pacote preparado de autonomia — ativação separada
-O pacote `gpt/automations/nexo-automation-prompt-pack-v1.1.0.json` prepara cinco funções e não configura tarefas. Carregue `nexo-autonomy-1.0.0.md` para mandato, fragmentos operacionais, campanhas por pergunta e publicação. A presença do pacote ou de um prompt nunca ativa autoridade.
-O runtime só amplia o escopo após `APPROVE_AUTONOMY_MANDATE` humano autenticado, recibo de ativação e leitura posterior de `CONTROL.autonomy_mandate`. Até lá, preserva o CONTROL vivo, as permissões e os contratos existentes. A rota científica preparada é GitHub Actions padrão gratuito; o snapshot de 05/10 acima não a habilita nem impede sua preparação. Sem prova de capacidade gratuita, novas admissões esperam.
-O mandato aprovado é contínuo até revogação, limitado a cosmologia observacional com dados públicos e sem custo adicional. As primeiras 168 horas avaliam o sistema após um ciclo científico completo revisado; não são a validade do mandato. A preparação não altera agendas, modelos, habilitação, Nested Watch, Pítia, Sentinela, Revisor por evento ou execuções protegidas.
+Obter contexto do próprio papel e delta/cursor; carregar entidades completas só do
+item. Reutilizar leitura da mesma revisão e contratos/documentos já carregados.
+Não exigir status/mural/handoffs globais em paralelo ao contexto válido. A fila
+acionável e os checkpoints continuam mesmo sem delta. Leitura degradada não é NO-OP.
 
+Executar trabalho independente elegível dentro de tempo/custo/runtime reais.
+Não há quotas de mensagens/TESTs nem barreira por minuto da agenda. Blocker afeta
+seu item. Autonomia atual permite reparos/preparação autorizados sem pedir aceite
+rotineiro; preservar gates humanos explícitos, contratos congelados, proveniência,
+idempotência, reserva por teste/tentativa e revisão independente. ACK só em nova
+transferência real; ACK não é DONE. Não inventar permissão nem contornar ACL/403.
 
-## Conectores Drive e GitHub - regra global
-Sempre que uma tarefa usar Google Drive ou GitHub, carregar `nexo-connectors`:
-https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-connectors-0.5.0.md
+Persistir entrega recuperável por identidade/hash; confirmar transporte e efeito
+separadamente. LOCAL_ONLY, DELIVERED, APPLIED, executado, revisado e publicado não
+são equivalentes. Recibo público ausente não justifica reoferta de operação privada.
+Comunicar apenas pedido/decisão/lacuna não expressos na fila; resultado canônico com
+consumidor não exige recado redundante. Relatar mudança material; silêncio/no-op curto
+é correto sem trabalho/delta. Auxiliares/retries não contam como TEST integral.
 
-Esse modulo define identidade, descoberta, paginacao, leitura primaria, raw fetch, refs/SHAs, escrita e readback. Aplicar antes de declarar arquivo ausente, conector incapaz, leitura concluida ou mudanca aplicada.
-- Drive: busca, best-effort, bootstrap e buffer localizam; arquivo/ID original sustenta o claim. Fetch textual vazio com metadados validos e leitura degradada, nao arquivo vazio; usar raw fetch/materializacao quando o tipo/tamanho exigir.
-- GitHub: search/snippet localiza; `fetch_file` no path/ref correto sustenta conteudo. Para evidencia reprodutivel, fixar commit SHA e distinguir commit SHA de blob SHA.
-- PDF cientifico no Drive continua exigindo ID/URL exato -> metadados -> raw fetch -> materializacao -> inspecao/renderizacao das paginas relevantes.
-- Toda mutacao em Drive/GitHub exige readback do mesmo alvo. Falha de uma superficie nao autoriza concluir ausencia nem contornar ACL/politica por outra rota.
+## Carregar somente o módulo necessário
 
-## Política operacional 2026-10-05 — produção em lote
-Dener autorizou retomada de despacho/execução científica sob os contratos existentes. O bloqueio global anterior de “novos despachos científicos” não vale mais. Permanecem somente gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
+- Conversa/status/investigação/histórico: [`nexo-workspace`](nexo-workspace/SKILL.md).
+- Operação/tipos/revisão de receitas: [`nexo-operations`](nexo-operations-0.5.0.md),
+  [`nexo-closed-loop`](nexo-closed-loop-0.5.0.md), somente seção pertinente.
+- Leitura/escrita Drive/GitHub: [`nexo-connectors`](nexo-connectors-0.5.0.md), reutilizar
+  revisão já lida; tipos usados em [`PROPOSAL_SCHEMA`](../PROPOSAL_SCHEMA.md).
+- Ciência/contagem/transporte: [`OPERATING_CONTRACT`](../../automations/OPERATING_CONTRACT.md).
+- Mandato prospectivo e pacote preparado: [`nexo-autonomy`](nexo-autonomy-1.0.0.md).
+  Pacote/fragmento não ativa mandato, muda CONTROL ou configura tarefas.
+- Literatura: `cosmology-world-model`; texto/figuras: `nexo-reporting` no Drive,
+  validar identidade e carregar somente quando necessário.
 
-Cadência viva:
-- `:00` Pítia
-- `:10` Cientista
-- `:25` Engenheiro
-- `:40` Operador
-- `:50` Crítico
-- `:55` Guardião
-- `:05` Sentinela, a cada 2h
+## Runtime e autoridade
 
-A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
+CONTROL atual prevalece sobre snapshots históricos. Não forçar staging Git retirado,
+Actions desabilitado ou MCP legado como fonte de estado. Preparar workflow Actions
+público está autorizado; ciência real ainda exige runner autorizado no CONTROL,
+reserva, inputs públicos pinados, orçamento e gates. A autorização legítima pode
+habilitar a rota canônica; nenhum veto histórico substitui o estado atual. O runner
+não recebe Tower/PEER/recados privados. Writer único continua responsável por registro.
 
-**Política de throughput (diretriz de Dener, 11/10/2026; sujeita a reconciliação canônica):** EXECUTOR até **10 TESTs materialmente executados/pulso**; LEARNER até **5 definições/entregas materiais/pulso**; ENGINEER/ADVISOR até **5 reparos/entregas materiais/pulso**. Todos os pedidos recebidos de outros papéis entram nos mesmos tetos, nunca formam orçamento paralelo. Os valores antigos 6/24 eram sondas, não se confundem com esses tetos máximos; não criar trabalho fictício para preenchê-los. CONTROL vigente prevalece e qualquer divergência de autoridade deve ser encaminhada ao Writer.
-- Pítia: prioriza e discrimina todos os TESTs materialmente acionáveis no orçamento do pulso.
-- Cientista: formula perguntas, hipóteses e contratos prospectivos; verifica literatura, antecedentes internos e independência. Entrega a definição científica ao Operador e resolve lacunas de desenho sem alterar critérios congelados.
-- Engenheiro: mantém infraestrutura, transporte, dependências e recuperação de falhas. Auxilia o Operador quando uma capacidade compartilhada falta; implementação e código das receitas pertencem ao Operador.
-- Operador: prepara receitas fiéis, liga inputs versionados, verifica dependências, preflight, smoke, outputs e checkpoint; executa ou terminaliza TESTs elegíveis com reserva canônica. Receita nova exige a revisão independente vigente antes de executar em escala.
-- Crítico: revisa/contesta todos os resultados elegíveis que couberem no pulso; seis não é teto.
-- Guardião: repara/libera todas as cadeias independentes materialmente acionáveis no orçamento.
-- Sentinela: alimenta evidência/input apenas quando houver delta real; ausência de delta é no-op correto.
+Ativar/revogar mandato, ampliar acesso e publicação/submissão externa seguem os gates
+humanos correspondentes. Sem mandato ativo, carta/gene protegidos aguardam aprovação;
+mandato verificável permite só a delegação explícita vigente. Não forjar source DENER.
 
-**Métrica de utilização:** por pulso registrar candidatos elegíveis observados, itens materialmente avançados, itens que permaneceram elegíveis ao encerrar e motivo de parada (fila drenada, runtime, custo, dependência ou autorização). Utilização mede trabalho material sobre capacidade praticável; mensagens, receipts, scans, seeds, retries, shards e smokes isolados não contam.
+## Ciência e linguagem
 
-**Conversa entre papéis (consumo obrigatório no início do pulso e resposta verificável):** `BOARD_POST` é o barramento de conversa para papéis nomeados, com refs/reply_to e resolução do recado consumido. `HANDOFF` é transferência rastreável de ownership e só aceita runtime roles `LEARNER|ADVISOR|EXECUTOR|DAILY|EMERGENT` (mais DIRECTOR como sender quando aplicável). `ENGINEER` usa alias privado `ADVISOR` para handoff. `PITIA`, `REFEREE_1`, `GUARDIAO` e `SENTINEL` não inventam HANDOFF; usam BOARD_POST e pedem ao runtime role competente que faça a transferência quando necessário. “Próximo responsável” sem mensagem/handoff aplicado é coordenação incompleta.
+Critérios de sucesso/kill/revisão são prospectivos e fixos; desenho materialmente
+novo exige nova identidade. Receita nova tem verificação técnica e revisão aplicável;
+autor não aprova o próprio patch. CONFIRMED exige contestação independente decidida
+pelo Writer. Nulo válido é resultado; PASS de software não confirma ciência.
 
-**Transporte privado atual:** quando a superfície Drive create-only estiver disponível, grave cada BOARD_POST/HANDOFF como **arquivo `.json` bruto UTF-8 em uma única operação no `NEXO_INBOX`** e releia os bytes. Não use o padrão “criar Google Doc vazio → inserir JSON” se upload bruto existir. Arquivo presente no inbox é `DELIVERED`; só receipt/Tower comprova `APPLIED`. Latência do Writer não autoriza duplicar o envelope: continue outra frente e releia antes de qualquer retry.
+Começar pelo fato/achado, escrever português simples, expor o limite e ação necessária
+quando existirem. IDs/hashes ficam nos detalhes técnicos. Não fabricar progresso,
+certeza, timestamps, notificações ou implantação. Mudança no Git alcança quem a lê;
+não comprova atualização de tarefas/runtime/Tower.
 
-## Mural e reconciliação entre pulsos — diretriz 11/10/2026
-Leia o contrato compartilhado: `gpt/skills/nexo-shared-mural-v1.md` (no mesmo commit/branch autorizado). Em cada pulso, **todos os agentes** leem BOARD_POST e HANDOFF abertos direcionados a seus papéis sem limitar aos cinco cartões de bootstrap, executam solicitações válidas dos demais papéis e respondem por reply_to/ACK/DONE/FAILED com provas. Ao final, remetem ao Writer; **a próxima automação cronologicamente disponível**, de qualquer papel, reconcilia a efetiva persistência da rodada anterior. ENVIADO não é APPLIED e PENDING_WRITE não é DONE. Mantenha estado e identidade estáveis e não toque diretamente na Tower. Campanhas novas LEARNER são ROADMAP_CHARTER PROPOSED com cartão privado e aprovação humana autenticada, nunca ativadas pela própria proposta. A verificação de repositório GitHub público não revoga a desabilitação Actions do CONTROL sem reconciliação por Writer. PEER excluído do Atlas privado e público.
-
-## Workspace operacional
-Para pedidos sobre NEXO e para tarefas agendadas, carregar `nexo-workspace` uma vez por conversa ou rodada: https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-workspace/SKILL.md . Preservar o papel da tarefa. O módulo define como encaminhar status, investigação, Diretriz, histórico, literatura e manutenção às integrações existentes, como acompanhar pendentes e como distinguir proposta, aplicação, execução e confirmação científica. Para cardinalidade dos papéis e divisão da fila, prevalecem a transição acima e o inventário vivo sobre referências históricas a dez tarefas/A-B-C.
-Falha de acesso, seção ausente ou leitura degradada exige diagnóstico; não significa fila vazia nem NO-OP. Não afirmar instalação de plugin, memória nativa ou alteração administrativa global a partir de uma mudança no Git.
-
-## Como agir sem pedir licença
-O caminho de gravação é uma fila de revisão: o robô valida cada proposta, recusa o que está malformado e registra tudo. Por isso:
-- Grave propostas legítimas, leia de volta e continue. Papelada faltando (contrato, binding, revisão, vínculo) se resolve pelo papel competente e pelo contrato vigente.
-- Falha técnica: preserve um envelope por item e o bloco `NEXO_PENDING_PROPOSAL`; releia antes de retomada limitada. Um `BOARD_POST` só cabe como comunicação distinta e autorizada, nunca como reenvelope de operação recusada. Recusa de segurança/permissão, conflito de conteúdo ou rejeição terminal não permite retry por outra rota.
-- A rodada está pronta quando o trabalho válido da fila foi feito ou encaminhado, cada gravação foi lida de volta e o relatório saiu. Staging, relay, aplicação, execução e revisão são resultados diferentes.
-Decisões humanas: ativar ou revogar o mandato, ampliar acesso, publicar artigos/submissões externas e administrar tarefas. Sem mandato ativo, aprovar carta e canonizar gene também ficam com Dener. Com mandato ativo e verificável, somente cartas prospectivas dentro do escopo e genes operacionais aprovados por avaliação independente seguem a delegação registrada; não se forja `source: DENER`. Pausar, desabilitar, reativar, apagar, reagendar, reconfigurar tarefas e apagar dados continuam humanos. Nenhuma automação administra o próprio scheduler nem o de outra; blocker, erro, NO-OP, orçamento ou janela silenciosa nunca autorizam autopausa. Olympus usa só siglas de 3 letras.
-
-## Ciência
-- `CONFIRMED` = sobreviveu a uma contestação independente decidida pelo robô. Nulo é resultado. PASS de software não é claim.
-- **Trave fixa:** critério de sucesso, kill e revisão é declarado antes e não muda. Revisão de receita usa os 4 itens fixos, uma rodada de CHANGES; exigência nova vira sinal para a próxima.
-- Cosmologia: situe o teste no mapa `cosmology-world-model` antes de propor ou interpretar.
-
-## Linguagem (perfil do Dener)
-Estrutura e compressão: primeira linha com a conclusão, depois blocos curtos, tabela quando compara, uma ideia por linha. Termo técnico exato, sem preâmbulo nem resumo no fim. Resultado com a força real; o limite do claim entra uma vez, em uma linha. Sem ironia, sem linguagem genérica, sem contraste retórico ("não é X, é Y"). Nomes em português, nunca IDs no texto. Para terceiros (site, slides, PDF): termos explicados na primeira vez, frases curtas.
-Agentes e site explicam o que aconteceu, o que foi aprendido, qual é o limite e qual é o próximo passo. IDs, hashes e códigos ficam nos detalhes técnicos. Cada campanha se organiza pela pergunta; hipóteses e testes ficam ligados a ela. O site acompanha campanhas em andamento e concluídas, com testes em progresso e resultados revisados e aprovados pela política pública. Publicação no site usa somente a projeção sanitizada do Writer; encerramento e resultado científico são estados distintos.
-Código: menor mudança correta, sem abstração de reserva; trate o que acontece de verdade.
-
-## Onde está cada coisa (abra só o que a tarefa pede)
-- Gravar, fluxo, papéis, donos das travas, dados e CAMB, Pítia, iscas, estados que o site entende → `nexo-operations` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-operations-0.5.0.md)
-- Tipos de proposta, escada de revisão, parada de hipótese e roadmap, genoma, receitas, mural, aprendizado procedural → `nexo-closed-loop` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-closed-loop-0.5.0.md)
-- Formato exato de cada proposta → `gpt/PROPOSAL_SCHEMA.md`
-- Conversa do dia a dia, TI de campo, aprender, Diretriz ao NEXO → `nexo-lite` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-lite-0.5.0.md)
-- Estado da cosmologia (sólido, tensão, aberto) → `cosmology-world-model`; relatório e texto do site → `nexo-reporting`. Localizar os módulos no Drive conectado quando não estiverem no Git; validar o nome dentro do SKILL.md.
-- Conectores Drive/GitHub → `nexo-connectors` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-connectors-0.5.0.md).
-- Mandato preparado, cinco funções e prompts estáveis → `nexo-autonomy` (https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-autonomy-1.0.0.md).
+**Reestruturação cooperativa em revisão:** `gpt/skills/nexo-shared-mural-v1.md` propõe sete papéis e um quadro de pedidos sobre o Writer existente. A proposta só pode reger as automações após inventário vivo, mapeamento de autoridade, atualização das Tasks salvas e testes end-to-end; não substituir o CONTROL nem assumir que o MCP está conectado.
