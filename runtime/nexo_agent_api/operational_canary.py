@@ -2349,7 +2349,10 @@ def _tower_readiness_metadata(root: Path, test: Mapping[str, Any]) -> Mapping[st
         manifest_sha = raw_revision.removeprefix("sha256:")
         if not _valid_hash(manifest_sha):
             return None
-        control_raw = (root / "CONTROL.json").read_bytes()
+        from .control_compat import read_control_compat
+        control_path = root / "CONTROL.json"
+        control_raw = (control_path.read_bytes() if control_path.is_file() else
+                       json.dumps(read_control_compat(root), ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode())
         reads += 1
         bytes_read += len(control_raw)
         authorization_revision = sha256(control_raw)

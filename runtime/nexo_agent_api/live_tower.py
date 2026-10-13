@@ -26,6 +26,7 @@ def read_live_tower_bytes(raw: bytes) -> dict[str, Any]:
 
 _JSON_SURFACES = (
     "CONTROL.json",
+    "runtime/executor_policy.json",
     "roadmaps/**/*.json",
     "entities/**/*.json",
     "indexes/**/*.json",
@@ -66,6 +67,7 @@ def build_live_tower_payload(
     *,
     updated_at: str | None = None,
     base: dict[str, Any] | None = None,
+    excluded_paths: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     """Pack the canonical files under ``root`` into one live Tower object.
 
@@ -73,6 +75,11 @@ def build_live_tower_payload(
     runtime, text entries, ...) are carried over unchanged, so repacking a
     downloaded Tower never drops state that the local scan does not own.
     """
+    # Trusted internal candidate argument, never read from a proposal or CONTROL.
+    # GC rehearsal must explicitly exclude paths in BOTH scan and base carryover.
+    for path in excluded_paths:
+        if not path or path.startswith("/") or "\\" in path or any(part in {"..", ".", ""} for part in path.split("/")):
+            raise ValueError("LIVE_TOWER_EXCLUSION_PATH_INVALID")
     root = Path(root)
     paths: set[Path] = set()
     for pattern in _JSON_SURFACES:
@@ -81,9 +88,11 @@ def build_live_tower_payload(
     files: dict[str, dict[str, Any]] = {
         key: value
         for key, value in ((base or {}).get("files") or {}).items()
-        if not _is_scanned_surface(key)
+        if not _is_scanned_surface(key) and key not in excluded_paths
     }
     for path in sorted(paths):
+        if logical_path(root, path) in excluded_paths:
+            continue
         files[logical_path(root, path)] = {
             "encoding": "json",
             "value": json.loads(path.read_text(encoding="utf-8")),
@@ -91,7 +100,7 @@ def build_live_tower_payload(
     # Contracts are carried from ``base`` but a local edit (writer document merge)
     # must win, otherwise contract updates are silently dropped on repack.
     for path in sorted(root.glob("contracts/**/*.json")):
-        if path.is_file():
+        if path.is_file() and logical_path(root, path) not in excluded_paths:
             try:
                 files[logical_path(root, path)] = {"encoding": "json", "value": json.loads(path.read_text(encoding="utf-8"))}
             except ValueError:
@@ -124,7 +133,8 @@ def publish_live_tower(
     destination = Path(target) if target is not None else root / LIVE_TOWER_NAME
     # The previous live object at the destination is the base: whatever the
     # local scan does not own survives the repack.
-    base = read_live_tower_bytes(destination.read_bytes()) if destination.is_file() else None
+    base_path = destination if destination.is_file() else root / LIVE_TOWER_NAME
+    base = read_live_tower_bytes(base_path.read_bytes()) if base_path.is_file() else None
     payload = build_live_tower_payload(root, updated_at=updated_at, base=base)
     raw = _canonical(payload) + b"\n"
 
@@ -185,14 +195,45 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
     """
     bundle = read_live_tower_bytes(raw)
     verify_live_tower(bundle)
+    from .control_compat import control_from_bundle, SOURCE_HEADER
+    control_from_bundle(bundle)
     root = Path(destination).resolve()
+    targets = {}
+    for relative, entry in bundle['files'].items():
+        if (not isinstance(relative, str) or not relative or not isinstance(entry, dict)
+                or '\\' in relative or any(part in {'', '.', '..'} for part in relative.split('/'))):
+            raise ValueError('unsafe live Tower path')
+        target = fs_path(root, relative).resolve()
+        if target == root or root not in target.parents:
+            raise ValueError('unsafe live Tower path')
+        targets[relative] = target
     root.mkdir(parents=True, exist_ok=True)
+    # Preflight representation cleanup in both migration and rollback directions.
+    # No file is removed until every obsolete component is verified and unedited.
+    from .control_compat import POLICY_PATH, AUTHORITY_PATH
+    obsolete = (["CONTROL.json"] if "CONTROL.json" not in bundle['files']
+                else [POLICY_PATH, AUTHORITY_PATH])
+    obsolete = [relative for relative in obsolete if (root / relative).exists()]
+    if obsolete:
+        previous_path = root / LIVE_TOWER_NAME
+        if not previous_path.is_file():
+            raise ValueError("CONTROL_REPRESENTATION_UNKNOWN_LOCAL_FILE")
+        previous = read_live_tower_bytes(previous_path.read_bytes())
+        verify_live_tower(previous)
+        control_from_bundle(previous)
+        for relative in obsolete:
+            entry = previous['files'].get(relative)
+            if not isinstance(entry, dict) or entry.get('encoding') != 'json':
+                raise ValueError('CONTROL_REPRESENTATION_UNKNOWN_LOCAL_FILE')
+            expected = (json.dumps(entry['value'],ensure_ascii=False,sort_keys=True,indent=2)+'\n').encode()
+            if (root / relative).read_bytes() != expected:
+                raise ValueError('CONTROL_REPRESENTATION_LOCAL_CHANGES_PRESENT')
+    for relative in obsolete:
+        (root / relative).unlink()
     for relative, entry in bundle["files"].items():
         if not isinstance(relative, str) or not isinstance(entry, dict):
             continue
-        target = fs_path(root, relative).resolve()
-        if target != root and root not in target.parents:
-            raise ValueError(f"unsafe live Tower path: {relative!r}")
+        target = targets[relative]
         encoding = entry.get("encoding")
         if encoding == "json":
             data = json.dumps(entry.get("value"), ensure_ascii=False, sort_keys=True, indent=2) + "\n"
@@ -204,9 +245,8 @@ def materialize_live_tower(raw: bytes, destination: str | Path) -> tuple[Path, d
         target.write_text(data, encoding="utf-8")
     (root / LIVE_TOWER_NAME).write_bytes(raw)
 
-    control = json.loads((root / "CONTROL.json").read_text(encoding="utf-8"))
-    if control.get("truth_owner") != bundle.get("truth_owner"):
-        raise ValueError("materialized CONTROL truth_owner differs from live Tower")
+    # Ephemeral header cache in this isolated materialization; never packed.
+    (root / SOURCE_HEADER).write_text(json.dumps({key: value for key, value in bundle.items() if key != "files"}), encoding="utf-8")
 
     metadata = {
         "export_role": "PUBLIC_READ_ONLY_DERIVED_COPY",

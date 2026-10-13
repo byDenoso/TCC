@@ -130,16 +130,23 @@ def _receipt_records(tower: dict) -> list[dict]:
     return records
 
 
-def receipt_status(tower: dict, prepared: dict) -> dict:
-    rows = []
+def receipt_index(tower: dict) -> dict:
+    """One verified bundle scan per immutable read; this index is not persisted."""
+    index = {}
     for row in _receipt_records(tower):
-        if (row.get("intent_id") == prepared["intent_id"]
-                and row.get("effect_id") == envelope_effect_id(prepared["intent_id"])):
-            rows.append(row)
-    rows.sort(key=lambda r: (r.get("observed_at", ""), r.get("receipt_id", "")))
-    if not rows:
+        key = (row["intent_id"], row["effect_id"])
+        prior = index.get(key)
+        if prior is None or (row.get("observed_at", ""), row["receipt_id"]) > (prior.get("observed_at", ""), prior["receipt_id"]):
+            index[key] = row
+    return index
+
+
+def receipt_status(tower: dict, prepared: dict, *, index: dict | None = None) -> dict:
+    if index is None:
+        index = receipt_index(tower)
+    row = index.get((prepared["intent_id"], envelope_effect_id(prepared["intent_id"])))
+    if row is None:
         return {"stage": "UNOBSERVED", "receipt": None, "tower_revision": tower.get("revision")}
-    row = rows[-1]
     if row.get("payload_sha256") != prepared["payload_sha256"]:
         raise ValueError("INTENT_PAYLOAD_CONFLICT")
     return {"stage": row.get("outcome"), "receipt": row,

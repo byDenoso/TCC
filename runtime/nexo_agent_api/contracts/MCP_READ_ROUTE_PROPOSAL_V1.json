@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "NEXO_MCP_READ_ROUTE_PROPOSAL_V1",
+  "description": "Scoped proposed route. Valid structure never authenticates a human or proves a connected canary.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "source", "created_at", "payload"],
+  "properties": {
+    "kind": {"const": "OPERATOR_INTENT"},
+    "source": {"const": "DENER"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["action", "endpoint", "role", "tool_names", "source_read", "catalog", "canary", "approval_ref"],
+      "properties": {
+        "action": {"const": "SET_MCP_ROUTE"},
+        "endpoint": {"type": "string", "format": "uri", "pattern": "^https://", "maxLength": 2048},
+        "role": {"const": "LEARNER"},
+        "tool_names": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true, "items": {"$ref": "#/$defs/toolName"}},
+        "source_read": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file_id", "tower_revision", "tower_sha256", "route_sha256", "tower_updated_at"],
+          "properties": {
+            "file_id": {"const": "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z"},
+            "tower_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "tower_sha256": {"$ref": "#/$defs/hash"},
+            "route_sha256": {"$ref": "#/$defs/hash"},
+            "tower_updated_at": {"type": "string", "format": "date-time"}
+          }
+        },
+        "catalog": {"$ref": "#/$defs/catalog"},
+        "canary": {"$ref": "#/$defs/canary"},
+        "approval_ref": {"type": "string", "minLength": 1, "maxLength": 512}
+      }
+    }
+  },
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "toolName": {"enum": ["nexo_capabilities", "nexo_search", "nexo_neighbors", "nexo_trace"]},
+    "catalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["endpoint", "source_file_id", "role", "tools", "sha256", "observed_at"],
+      "properties": {
+        "endpoint": {"type": "string", "format": "uri"},
+        "source_file_id": {"const": "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z"},
+        "role": {"const": "LEARNER"},
+        "tools": {
+          "type": "array", "minItems": 4, "maxItems": 4,
+          "items": {
+            "type": "object", "required": ["name", "inputSchema", "annotations"],
+            "properties": {
+              "name": {"$ref": "#/$defs/toolName"},
+              "inputSchema": {"type": "object", "required": ["type"], "properties": {"type": {"const": "object"}}},
+              "annotations": {
+                "type": "object", "required": ["readOnlyHint", "destructiveHint"],
+                "properties": {"readOnlyHint": {"const": true}, "destructiveHint": {"const": false}}
+              }
+            }
+          }
+        },
+        "sha256": {"$ref": "#/$defs/hash"},
+        "observed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "canary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "endpoint", "source_file_id", "role", "tool", "catalog_sha256", "observed_at", "receipt_ref", "readback", "capabilities", "capabilities_sha256"],
+      "properties": {
+        "runtime": {"const": "CHATGPT_CONNECTED_MCP"},
+        "endpoint": {"type": "string", "format": "uri"},
+        "source_file_id": {"const": "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z"},
+        "role": {"const": "LEARNER"},
+        "tool": {"const": "nexo_capabilities"},
+        "catalog_sha256": {"$ref": "#/$defs/hash"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "receipt_ref": {"type": "string", "minLength": 1, "maxLength": 512},
+        "readback": {"const": "PASS"},
+        "capabilities_sha256": {"$ref": "#/$defs/hash"},
+        "capabilities": {
+          "type": "object",
+          "required": ["status", "roles", "source_mode", "source", "authorization_revision", "read_only", "writes_enabled", "external_model_calls", "other_runtimes_authorized", "connection_scope", "supported_tools", "validity_start", "validity_end"],
+          "properties": {
+            "status": {"const": "AUTHENTICATED"},
+            "roles": {"const": ["LEARNER"]},
+            "source_mode": {"const": "DRIVE_REVISION_VERIFIED_PRIVATE_SCOPED_D1"},
+            "source": {
+              "type": "object", "required": ["source_id", "revision", "source_sha256"],
+              "properties": {
+                "source_id": {"const": "1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z"},
+                "revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+                "source_sha256": {"$ref": "#/$defs/hash"}
+              }
+            },
+            "authorization_revision": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+            "read_only": {"const": true},
+            "writes_enabled": {"const": false},
+            "external_model_calls": {"const": false},
+            "other_runtimes_authorized": {"const": false},
+            "connection_scope": {"const": "this_authenticated_runtime_only"},
+            "supported_tools": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true, "items": {"$ref": "#/$defs/toolName"}},
+            "validity_start": {"type": "string", "format": "date-time"},
+            "validity_end": {"type": "string", "format": "date-time"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -16,7 +16,8 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 4. **Fonte primaria vence derivado.** Bootstrap, buffer, indice, busca, projecao, snippet e pacote intermediario servem para localizar a fonte; nao substituem o arquivo ou commit que sustenta o claim.
 5. **Escrita so fecha com readback.** Criar, atualizar, renomear ou mover continua nao verificado ate reler o alvo e conferir identidade, conteudo relevante e metadados esperados.
 6. **Falha localizada.** Uma capability quebrada bloqueia somente a acao dependente. Continue partes independentes e registre o erro exato.
-7. **Sem bypass de seguranca.** 403, recusa de politica, ACL ou autenticacao nao autorizam trocar silenciosamente de servico, conta ou rota.
+7. **Contexto e entrega por papel.** Aplicar `automations/ROLE_CONTRACT_V1.md`: ler identidade/revisão e deltas necessários à própria fila; guardar entrega recuperável, próximo dono e efeito esperado. Não exigir reconciliação global por todos os papéis. A absorção de funções tem ativação separada e não muda a allowlist do Writer.
+8. **Sem bypass de seguranca.** 403, recusa de politica, ACL ou autenticacao nao autorizam trocar silenciosamente de servico, conta ou rota.
 
 ## Google Drive
 
@@ -39,6 +40,83 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 - list_folder prova somente os filhos diretos retornados. Nao inferir recursao ou completude alem do limite solicitado.
 
 ### Escrita
+
+
+### Ponte privada de celulas para automacoes sem arquivo exportavel
+
+**Autorizacao restrita, ja implementada no Writer existente (sem segundo Writer):**
+quando o runtime agendado NAO consegue vincular/exportar os bytes para o upload bruto
+por `container_session_unavailable`, `file_uri` indisponivel ou ausencia da capacidade
+de arquivo, uma **proposta pequena de tipo governado pelo Writer** pode usar
+exclusivamente o `NEXO_SCHEDULED_SPOOL` privado que o Writer ja consome,
+sem novo Writer, credencial, ACL, dado bruto da Tower ou bypass de politica.
+
+**Tipos permitidos pela ingestao sched-v1:** BOARD_POST, INTEGRITY_REPORT,
+LEARNING_SIGNAL, HYPOTHESIS_PROPOSAL, LESSON_PROPOSAL, SEMANTIC_BACKFILL,
+DATA_BINDING, RECIPE_BIND, ROADMAP_ATTACH, ROADMAP_CHARTER,
+MUTATION_PROPOSAL, CONTEST, VERDICT_REVIEW e NEXO_THOUGHT.
+Cada envelope exige papel de origem real (`source`) e a coluna `role`
+idêntica. MUTATION_PROPOSAL somente por EXECUTOR; VERDICT_REVIEW
+somente REFEREE_1/REFUTADOR; CONTEST somente REFEREE_1/REFUTADOR/SENTINEL.
+Isso entrega uma proposta, não executa ciência nem concede autoridade nova:
+Google Sheets ID `1M2maKkuEjxumZRa145dzei7dEPFi2yKsKlUf7_scC-E`,
+aba `Sheet1`, ID numerico `1417054989`, colunas
+`stable_id | created_at | role | envelope_b64url`. O proprietario e o Writer
+sao os unicos destinatarios conhecidos da ACL observada em 12/10/2026.
+Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONLY.
+
+1. Classifique a falha original. `403`, escopo/ACL insuficiente, politica de seguranca,
+   erro de autenticacao, rejeicao do Writer, schema invalido e conflito de identidade
+   **NAO** habilitam essa ponte. Ela so evita a passagem de bytes pela sessao local.
+2. Prepare exatamente um envelope JSON UTF-8 privado permitido, com `kind`,
+   `source`, `created_at` UTC, `intent_id` estavel e `payload` conforme
+   `gpt/PROPOSAL_SCHEMA.md`. Codifique os **mesmos bytes** em Base64URL
+   sem quebra de linha e sem padding, limite total codificado a 24 KiB.
+   Gere um `stable_id` imutavel em `[a-z0-9-]`, 1-60 caracteres,
+   prefixado por `sched-v1-`; nunca use a timestamp do pulso como nova
+   identidade para repeticoes da mesma proposta.
+3. Confira pelo `stable_id` a coluna A da planilha e
+   `byDenoso/Pantheon@main:nexo-one/scheduled-spool-ack.json` (key `acked`)
+   quando a proposta for publicavel por politica de recibos. **Recibos de
+   propostas privadas podem nao entrar no ack publico**:
+   `gateway_resolved` pode ficar vazio mesmo quando a Tower aplicou o efeito.
+   Para esses tipos, use a entidade e o recibo **privados** na Tower; falta
+   no ack publico NAO e falha de escrita nem permissao para duplicar.
+   confira tambem recibo/efeito canonico sempre que ha acesso autorizado. Se ja existe
+   mesmo ID, nao crie segunda linha; diferenca de bytes e CONFLITO,
+   nao substituicao. Se busca/leitura for degradada, pare em UNKNOWN.
+4. Se a API nativa `batch_update_spreadsheet` estiver **realmente**
+   disponivel nesse runtime, use um unico `appendCells` de quatro campos
+   `stringValue` na aba verificada; nao use `create_file`, Google Doc,
+   scripts de terceiros, Git publico, outra conta ou permissao nova.
+5. Releia a linha e compare quatro celulas, identidade, data e Base64URL
+   byte a byte. Somente com match declare `DELIVERED_PENDING_WRITER`.
+   A prova `acked[stable_id]` nao substitui a leitura do efeito e receipt
+   na Tower para `APPLIED`. Se o runtime agendado nao expuser o Sheets
+   write, preserve `PENDING_WRITE_LOCAL_ONLY` e a proposta original.
+
+**Proibido nesta ponte:** HANDOFF, HANDOFF_TRANSITION, OPERATOR_INTENT,
+TEST_BATTERY, FAMILY_CHARTER, FITNESS_REPORT, aprovar mandato ou carta
+protegida, trocar CONTROL, iniciar Actions cientifico bloqueado,
+revisao independente forjada, alterar criterio congelado, credencial,
+segredo, publicar PEER no Atlas público ou privado ou escrever a Tower diretamente.
+Handoffs formais continuam somente pelo NEXO_INBOX create-only com
+proveniencia DRIVE. BOARD_POST dirigido permite coordenacao privada
+enquanto o envio de HANDOFF formal estiver tecnicamente pendente,
+mas nao equivale a HANDOFF ACK/DONE.
+O Writer continua unico aplicador e valida cada proposta cientifica.
+Um erro LOCAL de exportacao nao exige acao rotineira do Dener: usar
+esta ponte quando a API de escrita Sheets estiver disponivel na
+automacao e continuar trabalho independente. Registro no spool
+nao comprova efeito canonico.
+
+### Ponte de arquivo exportado (ChatGPT -> Drive)
+- Para JSON bruto gerado no ChatGPT, **prefira o snapshot de arquivo exportado**, não um caminho do contêiner. Na superfície Files, depois de obter o `file_id` real do artefato exportado (formato `file_...`), faça **uma** operação `files.manage_library` com `{"operations":[{"operation":"upload","source_file_ref":{"file_id":"<file_id observado>"},"destination_path":"<pasta privada NEXO_INBOX>/<nome imutável>.json"}]}`. A pasta deve ser descoberta e conferida no Drive/Library; nunca invente file_id.
+- Na superfície nativa Google Drive `upload_file`, use somente o `file_uri` retornado de uma exportação/ação de arquivo compatível, com `parent_folder_id` confirmado. Não passe `/mnt/data/...`, caminhos Windows, URL textual ou base64 no lugar de `file_uri`.
+- `container_path` no `files.manage_library` só é elegível quando a sessão desse contêiner estiver de fato vinculada à ferramenta Files. `container_session_unavailable` ("No active container session was found for container_path") é **falha da ponte local**, não negação Drive/ACL nem problema do Writer: não repita o mesmo argumento. Se existir snapshot exportado **do mesmo arquivo**, recupere pela referência exata; sem referência verificável, mantenha `PENDING_WRITE_LOCAL_ONLY`.
+- **Antes de enviar:** valide UTF-8/JSON, tamanho e SHA-256; procure identidade/nome em `NEXO_INBOX`, `processed` e recibos; presença, resultado parcial ou busca degradada exigem reconciliação, nunca nova identidade. A operação é create-only, com mesmo nome e bytes; não sobrescreva nem crie Google Doc de duas etapas. **Depois:** leia metadados e bytes brutos pelo ID de retorno, compare SHA-256, tamanho, MIME `application/json` e parent canônico. Só então marque `DELIVERED/PENDING_WRITE`; `APPLIED` exige recibos **e efeito real** na Tower.
+- Este procedimento reutiliza a **mesma** pasta/conta/permissão Drive autorizada; não é fallback de ACL. Não use Git público, serviço externo, Writer alternativo ou upload do snapshot inteiro da Tower como transporte.
+
 
 - Resolva alvo e parents atuais antes de mover ou renomear.
 - Arquivo nativo Google e editado pela API nativa; arquivo bruto usa operacao de arquivo. Nao converter tipo por acidente.
