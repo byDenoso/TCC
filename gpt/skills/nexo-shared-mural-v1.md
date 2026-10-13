@@ -3,30 +3,28 @@
 Documento operacional para agentes agendados. **O CONTROL.json vivo e os contratos de domínio prevalecem.** Esta proposta não altera CONTROL, mandatos, timers, limite de paralelismo, Writer ou autoridade científica.
 
 ## 1. Fonte e responsabilidade
-- A fonte única é a Tower privada `NEXO_TOWER_LIVE.json` (Drive ID `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`); o Atlas privado apenas a apresenta. Não crie banco/mural alternativo.
-- `BOARD_POST` = diálogo privado `from/to/text/refs/reply_to`, nunca transição de ownership nem prova de compute.
-- `HANDOFF` = solicitação rastreável com `handoff_id`, `thread_id`, destinatário canônico, `entity_ref` e próxima ação concreta. Só os runtime roles autorizados pelo Writer podem criar/aceitar handoffs; ENGINEER tem alias ADVISOR quando o contrato permitir. Pítia, Crítico, Guardião e Sentinela conversam via BOARD_POST, não assumem outro papel.
-- No início **de todo pulso de cada papel**, leia CONTROL, recibos/envelopes pendentes do próprio pulso anterior, `evolution/board.json` e **todas** as ofertas abertas dirigidas ao papel, não somente os cinco cards de bootstrap. Para os runtime roles válidos, use `AgentService.inbox_for(role)` ou `python nexo_gpt_writer.py handoff <TOWER.json> list <PAPEL>` em cópia local verificada; `inbox_has_more` sinaliza paginação, não inexistência.
-- Priorize handoffs antigos já autorizados, tarefas encaminhadas por outros agentes e roadmaps ACTIVE antes de emitir ideias extras. Trate solicitações como parte do orçamento do papel, nunca como fila infinita paralela.
+- Tower privada e CONTROL vigentes são canônicos; Writer único, BOARD_POST, HANDOFF/WORK e fila permanecem. PEDIDO é projeção operacional de itens já governados pelo Writer, não ledger novo.
+- Sete papéis: Maestro/Pítia (continuidade e prioridades), Cientista (HIPOTESE/CONTRATO/RECEITA/LITERATURA), Engenheiro (BINDING/INTEGRIDADE técnica), Executor (EXECUCAO), Crítico (REVISAO independente), Sintetizador (propostas entre ciência/literatura), Editor (REDACAO e projeção aprovada). Uma vaga livre. Aliases de apresentação não concedem autoridade Writer.
+- Pedido mínimo: `{tipo:"PEDIDO",id,precisa:CAPACIDADE,sobre:referencia,porque:frase,de:papel,depende_de:[ids],estado:"ABERTO"}`, capacidades PRIORIDADE,HIPOTESE,CONTRATO,RECEITA,BINDING,EXECUCAO,REVISAO,LITERATURA,INTEGRIDADE,REDACAO,DECISAO_DENER. Persistir por schema existente; não presumir conversor implantado.
+- Em cada pulso confirmar conexão autorizada, identidade/revisão de Tower/CONTROL, recibos associados e pedidos liberados, de preferência com delta/cursor. Ordenar primeiro por prioridade explícita do roadmap/Maestro, depois abertura mais antiga. Dedupe capacidade + referência + finalidade. Não gerar ideias extras enquanto pedidos elegíveis destravadores esperam.
 
-## 2. Fechamento obrigatório da conversa
-- Uma mensagem relevante deve gerar resposta `BOARD_POST` com `reply_to` e evidência ou limitação real; recado sem referência e sem destinatário não prova ação.
-- Para `HANDOFF` recebido: se compatível com controle/ownership, `HANDOFF_TRANSITION(state=ACK,writer_role=<papel>)` antes de assumir; em seguida **executar a próxima ação concreta**; somente após artefato/efeito realmente produzido e persistido emitir `DONE`. Falha material comprovada `FAILED` com diagnóstico e próximo responsável. Não converter leitura/ACK/patch em RESULT científico.
-- A transição de HANDOFF, recibo e WORK devem ser correlacionados pelo mesmo `handoff_id`, `request_id`, `thread_id`, `entity_ref` e revisão; nunca recriar identidade em retry.
-- Operador (EXECUTOR) responde ao Cientista (LEARNER) com resultado/artefato concreto ou bloqueio demonstrado. Engenheiro remove dependência e passa referências verificáveis. Crítico revisa independentemente depois do RUN quando o contrato pedir. Pítia coordena pendências sem executar ciência; Sentinela verifica atrasos e Guardião investiga falhas de entrega.
+## 2. Reserva, dependências e encerramento
+- BOARD_POST comunica e recebe resposta apenas quando necessária; nunca prova ownership, execução ou entrega. HANDOFF/WORK canônico é solicitação rastreável.
+- `PEGO` somente com reserva **atômica** do Writer/lease existente, vinculando pedido, papel, revisão e prazo de duas cadências. ACK sem CAS/readback não concede exclusividade; se faltar mecanismo, registrar demanda técnica, não assumir trabalho exclusivo.
+- `FEITO` requer efeito concreto persistido, recibo e readback de mesma identidade; preparação local ou `DELIVERED` não é aplicação. `AGUARDA`: reutilizar/criar PEDIDO para capacidade faltante, ligar `depende_de`, detectar ciclos e registrar causa nova. Dependência validada libera elegibilidade derivada automaticamente pelo Writer.
+- Vencimento exige reconciliação: se job ativo, acompanhar o **mesmo** job/checkpoint; sem job ativo, liberar via Writer. Nunca duplicar por horário. Três devoluções distintas acionam decisão do Maestro. Após um pulso sem resposta admite uma cobrança; após dois, diagnosticar antes de nova cobrança. Maestro não aprova ciência nem é intermediário obrigatório de tudo.
 
-## 3. Writer e readback atrasado
-1. Início do pulso N: primeiro reconcile `PENDING_WRITE` deixado por **qualquer papel** no pulso anterior, conferindo identidade + receipt de envelope/efeito + entidade efetiva na geração atual da Tower. Um recibo `APPLIED` sem efeito correspondente exige investigação; STAGED ou DELIVERED não equivalem a APPLIED.
-2. Execute trabalhos autorizados. Ao fim do pulso N, envie envelopes idempotentes para a **entrada privada autenticada** declarada no CONTROL, uma vez por identidade, preferindo arquivo JSON UTF-8 create-only no Drive `NEXO_INBOX` e readback de bytes/MIME/parent. Ausência de transporte = PENDING/DELIVERY_UNAVAILABLE, nunca aplicado. **Não aguarde Writer para finalizar a rodada**.
-3. Pulso N+1: a próxima automação cronologicamente disponível, de qualquer papel, lê recebimentos anteriores. Confirma somente com readback efetivo; caso ainda pendente, não duplica, continua trabalho independente. Após persistência real ou rejeição terminal, atualiza estado derivado. Reenvio só se comprovado permitido pelo protocolo idempotente e após busca no inbox/processed/ledger.
-4. Intermediário `PENDING_WRITE` não conta como RUN/RESULT canônico, nem como DONE. Confirmação eventual pelo próximo pulso é **reconciliação operacional**, não dispensa os requisitos de persistência e readback terminal do CONTROL para ações materiais.
-5. Se nenhum runtime tiver acesso à rota Writer, anote `WRITE_DELIVERY_UNAVAILABLE` e continue tarefas somente leitura/compute cuja segurança permita; não contorne ACL com Git público ou overwrite direto da Tower.
+## 3. Persistência, falhas e controle de agendas
+- Um pulso reconcilia receipts `PENDING_WRITE` pertinentes e IDs de job; reenvio somente após verificação de não aplicação, com identidade e bytes iguais. Use o inbox privado autenticado declarado pelo CONTROL; jamais GitHub público para recados privados. `DELIVERED` não equivale a `APPLIED`.
+- Se a escrita falhar, mantenha `PENDING_WRITE` em armazenamento durável autorizado. Se não houver durabilidade, indique `PENDING_WRITE_LOCAL_ONLY`; nunca inventar recibo. Registrar `FALHA` com ferramenta, código e trabalho afetado, seguir com itens independentes. MCP indisponível não equivale a fila vazia; não contornar 401/403, ACL nem política.
+- Todo pulso produz `BATIMENTO={papel,em:UTC,fez:resumo,proximo:acao}`, persistido somente quando Writer/canal autorizado permitir. Resposta curta: PAPEL/UTC, Feito, Pedidos, Falhas/decisões novas, Próximo, Persistência.
+- **NUNCA PAUSAR:** agentes não criam, pausam, ativam, desativam, excluem ou alteram quaisquer agendas. Apenas Dener administra. Remover ferramentas de administração dos agentes quando possível. Ação que precise de autorização ainda ausente vira DECISAO_DENER com pergunta e recomendação; não insistir a cada pulso.
 
-## 4. Tetos por pulso e segurança científica
-- `EXECUTOR`: **até 10 TESTs científicos materialmente executados por pulso**, observando tempo e capacidade efetivos. Teste conta somente com computação real; RUN/RESULT passa a confirmado apenas com Writer e readback em pulso seguinte (ou quando possível); entrada na fila, smoke, patch e retry não contam.
-- `LEARNER`: **até 5 unidades materiais de definição/triagem científica por pulso**, incluindo pedidos recebidos e propostas de campanhas; não executar ciência fora do papel.
-- `ENGINEER/ADVISOR`: **até 5 reparos/entregas técnicas por pulso**, incluindo pedidos de outros papéis; não executar RESULT científico em lugar do EXECUTOR.
-- Tetos **não são metas mínimas**, não aumentam paralelismo, nem exigem cinco novos testes se houver trabalho já definido. `CONTROL.role_queue_limit=5` continua apenas um limite de **projeção**, não confunda com esses novos tetos. Qualquer conflito com CONTROL atual deve ir ao Writer/autoridade humana, não ser sobreposto por prompt.
+## 4. Cadências, capacidade e fronteira científica
+- Cadência inicial: Maestro/Pítia 30 minutos; Cientista, Engenheiro e Executor 1 hora; Crítico, Sintetizador e Editor 2 horas, fuso America/Sao_Paulo. Ajustar pela capacidade real e inventário vivo. Sem metas artificiais ou quotas de novos testes; cada job longo mantém seu ID.
+- Respeitar contrato congelado, null/rival, inputs, autorização, budget, validade e readback. Cientista pode implementar receita simples; Engenheiro cuida de binding/adapters; Executor executa e retoma; Crítico revisa independentemente; Sintetizador propõe teste de sistemática, discriminante ou reparo reutilizável; Editor somente projeta conteúdo aprovado.
+- Ninguém faz revisão independente do próprio resultado. Resultado nulo válido é entrega, sucesso técnico não é confirmação científica. Não mover critérios após olhar dados; claims incluem limite em uma linha e explicação em português.
+- Rótulos operacionais propostos: `estado_proposto:NOME_EM_MAIUSCULAS`, `definicao:frase`, mantendo estado base. Maestro só incorpora após 3 eventos distintos de >=2 papéis em 48 horas (retries não contam); 7 dias sem uso e sem pedido ativo permite arquivar o rótulo, sem apagar histórico ou alterar schema, transições, critérios ou autoridade.
 
 ## 5. Novas campanhas do Cientista
 - LEARNER pode criar `ROADMAP_CHARTER` com `status=PROPOSED`, questão nova, null/rival, literatura, dedupe, fontes públicas, budget/stop, segurança, escopo e impacto. Sem `mandate_id` que promova automaticamente; não enviar `APPROVE_CHARTER` em nome de Dener.
@@ -39,8 +37,9 @@ Documento operacional para agentes agendados. **O CONTROL.json vivo e os contrat
 - CONTROL observado em 11/10/2026: `github_actions_science_role=DISABLED_BUDGET_EXHAUSTED` e `github_actions_reenable_policy=EXPLICIT_OPERATOR_ONLY_AFTER_BUDGET_RESET_OR_PLAN_CHANGE`. Portanto, nenhuma execução científica é despachada em Actions até reconciliação canônica explícita pelo Writer e autorização adequada; preserve execução local.
 - Nunca compartilhe Tower privada, PEER privado, secrets, auth/paths internos, ou dados não-publicados nos logs e artifacts de repositório público. Preserve id/commit/inputs e verifique run original antes do retry.
 
-## 7. Critérios de aceitação
-- Uma solicitação LEARNER -> EXECUTOR aparece no mural privado (quando não PEER), tem `ACK` do destinatário e depois `DONE` com evidência concreta ou `FAILED` com motivo, **após o Writer aplicar cada transição**.
-- Pulso N entrega proposta; pulso N+1 confirma somente se Tower/recibo refletir efeito. O mesmo request não é aplicado duas vezes.
-- Proposta de campanha tem carta privada e continua inativa até ação humana autenticada; publicações não são inferidas.
-- Tetos e isolamento entre papéis preservados; GitHub indisponível mantém a rota local, não paralisa frentes independentes.
+## 7. Aceite e evidência
+- Antes de migrar agendas: inventário **vivo** com identidade das tasks, roles/cadência atuais, CONTROL e Tower atuais, Writer único com CAS/lease e readback comprovados; nunca criar duplicatas para contornar falta de acesso.
+- Testar em runtime real e pelo Writer o ciclo PEDIDO -> PEGO -> FEITO, falta de RECEITA -> AGUARDA -> liberação, replay duplicado, lease vencido com job ativo, pedido sem resposta e indisponibilidade MCP. Cada teste deve demonstrar que nenhum agente alterou agendas e que trabalho independente continuou.
+- PEER fica fora dos Atlas público e privado; Olympus e dados pessoais permanecem privados. Publicação usa só projeção aprovada e autorização vigente.
+- Sem prova operacional, marcar apenas PREPARADO/EM_REVISAO. Não anunciar recuperação, integração, atualização de prompt salvo ou execução científica sem recibo/teste verificável.
+
