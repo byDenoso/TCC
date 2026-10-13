@@ -22,34 +22,34 @@ class Round12FrozenReadinessTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         (self.root / "contracts").mkdir()
         self.test = {
-            "id": "T-MEGA26-LCDM-BIAS-HOD-152",
+            "id": "SYNTH-ROUND12-152",
             "kind": "TEST",
             "status": "BLOCKED_INPUT",
             "contract_lock": True,
-            "contract_ref": "TOWER_V06/contracts/MEGASTRUCTURE_LCDM_ROUND12_V1.json",
+            "contract_ref": "TOWER_V06/contracts/SYNTHETIC_ROUND12_V1.json",
             "frozen_test": {
-                "id": "T-MEGA26-LCDM-BIAS-HOD-152",
-                "null": "Dependent at fixed field and volume",
-                "rival": "Stable at fixed field and volume",
-                "method": "Compare exact locked HOD selections on the same fields",
-                "datasets": ["frozen simulation fields"],
-                "selection": "frozen halo and HOD selections, fixed volume",
-                "cuts": "unchanged Round12 search",
-                "success_criteria": ["measured under matched volume"],
-                "kill_criteria": ["exact selected inputs unavailable"],
-                "claim_boundary": "No anomaly inference",
+                "id": "SYNTH-ROUND12-152",
+                "null": "Synthetic null declaration",
+                "rival": "Synthetic alternative declaration",
+                "method": "Synthetic fixed-method declaration",
+                "datasets": ["synthetic generated vectors"],
+                "selection": "synthetic immutable selection",
+                "cuts": "unchanged synthetic selection",
+                "success_criteria": ["synthetic success condition"],
+                "kill_criteria": ["synthetic kill condition"],
+                "claim_boundary": "Synthetic fixture only",
             },
         }
         self.contract = {
-            "id": "MEGASTRUCTURE_LCDM_ROUND12_V1",
+            "id": "SYNTHETIC_ROUND12_V1",
             "status": "FROZEN_PREREGISTERED",
-            "question": "How do large structures depend on survey and tracer?",
-            "tests": [{"id": self.test["id"], "objective": "Repeat the frozen finder across exact HOD selections"}],
+            "question": "Synthetic contract question",
+            "tests": [{"id": self.test["id"], "objective": "Synthetic child objective"}],
         }
         self._contract()
 
     def _contract(self):
-        (self.root / "contracts" / "MEGASTRUCTURE_LCDM_ROUND12_V1.json").write_text(
+        (self.root / "contracts" / "SYNTHETIC_ROUND12_V1.json").write_text(
             json.dumps(self.contract), encoding="utf-8"
         )
 
@@ -91,8 +91,8 @@ class Round12FrozenReadinessTests(unittest.TestCase):
             self.assertNotIn("question", view)
 
     def test_other_round12_members_use_the_same_frozen_contract(self):
-        for test_id in ("T-MEGA26-LCDM-EVT-LMAX-149",
-                        "T-MEGA26-LCDM-TRACER-DENSITY-151"):
+        for test_id in ("SYNTH-ROUND12-149",
+                        "SYNTH-ROUND12-151"):
             with self.subTest(test_id=test_id):
                 child = {
                     **self.test,
