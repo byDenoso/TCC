@@ -903,7 +903,7 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     # An actual recipe-runner job still requires a validated recipe. A TEST
     # without a recipe can instead be evaluated by the existing direct runtime
     # when CONTROL explicitly authorizes that route.
-    direct_contract = _direct_scientific_route(root, test) and not recipe and params is None
+    direct_contract = _direct_scientific_route(root, test) and not recipe and params in (None, {})
     recipe_required = not direct_contract
     if recipe_required and (not valid_name or not isinstance(params, dict)):
         reasons.append('RECIPE_BINDING_MISSING')
