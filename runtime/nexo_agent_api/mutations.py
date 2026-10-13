@@ -224,6 +224,11 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
                 return replay
 
     try:
+        internal_context = {}
+        if "_scientific_review_authority" in request:
+            internal_context["_scientific_review_authority"] = request["_scientific_review_authority"]
+        if "_runner_observation_authority" in request:
+            internal_context["_runner_observation_authority"] = request["_runner_observation_authority"]
         result = service.mutate(
             entity_kind,
             entity_name,
@@ -232,6 +237,7 @@ def apply_mutation_request(root: str | Path, request: dict[str, Any]) -> dict[st
             writer_role=writer_role,
             event_type=event_type,
             material=bool(request.get("material", True)),
+            **internal_context,
         )
     except TowerAgentIssue as exc:
         if seeded_new_entity and path.exists():

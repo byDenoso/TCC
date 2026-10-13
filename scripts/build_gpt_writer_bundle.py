@@ -23,8 +23,14 @@ TEMPLATE = '''#!/usr/bin/env python3
 
     python nexo_gpt_writer.py apply  TOWER.json PROPOSALS.json OUT.json
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
+    python nexo_gpt_writer.py gc dry-run TOWER.json PRIVATE_REPORT.json
+    python nexo_gpt_writer.py context TOWER.json ROLE PRIVATE_CONTEXT.json
+    python nexo_gpt_writer.py mcp-route prepare TOWER.json HTTPS_ENDPOINT PRIVATE_ROUTE.json --approval-ref REF
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
+    python nexo_gpt_writer.py memory <context|search|dream|related|feedback> ...
+    python nexo_gpt_writer.py retrieval <sync|search|context|get|trace|groups|dream|diff|serve> ...
+    python nexo_gpt_writer.py continuity <inspect|context|prepare> ...
 
 Bundle sha256: {digest}
 """
@@ -45,6 +51,12 @@ if __name__ == "__main__":
 
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
+_REQUIRED_EXTENSION_SOURCES = (
+    "mcp_routing.py",
+    "memory.py", "memory_cli.py", "retrieval.py", "retrieval_cli.py",
+    "retrieval_mcp.py", "retrieval_models.py",
+    "continuity.py", "continuity_cli.py", "continuity_context.py", "enxame.py",
+)
 
 def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
     """Write a stable ZIP member: source mtimes must never change the Writer hash."""
@@ -56,17 +68,24 @@ def _write_deterministic(archive: zipfile.ZipFile, name: str, data: bytes) -> No
 
 
 def build() -> Path:
+    # Missing extension sources must fail closed, never strip installed commands.
+    for name in _REQUIRED_EXTENSION_SOURCES:
+        path = REPO / "runtime" / "nexo_agent_api" / name
+        if not path.is_file():
+            raise RuntimeError(f"Writer extension source missing: {path.relative_to(REPO)}")
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         _write_deterministic(archive, "runtime/__init__.py", b"")
         for package in ("nexo_agent_api", "nexo_execution", "portable_camb"):
             package_root = REPO / "runtime" / package
-            for path in sorted(package_root.rglob("*")):
+            for path in sorted(package_root.rglob("*"), key=lambda path: path.relative_to(package_root).as_posix()):
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
                     _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
-        for path in sorted((REPO / "contracts").rglob("*.json")):
-            _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
+        contracts_root = REPO / "contracts"
+        if contracts_root.is_dir():
+            for path in sorted(contracts_root.rglob("*.json"), key=lambda path: path.relative_to(REPO).as_posix()):
+                _write_deterministic(archive, path.relative_to(REPO).as_posix(), path.read_bytes())
     payload = base64.b64encode(buffer.getvalue()).decode("ascii")
     digest = hashlib.sha256(buffer.getvalue()).hexdigest()
     OUT.parent.mkdir(exist_ok=True)

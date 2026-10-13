@@ -73,7 +73,10 @@ def compose_board_snapshots(requests: list[dict[str, Any]]) -> list[dict[str, An
 
 
 def _entity(root: Path, kind: str, entity_id: str) -> dict[str, Any] | None:
-    path = entity_path(root, kind, entity_id)
+    try:
+        path = entity_path(root, kind, entity_id)
+    except ValueError:
+        return None
     if not path.is_file():
         return None
     return json.loads(path.read_text(encoding="utf-8"))
@@ -183,6 +186,8 @@ def _result_request(item: dict[str, Any], body: dict[str, Any], root: Path) -> l
         "arm": body.get("arm"),
         "semantic": semantic,
     }
+    if isinstance(body.get("public_presentation"), dict):
+        changes["public_presentation"] = body["public_presentation"]
     # A legacy/manual result may still be recorded scientifically, but it may
     # close an execution attempt only when it names the current observed
     # runner attempt. The mutation guard revalidates the completed battery and
@@ -436,6 +441,21 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         "preparation_evidence": preparation_record,
         "semantic": semantic,
     }
+    if body.get("gene_id"):
+        from .autonomy import read as autonomy_read, active as autonomy_active
+        gene = next((gene for gene in autonomy_read(root, evolution.GENOME_DOC).get("genes") or []
+                     if gene.get("id") == body["gene_id"]), {})
+        units = (gene.get("evaluation_plan") or {}).get("units") or []
+        if (gene.get("status") != "CANARY" or not autonomy_active(root, gene.get("mandate_id"))
+                or not any(unit.get("test_id") == test_id and unit.get("arm") == body.get("gene_arm")
+                           for unit in units if isinstance(unit, dict))):
+            raise ProposalError("OPERATIONAL_GENE_UNIT_NOT_PREREGISTERED")
+        changes.update(gene_id=body["gene_id"], gene_arm=body["gene_arm"],
+                       gene_plan_sha256=gene["evaluation_plan_sha256"])
+    if isinstance(body.get("public_presentation"), dict):
+        changes["public_presentation"] = body["public_presentation"]
+    if body.get("public_id"):
+        changes["public_id"] = body["public_id"]
     if lifecycle == "READY":
         changes["frozen_at"] = item.get("created_at") or evolution._now(item)
         # Public pre-registration: the frozen design's hash; the inbox commit that carried it is the timestamp.
@@ -477,6 +497,16 @@ def _hypothesis_requests(item: dict[str, Any], body: dict[str, Any], root: Path)
         })
     requests[0]["changes"]["hypothesis_id"] = hypothesis_id
     if roadmap_id:
+        roadmap_record = evolution._read(root, f"roadmaps/{roadmap_id}.json")
+        if roadmap_record.get("question_id"):
+            requests[0]["changes"]["question_id"] = roadmap_record["question_id"]
+        if roadmap_record.get("mandate_id"):
+            from .autonomy import active
+            if not active(root, roadmap_record["mandate_id"]):
+                raise ProposalError("AUTONOMY_MANDATE_INACTIVE")
+            requests[0]["changes"]["mandate_id"] = roadmap_record["mandate_id"]
+            requests[0]["changes"]["public_data_only"] = True
+            requests[0]["changes"]["visibility"] = roadmap_record.get("visibility") or "PRIVATE"
         path = fs_path(root, f"roadmaps/{roadmap_id}.json")
         if path.is_file():
             roadmap = json.loads(path.read_text(encoding="utf-8"))
@@ -742,6 +772,8 @@ def _operational_receipt_request(item: dict[str, Any], body: dict[str, Any]) -> 
 
 
 _KIND_ALIASES = {
+    "ENXAME_EVENT": "ENXAME_EVENT", "ENXAME_REGISTER_TEST": "ENXAME_REGISTER_TEST",
+    "NEXO_MEMORY_ENTRY": "NEXO_MEMORY_ENTRY", "NEXO_PROJECT_EVENT": "NEXO_PROJECT_EVENT",
     "MUTATION_PROPOSAL": "MUTATION_PROPOSAL", "RESULT": "MUTATION_PROPOSAL", "TEST_RESULT": "MUTATION_PROPOSAL",
     "RESULT_PROPOSAL": "MUTATION_PROPOSAL", "EXECUTION_RESULT": "MUTATION_PROPOSAL",
     "HYPOTHESIS_PROPOSAL": "HYPOTHESIS_PROPOSAL", "HYPOTHESIS": "HYPOTHESIS_PROPOSAL", "TEST_PROPOSAL": "HYPOTHESIS_PROPOSAL",
@@ -831,6 +863,14 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         raise ProposalError("proposal is not a JSON object")
     body = item.get("payload") if isinstance(item.get("payload"), dict) else {k: v for k, v in item.items() if not k.startswith("_")}
     raw_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    nested_kind = str(body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
+    if body is not item and item.get("kind") and nested_kind in _KIND_ALIASES:
+        if _KIND_ALIASES.get(raw_kind, raw_kind) != _KIND_ALIASES[nested_kind]:
+            raise ProposalError("PROPOSAL_KIND_AMBIGUOUS")
+    if nested_kind in _KIND_ALIASES and isinstance(body.get("payload"), dict):
+        # A transport wrapper is not a proposal payload. Guessing a second
+        # dispatch level used to acknowledge an INBOX_RECORD as BOARD_POST.
+        raise ProposalError("NESTED_PROPOSAL_ENVELOPE")
     if raw_kind == "BATCH":
         # Several envelopes in one inbox file (bootstrap, multi-kind runs): each is applied on its own.
         requests = []
@@ -848,6 +888,14 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
     batch = next((body[key] for key in _BATCH_KEYS if isinstance(body.get(key), list) and body.get(key)), None)
     first = batch[0] if batch and isinstance(batch[0], dict) else {}
     kind = _KIND_ALIASES.get(raw_kind) or _infer_kind(body) or _infer_kind(first) or raw_kind or "UNCLASSIFIED"
+    if kind == 'OPERATOR_INTENT' and body.get('action') == 'SET_MCP_ROUTE':
+        from .mcp_routing import operator_requests as mcp_route_requests
+        return mcp_route_requests(item,body,root)
+    if kind in {"ENXAME_EVENT", "ENXAME_REGISTER_TEST", "NEXO_MEMORY_ENTRY", "NEXO_PROJECT_EVENT"}:
+        if str(item.get("_inbox_source") or "").upper() != "DRIVE":
+            raise ProposalError("PRIVATE_CONTINUITY_REQUIRES_DRIVE_INBOX")
+        return [{"nexo_operation": kind, "payload": dict(body), "role": item.get("source"),
+                 "created_at": item.get("created_at")}]
     if kind in {"HANDOFF", "HANDOFF_TRANSITION"}:
         if str(item.get("_inbox_source") or "").upper() != "DRIVE":
             raise ProposalError("PRIVATE_HANDOFF_REQUIRES_DRIVE_INBOX")
@@ -936,6 +984,11 @@ def proposal_to_requests(item: dict[str, Any], root: str | Path) -> list[dict[st
         if kind == "ROADMAP_ATTACH":
             return _attach_requests(item, body, root)
         if kind in _EVOLUTION:
+            if kind == "BOARD_POST" and str(item.get("_inbox_source") or "").upper() == "SHEET_PRIVATE":
+                body = {**body, "private": True}
+                if isinstance(body.get("entries"), list):
+                    body["entries"] = [{**entry, "private": True} if isinstance(entry, dict) else entry
+                                       for entry in body["entries"]]
             requests = _EVOLUTION[kind](item, body, root)
             # Nothing to do (duplicate, spine gene, closed roadmap...) -> keep the proposal as a record, never fail.
             if not requests and kind == "BATTERY_STATUS":

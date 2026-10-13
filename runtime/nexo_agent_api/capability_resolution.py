@@ -157,7 +157,7 @@ class CapabilityExecutionResolver:
         }
 
     def _generic_frozen_adapter(self, test: dict[str, Any]) -> dict[str, Any] | None:
-        if str(test.get("domain") or "").upper() != "SCIENCE":
+        if str(test.get("domain") or "").upper() not in {"SCIENCE", "OBSERVATIONAL_COSMOLOGY"}:
             return None
         if _frozen_scientific_contract(test) is None:
             return None

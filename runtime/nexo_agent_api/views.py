@@ -230,21 +230,27 @@ def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
     )[:ROLE_QUEUE_LIMIT]
 
 
-def materialize_role_views(root: str | Path) -> dict[str, Any]:
+def _materialize_role_views(root: str | Path) -> dict[str, Any]:
     root = Path(root)
     state_counts = _refresh_hot_state(root)
     service = AgentService(root)
     active_ids = _active_ids(root)
     counts: dict[str, int] = {}
-    for role in ROLES:
+    from .autonomy import mandate
+    roles = ROLES + (("ENGINEER", "REFEREE_1", "GUARDIAO") if mandate(root).get("id") else ())
+    for role in roles:
         view = service.bootstrap(role)
         queue = view["queue"]
-        if active_ids is not None:
+        if active_ids is not None and role != "REFEREE_1":
             queue = [item for item in queue if str(item.get("id")) in active_ids]
             queue = [item for item in queue if not _deferred_by_active_p0(item, active_ids)]
+        total_before_projection = len(queue)
         queue = _prioritize(queue, role)
         view["queue"] = queue
         view["queue_count"] = len(queue)
+        view["queue_total_count"] = total_before_projection
+        view["queue_has_more"] = total_before_projection > len(queue)
+        view["queue_scope"] = "TOP_CARDS_ONLY_DISCOVERY_NOT_EXECUTION_AUTHORIZATION"
         view["queue_limit"] = ROLE_QUEUE_LIMIT
         view["view_model"] = "SINGLE_ROLE_VIEW"
         _write_json(root / "bootstrap" / f"{role.lower()}.json", view)
@@ -257,9 +263,15 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
         })
         counts[role] = view["queue_count"]
     return {
-        "roles": len(ROLES),
+        "roles": len(roles),
         "queue_counts": counts,
         "queue_limit": ROLE_QUEUE_LIMIT,
         "view_model": "SINGLE_ROLE_VIEW",
         "state_counts": state_counts,
     }
+
+
+def materialize_role_views(root: str | Path) -> dict[str, Any]:
+    from .operation_receipts import receipt_transaction
+    with receipt_transaction(root):
+        return _materialize_role_views(root)

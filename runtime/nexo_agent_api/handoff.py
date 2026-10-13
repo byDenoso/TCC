@@ -9,11 +9,10 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 from .service import TowerAgentIssue
-from .tower_paths import entity_path, json_file
+from .tower_paths import entity_path, json_file, logical_path
 
-RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT"}
-READ_ONLY_ROLES = {"REFEREE_1", "REFUTADOR"}
-HANDOFF_READ_ROLES = RUNTIME_ROLES | READ_ONLY_ROLES
+RUNTIME_ROLES = {"DAILY", "ADVISOR", "EXECUTOR", "LEARNER", "EMERGENT", "ENGINEER", "REFEREE_1", "REFUTADOR", "GUARDIAO"}
+ROLE_ALIASES = {"ADVISOR": "ENGINEER", "REFUTADOR": "REFEREE_1"}
 SEND_ROLES = RUNTIME_ROLES | {"DIRECTOR"}
 ACTIONABLE_STATES = {"PENDING", "ACK"}
 TERMINAL_STATES = {"DONE", "FAILED"}
@@ -75,15 +74,29 @@ def _write_event(root: Path, payload: dict) -> dict:
     event = dict(payload)
     event["event_id"] = event_id
     event["created_at"] = now.isoformat().replace("+00:00", "Z")
-    json_file(event_dir, event_id).write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    path = json_file(event_dir, event_id)
+    path.write_text(json.dumps(event, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    from .operation_receipts import _transaction_index
+    index = _transaction_index(root)
+    if index is not None and event.get("handoff_id"):
+        relative = logical_path(root, path)
+        index.handoff_cache["written_paths"].append(relative)
+        if index.handoff_cache["entries"] is not None:
+            index.handoff_cache["entries"].append((relative, event))
+            index.handoff_cache["entries"].sort(key=lambda row: row[0])
     return event
 
 
 def _handoff_events(root: Path) -> list[dict]:
+    from .operation_receipts import _transaction_index
+    index = _transaction_index(root)
+    if index is not None and index.handoff_cache["entries"] is not None:
+        return [row[1] for row in index.handoff_cache["entries"]]
     event_root = root / "events"
     if not event_root.exists():
         return []
     events = []
+    entries = []
     for path in sorted(event_root.rglob("*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -91,6 +104,9 @@ def _handoff_events(root: Path) -> list[dict]:
             continue
         if isinstance(payload, dict) and payload.get("handoff_id"):
             events.append(payload)
+            entries.append((logical_path(root, path), payload))
+    if index is not None:
+        index.handoff_cache["entries"] = entries
     return events
 
 
@@ -306,7 +322,7 @@ def _handoff_is_stale(self, event: dict) -> bool:
         return True
     current_owner = str(current.get("owner_role") or "").upper()
     recipient = str(event.get("to_role") or "").upper()
-    return bool(current_owner and recipient and current_owner != recipient)
+    return bool(current_owner and recipient and ROLE_ALIASES.get(current_owner, current_owner) != ROLE_ALIASES.get(recipient, recipient))
 
 
 def emit_handoff(
@@ -404,12 +420,12 @@ def emit_handoff(
 
 def inbox_for(self, role: str) -> list[dict]:
     recipient = role.upper()
-    if recipient not in HANDOFF_READ_ROLES:
+    if recipient not in RUNTIME_ROLES:
         raise TowerAgentIssue("ROLE_NOT_SUPPORTED", "Unknown NEXO role.", {"role": recipient})
     items = [
         event
         for event in _latest_by_handoff(self.root).values()
-        if event.get("to_role") == recipient
+        if ROLE_ALIASES.get(event.get("to_role"), event.get("to_role")) == ROLE_ALIASES.get(recipient, recipient)
         and event.get("state") in ACTIONABLE_STATES
         and not _handoff_is_stale(self, event)
     ]
@@ -427,8 +443,11 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     current = _latest_by_handoff(self.root).get(handoff_id)
     if not current:
         raise TowerAgentIssue("HANDOFF_NOT_FOUND", "Handoff does not exist.", {"handoff_id": handoff_id})
-    if writer != current.get("to_role"):
+    recipient = current.get("to_role")
+    if ROLE_ALIASES.get(writer, writer) != ROLE_ALIASES.get(recipient, recipient):
         raise TowerAgentIssue("HANDOFF_WRITER_MISMATCH", "Only the recipient can transition a handoff.", {"writer_role": writer})
+    # Aliases retain the recipient identity and ownership of the original offer.
+    writer = recipient
     current_state = str(current.get("state", ""))
     recovery_work, acceptance = (None, None)
     if current.get("handoff_type") == RECOVERY_HANDOFF:
@@ -438,6 +457,11 @@ def transition_handoff(self, handoff_id: str, *, state: str, writer_role: str) -
     allowed = {"PENDING": {"ACK", "DONE", "FAILED"}, "ACK": {"DONE", "FAILED"}}
     if target not in allowed.get(current_state, set()):
         raise TowerAgentIssue("HANDOFF_ILLEGAL_TRANSITION", "Illegal handoff state transition.", {"from": current_state, "to": target})
+    # Inbox filtering is not an authorization boundary: a caller can retain an
+    # old handoff ID after its WORK has finished or moved to another owner.
+    # Preserve idempotent ACK replay and allow stale offers to be closed.
+    if target == "ACK" and _handoff_is_stale(self, current):
+        raise TowerAgentIssue("HANDOFF_STALE", "A stale handoff cannot be accepted.", {"handoff_id": handoff_id})
     payload = {key: current.get(key) for key in (
         "handoff_id", "request_id", "request_fingerprint", "correlation_id", "parent_handoff_id",
         "thread_id", "from_role", "to_role", "handoff_type", "objective_ref",

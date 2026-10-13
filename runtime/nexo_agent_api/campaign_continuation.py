@@ -142,6 +142,13 @@ class CampaignFrontierResolver:
         tests, sources = self._campaign_items(campaign_id)
         runs_by_test = self._runs(campaign_id)
         ordered_ids = self._ordered_ids(campaign, tests)
+        # Scientific predecessors are tested against the entire canonical
+        # campaign, not their position in a display/execution order. A child
+        # may appear before an already-completed parent in execution_order.
+        completed_ids = {
+            item_id for item_id, item in tests.items()
+            if _status(item) in _SUCCESS_STATES
+        }
 
         completed: list[str] = []
         active: list[str] = []
@@ -170,7 +177,7 @@ class CampaignFrontierResolver:
                 continue
 
             dependencies = [str(value) for value in test.get("depends_on", []) if str(value)]
-            dependencies_closed = all(dep in completed for dep in dependencies)
+            dependencies_closed = all(dep in completed_ids for dep in dependencies)
             manual = str(test.get("execution_policy") or "AUTO").upper() == "MANUAL"
             blocker_class = _blocker_class(test)
             if blocker_class:
@@ -188,17 +195,26 @@ class CampaignFrontierResolver:
 
         campaign_state = _status(campaign)
         terminal_ids = [str(value) for value in campaign.get("terminal_test_ids", []) if str(value)]
-        terminal = campaign_state in _CAMPAIGN_TERMINAL_STATES
-        if not terminal and terminal_ids:
-            terminal = all(test_id in completed for test_id in terminal_ids)
-        if not terminal and tests and not terminal_ids:
-            terminal = len(completed) == len(tests)
+        # Treat terminal_test_ids as an additional dependency, not permission to
+        # skip other declared comparisons or independent reviews.
+        required_ids = set(tests) | set(terminal_ids)
+        execution_complete = bool(required_ids) and all(item in completed for item in required_ids)
+        pending_review = sorted(item for item in required_ids if item in completed and
+                                str(tests[item].get("review_state") or "").upper()
+                                not in {"CONFIRMED", "REFUTED"})
+        review_complete = execution_complete and not pending_review
 
+        # A status computed from DONE tests cannot close the campaign. Closing
+        # requires an explicit, persisted campaign decision with its own review.
+        terminal = campaign_state in _CAMPAIGN_TERMINAL_STATES
         if terminal:
             next_test_ids: list[str] = []
             frontier_status = "TERMINAL"
         else:
-            next_test_ids = recoverable or active or ready
+            # These are independent candidates, not an exclusive phase gate.
+            # Keep active runs first (no duplicate dispatch), then ready tests;
+            # checkpoint recovery must not hide unrelated executable work.
+            next_test_ids = active + ready + recoverable
             frontier_status = "ACTIVE"
 
         return {
@@ -212,6 +228,16 @@ class CampaignFrontierResolver:
             "blocker_classes": blocker_classes,
             "completed": completed,
             "terminal": terminal,
+            "terminal_source": "EXPLICIT_CAMPAIGN_STATE" if terminal else None,
+            "execution_complete": execution_complete,
+            "review_complete": review_complete,
+            "pending_review": pending_review,
+            "unresolved_declared_tests": sorted(required_ids - set(tests)),
+            "next_action": (
+                None if terminal or next_test_ids else
+                "REQUEST_INDEPENDENT_REVIEW" if pending_review else
+                "REQUEST_CLOSURE_DECISION" if review_complete else None
+            ),
             "next_test_ids": list(next_test_ids),
             "sources": sources,
         }

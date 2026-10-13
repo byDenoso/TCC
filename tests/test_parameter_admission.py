@@ -85,7 +85,7 @@ def test_parameter_rejection_reaches_queue_and_recovery_route(context):
     assert check['reasons']==['DATA_RELEASE_PARAM_MISMATCH']
     assert e.family_battery_items(root)==[]
     assert _route(check['reasons'])[0]=='LEARNER'
-    assert _route(['PREFLIGHT_CONTRACT_MISSING'])[0]=='ADVISOR'
+    assert _route(['PREFLIGHT_CONTRACT_MISSING'])[0]=='EXECUTOR'
 
 
 @pytest.mark.parametrize('code', [

@@ -304,7 +304,7 @@ class InboxApplyTests(unittest.TestCase):
         fake.write_text(json.dumps([battery]), encoding="utf-8")
         [loaded] = _runner_battery_updates(str(fake))
         self.assertEqual(loaded["_inbox_source"], "RUNNER_OBSERVATION")
-        self.assertEqual(loaded["_inbox_id"], "runner:battery:0:battery-1")
+        self.assertRegex(loaded["_inbox_id"], r"^runner:battery:v2:[0-9a-f]{64}$")
         assessment = {
             "nexo_operation": "EXECUTION_OBSERVATION_ASSESSMENT",
             "assessment": {

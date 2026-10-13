@@ -9,6 +9,7 @@ on:
       - 'runtime/nexo_agent_api/inbox_apply.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
       - 'runtime/nexo_agent_api/public_projection.py'
+      - 'gpt/nexo_memory.py'
       - 'gpt/nexo_gpt_writer.py'
       - 'runtime/nexo_agent_api/test_live_tower.py'
       - 'runtime/nexo_agent_api/test_mutations.py'

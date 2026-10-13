@@ -74,4 +74,118 @@ class AgentServiceTests(unittest.TestCase):
         self.assertNotIn("WAIT-CRITICAL", [item["id"] for item in advisor["queue"]])
         self.assertTrue(all(item["status"] == "READY" for item in advisor["queue"]))
 
+
+    def test_hidden_capability_work_is_discoverable_but_not_automatically_runnable(self):
+        capability = {
+            "capabilities": {
+                "peer.detection.d04_v1": {
+                    "roles": ["EXECUTOR"], "status": "ACTIVE",
+                    "backend": "chatgpt_runtime", "task_id": "peer_detection_d04",
+                }
+            }
+        }
+        (self.root / "manifests/capabilities.json").write_text(json.dumps(capability))
+        self.write_work("D04", {
+            "id": "PEER-DETECTION-D04", "status": "READY",
+            "owner_role": "EXECUTOR", "priority": "HIGH",
+            "capability_id": "peer.detection.d04_v1",
+            "blocker": "Exact matched profile grid missing",
+        })
+        service = AgentService(self.root)
+        self.assertEqual(service.queue_for("EXECUTOR"), [])
+        discovery = service.bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(discovery["omitted_executor_work_count"], 1)
+        self.assertEqual(discovery["omitted_executor_work"][0]["id"], "PEER-DETECTION-D04")
+        self.assertEqual(discovery["omitted_executor_work"][0]["visibility_status"],
+                         "DISCOVERY_ONLY_NOT_EXECUTABLE")
+        self.assertEqual(discovery["omitted_executor_work"][0]["first_gap"],
+                         "CAPABILITY_DECLARED_BUT_WORK_BINDING_INCOMPLETE")
+
+    def test_recipe_recovery_discovers_only_existing_active_roadmap_tests(self):
+        for name, status in (("RM-H0-ACTIVE", "ACTIVE"), ("RM-DE-CLOSED", "CLOSED")):
+            path = self.root / "roadmaps" / (name + ".json")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"state": status}))
+        for test_id, roadmap in (("H0-BRIDGE", "RM-H0-ACTIVE"),
+                                 ("DDE-CLOSED", "RM-DE-CLOSED")):
+            path = self.root / "entities/test" / (test_id + ".json")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({
+                "id": test_id, "state": "BLOCKED_INPUT",
+                "roadmap_id": roadmap, "data_binding": {"status": "BOUND"},
+                "readiness": {"eligible": False, "reasons": ["RECIPE_BINDING_MISSING"]},
+            }))
+        service = AgentService(self.root)
+        discovery = service.bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(discovery["active_recipe_blocked_test_count"], 1)
+        self.assertEqual(discovery["active_recipe_blocked_tests"][0]["test_id"], "H0-BRIDGE")
+        self.assertEqual(discovery["active_recipe_blocked_tests"][0]["data_binding_status"], "BOUND")
+        self.assertEqual(service.queue_for("EXECUTOR"), [])
+
+    def test_all_forty_blocked_tests_are_visible_without_fabricating_readiness(self):
+        roadmap = self.root / "roadmaps" / "RM-ACTIVE.json"
+        roadmap.parent.mkdir(parents=True, exist_ok=True)
+        roadmap.write_text(json.dumps({"state": "ACTIVE"}))
+        for index in range(40):
+            test_id = f"SYNTH-BLOCKED-{index:02d}"
+            reasons = (["RECIPE_BINDING_MISSING"] if index < 36
+                       else ["INPUT_PROVENANCE_INCOMPLETE"])
+            binding = {"status": "BOUND" if index < 5 else "PARTIAL"}
+            path = self.root / "entities" / "test" / (test_id + ".json")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({
+                "id": test_id, "state": "BLOCKED_INPUT",
+                "roadmap_id": "RM-ACTIVE", "data_binding": binding,
+                "readiness": {"eligible": False, "reasons": reasons},
+            }))
+        service = AgentService(self.root)
+        self.assertEqual(service.queue_for("EXECUTOR"), [])
+        view = service.bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(view["active_input_blocked_test_count"], 40)
+        self.assertEqual(view["active_recipe_blocked_test_count"], 36)
+        self.assertEqual(view["active_data_bound_recipe_blocked_count"], 5)
+        self.assertEqual(len({t["test_id"] for t in view["active_input_blocked_tests"]}), 40)
+        self.assertEqual(sum(not t["recipe_missing"] for t in view["active_input_blocked_tests"]), 4)
+        self.assertTrue(all(t["visibility_status"] == "RECOVERY_DISCOVERY_ONLY"
+                            for t in view["active_input_blocked_tests"]))
+
+    def test_closed_roadmap_with_stale_active_state_does_not_reopen_tests(self):
+        root = self.root / "roadmaps"
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "RM-CLOSED.json").write_text(json.dumps({
+            "status": "CLOSED", "state": "ACTIVE",
+        }))
+        (root / "RM-ACTIVE.json").write_text(json.dumps({
+            "status": "ACTIVE", "state": "ACTIVE",
+        }))
+        for test_id, roadmap_id in (("CLOSED-TEST", "RM-CLOSED"),
+                                    ("OPEN-TEST", "RM-ACTIVE")):
+            folder = self.root / "entities" / "test"
+            folder.mkdir(parents=True, exist_ok=True)
+            (folder / (test_id + ".json")).write_text(json.dumps({
+                "id": test_id, "status": "BLOCKED_INPUT",
+                "roadmap_id": roadmap_id,
+                "data_binding": {"status": "BOUND"},
+                "readiness": {"eligible": False, "reasons": ["RECIPE_BINDING_MISSING"]},
+            }))
+        result = AgentService(self.root).bootstrap("EXECUTOR")["discovery"]
+        self.assertEqual(result["active_input_blocked_test_count"], 1)
+        self.assertEqual(result["active_recipe_blocked_test_count"], 1)
+        self.assertEqual(result["active_input_blocked_tests"][0]["test_id"], "OPEN-TEST")
+        self.assertEqual(result["roadmap_state_conflict_count"], 1)
+        self.assertEqual(result["roadmap_state_conflicts"][0]["roadmap_id"], "RM-CLOSED")
+        self.assertEqual(result["roadmap_state_conflicts"][0]["effective_status"], "CLOSED")
+
+    def test_five_card_queue_reveals_full_runnable_count(self):
+        for i in range(7):
+            self.write_work(f"ID{i}", self.eligible(f"ID{i}"))
+        materialize_role_views(self.root)
+        view = json.loads((self.root / "bootstrap/executor.json").read_text())
+        self.assertEqual(view["queue_count"], 5)
+        self.assertEqual(view["queue_total_count"], 7)
+        self.assertTrue(view["queue_has_more"])
+        self.assertEqual(view["queue_scope"],
+                         "TOP_CARDS_ONLY_DISCOVERY_NOT_EXECUTION_AUTHORIZATION")
+
+
 if __name__=="__main__": unittest.main()

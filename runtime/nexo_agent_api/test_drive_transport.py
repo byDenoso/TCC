@@ -311,6 +311,25 @@ class ReaderCacheTests(unittest.TestCase):
 
 
 class ProposalParsingTests(unittest.TestCase):
+    def test_raw_json_inbox_file_reads_alt_media_without_doc_export(self):
+        from runtime.nexo_agent_api.drive_transport import DriveInbox
+
+        class RawSession:
+            def __init__(self):
+                self.calls = []
+
+            def get(self, url, params=None, timeout=None):
+                self.calls.append((url, dict(params or {})))
+                return _Response(200, b'{"kind":"BOARD_POST","payload":{"to":"EXECUTOR","text":"ok"}}')
+
+        session = RawSession()
+        inbox = DriveInbox(session=session)
+        raw = inbox._content({"id": "RAW-ID", "mimeType": "application/json"})
+        self.assertEqual(json.loads(raw)["kind"], "BOARD_POST")
+        self.assertEqual(session.calls, [
+            ("https://www.googleapis.com/drive/v3/files/RAW-ID", {"alt": "media"})
+        ])
+
     def test_doc_export_with_fence_and_bom_is_parsed(self):
         from runtime.nexo_agent_api.drive_transport import _parse_proposal
 
