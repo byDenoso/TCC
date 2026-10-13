@@ -90,6 +90,27 @@ class Round12FrozenReadinessTests(unittest.TestCase):
             self.assertNotIn("null", view)
             self.assertNotIn("question", view)
 
+    def test_other_round12_members_use_the_same_frozen_contract(self):
+        for test_id in ("T-MEGA26-LCDM-EVT-LMAX-149",
+                        "T-MEGA26-LCDM-TRACER-DENSITY-151"):
+            with self.subTest(test_id=test_id):
+                child = {
+                    **self.test,
+                    "id": test_id,
+                    "frozen_test": {**self.test["frozen_test"], "id": test_id},
+                }
+                self.contract["tests"] = [
+                    {"id": test_id, "objective": "Run exact locked Round12 selection"}
+                ]
+                self._contract()
+                view = _readiness_contract_view(child, self.root)
+                self.assertEqual(view["method"]["declared_method"], child["frozen_test"]["method"])
+                self.assertEqual(view["null"], child["frozen_test"]["null"])
+                result = readiness(self.root, child)
+                self.assertFalse(result["eligible"])
+                self.assertIn("RECIPE_BINDING_MISSING", result["reasons"])
+                self.assertIn("INPUT_PROVENANCE_INCOMPLETE", result["reasons"])
+
     def test_top_level_definition_is_not_replaced(self):
         view = _readiness_contract_view({**self.test, "null": "top-level frozen null"}, self.root)
         self.assertEqual(view["null"], "top-level frozen null")
