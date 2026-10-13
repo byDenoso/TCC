@@ -40,6 +40,27 @@ Comunicar apenas pedido/decisão/lacuna não expressos na fila; resultado canôn
 consumidor não exige recado redundante. Relatar mudança material; silêncio/no-op curto
 é correto sem trabalho/delta. Auxiliares/retries não contam como TEST integral.
 
+### Ausência de bloqueio global por ferramenta ou metadado
+
+Ao interpretar o CONTROL, distinguir fonte científica, controle de escrita e ferramentas auxiliares.
+O bootstrap exige identidade e revisão canônica verificadas para operações materiais,
+mas não uma chamada específica a MCP, resolver, perfil remoto ou canário pendente:
+leitura autenticada equivalente da Tower no Drive cumpre a descoberta de estado.
+Se MCP, context engine, skill resolver ou capability resolver remoto não responder,
+usar a leitura nativa autorizada, o registro de skills do Drive e ferramentas locais
+efetivamente disponíveis; não declarar fila vazia nem pedir autorização genérica.
+A indisponibilidade do serviço remoto limita apenas a operação que depende dele.
+
+`NO_OP` por ausência de delta é válido somente após conferir a fila acionável,
+execuções RUNNING/CHECKPOINTED e recuperações do papel. Recibo, hash de proposta,
+preflight repetido, plano formal, status remoto de deploy e validação de metadados
+não são licença nem pré-requisito universal para iniciar trabalho independente.
+Não duplicar verificações na mesma revisão. Um bloqueio real pertence ao item
+e deve identificar insumo/definição científica indispensável, autorização/ACL,
+capacidade de execução realmente insubstituível ou conflito científico material.
+Preservar critérios congelados, revisão independente de resultados, Writer único,
+reserva idempotente e readback para alterações canônicas ou científicas materiais.
+
 ## Carregar somente o módulo necessário
 
 - Conversa/status/investigação/histórico: [`nexo-workspace`](nexo-workspace/SKILL.md).
@@ -77,3 +98,5 @@ Começar pelo fato/achado, escrever português simples, expor o limite e ação 
 quando existirem. IDs/hashes ficam nos detalhes técnicos. Não fabricar progresso,
 certeza, timestamps, notificações ou implantação. Mudança no Git alcança quem a lê;
 não comprova atualização de tarefas/runtime/Tower.
+
+**Reestruturação cooperativa em revisão:** `gpt/skills/nexo-shared-mural-v1.md` propõe sete papéis e um quadro de pedidos sobre o Writer existente. A proposta só pode reger as automações após inventário vivo, mapeamento de autoridade, atualização das Tasks salvas e testes end-to-end; não substituir o CONTROL nem assumir que o MCP está conectado.
