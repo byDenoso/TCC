@@ -630,6 +630,21 @@ section('Reauditoria: laboratório, títulos e procedência');
   await p.context().close();
 }
 
+section('Cabeçalho acima das cenas após rolar');
+for (const width of [390, 1440]) {
+  const p = await page(width, { reducedMotion: 'reduce' });
+  await p.goto(`${BASE}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
+  await p.locator('[data-t-preset="0.5"]').click();
+  const control = p.locator(width < 700 ? '.mobile-menu summary' : '.main-nav a[href$="/laboratorio/"]');
+  ok(`cabeçalho ${width}: uma única navegação`, await p.locator('.header-shell').count() === 1);
+  ok(`cabeçalho ${width}: recebe cliques acima dos cartões`, await control.evaluate(a => { const r = a.getBoundingClientRect(); return a.contains(document.elementFromPoint(r.x + r.width/2, r.y + r.height/2)); }));
+  await control.click();
+  if (width < 700) await p.locator('.mobile-menu a[href$="/laboratorio/"]').click();
+  await p.waitForURL(url => url.pathname.endsWith('/laboratorio/'));
+  ok(`cabeçalho ${width}: navega após rolar`, /laboratorio/.test(p.url()) && p.errors.length === 0, p.errors.join(' | '));
+  await p.context().close();
+}
+
 section('Épocas coerentes e retorno ao desafio');
 for (const width of [390, 1440]) {
   const p = await page(width, { reducedMotion: 'reduce' });

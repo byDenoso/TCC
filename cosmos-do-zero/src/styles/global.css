@@ -92,6 +92,7 @@ em.serif, .serif-i, h1 em, h2 em, h3 em { font-family: var(--serif); font-style:
 .arrow { font-size: 1.15em; line-height: 1; }
 
 /* ───────────── Cabeçalho ───────────── */
+.hero-root { position: relative; }
 .header-shell { position: absolute; inset: 0 0 auto; z-index: 30; }
 .header-shell.solid { position: relative; background: var(--night); }
 .header { height: 96px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 36px; }

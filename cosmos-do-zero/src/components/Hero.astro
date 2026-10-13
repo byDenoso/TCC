@@ -6,11 +6,12 @@ let seed = 235711;
 const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
 const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand() * 88, o: 0.12 + rand() * 0.38, big: rand() > 0.9 }));
 ---
-<div class="hero-shell" id="topo">
+<div class="hero-root" id="topo">
+  <Header />
+  <div class="hero-shell">
   <div class="starfield" aria-hidden="true">
     {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
   </div>
-  <Header />
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
     <figure class="cmb-hero" data-cmb>
       <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
@@ -43,4 +44,5 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     </div>
     <a class="down" href="#observatorio">Descer <span aria-hidden="true">↓</span></a>
   </div>
+</div>
 </div>
