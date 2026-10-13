@@ -25,6 +25,7 @@ TEMPLATE = '''#!/usr/bin/env python3
     python nexo_gpt_writer.py verify TOWER.json [EXPECTED_FINGERPRINT]
     python nexo_gpt_writer.py gc dry-run TOWER.json PRIVATE_REPORT.json
     python nexo_gpt_writer.py context TOWER.json ROLE PRIVATE_CONTEXT.json
+    python nexo_gpt_writer.py mcp-route prepare TOWER.json HTTPS_ENDPOINT PRIVATE_ROUTE.json --approval-ref REF
     python nexo_gpt_writer.py frontier TOWER.json [ROADMAP_ID]
     python nexo_gpt_writer.py handoff TOWER.json list ROLE
     python nexo_gpt_writer.py memory <context|search|dream|related|feedback> ...
@@ -51,6 +52,7 @@ if __name__ == "__main__":
 _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
 _REQUIRED_EXTENSION_SOURCES = (
+    "mcp_routing.py",
     "memory.py", "memory_cli.py", "retrieval.py", "retrieval_cli.py",
     "retrieval_mcp.py", "retrieval_models.py",
     "continuity.py", "continuity_cli.py", "continuity_context.py", "enxame.py",

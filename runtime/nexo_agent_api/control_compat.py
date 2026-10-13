@@ -23,6 +23,10 @@ POLICY_FIELDS = frozenset({
     'mode', 'write_guard', 'derived_indexes_authority', 'atlas_role', 'drive_role',
     'runtime_revision', 'scientific_runtime', 'github_actions_science_role',
     'git_operational_write_state', 'canonical_read_policy', 'sol_context_policy',
+    'hosted_mcp_current_endpoint', 'hosted_mcp_current_storage_backend',
+    'hosted_mcp_cutover_requirements', 'hosted_mcp_migration_target',
+    'mcp_runtime_model', 'mcp_spec_storage', 'mcp_tower_resolution',
+    'mcp_tool_routes', 'hosted_mcp_scientific_read_endpoint', 'hosted_mcp_scientific_read_route',
 })
 BOOTSTRAP_FIELDS = IDENTITY_FIELDS | POLICY_FIELDS
 

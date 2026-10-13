@@ -190,6 +190,7 @@ _TRUSTED_CAPABILITY_FIELDS = frozenset({
     "_writer_dispatch_token",
     "_autonomy_human_authority",
     "_autonomy_authority",
+    "_mcp_route_authority",
     "_scientific_review_authority",
     "_runner_observation_authority",
 })
@@ -211,6 +212,9 @@ def _is_writer_dispatch_capability(value: Any) -> bool:
 
 
 def _is_trusted_capability(field: str, value: Any) -> bool:
+    if field == '_mcp_route_authority':
+        from .mcp_routing import ROUTE_AUTHORITY
+        return value is ROUTE_AUTHORITY
     if field == "_scientific_review_authority":
         from .autonomy import WRITER_AUTHORITY
         return value is WRITER_AUTHORITY

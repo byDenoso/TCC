@@ -44,7 +44,10 @@ def apply_document(root: Path, request: dict) -> dict:
     refused = guard_document(root, request)
     if refused is not None:
         return refused
-    if (relative != "CONTROL.json" and not relative.startswith(_DOCUMENT_PREFIXES)) or ".." in relative.split("/") or not relative.endswith(".json"):
+    from .mcp_routing import ROUTE_AUTHORITY
+    from .control_compat import POLICY_PATH
+    scoped_policy_route = relative == POLICY_PATH and request.get('_mcp_route_authority') is ROUTE_AUTHORITY
+    if (relative != "CONTROL.json" and not scoped_policy_route and not relative.startswith(_DOCUMENT_PREFIXES)) or ".." in relative.split("/") or not relative.endswith(".json"):
         return {"request_id": request.get("request_id"), "accepted": False, "issue": {"code": "DOCUMENT_PATH_NOT_ALLOWED", "message": relative}}
     from .scientific_integrity import guard_batteries
     refused = guard_batteries(root, request)

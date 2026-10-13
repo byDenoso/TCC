@@ -64,9 +64,10 @@ def timestamp(value):
 def attach_human_authority(item, verified_hashes):
     """Called only by trusted Writer context, never inferred from the envelope."""
     safe = {key: value for key, value in item.items() if key != "_autonomy_human_authority"}
+    from .mcp_routing import ACTION as MCP_ROUTE_ACTION
     if (str(safe.get("source") or "").upper() == "DENER"
             and safe.get("kind") == "OPERATOR_INTENT"
-            and (safe.get("payload") or {}).get("action") in ACTIONS
+            and (safe.get("payload") or {}).get("action") in ACTIONS | {MCP_ROUTE_ACTION}
             and envelope_hash(safe) in (verified_hashes or ())):
         safe["_autonomy_human_authority"] = HUMAN_AUTHORITY
     return safe
@@ -169,6 +170,9 @@ def operator_requests(item, body, root):
 
 def guard_document(root, request):
     """Control and evaluated fragments cannot be changed by generic requests."""
+    from .mcp_routing import ROUTE_AUTHORITY, guard_request
+    if request.get('_mcp_route_authority') is ROUTE_AUTHORITY:
+        return guard_request(root,request)
     relative = request.get("document")
     protected = relative in {"CONTROL.json", AUTHORITY_PATH, FRAGMENTS_DOC, CAPACITY_DOC, "evolution/public_campaign_approvals.json",
                              "evolution/autonomy_capacity_reviews.json"}
