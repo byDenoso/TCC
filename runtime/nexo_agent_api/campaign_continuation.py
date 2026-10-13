@@ -35,6 +35,13 @@ def _status(entity: dict[str, Any] | None) -> str:
     return str(entity.get("operational_status") or entity.get("status") or entity.get("state") or "").upper()
 
 
+def _declared_ids(value: Any) -> list[str]:
+    """Return structural ID collections without interpreting display strings."""
+    if not isinstance(value, (list, tuple, set)):
+        return []
+    return [str(item) for item in value if str(item)]
+
+
 def _blocker_class(entity: dict[str, Any]) -> str:
     explicit = str(
         entity.get("blocker_class")
@@ -118,7 +125,7 @@ class CampaignFrontierResolver:
 
     @staticmethod
     def _ordered_ids(campaign: dict[str, Any], tests: dict[str, dict[str, Any]]) -> list[str]:
-        declared = [str(value) for value in campaign.get("execution_order", []) if str(value)]
+        declared = _declared_ids(campaign.get("execution_order"))
         ordered = [test_id for test_id in declared if test_id in tests]
         ordered.extend(sorted(test_id for test_id in tests if test_id not in ordered))
         return ordered
@@ -194,10 +201,11 @@ class CampaignFrontierResolver:
                 blocked.append(test_id)
 
         campaign_state = _status(campaign)
-        terminal_ids = [str(value) for value in campaign.get("terminal_test_ids", []) if str(value)]
+        terminal_ids = _declared_ids(campaign.get("terminal_test_ids"))
+        declared_test_ids = _declared_ids(campaign.get("test_ids"))
         # Treat terminal_test_ids as an additional dependency, not permission to
         # skip other declared comparisons or independent reviews.
-        required_ids = set(tests) | set(terminal_ids)
+        required_ids = set(tests) | set(terminal_ids) | set(declared_test_ids)
         execution_complete = bool(required_ids) and all(item in completed for item in required_ids)
         pending_review = sorted(item for item in required_ids if item in completed and
                                 str(tests[item].get("review_state") or "").upper()
@@ -241,3 +249,4 @@ class CampaignFrontierResolver:
             "next_test_ids": list(next_test_ids),
             "sources": sources,
         }
+
