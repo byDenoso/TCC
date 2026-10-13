@@ -6,9 +6,10 @@ Reads both roadmap shapes found in the Tower:
 and returns what an executor should do next. A malformed roadmap is reported
 in ``skipped_roadmaps`` instead of stopping every other lane.
 
-Order: continue RUNNING work first; then READY tests whose dependencies are terminal;
-only then revisit CHECKPOINTED work. This prevents stale checkpoints from starving
-new executable tests while preserving continuity for work that is actually running.
+Order: continue RUNNING work with canonical attempt proof first; then READY tests
+whose dependencies are terminal; only then revisit CHECKPOINTED work with the
+same proof plus a checkpoint reference. This prevents stale lifecycle labels
+from starving executable tests while preserving evidenced continuity.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .scientific_integrity import RUN_REF, _reservation_attempt, timestamp
 from .tower_paths import entity_path, fs_path
 
 TERMINAL = {"DONE", "VERIFIED", "RESULT", "REJECTED", "FAILED", "INCONCLUSIVE", "SUPERSEDED", "COMPLETED", "CLOSED", "CLOSED_VERIFIED"}
@@ -37,7 +39,39 @@ def _read(path: Path) -> dict[str, Any] | None:
 def _lifecycle(test: dict[str, Any] | None) -> str:
     if not test:
         return "MISSING"
-    return str(test.get("state") or test.get("status") or "READY").upper()
+    return str(test.get("state") or test.get("status") or "UNKNOWN").upper()
+
+
+def _resume_evidence(root: Path, test: dict[str, Any]) -> dict[str, Any]:
+    """Check the canonical, local proof required to offer a resume candidate.
+
+    This is deliberately only a static preflight.  It does not attest that a
+    remote run or checkpoint artifact still exists and never authorizes a new
+    dispatch.  A lifecycle label by itself is not execution evidence.
+    """
+    started = (test.get("execution_observation") == "GITHUB_JOB_STEP"
+               and timestamp(test.get("started_at")) is not None
+               and RUN_REF.fullmatch(str(test.get("run_ref") or "")) is not None)
+    battery, spec = _reservation_attempt(root, test)
+    reservation = battery is not None and spec is not None
+    checkpoint = test.get("checkpoint_ref")
+    has_checkpoint = isinstance(checkpoint, str) and bool(checkpoint.strip())
+    missing = []
+    if not started:
+        missing.append("EXECUTION_START_EVIDENCE_MISSING")
+    if not reservation:
+        missing.append("CANONICAL_ATTEMPT_RESERVATION_MISSING")
+    if _lifecycle(test) == "CHECKPOINTED" and not has_checkpoint:
+        missing.append("CHECKPOINT_REFERENCE_MISSING")
+    return {
+        "recorded_start_verified": bool(started),
+        "canonical_attempt_reservation_verified": bool(reservation),
+        "checkpoint_reference_recorded": has_checkpoint,
+        "missing_evidence": missing,
+        "static_resume_candidate": not missing,
+        "action": "RECONCILE_EVIDENCE" if missing else "VERIFY_RUNTIME_BEFORE_RESUME",
+        "execution_authorized": False,
+    }
 
 
 def _dependency_met(dep: str, status_of) -> bool:
@@ -60,6 +94,7 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
     def status_of(test_id: str) -> str:
         return _lifecycle(test(test_id))
 
+    resume_candidates: list[dict[str, Any]] = []
     resumable: list[dict[str, Any]] = []
     ready: list[dict[str, Any]] = []
     waiting: list[dict[str, Any]] = []
@@ -103,7 +138,14 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
                 skipped.append({**base, "reason": "FRONTIER_TEST_NOT_MATERIALIZED"})
                 continue
             if state in RESUMABLE:
-                resumable.append(base)
+                evidence = _resume_evidence(root, entity)
+                candidate = {**base, "resume_evidence": evidence}
+                resume_candidates.append(candidate)
+                if evidence["static_resume_candidate"]:
+                    resumable.append(candidate)
+                else:
+                    waiting.append({**base, "reason": "RESUME_EVIDENCE_MISSING",
+                                    "missing_evidence": evidence["missing_evidence"]})
                 continue
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 # DRAFT = hypothesis still missing frozen criteria; the Learner completes it, the Executor waits.
@@ -135,7 +177,14 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
             base = {"roadmap_id": entity.get("roadmap_id"), "test_id": ref, "state": state,
                     "priority": entity.get("priority"), "source": "ENTITY_MATERIALIZED"}
             if state in RESUMABLE:
-                resumable.append(base)
+                evidence = _resume_evidence(root, entity)
+                candidate = {**base, "resume_evidence": evidence}
+                resume_candidates.append(candidate)
+                if evidence["static_resume_candidate"]:
+                    resumable.append(candidate)
+                else:
+                    waiting.append({**base, "reason": "RESUME_EVIDENCE_MISSING",
+                                    "missing_evidence": evidence["missing_evidence"]})
                 continue
             if state.startswith("BLOCKED") or state in {"DRAFT", "PROPOSED", "PLANNED"}:
                 waiting.append({**base, "reason": state})
@@ -190,7 +239,8 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
 
     running = [item for item in resumable if item.get("state") == "RUNNING"]
     checkpointed = [item for item in resumable if item.get("state") == "CHECKPOINTED"]
-    fair_checkpointed = _round_robin_by_roadmap(checkpointed)
+    checkpoint_candidates = [item for item in resume_candidates if item.get("state") == "CHECKPOINTED"]
+    fair_checkpointed = _round_robin_by_roadmap(checkpoint_candidates)
 
     genome = _read(root / "evolution" / "genome.json") or {}
     genes = {str(g.get("id")): g.get("canonical") for g in genome.get("genes", []) if isinstance(g, dict)}
@@ -219,8 +269,12 @@ def roadmap_frontier(root: str | Path, roadmap_id: str | None = None) -> dict[st
         "batch": (running + fair_ready + checkpointed)[:max_batch],
         "checkpoint_review": fair_checkpointed[:checkpoint_quota],
         "resumable": resumable,
+        "resumable_semantics": "STATIC_PREFLIGHT_PASSED; RUNTIME_READBACK_STILL_REQUIRED; NOT_EXECUTION_AUTHORIZATION",
+        "resume_candidates": resume_candidates,
+        "resume_evidence_missing": [entry for entry in resume_candidates
+                                    if entry["resume_evidence"]["missing_evidence"]],
         "ready": ready,
         "waiting": waiting,
         "skipped_roadmaps": skipped,
-        "rule": "RUNNING_BEFORE_READY_BEFORE_CHECKPOINTED; CONTESTS_FIRST; READY_ROADMAP_ROUND_ROBIN; CHECKPOINT_REVIEW_QUOTA_FROM_GENOME; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; MATERIALIZED_READY_REQUIRES_ACTIVE_ROADMAP",
+        "rule": "VERIFIED_RUNNING_BEFORE_READY_BEFORE_VERIFIED_CHECKPOINTED; RESUME_REQUIRES_RECORDED_START_AND_CANONICAL_ATTEMPT; CHECKPOINT_RESUME_ALSO_REQUIRES_REFERENCE; RUNTIME_READBACK_STILL_REQUIRED; CONTESTS_FIRST; READY_ROADMAP_ROUND_ROBIN; CHECKPOINT_REVIEW_QUOTA_FROM_GENOME; ONLY_AFFECTED_CHAIN_WAITS; INVALID_ROADMAPS_ARE_REPORTED_NOT_FATAL; MATERIALIZED_READY_REQUIRES_ACTIVE_ROADMAP",
     }
