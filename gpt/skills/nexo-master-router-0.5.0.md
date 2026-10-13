@@ -38,28 +38,18 @@ Esse modulo define identidade, descoberta, paginacao, leitura primaria, raw fetc
 - PDF cientifico no Drive continua exigindo ID/URL exato -> metadados -> raw fetch -> materializacao -> inspecao/renderizacao das paginas relevantes.
 - Toda mutacao em Drive/GitHub exige readback do mesmo alvo. Falha de uma superficie nao autoriza concluir ausencia nem contornar ACL/politica por outra rota.
 
-## Política operacional 2026-10-05 — produção em lote
+## Contrato comum e produção em lote
+
+Carregar [`automations/ROLE_CONTRACT_V1.md`](../../automations/ROLE_CONTRACT_V1.md) para contexto mínimo, dono, entrega e divisão dos seis papéis preparados. A absorção de Sentinela pelo Guardião e da reconciliação científica pelo Cientista tem ativação separada, após inventário vivo e revisão independente; este arquivo não afirma migração aplicada.
+
 Dener autorizou retomada de despacho/execução científica sob os contratos existentes. O bloqueio global anterior de “novos despachos científicos” não vale mais. Permanecem somente gates humanos explícitos, contratos científicos congelados, segurança, proveniência e independência.
 
-Cadência viva:
-- `:00` Pítia
-- `:10` Cientista
-- `:25` Engenheiro
-- `:40` Operador
-- `:50` Crítico
-- `:55` Guardião
-- `:05` Sentinela, a cada 2h
+Cadência e habilitação vêm do inventário vivo, com fuso e última execução observados. Não configurar agendas a partir de minutos históricos nesta documentação.
 
 A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicadas de qualquer rodada; se o item esperado ainda não chegou, pega outra frente elegível.
 
 **Política work-conserving de throughput:** os números históricos 6/24 são sondas de capacidade e observabilidade, não quotas, estágios obrigatórios nem tetos. Em cada pulso, cada papel drena todos os itens independentes elegíveis que couberem no orçamento real de tempo, custo e runtime. Se houver mais de 6 e capacidade segura, continue; se houver menos, processe o máximo real. Nunca crie TEST, receita, mensagem, retry ou variação para atingir um número.
-- Pítia: prioriza e discrimina todos os TESTs materialmente acionáveis no orçamento do pulso.
-- Cientista: formula perguntas, hipóteses e contratos prospectivos; verifica literatura, antecedentes internos e independência. Entrega a definição científica ao Operador e resolve lacunas de desenho sem alterar critérios congelados.
-- Engenheiro: mantém infraestrutura, transporte, dependências e recuperação de falhas. Auxilia o Operador quando uma capacidade compartilhada falta; implementação e código das receitas pertencem ao Operador.
-- Operador: prepara receitas fiéis, liga inputs versionados, verifica dependências, preflight, smoke, outputs e checkpoint; executa ou terminaliza TESTs elegíveis com reserva canônica. Receita nova exige a revisão independente vigente antes de executar em escala.
-- Crítico: revisa/contesta todos os resultados elegíveis que couberem no pulso; seis não é teto.
-- Guardião: repara/libera todas as cadeias independentes materialmente acionáveis no orçamento.
-- Sentinela: alimenta evidência/input apenas quando houver delta real; ausência de delta é no-op correto.
+A entrada, ação, entrega e limite de cada papel estão no contrato comum. O Cientista define a ciência; o Engenheiro materializa receitas a partir do contrato congelado quando necessário; o Operador reutiliza/prepara deterministicamente e executa. Não existe uma passagem obrigatória pelo Engenheiro em cada teste. A receita executável e as revisões aplicáveis continuam exigidas.
 
 **Métrica de utilização:** por pulso registrar candidatos elegíveis observados, itens materialmente avançados, itens que permaneceram elegíveis ao encerrar e motivo de parada (fila drenada, runtime, custo, dependência ou autorização). Utilização mede trabalho material sobre capacidade praticável; mensagens, receipts, scans, seeds, retries, shards e smokes isolados não contam.
 
@@ -75,7 +65,7 @@ A ordem é por item, nunca barreira global. Cada papel usa entregas já aplicada
 - Separar `DELIVERED` (linha/arquivo com readback) de `APPLIED` (receipt e efeito na Tower), reconciliar pendencias por identidade sem retransmissao cega. Falha tecnica da ponte de arquivo nao exige interacao humana rotineira: usar autonomamente a ponte Sheet quando permitida e disponivel, continuar trabalho independente e preservar pendencia reconciliavel. Gates humanos reais continuam intactos.
 
 ## Workspace operacional
-Para pedidos sobre NEXO e para tarefas agendadas, carregar `nexo-workspace` uma vez por conversa ou rodada: https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-workspace/SKILL.md . Preservar o papel da tarefa. O módulo define como encaminhar status, investigação, Diretriz, histórico, literatura e manutenção às integrações existentes, como acompanhar pendentes e como distinguir proposta, aplicação, execução e confirmação científica. Para cardinalidade dos papéis e divisão da fila, prevalecem a transição acima e o inventário vivo sobre referências históricas a dez tarefas/A-B-C.
+Para pedidos sobre NEXO e para tarefas agendadas, carregar `nexo-workspace` uma vez por conversa ou rodada: https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-workspace/SKILL.md . Preservar o papel da tarefa. O módulo define como encaminhar status, investigação, Diretriz, histórico, literatura e manutenção às integrações existentes, como acompanhar pendentes e como distinguir proposta, aplicação, execução e confirmação científica. Para cardinalidade dos papéis e divisão da fila, o inventário vivo prevalece sobre referências históricas a dez tarefas/A-B-C; a divisão consolidada segue o contrato comum com ativação separada.
 Falha de acesso, seção ausente ou leitura degradada exige diagnóstico; não significa fila vazia nem NO-OP. Não afirmar instalação de plugin, memória nativa ou alteração administrativa global a partir de uma mudança no Git.
 
 ## Como agir sem pedir licença
@@ -86,7 +76,7 @@ O caminho de gravação é uma fila de revisão: o robô valida cada proposta, r
 Decisões humanas: ativar ou revogar o mandato, ampliar acesso, publicar artigos/submissões externas e administrar tarefas. Sem mandato ativo, aprovar carta e canonizar gene também ficam com Dener. Com mandato ativo e verificável, somente cartas prospectivas dentro do escopo e genes operacionais aprovados por avaliação independente seguem a delegação registrada; não se forja `source: DENER`. Pausar, desabilitar, reativar, apagar, reagendar, reconfigurar tarefas e apagar dados continuam humanos. Nenhuma automação administra o próprio scheduler nem o de outra; blocker, erro, NO-OP, orçamento ou janela silenciosa nunca autorizam autopausa. Olympus usa só siglas de 3 letras.
 
 ## Reconciliação científica e Atlas
-O **NEXO · Reconciliador Científico** é um monitoramento periódico separado da Pítia e do Reconciliador Público. Seu contrato atual está em [`automations/RECONCILIADOR_CIENTIFICO_V1.md`](../../automations/RECONCILIADOR_CIENTIFICO_V1.md). Ele reconcilia TEST/RUN/RESULT/revisões/artefatos na Tower, agrupa por pergunta, compara somente a literatura pública verificável que muda a interpretação e encaminha campos de leitura simples ao **Writer único** por `SEMANTIC_BACKFILL`. Usa o Atlas existente em `Pergunta → Testes → Figuras/gráficos animados`, sem criar outro frontend, outra Tower, outro revisor ou resultados. Animações exigem dados numéricos verificáveis. O Reconciliador Público permanece independente e desativado até seus gates de privacidade, autorização humana e publicação estarem comprovados. O monitoramento notifica o usuário somente em delta científico material; a entrega de notificações depende da configuração da plataforma. PEER fica excluído de ambas as projeções.
+A reconciliação científica/editorial pertence ao Cientista no contrato preparado de seis papéis. Preservar as obrigações e revisões do [`automations/RECONCILIADOR_CIENTIFICO_V1.md`](../../automations/RECONCILIADOR_CIENTIFICO_V1.md) durante a migração; nenhuma tarefa remota é alterada por este texto. A vigilância operacional da Sentinela migra ao Guardião com continuidade comprovada. O Writer único aplica `SEMANTIC_BACKFILL`; o Atlas existente continua derivado, com animações somente a partir de dados numéricos verificáveis. O Reconciliador Público permanece desativado até gates de privacidade, autorização humana e publicação comprovados. PEER permanece excluído dos Atlas público e privado. Notificar somente delta científico material quando a plataforma permitir.
 
 ## Ciência
 - `CONFIRMED` = sobreviveu a uma contestação independente decidida pelo robô. Nulo é resultado. PASS de software não é claim.

@@ -97,6 +97,23 @@ class ControlCompatTests(unittest.TestCase):
             self.assertFalse(result['complete_consumer_coverage'])
 
 
+    def test_static_inventory_includes_mjs_with_source_hash_and_line(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as work:
+            root = Path(work)
+            body = b"// deployed module\nconst role = control['github_actions_science_role'];\n"
+            (root / 'consumer.mjs').write_bytes(body)
+            ignored = root / 'node_modules'
+            ignored.mkdir()
+            (ignored / 'vendor.mjs').write_bytes(body)
+            result = inventory_consumers(raw_tower(), [root])
+            self.assertEqual([source['path'] for source in result['sources']], ['consumer.mjs'])
+            key = next(row for row in result['keys'] if row['key'] == 'github_actions_science_role')
+            self.assertEqual(key['static_hints'][0]['line'], 2)
+            self.assertEqual(key['static_hints'][0]['sha256'], hashlib.sha256(body).hexdigest())
+            self.assertFalse(key['retirement_authorized'])
+            self.assertFalse(result['complete_consumer_coverage'])
+
     def test_reused_materialization_retires_only_known_unedited_control(self):
         raw=raw_tower();result,_=prepare_migration(raw)
         with tempfile.TemporaryDirectory() as work:

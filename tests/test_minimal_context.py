@@ -137,6 +137,55 @@ class TargetContextPrivacyTests(unittest.TestCase):
 
 
 class HandoffDeltaTests(unittest.TestCase):
+    def test_queue_cannot_disclose_denied_handoff_or_dependency(self):
+        with tempfile.TemporaryDirectory() as work:
+            fixture=MinimalContextTests();_,bundle=fixture.base(work)
+            bundle['files']['entities/work/W.json']={'encoding':'json','value':{'id':'W','owner_role':'ADVISOR','status':'READY','depends_on':['SECRET_DEP']}}
+            bundle['files']['entities/work/D.json']={'encoding':'json','value':{'id':'SECRET_DEP','owner_role':'EXECUTOR','status':'DONE','allowed_roles':['EXECUTOR']}}
+            bundle['files']['events/day/A.json']={'encoding':'json','value':{'handoff_id':'SECRET_ACK','entity_ref':'W','to_role':'ADVISOR','state':'ACK','allowed_roles':['EXECUTOR']}}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            result=prepare_context(Snapshot.read(path),'ADVISOR')
+            queue=result['changed']['work_queue:W']['value']
+            self.assertNotIn('SECRET_ACK',json.dumps(result));self.assertNotIn('SECRET_DEP',json.dumps(result))
+            self.assertEqual(queue['dependencies'],[{'visibility':'WITHHELD','satisfied':False}])
+            self.assertFalse(queue['actionable'])
+
+    def test_open_work_survives_board_retention_and_corrupt_cursor_rebuilds(self):
+        with tempfile.TemporaryDirectory() as work:
+            fixture=MinimalContextTests();_,bundle=fixture.base(work)
+            bundle['files']['entities/work/W.json']={'encoding':'json','value':{'id':'W','owner_role':'ADVISOR','status':'READY'}}
+            bundle['files']['evolution/board.json']={'encoding':'json','value':{'posts':[{'id':'old','to':'ADVISOR','refs':['W']}]}}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            first=prepare_context(Snapshot.read(path),'ADVISOR')
+            bundle['files']['evolution/board.json']['value']['posts']=[]
+            path.write_bytes(encode(bundle))
+            delta=prepare_context(Snapshot.read(path),'ADVISOR',cursor=first['cursor'])
+            self.assertEqual(delta['removed'],['board:old'])
+            self.assertIn('work_queue:W',delta['cursor']['hashes'])
+            corrupt=copy.deepcopy(delta['cursor']);corrupt['hashes']['work_queue:W']='0'*64
+            restored=prepare_context(Snapshot.read(path),'ADVISOR',cursor=corrupt)
+            self.assertTrue(restored['cursor_reset'])
+            self.assertIn('work_queue:W',restored['changed'])
+            lost=prepare_context(Snapshot.read(path),'ADVISOR')
+            self.assertEqual(restored['changed'],lost['changed'])
+            self.assertGreater(restored['metrics']['changed_bytes'],0)
+
+    def test_queue_deltas_report_terminal_work_and_preserve_role_acl(self):
+        with tempfile.TemporaryDirectory() as work:
+            fixture=MinimalContextTests();_,bundle=fixture.base(work)
+            for identity,owner,acl in [('OWN','ADVISOR',None),('OTHER','EXECUTOR',None),('HIDDEN','ADVISOR',['EXECUTOR'])]:
+                bundle['files']['entities/work/'+identity+'.json']={'encoding':'json','value':{'id':identity,'owner_role':owner,'status':'READY','allowed_roles':acl}}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            first=prepare_context(Snapshot.read(path),'ENGINEER')
+            self.assertIn('work_queue:OWN',first['changed'])
+            self.assertNotIn('work_queue:OTHER',first['changed']);self.assertNotIn('work_queue:HIDDEN',first['changed'])
+            bundle['files']['entities/work/OWN.json']['value']['status']='DONE'
+            path.write_bytes(encode(bundle))
+            delta=prepare_context(Snapshot.read(path),'ENGINEER',cursor=first['cursor'])
+            self.assertIn('work_queue:OWN',delta['removed'])
+            self.assertIn('entities/work/OWN.json',delta['removed'])
+            self.assertNotIn('work_queue:OWN',delta['changed'])
+
     def test_event_handoff_transitions_are_visible_in_role_deltas(self):
         with tempfile.TemporaryDirectory() as work:
             fixture=MinimalContextTests();_,bundle=fixture.base(work)

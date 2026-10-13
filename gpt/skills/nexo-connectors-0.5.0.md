@@ -16,7 +16,8 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 4. **Fonte primaria vence derivado.** Bootstrap, buffer, indice, busca, projecao, snippet e pacote intermediario servem para localizar a fonte; nao substituem o arquivo ou commit que sustenta o claim.
 5. **Escrita so fecha com readback.** Criar, atualizar, renomear ou mover continua nao verificado ate reler o alvo e conferir identidade, conteudo relevante e metadados esperados.
 6. **Falha localizada.** Uma capability quebrada bloqueia somente a acao dependente. Continue partes independentes e registre o erro exato.
-7. **Sem bypass de seguranca.** 403, recusa de politica, ACL ou autenticacao nao autorizam trocar silenciosamente de servico, conta ou rota.
+7. **Contexto e entrega por papel.** Aplicar `automations/ROLE_CONTRACT_V1.md`: ler identidade/revisão e deltas necessários à própria fila; guardar entrega recuperável, próximo dono e efeito esperado. Não exigir reconciliação global por todos os papéis. A absorção de funções tem ativação separada e não muda a allowlist do Writer.
+8. **Sem bypass de seguranca.** 403, recusa de politica, ACL ou autenticacao nao autorizam trocar silenciosamente de servico, conta ou rota.
 
 ## Google Drive
 
@@ -98,7 +99,7 @@ Confirme metadados e ACL atuais antes de escrever; sem prova, preserve LOCAL_ONL
 TEST_BATTERY, FAMILY_CHARTER, FITNESS_REPORT, aprovar mandato ou carta
 protegida, trocar CONTROL, iniciar Actions cientifico bloqueado,
 revisao independente forjada, alterar criterio congelado, credencial,
-segredo, publicar PEER no Atlas ou escrever a Tower diretamente.
+segredo, publicar PEER no Atlas público ou privado ou escrever a Tower diretamente.
 Handoffs formais continuam somente pelo NEXO_INBOX create-only com
 proveniencia DRIVE. BOARD_POST dirigido permite coordenacao privada
 enquanto o envio de HANDOFF formal estiver tecnicamente pendente,

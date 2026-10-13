@@ -175,7 +175,7 @@ def inventory_consumers(raw, source_roots):
     for source_root in source_roots:
         root=Path(source_root)
         for path in sorted(root.rglob('*')):
-            if not path.is_file() or path.suffix not in {'.py','.js','.ts','.tsx'} or any(p in {'.git','node_modules','__pycache__'} for p in path.parts):
+            if not path.is_file() or path.suffix not in {'.py','.js','.mjs','.ts','.tsx'} or any(p in {'.git','node_modules','__pycache__'} for p in path.parts):
                 continue
             body=path.read_bytes()
             source={'root':root.name,'path':path.relative_to(root).as_posix(),'sha256':hashlib.sha256(body).hexdigest()}
