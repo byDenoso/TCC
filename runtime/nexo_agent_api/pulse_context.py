@@ -73,6 +73,7 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
     files = snapshot.payload['files']
     selected = {}
     handoffs = {}
+    work_files = {}
     aliases = {role, ALIASES.get(role,role), *[key for key,value in ALIASES.items() if value==role]}
     locations = {}
     def add(path, item, source_path=None):
@@ -93,8 +94,10 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
             recipient=str(value.get('recipient_role') or value.get('recipient') or '').upper()
             if recipient in aliases and _acl_allows(value, aliases):
                 add(path,value)
-        elif path.startswith('entities/work/') and str(value.get('owner_role') or '').upper() in aliases:
-            if value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY'} and _acl_allows(value, aliases):
+        elif path.startswith('entities/work/'):
+            work_files[path]=value
+            if (str(value.get('owner_role') or '').upper() in aliases
+                    and value.get('status') in {'READY','RUNNING','CHECKPOINTED','WAIT_DEPENDENCY'} and _acl_allows(value, aliases)):
                 add(path,value)
     # Canonical handoffs live in events, not just entity-shaped compatibility
     # records. Match the existing protocol's logical-path ordering and include
@@ -105,10 +108,8 @@ def prepare_context(snapshot: Snapshot, role: str, *, cursor: dict | None = None
     # WORK entities outlive board retention. Derive obligations once with a
     # shared policy, then apply the same ownership and ACL boundary as context.
     event_by_id = {identity: value for identity, (_, value) in handoffs.items()}
-    work_by_id = {str(entry['value'].get('id')):entry['value'] for path,entry in files.items()
-                  if path.startswith('entities/work/') and isinstance(entry,dict)
-                  and entry.get('encoding')=='json' and isinstance(entry.get('value'),dict)}
-    for row in derive_work_queue(files, handoffs=handoffs):
+    work_by_id = {str(value.get('id')):value for value in work_files.values()}
+    for row in derive_work_queue(files, handoffs=handoffs, work_files=work_files):
         # Terminal rows remain available in the shared audit view, but their
         # removal from role cursors closes the obligation without reloading
         # all historic DONE/VERIFIED work on every recovery/bootstrap.
@@ -195,10 +196,20 @@ def main(argv):
     parser.add_argument('tower');parser.add_argument('role');parser.add_argument('output')
     parser.add_argument('--cursor');parser.add_argument('--target',action='append',default=[])
     args=parser.parse_args(argv)
-    cursor=json.loads(Path(args.cursor).read_text()) if args.cursor else None
+    cursor=None
+    cursor_recovery=None
+    if args.cursor:
+        try:
+            cursor=json.loads(Path(args.cursor).read_text(encoding='utf-8'))
+        except FileNotFoundError:
+            cursor_recovery='CURSOR_UNAVAILABLE'
+        except (ValueError,UnicodeError):
+            cursor_recovery='CURSOR_INVALID'
     if isinstance(cursor,dict) and isinstance(cursor.get('cursor'),dict):
         cursor=cursor['cursor']
     result=prepare_context(Snapshot.read(args.tower),args.role,cursor=cursor,target_refs=args.target)
+    if cursor_recovery:
+        result['cursor_recovery']=cursor_recovery
     from .tower_gc_cli import _write_private
     _write_private(args.output,json.dumps(result,ensure_ascii=False,sort_keys=True,indent=2).encode()+b'\n')
     print(json.dumps({'status':'CONTEXT_DELTA','changed':len(result['changed']),'removed':len(result['removed']),

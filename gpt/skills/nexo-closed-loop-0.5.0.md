@@ -31,7 +31,7 @@ Envelope `{kind, source, payload, created_at}`. Vários de uma vez: `kind: "BATC
 | ROADMAP_CLOSE | Guardião (SATURATION / BLOCKED, §6); o robô fecha SUCCESS/KILL/BUDGET | roadmap_id, reason, final_report (português simples: o que aprendemos, o que segue aberto) |
 | HYPOTHESIS_PROPOSAL | Learner; Dener via Lite (`origin_kind: DENER_DIRECTED`, `priority: P0`) | display_name, pergunta, nula, rival, método, dados, previsão, critérios, `hypothesis_id`, `stop{success_criteria, kill_criteria, max_discriminants, independence_requirement}` (§5); com teste pronto: `recipe`, `recipe_params` |
 | FAMILY_CHARTER | Learner | family_id, roadmap_id (ACTIVE), recipe existente, template, instances[{label, params}], stop{kill_rejected:2, success_promoted:2}; até 40 instâncias, grade declarada antes; incompleta é descartada em silêncio, releia |
-| RECIPE_BIND | qualquer papel que tenha o teste na mão | test_id, recipe, params: liga a receita a um teste existente (DRAFT, READY ou BLOCKED_INPUT); o robô despacha na rodada seguinte |
+| RECIPE_BIND | qualquer papel que tenha o teste na mão | test_id, recipe, params: liga a receita a um teste existente (DRAFT, READY ou BLOCKED_INPUT); o Writer revalida readiness e reserva antes do despacho |
 | DATA_BINDING | Learner, Operador | test_id, inputs[{name, url, version, sha256}], status BOUND/PARTIAL/UNAVAILABLE, note; BOUND exige versão e SHA256 dos bytes exatos; o runner precisa consumir e verificar esses mesmos inputs |
 | CONTEST | Refutador (`REFEREE_1`), Pítia sentinela (`SENTINEL`) | test_id, reason, refs, contest_test{question, null, rival, method, data, success_criteria, kill_criteria} |
 | VERDICT_REVIEW | Refutador, depois de o teste de contestação rodar | test_id, outcome SURVIVED/REFUTED, evidence, contest_test_id |
@@ -74,7 +74,15 @@ Receitas são código congelado em `byDenoso/Pantheon nexo-one/executor-runtime/
 Receitas `tower_native` (modos `prediction_calibration`, `readiness_yield`, `event_clock`) exigem fonte derivada atualmente autorizada e devolvem só agregados permitidos. Não usar a projeção pública retirada; falta de fonte válida exige reparo, sem expor dados privados no runner público.
 
 ## 9. Mural (BOARD_POST)
-No início de toda rodada leia `status.board`: recados para o seu papel ou para ALL. Responda cada um agindo (depois `resolve`) ou com nota curta (`reply_to`). Poste quando outro papel pode te destravar ou precisa saber agora. 1 a 2 frases em português simples, com `refs`; coordenação, nunca evidência. Trabalho que precisa de acompanhamento até o fim é HANDOFF. Reclamações (de outro papel ou do Dener) também vão aqui: uma frase com o fato e o pedido.
+Consumir no contexto do próprio papel somente recados novos/abertos dirigidos ao papel
+ou ALL e refs pertinentes. Reutilizar a revisão/cursor, sem reler mural inteiro.
+Responder agindo e vincular efeito; resolver após comprovação. Reply textual só
+quando houver decisão, lacuna ou dependência que a fila não mostra. Publicação de
+resultado/artefato com consumidor já canônico dispensa novo BOARD_POST.
+HANDOFF é transferência de ownership, não recibo de leitura nem passo obrigatório
+para cada acompanhamento. ACK só para nova transferência; retomada pelo mesmo dono
+ou oferta já aceita não cria novo aceite. Uma comunicação suficiente não exige
+BOARD_POST repetindo HANDOFF. IDs/refs preservam continuidade entre sessões.
 
 ## 10. Iscas (auditoria secreta do Guardião)
 O Guardião planta no máximo `guardiao.decoys_per_week` iscas: resultado com dado embaralhado ou efeito injetado, arquivado como qualquer outro. Guarda só o compromisso; o segredo fica no relatório dele, nunca na Tower. **Ninguém mais é avisado**, e o Guardião não cita a isca em mural, relatório nem prompt até ela ser descoberta (`DECOY_CALL`) ou passar batida por 3 rodadas do Crítico; a revelação vem no mínimo 48h depois do plantio. O Refutador nunca procura nem lê segredo de isca. Pega = contestada ou refutada.

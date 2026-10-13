@@ -53,9 +53,9 @@ Tópico novo na taxonomia = PR no TCC (contrato Git), não mutação da Tower.
 Os papéis se comunicam pelo bus privado já existente em `events/`, nunca por texto solto em relatório como substituto de estado.
 
 - Ler fila do próprio papel: `python scripts/nexo_tower.py handoff list --role <EXECUTOR|ADVISOR|LEARNER>`.
-- Ao assumir um item, marque o recebimento com `handoff ack <handoff_id> --role <papel>`. O código `ACK` significa apenas “recebi e assumi este trabalho”.
+- Ao aceitar uma nova transferência real de um item, marque o recebimento com `handoff ack <handoff_id> --role <papel>`. O código `ACK` significa apenas “recebi e assumi este trabalho”.
 - Só depois de persistir a ação ou resultado e confirmar pela releitura da Tower, use `handoff done <handoff_id> --role <papel>`. `DONE` significa “concluído e confirmado na fonte canônica”.
-- Use `handoff fail` apenas quando a execução realmente falhar ou houver bloqueio legítimo. `FAILED` significa “não foi possível concluir”. Somente o destinatário pode alterar esses estados técnicos.
+- Use `handoff fail` apenas quando a execução realmente falhar ou houver bloqueio legítimo. `FAILED` significa “não foi possível concluir”. Somente o destinatário pode alterar esses estados técnicos. Retomada pelo mesmo owner e obrigação já aceita não exigem nova oferta/ACK; não criar handoff para etapa com dono/ação já canônicos.
 - Envio novo: grave um JSON privado e rode `python scripts/nexo_tower.py handoff create <arquivo.json>`.
   O envio material usa o mesmo writer lock, o mesmo file id canônico da Tower, CAS, readback e sinalização do ATLAS de `apply`.
 - `request_id` é chave idempotente estável: retry do MESMO envio reutiliza exatamente o mesmo `request_id`; conteúdo diferente exige novo `request_id`.
@@ -91,21 +91,23 @@ Se a ancestralidade resolver univocamente a definição, registre as refs de pro
 
 ## Blockers (regra anti-burocracia)
 
-Blocker legítimo é SÓ:
+Uma dependência real pode bloquear o item: autorização/ACL, definição científica,
+inputs/proveniência/hash, binding/receita, memória/runtime, orçamento ou gate humano
+explícito. Registrar a dependência exata, evidência, dono e menor ação permitida;
+não negar `RECIPE_BINDING_MISSING` ou capability ausente só porque são reparáveis.
+Reparável significa que recuperação pode avançar; não significa execução liberada.
 
-1. `AUTHORIZATION_MISSING` — falta credencial externa que você não consegue obter;
-2. `IRREVERSIBLE_CONFLICT` — conflito externo irreversível;
-3. `SCIENTIFIC_DEFINITION_MISSING` — qualquer fallback mudaria estimand, seleção, null/rival ou regra de decisão;
-4. gate explícito de operador já declarado no roadmap.
+Recuperar/reusar/preparar deterministicamente dentro do contrato já autorizado;
+insumo público não se presume acessível nem válido. Fonte/hash/versão precisam de
+prova, sem substituição conveniente, critério alterado ou execução forçada. Decisão
+científica ambígua volta ao Cientista; código/integração ao Engenheiro; transporte
+ao Guardião. Evitar novas WORKs/recados se dono/ação já estão canônicos.
+Após tentativas equivalentes sem novo diagnóstico, mudar uma variável material
+permitida ou preservar checkpoint/dependência; não fabricar resultados.
 
-Não são blockers: dado público ausente localmente, cache/artefato faltando, wrapper/adapter/capability ausente,
-divergência de runtime reparável, campanha/plano/handoff ausente, ambiguidade metodológica resolvível por método
-canônico ou análise de sensibilidade, dependência que afeta só outra lane, `python3` ausente (use `sys.executable`).
-Para isso: recuperar → reusar → adaptar → implementar o menor pedaço → continuar o MESMO objetivo científico,
-registrando a limitação no resultado. Depois de duas tentativas equivalentes que falharam, mude uma variável material.
-
-Se uma lane travar de verdade, registre o blocker na entidade e siga para a próxima lane executável.
-Nunca termine uma execução com "aguardando o Dener" se existe outra lane que pode progredir.
+Blocker afeta somente a ação dependente. Continuar outra frente elegível dentro do
+orçamento; não terminar aguardando aceite genérico quando preparação independente
+ou ação própria autorizada pode avançar. Falha de autorização encerra a rota, sem bypass.
 
 ### Recuperação executável e responsabilidade
 
@@ -115,7 +117,7 @@ congelada. O estado `BLOCKED_INPUT` informa que a execução ainda não está li
 o que precisa ser recuperado, as fontes candidatas e a próxima ação, para não transformar a fila
 em um conjunto de avisos sem continuidade.
 
-- Consulte `status.execution_recovery` e a caixa privada de handoffs no início da rodada
+- Consulte recuperações/ofertas pertinentes no contexto do papel; use status/caixa completos somente quando o recorte não resolver o item
 - Preserve o responsável já registrado no TEST ou WORK associada. Sem responsável inequívoco,
   ADVISOR recebe a triagem; isso não representa aceite nem atribuição a Dener
 - A triagem encaminha definição congelada ausente/conflitante a LEARNER, receita/verificação
@@ -149,12 +151,12 @@ ciência materialmente diferente exige nova identidade TEST.
 
 ## Relato e contagem de ciência produzida
 
-**Abertura obrigatória:** comece pelo avanço científico verificável do pulso, em português natural,
+**Relato de mudança material:** quando houver computação científica, comece pelo avanço verificável, em português natural,
 indicando o que foi realmente calculado e o resultado relevante. Se houve computação científica,
 não abra com «0 TESTs executados», expressão que apaga trabalho real e confunde execução com
 persistência. A ausência de RUN/RESULT deve aparecer explicitamente, mas como métrica própria.
 
-Distinga sempre, sem somar categorias incompatíveis:
+Quando houver ciência executada/registrada, distinga categorias pertinentes, sem somá-las nem exigir zeros repetidos em toda rodada:
 
 1. **Análises científicas executadas:** unidades de análise novas que realmente rodaram sobre
    dados/entradas e produziram número, evidência ou conclusão científica verificável, com
@@ -171,9 +173,12 @@ Distinga sempre, sem somar categorias incompatíveis:
    DELIVERED, PENDING_WRITE, APPLIED e READBACK são estados diferentes; não inferir o último
    dos anteriores. Revisão independente e publicação são estados separados.
 
-Ao final, descreva as entregas ao Writer, o que mudou na Tower (revisão/fingerprint
-antes/depois, se houve mutação), o estado do ATLAS apenas quando verificado, a primeira
-transição pendente e seu dono. Em pulso sem computação, declare zero sem inventar progresso.
+Relatar somente achado/artefato e estágio realmente comprovado. Dependência acionável
+inclui dono e próxima ação; revisão/fingerprint ou Atlas entram apenas se necessários
+a sustentar mudança verificada. Recibos/fila já persistidos dispensam relatório,
+BOARD_POST e quadro de métricas paralelos. Sem delta material nem trabalho elegível,
+silêncio ou NO-OP breve; não fabricar progresso. Persistência atrasada mantém bundle
+recuperável e registro da etapa, sem novo envelope/identidade para cobrar aplicação.
 
 **Exemplo fiel:** «Executei 1 análise científica de sobreposição BAO em 33 contratos;
 identifiquei 31 sobreposições. 0 TESTs integrais concluídos e 0 RUN/RESULT com readback.

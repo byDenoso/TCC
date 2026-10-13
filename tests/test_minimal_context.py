@@ -1,4 +1,6 @@
 import copy
+import contextlib
+import io
 import json
 import tempfile
 import unittest
@@ -7,8 +9,8 @@ from unittest.mock import patch
 
 from runtime.nexo_agent_api.gpt_writer import apply_to_tower
 from runtime.nexo_agent_api.live_tower import build_live_tower_payload
-from runtime.nexo_agent_api.memory import Snapshot,digest
-from runtime.nexo_agent_api.pulse_context import prepare_context
+from runtime.nexo_agent_api.memory import Snapshot,digest,SourceError
+from runtime.nexo_agent_api.pulse_context import prepare_context,main as context_main
 from runtime.nexo_agent_api.test_public_projection import _tower
 from runtime.nexo_agent_api.service import AgentService
 
@@ -214,3 +216,49 @@ class HandoffDeltaTests(unittest.TestCase):
                 self.assertEqual(handoff._handoff_events(root),before)
                 with receipts.receipt_transaction(root) as nested:
                     self.assertIsNotNone(nested.handoff_cache['entries'])
+
+
+class ContextConsumptionTests(unittest.TestCase):
+    base = MinimalContextTests.base
+
+    def test_role_context_indexes_tower_files_once_without_changing_queue_or_acl(self):
+        class CountedFiles(dict):
+            scans=0
+            def __iter__(self):
+                self.scans+=1
+                return super().__iter__()
+            def items(self):
+                raise AssertionError('unnecessary full Tower files traversal')
+
+        with tempfile.TemporaryDirectory() as work:
+            _,bundle=self.base(work)
+            bundle['files']['entities/work/W.json']={'encoding':'json','value':{'id':'W','status':'READY','owner_role':'ADVISOR'}}
+            bundle['files']['entities/work/OTHER.json']={'encoding':'json','value':{'id':'OTHER','status':'READY','owner_role':'EXECUTOR'}}
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            snapshot=Snapshot.read(path)
+            expected=prepare_context(snapshot,'ADVISOR')
+            counted=CountedFiles(snapshot.payload['files']);snapshot.payload['files']=counted
+            actual=prepare_context(snapshot,'ADVISOR')
+            self.assertEqual(counted.scans,1)
+            actual.pop('metrics');expected.pop('metrics')
+            self.assertEqual(actual,expected)
+
+    def test_cli_recovers_missing_or_corrupt_cursor_without_accepting_invalid_tower(self):
+        with tempfile.TemporaryDirectory() as work:
+            _,bundle=self.base(work)
+            path=Path(work)/'source.json';path.write_bytes(encode(bundle))
+            cursor=Path(work)/'lost-cursor.json'
+            for index,reason in enumerate(['CURSOR_UNAVAILABLE','CURSOR_INVALID']):
+                if index:cursor.write_text('{broken json',encoding='utf-8')
+                output=Path(work)/('context-'+str(index)+'.json')
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(context_main([str(path),'ADVISOR',str(output),'--cursor',str(cursor)]),0)
+                result=json.loads(output.read_text())
+                self.assertTrue(result['cursor_reset']);self.assertEqual(result['cursor_recovery'],reason)
+                self.assertFalse(result['execution_authorization'])
+            tampered=json.loads(path.read_text());tampered['state_fingerprint']='sha256:'+'0'*64
+            path.write_text(json.dumps(tampered),encoding='utf-8')
+            output=Path(work)/'must-not-exist.json'
+            with self.assertRaises(SourceError):
+                context_main([str(path),'ADVISOR',str(output),'--cursor',str(cursor)])
+            self.assertFalse(output.exists())
