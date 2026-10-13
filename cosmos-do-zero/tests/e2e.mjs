@@ -659,7 +659,7 @@ for (const width of [390, 1440]) {
   }
   await p.goto(BASE + '/capitulos/origem-do-universo/#origem-do-universo-primeira-luz', { waitUntil: 'networkidle' });
   await p.locator('[data-cmbj]').scrollIntoViewIfNeeded();
-  ok(`CMB ${width}: fator de escala tem rótulo preciso`, /Escala das distâncias/.test(await p.locator('.cmbj-panel').innerText()));
+  ok(`CMB ${width}: fator de escala tem rótulo preciso`, /Escala das distâncias/i.test(await p.locator('.cmbj-panel').innerText()));
   ok(`regressões ${width}: sem erros e sem overflow`, p.errors.length === 0 && await overflow(p) <= 0, p.errors.join(' | '));
   await p.context().close();
 }
