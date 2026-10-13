@@ -932,7 +932,13 @@ def battery_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
         seen.add(test_id)
         if current.get("private") or is_private(resolve_semantic(current, entity_id=test_id)) or spec.get("script"):
             raise ProposalError("PUBLIC_RECIPE_ONLY")
+        # This is the legacy recipe battery route. A direct-contract TEST may
+        # be READY for native ChatGPT execution but cannot enter this runner.
+        if not current.get("recipe") or not isinstance(current.get("recipe_params"), dict):
+            raise ProposalError("BATTERY_RECIPE_REQUIRED_USE_DIRECT_RUNTIME")
         check = _readiness(root, current)
+        if not check.get("recipe_sha256"):
+            raise ProposalError("BATTERY_RECIPE_CODE_NOT_VALIDATED")
         if str(current.get("status") or current.get("state") or "").upper() != "READY" or not check["eligible"]:
             raise ProposalError("TEST_NOT_EXECUTABLE:" + test_id + ":" + ",".join(check["reasons"]))
         if spec.get("recipe") != current.get("recipe") or spec.get("params") != current.get("recipe_params"):
@@ -1233,8 +1239,8 @@ def family_battery_items(root: Path, now: datetime | None = None) -> list[dict[s
                 and str(roadmap.get("state") or "").upper() != "ACTIVE"):
             continue
         check = _readiness(root, test)
-        if not check["eligible"]:
-            continue
+        if not check["eligible"] or not test.get("recipe") or not check.get("recipe_sha256"):
+            continue  # Native direct-contract tasks do not enter recipe batches.
         execution_fingerprints[str(test["id"])] = integrity.execution_fingerprint(test, check["recipe_sha256"], check.get("param_preflight"))
         by_recipe.setdefault(str(test.get("recipe") or ""), []).append(test)
     running = {str(t.get("recipe") or "") for t in all_tests if str(t.get("status") or "").upper() == "RUNNING"}

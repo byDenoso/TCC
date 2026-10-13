@@ -856,6 +856,19 @@ def _verified_legacy_dependency(root: Path, dependency_id: str, dependency: dict
     )
 
 
+def _direct_scientific_route(root: Path, test: dict) -> bool:
+    """The canonical CONTROL permits frozen-contract science without a recipe file.
+
+    This does not authorize changing the scientific method, admitting a
+    recipe-runner battery, or asserting that an implementation was executed.
+    """
+    control = read(root, 'CONTROL.json')
+    route = str(test.get('execution') or '').upper()
+    return (control.get('execution_routing') == 'LEAN_NO_CONTRACT_DIRECT_RUNTIME'
+            and control.get('scientific_runtime') == 'CHATGPT_RUNTIME'
+            and route not in {'GITHUB_ACTIONS_BATTERY', 'RECIPE_RUNNER'})
+
+
 def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> dict:
     from .evolution import prereg_hash
     reasons = []
@@ -887,13 +900,18 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
         reasons.append('FROZEN_DESIGN_CHANGED')
     recipe, params = str(test.get('recipe') or ''), test.get('recipe_params')
     valid_name = bool(re.fullmatch(r'[a-z0-9_]{2,40}', recipe))
-    if not valid_name or not isinstance(params, dict):
+    # An actual recipe-runner job still requires a validated recipe. A TEST
+    # without a recipe can instead be evaluated by the existing direct runtime
+    # when CONTROL explicitly authorizes that route.
+    direct_contract = _direct_scientific_route(root, test) and not recipe and params is None
+    recipe_required = not direct_contract
+    if recipe_required and (not valid_name or not isinstance(params, dict)):
         reasons.append('RECIPE_BINDING_MISSING')
     recipe_root = Path(os.environ.get('NEXO_RECIPE_ROOT', 'nexo-one/executor-runtime/recipes'))
     recipe_hash = None
-    if not recipe_root.is_dir():
+    if recipe_required and not recipe_root.is_dir():
         reasons.append('RECIPE_CATALOG_UNAVAILABLE')
-    elif valid_name:
+    elif recipe_required and valid_name:
         code, smoke = recipe_root / (recipe + '.py'), recipe_root / 'smoke' / (recipe + '.json')
         if not code.is_file() or not smoke.is_file():
             reasons.append('RECIPE_OR_SMOKE_MISSING')
@@ -924,14 +942,17 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
                     or _verified_legacy_dependency(root, str(dependency_id), dependency)):
                 reasons.append('DEPENDENCY_UNRESOLVED')
                 break
-    if test.get('blocker'):
+    if test.get('blocker') and not (direct_contract and
+                                    str(test['blocker']).strip() == 'RECIPE_BINDING_MISSING'):
         reasons.append('BLOCKER_PRESENT')
     if not ignore_reservation and (str(test.get('id')) in active_tests(root)
                                   or str(test.get('status') or '').upper() in ACTIVE):
         reasons.append('ACTIVE_ATTEMPT')
     result = {'policy': POLICY, 'eligible': not reasons, 'reasons': sorted(set(reasons)),
             'recipe_sha256': recipe_hash, 'input_scope': 'RECORDED_BINDING_NOT_NETWORK_ATTESTATION',
-            'recipe_scope': 'SYNTAX_AND_SMOKE_SPEC_PRESENT' if preflight is None else 'VERSIONED_PARAMETER_PREFLIGHT'}
+            'recipe_scope': ('DIRECT_FROZEN_CONTRACT_NO_RECIPE_GATE' if direct_contract else
+                             'SYNTAX_AND_SMOKE_SPEC_PRESENT' if preflight is None else
+                             'VERSIONED_PARAMETER_PREFLIGHT')}
     if preflight is not None:
         result['param_preflight'] = preflight
     return result
@@ -1423,6 +1444,9 @@ def guard_batteries(root: Path, request: dict) -> dict | None:
             if not old:
                 test = entity(root, tid)
                 check = readiness(root, test)
+                # Direct-contract READY is not a recipe-runner reservation.
+                if not check.get('recipe_sha256') or not test.get('recipe'):
+                    problem = 'BATTERY_RECIPE_REQUIRED'; break
                 if not check['eligible'] or test.get('status') != 'READY' or spec.get('recipe') != test.get('recipe') or spec.get('params') != test.get('recipe_params') or spec.get('recipe_sha256') != check['recipe_sha256']:
                     problem = 'BATTERY_ADMISSION_FAILED'; break
                 if spec.get('param_preflight') != check.get('param_preflight'):
