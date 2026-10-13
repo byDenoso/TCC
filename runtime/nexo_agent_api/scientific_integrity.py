@@ -725,7 +725,7 @@ def valid_inputs(inputs: Any) -> bool:
     return True
 
 
-def _readiness_contract_view(test: dict) -> dict:
+def _readiness_contract_view(test: dict, root: Path | None = None) -> dict:
     """Expose legacy readiness names from the equivalent structured contract.
 
     This is a read-only view: it copies only values already present in the
@@ -733,6 +733,44 @@ def _readiness_contract_view(test: dict) -> dict:
     The hash/reference/timestamp freeze proof is checked separately below.
     """
     view = dict(test)
+    # Historical Round12 child TESTs retain their primary definitions under
+    # frozen_test rather than the legacy top-level readiness aliases. Only
+    # expose these declarations when a matching *local canonical* contract
+    # identifies the exact child. This is diagnostics, NOT freeze proof, a
+    # recipe binding or permission to execute.
+    frozen = test.get('frozen_test')
+    contract_ref = test.get('contract_ref')
+    if (root is not None and test.get('contract_lock') is True
+            and isinstance(frozen, dict) and frozen.get('id') == test.get('id')
+            and isinstance(contract_ref, str)
+            and contract_ref.startswith('TOWER_V06/contracts/')
+            and '..' not in contract_ref.split('/') and '\\' not in contract_ref):
+        relative = contract_ref.removeprefix('TOWER_V06/')
+        try:
+            contract = read(root, relative)
+        except (OSError, ValueError):
+            contract = {}
+        rows = contract.get('tests') if isinstance(contract.get('tests'), list) else []
+        children = [row for row in rows if isinstance(row, dict)
+                    and row.get('id') == test.get('id')]
+        if (contract.get('status') == 'FROZEN_PREREGISTERED'
+                and len(children) == 1 and contract.get('id')
+                and relative == 'contracts/' + contract['id'] + '.json'):
+            for key in ('null', 'rival', 'method', 'success_criteria',
+                        'kill_criteria', 'claim_boundary'):
+                if not view.get(key) and frozen.get(key):
+                    view[key] = frozen[key]
+            if not view.get('dataset_and_selection') and frozen.get('datasets') and frozen.get('selection'):
+                view['dataset_and_selection'] = {
+                    'datasets': frozen['datasets'],
+                    'selection': frozen['selection'],
+                    'cuts': frozen.get('cuts'),
+                }
+            if not view.get('question') and children[0].get('objective'):
+                view['question'] = {
+                    'campaign_question': contract.get('question'),
+                    'specific_objective': children[0]['objective'],
+                }
     input_contract = test.get('input_contract')
     input_contract = input_contract if isinstance(input_contract, dict) else {}
     operator = test.get('environment_operator_contract')
@@ -861,7 +899,7 @@ def readiness(root: Path, test: dict, *, ignore_reservation: bool = False) -> di
     reasons = []
     if terminal(test):
         reasons.append('TERMINAL_TEST')
-    frozen_view = _readiness_contract_view(test)
+    frozen_view = _readiness_contract_view(test, root)
     structured_fields = ('question', 'null', 'rival', 'method', 'dataset_and_selection')
     uses_structured_fallback = any(
         not test.get(key) and bool(frozen_view.get(key)) for key in structured_fields
