@@ -411,6 +411,10 @@ section('Três jornadas e explorações');
   ok('endereço antigo leva aos planetas', /\/laboratorio\/#planetas$/.test(p.url()) && await p.locator('#planetas').isVisible());
   await p.goto(BASE + '/#glossario', { waitUntil: 'networkidle' }); await p.waitForURL(/glossario/);
   ok('endereço antigo leva ao dicionário', /\/glossario\/$/.test(p.url()));
+  // A first click after page load must work even when an optional scene module is slow.
+  await p.route('**/_astro/scenes.*.js', async route => {
+    await new Promise(resolve => setTimeout(resolve, 2200)); await route.continue();
+  });
   await p.goto(BASE + '/capitulos/galaxias-e-nebulosas/');
   ok('primeira jornada leva à expansão', /origem-do-universo/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
   ok('cinco escalas disponíveis', await p.locator('[data-scale-step]').count() === 5);
