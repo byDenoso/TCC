@@ -9,11 +9,14 @@ from runtime.nexo_agent_api.tower_paths import entity_path
 
 
 class CampaignContinuationSafetyTests(TestCase):
-    def resolve(self, *, campaign=None, tests=None):
+    def resolve(self, *, campaign=None, campaign_entity=None, tests=None):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             self.store(root, 'test_group', 'CAMP-SYNTHETIC',
                        {'id':'CAMP-SYNTHETIC', 'status':'ACTIVE', **(campaign or {})})
+            if campaign_entity is not None:
+                self.store(root, 'campaign', 'CAMP-SYNTHETIC',
+                           {'id':'CAMP-SYNTHETIC', 'status':'ACTIVE', **campaign_entity})
             for test in tests or []:
                 self.store(root, 'test', test['id'],
                            {'campaign_id':'CAMP-SYNTHETIC', **test})
@@ -67,6 +70,17 @@ class CampaignContinuationSafetyTests(TestCase):
     def test_test_group_members_are_required_even_when_entity_is_missing(self):
         result = self.resolve(campaign={'test_ids':['T1','MISSING']}, tests=[
             {'id':'T1','status':'DONE','review_state':'CONFIRMED'}])
+        self.assertFalse(result['execution_complete'])
+        self.assertFalse(result['review_complete'])
+        self.assertEqual(result['unresolved_declared_tests'], ['MISSING'])
+
+    def test_test_group_members_remain_required_when_campaign_entity_coexists(self):
+        result = self.resolve(
+            campaign={'test_ids':['T1','MISSING']},
+            campaign_entity={},
+            tests=[{'id':'T1','status':'DONE','review_state':'CONFIRMED'}],
+        )
+        self.assertEqual(result['campaign_source'], 'campaign')
         self.assertFalse(result['execution_complete'])
         self.assertFalse(result['review_complete'])
         self.assertEqual(result['unresolved_declared_tests'], ['MISSING'])
