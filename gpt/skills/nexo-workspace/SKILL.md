@@ -6,15 +6,18 @@ description: Operar a conversa do Dener como interface da Tower e das funções 
 # Workspace operacional do NEXO
 
 ## Inicialização
-Ler a raiz e a interface atuais, salvo se já lidas nesta conversa:
-- https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-master-router-0.5.0.md
-- https://raw.githubusercontent.com/byDenoso/TCC/main/gpt/skills/nexo-lite-0.5.0.md
 
-Usar a intenção da mensagem; não apresentar menus. Abrir somente as fontes exigidas pelo pedido. Reutilizar leituras quando a revisão não mudou. Consultar `NEXO Lite/pendentes` e o mural para devolver resultados ao Dener, sem interromper assuntos alheios ao NEXO com ruído operacional.
+Aplicar raiz e `automations/ROLE_CONTRACT_V1.md` na revisão conhecida; reutilizar
+leituras válidas da mesma revisão. Usar intenção da mensagem e abrir somente fontes
+do pedido. Para automações, usar contexto/fila do próprio papel, cursores duráveis e
+refs necessárias ao item. O comando executável e o fallback restrito estão no
+contrato comum; não ler o bundle inteiro nem status global por rotina.
+Consultar `NEXO Lite/pendentes` e recados a DENER somente ao atender assunto NEXO
+ou delta material destinado a ele; não inserir ruído operacional em outra conversa.
 
 ## Autoridade por assunto
 - Ciência: Tower, entidades e evidências; projeção como leitura derivada.
-- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. O pacote de preparação atual abrange somente Cientista, Operador, Engenheiro, Crítico e Guardião; não altera tarefas reais. Estados de Pítia, Sentinela, Nested Watch, Operadores B/C e Revisor por evento permanecem como encontrados. `Bom dia` pertence ao Guardião. Referências históricas, bindings e IDs do pacote não substituem esse inventário.
+- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. O contrato comum prepara seis papéis; não altera tarefas reais nem prova as absorções aplicadas. Estados de Pítia, Sentinela, Nested Watch, Operadores B/C e Revisor por evento permanecem como encontrados. `Bom dia` pertence ao Guardião. Referências históricas, bindings e IDs do pacote não substituem esse inventário.
 - Caminho operacional: raiz atual, prompts salvos, código implantado e recibos de execução. Divergência com CONTROL histórico deve ser explicitada, sem trocar de arquitetura por conta própria.
 - Literatura: `cosmology-world-model` no Drive, com data da referência; confirmar valores atuais em fontes primárias antes de congelar critérios. O mapa orienta e não produz vereditos.
 - Memória: contexto operacional em `NEXO Lite/notas`, nunca fonte de resultado científico.
@@ -31,7 +34,7 @@ Usar a intenção da mensagem; não apresentar menus. Abrir somente as fontes ex
 
 ## Leitura das fontes
 Carregar `nexo-connectors` antes de operar Google Drive ou GitHub. Busca/snippet e fetch textual degradado nao provam conteudo, ausencia ou versao; usar identidade direta, paginacao, raw fetch/ref pinado e readback conforme o contrato.
-Ler a projeção em https://bydenoso.github.io/Pantheon/tower-projection/projection.json . Se a ferramenta não abrir, ler o arquivo canônico via Drive; erro de acesso não prova fila vazia. A Tower é o arquivo JSON `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`, não uma pasta. Confirmar metadados antes de baixar.
+Ler a Tower privada pela rota autorizada e usar apenas derivados atualmente aprovados. A projeção pública retirada não é rota de leitura; erro de acesso não prova fila vazia. A Tower é o arquivo JSON `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`, não uma pasta. Confirmar metadados antes de baixar.
 
 Para análise local, usar a cópia autenticada e o bundle utilizado pelo workflow `byDenoso/Pantheon@main:.github/workflows/nexo-writer-robot.yml`. Inspecionar antes de executar. Rodar somente leituras como `verify`, `status` e `frontier` na cópia local. Conferir stderr e seções esperadas: saída zero com mensagem `skipped` é leitura degradada. Identificar projeção reconstruída como local, sem alegar publicação.
 
@@ -42,16 +45,9 @@ Antes de escrever, resolva a Tower atual e `CONTROL.json`. Use a superfície de 
 
 Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Na rota privada Drive, prefira upload create-only de **arquivo JSON bruto UTF-8** diretamente no `NEXO_INBOX`, em uma única operação, seguido de readback dos bytes/MIME/parent. Não crie Google Doc vazio e dependa de uma segunda escrita quando upload bruto estiver disponível. Presença no inbox é entrega, não aplicação; releia receipt/Tower antes de retry. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
 
-## Funções atuais: pipeline por item
+## Funções preparadas: pipeline por item
 
-O pacote atual prepara cinco funções. Os horários abaixo são referências observadas e nunca configuração; reler o inventário vivo antes de uma atualização humana:
-| Tarefa | Gatilho BRT | Política de produção por pulso | Próximo consumidor |
-|---|---|---|---|
-| Cientista | :10, toda hora | perguntas, hipóteses, literatura, antecedentes e contratos prospectivos | Operador |
-| Engenheiro | :25, toda hora | infraestrutura, dependências, transporte e recuperação | papel afetado |
-| Operador | :40, toda hora | receitas, preflight, execução e recuperação de tentativas | Crítico |
-| Crítico | :50, toda hora | revisar/contestar resultados elegíveis independentemente | Operador/Cientista |
-| Guardião | :55, toda hora | reparar/liberar cadeias independentes acionáveis | todos os papéis |
+O contrato comum prepara seis papéis: PITIA, LEARNER, ENGINEER, EXECUTOR, REFEREE_1 e GUARDIAO. Sentinela e Reconciliador Científico mantêm suas pendências e encaminhamentos até migração remota revisada e continuidade comprovada. Este documento não altera tarefas reais. Agenda/fuso, habilitação e cadência vêm exclusivamente do inventário vivo; não inferir uma configuração de horários históricos.
 
 Os antigos números 6/24 são probes de capacidade para medir utilização, nunca quotas nem limites. Continue enquanto houver trabalho independente elegível e orçamento seguro. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Se a fila elegível drenar, o no-op é correto; se restarem itens elegíveis, a rodada deve registrar por que parou.
 
@@ -61,7 +57,7 @@ A cadência não é barreira global. Cada papel consome entregas já aplicadas, 
 - `BOARD_POST` é o canal de conversa direta entre papéis nomeados: PITIA, LEARNER, EXECUTOR, REFEREE_1, GUARDIAO, ENGINEER, SENTINEL, ADVISOR e demais destinos válidos do schema. Usar refs/reply_to e resolver recados consumidos.
 - `HANDOFF` é transferência de ownership e o runtime aceita somente recipient `DAILY|ADVISOR|EXECUTOR|LEARNER|EMERGENT`; sender é um desses ou DIRECTOR. ENGINEER usa ADVISOR no handoff privado.
 - PITIA, REFEREE_1, GUARDIAO e SENTINEL não criam handoff com seus nomes. Eles usam BOARD_POST; se ownership precisar mudar, pedem ao runtime role competente para criar/transicionar o HANDOFF.
-- Uma entrega com próximo consumidor não termina em prosa: precisa mensagem aplicada e, quando couber, handoff válido.
+- Uma entrega com próximo consumidor precisa efeito/artefato canônico ou pendência recuperável com refs e ação. Se a fila já apresenta o efeito e o consumidor, não repetir em BOARD_POST. HANDOFF somente para nova transferência real; não acrescentar recado duplicando o handoff suficiente.
 
 ### Rota operacional atual
 Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive é armazenamento canônico primário, Git state está aposentado como estado operacional, Actions científico está desabilitado por orçamento e ChatGPT runtime é a execução primária. Não forçar staging/relay Git antigo se o CONTROL vigente não o declarar como rota ativa.
@@ -71,23 +67,22 @@ Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive 
 
 ### Consumir recuperação e aceite privado
 
-No início da rodada, carregar o `status` da Tower privada e ler `execution_recovery`, além do
-mural. A projeção pública não publica ofertas/aceites. Com o bundle atual, consultar
-`python nexo_gpt_writer.py handoff TOWER.json list PAPEL`; use o papel canônico abaixo apenas
-para essa caixa privada, mantendo o `source` normal nas demais propostas:
-
-- Engenheiro: `ADVISOR`, triagem de infraestrutura e dependências compartilhadas
-- Cientista: `LEARNER`, definição congelada e conflitos de linhagem
-- Operador: `EXECUTOR`, receitas, insumos/proveniência, preflight e execução; reler antes de aceitar para não duplicar
-- Guardião: verifica oferta pendente, idade, responsável e readback; não aceita em nome de outro papel
-
-A caixa de bootstrap mostra cinco cartões, com `inbox_count` total e `inbox_has_more`; ela não limita a fila operacional. `handoff ... list PAPEL` retorna todas as ofertas abertas válidas do papel. Cruze essa lista com `execution_recovery.items`; ACK antigo não pode esconder oferta pendente. Até o bundle atualizado estar comprovado, use a seção privada completa para identificar os itens omitidos pelo leitor antigo.
+Obter obrigações, ofertas e recuperações pertinentes do contexto privado do próprio
+papel. Como fallback, consultar `status.execution_recovery` somente para os itens
+do papel/refs em questão; não varrer a seção inteira por rotina. Quando o comando context verificado já cobre a fila, não executar status,
+mural e handoff list globais para reconfirmar a mesma revisão. Carregar entidade
+completa apenas quando o recorte não basta à ação. Se faltar essa capacidade,
+`python nexo_gpt_writer.py handoff TOWER.json list PAPEL` lê a caixa privada:
+Engenheiro usa ADVISOR; Cientista LEARNER; Operador EXECUTOR. Guardião não aceita
+por outro papel. A caixa de bootstrap de cinco cartões não limita a fila; paginar
+ou consultar ofertas pertinentes quando indicar `inbox_has_more`, sem inventário
+global em toda rodada. Fonte inacessível não comprova continuidade/ausência.
 
 Aceite é transferência de ownership; diagnóstico, leitura de fontes, preparação local e reparo de código já autorizado podem avançar antes dele. A operação que depende de assumir a WORK espera o ACK aplicado. Combine preparação e persistência na mesma rodada quando os contratos e o transporte permitirem, sem aguardar o próximo horário de outro papel para uma ação já elegível.
 
-Ao assumir uma WORK, enviar `HANDOFF_ACK` com `writer_role` igual ao destinatário canônico pelo
+Ao aceitar nova transferência real de uma WORK, enviar `HANDOFF_ACK` com `writer_role` igual ao destinatário canônico pelo
 Drive privado NEXO_INBOX conforme PROPOSAL_SCHEMA. Reler a aplicação: só o aceite aplicado muda
-ownership. Proposta gravada, comentário no mural e atribuição ADVISOR não são aceite. Se faltarem
+ownership. Retomada pelo mesmo owner e ACK válido da mesma obrigação dispensam nova oferta/ACK. Proposta gravada, comentário no mural e atribuição ADVISOR não são aceite. Se faltarem
 ferramentas para ler ou escrever o canal privado, registrar a capacidade ausente sem publicar o
 handoff no GitHub, simular ACK ou retirar a responsabilidade anterior.
 
@@ -111,15 +106,15 @@ o papel possa realizar; não gere recado, hipótese ou resultado só para elimin
 
 ### Pipeline de receitas work-conserving
 
-O Cientista define a pergunta e o contrato científico: TEST/roadmap/hipótese, literatura, antecedentes internos, modelo/null/rival, método, seleção, parâmetros/priors, estatística/estimando, sucesso/kill e independência. Entrega o contrato ao Operador. Lacuna de definição volta ao Cientista sem alterar contratos congelados; não precisa de uma passagem obrigatória pelo Engenheiro.
+O Cientista define a pergunta e o contrato científico: TEST/roadmap/hipótese, literatura, antecedentes internos, modelo/null/rival, método, seleção, parâmetros/priors, estatística/estimando, sucesso/kill e independência. Entrega o contrato ao Engenheiro quando precisar de materialização e ao Operador para reutilização/preparação e execução. Lacuna de definição volta ao Cientista sem alterar contratos congelados; não precisa de uma passagem obrigatória pelo Engenheiro.
 
-O Operador é dono do código da receita e da preparação da execução. Reutiliza receita fiel ou implementa a especificação aprovada; confere inputs/versionamento/hashes, dependências, parâmetros, comando reproduzível, outputs, artifacts, preflight/smoke, checkpoint/resume, custo e proveniência. Só solicita READY após os gates técnicos e a revisão independente aplicáveis. O Engenheiro mantém infraestrutura, transporte, dependências compartilhadas e recuperação de falhas; não é uma barreira administrativa por teste.
+O Engenheiro materializa receita e binding a partir do contrato congelado quando necessário, e mantém infraestrutura, transporte e dependências compartilhadas. O Operador reutiliza receita fiel e prepara deterministicamente a execução: inputs/versionamento/hashes, dependências, parâmetros, comando reproduzível, outputs, artifacts, preflight/smoke, checkpoint/resume, custo e proveniência. Falta de implementação vai ao Engenheiro; mudança científica volta ao Cientista. Só solicita READY após os gates técnicos e a revisão independente aplicáveis. Não há barreira administrativa do Engenheiro por teste.
 
 O Operador executa apenas receitas tecnicamente válidas e readiness atual, com reserva canônica por teste/tentativa. Não aprova a própria receita. Certificação técnica não substitui revisão científica independente do resultado.
 
 ### Autonomia de receitas do roadmap
 Dentro da autorização de Dener para resolver receitas NEXO, seguir o ciclo completo:
-diagnóstico e WORK com dono → Operador prepara a receita (Engenheiro resolve infraestrutura) → patch mínimo e smoke fiel
+diagnóstico e WORK com dono → Engenheiro materializa receita quando necessário; Operador reutiliza/prepara deterministicamente → patch mínimo e smoke fiel
 ao contrato → Revisor independente verifica os critérios existentes → integração com todos
 os checks passando no mesmo SHA → Operador relê a versão integrada, revalida binding/readiness
 e reserva a bateria pelo Writer. Reutilizar PR já aberto e dependência existente antes de criar outro.
@@ -147,16 +142,15 @@ O Executor despacha READY ordinário somente de roadmap `ACTIVE`; contestação 
 a revisão do resultado que atacou. Avançar fase depende de readiness e recibos, não do minuto da
 agenda. Sem inventário vivo, não alterar horários nem afirmar mudança nos prompts salvos.
 
-Enquanto houver READY elegível e capacidade na rodada do Operador, NO-OP é inválido. O Operador único cobre toda a fila elegível por prioridade/idade e herda acompanhamento, resíduos e recuperações de EXECUTOR; relê staging/Tower antes de gravar. Guardião trata zero processamento com READY elegível como falha operacional e ausência de aplicação após dois pulsos do Writer como falha de pipeline.
+Enquanto houver READY elegível e capacidade na rodada do Operador, NO-OP é inválido. O Operador único cobre toda a fila elegível por prioridade/idade e herda acompanhamento, resíduos e recuperações de EXECUTOR; relê Tower/inbox/recibos privados antes de gravar. Guardião investiga falta de avanço com trabalho realmente acionável e capacidade comprovada; tempo decorrido ou dois pulsos sem recibo, isoladamente, não provam falha. Atualizar um incidente por transição material, sem alarmes repetidos.
 
-Tratar essa tabela como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
+Tratar esse contrato como mapa de integração, não como substituto do inventário vivo. Confirmar agenda viva antes de alterar. A janela silenciosa suspende notificações, nunca a execução. Proteger o Revisor: não substituir evento por polling. `last_run_time` prova execução da tarefa, não aplicação científica.
 
-Ler mural e propostas pendentes para evitar duplicatas. Atraso ou falha de leitura produz diagnóstico; NO-OP somente com leitura válida e ausência de trabalho. Contestações precedem testes novos. Metas de vazão não autorizam inventar testes ou dados.
+Usar refs/recibos/fila pertinentes para evitar duplicatas, reutilizando a revisão já lida. Atraso ou falha de leitura produz diagnóstico; NO-OP somente com leitura válida e ausência de trabalho. Contestações precedem testes novos. Metas de vazão não autorizam inventar testes ou dados.
 
 ## Critério de entrega
 Preserve stable_id e hash exato; consulte acked e receipts duráveis. Rejeição terminal,
-leitura falha, ausência e conflito são distintos. Não reenviar os 14 HANDOFF ACK inválidos
-de ADVISOR de 02/10/2026 nem aceitar por outro destinatário. Resultado, encerramento de
+leitura falha, ausência e conflito são distintos. Não reenviar ACK inválido nem aceitar por outro destinatário. Resultado, encerramento de
 tentativa e revisão científica são dimensões separadas. Reconciliação histórica exige
 prova compatível, versão e dry-run.
 

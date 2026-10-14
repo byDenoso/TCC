@@ -230,7 +230,7 @@ def _prioritize(queue: list[dict[str, Any]], role: str) -> list[dict[str, Any]]:
     )[:ROLE_QUEUE_LIMIT]
 
 
-def materialize_role_views(root: str | Path) -> dict[str, Any]:
+def _materialize_role_views(root: str | Path) -> dict[str, Any]:
     root = Path(root)
     state_counts = _refresh_hot_state(root)
     service = AgentService(root)
@@ -269,3 +269,9 @@ def materialize_role_views(root: str | Path) -> dict[str, Any]:
         "view_model": "SINGLE_ROLE_VIEW",
         "state_counts": state_counts,
     }
+
+
+def materialize_role_views(root: str | Path) -> dict[str, Any]:
+    from .operation_receipts import receipt_transaction
+    with receipt_transaction(root):
+        return _materialize_role_views(root)

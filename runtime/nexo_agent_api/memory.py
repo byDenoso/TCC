@@ -160,11 +160,11 @@ class Snapshot:
         fingerprint = "sha256:" + digest(files)
         if any(payload.get(k) != fingerprint for k in ("revision", "state_fingerprint")):
             raise SourceError("Tower content fingerprint mismatch")
-        control = files.get("CONTROL.json", {}).get("value")
-        if not isinstance(control, dict):
-            raise SourceError("The canonical CONTROL is missing")
-        if control.get("truth_owner") != payload["truth_owner"]:
-            raise SourceError("CONTROL and Tower authority disagree")
+        from .control_compat import control_from_bundle
+        try:
+            control_from_bundle(payload)
+        except ValueError as exc:
+            raise SourceError("Canonical authority components invalid") from exc
         if payload.get("write_model") != "IN_PLACE_FILE_REVISION_CAS_READBACK":
             raise SourceError("Unexpected Tower write model")
         for p in files:
@@ -834,9 +834,15 @@ def prepare_pulse(tower: str | Path, cache: str | Path, role: str, query: str, *
     packet = memory.context(query, role, budget_chars=budget_chars, expected_revision=snapshot.revision)
     packet["sync"] = sync
     packet["input_source_sha256"] = snapshot.raw_sha256
-    packet["control_reference"] = {"source_id": snapshot.source_id, "path": "CONTROL.json",
-                                   "content_sha256": digest(snapshot.payload["files"]["CONTROL.json"]["value"]),
+    from .control_compat import control_from_bundle, AUTHORITY_PATH
+    control = control_from_bundle(snapshot.payload)
+    path = 'CONTROL.json' if 'CONTROL.json' in snapshot.payload['files'] else AUTHORITY_PATH
+    packet["control_reference"] = {"source_id": snapshot.source_id,
+                                   "path": path,
+                                   "content_sha256": digest(snapshot.payload['files'][path]['value']),
                                    "tower_revision": snapshot.revision}
+    if path != 'CONTROL.json':
+        packet['control_reference']['compatibility_view_sha256'] = digest(control)
     return packet
 
 

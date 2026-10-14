@@ -16,7 +16,7 @@ import zipfile
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = REPO / "gpt" / "nexo_memory.py"
-MEMORY_SOURCES = ("memory.py", "memory_cli.py", "live_tower.py", "tower_paths.py")
+MEMORY_SOURCES = ("memory.py", "memory_cli.py", "live_tower.py", "tower_paths.py", "control_compat.py")
 RETRIEVAL_SOURCES = ("retrieval.py", "retrieval_cli.py", "retrieval_mcp.py", "retrieval_models.py")
 
 

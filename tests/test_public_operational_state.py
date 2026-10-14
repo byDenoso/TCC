@@ -6,8 +6,18 @@ from runtime.nexo_agent_api.public_projection import build_public_projection, ve
 from runtime.nexo_agent_api.tower_paths import entity_path
 
 
-def test_projection_preserves_terminal_attempt_and_review_as_separate_axes(tmp_path):
+@pytest.fixture
+def operational_tower(tmp_path):
     root = tmp_path / "tower"
+    root.mkdir()
+    (root / "CONTROL.json").write_text(json.dumps({
+        "truth_owner": "TOWER_V06@GOOGLE_DRIVE_PRIVATE",
+    }), encoding="utf-8")
+    return root
+
+
+def test_projection_preserves_terminal_attempt_and_review_as_separate_axes(operational_tower):
+    root = operational_tower
     path = entity_path(root, "test", "TEST-PUBLIC-LIFECYCLE")
     path.parent.mkdir(parents=True)
     original = {
@@ -29,8 +39,8 @@ def test_projection_preserves_terminal_attempt_and_review_as_separate_axes(tmp_p
     verify_projection(projection)
 
 
-def test_projection_does_not_invent_a_phase_for_legacy_records(tmp_path):
-    root = tmp_path / "tower"
+def test_projection_does_not_invent_a_phase_for_legacy_records(operational_tower):
+    root = operational_tower
     path = entity_path(root, "test", "TEST-LEGACY-LIFECYCLE")
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps({"id": "TEST-LEGACY-LIFECYCLE", "status": "DONE", "domain": "science"}), encoding="utf-8")
@@ -38,8 +48,8 @@ def test_projection_does_not_invent_a_phase_for_legacy_records(tmp_path):
     assert "execution_phase" not in test
 
 
-def test_projection_drops_unrecognized_phase_diagnostics(tmp_path):
-    root = tmp_path / "tower"
+def test_projection_drops_unrecognized_phase_diagnostics(operational_tower):
+    root = operational_tower
     path = entity_path(root, "test", "TEST-INVALID-LIFECYCLE")
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps({
@@ -52,8 +62,8 @@ def test_projection_drops_unrecognized_phase_diagnostics(tmp_path):
 
 
 @pytest.mark.parametrize("phase", ["DISPATCH_PENDING", "DISPATCHED", "READY"])
-def test_projection_preserves_actual_dispatch_and_failure_lifecycle(phase, tmp_path):
-    root = tmp_path / "tower"
+def test_projection_preserves_actual_dispatch_and_failure_lifecycle(phase, operational_tower):
+    root = operational_tower
     path = entity_path(root, "test", "TEST-DISPATCH-LIFECYCLE")
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps({
