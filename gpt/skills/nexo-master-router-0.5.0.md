@@ -1,79 +1,30 @@
 ---
 name: nexo-master-router
-description: Raiz do NEXO e do NEXO Lite. Carregar para pedidos e tarefas NEXO.
+description: Raiz operacional do NEXO; usar em pesquisa, estado e manutencao NEXO, nao em toda conversa comum.
 version: 0.5.0
 ---
 
-# NEXO — raiz
+# NEXO: raiz
 
-Tower privada é autoridade científica; Writer único aplica propostas; GitHub é
-código/proveniência; Atlas e contexto por papel são derivados. Resolver identidade,
-revisão e CONTROL atual uma vez por revisão. Tower Drive:
-`1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`. A projeção pública
-`tower-projection/projection.json` foi retirada por privacidade; não usar nem reativar.
-PEER permanece excluído dos Atlas público e privado.
+Para postura geral, aplicar `AGENTS.md` da raiz. Para operação, aplicar `automations/ROLE_CONTRACT_V1.md`. Esse contrato comum resolve referências históricas a seis papéis, receita obrigatória e leitura global por pulso nos módulos antigos; o schema continua definindo os envelopes aceitos. Documentação não altera runtime, CONTROL ou agenda por si.
+
+## Autoridade
+Tower privada no Drive, arquivo `1m97cFmEkw19yiqD_6FWPG4j1lDCAYM4z`, e CONTROL vigente sustentam estado e permissões científicas. Writer único aplica mutações canônicas com proteção de concorrência e readback. GitHub é código/proveniência; inventário vivo da ferramenta é agenda/habilitação. Atlas, MCP e índices são derivados, nunca substitutos de CONTROL. A projeção pública `tower-projection/projection.json` foi retirada: não usar nem reativar. PEER excluído dos Atlas público e privado.
+
+MCP é auxiliar pela conexão instalada. Falha de binding não prova Tower ausente nem suspende Drive já autorizado. Não contornar 401/403 ou ampliar acesso. Não colocar credenciais em prompts, arquivos ou logs. Compute/orçamento seguem CONTROL atual e capacidade verificada; veto científico não prova bloqueio de toda a plataforma Actions.
 
 ## Operar
+Resolver identidade/revisão uma vez por revisão e ler contexto/cursor do papel. Sem delta, verificar obrigações abertas; contexto válido dispensa mural/status/handoffs globais redundantes. Falha de leitura não é NO-OP. Blocker pertence ao item; preparo independente autorizado continua.
 
-Aplicar [`automations/ROLE_CONTRACT_V1.md`](../../automations/ROLE_CONTRACT_V1.md):
-entrada mínima, ação, entrega, dono e limite dos seis papéis preparados. Inventário
-vivo determina tarefas habilitadas, agenda/fuso e modelo. Absorções de Sentinela e
-Reconciliador Científico não estão comprovadas por este arquivo; preservar pendências
-até continuidade migrada. Não administrar scheduler por iniciativa da automação.
+Receita formal é opcional na rota direta autorizada. Faltas administrativas não dispensam dados, implementação fiel, critério prospectivo, capacidade real e autorização. Preserve contratos congelados, proveniência, reservas compartilhadas, idempotência e revisão científica independente. Runner legado de receitas continua exigindo o que realmente executa; não envie TEST direto a esse runner.
 
-Obter contexto do próprio papel e delta/cursor; carregar entidades completas só do
-item. Reutilizar leitura da mesma revisão e contratos/documentos já carregados.
-Não exigir status/mural/handoffs globais em paralelo ao contexto válido. A fila
-acionável e os checkpoints continuam mesmo sem delta. Leitura degradada não é NO-OP.
+Reutilizar entidades e entrega com consumidor; não multiplicar WORK/HANDOFF/BOARD_POST. ACK não é DONE. Distinguir LOCAL_ONLY, DELIVERED, APPLIED, executado, revisado e publicado. Recibo público ausente não autoriza reoferta privada. Relatar efeito material, erro acionável ou NO-OP verdadeiro; não fabricar produção.
 
-Executar trabalho independente elegível dentro de tempo/custo/runtime reais.
-Não há quotas de mensagens/TESTs nem barreira por minuto da agenda. Blocker afeta
-seu item. Autonomia atual permite reparos/preparação autorizados sem pedir aceite
-rotineiro; preservar gates humanos explícitos, contratos congelados, proveniência,
-idempotência, reserva por teste/tentativa e revisão independente. ACK só em nova
-transferência real; ACK não é DONE. Não inventar permissão nem contornar ACL/403.
+## Módulos sob demanda
+- Estado, investigação e histórico: `nexo-workspace/SKILL.md`.
+- Conectores/transporte: `nexo-connectors-0.5.0.md` e `gpt/PROPOSAL_SCHEMA.md` na raiz do repositório.
+- Operações: `nexo-operations-0.5.0.md`, `nexo-closed-loop-0.5.0.md` e `automations/OPERATING_CONTRACT.md`, somente a seção necessária.
+- Autonomia: `nexo-autonomy-1.0.0.md`; pacote preparado não ativa mandato nem amplia permissão.
+- Literatura e papers: skills vigentes pertinentes no Drive; confirmar identidade e ler antes de alegar conformidade.
 
-Persistir entrega recuperável por identidade/hash; confirmar transporte e efeito
-separadamente. LOCAL_ONLY, DELIVERED, APPLIED, executado, revisado e publicado não
-são equivalentes. Recibo público ausente não justifica reoferta de operação privada.
-Comunicar apenas pedido/decisão/lacuna não expressos na fila; resultado canônico com
-consumidor não exige recado redundante. Relatar mudança material; silêncio/no-op curto
-é correto sem trabalho/delta. Auxiliares/retries não contam como TEST integral.
-
-## Carregar somente o módulo necessário
-
-- Conversa/status/investigação/histórico: [`nexo-workspace`](nexo-workspace/SKILL.md).
-- Operação/tipos/revisão de receitas: [`nexo-operations`](nexo-operations-0.5.0.md),
-  [`nexo-closed-loop`](nexo-closed-loop-0.5.0.md), somente seção pertinente.
-- Leitura/escrita Drive/GitHub: [`nexo-connectors`](nexo-connectors-0.5.0.md), reutilizar
-  revisão já lida; tipos usados em [`PROPOSAL_SCHEMA`](../PROPOSAL_SCHEMA.md).
-- Ciência/contagem/transporte: [`OPERATING_CONTRACT`](../../automations/OPERATING_CONTRACT.md).
-- Mandato prospectivo e pacote preparado: [`nexo-autonomy`](nexo-autonomy-1.0.0.md).
-  Pacote/fragmento não ativa mandato, muda CONTROL ou configura tarefas.
-- Literatura: `cosmology-world-model`; texto/figuras: `nexo-reporting` no Drive,
-  validar identidade e carregar somente quando necessário.
-
-## Runtime e autoridade
-
-CONTROL atual prevalece sobre snapshots históricos. Não forçar staging Git retirado,
-Actions desabilitado ou MCP legado como fonte de estado. Preparar workflow Actions
-público está autorizado; ciência real ainda exige runner autorizado no CONTROL,
-reserva, inputs públicos pinados, orçamento e gates. A autorização legítima pode
-habilitar a rota canônica; nenhum veto histórico substitui o estado atual. O runner
-não recebe Tower/PEER/recados privados. Writer único continua responsável por registro.
-
-Ativar/revogar mandato, ampliar acesso e publicação/submissão externa seguem os gates
-humanos correspondentes. Sem mandato ativo, carta/gene protegidos aguardam aprovação;
-mandato verificável permite só a delegação explícita vigente. Não forjar source DENER.
-
-## Ciência e linguagem
-
-Critérios de sucesso/kill/revisão são prospectivos e fixos; desenho materialmente
-novo exige nova identidade. Receita nova tem verificação técnica e revisão aplicável;
-autor não aprova o próprio patch. CONFIRMED exige contestação independente decidida
-pelo Writer. Nulo válido é resultado; PASS de software não confirma ciência.
-
-Começar pelo fato/achado, escrever português simples, expor o limite e ação necessária
-quando existirem. IDs/hashes ficam nos detalhes técnicos. Não fabricar progresso,
-certeza, timestamps, notificações ou implantação. Mudança no Git alcança quem a lê;
-não comprova atualização de tarefas/runtime/Tower.
+Agentes não administram suas agendas. Push, merge/deploy, publicação/submissão, gastos, exclusão e permissões seguem autorização humana explícita. Nenhuma mudança neste arquivo comprova implantação, atualização da Tower ou teste científico.
