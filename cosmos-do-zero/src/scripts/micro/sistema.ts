@@ -54,7 +54,8 @@ const rochosos = (): Scene => {
       sphere(layer, 80, 125, 42, p.col);
       text(layer, 80, 200, p.n, { class: 'mx-t strong', 'text-anchor': 'middle' });
       bar(layer, 170, 50, 210, 7, p.light * k, 'luz do Sol recebida (Terra = 1)', fmt(p.light, 1), C.gold);
-      bar(layer, 170, 115, 210, 1, p.atmW * k, 'atmosfera (pressão)', p.atm, C.blue);
+      bar(layer, 170, 115, 210, 1, p.atmW * k, 'atmosfera (pressão)', '', C.blue);
+      text(layer,380,149,p.atm,{class:'mx-t small strong','text-anchor':'end'});
       bar(layer, 170, 180, 210, 600, (p.temp + 100) * k, 'temperatura média', `${fmt(p.temp)} °C`, C.accent);
       return p.cap;
     }

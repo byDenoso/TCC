@@ -23,6 +23,7 @@ export interface Exhibit {
   cameraForValue?: (value:number,aspect:number)=>[number,number,number];
   cameraForAspect?: (aspect:number)=>[number,number,number];
   orthographicHeight?: (aspect:number)=>number;
+  highDefinition?: boolean;
   views?:{label:string;camera:[number,number,number]}[];
   lighting?: { ambient:number; key:number; fill:number; exposure:number; shadows?:boolean; neutral?:boolean; keyPosition?:[number,number,number] };
   quality?(quality:'auto'|'low',width:number):Promise<void>|void;
@@ -77,7 +78,7 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
     canvas.style.touchAction = controls.enabled ? 'none' : 'pan-y';
   });
   rotate.setAttribute('aria-pressed', 'false');
-  const resetView = () => { controls.minDistance=home.length()*.5;camera.position.copy(home);camera.zoom=1;camera.updateProjectionMatrix(); controls.target.set(0, 0, 0); controls.update(); render(); };
+  const resetView = () => { controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);camera.zoom=1;camera.updateProjectionMatrix(); controls.target.set(0, 0, 0); controls.update(); render(); };
   button('Restaurar visão', resetView);
   const left = button('↶', () => turn(-0.2)); left.setAttribute('aria-label', 'Girar visão para a esquerda');
   const right = button('↷', () => turn(0.2)); right.setAttribute('aria-label', 'Girar visão para a direita');
@@ -91,7 +92,8 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   function pitch(a:number){camera.position.applyAxisAngle(new THREE.Vector3(1,0,0),a);controls.update();render();}
   const quality = document.createElement('select'); quality.setAttribute('aria-label', 'Qualidade da cena');
   quality.innerHTML = '<option value="auto">Ajustada à tela</option><option value="low">Econômica</option>';
-  quality.value=stage.dataset.cosmosQuality==='low'?'low':'auto';
+  if(exhibit.highDefinition)quality.add(new Option('Alta definição','high'));
+  quality.value=stage.dataset.cosmosQuality==='low'?'low':exhibit.highDefinition&&stage.dataset.cosmosQuality==='high'?'high':'auto';
   tools.append(quality);
   stage.append(canvas); stage.classList.add('cosmos-volume-ready','mx-stage--gl');
   const explanation=stage.closest('.mx-lab,.solar-experiment')?.querySelector('.mx-caption') ?? stage.closest('.obs-expansion-grid')?.querySelector('.obs-reading') ?? stage.closest('[data-island="planets"]')?.querySelector('[data-planet-description]') ?? stage.closest('[data-island="compare"]')?.querySelector('.compare-insight') ?? stage.closest('[data-scene]')?.querySelector('.scene-reading');
@@ -117,13 +119,13 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   const resize = () => {
     stage.dataset.cosmosQuality=quality.value;
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h || !alive) return;
-    renderer.setPixelRatio(quality.value === 'low' ? 1 : Math.min(devicePixelRatio || 1, w < 600 ? 1.25 : 1.5));
+    renderer.setPixelRatio(quality.value==='high'&&exhibit.highDefinition?Math.min(2,Math.max(devicePixelRatio||1,w<600?1.25:1.5)):quality.value==='low'?1:Math.min(devicePixelRatio||1,w<600?1.25:1.5));
     renderer.setSize(w, h, false);const aspect=w/h;
     if(camera instanceof THREE.PerspectiveCamera)camera.aspect=aspect;else{const height=exhibit.orthographicHeight!(aspect);camera.left=-height*aspect/2;camera.right=height*aspect/2;camera.top=height/2;camera.bottom=-height/2;}
-    if(exhibit.cameraForAspect&&aspect!==previousAspect){home.set(...exhibit.cameraForAspect(aspect));camera.position.copy(home);controls.update();}previousAspect=aspect;
+    if(exhibit.cameraForAspect&&aspect!==previousAspect){home.set(...exhibit.cameraForAspect(aspect));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.update();}previousAspect=aspect;
     const nextQualityKey=`${quality.value}:${w<600}`;
-    if(exhibit.quality&&nextQualityKey!==qualityKey){qualityKey=nextQualityKey;stage.dataset.qualityPending='true';Promise.resolve(exhibit.quality(quality.value as 'auto'|'low',w)).then(()=>{if(alive){stage.dataset.textureQuality=String(exhibit.group.userData.textureQuality);stage.dataset.qualityPending='false';render();projectLabels();}}).catch(()=>{if(alive){stage.dataset.qualityPending='false';stage.dataset.qualityError='true';}});}
-    if(exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,aspect));camera.position.copy(home);controls.update();}
+    if(exhibit.quality&&nextQualityKey!==qualityKey){qualityKey=nextQualityKey;stage.dataset.qualityPending='true';Promise.resolve(exhibit.quality(quality.value==='low'?'low':'auto',w)).then(()=>{if(alive){stage.dataset.textureQuality=String(exhibit.group.userData.textureQuality);stage.dataset.qualityPending='false';render();projectLabels();}}).catch(()=>{if(alive){stage.dataset.qualityPending='false';stage.dataset.qualityError='true';}});}
+    if(exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,aspect));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.update();}
     camera.updateProjectionMatrix(); render(); projectLabels();
   };
   quality.addEventListener('change', resize); controls.addEventListener('change', () => {render();projectLabels();});
@@ -143,7 +145,7 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
     canvas.remove(); details.remove(); labels.forEach(({e})=>e.remove()); stage.classList.remove('cosmos-volume-ready','mx-stage--gl'); release(); onDispose?.();
   }
   resize();
-  return { state(next) { const changed=next.value!==undefined&&next.value!==state.value;Object.assign(state, next);if(changed&&exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,stage.clientWidth/stage.clientHeight));camera.position.copy(home);controls.target.set(0,0,0);controls.update();}render(); projectLabels(); }, play() { /* transporte pertence ao motor */ }, resize, resetView, dispose };
+  return { state(next) { const changed=next.value!==undefined&&next.value!==state.value;Object.assign(state, next);if(changed&&exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,stage.clientWidth/stage.clientHeight));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.target.set(0,0,0);controls.update();}render(); projectLabels(); }, play() { /* transporte pertence ao motor */ }, resize, resetView, dispose };
 }
 
 export function disposeObjects(root: THREE.Object3D): void {

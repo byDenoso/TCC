@@ -182,7 +182,7 @@ const elementos = (): Scene => {
       clear(layer);
       const k = ease(t);
       els.forEach((e, i) => { const x = 30, y = 22 + i * 46; el('rect', { x, y, width: 52, height: 40, rx: 8, fill: i === v ? C.accent : C.surface, stroke: C.line }, layer); text(layer, x + 26, y + 27, e, { class: `mx-t strong${i === v ? ' on-accent' : ''}`, 'text-anchor': 'middle' }); });
-      sources.forEach((s, i) => { const y = 30 + i * 46, on = map[v].includes(i); el('rect', { x: 250, y: y - 18, width: 220, height: 32, rx: 16, fill: on ? C.surface : C.soft, stroke: on ? C.accent : C.line, 'stroke-width': on ? 2 : 1, opacity: on ? 1 : 0.6 }, layer); text(layer, 262, y + 3, s, { class: `mx-t small${on ? ' strong' : ''}` });
+      sources.forEach((s, i) => { const y = 30 + i * 46, on = map[v].includes(i); el('rect', { x: 250, y: y - 18, width: 220, height: i===4?48:32, rx: 16, fill: on ? C.surface : C.soft, stroke: on ? C.accent : C.line, 'stroke-width': on ? 2 : 1, opacity: on ? 1 : 0.6 }, layer); (i===4?['Colisões de estrelas','de nêutrons']:[s]).forEach((line,j)=>text(layer,262,y+3+j*19,line,{class:`mx-t small${on?' strong':''}`}));
         if (on) { const y0 = 42 + v * 46; const p = el('path', { d: `M82 ${y0} C170 ${y0} 170 ${y} 248 ${y}`, fill: 'none', stroke: C.accent, 'stroke-width': map[v][0] === i ? 3 : 1.6, pathLength: 1, 'stroke-dasharray': 1, 'stroke-dashoffset': 1 - k }, layer); void p; } });
       return caps[v];
     }

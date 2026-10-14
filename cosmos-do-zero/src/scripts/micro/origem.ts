@@ -224,7 +224,11 @@ const comeco = (): Scene => {
         const step = show(s.kind), on = step < v ? 1 : step === v ? k : 0;
         const fill = s.kind === 'ev' ? C.ink : s.kind === 'model' ? C.blue : s.kind === 'hyp' ? 'url(#mx-hatch)' : C.soft;
         el('rect', { x: s.x, y: 110, width: s.w - 2, height: 34, rx: 4, fill, opacity: 0.15 + 0.85 * on }, layer);
-        if (s.label && on > 0.3) text(layer, s.x + s.w / 2, s.kind === 'ev' ? 170 : 96, s.label, { class: `mx-t small${s.kind === 'ev' ? ' strong' : ' warm'}`, 'text-anchor': 'middle' });
+        if (s.label && on > 0.3) {
+          const y=s.kind==='ev'?(s.x===320?194:170):96;
+          if(s.kind==='ev')el('line',{x1:s.x+s.w/2,y1:146,x2:s.x+s.w/2,y2:y-17,stroke:C.line},layer);
+          text(layer,s.x+s.w/2,y,s.label,{class:`mx-t small${s.kind==='ev'?' strong':' warm'}`,'text-anchor':'middle'});
+        }
       }
       text(layer, 30, 220, 'começo', { class: 'mx-t small' });
       text(layer, 450, 220, 'hoje', { class: 'mx-t small', 'text-anchor': 'end' });

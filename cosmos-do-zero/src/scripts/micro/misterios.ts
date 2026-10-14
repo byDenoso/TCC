@@ -26,7 +26,7 @@ const metodo = (): Scene => {
         const x = 18 + i * 116, on = i < v ? 1 : i === v ? ease(t) : 0;
         el('rect', { x, y: 60, width: 100, height: 110, rx: 12, fill: i <= v ? C.surface : C.soft, stroke: i === v ? C.accent : C.line, 'stroke-width': i === v ? 2.5 : 1, opacity: 0.4 + 0.6 * (i <= v ? 1 : 0) }, layer);
         text(layer, x + 50, 150, c.t, { class: 'mx-t small strong', 'text-anchor': 'middle' });
-        text(layer, x + 50, 196, c.k, { class: `mx-t small${c.k === 'medida' ? '' : ' warm'}`, 'text-anchor': 'middle', opacity: on });
+        (i===3?['conclusão +','pergunta']:[c.k]).forEach((line,j)=>text(layer,x+50,196+j*20,line,{class:`mx-t small${c.k==='medida'?'':' warm'}`,'text-anchor':'middle',opacity:on}));
         const cx = x + 50, cy = 100;
         if (i === 0) { el('path', { d: `M${cx - 22} ${cy + 18} L${cx + 14} ${cy - 16} L${cx + 22} ${cy - 8} L${cx - 14} ${cy + 26} Z`, fill: C.ink2 }, layer); }
         if (i === 1) { el('rect', { x: cx - 36, y: cy - 10, width: 72, height: 18, fill: C.gold, opacity: 0.6 }, layer); [-20, 2, 18].forEach((d) => el('rect', { x: cx + d, y: cy - 10, width: 3, height: 18, fill: C.ink }, layer)); }

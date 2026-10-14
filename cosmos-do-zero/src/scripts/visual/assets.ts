@@ -13,7 +13,7 @@ export function createWorldFactory(): ((name:string)=>THREE.Group)&{quality(size
  let maximum=2048;
  const resizeMap=(source:THREE.Texture,target:THREE.Texture)=>{const image=source.image as {width:number;height:number};if(!image?.width)return;let nextImage:THREE.Texture['image'];if(image.width<=maximum){nextImage=source.image;}else{const canvas=document.createElement('canvas');canvas.width=maximum;canvas.height=Math.max(1,Math.round(image.height*maximum/image.width));canvas.getContext('2d')!.drawImage(source.image as CanvasImageSource,0,0,canvas.width,canvas.height);nextImage=canvas;}
   // Immutable GL storage must be released before changing image dimensions.
-  target.dispose();target.source=new THREE.Source(nextImage);target.needsUpdate=true;
+  target.dispose();target.source=new THREE.Source(nextImage);target.anisotropy=maximum<=512?1:4;target.needsUpdate=true;
  };
  const cloneMaterial=(source:THREE.Material)=>{
   if(materials.has(source))return materials.get(source)!;

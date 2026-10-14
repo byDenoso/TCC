@@ -189,7 +189,8 @@ const habitavel = (): Scene => {
       if (v === 3) text(layer, 80, 216, '(sem efeito estufa)', { class: 'mx-t small warm', 'text-anchor': 'middle' });
       bar(layer, 170, 50, 200, 3, (Math.log10(p.p) + 2.5) / 2 * k, 'pressão do ar (escala comprimida)', p.pt, C.blue);
       bar(layer, 170, 120, 200, 600, (p.temp + 100) * k, 'temperatura média', `${fmt(p.temp)} °C`, C.accent);
-      text(layer, 170, 190, `água na superfície: ${p.water}`, { class: 'mx-t small strong' });
+      text(layer,170,190,'água na superfície:',{class:'mx-t small strong'});
+      text(layer,170,212,p.water,{class:'mx-t small strong'});
       return p.cap;
     }
   };
