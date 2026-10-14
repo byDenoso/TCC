@@ -40,6 +40,15 @@ class PrivateSpoolEffects(unittest.TestCase):
         self.assertEqual({row["outcome"] for row in second["operation_receipts"]}, {"ALREADY_APPLIED"})
         self.assertEqual(_gateway_results(second, ["sheet-fixture"])[0]["items"], [])
 
+    def test_oversized_private_board_post_is_rejected_before_applied_receipt(self):
+        item = self.item()
+        item["payload"] = {**item["payload"], "text": "x" * 501}
+        packed, report = apply_to_tower(self.tower(), [item])
+        self.assertFalse(report["applied"], report)
+        self.assertEqual(report["rejected"][0]["reason"], "BOARD_TEXT_TOO_LONG")
+        self.assertEqual({row["outcome"] for row in report["operation_receipts"]}, {"REJECTED_TERMINAL"})
+        self.assertNotIn("evolution/board.json", read_live_tower_bytes(packed)["files"])
+
     def test_ambiguous_or_nested_board_payload_never_becomes_applied_record(self):
         for changes in (
             {"kind": "UNRECOGNIZED", "payload": {"kind": "BOARD_POST", "text": "Canary"}},

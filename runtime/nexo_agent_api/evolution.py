@@ -757,8 +757,12 @@ def thought_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> 
     for index, entry in enumerate(raw):
         if not isinstance(entry, dict) or not entry.get("text") or not entry.get("refs"):
             continue  # a thought without Tower ids is decoration, not evidence
+        text = str(entry["text"])
+        if len(text) > 600:
+            from .inbox_apply import ProposalError
+            raise ProposalError("THOUGHT_TEXT_TOO_LONG")
         entries.append({"id": entry.get("id") or f"TH-{_now(item)[:16]}-{index}", "at": _now(item),
-                        "kind": str(entry.get("kind") or "SURPRISE").upper(), "text": str(entry["text"])[:600],
+                        "kind": str(entry.get("kind") or "SURPRISE").upper(), "text": text,
                         "refs": [str(r) for r in entry["refs"]][:12]})
     retire = {str(r) for r in body.get("retire") or []}
     if not entries and not retire:
@@ -798,6 +802,10 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
             ttl = max(1, min(int(entry.get("ttl_h") or 48), 336))
         except (TypeError, ValueError):
             ttl = 48
+        text = " ".join(str(entry["text"]).split())
+        if len(text) > 500:
+            from .inbox_apply import ProposalError
+            raise ProposalError("BOARD_TEXT_TOO_LONG")
         refs = [str(r) for r in entry.get("refs") or []][:12]
         private = bool(entry.get("private")) or any(r.upper().startswith(("OLY", "OLYMPUS")) for r in refs)
         transport_identity = {
@@ -812,7 +820,7 @@ def board_requests(item: dict[str, Any], body: dict[str, Any], root: Path) -> li
                                              separators=(",", ":"), default=str).encode("utf-8")).hexdigest()[:12].upper()
         generated_id = f"BP-{declared_at[:16] if declared_at else 'UNDATED'}-{source}-{suffix}"
         posts.append({"id": str(entry.get("id") or generated_id), "at": now, "from": source, "to": to,
-                      "text": " ".join(str(entry["text"]).split())[:500], "refs": refs,
+                      "text": text, "refs": refs,
                       "reply_to": entry.get("reply_to"), "expires_at": (base + timedelta(hours=ttl)).strftime("%Y-%m-%dT%H:%M:%SZ"),
                       "private": private})
     resolve = {str(r) for r in body.get("resolve") or []}
