@@ -76,12 +76,19 @@ def build() -> Path:
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as archive:
         _write_deterministic(archive, "runtime/__init__.py", b"")
+        # These modules implement the new direct Drive/local execution path. They
+        # are intentionally outside the legacy Writer's self-contained payload.
+        # Bundling them would silently change the frozen Writer artifact.
+        direct_only = {"runtime/nexo_execution/campaign_store.py", "runtime/nexo_execution/checkpointed.py"}
         for package in ("nexo_agent_api", "nexo_execution", "portable_camb"):
             package_root = REPO / "runtime" / package
             for path in sorted(package_root.rglob("*"), key=lambda path: path.relative_to(package_root).as_posix()):
                 if path.is_file() and path.suffix in (".py", ".json") and (not path.name.startswith("test_") or path.name == "test_registry.py"):
                     rel = path.relative_to(package_root).as_posix()
-                    _write_deterministic(archive, f"runtime/{package}/{rel}", path.read_bytes())
+                    name = f"runtime/{package}/{rel}"
+                    if name in direct_only:
+                        continue
+                    _write_deterministic(archive, name, path.read_bytes())
         contracts_root = REPO / "contracts"
         if contracts_root.is_dir():
             for path in sorted(contracts_root.rglob("*.json"), key=lambda path: path.relative_to(REPO).as_posix()):
