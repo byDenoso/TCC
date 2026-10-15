@@ -1,11 +1,13 @@
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # NEXO — contrato operacional das automações
 
 As regras científicas, de privacidade e de readback valem para todos os papéis.
 Os comandos locais de escrita deste documento pertencem ao adapter Claude Code/PC
 com Writer autorizado. As ChatGPT Tasks habilitadas no inventário vivo usam a rota descrita em
-**Limite do runtime ChatGPT Tasks**, conforme `nexo-master-router-0.5.0` e
-`gpt/skills/nexo-workspace/SKILL.md`; não recebem autorização para escrever a Tower
-ou escolher transportes fora de CONTROL e das capacidades autorizadas.
+**Limite do runtime ChatGPT Tasks**, conforme o catálogo ativo do Pseudo-MCP e
+a skill `nexo-closed-loop` no Drive; não recebem autorização para escrever a Tower
+ou escolher transportes fora do Pseudo-MCP vigente e das capacidades autorizadas.
 
 ## Contrato comum dos papéis
 
@@ -186,10 +188,11 @@ Resposta ao Cientista: PENDING_WRITE».
 
 ## Limite do runtime ChatGPT Tasks
 
-As Tasks carregam `gpt/skills/nexo-master-router-0.5.0.md`,
-`gpt/skills/nexo-workspace/SKILL.md` e o contrato comum. Resolver primeiro CONTROL
-atual e capacidades autorizadas. GitHub é código/proveniência; staging/relay Git
-histórico não é rota vigente quando CONTROL o marca aposentado ou congelado.
+As Tasks consultam o Pseudo-MCP vigente no Drive, o AGENTS central e as skills
+do papel no catálogo ativo, incluindo `nexo-closed-loop`. Os módulos `gpt/skills`
+preservam adaptadores e referências técnicas/históricas. Resolver as capacidades
+autorizadas no ambiente executor. GitHub é código/proveniência; staging/relay Git
+histórico só é rota quando o código implantado e a autorização vigente o comprovam.
 A projeção pública retirada não é fonte de leitura nem prova de efeito.
 
 - Entregar propostas privadas pelo transporte aprovado ao Writer único, com

@@ -1,3 +1,5 @@
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # NEXO: contrato comum dos sete papeis
 
 Este contrato orienta operação; não configura tarefas ou permissões. Inventário vivo prova habilitação/agenda; política vigente reside no pseudo-MCP privado do Drive, arquivo `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, seção `control_retirement_transition.current_verified_rules`. A Tower LIVE sustenta estado/evidência. `CONTROL` permanece histórico/compatibilidade técnica. Referências antigas a cinco/seis papéis, quotas, leitura global e receita universal não prevalecem. Preserve pendências antes de migrar função; não apague histórico.
