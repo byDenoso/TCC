@@ -144,20 +144,138 @@ class OperationalConformance(unittest.TestCase):
     def test_second_claim_cannot_destroy_owner_work(self):
         rig=Rig();rig.worker.handle(rig.intent('claim_work'));out=rig.worker.handle(rig.intent('claim_work',principal='b'*64))
         self.assertEqual(out['state'],'WORK_ALREADY_CLAIMED');self.assertEqual(rig.store.get(WORK_ID)['owner'],PRINCIPAL)
-    def test_stale_version_is_durable_and_requires_linked_fresh_intent(self):
-        rig=Rig();old=rig.intent();rig.worker.handle(rig.intent('claim_work'));writes=rig.tower.writes
-        conflict=rig.worker.handle(old)
-        self.assertEqual(conflict['state'],'VERSION_CONFLICT');self.assertFalse(conflict['retryable'])
-        self.assertEqual(conflict['disposition'],'STALE_VERSION');self.assertEqual(rig.tower.writes,writes+1)
+    @staticmethod
+    def reidentify(intent):
+        intent['id']='op-'+digest({k:v for k,v in intent.items() if k!='id'})[:48]
+        return intent
+
+    def test_stale_version_revalidates_current_state_without_rewriting_intent(self):
+        rig=Rig();old=rig.intent();original=copy.deepcopy(old)
+        rig.worker.handle(rig.intent('claim_work'))
+        observed=rig.store.get(WORK_ID)['version']
+        result=rig.worker.handle(old)
+        self.assertEqual(result['state'],'DISPATCH_PENDING')
+        self.assertEqual(result['observed_version'],observed)
+        self.assertEqual(old,original)
         writes=rig.tower.writes
-        replay=rig.worker.handle(old)
-        self.assertTrue(replay['idempotent']);self.assertEqual(rig.tower.writes,writes)
-        unlinked=rig.worker.handle(rig.intent())
-        self.assertEqual(unlinked['state'],'SUPERSESSION_REQUIRED')
-        self.assertEqual(unlinked['disposition'],'REJECTED')
-        fresh=rig.intent(supersedes=old['id'])
-        self.assertNotEqual(fresh['id'],old['id'])
-        self.assertEqual(rig.worker.handle(fresh)['state'],'DISPATCH_PENDING')
+        self.assertTrue(rig.worker.handle(old)['idempotent'])
+        self.assertEqual(rig.tower.writes,writes)
+        rig.worker.tick([]);rig.worker.tick([])
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
+        self.assertEqual(rig.actions.dispatches,1)
+
+    def test_advisory_version_metadata_remains_validated_for_wire_compatibility(self):
+        rig=Rig();intent=rig.intent();del intent['expected_version'];self.reidentify(intent)
+        with self.assertRaisesRegex(OperationalError,'INTENT_FIELDS_INVALID'):
+            rig.worker.handle(intent)
+        for value in (None, True, -1, '1'):
+            with self.subTest(value=value):
+                other=Rig();bad=other.intent();bad['expected_version']=value;self.reidentify(bad)
+                with self.assertRaisesRegex(OperationalError,'INTENT_VERSION_INVALID'):
+                    other.worker.handle(bad)
+                self.assertEqual(other.drive.writes,0)
+
+    def test_stale_intent_cannot_take_new_owner_or_changed_definition(self):
+        rig=Rig();intent=rig.intent()
+        rig.worker.handle(rig.intent('claim_work',principal='b'*64))
+        with self.assertRaisesRegex(OperationalError,'CLAIM_OWNERSHIP_REQUIRED'):
+            rig.worker.handle(intent)
+        self.assertEqual(rig.drive.writes,0);self.assertEqual(rig.actions.dispatches,0)
+        rig=Rig();intent=rig.intent();work=rig.store.get(WORK_ID)
+        work['definition_sha256']='f'*64;rig.store.save(work,work['version'])
+        with self.assertRaisesRegex(OperationalError,'ROLE_CONTEXT_OR_PROMPT_CHANGED'):
+            rig.worker.handle(intent)
+        self.assertEqual(rig.drive.writes,0)
+
+    def test_fresh_state_transition_and_save_conflict_still_fail_closed(self):
+        rig=Rig();intent=rig.intent();work=rig.store.get(WORK_ID)
+        work['state']='FAILED';rig.store.save(work,work['version'])
+        result=rig.worker.handle(intent)
+        self.assertEqual(result['error']['code'],'WORK_NOT_EXECUTABLE')
+        self.assertEqual(result['disposition'],'REJECTED')
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'FAILED')
+        self.assertEqual(rig.drive.writes,0);self.assertEqual(rig.actions.dispatches,0)
+        rig=Rig();intent=rig.intent('claim_work');save=rig.store.save;changed=False
+        def concurrent_save(work,version):
+            nonlocal changed
+            if not changed:
+                changed=True
+                current=rig.store.get(WORK_ID)
+                current.update(owner='b'*64,state='CLAIMED')
+                save(current,current['version'])
+            return save(work,version)
+        with patch.object(rig.store,'save',side_effect=concurrent_save):
+            with self.assertRaisesRegex(OperationalError,'VERSION_CONFLICT'):
+                rig.worker.handle(intent)
+        self.assertEqual(rig.store.get(WORK_ID)['owner'],'b'*64)
+        self.assertEqual(rig.actions.dispatches,0)
+
+    def test_delayed_incompatible_prepare_preserves_pending_outbox_and_replay(self):
+        rig=Rig();rig.worker.handle(rig.intent('claim_work'));old=rig.intent('prepare_package')
+        rig.worker.handle(rig.intent('request_execution'))
+        before=rig.store.get(WORK_ID);drive_writes=rig.drive.writes
+        result=rig.worker.handle(old);after=rig.store.get(WORK_ID)
+        self.assertEqual(result['disposition'],'REJECTED')
+        self.assertEqual(result['error']['code'],'WORK_NOT_PREPARABLE')
+        for key in set(before)-{'version','processed','updated_at'}:
+            self.assertEqual(after.get(key),before[key],key)
+        self.assertEqual(rig.drive.writes,drive_writes)
+        writes=rig.tower.writes
+        self.assertTrue(rig.worker.handle(old)['idempotent'])
+        self.assertEqual(rig.tower.writes,writes)
+        rig.worker.tick([]);rig.worker.tick([])
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
+        self.assertEqual(rig.actions.dispatches,1)
+
+    def test_incompatible_actions_preserve_all_work_fields_except_receipt_and_version(self):
+        cases=[('prepare_package','RUNNING',None),('prepare_package','REGISTERED',None),
+               ('register_delivery','CLAIMED',None),('request_execution','FAILED',None),
+               ('prepare_package','BLOCKED','FAILED'),('prepare_package','BLOCKED','PREPARED')]
+        for action,state,resume in cases:
+            with self.subTest(action=action,state=state,resume=resume):
+                rig=Rig();rig.worker.handle(rig.intent('claim_work'));intent=rig.intent(action)
+                work=rig.store.get(WORK_ID)
+                work.update(state=state,error={'code':'EXISTING_ERROR'})
+                if resume:work['resume_state']=resume
+                rig.store.save(work,work['version']);before=rig.store.get(WORK_ID)
+                result=rig.worker.handle(intent);after=rig.store.get(WORK_ID)
+                self.assertEqual(result['disposition'],'REJECTED')
+                for key in set(before)-{'version','processed','updated_at'}:
+                    self.assertEqual(after.get(key),before[key],key)
+                self.assertEqual(rig.drive.writes,0);self.assertEqual(rig.actions.dispatches,0)
+
+    def test_legacy_stale_receipt_is_immutable_and_linked_retry_has_no_version_gate(self):
+        rig=Rig();old=rig.intent();work=rig.store.get(WORK_ID)
+        work['processed'][old['id']]={
+            'state':'VERSION_CONFLICT','intent_id':old['id'],'intent_sha256':digest(old),
+            'expected_version':old['expected_version'],'disposition':'STALE_VERSION',
+            'action':old['action'],'principal':old['principal'],'retryable':False}
+        rig.store.save(work,work['version'])
+        writes=rig.tower.writes
+        self.assertEqual(rig.worker.handle(old)['state'],'VERSION_CONFLICT')
+        self.assertEqual(rig.tower.writes,writes)
+        retry=rig.intent(supersedes=old['id']);retry['expected_version']=0;self.reidentify(retry)
+        self.assertEqual(rig.worker.handle(retry)['state'],'DISPATCH_PENDING')
+        self.assertEqual(rig.worker.handle(old)['disposition'],'STALE_VERSION')
+
+    def test_progress_block_recovery_revalidates_and_does_not_redispatch(self):
+        rig=Rig();original=rig.intent()
+        rig.worker.tick([original])
+        rig.actions.tamper=True
+        rig.worker.tick([])
+        work=rig.store.get(WORK_ID)
+        self.assertEqual(work['state'],'BLOCKED')
+        self.assertEqual(work['processed'][original['id']]['disposition'],'APPLIED')
+        self.assertEqual(rig.worker.handle(original)['disposition'],'APPLIED')
+        rig.actions.tamper=False
+        retry=rig.intent()
+        self.assertNotEqual(retry['id'],original['id'])
+        # An intervening harmless update does not invalidate the retry intent.
+        work=rig.store.get(WORK_ID);rig.store.save(work,work['version'])
+        rig.worker.tick([retry]);rig.worker.tick([])
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
+        self.assertEqual(rig.actions.dispatches,1)
+        self.assertEqual(rig.worker.handle(original)['disposition'],'APPLIED')
 
     def test_forbidden_failure_is_durable_and_new_intent_retries_only_after_reconciliation(self):
         rig=Rig();intent=rig.intent();rig.drive.error=OperationalError('DRIVE_HTTP_403',stage='DRIVE_METADATA_READ')
