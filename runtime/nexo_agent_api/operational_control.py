@@ -345,6 +345,7 @@ class OperationalWorker:
             "action": intent["action"],
             "principal": intent["principal"],
             "expected_version": intent["expected_version"],
+            "observed_version": work["version"],
             "disposition": disposition,
         }
         record.setdefault("idempotent", False)
@@ -357,7 +358,7 @@ class OperationalWorker:
         for intent_id, receipt in work.get("processed", {}).items():
             if not isinstance(receipt, dict) or receipt.get("disposition") not in {"BLOCKED", "STALE_VERSION"}:
                 continue
-            expected = receipt.get("expected_version")
+            expected = receipt.get("observed_version", receipt.get("expected_version"))
             if (receipt.get("intent_id") == intent_id and type(expected) is int
                     and expected < work.get("version", 0)):
                 terminal.append((intent_id, receipt))
@@ -382,7 +383,7 @@ class OperationalWorker:
                           and value.get("principal") == intent["principal"]]
         else:
             candidates = same_action
-        candidates.sort(key=lambda item: (item[1]["expected_version"], item[0]))
+        candidates.sort(key=lambda item: (item[1].get("observed_version", item[1].get("expected_version", -1)), item[0]))
         target = candidates[-1] if candidates else None
         prior_id = intent.get("supersedes")
 
@@ -401,9 +402,6 @@ class OperationalWorker:
                                    and prior.get("disposition") == "BLOCKED")
         require(prior.get("principal") == intent["principal"]
                 and (same_action_link or blocked_transition_link), "SUPERSESSION_IDENTITY_MISMATCH")
-        require(type(intent.get("expected_version")) is int
-                and intent["expected_version"] > prior.get("expected_version", -1),
-                "SUPERSESSION_VERSION_NOT_ADVANCED")
         return False
 
     @staticmethod
@@ -472,13 +470,10 @@ class OperationalWorker:
             result = self._record_disposition(work, intent, result, "REJECTED")
             self._save(work)
             return result
-        if work["version"] != intent["expected_version"]:
-            result = {"state": "VERSION_CONFLICT", "work_id": work["id"], "retryable": False,
-                      "expected_version": intent["expected_version"], "observed_version": work["version"],
-                      "recovery": "REREAD_AND_CREATE_A_LINKED_INTENT_IF_THE_ACTION_IS_STILL_VALID"}
-            result = self._record_disposition(work, intent, result, "STALE_VERSION")
-            self._save(work)
-            return result
+        # A producer's observed version is advisory, not authority to overwrite.
+        # get() read fresh Tower state; owner, frozen role context, supersession
+        # and action-specific transitions are checked against that state. _save
+        # still enforces the freshly read entity version and Tower head/readback.
         try:
             self._resume_blocked_action(work, action)
             if action == "claim_work":
