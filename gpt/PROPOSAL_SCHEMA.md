@@ -13,7 +13,8 @@ Envelope (um arquivo ou documento por proposta):
 ```
 Nome: `<utc>-<kind>-<slug>`.
 
-**Transporte público/operacional:** resolva primeiro o `CONTROL.json` da Tower viva. Se
+**Transporte público/operacional legado:** a política vigente é o pseudo-MCP privado
+do Drive, não o `CONTROL` histórico. Preserve as restrições técnicas de cada runner. Se
 `github_state_role` estiver `RETIRED_AS_OPERATIONAL_STATE` ou o alvo Git estiver congelado, **não**
 trate `byDenoso/TCC@nexo/dispatch-runtime` como rota vigente de estado; Git permanece código e
 proveniência. Use a superfície de mutação/ingress declarada pelo CONTROL atual e faça readback da
@@ -27,14 +28,81 @@ sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou refer
 handoff. Handoffs, BOARD_POSTs e outras mensagens privadas devem entrar no `NEXO_INBOX` do Drive
 privado como **arquivo UTF-8 JSON bruto criado atomicamente em uma única operação** quando a superfície
 de upload create-only estiver disponível. Releia os bytes do arquivo e confirme JSON, MIME
-`application/json`, tamanho e parent do `NEXO_INBOX`. **Não crie Google Doc vazio para depois inserir
-o JSON em uma segunda escrita**: essa rota é mais frágil e já produziu falhas de segurança. Google Doc
-com JSON no corpo é somente fallback de compatibilidade quando upload bruto não existir e criação,
-escrita e readback do Doc forem suportados na mesma sessão. Entrega no inbox prova `DELIVERED`, não
+`application/json`, tamanho e parent do `NEXO_INBOX`. **Não crie Google Doc vazio no inbox para
+preenchê-lo depois.** Na rota nativa abaixo, o Doc nasce fora da pasta consumida, recebe o texto
+com controle de revisão e é relido antes de ser movido ao destino. Upload bruto continua aceito;
+nenhuma troca de formato contorna recusa de autenticação, ACL ou política. Entrega no inbox prova `DELIVERED`, não
 `APPLIED`; consulte receipt/Tower antes de repetir. Se a rota privada falhar, mantenha a proposta
 pendente e não copie conteúdo privado para GitHub público. O Writer lê tanto arquivo JSON bruto quanto
 Doc exportável, aplica à Tower com controle de versão/readback e move itens tratados para
 `NEXO_INBOX/processed`.
+
+## Pacotes pequenos em Docs privados — NEXO_ARTIFACT_PACKAGE_V1
+
+Implementação: `runtime/nexo_agent_api/doc_persistence.py`; schema empacotado em
+`runtime/nexo_agent_api/contracts/NEXO_ARTIFACT_PACKAGE_V1.schema.json`.
+A presença no Git não comprova instalação: confirme o contrato no bundle efetivamente usado
+pelo Writer e faça um canário agendado por papel antes de declarar as Tasks operacionais.
+
+Um Doc de evidências guarda JSON puro com `contract`, `artifact_id`, `campaign_id`, `created_at`
+UTC, `producer_role`, `provenance` e `files`. Cada arquivo contém `name`, `mime_type`,
+`size_bytes`, `sha256` (`sha256:` + hexadecimal) e `content_b64` (Base64 padrão canônico).
+Limites: 128 KiB somados de bytes originais, 256 KiB de JSON UTF-8, nomes planos seguros,
+conteúdo não vazio. Não execute os arquivos ao restaurá-los. `producer_role` identifica um dos
+sete produtores; não é role autenticado nem autorização do Writer.
+
+Prepare o Doc fora do inbox, insira o JSON com `requiredRevisionId`, releia e mova o pacote
+preenchido para a pasta privada cujo nome é o `campaign_id`, filha da raiz de Campanhas
+verificada. Confira ID, MIME, parent, ausência de compartilhamento amplo e hashes.
+O pacote relido constitui `ARTIFACT_PERSISTED`, independentemente da consolidação na Tower.
+Não edite o pacote entregue. Correção material recebe nova identidade com proveniência da anterior.
+
+O envelope de consolidação mantém um `kind` já aceito, `source` real, `created_at`,
+`intent_id` estável e `payload`; pode acrescentar este campo **no nível do envelope**:
+
+```json
+{"artifact_packages":[{"file_id":"ID_DOC_VERIFICADO","folder_id":"ID_PASTA_VERIFICADA","campaign_id":"CAMP-EXEMPLO","artifact_id":"resultado-v1","package_sha256":"sha256:<64 hex>"}]}
+```
+
+O hash do pacote usa UTF-8 JSON com chaves ordenadas, separadores `,`/`:`, Unicode preservado
+e números não finitos proibidos (`doc_persistence.canonical`). Os hashes dos arquivos usam seus
+bytes originais. O campo é aceito somente pelo ingresso privado Drive, em entrega individual;
+não o coloque em `BATCH`, spool, Git público ou request bruto. Não envie o pacote de evidências
+como se fosse uma proposta.
+
+Crie a proposta fora do inbox e mova-a para `NEXO_INBOX` somente após preencher e reler.
+O Writer verifica Doc, campanha, privacidade e hashes; cataloga apenas metadados privados,
+preservando a proveniência e os bytes originais no Doc; aplica os efeitos no mesmo Writer.
+Sem leitura autorizada da campanha, a proposta permanece pendente. A credencial do Writer
+precisa de acesso de leitura real; esta documentação não concede permissão.
+
+Conserve nome, `intent_id`, bytes e journal de entrega entre rodadas. Após timeout, procure
+o Doc pelo ID/título estável em preparação, destino e `processed`, com leitura completa;
+não repita criação incerta nem sobrescreva conteúdo divergente. O adaptador
+`NativeDocsTransport` recebe sessão já autorizada e callback de checkpoint durável; não
+descobre credenciais. Nas Tasks, as mesmas etapas usam ferramentas nativas Drive/Docs e
+registram a identidade/etapa recuperável no histórico da execução. Sem prova de recuperação,
+informe `OUTCOME_UNKNOWN` e reconcilie antes de nova criação.
+
+Comandos no bundle, todos locais (nenhum deles entrega ou aplica à Tower):
+
+```text
+python nexo_gpt_writer.py artifact pack MANIFEST.json PACKAGE.json
+python nexo_gpt_writer.py artifact verify PACKAGE.json
+python nexo_gpt_writer.py artifact document PACKAGE.json FOLDER_ID DOCUMENT_PLAN.json
+python nexo_gpt_writer.py artifact restore PACKAGE.json OUTPUT_DIR
+```
+
+O manifesto contém os metadados do pacote e `files:[{name,mime_type,path}]`, com caminhos
+relativos ao manifesto. `DOCUMENT_PLAN.json` fornece título estável, texto, hash e destino
+para as ferramentas nativas; não é confirmação de upload. Restauração é create-only e
+recusa sobrescrever arquivo existente.
+
+Recibo sozinho não fecha a entrega: `confirm_application` exige uma Tower verificada,
+o recibo do `intent_id`/hash exatos e os efeitos esperados relidos. Só então declare
+`TOWER_APPLIED_READBACK`; revisão e publicação continuam etapas distintas. O resumo do
+Writer fornece somente contagens/idade de pendências; `evidence_health.attention_required`
+indica idade de pelo menos uma hora ou idade desconhecida, sem publicar IDs privados.
 
 ## BOARD_POST — mural compartilhado entre os agentes
 Recado curto de um papel para outro (ou para todos). É coordenação, nunca evidência: não muda teste nem veredito.

@@ -41,6 +41,25 @@ Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, l
 
 ### Escrita
 
+### Docs nativos: preencher antes de publicar no destino
+
+Para pequenos artefatos, o contrato implementado `NEXO_ARTIFACT_PACKAGE_V1` e as referências
+`artifact_packages` estão descritos em `gpt/PROPOSAL_SCHEMA.md`. Confirme o suporte no bundle
+implantado e a escrita no runtime agendado; fonte nova não comprova rollout.
+
+Na rota nativa, crie o Doc fora da pasta consumida pelo Writer; preencha JSON puro usando
+`requiredRevisionId`; releia; só então mova para a campanha ou, para a proposta, para o inbox.
+Isso evita que o consumidor receba um Doc vazio. Não depende de `file_uri`/sessão de arquivo.
+Mantenha ID/título estável e journal recuperável; uma criação com resposta perdida exige
+reconciliação antes de qualquer nova criação. Não edite evidência já entregue.
+
+Pacotes guardam até 128 KiB de arquivos originais em Base64, com hashes e proveniência;
+não exigem criação de arquivos brutos pela conta de serviço. Writer continua único e somente
+aplica referências após ler evidência na hierarquia privada correta. Falta de acesso de
+leitura da conta do Writer mantém a proposta pendente; não amplia ACL por conta própria.
+O primeiro canário em chat interativo não comprova capacidade nas sete Tasks ou após migrar
+de Business para Pro. Preserve as rotas legadas somente em seus escopos autorizados.
+
 
 ### Ponte privada de celulas para automacoes sem arquivo exportavel
 

@@ -18,6 +18,8 @@ Resolver identidade/revisão uma vez por revisão e ler contexto/cursor do papel
 
 Novos artefatos científicos são CREATE-ONLY na pasta privada CAMP_ID, com conteúdo não vazio e readback verificado; sua produção não exige Writer/inbox antes da evidência. Receita formal é opcional na rota direta autorizada. Faltas administrativas não dispensam dados, implementação fiel, critério prospectivo, capacidade real e autorização. Preserve contratos congelados, proveniência, reservas compartilhadas, idempotência e revisão científica independente. Runner legado de receitas continua exigindo o que realmente executa; não envie TEST direto a esse runner.
 
+Pacotes pequenos em Docs nativos usam `NEXO_ARTIFACT_PACKAGE_V1` quando suportado pelo bundle implantado: preparar/preencher/reler fora do inbox, mover evidência completa para a campanha e entregar proposta individual com referências/hashes ao Writer. Ver `gpt/PROPOSAL_SCHEMA.md`; até 128 KiB de bytes originais por pacote. Chat interativo não prova capacidade agendada; instalação, acesso de leitura do Writer e canário de cada Task são verificações distintas. Não confundir `producer_role` do pacote com role autorizado.
+
 Reutilizar entidades científicas e evitar duplicação de TEST/event_id; não multiplicar WORK/HANDOFF/BOARD_POST. ACK não é DONE. Distinguir LOCAL_ONLY, ARTIFACT_PERSISTED, PENDING_TOWER_APPLICATION, TOWER_APPLIED_READBACK, REVIEWED e ATLAS_PUBLISHED. Recibo público ausente não autoriza reoferta privada. Relatar efeito material, erro acionável ou NO-OP verdadeiro; não fabricar produção.
 
 ## Módulos sob demanda

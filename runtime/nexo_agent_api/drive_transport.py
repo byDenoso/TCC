@@ -334,6 +334,47 @@ class DriveInbox:
                 f"{_API}/{item['id']}", params={"alt": "media"}, timeout=60)), "INBOX_READ")
         return response.content
 
+    def read_artifact_package(self, ref: dict) -> dict:
+        """Read only a private native Doc in its pinned campaign hierarchy."""
+        from .doc_persistence import (CAMPAIGNS_ID, DOC_MIME, PackageError,
+                                      PackageUnavailable, parse_package, validate_references)
+        validate_references([ref])
+        root_id = os.environ.get("NEXO_CAMPAIGNS_FOLDER_ID", CAMPAIGNS_ID)
+
+        def metadata(identity):
+            response = DriveTower._call("ARTIFACT_METADATA", lambda: self.session.get(
+                f"{_API}/{identity}", params={"fields": "id,name,mimeType,parents,trashed,permissions(type,role)",
+                                              "supportsAllDrives": "true"}, timeout=60))
+            if response.status_code in {401, 403, 404}:
+                raise PackageUnavailable("ARTIFACT_READ_ACCESS_REQUIRED")
+            DriveTower._check(response, "ARTIFACT_METADATA")
+            meta = response.json()
+            if not isinstance(meta, dict) or not isinstance(meta.get("permissions"), list) or not meta["permissions"]:
+                raise PackageUnavailable("ARTIFACT_PRIVACY_UNVERIFIED")
+            if (meta.get("id") != identity or meta.get("trashed") is not False
+                    or any(p.get("type") != "user" for p in meta["permissions"])):
+                raise PackageError("ARTIFACT_PRIVATE_IDENTITY_UNVERIFIED")
+            return meta
+
+        try:
+            root, folder, doc = (metadata(identity) for identity in (root_id, ref["folder_id"], ref["file_id"]))
+            if (root.get("mimeType") != self.FOLDER or folder.get("mimeType") != self.FOLDER
+                    or root_id not in folder.get("parents", []) or folder.get("name") != ref["campaign_id"]
+                    or doc.get("mimeType") != DOC_MIME or ref["folder_id"] not in doc.get("parents", [])):
+                raise PackageError("ARTIFACT_CAMPAIGN_PARENT_MISMATCH")
+            package = parse_package(self._content(doc))
+            # A concurrent move/share cannot be hidden by an earlier metadata read.
+            after = metadata(ref["file_id"])
+            if after.get("parents") != doc.get("parents"):
+                raise PackageUnavailable("ARTIFACT_METADATA_CHANGED")
+            return package
+        except (PackageError, PackageUnavailable):
+            raise
+        except (RuntimeError, ValueError, TypeError, KeyError):
+            # An export/listing failure must not abort unrelated proposals or
+            # print private provider response bodies in the public Writer log.
+            raise PackageUnavailable("ARTIFACT_SOURCE_UNAVAILABLE") from None
+
     def mark_processed(self, file_id: str) -> None:
         inbox = self._inbox()
         item = self._metadata(file_id)

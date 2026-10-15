@@ -8,6 +8,9 @@ on:
       - 'runtime/nexo_agent_api/evolution.py'
       - 'runtime/nexo_agent_api/inbox_apply.py'
       - 'runtime/nexo_agent_api/gpt_writer.py'
+      - 'runtime/nexo_agent_api/doc_persistence.py'
+      - 'runtime/nexo_agent_api/contracts/NEXO_ARTIFACT_PACKAGE_V1.schema.json'
+      - 'tests/test_doc_persistence.py'
       - 'runtime/nexo_agent_api/public_projection.py'
       - 'gpt/nexo_memory.py'
       - 'gpt/nexo_gpt_writer.py'
@@ -46,3 +49,5 @@ jobs:
             runtime.nexo_agent_api.test_incident_lifecycle \
             runtime.nexo_agent_api.test_inbox_apply \
             runtime.nexo_agent_api.test_public_projection
+      - name: Verify native Docs persistence and interrupted delivery recovery
+        run: python -m unittest -v tests.test_doc_persistence
