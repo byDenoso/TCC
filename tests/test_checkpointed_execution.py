@@ -62,7 +62,7 @@ class ExecutionTests(unittest.TestCase):
     def run_it(self, **kwargs):
         return run_contract_once(self.contract, repository_root=self.repo, journal_directory=self.journals,
                                  expected_contract_hash=self.hash, authorized=kwargs.pop("authorized", True), **kwargs)
-+    def test_executes_real_runner_and_reuses_verified_result(self):
+    def test_executes_real_runner_and_reuses_verified_result(self):
         with patch.dict(os.environ, {"GITHUB_TOKEN": "synthetic-secret-not-for-solver"}):
             first = self.run_it()
         self.assertEqual(first["state"], "EXECUTED_LOCAL_VERIFIED")
