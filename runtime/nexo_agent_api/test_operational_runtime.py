@@ -192,6 +192,8 @@ class OperationalConformance(unittest.TestCase):
         work['state']='FAILED';rig.store.save(work,work['version'])
         result=rig.worker.handle(intent)
         self.assertEqual(result['error']['code'],'WORK_NOT_EXECUTABLE')
+        self.assertEqual(result['disposition'],'REJECTED')
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'FAILED')
         self.assertEqual(rig.drive.writes,0);self.assertEqual(rig.actions.dispatches,0)
         rig=Rig();intent=rig.intent('claim_work');save=rig.store.save;changed=False
         def concurrent_save(work,version):
@@ -207,6 +209,40 @@ class OperationalConformance(unittest.TestCase):
                 rig.worker.handle(intent)
         self.assertEqual(rig.store.get(WORK_ID)['owner'],'b'*64)
         self.assertEqual(rig.actions.dispatches,0)
+
+    def test_delayed_incompatible_prepare_preserves_pending_outbox_and_replay(self):
+        rig=Rig();rig.worker.handle(rig.intent('claim_work'));old=rig.intent('prepare_package')
+        rig.worker.handle(rig.intent('request_execution'))
+        before=rig.store.get(WORK_ID);drive_writes=rig.drive.writes
+        result=rig.worker.handle(old);after=rig.store.get(WORK_ID)
+        self.assertEqual(result['disposition'],'REJECTED')
+        self.assertEqual(result['error']['code'],'WORK_NOT_PREPARABLE')
+        for key in set(before)-{'version','processed','updated_at'}:
+            self.assertEqual(after.get(key),before[key],key)
+        self.assertEqual(rig.drive.writes,drive_writes)
+        writes=rig.tower.writes
+        self.assertTrue(rig.worker.handle(old)['idempotent'])
+        self.assertEqual(rig.tower.writes,writes)
+        rig.worker.tick([]);rig.worker.tick([])
+        self.assertEqual(rig.store.get(WORK_ID)['state'],'REGISTERED')
+        self.assertEqual(rig.actions.dispatches,1)
+
+    def test_incompatible_actions_preserve_all_work_fields_except_receipt_and_version(self):
+        cases=[('prepare_package','RUNNING',None),('prepare_package','REGISTERED',None),
+               ('register_delivery','CLAIMED',None),('request_execution','FAILED',None),
+               ('prepare_package','BLOCKED','FAILED'),('prepare_package','BLOCKED','PREPARED')]
+        for action,state,resume in cases:
+            with self.subTest(action=action,state=state,resume=resume):
+                rig=Rig();rig.worker.handle(rig.intent('claim_work'));intent=rig.intent(action)
+                work=rig.store.get(WORK_ID)
+                work.update(state=state,error={'code':'EXISTING_ERROR'})
+                if resume:work['resume_state']=resume
+                rig.store.save(work,work['version']);before=rig.store.get(WORK_ID)
+                result=rig.worker.handle(intent);after=rig.store.get(WORK_ID)
+                self.assertEqual(result['disposition'],'REJECTED')
+                for key in set(before)-{'version','processed','updated_at'}:
+                    self.assertEqual(after.get(key),before[key],key)
+                self.assertEqual(rig.drive.writes,0);self.assertEqual(rig.actions.dispatches,0)
 
     def test_legacy_stale_receipt_is_immutable_and_linked_retry_has_no_version_gate(self):
         rig=Rig();old=rig.intent();work=rig.store.get(WORK_ID)

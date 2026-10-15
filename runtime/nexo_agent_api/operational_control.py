@@ -422,6 +422,27 @@ class OperationalWorker:
         work.pop("resume_state", None)
         work.pop("error", None)
 
+    @classmethod
+    def _validate_action_transition(cls, work, action, principal):
+        """Reject incompatible arrivals without changing the current work."""
+        candidate = copy.deepcopy(work)
+        cls._resume_blocked_action(candidate, action)
+        allowed = {
+            "prepare_package": ({"CLAIMED", "BLOCKED"}, "WORK_NOT_PREPARABLE"),
+            "validate_package": ({"PREPARED", "VALIDATED"}, "WORK_NOT_PREPARED"),
+            "request_execution": ({"READY", "CLAIMED", "PREPARED", "VALIDATED", "DISPATCH_PENDING",
+                                   "DISPATCH_UNKNOWN", "RUNNING", "RESULT_AVAILABLE", "DELIVERY_PENDING", "REGISTERED"},
+                                  "WORK_NOT_EXECUTABLE"),
+            "register_delivery": ({"RESULT_AVAILABLE", "DELIVERY_PENDING", "REGISTERED"}, "RESULT_NOT_AVAILABLE"),
+        }
+        if action == "claim_work":
+            require(candidate["state"] == "READY" or
+                    (candidate["state"] == "CLAIMED" and candidate["owner"] == principal),
+                    "WORK_ALREADY_CLAIMED")
+        else:
+            states, code = allowed[action]
+            require(candidate["state"] in states, code)
+
     def _prepare(self, work):
         definition = work["definition"]
         validate_definition(definition)
@@ -464,6 +485,7 @@ class OperationalWorker:
             require(intent["role_session"] == work.get("role_session"), "SESSION_CHANGED")
         try:
             legacy_blocked_recovery = self._validate_supersession(work, intent)
+            self._validate_action_transition(work, action, intent["principal"])
         except OperationalError as exc:
             result = {"work_id": work["id"], "state": exc.code, "retryable": False,
                       "error": self._error_body(exc), "idempotent": False}
