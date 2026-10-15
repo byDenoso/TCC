@@ -4,6 +4,9 @@ description: Ciclo científico do NEXO. Use ao gravar proposta, contestar, revis
 version: 0.5.0
 ---
 
+
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # NEXO — ciclo fechado (detalhes)
 
 O fluxo, a carga por fila, a cobertura cruzada e os donos de cada trava estão no `nexo-operations`; tarefas, horários e habilitação vêm do inventário vivo, conforme `nexo-workspace`. Esta skill traz o que o router não repete: tipos de proposta, escada de revisão, parada de hipótese e roadmap, genoma, aptidão, iscas, mural e receitas.

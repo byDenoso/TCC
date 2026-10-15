@@ -4,6 +4,9 @@ description: Contrato de confiabilidade para Google Drive e GitHub no NEXO. Use 
 version: 0.5.0
 ---
 
+
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # NEXO - conectores Drive e GitHub
 
 Objetivo: transformar acesso de conector em evidencia verificavel. Descoberta, leitura, identidade, escrita e readback sao etapas diferentes.

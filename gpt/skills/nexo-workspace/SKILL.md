@@ -3,6 +3,9 @@ name: nexo-workspace
 description: Operar a conversa do Dener como interface da Tower e das funções NEXO habilitadas no inventário vivo. Usar para status, ideias e testes científicos, resultados antigos, investigação de falhas, comparação com literatura, manutenção e verificação de automações. Reutilizar GitHub, Drive, Writer e projeção; preservar critérios científicos e verificar cada afirmação de conclusão.
 ---
 
+
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # Workspace operacional do NEXO
 
 ## Inicialização

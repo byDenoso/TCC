@@ -4,6 +4,9 @@ description: Detalhes operacionais do NEXO. Abra a seção do assunto quando pre
 version: 0.5.0
 ---
 
+
+> Orientação vigente: Pseudo-MCP privado do Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB`, AGENTS central `1DSGzaNl3ztdiQNrE8zscekVdyG0qpLNKs7mYop_n7qA` e skills ativas do catálogo, em especial nexo-closed-loop (`1doHEF66ubpesm5u8v_lBukNxiXBn7IGN`). Este arquivo conserva referências técnicas/históricas e interfaces do código; não redefine a postura geral nem a política científica. CONTROL interno é compatibilidade/história, preservando mandatos e restrições realmente aplicados pelo software.
+
 # NEXO — operação
 
 ## Uma inteligência, dois órgãos
@@ -16,12 +19,12 @@ O Dener fala com **uma inteligência**: o **NEXO Lite** (`nexo-lite`), presente 
 | Escreve | só Diretriz | propostas no inbox |
 **Sem menu.** O Lite decide o órgão pela mensagem: dúvida, comando, procedimento, AdminDesk, aprender, decisão → responde ele mesmo. Ideia de cosmologia, "testa X", "Direção: <tema>", pergunta sobre teste ou agente → grava Diretriz e acompanha. Tarefa agendada é sempre NEXO.
 **Ponte de ida:** Diretriz (`DENER_DIRECTED`, P0, direto ao robô), registrada em `NEXO Lite/pendentes`. **Ponte de volta:** ao atender assunto NEXO, o Lite lê novidades/recados a DENER no contexto autorizado e entrega somente delta material.
-Mesmas regras de linguagem (11 a 13) nos dois. O Lite não roda pesquisa longa; o NEXO não responde dúvida de campo.
+As instruções próprias atuais estão no Drive. As restrições de persona e o fluxo obrigatório de Diretriz descritos acima são históricos; o NEXO atua como agente geral e copiloto de cosmologia dentro do pedido autorizado.
 
 **Transferência de método:** o Cientista pode propor o uso de um método pertinente em outra pergunta de cosmologia observacional. O novo mandato não abrange dieta, treino, saúde ou dados pessoais. Aplicações em outros domínios precisam de autorização própria; não existe quota diária de hipóteses de transferência.
 **Conversa e tarefa.** Carregar módulos NEXO para assuntos NEXO; não impor bootstrap operacional em mensagens alheias. Tarefa agendada conserva seu papel, sem persona de conversa.
 
-Aplicar `automations/ROLE_CONTRACT_V1.md` para contexto mínimo, dono, entrega e divisão operacional preparada. Inventário vivo e CONTROL prevalecem; este módulo não comprova migração aplicada.
+Aplicar `automations/ROLE_CONTRACT_V1.md` para contexto mínimo, dono, entrega e divisão operacional preparada. Inventário vivo define agenda; Pseudo-MCP no Drive define política; este módulo não comprova migração aplicada.
 
 ## O fluxo único
 **Ideia → Hipótese → Teste (contrato) → Receita → Bateria → Resultado → Contestação → Veredito → Nova ideia.**
@@ -49,7 +52,7 @@ Aplicar `automations/ROLE_CONTRACT_V1.md` para contexto mínimo, dono, entrega e
 **Regra:** antes de marcar binding faltando, procure no Drive acima (o Cientista e o Operador têm acesso). Achou: `DATA_BINDING` com o id do arquivo e a URL pública oficial do mesmo produto, e `RECIPE_BIND`. O runner público não lê o Drive: a receita baixa da URL oficial; o arquivo do Drive serve para conferir versão e formato. Só é "dado inexistente" o que não está no Drive nem em release público.
 
 ## Gravar (qualquer papel)
-1. As ChatGPT Tasks habilitadas seguem `nexo-master-router-0.5.0`, `nexo-workspace` e `nexo-connectors`: resolver CONTROL atual e transporte autorizado ao Writer único. Git staging/relay histórico não é rota vigente quando aposentado ou congelado. A projeção pública retirada não é fonte de leitura.
+1. As ChatGPT Tasks habilitadas seguem `nexo-master-router-0.5.0`, `nexo-workspace` e `nexo-connectors`: resolver Pseudo-MCP vigente e transporte autorizado ao Writer único. Git staging/relay histórico não é rota vigente quando aposentado ou congelado. A projeção pública retirada não é fonte de leitura.
 2. Preservar identidade determinística e os mesmos bytes/hash no retry; reler alvo e metadados. Arquivo/linha no inbox/spool comprova somente `DELIVERED`; aplicação exige recibo privado correspondente e efeito real relido na Tower. Não tentar acordar nem substituir o Writer.
 3. Recusa de acesso, autorização ou política interrompe a rota; preserve pendência e causa. Falha técnica admite retomada limitada pelo caminho já autorizado após verificar recibo/efeito. Erro de leitura não é ausência; conteúdo diferente sob a mesma identidade é conflito. Transporte pendente não impede trabalho independente autorizado.
 4. **Proposta não leva código** (o filtro do ChatGPT bloqueia). Em `TEST_BATTERY`, cada teste chama uma **receita congelada**: `{"test_id", "recipe": "<nome>", "params": {…}, "prediction", "timeout_min"}`. Receitas, parâmetros e exemplos: `byDenoso/Pantheon nexo-one/executor-runtime/recipes/README.md` — escolha a receita pelo que o teste mede. Se nenhuma receita servir, o teste fica BLOCKED_INPUT com WORK de recuperação e quem identificou a lacuna escreve a especificação (`LEARNING_SIGNAL` `RECIPE_REQUEST`), que o Guardião revisa uma vez pelos quatro critérios fixos (`nexo-closed-loop` §8).
