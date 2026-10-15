@@ -17,8 +17,8 @@ ou delta material destinado a ele; não inserir ruído operacional em outra conv
 
 ## Autoridade por assunto
 - Ciência: Tower, entidades e evidências; projeção como leitura derivada.
-- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. O contrato comum prepara seis papéis; não altera tarefas reais nem prova as absorções aplicadas. Estados de Pítia, Sentinela, Nested Watch, Operadores B/C e Revisor por evento permanecem como encontrados. `Bom dia` pertence ao Guardião. Referências históricas, bindings e IDs do pacote não substituem esse inventário.
-- Caminho operacional: raiz atual, prompts salvos, código implantado e recibos de execução. Divergência com CONTROL histórico deve ser explicitada, sem trocar de arquitetura por conta própria.
+- Agenda e tarefas habilitadas: inventário vivo da ferramenta de automações. Sete Tasks NEXO ativas: MAESTRO, CIENTISTA, ENGENHEIRO, EXECUTOR, CRITICO, SINTETIZADOR, EDITOR. Demais Tasks visíveis estão desativadas/concluídas em 15/10/2026. Papéis históricos não são agenda e não autorizam criar/reativar tarefas.
+- Caminho operacional: política do pseudo-MCP privado Drive `1XO_V7Cmb75l8zSWCIsaoQGFRssLwLqMB` (`control_retirement_transition`), Tower LIVE para estado/evidência, prompts/agenda vivos, código implantado e recibos de execução. `CONTROL` é histórico/compatibilidade técnica; divergência é defeito de migração, não veto de ciência.
 - Literatura: `cosmology-world-model` no Drive, com data da referência; confirmar valores atuais em fontes primárias antes de congelar critérios. O mapa orienta e não produz vereditos.
 - Memória: contexto operacional em `NEXO Lite/notas`, nunca fonte de resultado científico.
 
@@ -41,13 +41,13 @@ Para análise local, usar a cópia autenticada e o bundle utilizado pelo workflo
 Localizar no Drive as pastas `cosmology-world-model`, `nexo-reporting` e `NEXO Lite`; ler a identidade do SKILL.md antes de usar. Preservar pastas existentes. Pesquisar histórico por referências, não por semelhança de nomes apenas.
 
 ## Gravação e acompanhamento
-Antes de escrever, resolva a Tower atual e `CONTROL.json`. Use a superfície de mutação canônica declarada ali, com persistência e readback. Não force `byDenoso/TCC@nexo/dispatch-runtime` quando o CONTROL atual marcar Git state/staging como aposentado ou congelado; referências históricas servem apenas para proveniência.
+Para novo artefato científico, resolva a CAMP_ID privada e crie um item imutável CREATE-ONLY com ID/event_id, fonte, conteúdo não vazio, MIME, parent e hash/readback. Para consolidar estado na Tower, use somente o Writer técnico exclusivo autorizado, com recibos e readback; a Task não sobrescreve o JSON LIVE. Leia o pseudo-MCP Drive como política e Tower LIVE como estado; não usar `CONTROL.json` histórico para liberar/bloquear ciência. Git de staging só é ingress técnico se comprovadamente autorizado e sanitizado.
 
-Para coordenação entre papéis, use BOARD_POST. Para ownership rastreável, HANDOFF somente entre runtime roles suportados conforme a seção seguinte. Na rota privada Drive, prefira upload create-only de **arquivo JSON bruto UTF-8** diretamente no `NEXO_INBOX`, em uma única operação, seguido de readback dos bytes/MIME/parent. Não crie Google Doc vazio e dependa de uma segunda escrita quando upload bruto estiver disponível. Presença no inbox é entrega, não aplicação; releia receipt/Tower antes de retry. Rejeição de segurança/permissão encerra aquela rota; não contorne por serviço alternativo. Staging/proposta, aplicação, execução, resultado e revisão são estados diferentes.
+Coordenação direta entre agentes é opcional e não bloqueia teste independente. `BOARD_POST` e `HANDOFF` são envelopes legados quando um consumidor realmente os exigir, nunca pré-requisito universal. JSON/binários de campanha usam upload create-only autorizado; Google Doc OAuth só conta após criar, inserir texto com controle de revisão, mover e reler conteúdo não vazio na pasta correta. Inbox privado é transporte técnico de propostas da Tower, não repositório obrigatório dos artefatos científicos. Trate 401/403/SECURITY_BLOCK como limites reais. Diferencie ARTIFACT_PERSISTED, PENDING_TOWER_APPLICATION e TOWER_APPLIED_READBACK.
 
-## Funções preparadas: pipeline por item
+## Compatibilidade do pipeline legado por item (não cria gates novos)
 
-O contrato comum prepara seis papéis: PITIA, LEARNER, ENGINEER, EXECUTOR, REFEREE_1 e GUARDIAO. Sentinela e Reconciliador Científico mantêm suas pendências e encaminhamentos até migração remota revisada e continuidade comprovada. Este documento não altera tarefas reais. Agenda/fuso, habilitação e cadência vêm exclusivamente do inventário vivo; não inferir uma configuração de horários históricos.
+Esses seis papéis (PITIA, LEARNER, ENGINEER, EXECUTOR, REFEREE_1, GUARDIAO) são aliases de envelopes do Writer, não as sete Tasks científicas vigentes nem exigência de handoff. A agenda, permissões e a execução científica vêm do inventário vivo e do pseudo-MCP no Drive. Manter compatibilidade de mensagens apenas quando consumidor efetivo comprovado.
 
 Os antigos números 6/24 são probes de capacidade para medir utilização, nunca quotas nem limites. Continue enquanto houver trabalho independente elegível e orçamento seguro. Seeds, retries, shards, downloads, smokes, leituras, receipts e duplicatas não contam como produção científica. Se a fila elegível drenar, o no-op é correto; se restarem itens elegíveis, a rodada deve registrar por que parou.
 
@@ -60,10 +60,10 @@ A cadência não é barreira global. Cada papel consome entregas já aplicadas, 
 - Uma entrega com próximo consumidor precisa efeito/artefato canônico ou pendência recuperável com refs e ação. Se a fila já apresenta o efeito e o consumidor, não repetir em BOARD_POST. HANDOFF somente para nova transferência real; não acrescentar recado duplicando o handoff suficiente.
 
 ### Rota operacional atual
-Resolver `CONTROL.json` da Tower a cada mudança material. Em 05/10/2026, Drive é armazenamento canônico primário, Git state está aposentado como estado operacional, Actions científico está desabilitado por orçamento e ChatGPT runtime é a execução primária. Não forçar staging/relay Git antigo se o CONTROL vigente não o declarar como rota ativa.
+Resolver política no pseudo-MCP privado do Drive e estado na Tower LIVE, cada um na menor revisão adequada. A capacidade de compute deve ser observada em cada runtime; `DISABLED_BUDGET_EXHAUSTED` do CONTROL antigo não é veto global a Actions. Staging/relay Git é só transporte técnico comprovado, nunca fonte de estado nem canal para dados privados.
 
 ### Invariante READY
-`READY` significa executável agora, não “quase pronto”. Exigir definição científica congelada e suficiente, dados/entradas canônicos disponíveis e vinculados, recipe/capability executável, ausência de blocker ou `WAIT_DEPENDENCY`, identidade estável e nenhuma execução equivalente staged/RUNNING/terminal. Se faltar qualquer requisito, corrigir pelo fluxo autorizado para `CHECKPOINTED` ou `WAIT_DEPENDENCY` e criar o binding/reparo; não contar como despacho.
+`READY` significa cientificamente e operacionalmente executável na superfície autorizada. Exigir definição congelada suficiente, dados e inputs autenticados, avaliador fiel realmente executável, capacidade disponível, identidade estável e ausência de execução equivalente. Um catálogo de recipes ou binding administrativo só é obrigatório para o runner específico que o consome, não para todo chat ou Task. Se faltar qualquer requisito, corrigir pelo fluxo autorizado para `CHECKPOINTED` ou `WAIT_DEPENDENCY` e criar o binding/reparo; não contar como despacho.
 
 ### Consumir recuperação e aceite privado
 
