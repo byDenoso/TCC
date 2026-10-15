@@ -42,6 +42,19 @@ def _is_request(item: dict) -> bool:
     }
 
 
+def _has_artifact_packages(item: dict) -> bool:
+    pending = [item]
+    while pending:
+        current = pending.pop()
+        if "artifact_packages" in current:
+            return True
+        if str(current.get("kind") or "").upper() == "BATCH":
+            body = current.get("payload")
+            if isinstance(body, dict) and isinstance(body.get("items"), list):
+                pending.extend(child for child in body["items"] if isinstance(child, dict))
+    return False
+
+
 def _claims_operational_receipt(request: dict) -> bool:
     changes = request.get("changes") if isinstance(request.get("changes"), dict) else {}
     return (str(changes.get("kind") or "").upper() == "OPERATIONAL_RECEIPT"
@@ -66,6 +79,11 @@ def _operational_status(root: Path) -> dict[str, Any]:
         / "Pantheon" / "nexo-one" / "src" / "data" / "atlasObservation.ts"
     )
     contracts = {
+        "NEXO_ARTIFACT_PACKAGE_V1": {
+            "schema": "PRESENT" if (contract_dir / "NEXO_ARTIFACT_PACKAGE_V1.schema.json").is_file() else "MISSING",
+            "implementation": "TCC_RUNTIME",
+            "deployment": "UNVERIFIED",
+        },
         operation_receipts.CONTRACT: {
             "schema": "PRESENT" if receipt_schema.is_file() else "MISSING",
             "implementation": "TCC_RUNTIME",
@@ -90,8 +108,17 @@ def _operational_status(root: Path) -> dict[str, Any]:
 
 def _apply_one_request(root: Path, item: dict, request: dict, *,
                        operational_receipt_validated: bool = False,
+                       artifact_packages_validated: bool = False,
                        operational_work_authorized: bool = False) -> dict:
     changes = request.get("changes") or {}
+    from .doc_persistence import CONTRACT as PACKAGE_CONTRACT, catalog_readback
+    if changes.get("kind") == PACKAGE_CONTRACT or str(request.get("entity_name") or "").startswith("ARTIFACT_PACKAGE::"):
+        if not artifact_packages_validated:
+            return {"accepted": False, "issue": {"code": "ARTIFACT_PACKAGE_REQUIRES_VERIFIED_DRIVE"}}
+        receipt = apply_requests(root, [request])[0]
+        if receipt.get("accepted", True) and not receipt.get("issue") and not catalog_readback(root, request):
+            return {"accepted": False, "issue": {"code": "ARTIFACT_CATALOG_READBACK_MISSING"}}
+        return receipt
     reserved = (changes.get("kind") == "NEXO_OPERATIONAL_WORK_V1"
                 or str(request.get("entity_name") or "").startswith("OPERATIONAL-CONTROL-"))
     if reserved and not operational_work_authorized:
@@ -337,9 +364,10 @@ def _migrate_runner_battery_receipt(root: Path, item: dict, intent: str) -> dict
 
 def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=None, operational_work_authorized: bool = False,
                    verified_human_intents: frozenset[str] | None = None,
-                   verified_capacity_observation: dict | None = None) -> tuple[bytes | None, dict]:
+                   verified_capacity_observation: dict | None = None, artifact_reader=None) -> tuple[bytes | None, dict]:
     before = verify_live_tower(read_live_tower_bytes(tower_raw))
-    contract_versions = {"operation_receipts": operation_receipts.CONTRACT}
+    from .doc_persistence import CONTRACT as PACKAGE_CONTRACT, PackageError, PackageUnavailable, catalog_requests
+    contract_versions = {"operation_receipts": operation_receipts.CONTRACT, "artifact_packages": PACKAGE_CONTRACT}
     try:
         from .operational_canary import CANARY_CONTRACT
 
@@ -398,6 +426,11 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
             item = autonomy.attach_human_authority(item, verified_human_intents)
             payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
             if str(item.get("kind") or "").upper() == "BATCH" and isinstance(payload.get("items"), list):
+                if _has_artifact_packages(item):
+                    # A parent has no aggregate receipt; keep this envelope
+                    # intact so strict individual-delivery validation rejects it.
+                    flat.append(item)
+                    continue
                 base = item.get("_inbox_name") or "batch"
                 parent_id = str(item.get("_inbox_id") or "").strip()
                 child_intents = []
@@ -440,6 +473,13 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 if envelope_prior is not None:
                     changed_receipt_ledger = True
             if envelope_prior:
+                if envelope_prior["outcome"] in {"APPLIED", "ALREADY_APPLIED"} and "artifact_packages" in item:
+                    try:
+                        if catalog_requests(root, item, artifact_reader):
+                            raise PackageUnavailable("ARTIFACT_CATALOG_READBACK_MISSING")
+                    except (PackageUnavailable, PackageError) as exc:
+                        report.setdefault("deferred", []).append({"item": label, "outcome": "RETRYABLE_TRANSPORT", "reason": str(exc)})
+                        continue
                 if (envelope_prior["outcome"] in {"DEFERRED_DEPENDENCY", "RETRYABLE_TRANSPORT"}
                         and operation_receipts.retry_allowed(envelope_prior, envelope_source)):
                     pass  # Re-evaluate only after the recorded retry condition changed.
@@ -471,7 +511,12 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                     report["handled"].append(label)
                     continue
             try:
+                verified_catalog_requests = []
                 raw_request = _is_request(item)
+                if str(item.get("kind") or "").upper() == "BATCH" and _has_artifact_packages(item):
+                    raise ProposalError("ARTIFACT_BATCH_REQUIRES_INDIVIDUAL_DELIVERY")
+                if item.get("contract") == PACKAGE_CONTRACT or item.get("kind") == PACKAGE_CONTRACT:
+                    raise ProposalError("ARTIFACT_PACKAGE_IS_NOT_A_PROPOSAL")
                 requests = [item] if raw_request else proposal_to_requests(item, root)
                 body = item.get("payload") if isinstance(item.get("payload"), dict) else item
                 declared_kind = str(item.get("kind") or body.get("kind") or "").upper().replace("-", "_").replace(" ", "_")
@@ -484,10 +529,27 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                             requests = []  # Existing effect still needs its durable receipt.
                         else:
                             raise ProposalError(diagnostic.get("_not_applied_reason") or "BOARD_POST_EFFECT_REQUIRED")
+                if "artifact_packages" in item:
+                    if raw_request:
+                        raise ProposalError("ARTIFACT_PACKAGES_REQUIRE_TYPED_ENVELOPE")
+                    # Reuse the existing strict client schema; metadata cannot
+                    # turn an unknown kind into a successful INBOX_RECORD.
+                    from .inbox_client import prepare
+                    envelope = {key: value for key, value in item.items() if not key.startswith("_")}
+                    prepare(envelope, runtime_role=item.get("source"), allowed_kinds={item.get("kind")})
+                    if not requests or any((request.get("changes") or {}).get("kind") == "INBOX_RECORD" for request in requests):
+                        raise ProposalError("ARTIFACT_PROPOSAL_EFFECT_REQUIRED")
+                    verified_catalog_requests = catalog_requests(root, item, artifact_reader)
+                    requests += verified_catalog_requests
                 operational_receipt_validated = (
                     not raw_request and str(item.get("kind") or "").upper() == "OPERATIONAL_RECEIPT"
                 )
-            except ProposalError as exc:
+            except PackageUnavailable as exc:
+                # An unreadable external source is neither a rejection nor an
+                # applied effect. Retry the original bytes on the next pulse.
+                report.setdefault("deferred", []).append({"item": label, "outcome": "RETRYABLE_TRANSPORT", "reason": str(exc)})
+                continue
+            except (ProposalError, PackageError, PermissionError, ValueError) as exc:
                 requests = []
                 conversion_error = str(exc)
             else:
@@ -613,6 +675,7 @@ def apply_to_tower(tower_raw: bytes, items: list[dict], *, readiness_evaluator=N
                 receipt = _apply_one_request(
                     root, item, requests[request_index],
                     operational_receipt_validated=operational_receipt_validated,
+                    artifact_packages_validated=any(requests[request_index] is verified for verified in verified_catalog_requests),
                     operational_work_authorized=operational_work_authorized,
                 )
                 receipts.append((request_index, receipt))
@@ -1210,7 +1273,29 @@ def _run_optional_gc(raw: bytes, report: dict) -> None:
         report["gc"] = {"status": "GC_FAILED", "error_type": type(exc).__name__}
 
 
+def _evidence_pending_health(pending: list[dict], report: dict, *, now=None) -> dict:
+    """Public health counters only; no private filenames, IDs or receipt details."""
+    from datetime import datetime, timezone
+    now = now or datetime.now(timezone.utc)
+    deferred = {row.get("item") for row in report.get("deferred", [])}
+    entries = [entry for entry in pending if entry.get("name") in deferred
+               and isinstance(entry.get("payload"), dict) and "artifact_packages" in entry["payload"]]
+    ages = []
+    for entry in entries:
+        try:
+            created = datetime.fromisoformat(entry["createdTime"].replace("Z", "+00:00"))
+            ages.append(max(0, int((now - created).total_seconds())))
+        except (KeyError, ValueError, TypeError):
+            pass
+    age = max(ages) if ages else None
+    return {"pending": len(entries), "oldest_age_seconds": age,
+            "attention_required": bool(entries and (len(ages) != len(entries) or age >= 3600))}
+
+
 def _main(argv: list[str]) -> int:
+    if argv and argv[0] == "artifact":
+        from .doc_persistence import main as artifact_main
+        return artifact_main(argv[1:])
     if argv and argv[0] == 'mcp-route':
         from .mcp_routing import main as mcp_route_main
         return mcp_route_main(argv[1:])
@@ -1331,7 +1416,7 @@ def _main(argv: list[str]) -> int:
         items, shadowed = split_by_producer(items, os.environ.get("NEXO_ACTIVE_PRODUCER", "GPT"))
         if shadowed:
             print(json.dumps({"shadow": len(shadowed), "active_producer": os.environ.get("NEXO_ACTIVE_PRODUCER", "GPT"),
-                              "names": [str(s.get("_inbox_name")) for s in shadowed][:50]}, ensure_ascii=False))
+                              "names": [], "private_names_omitted": True}, ensure_ascii=False))
             shadow_ids = {str(s.get("_inbox_id")) for s in shadowed}
             for entry in list(github.seen):
                 if "github:" + entry["path"] in shadow_ids:
@@ -1378,6 +1463,8 @@ def _main(argv: list[str]) -> int:
                                   "status_code": exc.status_code, "retry_condition": exc.retry_condition}))
                 return 0
             trusted_context = {}
+            if any("artifact_packages" in item for item in items):
+                trusted_context["artifact_reader"] = inbox.read_artifact_package
             if verified_human_intents:
                 trusted_context["verified_human_intents"] = verified_human_intents
             if verified_capacity_observation is not None:
@@ -1481,7 +1568,11 @@ def _main(argv: list[str]) -> int:
                 except Exception as exc:
                     print(json.dumps({"status": "DRIVE_INBOX_MARK_FAILED", "error_type": type(exc).__name__}))
         summary = {"status": report.get("status"), "before": report.get("before"), "after": report.get("after"),
-                   "applied": len(report.get("applied", [])), "rejected": [r.get("item") for r in report.get("rejected", [])],
+                   "applied": len(report.get("applied", [])),
+                   "rejected": ["PRIVATE_ITEM" for _ in report.get("rejected", [])],
+                   "rejected_count": len(report.get("rejected", [])),
+                   "deferred": len(report.get("deferred", [])),
+                   "evidence_health": _evidence_pending_health(pending, report),
                    "write": report.get("write"), "gc": report.get("gc")}
         print(json.dumps(summary, ensure_ascii=False))
         applied = applied_roots

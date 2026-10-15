@@ -20,7 +20,7 @@ from .inbox_apply import _KIND_ALIASES
 
 INBOX_ID = "1NxhMy_HiGmHX2XHNLDDTRzqUoYY07HYR"
 _delivery_lock = threading.RLock()
-_ENVELOPE_FIELDS = frozenset({'kind', 'source', 'created_at', 'intent_id', 'payload', 'supersedes'})
+_ENVELOPE_FIELDS = frozenset({'kind', 'source', 'created_at', 'intent_id', 'payload', 'supersedes', 'artifact_packages'})
 _UTC_TIMESTAMP = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|\+00:00)')
 
 
@@ -61,6 +61,9 @@ def prepare(envelope: dict, *, runtime_role: str, allowed_kinds: set[str]) -> di
         raise ValueError("STABLE_INTENT_ID_REQUIRED")
     if not isinstance(envelope.get("payload"), dict):
         raise ValueError("ENVELOPE_SCHEMA_INVALID")
+    if "artifact_packages" in envelope:
+        from .doc_persistence import validate_references
+        validate_references(envelope["artifact_packages"])
     created_at = envelope.get('created_at')
     if not isinstance(created_at, str) or not _UTC_TIMESTAMP.fullmatch(created_at):
         raise ValueError('CREATED_AT_UTC_REQUIRED')

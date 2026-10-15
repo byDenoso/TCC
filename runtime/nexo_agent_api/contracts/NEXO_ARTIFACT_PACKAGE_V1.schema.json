@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NEXO_ARTIFACT_PACKAGE_V1",
+  "description": "Private immutable evidence in a native Doc. Maximum aggregate original bytes: 131072; canonical UTF-8 JSON: 262144. Verify decoded sizes, SHA-256, canonical Base64 and unique portable filenames in addition to this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "artifact_id", "campaign_id", "created_at", "producer_role", "provenance", "files"],
+  "properties": {
+    "contract": {"const": "NEXO_ARTIFACT_PACKAGE_V1"},
+    "artifact_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"},
+    "campaign_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"},
+    "created_at": {"type": "string", "format": "date-time", "pattern": "(Z|\\+00:00)$"},
+    "producer_role": {"enum": ["MAESTRO", "CIENTISTA", "ENGENHEIRO", "EXECUTOR", "CRITICO", "SINTETIZADOR", "EDITOR"]},
+    "provenance": {"type": "object", "minProperties": 1},
+    "files": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["name", "mime_type", "size_bytes", "sha256", "content_b64"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,119}$"},
+          "mime_type": {"type": "string", "pattern": "^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+$"},
+          "size_bytes": {"type": "integer", "minimum": 1, "maximum": 131072},
+          "sha256": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "content_b64": {"type": "string", "maxLength": 174764, "pattern": "^[A-Za-z0-9+/]*={0,2}$"}
+        }
+      }
+    }
+  }
+}
