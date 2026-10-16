@@ -1,10 +1,10 @@
 # NEXO · Formato das propostas do GPT
 
-> Este arquivo define só o **formato** de cada proposta. Fluxo, papéis, horários e regras estão no `nexo-master-router` e no `nexo-closed-loop` (`gpt/skills/`); em conflito, eles vencem.
+> Este arquivo define somente o **formato técnico** de propostas. Política operacional, papéis e agenda vêm do Pseudo-MCP privado do Drive, do AGENTS central e do inventário vivo das Tasks. Cópias em `gpt/skills/` são adaptadores ou referências técnicas, nunca autoridade superior às skills ativas do Drive.
 
-Todos os agentes do GPT escrevem neste formato. O **NEXO · Writer** aplica as propostas na Tower
-privada e atualiza o ATLAS público apenas com a projeção permitida. O conteúdo deve explicar em
-português simples o que aconteceu, por que importa e qual é o próximo passo.
+Propostas seguem este formato técnico; o **NEXO · Writer** aplica efeitos na Tower privada
+com recibo e readback. A publicação do ATLAS depende de um pipeline derivado e autorizado em
+separado: aplicar na Tower não equivale a publicar.
 
 Envelope (um arquivo ou documento por proposta):
 
@@ -13,15 +13,15 @@ Envelope (um arquivo ou documento por proposta):
 ```
 Nome: `<utc>-<kind>-<slug>`.
 
-**Transporte público/operacional legado:** a política vigente é o pseudo-MCP privado
-do Drive, não o `CONTROL` histórico. Preserve as restrições técnicas de cada runner. Se
-`github_state_role` estiver `RETIRED_AS_OPERATIONAL_STATE` ou o alvo Git estiver congelado, **não**
-trate `byDenoso/TCC@nexo/dispatch-runtime` como rota vigente de estado; Git permanece código e
-proveniência. Use a superfície de mutação/ingress declarada pelo CONTROL atual e faça readback da
-Tower/receipt. O staging Git abaixo é apenas compatibilidade histórica quando explicitamente
-reativado pelo CONTROL. Preserve identidade e bytes no retry; recibo ausente, erro de leitura,
-conflito e rejeição terminal são resultados distintos. Capability publicada não prova acesso da
-tarefa agendada e não autoriza trocar de transporte.
+**Transporte público/operacional legado:** a política vigente é o Pseudo-MCP privado
+do Drive, não o `CONTROL` histórico. Preserve restrições técnicas reais de cada runner,
+credenciais e ACL. `byDenoso/TCC@nexo/dispatch-runtime` não é estado canônico; Git
+permanece código e proveniência. Use apenas a superfície de ingresso atualmente autorizada
+pelo Pseudo-MCP para cada tipo de conteúdo, com readback do envelope, recibo e efeito na
+Tower. O staging Git abaixo é compatibilidade técnica, nunca fallback automático para
+conteúdo privado ou falha de acesso. Preserve identidade e bytes no retry; recibo ausente,
+erro de leitura, conflito e rejeição terminal são resultados distintos. Capability publicada
+não prova acesso da tarefa agendada nem autoriza trocar de transporte.
 
 **Privacidade e destino:** GitHub é público e aceita somente propostas
 sanitizadas, sem dados privados da Tower, conteúdo de conversas, nomes ou referências internas de
