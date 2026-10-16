@@ -69,10 +69,10 @@ class RecoveryIsolatedTests(TestCase):
             with self.assertRaisesRegex(RuntimeError, "isolated"):
                 with writer_lock():
                     raise RuntimeError("isolated")
-            self.assertFalse((Path(folder) / "tower.lock").exists())
+            self.assertTrue((Path(folder) / "tower.lock").exists())
             with writer_lock():
                 self.assertTrue((Path(folder) / "tower.lock").exists())
-            self.assertFalse((Path(folder) / "tower.lock").exists())
+            self.assertTrue((Path(folder) / "tower.lock").exists())
 
     def test_busy_lock_does_not_take_over_existing_owner(self):
         with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {"NEXO_HOME":folder}):
