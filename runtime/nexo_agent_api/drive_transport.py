@@ -14,6 +14,7 @@ cannot protect against an independent writer that races from another process.
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
@@ -335,44 +336,87 @@ class DriveInbox:
         return response.content
 
     def read_artifact_package(self, ref: dict) -> dict:
-        """Read only a private native Doc in its pinned campaign hierarchy."""
-        from .doc_persistence import (CAMPAIGNS_ID, DOC_MIME, PackageError,
-                                      PackageUnavailable, parse_package, validate_references)
-        validate_references([ref])
-        root_id = os.environ.get("NEXO_CAMPAIGNS_FOLDER_ID", CAMPAIGNS_ID)
+        """Read a specifically shared private Doc without granting folder-wide access.
 
-        def metadata(identity):
+        The authenticated private inbox supplied a digest-pinned reference. Google
+        Drive grants a reader access to an individual file without granting access
+        to its parents, and ``files.get.permissions`` is sometimes omitted for a
+        reader. Read the specific Doc's metadata, then list its ACL separately.
+        Refuse if privacy cannot be verified; never infer privacy from sharing.
+        The verified parent *ID*, not an untrusted folder name, must match the
+        reference, which the producer checked against the campaign at staging.
+        """
+        from .doc_persistence import (DOC_MIME, PackageError, PackageUnavailable,
+                                      digest, canonical, parse_package, validate_references)
+        validate_references([ref])
+        doc_id = ref["file_id"]
+
+        def metadata():
             response = DriveTower._call("ARTIFACT_METADATA", lambda: self.session.get(
-                f"{_API}/{identity}", params={"fields": "id,name,mimeType,parents,trashed,permissions(type,role)",
-                                              "supportsAllDrives": "true"}, timeout=60))
+                f"{_API}/{doc_id}",
+                params={"fields": "id,name,mimeType,parents,trashed", "supportsAllDrives": "true"},
+                timeout=60,
+            ))
             if response.status_code in {401, 403, 404}:
                 raise PackageUnavailable("ARTIFACT_READ_ACCESS_REQUIRED")
             DriveTower._check(response, "ARTIFACT_METADATA")
             meta = response.json()
-            if not isinstance(meta, dict) or not isinstance(meta.get("permissions"), list) or not meta["permissions"]:
-                raise PackageUnavailable("ARTIFACT_PRIVACY_UNVERIFIED")
-            if (meta.get("id") != identity or meta.get("trashed") is not False
-                    or any(p.get("type") != "user" for p in meta["permissions"])):
+            if not isinstance(meta, dict) or meta.get("id") != doc_id or meta.get("trashed") is not False:
                 raise PackageError("ARTIFACT_PRIVATE_IDENTITY_UNVERIFIED")
+            if (meta.get("mimeType") != DOC_MIME or meta.get("name") != "nexo-doc-v1-" + ref["artifact_id"]
+                    or meta.get("parents") != [ref["folder_id"]]):
+                raise PackageError("ARTIFACT_CAMPAIGN_PARENT_MISMATCH")
             return meta
 
+        def private_acl():
+            # A directly shared reader may receive no ACL in files.get.
+            # permissions.list supports drive.readonly; a denial is NOT a
+            # license to assume privacy or use another route.
+            permissions = []
+            params = {"fields": "nextPageToken,permissions(id,type,role)", "supportsAllDrives": "true",
+                      "pageSize": 100}
+            tokens = set()
+            while True:
+                response = DriveTower._call("ARTIFACT_PERMISSIONS", lambda: self.session.get(
+                    f"{_API}/{doc_id}/permissions", params=params, timeout=60,
+                ))
+                if response.status_code in {401, 403, 404}:
+                    raise PackageUnavailable("ARTIFACT_PRIVACY_UNVERIFIED")
+                DriveTower._check(response, "ARTIFACT_PERMISSIONS")
+                page = response.json()
+                if not isinstance(page, dict) or not isinstance(page.get("permissions"), list):
+                    raise PackageUnavailable("ARTIFACT_PRIVACY_UNVERIFIED")
+                permissions.extend(page["permissions"])
+                if (len(permissions) > 1000 or any(not isinstance(p, dict) or p.get("type") != "user"
+                    or not isinstance(p.get("id"), str) or not p["id"] for p in permissions)):
+                    raise PackageError("ARTIFACT_PRIVATE_IDENTITY_UNVERIFIED")
+                token = page.get("nextPageToken")
+                if not token:
+                    if not permissions:
+                        raise PackageUnavailable("ARTIFACT_PRIVACY_UNVERIFIED")
+                    return tuple(sorted((p["id"], p["type"], str(p.get("role"))) for p in permissions))
+                if not isinstance(token, str) or token in tokens or len(tokens) >= 10:
+                    raise PackageUnavailable("ARTIFACT_PERMISSIONS_INCOMPLETE")
+                tokens.add(token)
+                params = {**params, "pageToken": token}
+
         try:
-            root, folder, doc = (metadata(identity) for identity in (root_id, ref["folder_id"], ref["file_id"]))
-            if (root.get("mimeType") != self.FOLDER or folder.get("mimeType") != self.FOLDER
-                    or root_id not in folder.get("parents", []) or folder.get("name") != ref["campaign_id"]
-                    or doc.get("mimeType") != DOC_MIME or ref["folder_id"] not in doc.get("parents", [])):
-                raise PackageError("ARTIFACT_CAMPAIGN_PARENT_MISMATCH")
-            package = parse_package(self._content(doc))
-            # A concurrent move/share cannot be hidden by an earlier metadata read.
-            after = metadata(ref["file_id"])
-            if after.get("parents") != doc.get("parents"):
+            before = metadata()
+            acl_before = private_acl()
+            package = parse_package(self._content(before))
+            if (package["artifact_id"] != ref["artifact_id"]
+                    or package["campaign_id"] != ref["campaign_id"]
+                    or digest(canonical(package)) != ref["package_sha256"]):
+                raise PackageError("ARTIFACT_REFERENCE_IDENTITY_MISMATCH")
+            after = metadata()
+            acl_after = private_acl()
+            if before != after or acl_before != acl_after:
                 raise PackageUnavailable("ARTIFACT_METADATA_CHANGED")
             return package
         except (PackageError, PackageUnavailable):
             raise
         except (RuntimeError, ValueError, TypeError, KeyError):
-            # An export/listing failure must not abort unrelated proposals or
-            # print private provider response bodies in the public Writer log.
+            # No private provider body may be printed in a public Writer log.
             raise PackageUnavailable("ARTIFACT_SOURCE_UNAVAILABLE") from None
 
     def mark_processed(self, file_id: str) -> None:
@@ -404,19 +448,54 @@ class DriveInbox:
 
 @contextmanager
 def writer_lock(name: str = "tower.lock", *, stale_after: float = 3 * 3600) -> Iterator[Path]:
-    """Exclusive local lock so overlapping automations never write concurrently."""
+    """Hold an OS-backed local lock; this is not a distributed Drive CAS.
+
+    The inode is intentionally kept after release. Unlinking a locked file can
+    let another process lock a different inode under the same name. The kernel
+    releases the lock on process exit, so age-based deletion is unnecessary and
+    must never evict a live owner. ``stale_after`` remains for API compatibility.
+    All concurrent local writers must use this implementation and lock path.
+    """
+    del stale_after
     home = nexo_home()
     home.mkdir(parents=True, exist_ok=True)
     path = home / name
-    if path.exists() and time.time() - path.stat().st_mtime > stale_after:
-        path.unlink(missing_ok=True)
+    fd = os.open(path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    locked = False
     try:
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError as exc:
-        raise TowerConflict(f"NEXO_WRITER_BUSY:{path}") from exc
-    try:
-        os.write(fd, json.dumps({"pid": os.getpid(), "at": time.time()}).encode())
-        os.close(fd)
+        try:
+            if os.name == "nt":
+                import msvcrt
+                # Windows byte-range locking requires an existing first byte.
+                if os.fstat(fd).st_size == 0:
+                    os.write(fd, b" ")
+                os.lseek(fd, 0, os.SEEK_SET)
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            if exc.errno in {errno.EACCES, errno.EAGAIN}:
+                raise TowerConflict(f"NEXO_WRITER_BUSY:{path}") from exc
+            raise
+        locked = True
+        os.lseek(fd, 0, os.SEEK_SET)
+        payload = json.dumps({"pid": os.getpid(), "at": time.time()}).encode()
+        written = 0
+        while written < len(payload):
+            count = os.write(fd, payload[written:])
+            if count == 0:
+                raise OSError("NEXO_WRITER_LOCK_SHORT_WRITE")
+            written += count
+        os.ftruncate(fd, len(payload))
         yield path
     finally:
-        path.unlink(missing_ok=True)
+        try:
+            if locked:
+                if os.name == "nt":
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+        finally:
+            os.close(fd)
