@@ -582,9 +582,19 @@ class OperationalWorker:
         return work
 
     def tick(self, intents: list[dict]) -> dict:
-        report = {"intents": [], "progress": [], "errors": []}
+        report = {"intents": [], "progress": [], "errors": [], "terminal_replays_skipped": 0}
         for item in intents:
             try:
+                prior = self.store.get(item["work_id"]).get("processed", {}).get(item["id"])
+                if (isinstance(prior, dict)
+                        and prior.get("intent_sha256") == digest(item)
+                        and prior.get("disposition") in {"APPLIED", "REJECTED", "BLOCKED", "STALE_VERSION"}):
+                    # The immutable intent has a durable terminal receipt. Replaying
+                    # it each 15-minute tick cannot cure an old expected_version.
+                    # Progress still runs below; recovery requires a NEW linked
+                    # intent after an authorized re-read, never silent re-issue.
+                    report["terminal_replays_skipped"] += 1
+                    continue
                 report["intents"].append(self.handle(item))
             except Exception as exc:
                 report["errors"].append({"work_id": item.get("work_id"), "code": getattr(exc, "code", type(exc).__name__)})
