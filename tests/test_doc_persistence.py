@@ -206,6 +206,11 @@ class EvidenceDrive:
         self.calls.append((url, params))
         if self.denied:
             return Reply(status=403)
+        if url.endswith("/permissions"):
+            return Reply({"permissions": [
+                {"id": "owner-fixture", "type": "user", "role": "owner"},
+                {"id": "reader-fixture", "type": "anyone" if self.public else "user", "role": "reader"},
+            ]})
         if url.endswith("/export"):
             return Reply(raw=b"\xef\xbb\xbf" + docs.canonical(self.p) + b"\n", status=self.export_status)
         identity = url.rsplit("/", 1)[-1]
@@ -215,7 +220,8 @@ class EvidenceDrive:
         elif identity == "CAMPAIGN_FOLDER":
             value.update(mimeType=DriveInbox.FOLDER, name=self.p["campaign_id"], parents=[docs.CAMPAIGNS_ID])
         elif identity == "PACKAGE_DOC":
-            value.update(mimeType=docs.DOC_MIME, parents=["WRONG" if self.wrong_parent else "CAMPAIGN_FOLDER"])
+            value.update(mimeType=docs.DOC_MIME, name="nexo-doc-v1-" + self.p["artifact_id"],
+                         parents=["WRONG" if self.wrong_parent else "CAMPAIGN_FOLDER"])
         return Reply(value)
 
 
@@ -446,7 +452,10 @@ class RobotBoundaryTests(unittest.TestCase):
                 self.assertEqual(gpt_writer.main(["robot"]), 3 if conflict else 0)
                 self.assertEqual(state["moved"], not conflict)
                 self.assertEqual(state["writes"], 3 if conflict else 1)
-                self.assertFalse((Path(tmp) / "tower.lock").exists())
+                # An OS-backed lock preserves the inode; verify RELEASE by reacquiring.
+                from runtime.nexo_agent_api.drive_transport import writer_lock
+                with writer_lock():
+                    self.assertTrue((Path(tmp) / "tower.lock").exists())
                 self.assertNotIn("Synthetic persisted evidence", str(printed.call_args_list))
                 if not conflict:
                     self.assertEqual(gpt_writer.main(["robot"]), 0)
