@@ -21,7 +21,8 @@ IDENTITY_FIELDS = {'truth_owner', 'write_model', 'drive_live_tower_file_id'}
 AUTHORITY_FIELDS = {'autonomy_mandate', 'revoked_autonomy_mandates'}
 POLICY_FIELDS = frozenset({
     'mode', 'write_guard', 'derived_indexes_authority', 'atlas_role', 'drive_role',
-    'runtime_revision', 'scientific_runtime', 'github_actions_science_role',
+    'execution_routing', 'lean_execution_policy', 'runtime_revision', 'scientific_runtime',
+    'github_actions_science_role',
     'git_operational_write_state', 'canonical_read_policy', 'sol_context_policy',
     'hosted_mcp_current_endpoint', 'hosted_mcp_current_storage_backend',
     'hosted_mcp_cutover_requirements', 'hosted_mcp_migration_target',
