@@ -43,20 +43,26 @@ def fingerprint(test: dict) -> str:
                              {key: test.get(key) for key in integrity.FROZEN}})
 
 
+_BASELINE_ONLY = object()
+
+
+def _default_readiness_evaluator():
+    """Resolve one evaluator; preserve the canonical baseline if unavailable."""
+    try:
+        from .operational_canary import make_tower_readiness_evaluator
+        evaluator = make_tower_readiness_evaluator()
+    except (ImportError, AttributeError, TypeError, ValueError):
+        evaluator = None
+    return evaluator if evaluator is not None else _BASELINE_ONLY
+
+
 def evaluate_readiness(root: str | Path, test: dict, *, ignore_reservation: bool = False,
                        readiness_evaluator=None) -> dict:
     """Use the fail-closed Tower C01 wrapper, preserving canonical baseline behavior."""
     root = Path(root)
     baseline = lambda: integrity.readiness(root, test, ignore_reservation=ignore_reservation)
-    evaluator = readiness_evaluator
-    if evaluator is None:
-        try:
-            from .operational_canary import make_tower_readiness_evaluator
-
-            evaluator = make_tower_readiness_evaluator()
-        except (ImportError, AttributeError, TypeError, ValueError):
-            evaluator = None
-    if evaluator is None:
+    evaluator = readiness_evaluator if readiness_evaluator is not None else _default_readiness_evaluator()
+    if evaluator is _BASELINE_ONLY:
         return baseline()
     try:
         parameters = inspect.signature(evaluator).parameters
@@ -164,6 +170,7 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
     work_by_id = {w.get("id"): w for w in works}
     requests = []
     active = integrity.active_tests(root)
+    evaluator = readiness_evaluator
     for test in _entities(root, "test"):
         tid = str(test.get("id") or "")
         if not tid or test.get("private") or is_private(resolve(test, entity_id=tid)):
@@ -221,7 +228,9 @@ def reconcile_requests(root: str | Path, *, readiness_evaluator=None) -> list[di
                        test["blocker"] == ",".join(previous.get("reasons") or []))
         if managed:
             provisional["blocker"] = None
-        check = evaluate_readiness(root, provisional, readiness_evaluator=readiness_evaluator)
+        if evaluator is None:
+            evaluator = _default_readiness_evaluator()
+        check = evaluate_readiness(root, provisional, readiness_evaluator=evaluator)
         check["reasons"] = sorted(set(check["reasons"] + conflicts))
         check["eligible"] = not check["reasons"]
         changes = {**recovered, "readiness": check}

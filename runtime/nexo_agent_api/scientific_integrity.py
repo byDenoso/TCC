@@ -862,7 +862,13 @@ def _direct_scientific_route(root: Path, test: dict) -> bool:
     This does not authorize changing the scientific method, admitting a
     recipe-runner battery, or asserting that an implementation was executed.
     """
-    control = read(root, 'CONTROL.json')
+    from .control_compat import AUTHORITY_PATH, POLICY_PATH, SOURCE_HEADER, read_control_compat
+
+    if not any((Path(root) / path).exists() for path in
+               ("CONTROL.json", AUTHORITY_PATH, POLICY_PATH, SOURCE_HEADER)):
+        # Legacy fixtures without control cannot opt into the direct route.
+        return False
+    control = read_control_compat(root)
     route = str(test.get('execution') or '').upper()
     return (control.get('execution_routing') == 'LEAN_NO_CONTRACT_DIRECT_RUNTIME'
             and control.get('scientific_runtime') == 'CHATGPT_RUNTIME'
