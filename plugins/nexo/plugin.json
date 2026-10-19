@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "nexo",
+  "version": "0.4.0",
+  "description": "Router, ciclo de pesquisa e NEXO Lite.",
+  "author": {
+    "name": "Dener Pereira"
+  },
+  "repository": "https://github.com/byDenoso/TCC",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "NEXO",
+        "shortDescription": "Router, ciclo de pesquisa e NEXO Lite.",
+        "developerName": "Dener Pereira",
+        "category": "Productivity"
+      }
+    }
+  }
+}
