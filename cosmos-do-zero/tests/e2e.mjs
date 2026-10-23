@@ -795,7 +795,10 @@ for(const width of [390,1440]){
  const p=await page(width,{reducedMotion:'reduce'});
  await p.goto(BASE+'/capitulos/origem-do-universo/#origem-do-universo-expansao',{waitUntil:'networkidle'});
  const module=p.locator('[data-hubble-lesson]');
- ok(`Hubble ${width}: pré-requisito aponta para a aula anterior`,await p.locator('.lesson-path a').getAttribute('href')===new URL(BASE+'/capitulos/galaxias-e-nebulosas/').pathname);
+ ok(`Trilha ${width}: três aulas na ordem canônica`,await p.locator('.lesson-path ol a').count()===3);
+ ok(`Trilha ${width}: aula atual identificada`,await p.locator('.lesson-path [aria-current=step]').count()===1&&/Universo evoluiu/.test(await p.locator('.lesson-path [aria-current=step]').innerText()));
+ ok(`Trilha ${width}: próxima aula disponível`,(await p.locator('.lesson-path ol a').nth(2).getAttribute('href')).endsWith('/capitulos/misterios-do-cosmos/'));
+ ok(`Hubble ${width}: pré-requisito aponta para a aula anterior`,await p.locator('.lesson-path-before a').getAttribute('href')===new URL(BASE+'/capitulos/galaxias-e-nebulosas/').pathname);
  const slider=module.getByRole('slider');await slider.focus();await p.keyboard.press('ArrowRight');
  ok(`Hubble ${width}: régua responde ao teclado`,/1.750/.test(await module.locator('[data-hubble-value]').innerText()));
  await module.getByRole('radio',{name:'700 km/s',exact:true}).check();await module.getByRole('button',{name:'Conferir resposta'}).click();

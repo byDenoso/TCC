@@ -1,14 +1,26 @@
 ---
-import { adjacentChapters, chapterTitleShort } from '../data';
+import { adjacentChapters, chapterTitleShort, trackChapterIds, chapterTrack } from '../data';
 import type { ChapterId } from '../types';
 import { chapterUrl } from '../lib/url';
 const { id } = Astro.props as { id: ChapterId };
 const { prev } = adjacentChapters(id);
+const track = trackChapterIds(id);
 ---
-<nav class="lesson-path" aria-label="Pré-requisitos">
-  {prev ? <a href={chapterUrl(prev.id)}>Antes desta aula: {chapterTitleShort[prev.id]} <span aria-hidden="true">↗</span></a> : <span>Comece aqui · sem pré-requisitos</span>}
+<nav class="lesson-path" aria-label="Trilha de aprendizagem">
+  <p class="lesson-path-label">{chapterTrack(id) === 'primary' ? 'Sua trilha · três grandes perguntas' : 'Leituras complementares'}</p>
+  <ol>{track.map((chapterId, index) => <li><a href={chapterUrl(chapterId)} aria-current={chapterId === id ? 'step' : undefined}><span class="lesson-path-number" aria-hidden="true">{index + 1}</span><span>{chapterTitleShort[chapterId]}{chapterId === id && <small>Você está aqui</small>}</span></a></li>)}</ol>
+  <p class="lesson-path-before">{prev ? <a href={chapterUrl(prev.id)}>Antes desta aula: {chapterTitleShort[prev.id]} <span aria-hidden="true">↗</span></a> : <span>Comece aqui · sem pré-requisitos</span>}</p>
 </nav>
 <style>
-.lesson-path{margin:22px 0;font:600 14px/1.5 var(--body);color:var(--muted)}
-.lesson-path a{color:var(--accent-ink);display:inline-flex;align-items:center;gap:12px;min-height:44px;text-underline-offset:4px}
+.lesson-path{margin:28px 0;padding:20px;border:1px solid var(--line-strong);border-radius:16px;background:var(--surface);font:500 14px/1.5 var(--body);color:var(--ink)}
+.lesson-path-label{margin:0 0 14px;font-weight:650;color:var(--muted)}
+.lesson-path ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0;margin:0;list-style:none}.lesson-path li{min-width:0}
+.lesson-path ol a{display:flex;align-items:flex-start;gap:10px;min-height:64px;padding:12px;border:1px solid transparent;border-radius:10px;color:var(--ink);text-decoration:none;overflow-wrap:anywhere}
+.lesson-path ol a[aria-current]{border-color:var(--accent-ink);background:var(--bg)}.lesson-path ol a:hover{text-decoration:underline;text-underline-offset:4px}
+.lesson-path-number{flex:none;display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--line-strong);border-radius:50%;font-size:12px;font-variant-numeric:tabular-nums}
+.lesson-path [aria-current] .lesson-path-number{background:var(--accent-ink);color:var(--bg);border-color:var(--accent-ink)}
+.lesson-path small{display:block;font-size:12px;color:var(--accent-ink);margin-top:4px;font-weight:600}
+.lesson-path-before{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--muted)}.lesson-path-before a{color:var(--accent-ink);display:inline-flex;align-items:center;gap:12px;min-height:44px;text-underline-offset:4px}
+.lesson-path a:focus-visible{outline:3px solid var(--accent-ink);outline-offset:3px}
+@media(max-width:700px){.lesson-path{padding:16px}.lesson-path ol{grid-template-columns:1fr;gap:4px}.lesson-path ol a{align-items:center;min-height:48px;padding:10px}.lesson-path-before a{display:block;padding-block:8px}}
 </style>

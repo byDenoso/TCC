@@ -14,7 +14,8 @@ try {
     if (!response?.ok()) throw new Error(`Pagina publica falhou (${response?.status() ?? 'sem status'}).`);
     await page.screenshot({ path: `docs/screenshots/publicado-${label}.png`, fullPage: true });
     console.log(`Captura: ${label} ${response.url()}`);
-    await page.goto(`${base}/capitulos/origem-do-universo/#origem-do-universo-expansao`,{waitUntil:'networkidle'});
+    await page.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
+    await page.screenshot({path:`docs/screenshots/render-trilha-${label}.png`});
     const lesson=page.locator('[data-hubble-lesson]');
     await lesson.scrollIntoViewIfNeeded();
     await lesson.screenshot({path:`docs/screenshots/render-hubble-${label}.png`});
