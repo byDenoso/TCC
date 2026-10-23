@@ -70,6 +70,11 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   toggle.type = 'button'; toggle.className = 'step-toggle'; toggle.dataset.stepToggle = '';
   $('.reader-aside', root)?.append(toggle);
 
+  const jump = document.createElement('select');
+  jump.className = 'step-select'; jump.dataset.stepSelect = ''; jump.setAttribute('aria-label', 'Passo da aula');
+  sections.forEach((section, index) => jump.add(new Option(`${index + 1} / ${sections.length} · ${section.querySelector('h2')?.textContent ?? ''}`, String(index))));
+  bar.prepend(jump);
+
   const prev = $<HTMLButtonElement>('[data-step-prev]', bar)!, next = $<HTMLButtonElement>('[data-step-next]', bar)!;
   const dots = $$<HTMLButtonElement>('[data-step-dot]', bar), count = $('[data-step-count]', bar)!;
   let whole = false, current = 0, reachedEnd = false, initializing = true;
@@ -93,6 +98,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     bar.hidden = whole;
     dots.forEach((d, k) => { d.setAttribute('aria-current', String(k === current)); d.dataset.done = String(k < current || (reachedEnd && k <= current)); });
     count.textContent = `Passo ${current + 1} de ${sections.length}`;
+    jump.value = String(current);
     prev.disabled = current === 0;
     const nextTitle = sections[current + 1]?.querySelector('h2')?.textContent?.trim();
     next.replaceChildren(...(current === sections.length - 1 ? ['Ir para o desafio da aula ↓'] : ['Próximo', Object.assign(document.createElement('span'), { className: 'step-next-title', textContent: `: ${nextTitle ?? 'passo seguinte'}` }), ' →']));
@@ -108,6 +114,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
       if (top < 80 || top > innerHeight * 0.6) sections[current].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
     }
   };
+  jump.addEventListener('change', () => show(Number(jump.value), true, true));
   prev.addEventListener('click', () => show(current - 1, true, true));
   next.addEventListener('click', () => {
     if (current === sections.length - 1) { $('.chapter-check', root)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); return; }

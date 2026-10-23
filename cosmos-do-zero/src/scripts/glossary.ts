@@ -32,6 +32,15 @@ export function initGlossary(): void {
     }
     if (url) setParams({ q: input.value.trim() || null, jornada: chapter || null });
   };
+  const revealHash = () => {
+    let id = ''; try { id = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    const entry = entries.find(node => node.id === id);
+    if (!entry) return;
+    // A shared definition is authoritative over an unrelated previous filter.
+    if (entry.hidden) { input.value = ''; chapter = ''; render(); }
+    entry.open = true;
+  };
+  window.addEventListener('hashchange', revealHash);
   input.addEventListener('input', () => render());
   reset?.addEventListener('click', () => { input.value = ''; render(); input.focus(); });
   input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && input.value) { input.value = ''; render(); } });
@@ -41,10 +50,12 @@ export function initGlossary(): void {
   if (q) input.value = q;
   if (j && (CHAPTER_IDS as readonly string[]).includes(j)) chapter = j as ChapterId;
   if (q || j) render(false);
+  revealHash();
   window.addEventListener('popstate', () => {
     input.value = getParam('q') ?? '';
     const current = getParam('jornada');
     chapter = current && (CHAPTER_IDS as readonly string[]).includes(current) ? current as ChapterId : '';
     render(false);
+    revealHash();
   });
 }
