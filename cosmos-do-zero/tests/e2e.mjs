@@ -790,6 +790,32 @@ section('Leitura, busca e régua acessível');
   await p.context().close();
 }
 
+section('Hubble: exemplo, teclado e alternativa leve');
+for(const width of [390,1440]){
+ const p=await page(width,{reducedMotion:'reduce'});
+ await p.goto(BASE+'/capitulos/origem-do-universo/#origem-do-universo-expansao',{waitUntil:'networkidle'});
+ const module=p.locator('[data-hubble-lesson]');
+ ok(`Hubble ${width}: pré-requisito aponta para a aula anterior`,await p.locator('.lesson-path a').getAttribute('href')===new URL(BASE+'/capitulos/galaxias-e-nebulosas/').pathname);
+ const slider=module.getByRole('slider');await slider.focus();await p.keyboard.press('ArrowRight');
+ ok(`Hubble ${width}: régua responde ao teclado`,/1.750/.test(await module.locator('[data-hubble-value]').innerText()));
+ await module.getByRole('radio',{name:'700 km/s',exact:true}).check();await module.getByRole('button',{name:'Conferir resposta'}).click();
+ ok(`Hubble ${width}: erro orienta nova tentativa`,await module.locator('[data-hubble-feedback]').getAttribute('data-correct')==='false');
+ await module.getByRole('radio',{name:'2.100 km/s',exact:true}).check();await module.getByRole('button',{name:'Conferir resposta'}).click();
+ ok(`Hubble ${width}: acerto explica a conta`,await module.locator('[data-hubble-feedback]').getAttribute('data-correct')==='true'&&/70 × 30/.test(await module.locator('[data-hubble-feedback]').innerText()));
+ await module.locator('.hubble-values summary').click();ok(`Hubble ${width}: tabela acessível`,await module.locator('tbody tr').count()===5);
+ ok(`Hubble ${width}: sem overflow`,await overflow(p)<=0);
+ const contrast=await module.locator('.hubble-control p').evaluate(n=>{const c=getComputedStyle(n).color,b=getComputedStyle(n.closest('[data-hubble-lesson]')).backgroundColor;const luminance=s=>{const a=(s.match(/[\d.]+/g)||[]).slice(0,3).map(Number).map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4});return .2126*a[0]+.7152*a[1]+.0722*a[2]};const x=luminance(c),y=luminance(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)});
+ ok(`Hubble ${width}: contraste do valor >= 4,5`,contrast>=4.5,`ratio ${contrast}`);
+ await p.context().close();
+}
+{
+ const p=await page(390,{javaScriptEnabled:false,reducedMotion:'reduce'});
+ await p.goto(BASE+'/capitulos/origem-do-universo/#origem-do-universo-expansao');
+ const m=p.locator('[data-hubble-lesson]');await m.locator('.hubble-values summary').click();await m.locator('.hubble-solution summary').click();
+ ok('Hubble sem JS: explicação, gráfico, tabela e resolução disponíveis',await m.locator('svg').isVisible()&&await m.locator('tbody tr').count()===5&&await m.locator('.hubble-solution p').isVisible());
+ await p.context().close();
+}
+
 await browser.close();
 console.log(`\n${pass} verificações OK, ${fails.length} falhas`);
 if (fails.length) { console.log(fails.map((f) => ' - ' + f).join('\n')); process.exit(1); }

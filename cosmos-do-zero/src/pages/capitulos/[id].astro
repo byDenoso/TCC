@@ -2,6 +2,8 @@
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import Header from '../../components/Header.astro';
+import HubbleLesson from '../../components/HubbleLesson.astro';
+import LessonPath from '../../components/LessonPath.astro';
 import QuizCard from '../../components/QuizCard.astro';
 import CosmosScene from '../../components/CosmosScene.astro';
 import Observatorio from '../../components/Observatorio.astro';
@@ -43,7 +45,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
         <a class="back-link" href={u(isPrimary ? '/#capitulos' : '/laboratorio/')}>← {isPrimary ? 'Todas as aulas' : 'Mais experimentos'}</a>
         <div class="section-id">{isPrimary ? `Aula ${pad2(n)} de 03` : 'Leitura complementar'} · {ch.minutes} min · {ch.sections.length} passos</div>
         <h1>{ch.title}</h1>
-        <p class="reader-intro">{ch.intro}</p>
+        <LessonPath id={ch.id}/><p class="reader-intro">{ch.intro}</p>
         {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
         <div class="reader-idea"><span class="meta">A ideia que conecta tudo</span><p>{ch.idea}</p></div>
         <nav class="reader-entry" aria-label="Por onde começar esta aula">
@@ -89,6 +91,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.id === 'misterios-do-cosmos-materia-escura' && <Lensing id={s.id} />}
               {s.id === 'sistema-solar-sol-e-planetas' && <SolarStudio id={s.id} />}
+              {s.id === 'origem-do-universo-expansao' && <HubbleLesson/>}
               {s.more && (
                 <details class="depth-detail" data-layer="more">
                   <summary>Entenda melhor</summary>

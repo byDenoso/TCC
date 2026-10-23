@@ -1,0 +1,72 @@
+---
+---
+<section class="hubble-lesson" aria-labelledby="hubble-lesson-title" data-hubble-lesson>
+  <h2 id="hubble-lesson-title">O dobro da distância, o dobro da velocidade</h2>
+  <p>Imagine marcas numa fita elástica. Ao esticar a fita de maneira uniforme, marcas mais distantes se separam mais depressa. Em grandes escalas, a expansão do Universo apresenta essa relação entre distância e velocidade.</p>
+  <div class="hubble-formula"><strong>v = H₀ × d</strong><span>velocidade = taxa de expansão × distância</span></div>
+  <p>Adote H₀ = 70 km/s/Mpc para este exemplo. A 10 Mpc, a velocidade de recessão é 700 km/s. A 20 Mpc, ela é 1.400 km/s. Um megaparsec (Mpc) equivale a cerca de 3,26 milhões de anos-luz.</p>
+  <figure class="hubble-figure">
+    <svg viewBox="0 0 520 300" role="img" aria-labelledby="hubble-chart-title hubble-chart-description">
+      <title id="hubble-chart-title">Velocidade de recessão em função da distância</title>
+      <desc id="hubble-chart-description">Uma reta passa pela origem. No exemplo, uma galáxia a 20 Mpc se afasta a 1.400 km/s. A tabela abaixo fornece os mesmos valores.</desc>
+      <g class="hubble-grid"><path d="M64 30V246H486M64 138H486M64 30H486"/></g>
+      <g class="hubble-ticks"><text x="54" y="250" text-anchor="end">0</text><text x="54" y="142" text-anchor="end">1.400</text><text x="54" y="34" text-anchor="end">2.800</text><text x="64" y="268" text-anchor="middle">0</text><text x="275" y="268" text-anchor="middle">20</text><text x="486" y="268" text-anchor="middle">40</text><text x="280" y="294" text-anchor="middle">Distância (Mpc)</text><text x="64" y="17">Velocidade (km/s)</text></g>
+      <path class="hubble-line" d="M64 246L486 30"/>
+      <path class="hubble-guide" d="M275 246V138H64" data-hubble-guide/>
+      <circle class="hubble-dot" cx="275" cy="138" r="7" data-hubble-dot/>
+    </svg>
+    <figcaption>Exemplo didático no Universo próximo, com H₀ fixo. Sem dados observacionais.</figcaption>
+  </figure>
+  <div class="hubble-control" data-hubble-control hidden>
+    <label for="hubble-distance">Distância da galáxia <output for="hubble-distance" data-hubble-distance>20 Mpc</output></label>
+    <input id="hubble-distance" type="range" min="5" max="40" step="5" value="20" aria-describedby="hubble-value"/>
+    <p id="hubble-value" data-hubble-value>70 × 20 = <strong>1.400 km/s</strong></p>
+  </div>
+  <details class="hubble-values"><summary>Valores em tabela</summary><table><caption>Exemplo com H₀ = 70 km/s/Mpc</caption><thead><tr><th scope="col">Distância (Mpc)</th><th scope="col">Velocidade (km/s)</th></tr></thead><tbody>{[5,10,20,30,40].map(d=><tr><th scope="row">{d}</th><td>{(70*d).toLocaleString('pt-BR')}</td></tr>)}</tbody></table></details>
+  <form class="hubble-exercise" data-hubble-exercise>
+    <fieldset><legend>Agora é sua vez: a 30 Mpc, qual é a velocidade neste exemplo?</legend>
+      {[['700','700 km/s'],['2100','2.100 km/s'],['4200','4.200 km/s']].map(([v,label])=><label><input type="radio" name="hubble-answer" value={v} required/>{label}</label>)}
+    </fieldset>
+    <button type="submit" data-hubble-check hidden>Conferir resposta</button>
+    <p class="hubble-feedback" role="status" aria-live="polite" data-hubble-feedback></p>
+    <details class="hubble-solution"><summary>Ver resolução</summary><p>70 × 30 = 2.100 km/s. Triplicar a distância triplica a velocidade neste modelo.</p></details>
+  </form>
+  <details class="hubble-takeaway" open><summary>O que fica</summary><ul><li>A relação é proporcional: dobrar d dobra v, mantendo H₀ fixo.</li><li>H₀ descreve a taxa de expansão atual. Seu valor aqui é uma escolha para aprender a conta.</li><li>Movimentos locais também afetam as velocidades das galáxias. A relação simples é uma aproximação para distâncias cosmológicas pequenas.</li></ul></details>
+</section>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-hubble-lesson]').forEach(root=>{
+    const range=root.querySelector<HTMLInputElement>('#hubble-distance')!;
+    const output=root.querySelector<HTMLOutputElement>('[data-hubble-distance]')!;
+    const value=root.querySelector<HTMLElement>('[data-hubble-value]')!;
+    const dot=root.querySelector<SVGCircleElement>('[data-hubble-dot]')!;
+    const guide=root.querySelector<SVGPathElement>('[data-hubble-guide]')!;
+    const desc=root.querySelector<SVGDescElement>('#hubble-chart-description')!;
+    root.querySelector<HTMLElement>('[data-hubble-control]')!.hidden=false;
+    root.querySelector<HTMLElement>('[data-hubble-check]')!.hidden=false;
+    range.addEventListener('input',()=>{
+      const d=Number(range.value),v=70*d,x=64+422*d/40,y=246-216*d/40;
+      output.value=`${d} Mpc`;range.setAttribute('aria-valuetext',`${d} megaparsecs`);
+      value.textContent=`70 × ${d} = ${v.toLocaleString('pt-BR')} km/s`;
+      dot.setAttribute('cx',String(x));dot.setAttribute('cy',String(y));
+      guide.setAttribute('d',`M${x} 246V${y}H64`);
+      desc.textContent=`A ${d} Mpc, a velocidade neste exemplo é ${v.toLocaleString('pt-BR')} km/s. A reta passa pela origem.`;
+    });
+    const form=root.querySelector<HTMLFormElement>('[data-hubble-exercise]')!;
+    form.addEventListener('submit',event=>{
+      event.preventDefault();
+      const answer=new FormData(form).get('hubble-answer'),right=answer==='2100';
+      const feedback=root.querySelector<HTMLElement>('[data-hubble-feedback]')!;
+      feedback.dataset.correct=String(right);
+      feedback.textContent=right?'Isso: 70 × 30 = 2.100 km/s. A proporção foi mantida.':'Multiplique 70 pela distância de 30 Mpc. A unidade Mpc se cancela e o resultado fica em km/s. Tente de novo.';
+    });
+    form.addEventListener('change',()=>{root.querySelector<HTMLElement>('[data-hubble-feedback]')!.textContent='';});
+  });
+</script>
+<style>
+.hubble-lesson{margin:44px 0;padding:clamp(20px,4vw,34px);border:1px solid var(--line-strong);border-radius:22px;background:var(--surface);color:var(--ink);min-width:0}
+.hubble-lesson h2{font-size:clamp(25px,4vw,38px);line-height:1.15;margin:0 0 22px}.hubble-lesson p{line-height:1.7}.hubble-formula{display:grid;gap:8px;padding:22px 0;border-block:1px solid var(--line);margin:24px 0}.hubble-formula strong{font:600 clamp(26px,5vw,36px)/1.3 var(--sans);color:var(--accent-ink)}.hubble-formula span{font-size:14px;color:var(--muted)}
+.hubble-figure{margin:28px 0}.hubble-figure svg{display:block;width:100%;height:auto;overflow:visible}.hubble-grid{fill:none;stroke:var(--line-strong)}.hubble-ticks{fill:var(--ink);font:13px var(--body)}.hubble-line{fill:none;stroke:var(--accent-ink);stroke-width:3}.hubble-guide{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 5}.hubble-dot{fill:var(--accent-ink);stroke:var(--surface);stroke-width:3}.hubble-figure figcaption{font:13px/1.6 var(--body);color:var(--muted);margin-top:14px}
+.hubble-control label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-weight:600}.hubble-control input{width:100%;min-height:44px;accent-color:var(--accent-ink)}.hubble-control output{font-variant-numeric:tabular-nums}.hubble-control p{font:600 20px var(--sans);color:var(--accent-ink)}
+.hubble-lesson summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:600}.hubble-values{margin-block:20px}.hubble-values table{width:100%;border-collapse:collapse;font-size:14px}.hubble-values :is(th,td){text-align:left;border-bottom:1px solid var(--line);padding:10px 4px}.hubble-values caption{text-align:left;padding-block:12px}
+.hubble-exercise{border-block:1px solid var(--line);padding-block:24px}.hubble-exercise fieldset{border:0;padding:0;margin:0}.hubble-exercise legend{font-weight:700;line-height:1.6;margin-bottom:16px}.hubble-exercise label{display:flex;align-items:center;gap:12px;min-height:48px;cursor:pointer}.hubble-exercise input{width:20px;height:20px;accent-color:var(--accent-ink)}.hubble-exercise button{min-height:44px;margin-top:16px;padding:12px 22px;border:1px solid var(--accent-ink);border-radius:24px;background:var(--accent-ink);color:var(--bg);font:600 15px var(--body);cursor:pointer}.hubble-lesson [hidden]{display:none!important}.hubble-feedback:empty{display:none}.hubble-feedback{padding:14px;border-left:3px solid var(--accent-ink);background:var(--bg)}.hubble-takeaway li{margin-block:12px;line-height:1.6}.hubble-lesson :focus-visible{outline:3px solid var(--accent-ink);outline-offset:4px}
+</style>

@@ -1,0 +1,14 @@
+---
+import { adjacentChapters, chapterTitleShort } from '../data';
+import type { ChapterId } from '../types';
+import { chapterUrl } from '../lib/url';
+const { id } = Astro.props as { id: ChapterId };
+const { prev } = adjacentChapters(id);
+---
+<nav class="lesson-path" aria-label="Pré-requisitos">
+  {prev ? <a href={chapterUrl(prev.id)}>Antes desta aula: {chapterTitleShort[prev.id]} <span aria-hidden="true">↗</span></a> : <span>Comece aqui · sem pré-requisitos</span>}
+</nav>
+<style>
+.lesson-path{margin:22px 0;font:600 14px/1.5 var(--body);color:var(--muted)}
+.lesson-path a{color:var(--accent-ink);display:inline-flex;align-items:center;gap:12px;min-height:44px;text-underline-offset:4px}
+</style>
