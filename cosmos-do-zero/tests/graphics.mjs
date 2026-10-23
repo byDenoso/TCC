@@ -1,5 +1,6 @@
 // Exercita os shaders de produção em WebGL (ANGLE/SwiftShader), incluindo emulação de viewport390; não é celular físico.
 import assert from 'node:assert/strict';
+import {selectLessonStep} from './lib/reader-navigation.mjs';
 import { mkdirSync } from 'node:fs';
 import {installGpuProbe} from './lib/gpu-probe.mjs';
 import { chromium } from 'playwright';
@@ -51,7 +52,7 @@ try {
     const root = page.locator('[data-mx="galaxias-e-nebulosas-teia-cosmica"]');
     // Seleciona o passo que contém a teia a partir da estrutura da própria aula.
     const dot = await root.evaluate(r => [...document.querySelectorAll('.lesson-section')].indexOf(r.closest('.lesson-section')));
-    await page.locator(`[data-step-dot="${dot}"]`).click();
+    await selectLessonStep(page,dot);
     await root.scrollIntoViewIfNeeded();
     const web = root.locator('.mx-gl');
     await web.waitFor({ state: 'visible' });
@@ -77,7 +78,7 @@ try {
     assert.ok(await root.locator('.mx-flat circle').first().isVisible()); checked++;
     assert.deepEqual(errors, [], `sem erros de shader ${width}`); checked++;
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1,'máximo1WebGL real incluindo todos os caminhos');checked++;
-    for(const[route,step,id]of[['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]){await page.goto(`${base}/capitulos/${route}/`);await page.locator(`[data-step-dot="${step}"]`).click();const module=page.locator(`[data-mx="${id}"]`),stage=module.locator('.mx-stage').first();await stage.scrollIntoViewIfNeeded();await stage.locator('.cosmos-volume').waitFor();await still(stage.locator('.cosmos-volume'),`${id} ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.active()),1);checked++;}
+    for(const[route,step,id]of[['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]){await page.goto(`${base}/capitulos/${route}/`);await selectLessonStep(page,step);const module=page.locator(`[data-mx="${id}"]`),stage=module.locator('.mx-stage').first();await stage.scrollIntoViewIfNeeded();await stage.locator('.cosmos-volume').waitFor();await still(stage.locator('.cosmos-volume'),`${id} ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.active()),1);checked++;}
     await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();

@@ -1,6 +1,7 @@
 // E2E (Playwright/Chromium) contra o build servido em BASE_URL (padrão http://localhost:4321).
 // Uso: npm run build && npm run preview &  →  npm run test:e2e   (SHOTS=1 salva capturas em docs/screenshots)
 import { chromium } from 'playwright';
+import {selectLessonStep,lastLessonStep} from './lib/reader-navigation.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL ?? 'http://localhost:4321').replace(/\/$/, '');
@@ -28,7 +29,7 @@ async function page(width = 1280, opts = {}) {
   return p;
 }
 const unlockLab = (p) => p.evaluate(() => document.querySelectorAll('[data-guess-skip]').forEach((b) => b.click()));
-const toLessonEnd = async (p) => { const d = p.locator('[data-step-dot]'); if (await d.count()) { await d.last().click(); await p.waitForTimeout(150); } };
+const toLessonEnd = async (p) => { await lastLessonStep(p); await p.waitForTimeout(150); };
 const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
 // 1 — larguras, rolagem horizontal, erros de console, todas as páginas
@@ -702,7 +703,7 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const failuresBefore = fails.length;
-      await p.locator(`[data-step-dot="${dots[i]}"]`).click();
+      await selectLessonStep(p,dots[i]);
       const root = p.locator(`[data-mx="${id}"]`);
       await root.scrollIntoViewIfNeeded();
       await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), id);
@@ -779,7 +780,10 @@ section('Leitura, busca e régua acessível');
   await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
   await p.locator('.reader-entry .cta').click();
   ok('atalho abre o primeiro passo da aula', p.url().includes('#origem-do-universo-o-universo') && await p.locator('.lesson-section').first().isVisible());
-  ok('alvos da trilha têm área útil de toque', await p.locator('[data-step-dot]').evaluateAll(nodes => nodes.every(n => { const r = n.getBoundingClientRect(); return r.width >= 24 && r.height >= 44; })));
+  ok('seletor mobile está visível e rotulado', await p.getByLabel('Passo da aula', { exact: true }).isVisible());
+  ok('alvos da trilha têm área útil de toque', await p.locator('[data-step-select], [data-step-prev], [data-step-next]').evaluateAll(nodes => nodes.length === 3 && nodes.every(n => { const r = n.getBoundingClientRect(); return r.width >= 44 && r.height >= 48; })));
+  await selectLessonStep(p, 2);
+  ok('seletor mobile sincroniza passo e URL', await p.locator('[data-step-select]').inputValue() === '2' && new URL(p.url()).hash === await p.locator('.lesson-section').nth(2).getAttribute('id').then(id => '#' + id));
   await p.evaluate(() => sessionStorage.setItem(`cosmos-quiz:${location.pathname}:origem-do-universo`, JSON.stringify({ ids: ['big-bang'], position: -1, answered: true, choice: 99, history: [null], finished: false })));
   await p.reload({ waitUntil: 'networkidle' });
   ok('quiz inválido recupera a primeira pergunta sem erro', p.errors.length === 0);

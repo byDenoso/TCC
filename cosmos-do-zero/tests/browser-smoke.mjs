@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {lastLessonStep} from './lib/reader-navigation.mjs';
 import { firefox, webkit } from 'playwright';
 
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4321';
@@ -30,7 +31,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     check(`${name}: viagem da luz iniciada`, await light.getAttribute('aria-pressed') === 'true');
     await light.click();
     check(`${name}: viagem da luz pausada`, await light.getAttribute('aria-pressed') === 'false');
-    const stepDots=page.locator('[data-step-dot]');await stepDots.last().click();
+    await lastLessonStep(page);
     const quiz = page.locator('.chapter-check [data-quiz]');
     for (let i = 0; i < 3; i++) {
       await quiz.locator('[data-answer]').first().click();
@@ -68,7 +69,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
       localStorage.setItem('cosmos-v3-progress', '[]');
       Object.defineProperty(Storage.prototype, 'setItem', { value() { throw new DOMException('quota', 'QuotaExceededError'); } });
     });
-    await blocked.goto(base + first, { waitUntil: 'networkidle' });await blocked.locator('[data-step-dot]').last().click();
+    await blocked.goto(base + first, { waitUntil: 'networkidle' });await lastLessonStep(blocked);
     await blocked.locator('[data-complete]').click();
     check(`${name}: leitura antiga não apaga gravação que falhou`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'true');
     check(`${name}: aviso de progresso da sessão`, /sessão/.test(await blocked.locator('[data-complete-status]').innerText()));
