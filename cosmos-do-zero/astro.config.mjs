@@ -14,6 +14,7 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'auto' },
   devToolbar: { enabled: false },
   vite: {
+    server: { allowedHosts: ['terminal.local'] },
     define: {
       'import.meta.env.PUBLIC_SITE_INDEXING': JSON.stringify(
         process.env.VERCEL_ENV === 'production' || process.env.SITE_PUBLIC === 'true' ? 'true' : 'false'
