@@ -26,8 +26,16 @@ export function readPlace(chapter?: string): Place | null {
   const all = readAll();
   return chapter ? all[chapter] ?? null : Object.values(all).sort((a, b) => b.at - a.at)[0] ?? null;
 }
+/** A completed recent visit must not hide an older unfinished lesson. */
+export function latestUnfinishedPlace(places: Record<string, Place>, completed: readonly string[]): Place | null {
+  return Object.values(places).filter(place=>place.step>0 && !completed.includes(place.chapter)).sort((a,b)=>b.at-a.at)[0] ?? null;
+}
+export function readUnfinishedPlace(completed: readonly string[]): Place | null {
+  return latestUnfinishedPlace(readAll(), completed);
+}
 export function rememberPlace(place: Place): void {
   const all = readAll();
   all[place.chapter] = place;
   try { localStorage.setItem(KEY, JSON.stringify(all)); } catch { /* a leitura continua sem armazenamento */ }
 }
+

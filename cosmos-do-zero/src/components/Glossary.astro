@@ -1,4 +1,5 @@
 ---
+import '../styles/glossary.css';
 import { terms, chapterTitleShort } from '../data';
 import { chapterUrl } from '../lib/url';
 import { CHAPTER_IDS } from '../types';
@@ -8,9 +9,10 @@ const Title = Astro.props.headingLevel ?? 'h2';
 ---
 <section class="glossary-section paper" id="glossario" aria-labelledby="glossary-title" data-island="glossary">
   <div class="page-width">
+    <p class="section-id">Uma ideia de cada vez</p>
     <div class="intro-head">
       <Title class="display" id="glossary-title">Dicionário do cosmos</Title>
-
+      <p>Encontre uma palavra, entenda com um exemplo e veja como ela aparece nas aulas. Você pode buscar pelo termo ou filtrar por jornada.</p>
     </div>
     <form class="glossary-search" role="search" onsubmit="return false">
       <label for="glossary-search">O que você quer entender?</label>
@@ -43,3 +45,4 @@ const Title = Astro.props.headingLevel ?? 'h2';
     </div>
   </div>
 </section>
+

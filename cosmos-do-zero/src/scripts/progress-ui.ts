@@ -2,7 +2,7 @@ import { $, $$, setText } from './dom';
 import { createLocalStore, mainCompletedCount, nextUnfinished, progressLabel } from '../lib/progress';
 import { PRIMARY_CHAPTER_IDS, type ChapterId } from '../types';
 import { chapterUrl } from '../lib/url';
-import { readPlace } from '../lib/reading-place';
+import { readUnfinishedPlace } from '../lib/reading-place';
 
 export const store = createLocalStore();
 
@@ -35,8 +35,7 @@ export function refreshProgress(): void {
     b.setAttribute('aria-pressed', String(isDone));
   });
   // Abertura: continuar de onde parou (o último passo visitado de uma aula não concluída)
-  const place = readPlace();
-  const resumeAt = place && !done.includes(place.chapter as ChapterId) && place.step > 0 ? place : null;
+  const resumeAt = readUnfinishedPlace(done);
   for (const card of $$<HTMLAnchorElement>('[data-resume]')) {
     card.hidden = !resumeAt;
     if (!resumeAt) continue;
@@ -94,3 +93,4 @@ export function initProgress(): void {
     if (!ids.includes(id)) { store.write([...ids, id]); refreshProgress(); }
   });
 }
+

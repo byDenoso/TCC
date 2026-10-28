@@ -54,6 +54,7 @@ export function initNav(): void {
     $$('a', menu).forEach((a) => a.addEventListener('click', () => close()));
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(true); });
     document.addEventListener('click', (e) => { if (menu.open && !menu.contains(e.target as Node)) close(); });
+    menu.addEventListener('focusout', (e) => { if (menu.open && e.relatedTarget instanceof Node && !menu.contains(e.relatedTarget)) close(); });
     matchMedia('(min-width: 761px)').addEventListener('change', (e) => e.matches && close());
   }
   // Destaque da seção atual no menu principal
@@ -71,3 +72,4 @@ export function initNav(): void {
   const hero = $('.hero-shell');
   if (hero) new IntersectionObserver(([e]) => e.isIntersecting && links.forEach((a) => a.removeAttribute('aria-current')), { rootMargin: '-60% 0px 0px 0px' }).observe(hero);
 }
+

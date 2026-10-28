@@ -14,6 +14,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   </div>
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
     <figure class="cmb-hero" data-cmb>
+      <div class="cmb-instrument-label"><span class="meta">01 / Uma pista do início</span><span class="cmb-interaction-hint">Explore com o toque ou as setas</span></div>
       <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
         <canvas data-cmb-canvas width="480" height="240"></canvas>
         <span class="cmb-probe" data-cmb-probe hidden></span>
@@ -26,7 +27,9 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
       </figcaption>
     </figure>
     <div class="hero-copy">
+      <p class="hero-overline"><span class="dash" aria-hidden="true"></span>Um observatório para aprender</p>
       <h1 id="hero-title">Cosmos<br /><span class="serif">do Zero.</span></h1>
+      <p class="hero-introduction">Do nosso lugar na galáxia à luz mais antiga do Universo. Descubra a cosmologia em aulas curtas e experimentos que você controla.</p>
       <div class="hero-actions">
         <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')}>Começar do zero <span class="arrow" aria-hidden="true">↗</span></a>
         <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> <span aria-hidden="true">→</span></a>
@@ -35,7 +38,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     </div>
   </section>
   <div class="hero-foot page-width">
-    <div class="hero-foot-left"></div>
+    <div class="hero-foot-left"><span class="meta">Sem pré-requisitos<br />No seu ritmo</span></div>
     <div class="hero-foot-center">
       <div><span class="number">13,8</span><span class="statcopy">bilhões de anos</span></div>
       <div><span class="number">1 : 100 mil</span><span class="statcopy">variação de temperatura</span></div>
@@ -44,3 +47,4 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   </div>
 </div>
 </div>
+

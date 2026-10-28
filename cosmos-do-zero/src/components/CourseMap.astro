@@ -5,7 +5,7 @@ import { chapterUrl, u } from '../lib/url';
 const pos = [{ x: 12.5, y: 70 }, { x: 43, y: 42 }, { x: 75, y: 62 }];
 const nodes = primaryRows.map((row, i) => {
   const ch = chapters.find((c) => c.id === row.id)!;
-  return { id: row.id, href: chapterUrl(row.id), label: `Aula ${i + 1} · ${ch.minutes} min`, title: row.title, ...pos[i] };
+  return { id: row.id, href: chapterUrl(row.id), label: `Aula ${i + 1} · ${ch.minutes} min`, title: row.title, state: i===0?'Comece por aqui':'Disponível para explorar', ...pos[i] };
 });
 ---
 <nav class="course-map" aria-label="Trilha do curso" data-course-map>
@@ -16,7 +16,7 @@ const nodes = primaryRows.map((row, i) => {
   <ol>
     {nodes.map((n) => (
       <li style={`--x:${n.x}%;--y:${n.y}%`} data-course-node={n.id} data-state="todo">
-        <a href={n.href}><span class="course-star" aria-hidden="true"></span><span class="course-label"><small>{n.label}</small><strong>{n.title}</strong><em data-course-state>Comece por aqui</em></span></a>
+        <a href={n.href}><span class="course-star" aria-hidden="true"></span><span class="course-label"><small>{n.label}</small><strong>{n.title}</strong><em data-course-state>{n.state}</em></span></a>
       </li>
     ))}
     <li style="--x:92%;--y:33%" data-course-node="desafio" data-state="todo" class="is-final">
@@ -24,3 +24,4 @@ const nodes = primaryRows.map((row, i) => {
     </li>
   </ol>
 </nav>
+

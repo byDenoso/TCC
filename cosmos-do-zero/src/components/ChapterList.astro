@@ -8,9 +8,10 @@ import CourseMap from './CourseMap.astro';
 ---
 <section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
   <div class="page-width">
+    <p class="section-id">O seu percurso</p>
     <div class="intro-head">
-      <h2 class="display" id="chapters-title">Aulas</h2>
-
+      <h2 class="display" id="chapters-title">Três aulas.<br /><em>Um novo olhar.</em></h2>
+      <p>Comece pelo nosso endereço cósmico. Depois, acompanhe a história do Universo e as pistas que nos permitem investigá-lo.</p>
     </div>
     <a class="resume-card" href={chapterUrl(primaryRows[0].id)} data-resume data-titles={JSON.stringify(Object.fromEntries(chapters.map((c) => [c.id, c.title])))} hidden>
       <span class="meta">Continuar de onde parou</span>
@@ -57,3 +58,4 @@ import CourseMap from './CourseMap.astro';
     <Badges />
   </div>
 </section>
+

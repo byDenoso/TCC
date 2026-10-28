@@ -126,8 +126,16 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
       </div>
       <nav class="chapter-pagination page-width" aria-label="Continuar a jornada">
         {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}
-        {next ? <a class="textlink" href={chapterUrl(next.id)}>Próximo: {chapterTitleShort[next.id]} <span aria-hidden="true">↗</span></a> : <a class="textlink" href={u(isPrimary ? '/#desafio' : '/laboratorio/')}>{isPrimary ? 'Fechar a jornada: testar as três ideias' : 'Voltar à exploração livre'} <span aria-hidden="true">↗</span></a>}
+        <a class="next-lesson-card" href={next ? chapterUrl(next.id) : u(isPrimary ? '/#desafio' : '/laboratorio/')}>
+          <span class="next-lesson-copy">
+            <span class="meta">{next ? `A seguir · ${next.minutes} min` : isPrimary ? 'Sua próxima descoberta' : 'Continue explorando'}</span>
+            <strong>{next ? chapterTitleShort[next.id] : isPrimary ? 'Conecte as três ideias' : 'Volte ao laboratório'}</strong>
+            <span>{next ? (next.learningGoal ?? next.intro) : isPrimary ? 'Revisite o que aprendeu no desafio da jornada. As explicações ajudam a escolher o que explorar de novo.' : 'Escolha outro experimento e continue investigando as suas perguntas.'}</span>
+          </span>
+          <span class="next-lesson-arrow" aria-hidden="true">→</span>
+        </a>
       </nav>
     </article>
   </main>
 </Base>
+

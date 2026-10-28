@@ -82,8 +82,13 @@ export function suggestTerms(terms: Term[], query: string, n = 3): number[] {
     const names = [t.term, ...(SYNONYMS[t.term] ?? [])].map(searchNormalize);
     let best = Infinity;
     for (const name of names) {
-      best = Math.min(best, editDistance(q, name, 12) / Math.max(q.length, name.length));
-      for (const w of name.split(' ')) for (const tok of q.split(' ')) if (w.length >= 3) best = Math.min(best, editDistance(tok, w, 6) / Math.max(tok.length, w.length) + 0.1);
+      const distance = editDistance(q, name, 12);
+      // max + 1 means "outside the search bound", not a measured distance.
+      if (distance <= 12) best = Math.min(best, distance / Math.max(q.length, name.length));
+      for (const w of name.split(' ')) for (const tok of q.split(' ')) if (w.length >= 3) {
+        const wordDistance = editDistance(tok, w, 6);
+        if (wordDistance <= 6) best = Math.min(best, wordDistance / Math.max(tok.length, w.length) + 0.1);
+      }
     }
     return best;
   };
@@ -91,3 +96,4 @@ export function suggestTerms(terms: Term[], query: string, n = 3): number[] {
 }
 
 export const countLabel = (n: number): string => `${n} ${n === 1 ? 'termo' : 'termos'}`;
+

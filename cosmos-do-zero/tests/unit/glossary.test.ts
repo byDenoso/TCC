@@ -23,4 +23,8 @@ describe('busca tolerante do glossário', () => {
     expect(names('zzzzqq')).toEqual([]);
     expect(suggestTerms(T, 'galaxa').map((i) => T[i].term)).toContain('Galáxia');
   });
+  it('não sugere nomes longos a partir de uma distância interrompida', () => {
+    for (const query of ['zzzzzz', 'zzzzqq', 'q'.repeat(100)]) expect(suggestTerms(T, query)).toEqual([]);
+  });
 });
+

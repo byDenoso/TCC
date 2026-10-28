@@ -62,7 +62,7 @@
 .reader-references li { margin-bottom: 11px; }
 .reader-references a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
 .reader-finish { display: flex; align-items: center; gap: 25px; padding: 30px 0 50px; }
-.reader-finish .cta { color: var(--ink); }
+.reader-finish .cta { color: var(--on-accent); }
 .reader-finish .cta[data-done='true'] { background: var(--surface); border-color: var(--line-strong); color: var(--ink); }
 .reader-finish p { font-size: 12px; color: var(--muted); line-height: 1.6; margin: 0; }
 .chapter-pagination { display: flex; justify-content: space-between; gap: 40px; border-top: 1px solid color-mix(in srgb, var(--line) 33%, transparent); padding: 30px 0 65px; align-items: start; }
@@ -105,3 +105,16 @@
 .reader-aside nav a { min-height: 44px; }
 .chapter-check, .reader-references, .reader-finish { scroll-margin-top: 90px; }
 .lesson-section > p { text-wrap: pretty; }
+
+/* Give the next learning destination a clear title, purpose and reading time. */
+.reader-page .chapter-pagination {display:grid;grid-template-columns:minmax(180px,.65fr) minmax(0,1.35fr);gap:40px;align-items:start;padding-block:32px 72px;border-color:var(--line-strong)}
+.reader-page .chapter-pagination>.textlink {min-height:48px;display:inline-flex;align-items:center;font-size:14px;width:fit-content}
+.reader-page .chapter-pagination .next-lesson-card {display:flex;align-items:center;justify-content:space-between;gap:32px;padding:28px 32px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);text-decoration:none;color:var(--ink);transition:background .18s,border-color .18s}
+.reader-page .next-lesson-card:hover {border-color:var(--accent);background:var(--bg-alt)}
+.next-lesson-copy {display:grid;gap:14px}
+.next-lesson-copy .meta {font-size:11px;letter-spacing:.07em;color:var(--accent-ink)}
+.next-lesson-copy strong {font:600 clamp(24px,2.5vw,32px)/1.2 var(--sans);letter-spacing:-.025em}
+.next-lesson-copy>span:last-child {font:400 15px/1.8 var(--body);color:var(--ink-2);max-width:50ch}
+.next-lesson-arrow {display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;border:1px solid var(--line-strong);border-radius:50%;font-size:22px;color:var(--accent-ink)}
+@media(max-width:760px){.reader-page .chapter-pagination{grid-template-columns:minmax(0,1fr);gap:24px}.reader-page .chapter-pagination .next-lesson-card{padding:24px 20px;gap:20px}.next-lesson-copy>span:last-child{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.reader-page .chapter-pagination .next-lesson-card{transition:none}}

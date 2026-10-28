@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePlaces } from '../../src/lib/reading-place';
+import { latestUnfinishedPlace, parsePlaces } from '../../src/lib/reading-place';
 
 const place = { chapter: 'galaxias-e-nebulosas', step: 3, total: 6, section: 'galaxias-e-nebulosas-nebulosas', title: 'Nebulosas', at: 100 };
 describe('retomar a leitura sem depender de armazenamento válido', () => {
@@ -14,4 +14,15 @@ describe('retomar a leitura sem depender de armazenamento válido', () => {
       expect(parsePlaces(JSON.stringify({ [place.chapter]: bad }))).toEqual({});
     }
   });
+  it('retoma a aula pendente mesmo após visitar ou concluir outra mais recentemente', () => {
+    const recent = {...place, chapter:'origem-do-universo', section:'origem-do-universo-primeira-luz', at:200};
+    const places = {[place.chapter]:place, [recent.chapter]:recent};
+    expect(latestUnfinishedPlace(places, [recent.chapter])).toEqual(place);
+    expect(latestUnfinishedPlace(places, [])).toEqual(recent);
+    expect(latestUnfinishedPlace(places, [place.chapter,recent.chapter])).toBeNull();
+  });
+  it('não oferece retomar uma aula que continua no primeiro passo', () => {
+    expect(latestUnfinishedPlace({[place.chapter]:{...place,step:0}}, [])).toBeNull();
+  });
 });
+

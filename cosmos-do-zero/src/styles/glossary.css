@@ -1,0 +1,72 @@
+/* ═════════ 06 · Glossário ═════════ */
+.glossary-section { padding: var(--space-section) 0; }
+.glossary-search { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-bottom: 18px; }
+.glossary-search label { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); }
+.glossary-search input { min-width: 0; border: 0; border-bottom: 2px solid var(--line); background: transparent; padding: 15px 0; color: var(--ink); border-radius: 0; font-size: 23px; font-family: var(--sans); letter-spacing: -0.02em; }
+.glossary-search input::placeholder { color: var(--muted); font-size: 18px; }
+.glossary-search input:focus-visible { outline: 0; border-bottom-color: var(--focus); box-shadow: 0 2px 0 var(--focus); }
+.glossary-search > span { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.glossary-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+.glossary-chips button { background: none; border: 1px solid color-mix(in srgb, var(--line) 40%, transparent); color: var(--ink-2); padding: 9px 14px; min-height: 40px; font-size: 12px; border-radius: 99px; transition: background 0.2s, color 0.2s; }
+.glossary-chips button:hover { background: var(--surface); }
+.glossary-chips button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.glossary-list { border-top: 1px solid color-mix(in srgb, var(--line) 27%, transparent); }
+.glossary-entry { border-bottom: 1px solid color-mix(in srgb, var(--line) 27%, transparent); }
+.glossary-entry summary { list-style: none; display: flex; justify-content: space-between; gap: 20px; padding: 22px 0; font-family: var(--sans); font-size: 24px; font-weight: 700; letter-spacing: -0.03em; cursor: pointer; min-height: 44px; }
+.glossary-entry summary::-webkit-details-marker { display: none; }
+.glossary-entry summary span { font-weight: 400; color: var(--accent-ink); transition: transform 0.25s var(--ease); }
+.glossary-entry[open] summary span { transform: rotate(45deg); }
+.glossary-entry > div { padding: 0 0 27px; max-width: 700px; }
+.glossary-entry p { font-size: 16px; line-height: 1.7; color: var(--ink-2); margin: 0; }
+.glossary-entry .glossary-example { color: var(--muted); font-size: 14px; margin-top: 12px; }
+.glossary-entry .textlink { margin-top: 16px; color: var(--accent-ink); }
+.glossary-empty { padding: 40px 0; font-size: 16px; color: var(--ink-2); }
+.glossary-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.glossary-suggest > div { display: contents; }
+.glossary-suggest-btn { min-height: 44px; padding: 8px 16px; border: 1px solid var(--line, currentColor); border-radius: 999px; background: var(--surface); color: var(--accent-ink); font: inherit; cursor: pointer; }
+.glossary-suggest-btn:hover, .glossary-suggest-btn:focus-visible { border-color: var(--accent); }
+.glossary-empty .textlink { background: none; border: 0; border-bottom: 1px solid currentColor; color: var(--accent-ink); margin-top: 8px; padding: 10px 0 8px; }
+
+
+.glossary-input-wrap { position: relative; min-width: 0; }
+.glossary-input-wrap input { width: 100%; padding-right: 48px; }
+.glossary-reset { position: absolute; right: 0; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--surface); color: var(--ink); font-size: 24px; }
+.glossary-reset:hover { background: var(--accent-soft); }
+.glossary-input-wrap input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.glossary-chips button { min-height: 44px; }
+@media(max-width:760px) {
+  .glossary-search { gap: 12px; }
+  .glossary-search input { font-size: 19px; }
+  .glossary-search input::placeholder { font-size: 14px; }
+  .glossary-entry summary { font-size: 21px; }
+  .glossary-entry p { font-size: 15px; }
+}
+
+/* A focused reference desk, loaded only where the dictionary appears. */
+.glossary-section .intro-head {display:grid;grid-template-columns:1.1fr 1fr;gap:48px;align-items:end;margin:20px 0 40px}
+.glossary-section .intro-head .display {font:600 clamp(40px,5vw,68px)/1.08 var(--sans);letter-spacing:-.045em;margin:0;max-width:12ch}
+.glossary-section .intro-head>p {font-size:16px;line-height:1.8;color:var(--ink-2);max-width:42ch;margin:0}
+.glossary-section .glossary-search {padding:24px;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;margin-bottom:20px}
+.glossary-section .glossary-search label {font-size:14px;font-weight:600}
+.glossary-section .glossary-search input {font:400 18px/1.5 var(--body);min-height:52px;padding-block:12px;border-bottom-color:var(--line-strong)}
+.glossary-section .glossary-search input::placeholder {font-size:16px}
+.glossary-section .glossary-search>span {font-size:13px}
+.glossary-section .glossary-chips {gap:8px;margin-bottom:32px}
+.glossary-section .glossary-chips button {border-color:var(--line-strong);border-radius:5px;font:500 13px/1.5 var(--body);min-height:44px}
+.glossary-section .glossary-entry {padding:0;border-top:0;border-bottom:1px solid var(--line-strong)}
+.glossary-section .glossary-entry>summary {padding-block:24px;font-size:24px;font-weight:550;line-height:1.4}
+.glossary-section .glossary-entry[open]>summary {color:var(--accent-ink)}
+.glossary-section .glossary-entry>div {max-width:75ch;padding:0 0 28px}
+.glossary-section .glossary-entry p {font-size:17px;line-height:1.85}
+.glossary-section .glossary-entry .glossary-example {padding:16px 20px;background:var(--surface);border-left:2px solid var(--accent);font-size:15px;margin-top:18px;color:var(--ink-2)}
+.glossary-section .glossary-entry .textlink {font-size:14px;min-height:44px;align-items:center}
+@media(max-width:760px){
+ .glossary-section .intro-head {grid-template-columns:1fr;gap:24px}
+ .glossary-section .intro-head .display {font-size:44px;max-width:13ch}
+ .glossary-section .intro-head>p {font-size:15px}
+ .glossary-section .glossary-search {grid-template-columns:minmax(0,1fr);padding:20px}
+ .glossary-section .glossary-search input {font-size:16px}
+ .glossary-section .glossary-search input::placeholder {font-size:14px}
+ .glossary-section .glossary-entry>summary {font-size:22px}
+ .glossary-section .glossary-entry p {font-size:16px}
+}

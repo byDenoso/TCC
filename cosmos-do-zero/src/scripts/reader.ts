@@ -117,7 +117,13 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   jump.addEventListener('change', () => show(Number(jump.value), true, true));
   prev.addEventListener('click', () => show(current - 1, true, true));
   next.addEventListener('click', () => {
-    if (current === sections.length - 1) { $('.chapter-check', root)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }); return; }
+    if (current === sections.length - 1) {
+      const challenge = $('.chapter-check', root);
+      const heading = challenge?.querySelector<HTMLElement>('h2');
+      if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
+      challenge?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      return;
+    }
     show(current + 1, true, true);
   });
   dots.forEach((d, k) => d.addEventListener('click', () => show(k, true, true)));
@@ -168,8 +174,9 @@ function offerResume(root: HTMLElement, bar: HTMLElement, place: Place, go: (k: 
   yes.dataset.resumeGo = '';
   const close = () => box.remove();
   yes.addEventListener('click', () => { close(); go(place.step); });
-  no.addEventListener('click', () => { close(); root.querySelector<HTMLElement>('.lesson-section h2')?.focus({ preventScroll: true }); });
+  no.addEventListener('click', () => { close(); go(0); });
   box.append(text, yes, no);
   const first = root.querySelector('.lesson-section');
   (first ?? bar).before(box);
 }
+
