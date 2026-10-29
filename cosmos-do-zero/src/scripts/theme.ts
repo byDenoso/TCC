@@ -1,4 +1,4 @@
-/** Tema claro (creme + azul-noite + laranja) ou escuro (céu noturno + creme + laranja). Padrão: o do sistema; a escolha fica salva. */
+/** Cosmic interface. Preserve the system preference and the saved choice. */
 const KEY = 'cosmos-theme';
 type Theme = 'light' | 'dark';
 const system = (): Theme => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -8,7 +8,9 @@ export function initTheme(): void {
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')];
   const sync = () => {
     const t = current();
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', t === 'dark' ? '#070b18' : '#fff8e7');
+    // Keep browser chrome in sync with the canonical CSS token, not a second palette.
+    const background = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+    if (background) document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background);
     for (const b of buttons) {
       b.setAttribute('aria-pressed', String(t === 'dark'));
       b.setAttribute('aria-label', t === 'dark' ? 'Usar tema claro' : 'Usar tema escuro');

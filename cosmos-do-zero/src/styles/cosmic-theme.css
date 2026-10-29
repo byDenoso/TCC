@@ -1,0 +1,117 @@
+/* Cosmos Next: interface palette only. Physical data / CMB colour maps stay unchanged.
+   Imported by Base after the existing theme. Explicit html specificity also wins
+   over older dark-mode declarations in route-level CSS without !important. */
+html:root {
+  --bg: #f4f5fb;
+  --bg-alt: #ebedf7;
+  --surface: #ffffff;
+  --surface-2: #e3e6f3;
+  --ink: #18213b;
+  --ink-2: #354461;
+  --muted: #526079;
+  --line: #cdd3e5;
+  --line-strong: #77829d;
+  --accent: #6540bb;
+  --accent-strong: #4f2c9c;
+  --accent-ink: #5935ad;
+  --accent-soft: #eae3fb;
+  --on-accent: #ffffff;
+  --accent-2: #08707a;
+  --shadow: rgba(7, 11, 27, 0.12);
+  --focus: #08707a;
+  --glow-core: #6540bb;
+  --glow-mid: #08707a;
+  color-scheme: light;
+}
+html:root[data-theme='dark'] {
+  --bg: #070b1b;
+  --bg-alt: #0c1226;
+  --surface: #121a30;
+  --surface-2: #1b2540;
+  --ink: #f5f3ff;
+  --ink-2: #d4d9ed;
+  --muted: #aab6d1;
+  --line: #2b3854;
+  --line-strong: #697a9b;
+  --accent: #bda4ff;
+  --accent-strong: #d0bcff;
+  --accent-ink: #c9b4ff;
+  --accent-soft: #282044;
+  --on-accent: #160e2a;
+  --accent-2: #5ce1e6;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --focus: #5ce1e6;
+  --glow-core: #bda4ff;
+  --glow-mid: #5ce1e6;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+html:root:not([data-theme='light']) {
+  --bg: #070b1b;
+  --bg-alt: #0c1226;
+  --surface: #121a30;
+  --surface-2: #1b2540;
+  --ink: #f5f3ff;
+  --ink-2: #d4d9ed;
+  --muted: #aab6d1;
+  --line: #2b3854;
+  --line-strong: #697a9b;
+  --accent: #bda4ff;
+  --accent-strong: #d0bcff;
+  --accent-ink: #c9b4ff;
+  --accent-soft: #282044;
+  --on-accent: #160e2a;
+  --accent-2: #5ce1e6;
+  --shadow: rgba(0, 0, 0, 0.4);
+  --focus: #5ce1e6;
+  --glow-core: #bda4ff;
+  --glow-mid: #5ce1e6;
+  color-scheme: dark;
+}
+}
+
+/* Reuse existing semantic aliases, fonts and layout. No added font downloads. */
+html { background: var(--bg); }
+body { background: var(--bg); }
+.header-shell.solid, .header-shell { color: var(--ink); }
+.header { border-color: var(--line); }
+.identity-mark, .identity-mark::before { border-color: var(--line-strong); }
+.identity-mark::after { background: var(--accent-2); box-shadow: none; }
+.main-nav a { font-size: 13px; letter-spacing: .07em; }
+.header-cta { border-color: var(--line-strong); }
+.header-cta:hover { background: var(--surface-2); color: var(--ink); }
+.cta { box-shadow: none; border-color: var(--accent); }
+.cta:hover { border-color: var(--accent-strong); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+:is(input, select, textarea) { accent-color: var(--accent); }
+:is(button, a, input, select, summary) { scroll-margin-block: 110px 28px; }
+.section-id { color: var(--accent-ink); }
+.section-id::before { width: 30px; }
+.textlink:hover { color: var(--accent-ink); }
+.reader-page { background: var(--bg); }
+.reader-page :is(p, li) { line-height: 1.75; }
+.reader-page :is(h1, h2, h3) { text-wrap: balance; }
+/* Never recolour images, canvas or SVG marks representing scientific values. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media (forced-colors: active) {
+  :focus-visible { outline-color: Highlight; }
+  .cta, .header-cta { border: 1px solid ButtonText; }
+}
+/* Existing CMB instrument becomes a calm reading panel, not a decorative backdrop. */
+.hero-shell { background: var(--bg); }
+.hero-copy h1 .serif { color: var(--accent-ink); }
+.hero-copy .hero-overline { font-size: 12px; line-height: 1.6; letter-spacing: .09em; }
+.hero-main .cmb-hero { min-width: 0; padding: clamp(18px, 2.4vw, 34px); border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.cmb-instrument-label { gap: 12px; }
+.cmb-frame { box-shadow: 0 0 0 1px var(--line-strong); }
+.cmb-frame:focus-visible { outline: 3px solid var(--focus); outline-offset: 5px; box-shadow: none; }
+.hero-foot-left .meta, .hero-foot-center .statcopy, .hero-foot .down { font-size: 11px; }
+@media (max-width: 760px) {
+  .hero-main { padding-top: 120px; }
+  .hero-copy .hero-overline { font-size: 11px; }
+  .hero-main .cmb-hero { margin-top: 36px; }
+  .cmb-instrument-label { flex-wrap: wrap; }
+}
