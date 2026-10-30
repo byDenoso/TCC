@@ -1,0 +1,16 @@
+{
+  "name": "nexo",
+  "interface": {
+    "displayName": "NEXO"
+  },
+  "plugins": [
+    {
+      "name": "nexo",
+      "source": {
+        "source": "local",
+        "path": "./plugins/nexo"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
