@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { createMcpHandler } from 'mcp-handler';
 import { z } from 'zod';
 import { status, propose, bindRecipe, boardPost } from '../lib/core.js';
@@ -38,5 +39,6 @@ export default async function handler(req, res) {
   const response = await mcp(request);
   res.statusCode = response.status;
   for (const [key, value] of response.headers) res.setHeader(key, value);
-  res.end(Buffer.from(await response.arrayBuffer()));
+  if (!response.body) return res.end();
+  Readable.fromWeb(response.body).pipe(res);
 }
