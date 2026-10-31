@@ -1,3 +1,5 @@
+import { configuredCatalog } from '../lib/drive-catalog.js';
+import { CATEGORIES } from '../lib/catalog.js';
 import { Readable } from 'node:stream';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 import { z } from 'zod';
@@ -9,6 +11,17 @@ const requireWrite = ctx => {
   if (!ctx.http?.authInfo?.scopes?.includes(SCOPES.WRITE)) throw new Error('Permissão de escrita necessária');
 };
 const mcp = createMcpHandler(server => {
+  server.registerTool('catalog_status', { description: 'Read configured private catalog sources and report freshness, hashes and blocked connections. Does not execute science.',
+    inputSchema: z.object({}), annotations: { readOnlyHint: true, destructiveHint: false } },
+    async () => text(await configuredCatalog().status()));
+  server.registerTool('catalog_search', { description: 'Search typed capabilities, solvers, adapters, datasets, recipes, skills, contracts and Tower/Writer references. Paginated metadata only; recorded readiness is not execution authorization.',
+    inputSchema: z.object({ q: z.string().max(200).default(''), category: z.enum(CATEGORIES).optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.string().max(1024).optional() }),
+    annotations: { readOnlyHint: true, destructiveHint: false } },
+    async args => text(await configuredCatalog().search(args)));
+  server.registerTool('catalog_get', { description: 'Read one discovered catalog record with provenance and readiness boundaries. Does not fetch arbitrary files, run solvers or write Tower.',
+    inputSchema: z.object({ id: z.string().min(1).max(1024) }), annotations: { readOnlyHint: true, destructiveHint: false } },
+    async args => text(await configuredCatalog().get(args)));
+
   server.registerTool('status', { description: 'Retorna a projeção pública atual do NEXO.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true } },
     async () => text(await status()));

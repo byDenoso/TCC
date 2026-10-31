@@ -67,3 +67,9 @@ test('write request classification denies calls and batched calls except status'
     { method: 'tools/call', params: { name: 'board_post' } }]), true);
   assert.equal(isWriteRequest({ method: 'tools/call' }), true);
 });
+
+
+test('discovery tools require read scope and unknown tools remain fail-closed',()=>{
+  for(const name of ['catalog_status','catalog_search','catalog_get'])assert.equal(isWriteRequest({method:'tools/call',params:{name}}),false);
+  assert.equal(isWriteRequest({method:'tools/call',params:{name:'dispatch'}}),true);
+});

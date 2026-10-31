@@ -13,6 +13,8 @@ const writes = new Map();
 Object.assign(process.env, {
   OAUTH_ISSUER: 'https://issuer.invalid/', OAUTH_AUDIENCE: 'https://nexo.example.test/api/mcp',
   OAUTH_JWKS_URI: 'https://issuer.invalid/jwks', OAUTH_OWNER_SUB: 'only-owner',
+  GOOGLE_DRIVE_ACCESS_TOKEN: 'mock-drive-only',
+  NEXO_CATALOG_SOURCES: JSON.stringify([{id:'fixture',fileId:'test-catalog',format:'runtime'}]),
   GITHUB_TOKEN: 'mock-only', NEXO_BRANCH: 'nexo/mcp-smoke-disposable',
 });
 
@@ -29,6 +31,10 @@ function token(scope) {
 before(async () => {
   globalThis.fetch = async (input, options = {}) => {
     const url = String(input);
+    if (url.startsWith('https://www.googleapis.com/drive/v3/files/test-catalog')) {
+      assert.equal(options.method,'GET');
+      return url.includes('alt=media') ? Response.json({contract:'MCP_RUNTIME_CONTRACT_V1',capabilities:[{id:'solver.example',state:'CATALOGUED'}]}) : Response.json({mimeType:'application/json',version:'1',modifiedTime:'2026-10-30T00:00:00Z'});
+    }
     if (url === process.env.OAUTH_JWKS_URI) return Response.json({ keys: [jwk] });
     if (url.includes('bydenoso.github.io')) return Response.json({ tests: [], evolution: {} });
     if (url.includes('/contents/nexo_persist/requests/')) {
@@ -101,4 +107,15 @@ test('HTTP authenticated write stages BOARD_POST only on disposable branch', asy
   assert.equal(writes.size, 1);
   const payload = JSON.parse(Buffer.from([...writes.values()][0].content, 'base64').toString());
   assert.equal(payload.envelope.kind, 'BOARD_POST');
+});
+
+
+test('HTTP reader discovers catalog and gets provenance without a write grant', async()=>{
+  for(const [name,args,expected] of [
+    ['catalog_status',{},/AVAILABLE/],
+    ['catalog_search',{category:'solver'},/solver.example/],
+    ['catalog_get',{id:'fixture:capability:solver.example'},/sha256/]]) {
+    const r=await rpc(message('tools/call',{name,arguments:args}),token('nexo:read'));
+    const body=await r.text(); assert.equal(r.status,200,body);assert.match(body,expected);
+  }
 });
