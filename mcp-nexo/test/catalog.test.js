@@ -38,3 +38,14 @@ test('search status and revision belong to one snapshot across cache expiry',asy
  const now=Date.now;let clocks=0,calls=0;Date.now=()=>clocks++===0?0:30001;
  try{const s=mod.createCatalogService({sources:[sources[0]],readSource:async()=>{if(++calls>1)throw Error('upstream');return reader(sources[0]);}});const r=await s.search({});assert.ok(r.items.length);assert.equal(r.sourceStatus,'AVAILABLE');assert.equal(calls,1);}finally{Date.now=now;}
 });
+
+test('canonical dataset inventory aliases preserve raw metadata and readiness boundaries',async()=>{
+ const csv='dataset_id,canonical_name,logical_path,validation_state,camb_integration_status,adapter_or_handler\nNEXO-CAT-001,DESI_DR1,04_DATASETS/DESI_DR1,METADATA_ONLY,SUPPORTED,DESIAdapter\n';
+ const svc=mod.createCatalogService({sources:[{id:'d',fileId:'fixture',format:'datasets_csv'}],readSource:async()=>({text:csv})});
+ const r=await svc.get({id:'d:dataset:NEXO-CAT-001'});
+ assert.equal(r.label,'DESI_DR1');
+ assert.equal(r.record.dataset_id,'NEXO-CAT-001');
+ assert.equal(r.record.adapter_or_handler,'DESIAdapter');
+ assert.equal(r.readiness.remoteExecution,false);
+ assert.equal((await svc.search({category:'adapter'})).total,1);
+});
