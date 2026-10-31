@@ -25,7 +25,7 @@ function csvRows(text) {
   if(quoted) throw Error('INVALID_SOURCE');
   if(field || row.length || closed){row.push(field);rows.push(row);}
   const headers=rows.shift();
-  if(!headers?.includes('resource_id') || new Set(headers).size!==headers.length) throw Error('INVALID_SOURCE');
+  if(!(headers?.includes('resource_id')||headers?.includes('dataset_id')) || new Set(headers).size!==headers.length) throw Error('INVALID_SOURCE');
   return rows.filter(r=>r.some(Boolean)).map(r=>{if(r.length!==headers.length)throw Error('INVALID_SOURCE');return Object.fromEntries(headers.map((h,i)=>[h,r[i]]));});
 }
 function parse(source,text) {
@@ -48,7 +48,11 @@ function parse(source,text) {
     }
   } else if(source.format==='datasets_csv') {
     const adapters=new Map();
-    for(const r of csvRows(text)) {
+    for(const original of csvRows(text)) {
+      const handler=original.adapter_or_handler||'';
+      const adapter=original.adapter||( /^[A-Za-z][A-Za-z0-9_.-]*$/.test(handler) && handler!=='None' ? handler : '' );
+      const r={...original,resource_id:original.resource_id||original.dataset_id,name:original.name||original.canonical_name,
+        integration_status:original.integration_status||original.camb_integration_status,adapter};
       add(r.resource_id,'dataset',r.name,r);
       if(r.adapter){if(!adapters.has(r.adapter))adapters.set(r.adapter,[]);adapters.get(r.adapter).push({resource_id:r.resource_id,family:r.family,integration_status:r.integration_status,validation_state:r.validation_state,scope:r.integration_scope});}
     }
