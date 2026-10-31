@@ -1,12 +1,11 @@
 const SCHEMA=['data','task','item','titulo','resultado','metodo','numeros','limites','referencias','link_dados'];
 const SCOPE='https://www.googleapis.com/auth/spreadsheets.readonly';
 
-export async function readTowerResults({oidcToken,connector,subject,spreadsheetId,limit=10,fetchImpl=fetch}) {
-  if(!oidcToken || !/^[\w.-]+\/[\w.-]+$/.test(connector||'') || !subject || !/^[\w-]{1,160}$/.test(spreadsheetId||'')) throw Error('CONNECT_NOT_CONFIGURED');
-  if(!Number.isSafeInteger(limit)||limit<1||limit>20) throw Error('INVALID_LIMIT');
+export async function getGoogleConnectToken({oidcToken,connector,subject,scopes=[SCOPE],fetchImpl=fetch}) {
+  if(!oidcToken || !/^[\\w.-]+\\/[\\w.-]+$/.test(connector||'') || !subject) throw Error('CONNECT_NOT_CONFIGURED');
   const connect=await fetchImpl('https://api.vercel.com/v1/connect/token/'+encodeURIComponent(connector),{
     method:'POST',redirect:'error',headers:{authorization:'Bearer '+oidcToken,'content-type':'application/json'},
-    body:JSON.stringify({subject:{type:'user',id:subject},scopes:[SCOPE]}),signal:AbortSignal.timeout(10000)
+    body:JSON.stringify({subject:{type:'user',id:subject},scopes:scopes}),signal:AbortSignal.timeout(10000)
   });
   if(!connect.ok) {
     const payload=await connect.json().catch(()=>null);
@@ -14,7 +13,7 @@ export async function readTowerResults({oidcToken,connector,subject,spreadsheetI
     if(connect.status===401 && code==='user_authorization_required') {
       const auth=await fetchImpl('https://api.vercel.com/v1/connect/authorize/'+encodeURIComponent(connector),{
         method:'POST',redirect:'error',headers:{authorization:'Bearer '+oidcToken,'content-type':'application/json',accept:'application/json'},
-        body:JSON.stringify({subject:{type:'user',id:subject},scopes:[SCOPE]}),signal:AbortSignal.timeout(10000)
+        body:JSON.stringify({subject:{type:'user',id:subject},scopes:scopes}),signal:AbortSignal.timeout(10000)
       });
       if(!auth.ok) throw Error('CONNECT_AUTHORIZATION_UNAVAILABLE_HTTP_'+auth.status);
       const data=await auth.json();
@@ -28,6 +27,15 @@ export async function readTowerResults({oidcToken,connector,subject,spreadsheetI
   }
   const {token}=await connect.json();
   if(typeof token!=='string'||!token) throw Error('CONNECT_UNAVAILABLE');
+  return {token};
+}
+
+export async function readTowerResults({oidcToken,connector,subject,spreadsheetId,limit=10,fetchImpl=fetch}) {
+  if(!/^[\\w-]{1,160}$/.test(spreadsheetId||'')) throw Error('CONNECT_NOT_CONFIGURED');
+  if(!Number.isSafeInteger(limit)||limit<1||limit>20) throw Error('INVALID_LIMIT');
+  const access=await getGoogleConnectToken({oidcToken,connector,subject,fetchImpl});
+  if(access.authorization_required) return access;
+  const {token}=access;
   const base='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(spreadsheetId);
   async function get(path){
     const r=await fetchImpl(base+path,{method:'GET',redirect:'error',headers:{authorization:'Bearer '+token},signal:AbortSignal.timeout(15000)});
