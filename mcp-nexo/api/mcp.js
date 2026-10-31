@@ -1,6 +1,6 @@
 import { configuredCatalog } from '../lib/drive-catalog.js';
 import { CATEGORIES } from '../lib/catalog.js';
-import { readTowerResults } from '../lib/tower.js';
+import { readTowerResults, getGoogleConnectToken } from '../lib/tower.js';
 import { Readable } from 'node:stream';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 import { z } from 'zod';
@@ -11,20 +11,34 @@ const text = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }
 const requireWrite = ctx => {
   if (!ctx.http?.authInfo?.scopes?.includes(SCOPES.WRITE)) throw new Error('Permissão de escrita necessária');
 };
+const catalogRead = async (ctx, operation, args) => {
+  let token=process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+  if(!token){
+    const access=await getGoogleConnectToken({
+      oidcToken:ctx.http?.authInfo?.extra?.projectOidc,
+      connector:process.env.GOOGLE_CONNECTOR,
+      subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',
+      scopes:['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/spreadsheets.readonly']
+    });
+    if(access.authorization_required) return access;
+    token=access.token;
+  }
+  return configuredCatalog({token})[operation](args);
+};
 const mcp = createMcpHandler(server => {
   server.registerTool('tower_results', { description: 'Lê as linhas recentes da aba privada RESULTADOS da Tower. Preserva método, limites e referências; não acessa o mural.',
     inputSchema: z.object({limit:z.number().int().min(1).max(20).default(10)}), annotations:{readOnlyHint:true,destructiveHint:false} },
     async ({limit},ctx) => text(await readTowerResults({limit,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
   server.registerTool('catalog_status', { description: 'Read configured private catalog sources and report freshness, hashes and blocked connections. Does not execute science.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true, destructiveHint: false } },
-    async () => text(await configuredCatalog().status()));
+    async (_,ctx) => text(await catalogRead(ctx,'status')));
   server.registerTool('catalog_search', { description: 'Search typed capabilities, solvers, adapters, datasets, recipes, skills, contracts and Tower/Writer references. Paginated metadata only; recorded readiness is not execution authorization.',
     inputSchema: z.object({ q: z.string().max(200).default(''), category: z.enum(CATEGORIES).optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.string().max(1024).optional() }),
     annotations: { readOnlyHint: true, destructiveHint: false } },
-    async args => text(await configuredCatalog().search(args)));
+    async (args,ctx) => text(await catalogRead(ctx,'search',args)));
   server.registerTool('catalog_get', { description: 'Read one discovered catalog record with provenance and readiness boundaries. Does not fetch arbitrary files, run solvers or write Tower.',
     inputSchema: z.object({ id: z.string().min(1).max(1024) }), annotations: { readOnlyHint: true, destructiveHint: false } },
-    async args => text(await configuredCatalog().get(args)));
+    async (args,ctx) => text(await catalogRead(ctx,'get',args)));
 
   server.registerTool('status', { description: 'Retorna a projeção pública atual do NEXO.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true } },
