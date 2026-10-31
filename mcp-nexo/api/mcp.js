@@ -1,6 +1,7 @@
 import { configuredCatalog } from '../lib/drive-catalog.js';
 import { CATEGORIES } from '../lib/catalog.js';
 import { readTowerResults, getGoogleConnectToken } from '../lib/tower.js';
+import { inspectLocalArtifact } from '../lib/artifacts.js';
 import { Readable } from 'node:stream';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 import { z } from 'zod';
@@ -29,6 +30,7 @@ const mcp = createMcpHandler(server => {
   server.registerTool('tower_results', { description: 'Lê as linhas recentes da aba privada RESULTADOS da Tower. Preserva método, limites e referências; não acessa o mural.',
     inputSchema: z.object({limit:z.number().int().min(1).max(20).default(10)}), annotations:{readOnlyHint:true,destructiveHint:false} },
     async ({limit},ctx) => text(await readTowerResults({limit,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
+  server.registerTool('local_artifact_status', {description:'Read-only check of a LOCAL_ONLY Tower row against exact-name Drive copies and SHA-256.', inputSchema:z.object({row:z.number().int().min(2)}),annotations:{readOnlyHint:true,destructiveHint:false}}, async ({row},ctx)=>text(await inspectLocalArtifact({row,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
   server.registerTool('catalog_status', { description: 'Read configured private catalog sources and report freshness, hashes and blocked connections. Does not execute science.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true, destructiveHint: false } },
     async (_,ctx) => text(await catalogRead(ctx,'status')));
