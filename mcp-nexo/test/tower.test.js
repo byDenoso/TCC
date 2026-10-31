@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readTowerResults } from '../lib/tower.js';
+import { readTowerResults, getGoogleConnectToken } from '../lib/tower.js';
 
 test('reads bounded latest Tower result rows with provenance and read-only scopes', async () => {
   const calls=[];
@@ -42,4 +42,13 @@ test('missing consent starts authorization for the same subject and read scope',
   assert.deepEqual(value,{authorization_required:true,authorization_url:'https://connect.vercel.com/authorize/example'});
   assert.deepEqual(calls[0].body,calls[1].body);
   assert.match(calls[1].url,/\/v1\/connect\/authorize\//);
+});
+
+test('catalog Connect asks only existing readonly Drive and Sheets scopes', async()=>{
+ const calls=[];const fetchImpl=async (url,options)=>{calls.push({url:String(url),options});return Response.json({token:'synthetic-google'});};
+ const scopes=['https://www.googleapis.com/auth/drive.readonly','https://www.googleapis.com/auth/spreadsheets.readonly'];
+ const r=await getGoogleConnectToken({oidcToken:'synthetic-oidc',connector:'google/example',subject:'owner',scopes,fetchImpl});
+ assert.equal(r.token,'synthetic-google');
+ assert.deepEqual(JSON.parse(calls[0].options.body).scopes,scopes);
+ assert.equal(calls.length,1);
 });
