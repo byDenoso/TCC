@@ -131,3 +131,12 @@ test('HTTP reader can read Tower results without write scope', async()=>{
   const r=await rpc(message('tools/call',{name:'tower_results',arguments:{limit:1}}),token('nexo:read'));
   const body=await r.text();assert.equal(r.status,200,body);assert.match(body,/resultado/);
 });
+
+test('HTTP catalog reads through Vercel Connect without a static Google token',async()=>{
+ const saved=process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+ delete process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+ try {
+   const r=await rpc(message('tools/call',{name:'catalog_status',arguments:{}}),token('nexo:read'));
+   const body=await r.text();assert.equal(r.status,200,body);assert.match(body,/AVAILABLE/);
+ } finally {process.env.GOOGLE_DRIVE_ACCESS_TOKEN=saved;}
+});
