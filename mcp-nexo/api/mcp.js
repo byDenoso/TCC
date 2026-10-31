@@ -1,5 +1,6 @@
 import { configuredCatalog } from '../lib/drive-catalog.js';
 import { CATEGORIES } from '../lib/catalog.js';
+import { readTowerResults } from '../lib/tower.js';
 import { Readable } from 'node:stream';
 import { createMcpHandler, withMcpAuth } from 'mcp-handler';
 import { z } from 'zod';
@@ -11,6 +12,9 @@ const requireWrite = ctx => {
   if (!ctx.http?.authInfo?.scopes?.includes(SCOPES.WRITE)) throw new Error('Permissão de escrita necessária');
 };
 const mcp = createMcpHandler(server => {
+  server.registerTool('tower_results', { description: 'Lê as linhas recentes da aba privada RESULTADOS da Tower. Preserva método, limites e referências; não acessa o mural.',
+    inputSchema: z.object({limit:z.number().int().min(1).max(20).default(10)}), annotations:{readOnlyHint:true,destructiveHint:false} },
+    async ({limit},ctx) => text(await readTowerResults({limit,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
   server.registerTool('catalog_status', { description: 'Read configured private catalog sources and report freshness, hashes and blocked connections. Does not execute science.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true, destructiveHint: false } },
     async () => text(await configuredCatalog().status()));
@@ -35,8 +39,12 @@ const mcp = createMcpHandler(server => {
     inputSchema: z.object({ to: z.string(), text: z.string(), refs: z.array(z.unknown()).default([]) }) },
     async ({ to, text: body, refs }, ctx) => { requireWrite(ctx); return text(await boardPost(to, body, refs)); });
 });
-const verify = async (_request, token) => verifyAccessToken(token);
-const options = { required: true, resourceMetadataPath: '/.well-known/oauth-protected-resource' };
+const verify = async (request, token) => {
+  const info = await verifyAccessToken(token);
+  if (!info) return undefined;
+  return {...info,extra:{...info.extra,projectOidc:request.headers.get('x-vercel-oidc-token') || process.env.VERCEL_OIDC_TOKEN}};
+};
+const options = { required: true, resourceMetadataPath: '/.well-known/oauth-protected-resource/api/mcp' };
 const readHandler = withMcpAuth(mcp, verify, { ...options, requiredScopes: [SCOPES.READ] });
 const writeHandler = withMcpAuth(mcp, verify, { ...options, requiredScopes: [SCOPES.READ, SCOPES.WRITE] });
 

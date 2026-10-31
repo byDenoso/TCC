@@ -81,7 +81,7 @@ export function isWriteRequest(body) {
   if (Array.isArray(body)) return body.some(isWriteRequest);
   if (!body || typeof body !== 'object') return true;
   if (body.method !== 'tools/call') return false;
-  return !['status', 'catalog_status', 'catalog_search', 'catalog_get'].includes(body.params?.name);
+  return !['status', 'catalog_status', 'catalog_search', 'catalog_get', 'tower_results'].includes(body.params?.name);
 }
 
 export const SCOPES = Object.freeze({ READ, WRITE });

@@ -14,6 +14,7 @@ Object.assign(process.env, {
   OAUTH_ISSUER: 'https://issuer.invalid/', OAUTH_AUDIENCE: 'https://nexo.example.test/api/mcp',
   OAUTH_JWKS_URI: 'https://issuer.invalid/jwks', OAUTH_OWNER_SUB: 'only-owner',
   GOOGLE_DRIVE_ACCESS_TOKEN: 'mock-drive-only',
+  GOOGLE_CONNECTOR: 'google/test', GOOGLE_CONNECT_SUBJECT_ID: 'owner', NEXO_TOWER_SPREADSHEET_ID: 'fixture',
   NEXO_CATALOG_SOURCES: JSON.stringify([{id:'fixture',fileId:'test-catalog',format:'runtime'}]),
   GITHUB_TOKEN: 'mock-only', NEXO_BRANCH: 'nexo/mcp-smoke-disposable',
 });
@@ -31,6 +32,12 @@ function token(scope) {
 before(async () => {
   globalThis.fetch = async (input, options = {}) => {
     const url = String(input);
+    if(url.startsWith('https://api.vercel.com/v1/connect/token/')) return Response.json({token:'synthetic-google'});
+    if(url.includes('sheets.googleapis.com/v4/spreadsheets/fixture?')) return Response.json({sheets:[{properties:{title:'RESULTADOS',gridProperties:{rowCount:10}}}]});
+    if(url.includes('sheets.googleapis.com/v4/spreadsheets/fixture/values/')) {
+      if(url.includes('A1%3AJ1')) return Response.json({values:[['data','task','item','titulo','resultado','metodo','numeros','limites','referencias','link_dados']]});
+      return Response.json({values:[['2026','S1','ID','titulo','resultado']]});
+    }
     if (url.startsWith('https://www.googleapis.com/drive/v3/files/test-catalog')) {
       assert.equal(options.method,'GET');
       return url.includes('alt=media') ? Response.json({contract:'MCP_RUNTIME_CONTRACT_V1',capabilities:[{id:'solver.example',state:'CATALOGUED'}]}) : Response.json({mimeType:'application/json',version:'1',modifiedTime:'2026-10-30T00:00:00Z'});
@@ -65,7 +72,7 @@ after(async () => {
 async function rpc(body, auth) {
   return originalFetch(base, { method: 'POST', headers: {
     accept: 'application/json, text/event-stream', 'content-type': 'application/json',
-    'mcp-protocol-version': '2025-03-26', ...(auth ? { authorization: 'Bearer ' + auth } : {}),
+    'mcp-protocol-version': '2025-03-26', 'x-vercel-oidc-token':'synthetic-oidc', ...(auth ? { authorization: 'Bearer ' + auth } : {}),
   }, body: JSON.stringify(body) });
 }
 const message = (method, params = {}) => ({ jsonrpc: '2.0', id: 1, method, params });
@@ -73,7 +80,7 @@ const message = (method, params = {}) => ({ jsonrpc: '2.0', id: 1, method, param
 test('HTTP missing bearer is 401 with OAuth discovery challenge', async () => {
   const r = await rpc(message('initialize'));
   assert.equal(r.status, 401);
-  assert.match(r.headers.get('www-authenticate') || '', /oauth-protected-resource/);
+  assert.match(r.headers.get('www-authenticate') || '', /oauth-protected-resource\/api\/mcp/);
 });
 test('HTTP authorized initialize and tools/list', async () => {
   const access = token('nexo:read');
@@ -118,4 +125,9 @@ test('HTTP reader discovers catalog and gets provenance without a write grant', 
     const r=await rpc(message('tools/call',{name,arguments:args}),token('nexo:read'));
     const body=await r.text(); assert.equal(r.status,200,body);assert.match(body,expected);
   }
+});
+
+test('HTTP reader can read Tower results without write scope', async()=>{
+  const r=await rpc(message('tools/call',{name:'tower_results',arguments:{limit:1}}),token('nexo:read'));
+  const body=await r.text();assert.equal(r.status,200,body);assert.match(body,/resultado/);
 });
