@@ -26,8 +26,8 @@ export function createDriveReader({token,fetchImpl=fetch}){
   };
 }
 let service;let configuration;
-export function configuredCatalog(){
-  const config=process.env.NEXO_CATALOG_SOURCES||'[]';const token=process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+export function configuredCatalog({token:scopedToken}={}){
+  const config=process.env.NEXO_CATALOG_SOURCES||'[]';const token=scopedToken||process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
   // Credential rotation invalidates cache. Values are never logged or returned.
   if(!service||configuration?.config!==config||configuration?.token!==token){
     const sources=JSON.parse(config);
