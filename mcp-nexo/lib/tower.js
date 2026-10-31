@@ -2,7 +2,7 @@ const SCHEMA=['data','task','item','titulo','resultado','metodo','numeros','limi
 const SCOPE='https://www.googleapis.com/auth/spreadsheets.readonly';
 
 export async function getGoogleConnectToken({oidcToken,connector,subject,scopes=[SCOPE],fetchImpl=fetch}) {
-  if(!oidcToken || !/^[\\w.-]+\\/[\\w.-]+$/.test(connector||'') || !subject) throw Error('CONNECT_NOT_CONFIGURED');
+  if(!oidcToken || !/^[\w.-]+\/[\w.-]+$/.test(connector||'') || !subject) throw Error('CONNECT_NOT_CONFIGURED');
   const connect=await fetchImpl('https://api.vercel.com/v1/connect/token/'+encodeURIComponent(connector),{
     method:'POST',redirect:'error',headers:{authorization:'Bearer '+oidcToken,'content-type':'application/json'},
     body:JSON.stringify({subject:{type:'user',id:subject},scopes:scopes}),signal:AbortSignal.timeout(10000)
@@ -31,7 +31,7 @@ export async function getGoogleConnectToken({oidcToken,connector,subject,scopes=
 }
 
 export async function readTowerResults({oidcToken,connector,subject,spreadsheetId,limit=10,fetchImpl=fetch}) {
-  if(!/^[\\w-]{1,160}$/.test(spreadsheetId||'')) throw Error('CONNECT_NOT_CONFIGURED');
+  if(!/^[\w-]{1,160}$/.test(spreadsheetId||'')) throw Error('CONNECT_NOT_CONFIGURED');
   if(!Number.isSafeInteger(limit)||limit<1||limit>20) throw Error('INVALID_LIMIT');
   const access=await getGoogleConnectToken({oidcToken,connector,subject,fetchImpl});
   if(access.authorization_required) return access;
