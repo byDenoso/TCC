@@ -62,7 +62,8 @@ Configure fora do Git, somente após autorização operacional:
 
 - `NEXO_CATALOG_SOURCES`: JSON de até 32 fontes previamente autorizadas, por exemplo:
   `[{"id":"runtime","fileId":"ID_PRIVADO_CONFIGURADO_NO_SERVIDOR","format":"runtime"}]`.
-- `GOOGLE_DRIVE_ACCESS_TOKEN`: credencial de leitura do servidor, independente do token OAuth recebido do cliente MCP. O servidor não cria, renova nem amplia credenciais. Um token expirado gera fonte `UNAVAILABLE`; use a infraestrutura de credenciais autorizada para renová-lo. Acesso ao Drive/Sheets precisa ser concedido explicitamente fora desta implementação.
+- **Preferencial:** reutilizar o conector Google Vercel Connect já configurado com `GOOGLE_CONNECTOR` e `GOOGLE_CONNECT_SUBJECT_ID`, concedendo somente `drive.readonly` e `spreadsheets.readonly` ao proprietário. O MCP obtém o token por execução, sem nova chave estática; se faltar consentimento, devolve `authorization_required` pela rota do próprio Connect. Nunca eleva o escopo nem contorna uma recusa.
+- **Alternativa legada opcional:** `GOOGLE_DRIVE_ACCESS_TOKEN` para um token de leitura do servidor gerenciado externamente, quando Connect não puder ser usado. Nunca registrar o valor no Git; rotação e autorização permanecem externas.
 
 Formatos suportados:
 
