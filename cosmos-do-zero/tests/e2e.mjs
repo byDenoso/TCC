@@ -680,7 +680,9 @@ for (const width of [390, 1440]) {
     await back.focus(); await p.keyboard.press('Enter');
     await p.locator('[data-quiz]').waitFor({ state: 'visible' });
     ok(`quiz ${width}/${chapterQuiz}: pergunta e posição preservadas`, await p.locator('[data-quiz-question]').innerText() === question && await p.locator('[data-quiz-counter]').innerText() === counter);
-    ok(`quiz ${width}/${chapterQuiz}: resposta e foco preservados`, await p.locator('[data-quiz-answers] button:disabled').count() > 0 && await p.locator('[data-quiz-question]').evaluate(n => n === document.activeElement));
+    // O foco e a resposta voltam quando o script da página termina de montar o quiz; esperar em vez de ler no primeiro quadro (leitura imediata falhava ~1 em 5 em servidor local rápido).
+    const restored = await p.waitForFunction(() => document.querySelectorAll('[data-quiz-answers] button:disabled').length > 0 && document.querySelector('[data-quiz-question]') === document.activeElement, null, { timeout: 5000 }).then(() => true, () => false);
+    ok(`quiz ${width}/${chapterQuiz}: resposta e foco preservados`, restored);
     await p.locator('[data-quiz-next]').click();
     ok(`quiz ${width}/${chapterQuiz}: tentativa continua`, /02 \/ /.test(await p.locator('[data-quiz-counter]').innerText()));
   }

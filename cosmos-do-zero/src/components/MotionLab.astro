@@ -1,0 +1,109 @@
+---
+import '../styles/motion-lab.css';
+/**
+ * Ciência em movimento: cinco animações científicas interativas. O texto e a estrutura vêm do servidor;
+ * o desenho e o movimento são montados por src/scripts/motion-lab.ts (sem WebGL).
+ * Sem JavaScript, cada painel vira um texto descritivo.
+ */
+interface Key { kind: 'solid' | 'dash' | 'dot' | 'bar'; text: string }
+interface Panel {
+  id: string; tab: string; title: string; lede: string; alt: string; note: string;
+  range: string; key: Key[];
+}
+const panels: Panel[] = [
+  {
+    id: 'luz', tab: 'Luz esticada',
+    title: 'Por que a luz das galáxias distantes chega mais vermelha?',
+    lede: 'O espaço cresce enquanto a luz viaja. A onda é esticada junto, e a cor muda.',
+    alt: 'Uma onda de luz azul que, conforme o espaço cresce, fica mais comprida e mais vermelha, até virar infravermelho. As linhas escuras do arco-íris da galáxia andam para a direita junto com ela.',
+    note: 'Ilustração simplificada: as cores são aproximadas. Na prática, o astrônomo compara as linhas escuras da galáxia com as mesmas linhas medidas em laboratório.',
+    range: 'Quanto o espaço cresceu',
+    key: [{ kind: 'bar', text: 'linha escura da luz da galáxia' }, { kind: 'dash', text: 'onde ela estava' }]
+  },
+  {
+    id: 'expansao', tab: 'Espaço crescendo',
+    title: 'Se tudo se afasta, onde fica o centro?',
+    lede: 'Em lugar nenhum. Quando o espaço cresce, cada galáxia vê as outras se afastarem, e as mais distantes se afastam mais depressa.',
+    alt: 'Galáxias num quadriculado que se estica. Setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Trocando a galáxia de onde se olha, a vista é a mesma.',
+    note: 'Modelo de brinquedo: galáxias num quadriculado que se repete, só para mostrar a ideia. O Universo real não tem borda nem centro. Perto de nós, a gravidade mantém as galáxias juntas, e ali não há expansão.',
+    range: 'Quanto o espaço cresceu',
+    key: [{ kind: 'solid', text: 'seta: rapidez de afastamento' }]
+  },
+  {
+    id: 'hubble', tab: 'Diagrama de Hubble',
+    title: 'Como se descobriu que o Universo cresce?',
+    lede: 'Medindo a distância e a rapidez de muitas galáxias. Um ponto não diz nada; vários pontos mostram um padrão.',
+    alt: 'Pontos aparecem um a um num gráfico: cada ponto é uma galáxia, com a distância na horizontal e a rapidez de afastamento na vertical. Eles se alinham numa reta: o dobro da distância, o dobro da rapidez.',
+    note: 'Dados fictícios, desenhados para mostrar o padrão. Medições reais têm mais ruído, e hoje usam milhares de galáxias.',
+    range: 'Galáxias medidas',
+    key: [{ kind: 'dot', text: 'uma galáxia' }, { kind: 'solid', text: 'reta que melhor passa pelos pontos' }]
+  },
+  {
+    id: 'frio', tab: 'Luz esfriando',
+    title: 'Por que a luz mais antiga virou micro-ondas?',
+    lede: 'Quando se soltou, a luz era quente e brilhante. O espaço cresceu cerca de mil vezes e esticou essa luz até ela esfriar.',
+    alt: 'Uma curva mostra a cor da luz em cada temperatura. Voltando no tempo, a luz fica mais quente e o pico da curva sai das micro-ondas, passa pelo infravermelho e chega perto da luz visível, com cor de laranja-claro.',
+    note: 'A curva tem a forma real da luz de um corpo quente, mas cada curva foi ajustada para chegar ao topo. O eixo horizontal é logarítmico: cada divisão vale 10 vezes mais.',
+    range: 'Voltar no tempo',
+    key: [{ kind: 'solid', text: 'luz mais forte nesta cor' }, { kind: 'dash', text: 'pico da curva' }]
+  },
+  {
+    id: 'giro', tab: 'Galáxia girando',
+    title: 'Por que as galáxias giram rápido demais?',
+    lede: 'Pela gravidade, estrelas na borda deveriam girar mais devagar. Medindo, elas giram tão rápido quanto as de dentro.',
+    alt: 'Uma galáxia vista de cima, com estrelas em órbita, e um gráfico da rapidez de giro do centro à borda. Só com a matéria visível, a rapidez cai na borda; com matéria escura, ela fica quase constante.',
+    note: 'Modelo de brinquedo: curvas simplificadas, que lembram galáxias espirais. Não é uma galáxia específica nem uma medida.',
+    range: 'Quanta matéria escura',
+    key: [{ kind: 'dash', text: 'esperado só com o que enxergamos' }, { kind: 'solid', text: 'o que se mede' }]
+  }
+];
+---
+<section class="sci-lab" id="movimento" data-sci-lab aria-labelledby="sci-title">
+  <div class="page-width">
+    <p class="section-id">Ciência em movimento</p>
+    <header class="sci-head">
+      <h2 class="display" id="sci-title">Veja o Universo<br /><em>se mexer.</em></h2>
+      <p>Cinco animações curtas mostram, com a forma real de cada fenômeno, as pistas que os cientistas usam. Mexa na barra, toque na figura e compare com o que você leu.</p>
+    </header>
+
+    <div class="sci-tabs" role="tablist" aria-label="Animações científicas" data-sci-tabs hidden>
+      {panels.map((p, i) => <button type="button" role="tab" id={`movimento-aba-${p.id}`} aria-controls={`movimento-${p.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-sci-tab={p.id}>{p.tab}</button>)}
+    </div>
+
+    <div class="sci-body" data-sci-body>
+      {panels.map((p, i) => (
+        <article class="sci-panel" id={`movimento-${p.id}`} role="tabpanel" aria-labelledby={`movimento-aba-${p.id}`} data-sci-panel={p.id} hidden={i > 0}>
+          <figure class="sci-fig">
+            <div class="sci-stage" data-sci-stage>
+              <svg data-sci-svg viewBox="0 0 480 300" role="img" aria-label={p.alt} preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+            <ul class="sci-key" aria-label="Legenda">
+              {p.key.map((k) => <li><i data-kind={k.kind} aria-hidden="true"></i>{k.text}</li>)}
+            </ul>
+          </figure>
+          <div class="sci-side">
+            <p class="sci-badge"><span aria-hidden="true">◐</span> Ilustração</p>
+            <h3>{p.title}</h3>
+            <p class="sci-lede">{p.lede}</p>
+            <noscript><p class="sci-static">{p.alt}</p></noscript>
+            <div class="sci-controls">
+              <div class="sci-range">
+                <label for={`movimento-barra-${p.id}`}>{p.range} <output for={`movimento-barra-${p.id}`} data-sci-value></output></label>
+                <input id={`movimento-barra-${p.id}`} type="range" min="0" max="1" step="0.005" value="0" data-sci-range />
+              </div>
+              <div class="sci-buttons" role="group" aria-label="Controle da animação">
+                <button type="button" data-sci-play aria-pressed="false"><span aria-hidden="true" data-sci-ico>▶</span><span data-sci-play-label>Animar</span></button>
+                <button type="button" data-sci-reset><span aria-hidden="true">↺</span>Reiniciar</button>
+                <button type="button" data-sci-action hidden><span aria-hidden="true">⇄</span><span data-sci-action-label>Ver de outra galáxia</span></button>
+              </div>
+            </div>
+            <p class="sci-read" data-sci-read>{p.alt}</p>
+            <p class="visually-hidden" role="status" data-sci-live></p>
+            <p class="sci-note"><strong>Como interpretar.</strong> {p.note}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+  <noscript><style>.sci-lab [data-sci-panel][hidden]{display:grid}.sci-lab .sci-fig,.sci-lab .sci-controls,.sci-lab .sci-read,.sci-lab .sci-badge{display:none}.sci-lab .sci-panel{grid-template-columns:1fr;padding-block:18px;border-top:1px solid var(--line)}</style></noscript>
+</section>

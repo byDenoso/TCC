@@ -1,0 +1,75 @@
+/* Legibilidade e toque. Importado por último em cada página para vencer as folhas de rota
+   (reading-refinements.css, home.css) sem !important. Não muda cores nem layout: só pisos de tamanho. */
+
+/* 1. Nenhum texto abaixo de 12 px, em qualquer largura. */
+html:root .hero-copy .hero-overline,
+html:root .cmb-instrument-label .meta,
+html:root .cmb-interaction-hint,
+html:root .hero-foot-left .meta,
+html:root .hero-foot-center .statcopy,
+html:root .hero-foot .down,
+html:root .observatory .obs-readouts dt,
+html:root .observatory .obs-tabs button > span,
+html:root .reader-page .evidence-label,
+html:root .next-lesson-copy .meta,
+html:root .theme-label,
+html:root .chapter-index,
+html:root .cmbj-tag,
+html:root .cmbj-panel dt,
+html:root .obs3d-tag { font-size: 12px; }
+
+/* 2. Textos de leitura e controles: a partir de 13 px no celular. */
+@media (max-width: 760px) {
+  html:root .textlink,
+  html:root .cmb-note,
+  html:root .cmb-go,
+  html:root .cmb-scale span,
+  html:root figcaption,
+  html:root figcaption a,
+  html:root figcaption p,
+  html:root .footer-nav a,
+  html:root .footer-end a,
+  html:root .footer-end span,
+  html:root .mobile-menu summary,
+  html:root .obs-legend li,
+  html:root .obs-mixlabel,
+  html:root .obs-tag,
+  html:root .experience-note,
+  html:root .timeline-footnote,
+  html:root .illustration-note,
+  html:root .credit-line,
+  html:root .planet-caption a,
+  html:root .compare-selectors button,
+  html:root .compare-selectors label,
+  html:root .star-presets button,
+  html:root .timeline-controls button,
+  html:root .timeline-controls span,
+  html:root .depth-controls button,
+  html:root .step-next,
+  html:root .step-prev,
+  html:root .obs-tabs button,
+  html:root .obs-tabs button > span,
+  html:root .reader-aside .meta,
+  html:root .lesson-meta .meta,
+  html:root .mx-head .meta { font-size: 13px; }
+
+  /* 3. Alvos de toque de 44 px, sem mexer no desenho: a área clicável cresce por pseudo-elemento. */
+  html:root .textlink { position: relative; }
+  html:root .textlink::before { content: ''; position: absolute; inset: -5px -4px; }
+  html:root .footer-nav a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding-inline: 6px; }
+  html:root .footer-end a { display: inline-flex; align-items: center; min-height: 44px; }
+  html:root .header .identity { min-height: 44px; align-items: center; }
+  html:root .theme-toggle { min-width: 44px; }
+  html:root .depth-detail > summary,
+  html:root .reference-index > summary { display: flex; align-items: center; min-height: 44px; }
+  html:root .subpage-jump a { display: inline-flex; align-items: center; min-height: 44px; }
+  html:root .back-link,
+  html:root .glossary-link { display: inline-flex; align-items: center; min-height: 44px; }
+  html:root .star-controls input[type='range'] { min-height: 44px; }
+  html:root .reference-index li > a,
+  html:root .image-credits figcaption > a,
+  html:root .planet-caption a { display: inline-block; padding-block: 14px; }
+}
+
+/* O link "Em movimento" do menu principal só cabe a partir de 901 px; abaixo disso o cabeçalho estouraria a largura. */
+@media (min-width: 761px) and (max-width: 900px) { html:root .main-nav a[data-spy='movimento'] { display: none; } }
