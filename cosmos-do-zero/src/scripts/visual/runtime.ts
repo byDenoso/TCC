@@ -176,6 +176,7 @@ export function observeScene(stage: HTMLElement, create: () => Exhibit): Mounted
     catch { view=null; }
     if (!view) { failed = true; stage.dataset.visualFallback = 'true'; stage.dispatchEvent(new CustomEvent('cosmos:unavailable')); }
     view?.state(latest);
+    if (view) stage.dispatchEvent(new CustomEvent('cosmos:ready'));
   };
   const io = new IntersectionObserver(([e]) => {
     if (e.isIntersecting) enter(); else if(!optionsActive()) { view?.dispose(); view = null; }

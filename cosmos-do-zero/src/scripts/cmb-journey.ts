@@ -117,7 +117,7 @@ function setup(root: HTMLElement): void {
   if (!ctx) { root.classList.add('is-static'); return; }
 
   let step = stepFromParam(getParam(URL_PARAM));
-  let t = 0, elapsed = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false;
+  let t = 0, elapsed = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false, autoStarted = false;
   let pal = palette();
   let W = 0, H = 0, dpr = 1;
   const plasma = new Plasma(0.56);
@@ -307,6 +307,7 @@ function setup(root: HTMLElement): void {
   const play = () => { if (!visible || document.hidden || reduced.matches) { if (!reduced.matches) autoPaused = true; draw(); return; } if (t >= 1) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
   const pause = () => { cancelAnimationFrame(frame); setPlaying(false); draw(); };
   const go = (i: number, autoplay = true) => {
+    autoStarted = true;
     step = clamp(i, 0, STEPS.length - 1); t = 0; elapsed = 0; done = false;
     if (step <= 1) { plasma.reset(plasma.h); warm(); } // A: elétrons livres; B: recomeça a captura
     setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) });
@@ -316,8 +317,8 @@ function setup(root: HTMLElement): void {
   };
   btnPrev.addEventListener('click', () => go(step - 1));
   btnNext.addEventListener('click', () => go(step + 1));
-  btnReplay.addEventListener('click', () => { t = 0; done = false; if (step === 1) { plasma.reset(plasma.h); warm(); } play(); });
-  btnPlay.addEventListener('click', () => { autoPausedReset(); const m = btnPlay.dataset.mode; if (playing) pause(); else if (m === 'next') go(step + 1); else if (m === 'again') go(0); else play(); });
+  btnReplay.addEventListener('click', () => { autoStarted = true; t = 0; done = false; if (step === 1) { plasma.reset(plasma.h); warm(); } play(); });
+  btnPlay.addEventListener('click', () => { autoStarted = true; autoPausedReset(); const m = btnPlay.dataset.mode; if (playing) pause(); else if (m === 'next') go(step + 1); else if (m === 'again') go(0); else play(); });
   stepBtns.forEach((b, i) => b.addEventListener('click', () => go(i)));
   root.addEventListener('keydown', (ev) => {
     if ((ev.target as HTMLElement).closest('button, a, input, summary')) {
@@ -333,12 +334,14 @@ function setup(root: HTMLElement): void {
     visible = e.isIntersecting;
     if (!visible && playing) { pause(); autoPaused = true; }
     else if (visible && autoPaused && !document.hidden) { autoPaused = false; play(); }
+    else if (visible && !autoStarted && !document.hidden && !reduced.matches) { autoStarted = true; play(); }
   }, { threshold: 0.2 }).observe(stage);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && playing) { pause(); autoPaused = true; }
     else if (!document.hidden && autoPaused && visible) { autoPaused = false; play(); }
+    else if (!document.hidden && visible && !autoStarted && !reduced.matches) { autoStarted = true; play(); }
   });
-  reduced.addEventListener('change', () => { pause(); });
+  reduced.addEventListener('change', () => { if (reduced.matches) pause(); else if (visible && !autoStarted && !document.hidden) { autoStarted = true; play(); } });
   const refreshPalette = () => { pal = palette(); sprites.clear(); draw(); };
   new MutationObserver(refreshPalette).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshPalette);

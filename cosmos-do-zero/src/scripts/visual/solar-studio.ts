@@ -4,6 +4,7 @@ import { attachWorldView } from './world-view';
 import type { MountedScene } from './runtime';
 import { svg,animator,reduced } from '../lab/common';
 import { orbitalPeriodYears,SOLAR_MASS_KG } from '../../lib/physics';
+import { visibleMotion } from '../visible-motion';
 export async function initSolarStudio():Promise<void>{
  for(const root of document.querySelectorAll<HTMLElement>('[data-solar-studio]')){
   let mode='sizes',selected=2,moon=false,phase=0,ticket=0,alive=true,view:MountedScene|null=null;
@@ -11,7 +12,8 @@ export async function initSolarStudio():Promise<void>{
   const modes=[...root.querySelectorAll<HTMLButtonElement>('[data-solar-mode]')],buttons=[...root.querySelectorAll<HTMLButtonElement>('[data-solar-planet]')];
   const largest=Math.max(...planets.map(p=>p.radius)),furthest=Math.max(...planets.map(p=>p.distance));
   const play=root.querySelector<HTMLButtonElement>('[data-solar-play]')!;
-  const sync=()=>{play.setAttribute('aria-pressed',String(animation.running()));play.textContent=animation.running()?'Pausar rotação':reduced()?'Avançar rotação':'Ver rotação';};
+  const reset=root.querySelector<HTMLButtonElement>('[data-solar-reset]')!;
+  const sync=()=>{reset.disabled=play.disabled;play.setAttribute('aria-pressed',String(animation.running()));play.textContent=play.disabled?'Rotação indisponível nesta visualização':animation.running()?'Pausar rotação':reduced()?'Avançar rotação':'Ver rotação';};
   const render=()=>{
    const p=planets[selected];root.querySelector<HTMLButtonElement>('[data-solar-moon]')!.setAttribute('aria-pressed',String(moon));modes.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.solarMode===mode)));buttons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selected&&!moon)));
    root.querySelector<HTMLElement>('[data-solar-close-note]')!.textContent=(moon?'Lua':p.id==='mercurio'?'Mercúrio · cores realçadas MESSENGER':p.name)+' · detalhe ampliado, fora da escala da régua';
@@ -25,12 +27,16 @@ export async function initSolarStudio():Promise<void>{
    fallback.replaceChildren();ruler.replaceChildren();planets.forEach((p,i)=>{const x=mode==='sizes'?38+i*80:24+p.distance/furthest*572,r=mode==='sizes'?p.radius/largest*28:6;svg('circle',{cx:x,cy:40,r,fill:i===selected?'#ce804c':'#91a9be'},ruler);if(mode==='sizes'||i===selected)svg('text',{x,y:90,'text-anchor':'middle',fill:'var(--ink-2)','font-size':12},ruler,p.name);});view?.state({value:selected,phase});
   };
   const animation=animator(stage,dt=>{phase+=dt*.00008;view?.state({phase});return true;});
-  play.addEventListener('click',()=>{if(reduced()){phase+=.25;render();}else if(animation.running())animation.stop();else animation.start();sync();});stage.addEventListener('cosmos:autopause',sync);
-  root.querySelector<HTMLButtonElement>('[data-solar-reset]')!.addEventListener('click',()=>{animation.stop();phase=0;render();sync();});
+  const automatic=visibleMotion(stage,{start(){animation.start();sync();},stop(){animation.stop();sync();},running:()=>animation.running(),ready:()=>stage.classList.contains('cosmos-volume-ready'),pauseTarget:stage});
+  play.addEventListener('click',()=>{automatic.manual();if(reduced()){phase+=.25;render();}else if(animation.running())animation.stop();else animation.start();sync();});stage.addEventListener('cosmos:autopause',sync);
+  stage.addEventListener('cosmos:ready',()=>{play.disabled=false;automatic.refresh();sync();});
+  const unavailable=()=>{animation.stop();play.disabled=true;sync();};
+  stage.addEventListener('cosmos:unavailable',unavailable);stage.addEventListener('cosmos:contextlost',unavailable);
+  reset.addEventListener('click',()=>{automatic.manual();animation.stop();phase=0;render();sync();});
   const refresh=async()=>{const token=++ticket;view?.dispose();view=null;render();const next=await attachWorldView(stage,()=>[moon?'lua':planets[selected].id],undefined,()=>alive&&token===ticket);if(alive&&token===ticket){view=next;render();}else next?.dispose();};
   modes.forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.solarMode!;render();}));buttons.forEach((b,i)=>b.addEventListener('click',()=>{selected=i;moon=false;phase=0;void refresh();}));root.querySelector<HTMLButtonElement>('[data-solar-moon]')!.addEventListener('click',()=>{moon=true;phase=0;void refresh();});render();sync();
   await refresh();
-  window.addEventListener('pagehide',e=>{ticket++;if(!e.persisted){alive=false;animation.dispose();view?.dispose();}});
+  window.addEventListener('pagehide',e=>{ticket++;if(!e.persisted){alive=false;automatic.dispose();animation.dispose();view?.dispose();}});
   window.addEventListener('pageshow',e=>{if(e.persisted&&!view)void refresh();});
  }
 }

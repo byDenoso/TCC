@@ -18,7 +18,8 @@
     "test:browsers": "node tests/browser-smoke.mjs",
     "test:renders": "node tests/renders.mjs",
     "test:pages": "node tests/pages-base.mjs",
-    "test:graphics": "node tests/graphics.mjs",
+    "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs",
+    "test:autoplay": "node tests/autoplay-visible.mjs",
     "test:motion": "node tests/motion-lab.mjs",
     "test:experience": "node tests/ambient-motion.mjs && node tests/beginner-flow.mjs && node tests/visual-fallback.mjs"
   },
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "playwright": "^1.50.0",
+    "rolldown": "~1.2.13",
     "sharp": "0.35.5",
     "typescript": "^5.6.0",
     "vitest": "4.1.11"

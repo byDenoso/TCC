@@ -1,6 +1,7 @@
 import { animator, clear, fmt, initGuess, q, qa, reduced, svg } from './common';
 import { expandedPosition, expansionPositions, separation } from '../../lib/expansion';
 import type { MountedScene } from '../visual/runtime';
+import { visibleMotion } from '../visible-motion';
 
 const SCALE_MAX = 2.5;
 export function initExpansao(root: HTMLElement): void {
@@ -50,21 +51,23 @@ export function initExpansao(root: HTMLElement): void {
     line(`Da galáxia ${'ABC'[observer]}, a vizinha estava a ${fmt(near,1)} passos. Agora está a ${fmt(near*scale,1)}.`);
     line(`A mais distante estava a ${fmt(far,1)} passos. Agora está a ${fmt(far*scale,1)}: ganhou ${fmt(far*(scale-1),1)} passos.`);
     line('As distâncias crescem na mesma proporção. Mude de observador: ninguém ocupa um centro privilegiado.');
-    live.textContent=`Observador ${'ABC'[observer]}. Distâncias cresceram ${fmt(scale,2)} vezes. A vizinha está a ${fmt(near*scale,1)} passos; a mais distante, ${fmt(far*scale,1)}.`;
+    if (!anim.running()) live.textContent=`Observador ${'ABC'[observer]}. Distâncias cresceram ${fmt(scale,2)} vezes. A vizinha está a ${fmt(near*scale,1)} passos; a mais distante, ${fmt(far*scale,1)}.`;
     if(moved&&scale>=1.5) root.dispatchEvent(new CustomEvent('cosmos:badge',{bubbles:true,detail:{id:'sem-centro'}}));
   };
   buttons.forEach((b,i)=>b.addEventListener('click',()=>{moved ||= i!==observer; observer=i; render();}));
   const syncPlay=()=>{play.setAttribute('aria-pressed',String(anim.running())); play.textContent=anim.running()?'Pausar':Number(range.value)>=SCALE_MAX?'Recomeçar':'Deixar o espaço crescer';};
-  const anim=animator(root,dt=>{scaleValue=Math.min(SCALE_MAX,scaleValue+dt*0.00022);range.value=String(scaleValue); render(); const more=scaleValue<SCALE_MAX; if(!more)queueMicrotask(syncPlay); return more;});
+  const anim=animator(root,dt=>{scaleValue=Math.min(SCALE_MAX,scaleValue+dt*0.00022);range.value=String(scaleValue); render(); const more=scaleValue<SCALE_MAX; if(!more)queueMicrotask(()=>{syncPlay();render();}); return more;});
+  const automatic=visibleMotion(volume,{start(){anim.start();syncPlay();},stop(){anim.stop();syncPlay();render();},running:()=>anim.running(),pauseTarget:root});
   root.addEventListener('cosmos:autopause',syncPlay);
-  window.addEventListener('pagehide',event=>{if(!event.persisted)anim.dispose();});
+  window.addEventListener('pagehide',event=>{if(!event.persisted){automatic.dispose();anim.dispose();}});
   play.addEventListener('click',()=>{
+    automatic.manual();
     if(anim.running()){anim.stop();syncPlay();return;}
     if(reduced()){scaleValue=scaleValue>=SCALE_MAX?1:Math.min(SCALE_MAX,scaleValue+0.25);range.value=String(scaleValue);render();syncPlay();return;}
     if(scaleValue>=SCALE_MAX){scaleValue=1;range.value='1';}anim.start();syncPlay();
   });
-  range.addEventListener('input',()=>{anim.stop();scaleValue=Number(range.value);render();syncPlay();}); arrows.addEventListener('change',render);
-  qa<HTMLButtonElement>(root,'[data-e-reset]').forEach(b=>b.addEventListener('click',()=>{anim.stop();scaleValue=1;range.value='1';observer=0;render();syncPlay();}));
+  range.addEventListener('input',()=>{automatic.manual();anim.stop();scaleValue=Number(range.value);render();syncPlay();}); arrows.addEventListener('change',render);
+  qa<HTMLButtonElement>(root,'[data-e-reset]').forEach(b=>b.addEventListener('click',()=>{automatic.manual();anim.stop();scaleValue=1;range.value='1';observer=0;render();syncPlay();}));
   import('../visual/runtime').then(async({observeScene,whenNear})=>{
     if(!await whenNear(volume))return;
     const {prepareEmissionGalaxies,emissionSize,emissionReady}=await import('../visual/galaxy-emission');const size=emissionSize(volume.clientWidth,volume.dataset.cosmosQuality==='low'?'low':'auto');await prepareEmissionGalaxies(size);

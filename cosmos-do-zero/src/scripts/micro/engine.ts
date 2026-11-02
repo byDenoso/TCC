@@ -18,6 +18,7 @@ export interface Scene {
   setPlaying?(playing: boolean): void;
   dispose?(): void;
 }
+import { visibleMotion } from '../visible-motion';
 export type SceneMap = Record<string, () => Scene>;
 
 const loaders: Record<string, () => Promise<{ scenes: SceneMap }>> = {
@@ -59,7 +60,6 @@ export function initMicro(): void {
     for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); boot(e.target as HTMLElement); }
   }, { rootMargin: '500px 0px' });
   roots.forEach((r) => io.observe(r));
-  document.addEventListener('visibilitychange', () => { if (document.hidden) running?.stop(); });
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) { mounted.forEach((r) => r.stop()); return; }
     mounted.forEach((r) => r.dispose()); mounted.clear(); io.disconnect();
@@ -143,9 +143,9 @@ function setup(root: HTMLElement, scene: Scene): void {
     scene.setPlaying?.(on);
   };
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(); };
-  let visibleObserver: IntersectionObserver | null = null;
+  let automatic: ReturnType<typeof visibleMotion> | null = null;
   const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } };
-  const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); visibleObserver?.disconnect(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
+  const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
   mounted.add(runner);
 
   const touched = () => {
@@ -163,20 +163,20 @@ function setup(root: HTMLElement, scene: Scene): void {
     } else {
       t = Math.min(1, t + dt / dur);
       if (t >= 1) {
-        if (kind === 'stages' && v < max) { v += 1; t = 0; live.textContent = opts[v]?.textContent?.replace(/^\d/, '') ?? ''; }
+        if (kind === 'stages' && v < max) { v += 1; t = 0; if (interacted) live.textContent = opts[v]?.textContent?.replace(/^\d/, '') ?? ''; }
         else { render(false); stop(); return; }
       }
     }
     render(false);
     frame = requestAnimationFrame(tick);
   };
-  const start = () => {
+  const start = (resume = false) => {
     if (!visible) return;
     running?.stop();
     if (reducedQuery.matches) { step(); return; }
     if (sweep && v >= max) v = min;
     if (kind === 'stages' && v >= max && t >= 1) v = 0;
-    if (!sweep) t = 0;
+    if (!sweep && !resume) t = 0;
     running = runner; last = 0; setPlaying(true);
     frame = requestAnimationFrame(tick);
   };
@@ -188,17 +188,17 @@ function setup(root: HTMLElement, scene: Scene): void {
     t = 1; touched(); render();
   };
 
-  play.addEventListener('click', () => { touched(); if (playing) stop(); else start(); });
-  stepBtn.addEventListener('click', step);
-  reset.addEventListener('click', () => { stop(); v = initial; t = 1; render(); });
-  range?.addEventListener('input', () => { stop(); v = Number(range.value); t = 1; touched(); render(); });
+  play.addEventListener('click', () => { automatic?.manual(); touched(); if (playing) stop(); else start(); });
+  stepBtn.addEventListener('click', () => { automatic?.manual(); step(); });
+  reset.addEventListener('click', () => { automatic?.manual(); stop(); v = initial; t = 1; render(); });
+  range?.addEventListener('input', () => { const next = Number(range.value); automatic?.manual(); stop(); v = next; t = 1; touched(); render(); });
   opts.forEach((b, i) => b.addEventListener('click', () => {
+    automatic?.manual();
     stop(); v = i; touched();
     // escolher uma opção numa cena com movimento já toca o movimento dela (exceto com movimento reduzido)
     if (kind === 'choice' && !reducedQuery.matches) { t = 0; running = runner; last = 0; setPlaying(true); frame = requestAnimationFrame(tick); render(false); }
     else { t = 1; render(); }
   }));
-  if ('IntersectionObserver' in window) { visibleObserver = new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (!visible) stop(); }, { threshold: 0.05 }); visibleObserver.observe(root.querySelector('.mx-lab')!); }
   reducedQuery.addEventListener('change', reducedChange);
 
   // ── palpite ──
@@ -264,4 +264,5 @@ function setup(root: HTMLElement, scene: Scene): void {
   root.classList.add('is-ready');
   setPlaying(false);
   render(false);
+  automatic = visibleMotion(root.querySelector('.mx-lab')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
 }

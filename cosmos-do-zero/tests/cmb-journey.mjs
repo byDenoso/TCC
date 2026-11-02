@@ -38,6 +38,7 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
     // primeiro clique depois de carregar: tempo até o botão refletir o estado e o próximo quadro ser pintado
     const firstClick = await page.evaluate(async () => {
       const b = document.querySelector('[data-cmbj-play]');
+      if (b.getAttribute('aria-pressed') === 'true') b.click();
       const t0 = performance.now(); b.click();
       const pressed = b.getAttribute('aria-pressed') === 'true';
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -77,7 +78,7 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
   const page = await ctx.newPage();
   await page.goto(URL_('?luz=3'), { waitUntil: 'load' });
   await focusScene(page);
-  await page.click('[data-cmbj-play]');
+  if (await page.locator('[data-cmbj-play]').getAttribute('aria-pressed') !== 'true') await page.click('[data-cmbj-play]');
   await page.waitForTimeout(400);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(500);
