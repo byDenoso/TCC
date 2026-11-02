@@ -21,7 +21,7 @@ const ext = ' (abre em outra aba)';
       <p class="section-id">Aprender fazendo</p>
       <header class="obs-head">
         <h2 class="display" id={`${id}-title`}>Mexa nos botões<br /><em>do Universo.</em></h2>
-        <p>Faça um palpite, mexa e veja o que acontece. Os experimentos mostram, de forma simplificada, como os cientistas conectam as pistas do Universo.</p>
+        <p>Investigue uma pergunta com controles e medidas. Faça um palpite, mexa e veja o que acontece. Os experimentos mostram, de forma simplificada, como os cientistas conectam as pistas do Universo.</p>
       </header>
     ) : (
       <header class="obs-head compact">
@@ -59,7 +59,7 @@ const ext = ' (abre em outra aba)';
             <div class="obs-panel">
               <h3>Máquina do tempo</h3>
               <p class="obs-lede">A luz demora para viajar. Por isso, <strong>olhar para longe é olhar para o passado</strong>. Arraste e veja como era o Universo quando a luz saiu de lá.</p>
-              <label class="obs-slider" for={`${id}-t-range`}>Olhar mais longe <output data-t-z for={`${id}-t-range`}>agora</output></label>
+              <label class="obs-slider" for={`${id}-t-range`}>Olhar mais longe <output aria-live="off" data-t-z for={`${id}-t-range`}>agora</output></label>
               <input id={`${id}-t-range`} type="range" min="0" max="1000" step="1" value="0" data-t-range />
               <div class="obs-chips" role="group" aria-label="Pontos de parada">
                 <button type="button" data-t-preset="0" aria-pressed="true">Hoje</button>
@@ -108,6 +108,7 @@ const ext = ' (abre em outra aba)';
             <h3 class="obs-pilot-title">O espaço crescendo</h3>
             <figure class="obs-viz">
               <div class="expansion-stage" data-e-volume>
+                <span class="e-observer-label" data-e-observer-label>Você observa da galáxia A</span>
                 <svg data-e-svg viewBox="0 0 640 400" role="group" aria-label="Galáxias vistas de uma posição escolhida. Use os botões de observador para mudar de galáxia."></svg>
               </div>
               <figcaption>Galáxias mantêm seu tamanho. O espaço entre elas cresce. Formas e distâncias são ilustrativas.</figcaption>
@@ -119,15 +120,20 @@ const ext = ' (abre em outra aba)';
                 <button type="button" data-e-observer="1" aria-pressed="false">Galáxia B</button>
                 <button type="button" data-e-observer="2" aria-pressed="false">Galáxia C</button>
               </div>
-              <label class="obs-slider" for={`${id}-e-range`}>Quanto o espaço cresceu <output data-e-scale for={`${id}-e-range`}>1,00 ×</output></label>
+              <div class="expansion-guide" data-e-guide><strong>Observe:</strong> deixe o espaço crescer e compare a distância entre as galáxias.</div>
+              <label class="obs-slider" for={`${id}-e-range`}>Quanto o espaço cresceu <output aria-live="off" data-e-scale for={`${id}-e-range`}>1,00 ×</output></label>
               <input id={`${id}-e-range`} type="range" min="1" max="2.5" step="0.01" value="1" data-e-range />
               <div class="obs-actions">
                 <button type="button" class="obs-btn" data-e-play aria-pressed="false">Deixar o espaço crescer</button>
                 <button type="button" class="obs-btn ghost" data-e-reset>Voltar ao início</button>
                 <label class="obs-check"><input type="checkbox" data-e-arrows /> Mostrar o caminho de cada galáxia</label>
               </div>
+              <div class="e-options"><label><input type="checkbox" data-e-before /> Comparar com o início</label><label><input type="checkbox" data-e-stops /> Paradas explicativas</label><label>Velocidade <select data-e-speed aria-label="Velocidade da expansão"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="1.5">1,5×</option></select></label></div>
+              <div class="e-targets" role="group" aria-label="Galáxia para comparar"><span>Compare com:</span>{['A','B','C'].map((name,i)=><button type="button" data-e-target={i} aria-pressed={i===1?'true':'false'}>{name}</button>)}</div>
+              <p class="e-selection" data-e-selection></p>
+              <div class="e-finish" data-e-finish hidden><strong>Você viu o espaço crescer.</strong><p>As distâncias aumentaram na mesma proporção. Troque a galáxia observadora: o padrão continua, sem um centro privilegiado.</p><button type="button" class="obs-btn ghost" data-e-reset>Rever do início</button></div>
               <div class="obs-reading" data-e-reading></div>
-              <figure class="obs-plot"><svg data-e-plot viewBox="0 0 560 230" role="img" aria-label="Gráfico: quanto mais longe a galáxia estava, mais ela se afastou, formando uma linha reta"></svg><figcaption>Cada ponto é uma galáxia. Todos caem na mesma linha reta: o dobro da distância, o dobro do afastamento.</figcaption></figure>
+              <figure class="obs-plot"><svg data-e-plot viewBox="0 0 560 230" role="group" aria-label="Gráfico: quanto mais longe a galáxia estava, mais ela se afastou, formando uma linha reta"></svg><figcaption>Cada ponto é uma galáxia. Todos caem na mesma linha reta: o dobro da distância, o dobro do afastamento.</figcaption></figure>
             </div>
           </div>
           <details class="obs-tech">
@@ -210,11 +216,11 @@ const ext = ' (abre em outra aba)';
                 <button type="button" data-r-scenario="crunch" aria-pressed="false">Matéria demais</button>
                 <button type="button" data-r-scenario="escura" aria-pressed="false">Muita energia escura</button>
               </div>
-              <label class="obs-slider" for={`${id}-r-om`}>Quanta matéria <output data-r-om-out for={`${id}-r-om`}>igual ao nosso</output></label>
+              <label class="obs-slider" for={`${id}-r-om`}>Quanta matéria <output aria-live="off" data-r-om-out for={`${id}-r-om`}>igual ao nosso</output></label>
               <input id={`${id}-r-om`} type="range" min="0.05" max="2" step="0.005" value={PLANCK.om} data-r-om />
-              <label class="obs-slider" for={`${id}-r-ol`}>Quanta energia escura <output data-r-ol-out for={`${id}-r-ol`}>igual ao nosso</output></label>
+              <label class="obs-slider" for={`${id}-r-ol`}>Quanta energia escura <output aria-live="off" data-r-ol-out for={`${id}-r-ol`}>igual ao nosso</output></label>
               <input id={`${id}-r-ol`} type="range" min="0" max="1.5" step="0.005" value={PLANCK.ol} data-r-ol />
-              <label class="obs-slider" for={`${id}-r-h0`}>Ritmo da expansão hoje <output data-r-h0-out for={`${id}-r-h0`}>igual ao nosso</output></label>
+              <label class="obs-slider" for={`${id}-r-h0`}>Ritmo da expansão hoje <output aria-live="off" data-r-h0-out for={`${id}-r-h0`}>igual ao nosso</output></label>
               <input id={`${id}-r-h0`} type="range" min="50" max="90" step="0.1" value={PLANCK.h0} data-r-h0 />
               <dl class="obs-readouts single">
                 <div><dt>Idade do Universo</dt><dd data-r-out="age">—</dd></div>

@@ -26,6 +26,7 @@ const more = [
       {nav.map((n) => <a href={u(n.href)} data-spy={n.spy} aria-current={(Astro.url.pathname.replace(/\/$/, '').endsWith('/' + n.spy) || (n.spy === 'capitulos' && Astro.url.pathname.includes('/capitulos/')) ? 'page' : undefined)}>{n.label}</a>)}
     </nav>
     <div class="header-tools">
+      <details class="motion-settings"><summary aria-label="Preferência de movimento">Movimento</summary><div><label for="cosmos-motion-select">Animações do site</label><select id="cosmos-motion-select" data-motion-select><option value="full">Completo</option><option value="gentle">Suave</option><option value="reduced">Reduzido</option></select><p>A preferência de movimento reduzido do seu aparelho é sempre respeitada.</p></div></details>
       <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Usar tema escuro">
         <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></svg>
         <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></svg>

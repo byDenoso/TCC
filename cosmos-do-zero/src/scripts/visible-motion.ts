@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 /** Automatic motion follows the visible scene and never overrides a manual pause. */
 export function visibleMotion(stage: Element, controls: {
   start(resume: boolean): void;
@@ -7,7 +8,7 @@ export function visibleMotion(stage: Element, controls: {
   visibility?(visible: boolean): void;
   pauseTarget?: Element;
 }): { manual(): void; refresh(): void; dispose(): void } {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const reduced = motionPreference;
   let visible = false, started = false, suspended = false, manual = false;
 
   const start = () => {

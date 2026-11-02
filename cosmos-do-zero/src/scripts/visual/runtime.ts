@@ -63,7 +63,10 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   controls.minDistance = home.length() * 0.5; controls.maxDistance = home.length() * 1.8;
   let alive = true;
   const state: VisualState = { value: 0, phase: 1, elapsed: 0 };
-  const render = () => { if (!alive || document.hidden) return; const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight)return;const updateStart=diagnostics.enabled?performance.now():0;exhibit.update(state);const updateMs=diagnostics.enabled?performance.now()-updateStart:0;const start=diagnostics.enabled?performance.now():0; renderer.render(scene, camera);diagnostics.frame(diagnostics.enabled?performance.now()-start:0,updateMs); };
+  let samples=0,slowFrames=0;
+  const render = () => { if (!alive || document.hidden) return; const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight)return;const updateStart=diagnostics.enabled?performance.now():0;exhibit.update(state);const updateMs=diagnostics.enabled?performance.now()-updateStart:0;const start=diagnostics.enabled?performance.now():0; const frameStart=performance.now();renderer.render(scene, camera);
+    if(quality.value==='auto'&&++samples<=24){if(performance.now()-frameStart>35)slowFrames++;if(samples===24&&slowFrames>=8){quality.value='low';stage.dataset.adaptiveQuality='low';queueMicrotask(resize);}}
+    diagnostics.frame(diagnostics.enabled?performance.now()-start:0,updateMs); };
   const details = document.createElement('details'); details.className = 'cosmos-view-options';
   const summary = document.createElement('summary'); summary.textContent = 'Visão e qualidade da cena'; details.append(summary);
   const tools = document.createElement('div'); tools.className = 'cosmos-view-tools'; details.append(tools);

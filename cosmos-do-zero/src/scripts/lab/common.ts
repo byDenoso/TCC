@@ -1,3 +1,4 @@
+import { motionPreference, motionFactor } from '../motion-preference';
 /** Utilidades compartilhadas pelos instrumentos do Observatório. */
 const NS = 'http://www.w3.org/2000/svg';
 export type Attrs = Record<string, string | number>;
@@ -44,7 +45,7 @@ export function lightYears(mpc: number): string {
   return `${fmt(gly * 1000, gly * 1000 >= 100 ? 0 : 1)} milhões de anos-luz`;
 }
 
-export const reduced = (): boolean => matchMedia('(prefers-reduced-motion: reduce)').matches;
+export const reduced = (): boolean => motionPreference.matches;
 
 const guesses = new WeakMap<HTMLElement, (focus: boolean) => void>();
 /** O palpite funciona desde a abertura, mesmo quando o desenho ainda não foi carregado. */
@@ -112,12 +113,13 @@ export function animator(host: Element, step: (dt: number) => boolean): { start(
   const loop = (now: number) => {
     if (!on) return;
     const dt = last ? Math.min(now - last, 64) : 16; last = now;
-    if (!step(dt)) { stop(); return; }
+    if (!step(dt * motionFactor())) { stop(); return; }
     frame = requestAnimationFrame(loop);
   };
   const pause=()=>{const wasOn=on;stop();if(wasOn)host.dispatchEvent(new CustomEvent('cosmos:autopause'));};
-  const hidden=()=>{if(document.hidden)pause();};document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',pause);
+  const hidden=()=>{if(document.hidden)pause();};
+  const preference=()=>{if(motionPreference.matches)pause();};motionPreference.addEventListener('change',preference);document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',pause);
   let io:IntersectionObserver|null=null;
   if ('IntersectionObserver' in window){io=new IntersectionObserver(([e])=>{visible=e.isIntersecting;if(!visible)pause();});io.observe(host);}
-  return { start() { const rect=host.getBoundingClientRect();visible=rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth&&!host.closest('[hidden]');if (on || !visible || document.hidden) return; on = true; frame = requestAnimationFrame(loop); }, stop, running: () => on,dispose(){stop();io?.disconnect();document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',pause);} };
+  return { start() { const rect=host.getBoundingClientRect();visible=rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth&&!host.closest('[hidden]');if (on || !visible || document.hidden) return; on = true; frame = requestAnimationFrame(loop); }, stop, running: () => on,dispose(){stop();io?.disconnect();motionPreference.removeEventListener('change',preference);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',pause);} };
 }

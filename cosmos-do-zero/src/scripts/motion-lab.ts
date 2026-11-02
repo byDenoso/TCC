@@ -1,3 +1,4 @@
+import { motionPreference, motionFactor } from './motion-preference';
 /**
  * Painel "Ciência em movimento": abas, controles e laço de animação das cinco cenas.
  * Regras: só a aba aberta anima; tudo para fora da tela ou com a aba do navegador escondida;
@@ -7,7 +8,7 @@
 import { SCI_SCENES, type SciFrame, type SciScene } from './motion-lab-scenes';
 import { ease } from './micro/draw';
 
-const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const reducedQuery = motionPreference;
 
 class SciPanel {
   readonly id: string;
@@ -99,7 +100,7 @@ class SciPanel {
       this.range.value = String(this.p); this.draw(true);
     });
     this.action?.addEventListener('click', () => { const scene = this.ensure(); scene.action?.run(); this.announce('Visão trocada para outra galáxia.'); });
-    reducedQuery.addEventListener('change', () => { if (reducedQuery.matches) { this.setPlaying(false); this.syncLabel(); } });
+    reducedQuery.addEventListener('change', () => { if (reducedQuery.matches) this.setPlaying(false); this.syncLabel(); });
   }
 
   private advance(scene: SciScene): void {
@@ -127,7 +128,7 @@ class SciPanel {
   }
 
   private readonly tick = (now: number): void => {
-    const dt = this.last ? Math.min(0.064, (now - this.last) / 1000) : 0;
+    const dt = this.last ? Math.min(0.064, (now - this.last) / 1000 * motionFactor()) : 0;
     this.last = now; this.time += dt;
     const scene = this.scene!;
     if (scene.sweep && this.sweeping) {

@@ -1,3 +1,4 @@
+import { motionPreference } from '../motion-preference';
 import { PLANCK, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, lookbackGyr, observedWavelengthNm, zAcceleration } from '../../lib/cosmology';
 import { clear, duration, fmt, fmtAuto, initGuess, lightYears, q, qa, reduced, svg } from './common';
 import { getParam, setParams } from '../../lib/url-state';
@@ -110,8 +111,8 @@ export function initTempo(root: HTMLElement): void {
       render();
     }).catch(() => use2d());
   }
-  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-    if (e.matches) { view3d?.dispose(); view3d = null; use2d(); }
+  motionPreference.addEventListener('change', () => {
+    if (motionPreference.matches) { view3d?.dispose(); view3d = null; use2d(); }
   });
   let exact: number | null = null;
   const render = (): void => {

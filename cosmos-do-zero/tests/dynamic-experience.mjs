@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import { chromium } from 'playwright';
+const base=(process.env.BASE_URL??'http://127.0.0.1:4321').replace(/\/$/,'');
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+let checks=0; const ok=(v,m)=>{assert.ok(v,m);checks++;};
+try {
+ for(const width of [390,1280]){
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'no-preference'});
+  await page.goto(`${base}/?lab=expansao#observatorio`);
+  const panel=page.locator('[data-station="expansao"]');
+  await page.waitForFunction(()=>document.querySelector('[data-station="expansao"]')?.dataset.stationReady==='true');
+  const preference=page.locator('[data-motion-select]');
+  ok(await preference.count()===1,`${width}: preferência global disponível`);
+  await page.locator('.motion-settings summary').click();
+  await preference.selectOption('reduced');
+  await page.locator('.motion-settings summary').click();
+  ok(await page.locator('html').getAttribute('data-motion')==='reduced',`${width}: movimento reduzido aplicado`);
+  await panel.locator('[data-e-volume]').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(150);
+  ok(await panel.locator('[data-e-play]').getAttribute('aria-pressed')==='false',`${width}: preferência interrompe reprodução`);
+  await panel.locator('[data-e-range]').fill('1.5');
+  await panel.locator('[data-e-target="2"]').click();
+  ok(await panel.locator('[data-e-selection]').textContent().then(t=>t.includes('C')),`${width}: alvo identificado`);
+  ok(await panel.locator('[data-e-plot] [data-selected="true"]').count()===1,`${width}: seleção compartilhada com gráfico`);
+  await panel.locator('[data-e-before]').check();
+  ok(await panel.locator('.e-before').nth(1).evaluate(e=>e.style.display!=='none'),`${width}: posições anteriores visíveis`);
+  await panel.locator('[data-e-range]').fill('2.5');
+  ok(await panel.locator('[data-e-play]').textContent().then(t=>/Recomeçar/.test(t)),`${width}: transporte reconhece final manual`);
+  ok(await panel.locator('[data-e-finish]').isVisible(),`${width}: descoberta final disponível`);
+  await panel.locator('[data-experience-expand]').click();
+  ok(await panel.getAttribute('data-expanded')==='true',`${width}: experiência ampliada`);
+  await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('[data-expanded]'));
+  ok(await panel.locator('[data-experience-expand]').evaluate(e=>e===document.activeElement),`${width}: foco retorna ao controle de ampliação`);
+  ok(await panel.getAttribute('data-expanded')!=='true',`${width}: Escape encerra ampliação`);
+  await panel.locator('[data-e-reset]').first().click();
+  ok(await panel.locator('[data-e-play]').textContent().then(t=>/Avançar/.test(t)),`${width}: reset sincroniza transporte`);
+  ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${width}: sem transbordamento`);
+  await page.reload();
+  ok(await preference.inputValue()==='reduced',`${width}: preferência persistida`);
+  await page.locator('.motion-settings summary').click();await preference.selectOption('full');await page.locator('.motion-settings summary').click();
+  const motion=page.locator('[data-sci-panel="luz"]');await motion.locator('[data-sci-stage]').scrollIntoViewIfNeeded();
+  const boxes=await motion.evaluate(root=>{const a=root.querySelector('.sci-fig').getBoundingClientRect(),b=root.querySelector('.sci-side').getBoundingClientRect();return {ay:a.y,by:b.y};});
+  if(width>1000)ok(Math.abs(boxes.ay-boxes.by)<10,'desktop: ilustração e comandos lado a lado');
+  await motion.locator('[data-sci-play]').click();
+  await page.locator('.motion-settings summary').click();await preference.selectOption('reduced');await preference.selectOption('full');await page.locator('.motion-settings summary').click();
+  ok(await motion.locator('[data-sci-play-label]').textContent().then(t=>t==='Animar'),`${width}: rótulo retorna ao modo completo`);
+  await page.close();
+ }
+ const page=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'});
+ await page.goto(base+'/'); await page.locator('.motion-settings summary').click();await page.locator('[data-motion-select]').selectOption('full');
+ ok(await page.locator('html').getAttribute('data-motion')==='reduced','sistema tem prioridade');
+ await page.goto(base+'/laboratorio/#tempo');
+ const range=page.locator('[data-era-range]');
+ await range.fill('3');
+ ok(await page.locator('[data-era-position]').textContent().then(t=>t.startsWith('04')),'régua temporal seleciona marco');
+ await page.close();
+ console.log(`Dinâmica: ${checks} verificações aprovadas`);
+} finally {await browser.close();}

@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 import { $, $$ } from './dom';
 import { getParam, setParams } from '../lib/url-state';
 import type { DepthLevel } from '../types';
@@ -55,7 +56,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   if (!content || sections.length < 2) return;
   const after = $$<HTMLElement>('.chapter-check, .reader-references, .reader-finish', root);
   const chapter = root.dataset.reader ?? '';
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => motionPreference.matches;
 
   const bar = document.createElement('div');
   bar.className = 'lesson-stepper';
@@ -92,7 +93,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     sections.forEach((s, k) => {
       const on = whole || k === current;
       s.hidden = !on;
-      s.classList.toggle('step-in', !whole && k === current && !reduced);
+      s.classList.toggle('step-in', !whole && k === current && !reduced());
     });
     after.forEach((a) => (a.hidden = !whole && !reachedEnd));
     bar.hidden = whole;
@@ -111,7 +112,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
       const h = sections[current].querySelector<HTMLElement>('h2');
       if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
       const top = sections[current].getBoundingClientRect().top;
-      if (top < 80 || top > innerHeight * 0.6) sections[current].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      if (top < 80 || top > innerHeight * 0.6) sections[current].scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
     }
   };
   jump.addEventListener('change', () => show(Number(jump.value), true, true));
@@ -121,7 +122,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
       const challenge = $('.chapter-check', root);
       const heading = challenge?.querySelector<HTMLElement>('h2');
       if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); }
-      challenge?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      challenge?.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' });
       return;
     }
     show(current + 1, true, true);

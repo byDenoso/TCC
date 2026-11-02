@@ -1,0 +1,95 @@
+/* Movimento didático, superfícies consistentes e comandos sempre relacionados à cena. */
+html { --header-clearance:110px; --lesson-clearance:120px; scroll-padding-top:var(--header-clearance); }
+:where(section[id],article[id],.obs-station,.lesson-section,h2[id],h3[id]) { scroll-margin-top:var(--header-clearance)!important; }
+:where(button,select,summary,input) { -webkit-tap-highlight-color:transparent; }
+:where(button,a,select,summary):focus-visible { outline:3px solid var(--accent-ink);outline-offset:4px; }
+:where(.obs-btn,.obs-chips button,.mx-transport button,.sci-buttons button,.solar-planets button) { border-radius:12px; }
+:where(button,a,summary) { transition:background .2s,color .2s,border-color .2s,box-shadow .2s,transform .2s; }
+:where(button):active:not(:disabled) { transform:translateY(1px); }
+.motion-settings { position:relative;font:600 11px var(--body); }
+.motion-settings>summary { cursor:pointer;min-height:44px;display:flex;align-items:center;padding:8px; }
+.motion-settings>div { position:absolute;right:0;top:100%;width:260px;padding:18px;border:1px solid var(--line-strong);border-radius:16px;background:var(--surface);color:var(--ink);box-shadow:0 12px 36px var(--shadow);z-index:60; }
+.motion-settings label { display:block;font-size:14px;margin-bottom:10px; }
+.motion-settings select { width:100%;min-height:44px;border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);border-radius:8px;padding:8px;font:500 14px var(--body); }
+.motion-settings p { font-size:12px;line-height:1.6;color:var(--muted);margin:10px 0 0; }
+.experience-toolbar { display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin:16px 0; }
+.experience-status { display:inline-flex;align-items:center;gap:8px;color:var(--muted);font:600 12px/1.5 var(--body); }
+.experience-status::before { content:'';width:7px;height:7px;border-radius:50%;background:var(--muted); }
+[data-playback='playing']>.experience-toolbar .experience-status::before { background:#329b94;box-shadow:0 0 0 4px #329b9420; }
+.experience-toolbar button,.experience-close { min-height:44px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink);font:600 12px var(--body);cursor:pointer; }
+.experience-dialog { width:min(1280px,96vw);max-width:96vw;max-height:94dvh;padding:clamp(16px,3vw,32px);border:1px solid var(--line-strong);border-radius:24px;background:var(--bg);color:var(--ink);overflow:auto;overscroll-behavior:contain; }
+.experience-dialog::backdrop { background:#060b21bb;backdrop-filter:blur(8px); }
+.experience-dialog [data-expanded] { max-width:1100px;margin:auto; }
+.experience-dialog .obs-guess,.experience-dialog [data-expanded]>.experience-toolbar { display:none!important; }
+.experience-close { display:block;margin:0 0 16px auto;position:sticky;top:0;z-index:25;box-shadow:0 4px 20px var(--shadow); }
+.experience-terms { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:20px 0 6px;color:var(--muted);font:500 12px/1.5 var(--body); }
+.experience-terms button { min-height:44px;border:0;background:transparent;color:var(--accent-ink);padding:6px 9px;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:4px;font:600 12px var(--body); }
+.term-pop { z-index:100;inset:auto 0 max(24px,env(safe-area-inset-bottom)); }
+.term-pop p { margin:0; }.term-pop strong { margin-bottom:10px; }
+html:root .reader-content { padding-bottom:var(--lesson-clearance); }
+html:root .lesson-stepper { position:sticky;margin-top:32px; }
+.step-dot { min-width:36px;min-height:44px;position:relative; }
+html:root .step-dots { gap:0; }
+html:root .reader-aside [aria-current] { border-left:3px solid var(--accent-ink);padding-left:12px;transition:background .25s; }
+html:root .solar-ruler-scroll { border:1px solid var(--line);border-radius:14px;background:linear-gradient(90deg,var(--surface),transparent 8% 92%,var(--surface));scrollbar-color:var(--accent-ink) var(--surface);scrollbar-width:thin; }
+html:root .solar-ruler-hint { display:block; }
+html:root .cmb-probe { width:30px;height:30px;margin:-15px 0 0 -15px;box-shadow:0 0 0 6px #ffffff22,0 0 20px #d4c4ff99; }
+.cmb-probe::after { content:'';position:absolute;inset:8px;border-radius:50%;background:white; }
+.hero-routes a strong::after { display:block;color:#b8bfd8;font:400 11px/1.5 var(--body);margin-top:4px; }
+.hero-routes a:nth-child(1) strong::after { content:'Teste suas ideias'; }.hero-routes a:nth-child(2) strong::after {content:'Observe o que muda';}.hero-routes a:nth-child(3) strong::after {content:'Siga uma sequência';}
+.hero-root .header-tools { gap:10px; }
+.header-cta { max-width:190px; }
+.sci-head>p::after {content:' Aqui, o movimento explica uma ideia por vez.';}
+html:root .obs-tabs button span { color:inherit; }
+html:root .obs-expansion-grid { display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:24px;align-items:start; }
+html:root .obs-expansion-grid>.obs-pilot-title { grid-column:1/-1;font-size:clamp(28px,3vw,42px); }
+html:root .obs-expansion-grid>.obs-viz { display:block;position:sticky!important;top:var(--header-clearance)!important;min-width:0;border-radius:20px;overflow:hidden;background:#080e24!important; }
+html:root .obs-expansion-grid .expansion-stage { height:auto;aspect-ratio:1.6;min-height:260px;background:radial-gradient(ellipse at 45% 40%,#253054,#080e24 72%)!important;border-radius:18px 18px 0 0; }
+html:root .obs-expansion-grid>.obs-panel { display:flex;flex-direction:column;gap:12px; }
+html:root .obs-expansion-grid .obs-lede { font-size:14px;margin:0; }
+html:root .obs-expansion-grid .obs-viz>figcaption { color:#b8c7e5;background:#080e24;padding:12px 16px;border-top:1px solid #ffffff16;font-size:12px; }
+html:root .obs-expansion-grid .cosmos-volume { mask-image:none; }
+html:root .obs-expansion-grid .obs-actions { margin:0;gap:8px; }
+html:root .obs-expansion-grid .obs-chips { margin:0; }
+html:root .obs-expansion-grid .obs-slider { margin:0; }
+html:root .obs-expansion-grid .obs-reading { display:none; }
+.expansion-guide { padding:12px 14px;background:var(--surface);border-left:3px solid var(--accent-ink);border-radius:0 12px 12px 0;font-size:14px;line-height:1.6; }
+.expansion-guide strong { color:var(--accent-ink); }
+.e-options { display:flex;gap:6px 14px;flex-wrap:wrap; }.e-options label { display:flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:var(--ink-2); }.e-options select { min-height:44px;padding:6px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);color:var(--ink); }
+.e-selection { font:600 13px/1.6 var(--body);margin:0;padding:10px 12px;background:var(--accent-soft);border-radius:12px; }
+.e-finish { padding:16px;border:1px solid var(--accent);border-radius:14px;background:var(--surface);font-size:14px;line-height:1.6; }.e-finish p { margin:6px 0 12px; }
+.e-finish[hidden] { display:none; }
+.e-before { fill:none;stroke:#a9b8d2;stroke-width:1;stroke-dasharray:3 3;opacity:.55; }
+.e-ruler { stroke:#9ce9df;stroke-width:1.5;stroke-dasharray:4 3; }
+html:root .expansion-stage svg .obs-cap { fill:#d9e7ff;font-size:13px; }.expansion-stage svg .e-measure { fill:#b0f4e6;font:600 12px var(--body);paint-order:stroke;stroke:#080e24;stroke-width:4px; }
+.e-galaxy { transition:opacity .2s; }.e-galaxy[data-selected='true'] { filter:drop-shadow(0 0 5px #9ce9df); }.e-dot[data-selected='true'] { fill:var(--accent-ink);r:6;stroke:var(--bg);stroke-width:2; }
+.e-targets {display:flex;gap:6px;flex-wrap:wrap;align-items:center;}.e-targets>span {font-size:12px;color:var(--muted);margin-right:4px;}.e-targets button {min-height:44px;min-width:44px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);}.e-targets button[aria-pressed='true'] {background:var(--accent);color:var(--on-accent);}
+.e-observer-label { position:absolute;top:12px;left:14px;color:#cbd8ef;font:600 12px var(--body);z-index:2;pointer-events:none; }
+.e-svg-help { padding:0 14px 12px;margin:0;color:#a8c3df;background:#080e24;font-size:12px;line-height:1.5; }
+.solar-facts { display:flex;flex-wrap:wrap;gap:10px 24px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin:12px 0; }.solar-facts div {min-width:100px;}.solar-facts dt {font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}.solar-facts dd {margin:4px 0 0;font:700 16px var(--body);}
+.solar-layers { display:flex;gap:8px 18px;align-items:center;flex-wrap:wrap; }.solar-layers label {display:flex;gap:8px;align-items:center;min-height:44px;font-size:13px;}.solar-layers input {width:18px;height:18px;accent-color:var(--accent-ink);}
+.solar-layer-note { font-size:12px;color:var(--muted);line-height:1.6; }
+.solar-stage { border-radius:20px; }.solar-stage.is-switching { opacity:.65; }.solar-poster {transition:opacity .3s,transform .5s;}
+html:root .solar-planets {display:flex;flex-wrap:wrap;gap:7px;margin:16px 0 10px;}.solar-planets button {min-height:44px;}
+.time-scrubber {display:flex;align-items:center;gap:16px;margin-top:20px;}.time-scrubber label {font-size:13px;white-space:nowrap;}.time-scrubber input {width:100%;height:44px;accent-color:var(--accent);}.timeline-detail.is-changing {animation:experience-enter .35s both;}.timeline-visual img {transition:opacity .25s;}.timeline-visual[data-loading='true'] img {opacity:.65;}
+[data-focus-diagram='true'] {box-shadow:0 0 0 2px var(--accent-ink),0 12px 30px var(--shadow)!important;}
+@media (prefers-reduced-motion:no-preference) {
+ html:not([data-motion='reduced']) .hero-copy>* {animation:experience-enter .7s both;}.hero-copy h1 {animation-delay:.07s!important;}.hero-copy .hero-introduction {animation-delay:.14s!important;}.hero-copy .hero-actions {animation-delay:.21s!important;}.hero-copy .hero-routes {animation-delay:.28s!important;}
+ html:not([data-motion='reduced']) .cmb-hero {animation:experience-enter .85s .15s both;}
+ html:not([data-motion='reduced']) .quiz-feedback:not([hidden]),html:not([data-motion='reduced']) [data-guess-result]:not([hidden]),html:not([data-motion='reduced']) .mx-verdict:not([hidden]),html:not([data-motion='reduced']) .e-finish:not([hidden]) {animation:experience-enter .35s both;}
+ @keyframes experience-enter {from {opacity:.4;transform:translateY(12px);}to {opacity:1;transform:none;}}
+}
+html[data-motion='gentle'] {scroll-behavior:auto;}html[data-motion='gentle'] .sky-orbit {animation-duration:90s!important;}
+html[data-motion='reduced'] *,html[data-motion='reduced'] *::before,html[data-motion='reduced'] *::after {animation:none!important;transition:none!important;scroll-behavior:auto!important;}
+@media(max-width:1150px) { .main-nav {gap:14px!important;}.main-nav a {font-size:10px!important;}.theme-label {display:none;}.header-cta {max-width:150px;font-size:10px!important;} }
+@media(max-width:900px) { html:root .obs-expansion-grid {grid-template-columns:1fr;gap:16px;}html:root .obs-expansion-grid>.obs-viz {position:relative!important;top:auto!important;}html:root .obs-expansion-grid>.obs-panel {display:flex;}html:root .obs-expansion-grid .expansion-stage {min-height:210px;} }
+@media(max-width:600px) {html:root .header-tools {gap:4px;}.motion-settings>summary {font-size:10px;padding:5px;}.motion-settings>div {position:fixed;top:82px;right:16px;}.experience-toolbar {gap:6px;}.experience-toolbar button {font-size:11px;}.experience-status {font-size:11px;}.experience-dialog {padding:12px;max-width:98vw;width:98vw;border-radius:16px;}.experience-terms {gap:2px;}.solar-facts {gap:12px;}.solar-facts dd {font-size:14px;}html:root .obs-expansion-grid {display:grid;}html:root .obs-expansion-grid>.obs-viz {display:block;}html:root .obs-expansion-grid .obs-pilot-title {font-size:30px;}html:root .obs-expansion-grid .expansion-stage {min-height:210px;aspect-ratio:1.6;} .time-scrubber {gap:8px;}.time-scrubber label {font-size:11px;} }
+html:root [data-e-observer][aria-pressed='true'] {box-shadow:inset 0 -3px var(--galaxy-color);}
+.is-reframing>svg,.is-reframing>.cosmos-volume {animation:experience-enter .35s both;}
+.e-dot,.e-targets button {cursor:pointer;}
+.topic-preview {display:block;width:52px;height:32px;margin-bottom:8px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;opacity:.8;}
+[data-scene-loading='true']::after {content:'Preparando a vista 3D · a ilustração já está disponível';position:absolute;bottom:12px;left:12px;right:12px;z-index:4;border-radius:12px;padding:10px;background:#0b142bdf;color:#e0e8fa;font:500 12px/1.5 var(--body);pointer-events:none;}
+html:root .prediction-recall {font-size:13px;color:var(--muted);padding:10px 12px;background:var(--surface);border-radius:10px;margin-bottom:12px;}
+@media (prefers-reduced-motion:no-preference) {html:not([data-motion='reduced']) .sci-tabs button:is(:hover,:focus-visible) .topic-preview path {stroke-dasharray:100;animation:preview-trace .8s both;}@keyframes preview-trace {from {stroke-dashoffset:100;}to {stroke-dashoffset:0;}}}
+.e-dot:focus-visible {outline:2px solid var(--accent-ink);}
+.sci-panel>.experience-toolbar,.sci-panel>.experience-terms {grid-column:1/-1;}
