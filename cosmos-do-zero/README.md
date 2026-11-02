@@ -32,7 +32,7 @@ Fontes/creditos aparecem junto às experiências e em `/fontes/`. Manifests: `as
 
 ## Verificação
 
-`npm run check`, `npm test`, `npm run test:http`, `npm run test:e2e`, `npm run test:renders`, `npm run test:graphics`, `npm run test:browsers`. `test:pages` valida a saída local com variáveis dos dois destinos autorizados; não envia arquivos para eles.
+`npm run check`, `npm test`, `npm run test:http`, `npm run test:e2e`, `npm run test:renders`, `npm run test:graphics`, `npm run test:browsers`, `npm run test:motion` (painel "Ciência em movimento" da home, com a página servida em `BASE_URL`). `test:pages` valida a saída local com variáveis dos dois destinos autorizados; não envia arquivos para eles.
 
 Testes dedicados incluem60/120 Hz da expansão, navegação/progresso/storage bloqueado, BFCache real, perda de contexto/falha de asset, pausa exata, seleção rápida, remount de qualidade,20 trocas e medição de memória. Registros e capturas estão no pacote de homologação; resultados históricos de outras revisões não são resultados desta execução.
 
@@ -43,3 +43,9 @@ Ilustrações e pontos gerados são TOY_MODEL. Testes numéricos verificam imple
 Preservados `cosmos-v3-progress`, `cosmos-v5-selos`, `cosmos-v6-praticado`, `cosmos-v6-onde`, `cosmos-quiz:${pathname}:${chapter}` e `cosmos-quiz-review`. Reiniciar experimento/restaurar câmera não apaga conquistas. A origem privada mantém progresso separado da produção; QA usa fixtures artificiais.
 
 Base de reversão: commit67a467f242fae92a638ec01884ef8ee6c81c3dcf da branch cosmos-do-zero. Homologação ocorre em branch/ambiente separados; nenhuma reversão exige apagar dados do aluno. Para reverter a prévia, publique uma versão privada previamente registrada ou reconstrua essa base em outro checkout. A produção exige autorização futura específica do Dener.
+
+## Ciência em movimento (home)
+
+Cinco animações SVG interativas (luz esticada pela expansão, expansão sem centro, diagrama de Hubble se montando, luz do começo esfriando, curva de rotação de galáxia) em `src/components/MotionLab.astro`, `src/scripts/motion-lab*.ts` e `src/styles/motion-lab.css`. A matemática fica em `src/lib/motion-lab.ts` (testada em `tests/unit/motion-lab.test.ts`). Todas são ilustrações didáticas rotuladas como tal; nenhuma usa dados observacionais. Não usam WebGL (não disputam o contexto único das cenas 3D), só a aba aberta anima, tudo para fora da tela ou com a aba do navegador escondida, e com `prefers-reduced-motion` nada se move sozinho ("Avançar" mostra o próximo estado).
+
+`src/styles/ux-refinements.css` (importado por último em cada página) fixa o piso de 12 px para texto e de 13 px para texto de leitura e controles no celular, e amplia áreas de toque para 44 px sem mexer no desenho.

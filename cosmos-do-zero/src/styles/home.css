@@ -236,7 +236,8 @@
   .intro-head p { margin-top: 25px; font-size: 15px; max-width: none; }
   .journey-status { font-size: 12px; }
   .journey-status progress { width: 85px; }
-  .chapter-button { grid-template-columns: 52px 1fr 37px; padding: 26px 0; gap: 12px; }
+  /* Duas colunas (texto + ícone): o posicionamento do índice/título/ícone vem de reading-refinements.css. */
+  .chapter-button { grid-template-columns: minmax(0, 1fr) 37px; padding: 26px 0; gap: 12px; }
   .chapter-button:hover { padding-left: 0; padding-right: 0; background: none; }
   .chapter-teaser { display: none; }
   .chapter-title { font-size: clamp(23px, 6.2vw, 35px); }
@@ -328,7 +329,7 @@
   .sources-section :is(h1, h2) { font-size: clamp(40px, 10.6vw, 65px); }
 }
 @media (max-width: 400px) {
-  .chapter-button { grid-template-columns: 46px 1fr 30px; gap: 8px; }
+  .chapter-button { grid-template-columns: minmax(0, 1fr) 30px; gap: 8px; }
   .chapter-title { font-size: 22px; }
   .chapter-icon { height: 29px; width: 29px; font-size: 18px; }
   .ruler-row { --max: 56px; gap: 4px; }

@@ -2,15 +2,18 @@
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import Observatorio from '../components/Observatorio.astro';
+import MotionLab from '../components/MotionLab.astro';
 import ChapterList from '../components/ChapterList.astro';
 import QuizSection from '../components/QuizSection.astro';
 import ContinueStrip from '../components/ContinueStrip.astro';
 import '../styles/home.css';
+import '../styles/ux-refinements.css';
 ---
 <Base title="Cosmos do Zero" description="Cosmologia para curiosos, do zero: volte no tempo até a luz mais antiga, deixe o espaço se expandir, meça a velocidade da expansão e descubra do que o Universo é feito em quatro experimentos interativos.">
   <Hero />
   <main id="principal">
     <Observatorio />
+    <MotionLab />
     <ChapterList />
     <QuizSection />
     <ContinueStrip />
