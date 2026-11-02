@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 /** Movimento: revelação ao rolar e estrelas que acompanham o ponteiro. */
 const SELECTORS = [
   '.section-id', 'main .display', '.intro-head > p', '.obs-head > p', '.obs-tabs', '.chapter-row', '.journey-status', '.course-map', '.badges',
@@ -9,7 +10,7 @@ const SELECTORS = [
 ];
 
 export function initMotion(): void {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+  if (motionPreference.matches || !('IntersectionObserver' in window)) return;
   const nodes = [...document.querySelectorAll<HTMLElement>(SELECTORS.join(','))].filter((n) => !n.closest('.hero-shell, [hidden], .obs-station'));
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
@@ -25,8 +26,8 @@ export function initMotion(): void {
     if (n.matches('.continue-card, .quiz-card, .chapter-photo, .chapter-concept, .image-credits figure, .cosmos-scene')) n.classList.add('rv-scale');
     io.observe(n);
   }
-  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-    if (e.matches) { nodes.forEach((n) => n.classList.add('is-in')); io.disconnect(); }
+  motionPreference.addEventListener('change', () => {
+    if (motionPreference.matches) { nodes.forEach((n) => n.classList.add('is-in')); io.disconnect(); }
   });
 
   // Estrelas acompanham o ponteiro (profundidade)

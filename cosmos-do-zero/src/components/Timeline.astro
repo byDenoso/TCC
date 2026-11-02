@@ -34,6 +34,7 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
         </button>
       ))}
     </div>
+    <div class="time-scrubber"><label for="era-range">Escolha um marco</label><input id="era-range" data-era-range type="range" min="0" max={eras.length-1} step="1" value="0" aria-valuetext={first.title} /></div>
     <div class="timeline-controls">
       <button type="button" data-era-prev disabled>← Anterior</button>
       <span data-era-position>01 / {pad2(eras.length)}</span>

@@ -11,3 +11,11 @@ export function separation(i: number, observer: number): number {
 export function expandedPosition(i: number, observer: number, scale: number): [number,number,number] {
   return expansionPositions[i].map((v,k)=>(v-expansionPositions[observer][k])*scale) as [number,number,number];
 }
+
+/** Enquadramento fixo por observador: a expansão move os pontos, sem mudar a régua da câmera. */
+export function projectExpansion(i: number, observer: number, scale: number): [number,number] {
+ const flat=(p:number[])=>[p[0]+p[2]*.2,p[1]-p[2]*.42];
+ const all=expansionPositions.map((_,j)=>flat(expandedPosition(j,observer,2.5)));
+ const unit=Math.min(270/Math.max(...all.map(p=>Math.abs(p[0]))),150/Math.max(...all.map(p=>Math.abs(p[1]))));
+ const [x,y]=flat(expandedPosition(i,observer,scale));return [320+x*unit,200+y*unit];
+}

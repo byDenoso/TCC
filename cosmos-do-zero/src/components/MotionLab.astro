@@ -10,6 +10,7 @@ interface Panel {
   id: string; tab: string; title: string; lede: string; alt: string; note: string;
   range: string; key: Key[];
 }
+const preview:Record<string,string>={luz:'M2 16Q8 2 14 16T26 16T38 16T50 16',expansao:'M8 16H44M26 2V30M8 12L4 16L8 20M44 12L48 16L44 20',hubble:'M5 3V28H49M8 25L22 18L35 11L47 5',frio:'M3 28C12 28 13 3 22 3S30 28 49 28',giro:'M26 16C26 4 45 3 46 15S26 33 14 24S5 3 26 3'};
 const panels: Panel[] = [
   {
     id: 'luz', tab: 'Luz esticada',
@@ -67,7 +68,7 @@ const panels: Panel[] = [
     </header>
 
     <div class="sci-tabs" role="tablist" aria-label="Animações científicas" data-sci-tabs hidden>
-      {panels.map((p, i) => <button type="button" role="tab" id={`movimento-aba-${p.id}`} aria-controls={`movimento-${p.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-sci-tab={p.id}>{p.tab}</button>)}
+      {panels.map((p, i) => <button type="button" role="tab" id={`movimento-aba-${p.id}`} aria-controls={`movimento-${p.id}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-sci-tab={p.id}><svg class="topic-preview" viewBox="0 0 52 32" aria-hidden="true"><path d={preview[p.id]} /></svg>{p.tab}</button>)}
     </div>
 
     <div class="sci-body" data-sci-body>
@@ -88,7 +89,7 @@ const panels: Panel[] = [
             <noscript><p class="sci-static">{p.alt}</p></noscript>
             <div class="sci-controls">
               <div class="sci-range">
-                <label for={`movimento-barra-${p.id}`}>{p.range} <output for={`movimento-barra-${p.id}`} data-sci-value></output></label>
+                <label for={`movimento-barra-${p.id}`}>{p.range} <output aria-live="off" for={`movimento-barra-${p.id}`} data-sci-value></output></label>
                 <input id={`movimento-barra-${p.id}`} type="range" min="0" max="1" step="0.005" value="0" data-sci-range />
               </div>
               <div class="sci-buttons" role="group" aria-label="Controle da animação">

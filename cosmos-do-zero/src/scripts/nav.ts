@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 import { $, $$ } from './dom';
 import { u } from '../lib/url';
 
@@ -38,7 +39,7 @@ export function initNav(): void {
         const oldURL = location.href;
         if (location.hash !== url.hash) { history.pushState(history.state, '', location.search + url.hash); dispatchEvent(new HashChangeEvent('hashchange', { oldURL, newURL: location.href })); }
         else revealHash();
-        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const smooth = !motionPreference.matches;
         target.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant', block: 'start' });
         if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
         target.focus({ preventScroll: true });

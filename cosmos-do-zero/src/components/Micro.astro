@@ -30,7 +30,7 @@ const letters = 'ABCDE';
     <div class="mx-controls">
       {c.kind === 'range' ? (
         <div class="mx-range">
-          <label for={`${id}-mx-range`}>{c.label} <output data-mx-out for={`${id}-mx-range`}></output></label>
+          <label for={`${id}-mx-range`}>{c.label} <output aria-live="off" data-mx-out for={`${id}-mx-range`}></output></label>
           <input id={`${id}-mx-range`} type="range" min={c.min} max={c.max} step={c.step} value={c.value} data-mx-range />
         </div>
       ) : (

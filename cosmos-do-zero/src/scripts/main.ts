@@ -1,3 +1,5 @@
+import { initMotionPreference } from './motion-preference';
+import { initExperience } from './experience';
 import { initNav } from './nav';
 import { initProgress } from './progress-ui';
 import { initTheme } from './theme';
@@ -27,7 +29,7 @@ const instruments: [string, () => Promise<void>][] = [
 
 /** Carrega apenas os instrumentos presentes; o leitor prepara os passos antes das cenas. */
 async function boot(): Promise<void> {
-  for (const init of [initTheme, initSchool, initHeader, initNav, initProgress, initGuesses]) {
+  for (const init of [initMotionPreference, initExperience, initTheme, initSchool, initHeader, initNav, initProgress, initGuesses]) {
     try { init(); } catch (err) { console.error('[cosmos] falha ao iniciar', init.name, err); }
   }
   if (document.querySelector('.chapter-reader')) {

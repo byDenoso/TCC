@@ -1,6 +1,7 @@
+import { motionPreference } from './motion-preference';
 /** Conceptual teaching scenes. Motion requires an explicit action and stops out of view. */
 export function initScenes(): void {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const reduced = motionPreference;
   for (const root of document.querySelectorAll<HTMLElement>('[data-scene]')) {
     const status = root.querySelector<HTMLElement>('[data-scene-status]')!;
     let stopMotion = () => {};

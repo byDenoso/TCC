@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 import { $, $$ } from './dom';
 import { questions } from '../data/client';
 import { advance, answer, createQuiz, missed, poolFor, score, verdict, type QuizState } from '../lib/quiz';
@@ -35,7 +36,7 @@ function offerQuizReturn(context?: Review): void {
       if (card) {
         const url = new URL(a.href); history.pushState(history.state, '', url);
         card.closest<HTMLElement>('.chapter-check')?.removeAttribute('hidden');
-        card.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+        card.scrollIntoView({ behavior: motionPreference.matches ? 'instant' : 'smooth', block: 'start' });
         question?.focus({ preventScroll: true });
       }
       a.remove();

@@ -3,7 +3,7 @@ import { emissionGalaxy,emissionPalette,emissionSize,prepareEmissionGalaxies,typ
 import type { Exhibit } from './runtime';
 import { expansionPositions } from '../../lib/expansion';
 
-export function expansion(observer: () => number, arrows: () => boolean,initialSize:EmissionSize=1536): Exhibit {
+export function expansion(observer: () => number, arrows: () => boolean,initialSize:EmissionSize=1536,target:()=>number=()=>1,before:()=>boolean=()=>false): Exhibit {
  const group=new THREE.Group();
  let size=initialSize,palette=emissionPalette(size),request=0,disposed=false;
  group.userData.textureQuality=size;
@@ -22,15 +22,22 @@ export function expansion(observer: () => number, arrows: () => boolean,initialS
  vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);gl_PointSize=2.2;}',
  fragmentShader:'void main(){vec2 p=gl_PointCoord-.5;float a=exp(-dot(p,p)*32.)*.18;gl_FragColor=vec4(.64,.74,.92,a);}' })));
  const paths=expansionPositions.map(()=>{const geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]);const line=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x8ca4ba,transparent:true,opacity:.24}));group.add(line);return line;});
- return {group,inspect(){return {galaxies:galaxies.map(g=>({name:g.name,scale:g.scale.toArray(),position:g.position.toArray()}))};},camera:[1.1,3.4,7.8],cameraForAspect:aspect=>aspect<1.2?[.8,5.7,10.6]:[1.1,3.4,7.8],
+ const ghosts=galaxies.map(()=>{const ghost=new THREE.Mesh(new THREE.RingGeometry(.28,.31,32),new THREE.MeshBasicMaterial({color:0xb9cae8,transparent:true,opacity:.35,side:THREE.DoubleSide,depthWrite:false}));ghost.rotation.x=-Math.PI/2;group.add(ghost);return ghost;});
+ const ruler=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3()]),new THREE.LineBasicMaterial({color:0x9ce9df,transparent:true,opacity:.8}));group.add(ruler);
+ const measure={text:'',position:new THREE.Vector3()};
+ return {group,inspect(){return {galaxies:galaxies.map(g=>({name:g.name,scale:g.scale.toArray(),position:g.position.toArray()}))};},camera:[1,10,29],cameraForAspect:aspect=>aspect<1.2?[1,13,36]:[1,10,29],
  async quality(mode,width){const next=emissionSize(width,mode),ticket=++request;if(next===size)return;await prepareEmissionGalaxies(next);if(disposed||ticket!==request)return;const old=palette;palette=emissionPalette(next);group.traverse(o=>{const mesh=o as THREE.Mesh;for(const m of mesh.material?(Array.isArray(mesh.material)?mesh.material:[mesh.material]):[]){const material=m as THREE.MeshBasicMaterial;const index=material.map?old.indexOf(material.map):-1;if(index>=0)material.map=palette[index];}});old.forEach(t=>t.dispose());size=next;group.userData.textureQuality=size;},
  dispose(){disposed=true;request++;},
- labels:galaxies.slice(0,3).map((object,i)=>({text:'ABC'[i],object,position:new THREE.Vector3(),pixelOffset:[i===1?-30:30,-14] as [number,number]})),update({value}){
+ labels:[...galaxies.slice(0,3).map((object,i)=>({text:'ABC'[i],object,position:new THREE.Vector3(),pixelOffset:[i===1?-30:30,-14] as [number,number]})),measure],update({value}){
   const scale=Math.max(1,value),origin=expansionPositions[observer()];
   galaxies.forEach((g,i)=>{
    const p=expansionPositions[i];g.position.set((p[0]-origin[0])*scale,(p[1]-origin[1])*scale,(p[2]-origin[2])*scale);
    const a=paths[i].geometry.getAttribute('position') as THREE.BufferAttribute;a.setXYZ(0,p[0]-origin[0],p[1]-origin[1],p[2]-origin[2]);a.setXYZ(1,g.position.x,g.position.y,g.position.z);a.needsUpdate=true;
+   ghosts[i].position.set(p[0]-origin[0],p[1]-origin[1],p[2]-origin[2]);ghosts[i].visible=before()&&i!==observer();
    paths[i].visible=arrows()&&i!==observer()&&scale>1.01;
   });
+  const destination=galaxies[target()].position;
+  const points=ruler.geometry.getAttribute('position') as THREE.BufferAttribute;points.setXYZ(0,0,0,0);points.setXYZ(1,destination.x,destination.y,destination.z);points.needsUpdate=true;
+  measure.position.copy(destination).multiplyScalar(.5);measure.position.y+=.35;measure.text=`${destination.length().toLocaleString('pt-BR',{maximumFractionDigits:1})} passos`;
  }};
 }

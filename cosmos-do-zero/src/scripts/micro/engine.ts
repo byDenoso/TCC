@@ -1,3 +1,4 @@
+import { motionPreference, motionFactor } from '../motion-preference';
 /**
  * Motor das microexperiências. Cada cena só é carregada quando chega perto da tela,
  * só uma anima por vez, e tudo para fora da tela ou com a aba escondida.
@@ -42,7 +43,7 @@ function markPracticed(id: string): void {
 interface Runner { stop(): void; dispose(): void }
 let running: Runner | null = null;
 const mounted = new Set<Runner>();
-const reducedQuery = matchMedia('(prefers-reduced-motion: reduce)');
+const reducedQuery = motionPreference;
 
 export function initMicro(): void {
   const roots = [...document.querySelectorAll<HTMLElement>('[data-mx]')];
@@ -144,7 +145,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   };
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(interacted); };
   let automatic: ReturnType<typeof visibleMotion> | null = null;
-  const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } };
+  const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } setPlaying(playing); };
   const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
   mounted.add(runner);
 
@@ -156,7 +157,7 @@ function setup(root: HTMLElement, scene: Scene): void {
 
   const tick = (now: number) => {
     if (!playing) return;
-    const dt = last ? Math.min(now - last, 64) : 16; last = now;
+    const dt = (last ? Math.min(now - last, 64) : 16) * motionFactor(); last = now;
     if (sweep) {
       v = Math.min(max, v + ((max - min) * dt) / (dur * 2.2));
       if (v >= max) { v = max; render(false); stop(); return; }

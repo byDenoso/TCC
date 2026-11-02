@@ -1,3 +1,4 @@
+import { motionPreference } from './motion-preference';
 import { $, $$, setText } from './dom';
 import { clampMass, massLabel, stellarPath } from '../lib/stars';
 import { format } from '../lib/format';
@@ -14,7 +15,7 @@ export function initStars(): void {
   const svg = $<SVGSVGElement>('[data-star-svg]', root);
   const caption = $('[data-star-caption]', root);
   const play = $<HTMLButtonElement>('[data-star-play]', root);
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const reduced = motionPreference;
   const layer = svg ? document.createElementNS('http://www.w3.org/2000/svg', 'g') : null;
   if (svg && layer) svg.append(layer);
   let step = 2, t = 1, playing = false, frame = 0, last = 0;
@@ -84,7 +85,7 @@ export function initStars(): void {
   $('[data-star-next]', root)?.addEventListener('click', () => { automatic?.manual(); next(); });
   $('[data-star-reset]', root)?.addEventListener('click', () => { automatic?.manual(); stop(); step = 2; t = 1; paint(); });
   window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted){automatic?.dispose();volume?.dispose();}});
-  reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } });
+  reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } setPlaying(playing); });
   const q = getParam('massa');
   if (q) slider.value = String(clampMass(Number(q.replace(',', '.'))));
   setPlaying(false);

@@ -1,3 +1,4 @@
+import { motionPreference, motionFactor } from './motion-preference';
 /**
  * A luz mais antiga em três etapas (Canvas 2D):
  *  A. Universo quente: elétrons livres desviam a luz (espalhamento). Sem fonte central: a caixa é um pedaço de um meio uniforme e se repete nas bordas.
@@ -9,7 +10,7 @@ import { A_DEC, STEP_TEXT, STEPS, URL_PARAM, bandOf, fmtLength, fmtScale, fmtTem
 import { getParam, setParams } from '../lib/url-state';
 
 const DONE_KEY = 'cosmos-v6-praticado';
-const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+const reduced = motionPreference;
 const DUR = [9000, 6500, 8000]; // ms por etapa; a etapa A repete em ciclo enquanto está tocando
 
 function rng(seed: number): () => number {
@@ -293,7 +294,7 @@ function setup(root: HTMLElement): void {
   };
   const tick = (now: number) => {
     if (!playing) return;
-    const dt = last ? Math.min(now - last, 50) : 16; last = now;
+    const dt = (last ? Math.min(now - last, 50) : 16) * motionFactor(); last = now;
     elapsed += dt;
     t += dt / DUR[step];
     if (step !== 2) plasma.step(dt / 1000, step === 0 ? null : ease(clamp(t)), r);
