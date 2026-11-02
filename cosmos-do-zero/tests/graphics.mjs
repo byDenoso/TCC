@@ -78,7 +78,19 @@ try {
     assert.ok(await root.locator('.mx-flat circle').first().isVisible()); checked++;
     assert.deepEqual(errors, [], `sem erros de shader ${width}`); checked++;
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1,'máximo1WebGL real incluindo todos os caminhos');checked++;
-    for(const[route,step,id]of[['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]){await page.goto(`${base}/capitulos/${route}/`);await selectLessonStep(page,step);const module=page.locator(`[data-mx="${id}"]`),stage=module.locator('.mx-stage').first();await stage.scrollIntoViewIfNeeded();await stage.locator('.cosmos-volume').waitFor();await still(stage.locator('.cosmos-volume'),`${id} ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.active()),1);checked++;}
+    for (const [route, step, id] of [['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]) {
+      await page.goto(`${base}/capitulos/${route}/`); await selectLessonStep(page, step);
+      const module = page.locator(`[data-mx="${id}"]`), stage = module.locator('.mx-stage').first();
+      await stage.scrollIntoViewIfNeeded();
+      try { await stage.locator('.cosmos-volume').waitFor(); }
+      catch (error) {
+        const state = await module.evaluate(root => ({ booted:root.dataset.mxBooted, fallback:root.dataset.visualFallback, stages:[...root.querySelectorAll('.mx-stage')].map(el => ({ class:el.className, hidden:el.hidden, fallback:el.dataset.visualFallback, top:Math.round(el.getBoundingClientRect().top), bottom:Math.round(el.getBoundingClientRect().bottom), canvas:!!el.querySelector('.cosmos-volume') })) }));
+        console.error('GRAPHICS_DIAGNOSTIC', JSON.stringify({ id, width, state, errors }));
+        throw error;
+      }
+      await still(stage.locator('.cosmos-volume'), `${id} ${width}`);
+      assert.equal(await page.evaluate(() => __GPU_PROBE.active()), 1); checked++;
+    }
     await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();

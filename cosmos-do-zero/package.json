@@ -7,10 +7,10 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build && node scripts/postbuild.mjs",
-    "preview": "astro preview",
-    "check": "astro check",
+    "dev": "node scripts/astro-local.mjs dev",
+    "build": "node scripts/astro-local.mjs build && node scripts/postbuild.mjs",
+    "preview": "node scripts/astro-local.mjs preview",
+    "check": "node scripts/astro-local.mjs check",
     "test": "vitest run",
     "test:http": "node tests/http.mjs",
     "test:e2e": "node tests/e2e.mjs",
@@ -19,7 +19,8 @@
     "test:renders": "node tests/renders.mjs",
     "test:pages": "node tests/pages-base.mjs",
     "test:graphics": "node tests/graphics.mjs",
-    "test:motion": "node tests/motion-lab.mjs"
+    "test:motion": "node tests/motion-lab.mjs",
+    "test:experience": "node tests/ambient-motion.mjs && node tests/beginner-flow.mjs && node tests/visual-fallback.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

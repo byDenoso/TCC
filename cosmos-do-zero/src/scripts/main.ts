@@ -3,6 +3,7 @@ import { initProgress } from './progress-ui';
 import { initTheme } from './theme';
 import { initHeader } from './header';
 import { initMotion } from './motion';
+import { initAmbient } from './ambient';
 import { initSchool } from './school';
 import { initGuesses } from './lab/common';
 import { initReader } from './reader';
@@ -40,6 +41,7 @@ async function boot(): Promise<void> {
   await Promise.all(instruments.filter(([selector]) => document.querySelector(selector)).map(async ([selector, init]) => {
     try { await init(); } catch (err) { console.error('[cosmos] instrumento', selector, err); }
   }));
+  initAmbient();
   initMotion();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => void boot(), { once: true }); else void boot();

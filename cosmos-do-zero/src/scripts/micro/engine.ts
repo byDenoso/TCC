@@ -98,6 +98,11 @@ function setup(root: HTMLElement, scene: Scene): void {
   scene.init(svg);
   let volume: import('../visual/runtime').MountedScene | null = null;
   let visualStage = svg.parentElement!;
+  const visualNotice = root.querySelector<HTMLElement>('[data-mx-visual-state]')!;
+  const showVisualFallback = () => {
+    visualNotice.textContent = 'Cena 3D indisponível neste navegador. Continue usando o diagrama e os controles abaixo.';
+    visualNotice.hidden = false;
+  };
   let alive = true;
   import('../visual/exhibits').then(async ({ visualCatalog }) => {
     const spec = visualCatalog[id]; if (!spec || !alive) return;
@@ -114,9 +119,11 @@ function setup(root: HTMLElement, scene: Scene): void {
       svg.parentElement!.before(visualStage);
       const useFlat=()=>{visualStage.hidden=true;visualStage.style.display='none';};visualStage.addEventListener('cosmos:contextlost',useFlat);visualStage.addEventListener('cosmos:unavailable',useFlat);
     }
+    visualStage.addEventListener('cosmos:unavailable', showVisualFallback);
+    visualStage.addEventListener('cosmos:contextlost', showVisualFallback);
     const { observeScene } = await import('../visual/runtime');
     volume = observeScene(visualStage, ()=>spec.make(visualStage)); volume.state({ value:v, phase:t });
-  }).catch(() => { root.dataset.visualFallback='true'; });
+  }).catch(() => { root.dataset.visualFallback='true'; if (alive) showVisualFallback(); });
 
   let liveTimer = 0;
   const render = (announce = true) => {
@@ -204,8 +211,12 @@ function setup(root: HTMLElement, scene: Scene): void {
     gBox.querySelector<HTMLElement>('[data-mx-guess-hint]')!.hidden = true;
     const ok = guess === gRight;
     gBtns.forEach((b, i) => { b.dataset.state = i === gRight ? 'right' : i === guess ? 'wrong' : 'idle'; });
-    gBox.querySelector<HTMLElement>('[data-mx-verdict-label]')!.textContent = ok ? 'Seu palpite bateu.' : 'O que a cena mostra:';
-    gBox.querySelector<HTMLElement>('[data-mx-verdict]')!.hidden = false;
+    gBox.querySelector<HTMLElement>('[data-mx-verdict-label]')!.textContent = ok ? 'Seu palpite bateu.' : 'O que sabemos:';
+    const verdict = gBox.querySelector<HTMLElement>('[data-mx-verdict]')!;
+    verdict.hidden = false;
+    const feedback = root.querySelector<HTMLElement>('[data-mx-inline-feedback]')!;
+    feedback.textContent = verdict.textContent?.trim() ?? '';
+    feedback.hidden = false;
     root.dispatchEvent(new CustomEvent('cosmos:guess', { bubbles: true, detail: { station: id, ok } }));
   }
   gBtns.forEach((b, i) => b.addEventListener('click', () => {
@@ -213,7 +224,12 @@ function setup(root: HTMLElement, scene: Scene): void {
     guess = i;
     gBtns.forEach((x) => { x.disabled = true; x.dataset.state = x === b ? 'chosen' : 'idle'; });
     if (interacted) revealGuess();
-    else { gBox.querySelector<HTMLElement>('[data-mx-guess-hint]')!.hidden = false; root.querySelector<HTMLElement>('[data-mx-range], [data-mx-opt="1"], [data-mx-play]')?.focus({ preventScroll: true }); }
+    else {
+      gBox.querySelector<HTMLElement>('[data-mx-guess-hint]')!.hidden = false;
+      const next = root.querySelector<HTMLElement>('[data-mx-range], [data-mx-opt="1"], [data-mx-play]');
+      next?.focus({ preventScroll: true });
+      next?.scrollIntoView({ behavior: 'auto', block: 'center' });
+    }
   }));
 
   // ── verificação ──

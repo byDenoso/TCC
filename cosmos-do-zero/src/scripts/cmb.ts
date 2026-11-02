@@ -60,8 +60,8 @@ export function initCmb(): void {
     const uK = Math.round(f(x, y * 0.5) * SIGMA_UK);
     const diff = Math.abs(uK);
     read.textContent = diff < 8
-      ? 'Neste mapa simulado, a temperatura está quase na média. A CMB observada também é muito uniforme, com pequenas variações.'
-      : `Neste mapa simulado, a luz está ${uK > 0 ? 'mais quente' : 'mais fria'} que a média: ${fmt(diff)} milionésimos de kelvin (valor ilustrativo). Na CMB observada, as variações trazem pistas das estruturas que deram origem às galáxias.`;
+      ? 'Neste mapa simulado, a temperatura está quase na média. A luz antiga observada no céu também é muito uniforme, com pequenas diferenças.'
+      : `Neste mapa simulado, a luz está ${uK > 0 ? 'mais quente' : 'mais fria'} que a média: ${fmt(diff)} milionésimos de kelvin (valor ilustrativo). Um milionésimo de kelvin equivale a um milionésimo de grau Celsius de diferença. No céu, essas pequenas diferenças ajudam a estudar a formação das estruturas do Universo.`;
   };
   const fromEvent = (e: PointerEvent) => { const r = frame.getBoundingClientRect(); show((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height); };
   frame.addEventListener('pointermove', fromEvent);

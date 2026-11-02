@@ -107,7 +107,7 @@ export function initHubble(root: HTMLElement): void {
       add('Distância', `${fmt(selected.dm * 3.261564, 0)} milhões de anos-luz`);
       add('A cor da luz', z < 0.02 ? 'chega um pouquinho mais avermelhada' : z < 0.05 ? 'chega um pouco mais avermelhada' : 'chega bem mais avermelhada');
       add('Velocidade de afastamento', `${fmtAuto(selected.v)} km por segundo`);
-    } else add('Como medir', 'Toque numa galáxia: o telescópio mede a distância e a velocidade dela.');
+    } else add('Como medir', 'Toque numa galáxia para ver valores simulados de distância e velocidade. Na prática, os astrônomos estimam essas grandezas com técnicas diferentes.');
     drawSpec(selected);
     drawPlot();
     if (done.length >= 8) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'hubble' } }));
