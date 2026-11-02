@@ -142,7 +142,7 @@ function setup(root: HTMLElement, scene: Scene): void {
     root.classList.toggle('is-playing', on);
     scene.setPlaying?.(on);
   };
-  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(); };
+  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(interacted); };
   let automatic: ReturnType<typeof visibleMotion> | null = null;
   const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } };
   const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
