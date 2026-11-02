@@ -11,7 +11,9 @@ const SELECTORS = [
 
 export function initMotion(): void {
   if (motionPreference.matches || !('IntersectionObserver' in window)) return;
-  const nodes = [...document.querySelectorAll<HTMLElement>(SELECTORS.join(','))].filter((n) => !n.closest('.hero-shell, [hidden], .obs-station'));
+  // Quando o GSAP coreografa títulos, marcadores e cartões, a revelação em CSS não os anima de novo.
+  const gsapOwned = document.documentElement.classList.contains('gsap-on') ? 'main .display, main .section-id, .continue-cards > *, .chapters > *' : '';
+  const nodes = [...document.querySelectorAll<HTMLElement>(SELECTORS.join(','))].filter((n) => !n.closest('.hero-shell, [hidden], .obs-station') && !(gsapOwned && n.matches(gsapOwned)));
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });

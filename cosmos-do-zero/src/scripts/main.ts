@@ -37,6 +37,9 @@ async function boot(): Promise<void> {
   }
   // SSR controls must be bound before load completes, including on a cold connection.
   // Reader still prepares the chapter first; scene assets and 3D remain lazy.
+  // Motion graphics (GSAP) e abertura em WebGL: carregados à parte; se falharem, a página continua igual.
+  void import('./motion-gsap').then((m) => m.initGsapMotion()).catch((err) => console.error('[cosmos] motion', err));
+  if (document.querySelector('.hero-shell')) void import('./hero-gl').then((m) => m.initHeroGl()).catch((err) => console.error('[cosmos] webgl', err));
   if (document.querySelector('[data-scene]')) {
     try { initScenes(); } catch (err) { console.error('[cosmos] instrumento', '[data-scene]', err); }
   }
