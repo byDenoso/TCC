@@ -3,6 +3,7 @@ import { clampMass, massLabel, stellarPath } from '../lib/stars';
 import { format } from '../lib/format';
 import { getParam, setParams } from '../lib/url-state';
 import { drawStellar } from './micro/stellar';
+import { visibleMotion } from './visible-motion';
 
 /** Laboratório estelar: a massa escolhe o caminho; as etapas são desenhadas e podem ser percorridas passo a passo. */
 export function initStars(): void {
@@ -17,6 +18,7 @@ export function initStars(): void {
   const layer = svg ? document.createElementNS('http://www.w3.org/2000/svg', 'g') : null;
   if (svg && layer) svg.append(layer);
   let step = 2, t = 1, playing = false, frame = 0, last = 0;
+  let automatic: ReturnType<typeof visibleMotion> | null = null;
   let volume:import('./visual/runtime').MountedScene|null=null;
   if(svg)import('./visual/exhibits').then(async({stellarMass})=>{
     await(await import('./visual/stellar-materials')).prepareStellarMaterials();
@@ -59,30 +61,33 @@ export function initStars(): void {
       const b = document.createElement('button'); b.type = 'button'; b.dataset.starStep = String(i);
       const n = document.createElement('span'); n.textContent = String(i + 1).padStart(2, '0');
       const p = document.createElement('p'); p.textContent = name; b.append(n, p);
-      b.addEventListener('click', () => { stop(); step = i; t = 1; paint(); });
+      b.addEventListener('click', () => { automatic?.manual(); stop(); step = i; t = 1; paint(); });
       li.append(b); return li;
     }));
     presets.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.mass) === m)));
     paint();
     if (url) setParams({ massa: m === 1 ? null : String(m).replace('.', ',') });
   };
-  slider.addEventListener('input', () => render());
-  presets.forEach((b) => b.addEventListener('click', () => { slider.value = b.dataset.mass!; render(); }));
-  play?.addEventListener('click', () => {
-    if (playing) { stop(); return; }
-    if (reduced.matches) { next(); return; }
+  slider.addEventListener('input', () => { automatic?.manual(); stop(); render(); });
+  presets.forEach((b) => b.addEventListener('click', () => { automatic?.manual(); stop(); slider.value = b.dataset.mass!; render(); }));
+  const start = () => {
     if (step >= 4 && t >= 1) step = 0;
     if (t >= 1) t = 0;
     last = 0; setPlaying(true); frame = requestAnimationFrame(tick);
+  };
+  play?.addEventListener('click', () => {
+    automatic?.manual();
+    if (playing) { stop(); return; }
+    if (reduced.matches) { next(); return; }
+    start();
   });
-  $('[data-star-next]', root)?.addEventListener('click', next);
-  $('[data-star-reset]', root)?.addEventListener('click', () => { stop(); step = 2; t = 1; paint(); });
-  if (svg && 'IntersectionObserver' in window) new IntersectionObserver(([e]) => { if (!e.isIntersecting) stop(); }).observe(svg.parentElement!);
-  window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted)volume?.dispose();});
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  $('[data-star-next]', root)?.addEventListener('click', () => { automatic?.manual(); next(); });
+  $('[data-star-reset]', root)?.addEventListener('click', () => { automatic?.manual(); stop(); step = 2; t = 1; paint(); });
+  window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted){automatic?.dispose();volume?.dispose();}});
   reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } });
   const q = getParam('massa');
   if (q) slider.value = String(clampMass(Number(q.replace(',', '.'))));
   setPlaying(false);
   render(false);
+  if (svg && play) automatic = visibleMotion(svg.parentElement!, { start, stop, running: () => playing });
 }

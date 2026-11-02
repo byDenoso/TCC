@@ -5,8 +5,8 @@ root=Path(__file__).resolve().parents[2];src=root/'assets/source/posters/capture
 font=ImageFont.truetype('C:/Windows/Fonts/segoeui.ttf',23)
 rows=[]
 def export(name,image,label,origin,license):
- image=image.convert('RGB');image.thumbnail((1200,800),Image.Resampling.LANCZOS)
- canvas=Image.new('RGB',(1200,800),'#070c18');canvas.paste(image,((1200-image.width)//2,(800-image.height)//2))
+ image=image.convert('RGBA');image.thumbnail((1200,800),Image.Resampling.LANCZOS)
+ canvas=Image.new('RGB',(1200,800),'#070c18');canvas.paste(image,((1200-image.width)//2,(800-image.height)//2),image)
  draw=ImageDraw.Draw(canvas);draw.rectangle((0,747,1200,800),fill='#070c18');draw.text((30,761),label,font=font,fill='#d1d9e4')
  canvas.save(out/(name+'.webp'),quality=88,method=4);canvas.resize((600,400),Image.Resampling.LANCZOS).save(out/(name+'-small.webp'),quality=84,method=4)
  canvas.save(root/'assets/source/posters'/(name+'.png'),optimize=True)
@@ -15,7 +15,7 @@ def export(name,image,label,origin,license):
  rows.append(dict(name=name,origin=origin,license=license,caption=label,files=files))
 for name,label in [('plasma','Plasma primordial · esquema com luz, elétrons e núcleos · sem estrelas'),('nuclei','Primeiros núcleos · partículas ampliadas · ilustração'),('star','Superfície estelar · granulação ampliada · ilustração'),('galaxies','Galáxia ilustrativa · estrelas e poeira sintetizadas'),('group-local','Grupo Local · posição e morfologia ilustrativas'),('solar-system','Sistema Solar · tamanhos e separações ilustrativos'),('cosmic-web','Distribuição artística · filamentos, aglomerações e vazios')]:
  export(name,Image.open(src/(name+'.png')),label,'Capture of the corresponding interactive scene; capture.json specifies route and state','CC0-1.0 original artwork; solar maps retain credits in solar-materials manifest')
-export('earth',Image.open(root/'public/models/portraits/terra.webp'),'Terra · composição MODIS e geometria/iluminação ilustrativas','NASA Earth Observatory Blue Marble Next Generation July2004, rendered original Blender model','NASA media policy; official credits preserved in solar-materials manifest')
+export('earth',Image.open(root/'public/models/portraits/terra.webp'),'Terra · mapa MODIS; oceanos, nuvens e iluminação ilustrativos','NASA MODIS July2004 land map; rendered by scripts/render-earth-portrait.mjs with illustrative ocean, clouds and atmosphere','NASA media policy; official credits preserved in solar-materials manifest')
 # Synthetic angular field on an elliptical full-sky illustration. No observational data.
 w,h=1200,640;x,y=np.meshgrid(np.linspace(-1,1,w),np.linspace(-1,1,h));mask=x*x+y*y<1
 lon=np.pi*x/np.sqrt(np.maximum(1e-6,1-y*y));lat=np.arcsin(np.clip(y,-1,1));field=np.zeros((h,w));rng=np.random.default_rng(1976)

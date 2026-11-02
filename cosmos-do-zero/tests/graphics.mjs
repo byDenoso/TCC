@@ -88,10 +88,12 @@ try {
         console.error('GRAPHICS_DIAGNOSTIC', JSON.stringify({ id, width, state, errors }));
         throw error;
       }
+      await module.locator('[data-mx-reset]').click();
+      await stage.scrollIntoViewIfNeeded();
       await still(stage.locator('.cosmos-volume'), `${id} ${width}`);
       assert.equal(await page.evaluate(() => __GPU_PROBE.active()), 1); checked++;
     }
-    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
+    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await page.locator('[data-solar-reset]').click();await solar.scrollIntoViewIfNeeded();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();
   }

@@ -130,19 +130,19 @@
     },
     {
       "name": "earth",
-      "origin": "NASA Earth Observatory Blue Marble Next Generation July2004, rendered original Blender model",
+      "origin": "NASA MODIS July 2004 land map; browser render from scripts/render-earth-portrait.mjs; ocean color, clouds, atmosphere and lighting are illustrative",
       "license": "NASA media policy; official credits preserved in solar-materials manifest",
-      "caption": "Terra · composição MODIS e geometria/iluminação ilustrativas",
+      "caption": "Terra · mapa MODIS; oceanos, nuvens e iluminação ilustrativos",
       "files": [
         {
           "file": "earth.webp",
-          "bytes": 29216,
-          "sha256": "09d56ab2965e3e68907447c7a1d3fde687ffe8f6d2edfeee71f50641a69d1d5e"
+          "bytes": 56234,
+          "sha256": "7c48e029098e822ca385aa600d3abba0f3450df3c344f68914b5537e4401190e"
         },
         {
           "file": "earth-small.webp",
-          "bytes": 9368,
-          "sha256": "9cb0757f1ef09de28addb749788d232093450f3fe2c383d23f965ffcf2d9e29a"
+          "bytes": 17662,
+          "sha256": "de642b60631f36cbf9550ff253dbca9e9cacce64214b6f920655649befa2483e"
         }
       ]
     },
