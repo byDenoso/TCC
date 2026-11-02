@@ -17,12 +17,13 @@ const letters = 'ABCDE';
     <div class="mx-opts">
       {spec.guess.options.map((o, i) => <button type="button" data-mx-guess={i}><span aria-hidden="true">{letters[i]}</span>{o}</button>)}
     </div>
-    <p class="mx-hint" data-mx-guess-hint hidden>Agora mexa na cena e veja se acertou.</p>
+    <p class="mx-hint" data-mx-guess-hint hidden>Agora use os controles da figura para investigar seu palpite.</p>
     <div class="mx-verdict" data-mx-verdict hidden><p><strong data-mx-verdict-label></strong> {spec.guess.why}</p></div>
   </div>
 
   <div class="mx-lab">
     <p class="mx-label"><strong>2 · Mexa e observe.</strong></p>
+    <p class="mx-visual-state" data-mx-visual-state role="status" hidden></p>
     <div class="mx-stage">
       <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
     </div>
@@ -43,6 +44,7 @@ const letters = 'ABCDE';
         <button type="button" data-mx-reset><span class="mx-ico" aria-hidden="true">↺</span>Reiniciar</button>
       </div>
     </div>
+    <p class="mx-inline-feedback" data-mx-inline-feedback role="status" hidden></p>
     <p class="mx-caption" data-mx-caption>{spec.alt}</p>
     {id === 'galaxias-e-nebulosas-nebulosas' && <p class="mx-detail-note">Detalhe de luz: <a href="https://esahubble.org/images/heic0601a/">composição Hubble de Orion</a>, <a href="https://esahubble.org/copyright/">CC BY 4.0</a>. Crédito: NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team. Imagem reduzida e filtrada; profundidade e cores por mecanismo atribuídas nesta ilustração, sem reconstruir Orion em 3D.</p>}
 

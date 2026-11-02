@@ -13,35 +13,48 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
   </div>
   <section class="hero-main page-width hero" aria-labelledby="hero-title">
-    <figure class="cmb-hero" data-cmb>
-      <div class="cmb-instrument-label"><span class="meta">01 / Uma pista do início</span><span class="cmb-interaction-hint">Explore com o toque ou as setas</span></div>
-      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
-        <canvas data-cmb-canvas width="480" height="240"></canvas>
-        <span class="cmb-probe" data-cmb-probe hidden></span>
-      </div>
-      <figcaption>
-        <p class="cmb-read" data-cmb-read aria-live="polite">A luz mais antiga que conseguimos observar diretamente vem da época em que o Universo ficou transparente. Explore a ilustração.</p>
-        <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
-        <p class="cmb-note" id="cmb-provenance">Mapa simulado da luz antiga do Universo. As cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck.</p>
-        <a class="cmb-go" href="?lab=tempo&amp;z=1090#observatorio">De onde vem essa luz? Viaje até ela →</a>
-      </figcaption>
-    </figure>
     <div class="hero-copy">
       <p class="hero-overline"><span class="dash" aria-hidden="true"></span>Um observatório para aprender</p>
       <h1 id="hero-title">Cosmos<br /><span class="serif">do Zero.</span></h1>
-      <p class="hero-introduction">Do nosso lugar na galáxia à luz mais antiga do Universo. Descubra a cosmologia em aulas curtas e experimentos que você controla.</p>
+      <p class="hero-introduction">Comece pela Terra e siga até as galáxias e a luz mais antiga. Entenda o Universo em aulas curtas e experiências que você controla.</p>
       <div class="hero-actions">
         <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')}>Começar do zero <span class="arrow" aria-hidden="true">↗</span></a>
         <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> <span aria-hidden="true">→</span></a>
         <a class="textlink" href="#observatorio">Explorar uma pergunta <span aria-hidden="true">→</span></a>
       </div>
+      <nav class="hero-routes" aria-label="Formas de explorar">
+        <a href="#observatorio"><span>04</span><strong>experimentos</strong><i aria-hidden="true">↗</i></a>
+        <a href="#movimento"><span>05</span><strong>animações</strong><i aria-hidden="true">↗</i></a>
+        <a href="#capitulos"><span>03</span><strong>aulas</strong><i aria-hidden="true">↗</i></a>
+      </nav>
     </div>
+    <figure class="cmb-hero" data-cmb>
+      <div class="cmb-instrument-label"><span class="meta">01 / A luz mais antiga</span><span class="cmb-interaction-hint">Toque no mapa ou use as setas</span></div>
+      <div class="cmb-observation">
+        <svg class="sky-orbits" viewBox="0 0 600 300" aria-hidden="true" focusable="false">
+          <g class="sky-orbit sky-orbit--outer"><ellipse cx="300" cy="150" rx="287" ry="132"/><circle cx="80" cy="66" r="3.2"/><circle cx="523" cy="218" r="2"/></g>
+          <g class="sky-orbit sky-orbit--inner"><ellipse cx="300" cy="150" rx="270" ry="117"/><circle cx="485" cy="64" r="3"/></g>
+          <path class="sky-crosshair" d="M300 12v16 M300 272v16 M12 150h16 M572 150h16" />
+        </svg>
+      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
+        <canvas data-cmb-canvas width="480" height="240"></canvas>
+        <span class="cmb-probe" data-cmb-probe hidden></span>
+      </div>
+      </div>
+      <figcaption>
+        <p class="cmb-read" data-cmb-read aria-live="polite">Esta luz começou sua viagem quando o Universo tinha cerca de 380 mil anos. Toque no mapa para explorar pequenas diferenças de temperatura.</p>
+        <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
+        <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck.</p>
+        <a class="cmb-go" href="?lab=tempo&amp;z=1090#observatorio">De onde vem essa luz? Viaje até ela →</a>
+        <button class="ambient-toggle" type="button" data-ambient-toggle hidden>Pausar o céu animado</button>
+      </figcaption>
+    </figure>
   </section>
   <div class="hero-foot page-width">
     <div class="hero-foot-left"><span class="meta">Sem pré-requisitos<br />No seu ritmo</span></div>
     <div class="hero-foot-center">
-      <div><span class="number">13,8</span><span class="statcopy">bilhões de anos</span></div>
-      <div><span class="number">1 : 100 mil</span><span class="statcopy">variação de temperatura</span></div>
+      <div><span class="number">13,8</span><span class="statcopy">bilhões de anos · idade estimada do Universo</span></div>
+      <div><span class="number">3 aulas</span><span class="statcopy">para começar do zero</span></div>
     </div>
     <a class="down" href="#observatorio">Descer <span aria-hidden="true">↓</span></a>
   </div>

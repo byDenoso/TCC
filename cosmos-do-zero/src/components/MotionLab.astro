@@ -23,19 +23,19 @@ const panels: Panel[] = [
   {
     id: 'expansao', tab: 'Espaço crescendo',
     title: 'Se tudo se afasta, onde fica o centro?',
-    lede: 'Em lugar nenhum. Quando o espaço cresce, cada galáxia vê as outras se afastarem, e as mais distantes se afastam mais depressa.',
+    lede: 'Na expansão descrita pelo modelo cosmológico, não há um centro especial. Em grandes distâncias, as galáxias tendem a se afastar, e as mais distantes se afastam mais depressa.',
     alt: 'Galáxias num quadriculado que se estica. Setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Trocando a galáxia de onde se olha, a vista é a mesma.',
-    note: 'Modelo de brinquedo: galáxias num quadriculado que se repete, só para mostrar a ideia. O Universo real não tem borda nem centro. Perto de nós, a gravidade mantém as galáxias juntas, e ali não há expansão.',
+    note: 'O quadriculado é uma ilustração que se repete, não um mapa do Universo. O modelo cosmológico usual não tem um centro privilegiado; a extensão do Universo inteiro é desconhecida. Em sistemas ligados pela gravidade, a expansão não aumenta as distâncias dessa forma.',
     range: 'Quanto o espaço cresceu',
     key: [{ kind: 'solid', text: 'seta: rapidez de afastamento' }]
   },
   {
-    id: 'hubble', tab: 'Diagrama de Hubble',
+    id: 'hubble', tab: 'Medindo a expansão',
     title: 'Como se descobriu que o Universo cresce?',
     lede: 'Medindo a distância e a rapidez de muitas galáxias. Um ponto não diz nada; vários pontos mostram um padrão.',
     alt: 'Pontos aparecem um a um num gráfico: cada ponto é uma galáxia, com a distância na horizontal e a rapidez de afastamento na vertical. Eles se alinham numa reta: o dobro da distância, o dobro da rapidez.',
     note: 'Dados fictícios, desenhados para mostrar o padrão. Medições reais têm mais ruído, e hoje usam milhares de galáxias.',
-    range: 'Galáxias medidas',
+    range: 'Galáxias simuladas',
     key: [{ kind: 'dot', text: 'uma galáxia' }, { kind: 'solid', text: 'reta que melhor passa pelos pontos' }]
   },
   {
@@ -50,11 +50,11 @@ const panels: Panel[] = [
   {
     id: 'giro', tab: 'Galáxia girando',
     title: 'Por que as galáxias giram rápido demais?',
-    lede: 'Pela gravidade, estrelas na borda deveriam girar mais devagar. Medindo, elas giram tão rápido quanto as de dentro.',
+    lede: 'Em muitas galáxias, estrelas distantes do centro giram mais rápido do que se esperaria considerando apenas a matéria visível.',
     alt: 'Uma galáxia vista de cima, com estrelas em órbita, e um gráfico da rapidez de giro do centro à borda. Só com a matéria visível, a rapidez cai na borda; com matéria escura, ela fica quase constante.',
-    note: 'Modelo de brinquedo: curvas simplificadas, que lembram galáxias espirais. Não é uma galáxia específica nem uma medida.',
-    range: 'Quanta matéria escura',
-    key: [{ kind: 'dash', text: 'esperado só com o que enxergamos' }, { kind: 'solid', text: 'o que se mede' }]
+    note: 'Curvas de um modelo ilustrativo: não são medições de uma galáxia específica. O controle vai de nenhum efeito adicional até um valor escolhido para mostrar a ideia; a porcentagem não é uma medida real de massa.',
+    range: 'Efeito ilustrativo da matéria escura',
+    key: [{ kind: 'dash', text: 'esperado só com o que enxergamos' }, { kind: 'solid', text: 'modelo com matéria escura' }]
   }
 ];
 ---
@@ -63,7 +63,7 @@ const panels: Panel[] = [
     <p class="section-id">Ciência em movimento</p>
     <header class="sci-head">
       <h2 class="display" id="sci-title">Veja o Universo<br /><em>se mexer.</em></h2>
-      <p>Cinco animações curtas mostram, com a forma real de cada fenômeno, as pistas que os cientistas usam. Mexa na barra, toque na figura e compare com o que você leu.</p>
+      <p>Cinco ilustrações mostram como luz, espaço e galáxias ajudam a entender o Universo. Escolha um tema e mova a barra para descobrir o que muda.</p>
     </header>
 
     <div class="sci-tabs" role="tablist" aria-label="Animações científicas" data-sci-tabs hidden>
@@ -104,6 +104,7 @@ const panels: Panel[] = [
         </article>
       ))}
     </div>
+    <p class="sci-sources">Quer se aprofundar? Consulte as explicações da NASA sobre <a href="https://science.nasa.gov/mission/webb/big-bang-q-and-a/" target="_blank" rel="noopener noreferrer">a expansão e a luz antiga <span class="visually-hidden">(abre em outra aba)</span>↗</a> e <a href="https://science.nasa.gov/mission/webb/galaxies-over-time/" target="_blank" rel="noopener noreferrer">a rotação das galáxias <span class="visually-hidden">(abre em outra aba)</span>↗</a>.</p>
   </div>
   <noscript><style>.sci-lab [data-sci-panel][hidden]{display:grid}.sci-lab .sci-fig,.sci-lab .sci-controls,.sci-lab .sci-read,.sci-lab .sci-badge{display:none}.sci-lab .sci-panel{grid-template-columns:1fr;padding-block:18px;border-top:1px solid var(--line)}</style></noscript>
 </section>
