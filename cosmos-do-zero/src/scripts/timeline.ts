@@ -55,4 +55,5 @@ export function initTimeline(): void {
   next.addEventListener('click', () => render(selected + 1, { scroll: true }));
   const fromUrl = Number(getParam('marco'));
   render(Number.isInteger(fromUrl) && fromUrl >= 1 && fromUrl <= eras.length ? fromUrl - 1 : 0, { url: false });
+  range.disabled=false;root.dataset.timelineReady='true';
 }

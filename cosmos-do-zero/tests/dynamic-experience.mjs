@@ -49,9 +49,11 @@ try {
  const page=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'});
  await page.goto(base+'/'); await page.locator('.motion-settings summary').click();await page.locator('[data-motion-select]').selectOption('full');
  ok(await page.locator('html').getAttribute('data-motion')==='reduced','sistema tem prioridade');
- await page.goto(base+'/laboratorio/#tempo');
+ await page.route('**/_astro/timeline.*.js',async route=>{await new Promise(resolve=>setTimeout(resolve,700));await route.continue();});
+ await page.goto(base+'/laboratorio/#tempo',{waitUntil:'domcontentloaded'});
  const range=page.locator('[data-era-range]');
  await range.fill('3');
+ ok(await page.locator('[data-island="timeline"]').getAttribute('data-timeline-ready')==='true','régua aguarda inicialização mesmo com módulo atrasado');
  ok(await page.locator('[data-era-position]').textContent().then(t=>t.startsWith('04')),'régua temporal seleciona marco');
  await page.close();
  console.log(`Dinâmica: ${checks} verificações aprovadas`);

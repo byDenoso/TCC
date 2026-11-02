@@ -28,7 +28,7 @@ export async function initSolarStudio():Promise<void>{
    root.querySelector('[data-solar-fact="radius"]')!.textContent=(moon?1737:p.radius).toLocaleString('pt-BR')+' km';
    root.querySelector('[data-solar-fact="distance"]')!.previousElementSibling!.textContent=moon?'Distância à Terra':'Distância ao Sol';
    root.querySelector('[data-solar-fact="distance"]')!.textContent=moon?'384 mil km da Terra':p.distance.toLocaleString('pt-BR')+' UA';
-   const period=root.querySelector('[data-solar-fact="period"]')!;period.previousElementSibling!.textContent=moon?'Uma volta à Terra':'Uma volta ao Sol';period.textContent=moon?'27,3 dias':orbitalPeriodYears(p.distance,1,p.mass/SOLAR_MASS_KG).toLocaleString('pt-BR',{maximumFractionDigits:2})+' anos terrestres';
+   const years=orbitalPeriodYears(p.distance,1,p.mass/SOLAR_MASS_KG);const period=root.querySelector('[data-solar-fact="period"]')!;period.previousElementSibling!.textContent=moon?'Uma volta à Terra':'Uma volta ao Sol';period.textContent=moon?'27,3 dias':years.toLocaleString('pt-BR',{maximumFractionDigits:2})+(Math.round(years*100)===100?' ano terrestre':' anos terrestres');
    root.querySelector<HTMLButtonElement>('[data-solar-moon]')!.setAttribute('aria-pressed',String(moon));modes.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.solarMode===mode)));buttons.forEach((b,i)=>b.setAttribute('aria-pressed',String(i===selected&&!moon)));
    root.querySelector<HTMLElement>('[data-solar-close-note]')!.textContent=(moon?'Lua':p.id==='mercurio'?'Mercúrio · cores realçadas MESSENGER':p.name)+' · detalhe ampliado, fora da escala da régua';
    root.querySelector<HTMLImageElement>('[data-solar-poster]')!.alt=(moon?'Lua':p.name)+': mapa de origem declarada em geometria e iluminação ilustrativas.';
