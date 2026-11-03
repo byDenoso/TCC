@@ -86,8 +86,8 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
-          npm run test:graphics
           npm run test:e2e
+          npm run test:graphics
           npm run test:renders
       - name: Empacotar destino selecionado
         run: node scripts/package-pages.mjs
@@ -176,8 +176,8 @@ jobs:
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
       - name: Jornada, escalas, interacoes, progresso e renders publicados
         run: |
-          npm run test:graphics
           npm run test:e2e
+          npm run test:graphics
           npm run test:renders
       - name: Capturas da URL real (desktop e mobile)
         run: node scripts/capture-public.mjs
