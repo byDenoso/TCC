@@ -94,7 +94,7 @@ html:root .lesson-section .lesson-try { font-size:14px; line-height:1.7; color:v
 .lesson-try strong { color:var(--accent-ink); }
 html:root .mx { margin-top:20px; padding:20px; border:1px solid var(--line); box-shadow:0 15px 40px var(--shadow); background:var(--surface); }
 html:root .mx-head h3 { font:550 22px/1.3 var(--sans); letter-spacing:-.02em; }
-html:root .mx .mx-stage { aspect-ratio:16/9; min-height:240px; border-radius:12px; }
+html:root .mx .mx-stage { width:100%; max-width:100%; aspect-ratio:16/9; min-height:240px; border-radius:12px; }
 html:root .mx :is(.mx-head,.mx-lab,.mx-controls,.mx-visuals,.experience-toolbar) { min-width:0; }
 html:root .mx .mx-volume-stage + .mx-stage { min-height:0; }
 html:root .mx-caption { border:1px solid var(--line); background:var(--bg); padding:16px; color:var(--ink); }
