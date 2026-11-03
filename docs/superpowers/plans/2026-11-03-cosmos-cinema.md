@@ -43,8 +43,8 @@
 ### Task 4: revisão, prompt e publicação
 **Files:** `docs/COSMOS_PROMPT_REWORK.md`, registro de entrega e testes relevantes.
 - [x] Revisão independente do diff, corrigir questões importantes e executar verificações necessárias.
-- [ ] Persistir fonte e mídia, abrir/integrar PR na branch Cosmos e publicar nos dois destinos existentes.
-- [ ] Verificar a URL real, capturar resultado e registrar os checks.
+- [x] Persistir fonte e mídia, abrir/integrar PR na branch Cosmos e publicar nos dois destinos existentes.
+- [x] Verificar a URL real, capturar resultado e registrar os checks.
 
 ## Ledger
 - Base remota: `ecf53114189e45d055bb1ddfe988e078b39fda4a`, árvore `16580f533984f1bccb2327e5417f14335b20c84e`.
@@ -55,5 +55,12 @@
 - Integração: a página inicial usa o MotionLab antes do catálogo; as histórias de 20 s abrem cada capítulo, sem repetir um segundo player na entrada.
 - Evidência local: testes RED em modelos/limites de etapas antes das correções; 172 testes unitários GREEN; Astro sem diagnósticos; build público de 11 páginas, 261 fragmentos e 564 URLs/assets; teste HTTP aprovado.
 - Mídia: seis filmes H.264, 1280×720, 24 fps, 480 quadros/20 s, sem áudio, com VTT; quadros inspecionados visualmente.
-- Revisão independente: três achados de pausa, celular deitado e histórico corrigidos em `2a96e88`; reavaliação aprovou as correções. Browser suite ainda será executada no CI.
+- Revisão independente: três achados de pausa, celular deitado e histórico corrigidos em `2a96e88`; reavaliação aprovou as correções. Suíte de navegador aprovada no CI e no domínio público.
 - Publicação: novos PRs para a branch Cosmos passam pelo mesmo workflow de verificação; publicação continua condicionada à branch e marcador autorizados.
+
+- Conferência final encontrou a camada GLSL do céu ainda com violeta. Teste GPU de pixels RED no CI `41713718270` (75,1% azul/ciano), correção revisada em `c938984`, etapa independente GREEN no CI `41714419269` para 390/1440 px; integrada pelo PR199. Nenhuma geometria ou interação mudou.
+
+- Verificação pública encontrou dois sintomas de um clique perdido em primeiras estruturas. Sonda isolada CI `41720518581`: oito variações de assets passaram; IO atrasado200ms reproduziu o guard de visibilidade (palco na tela, primeira escrita true ausente, segundo clique inicia). Corrigido pelo PR201 via controlador de visibilidade, com prioridade direta para Avançar reduzido.
+- PR201 (`41722044944`): Astro205 sem diagnósticos,172 unitários,8 céuGPU,170 cinema/transporte,54 shaders,26 visibilidade,34 dinâmica,1109 E2E e20 imagens aprovados. Revisão independente aprovou o controle e a preferência reduzida.
+
+- Entrega final: fonte `92272aa265451172e787353dbd2f062cc5e77732`; workflow público `41722894450` com build, deploy Pages e verificação pública SUCCESS. No domínio principal: 8 checks de céu azul,170 cinema/transporte,1109 E2E sem falhas,54 shaders,26 visibilidade,34 dinâmica e20 imagens aprovados. Vercel READY no deployment `dpl_51h85XwxmF9WsHBucTQ697C3L1oB`. Capturas reais da entrada e da aula persistidas em `docs/screenshots/cosmos-cinema-principal-*.png`; os seis vídeos foram reproduzidos em ambos os endereços.
