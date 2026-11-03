@@ -1,17 +1,18 @@
 ---
 import { primaryRows, chapters, PRIMARY_CHAPTER_IDS } from '../data';
-import { chapterUrl, u } from '../lib/url';
+import { chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
-const visuals: Record<string, { src: string; label: string; icon: string }> = {
-  'galaxias-e-nebulosas': { src: '/posters/galaxies-small.webp', label: 'Escalas e galáxias', icon: '◎' },
-  'origem-do-universo': { src: '/posters/plasma-small.webp', label: 'A história do Universo', icon: '✧' },
-  'misterios-do-cosmos': { src: '/posters/cosmic-web-small.webp', label: 'Luz, gravidade e evidências', icon: '⌁' },
-  'vida-das-estrelas': { src: '/posters/star-small.webp', label: 'Nascimento e evolução estelar', icon: '✺' },
-  'sistema-solar': { src: '/posters/solar-system-small.webp', label: 'Planetas e órbitas', icon: '◌' },
-  'terra-e-atmosfera': { src: '/posters/earth-small.webp', label: 'O nosso planeta', icon: '⊕' }
+import { STORIES, renderStory } from '../lib/story-scenes';
+const visuals: Record<string, { label: string; icon: string }> = {
+  'galaxias-e-nebulosas': { label: 'Escalas e galáxias', icon: '◎' },
+  'origem-do-universo': { label: 'A história do Universo', icon: '✧' },
+  'misterios-do-cosmos': { label: 'Luz, gravidade e evidências', icon: '⌁' },
+  'vida-das-estrelas': { label: 'Nascimento e evolução estelar', icon: '✺' },
+  'sistema-solar': { label: 'Planetas e órbitas', icon: '◌' },
+  'terra-e-atmosfera': { label: 'O nosso planeta', icon: '⊕' }
 };
 ---
 <section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
@@ -19,7 +20,7 @@ const visuals: Record<string, { src: string; label: string; icon: string }> = {
     <p class="section-id">Uma escola para a sua curiosidade</p>
     <div class="intro-head">
       <h2 class="display" id="chapters-title">Do primeiro olhar<br /><em>às grandes perguntas.</em></h2>
-      <p>Comece pela trilha de cosmologia ou siga uma curiosidade. Cada aula tem seis passos, animações automáticas e espaço para experimentar.</p>
+      <p>Escolha uma pergunta. Veja a ideia em movimento, mude os controles e descubra o que acontece.</p>
     </div>
     <div class="school-method" aria-label="Como você aprende">
       <div><span aria-hidden="true">01</span><p><strong>Observe acontecer.</strong>A cena começa sozinha. A legenda mostra o que está mudando.</p></div>
@@ -32,13 +33,14 @@ const visuals: Record<string, { src: string; label: string; icon: string }> = {
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
+    <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><button type="button" data-preview-toggle aria-pressed="true" hidden>Pausar as capas</button></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
       {chapters.map((ch, i) => {
         const visual = visuals[ch.id];
         const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
         return <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
-          <div class="school-course-image"><img src={u(visual.src)} alt="" loading="lazy" width="600" height="360" /><span class="school-course-number">{pad2(i + 1)}</span><span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span></div>
-          <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{ch.learningGoal ?? ch.intro}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
+          <div class="school-course-image"><div data-story-preview={ch.id} data-story-uid={`preview-${i}`} aria-hidden="true" set:html={renderStory(ch.id,1,`preview-${i}`)} /><span class="school-course-number">{pad2(i + 1)}</span><span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span></div>
+          <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
         </a>;
       })}
     </div>

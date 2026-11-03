@@ -37,7 +37,7 @@ export function initStars(): void {
     playing = on;
     if (!play) return;
     play.setAttribute('aria-pressed', String(on));
-    setText($('[data-star-play-label]', play), on ? 'Pausar' : reduced.matches ? 'Avançar' : 'Animar a vida');
+    setText($('[data-star-play-label]', play), on ? 'Pausar' : reduced.matches ? 'Avançar' : 'Reproduzir ciclo');
     $('.mx-ico', play)!.textContent = on ? '❚❚' : '▶';
   };
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); paint(); };

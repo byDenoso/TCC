@@ -13,7 +13,6 @@ const letters = 'ABCDE';
   </div>
 
   <div class="mx-lab">
-    <p class="mx-label"><strong>Observe a cena.</strong> Depois, pause para experimentar.</p>
     <p class="mx-visual-state" data-mx-visual-state role="status" hidden></p>
     <div class="mx-visuals" data-mx-visuals><div class="mx-stage">
       <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
@@ -30,10 +29,10 @@ const letters = 'ABCDE';
         </div>
       )}
       <div class="mx-transport" role="group" aria-label="Controle da animação">
-        <button type="button" data-mx-play aria-pressed="false"><span class="mx-ico" aria-hidden="true">▶</span><span data-mx-play-label>Animar</span></button>
-        <button type="button" data-mx-step><span class="mx-ico" aria-hidden="true">⏭</span>Passo</button>
+        <button type="button" data-mx-play aria-pressed="false"><span class="mx-ico" aria-hidden="true">▶</span><span data-mx-play-label>Reproduzir</span></button>
+        <button type="button" data-mx-step><span class="mx-ico" aria-hidden="true">⏭</span>Avançar cena</button>
         <button type="button" data-mx-reset><span class="mx-ico" aria-hidden="true">↺</span>Reiniciar</button>
-        <button type="button" data-mx-auto><span aria-hidden="true">⟳</span> Demonstração automática</button>
+        <button type="button" data-mx-auto aria-label="Retomar a sequência automática"><span aria-hidden="true">⟳</span> Ver sequência</button>
       </div>
     </div>
     <p class="mx-inline-feedback" data-mx-inline-feedback role="status" hidden></p>
@@ -45,7 +44,7 @@ const letters = 'ABCDE';
     {id === 'terra-e-atmosfera-campo-magnetico' && <p class="mx-detail-note">Comparação ilustrativa, sem prever quanto ar se perde. Gravidade, radiação, composição e campos induzidos também importam: <a href="https://science.nasa.gov/venus/venus-facts/">Vênus mantém uma atmosfera densa e tem um campo induzido na ionosfera</a>, embora não tenha dínamo interno como a Terra.</p>}
     {id === 'terra-e-atmosfera-camadas' && <p class="mx-detail-note">O controle cobre 0–120 km: as quatro camadas inferiores e a parte inicial da termosfera. A exosfera fica acima, fora desta faixa. As espessuras 3D estão ampliadas cerca de dez vezes; o perfil de temperatura continua no diagrama 2D.</p>}
     <p class="visually-hidden" role="status" data-mx-live></p>
-    <p class="mx-limit"><strong>Como interpretar esta experiência.</strong> {spec.limit}</p>
+    <p class="mx-limit"><strong>Sobre o desenho.</strong> {spec.limit}</p>
   </div>
 
   <details class="mx-guess school-prediction" data-mx-guess-box data-right={spec.guess.right}>

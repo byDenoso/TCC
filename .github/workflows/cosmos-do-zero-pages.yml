@@ -1,6 +1,11 @@
 name: Cosmos do Zero | GitHub Pages
 
 on:
+  pull_request:
+    branches: [cosmos-do-zero]
+    paths:
+      - 'cosmos-do-zero/**'
+      - '.github/workflows/cosmos-do-zero-pages.yml'
   push:
     branches: [cosmos-do-zero]
     paths:
@@ -23,7 +28,7 @@ on:
         default: false
 
 concurrency:
-  group: cosmos-do-zero-pages
+  group: cosmos-do-zero-pages-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}
   cancel-in-progress: true
 
 permissions: {}
@@ -86,6 +91,7 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
+          npm run test:cinema
           npm run test:graphics
           npm run test:e2e
           npm run test:renders
@@ -176,6 +182,7 @@ jobs:
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
       - name: Jornada, escalas, interacoes, progresso e renders publicados
         run: |
+          npm run test:cinema
           npm run test:e2e
           npm run test:graphics
           npm run test:renders

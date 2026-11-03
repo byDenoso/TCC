@@ -24,7 +24,8 @@ const instruments: [string, () => Promise<void>][] = [
   ['[data-observatory]', async () => (await import('./lab')).initLab()],
   ['[data-mx]', async () => (await import('./micro/engine')).initMicro()],
   ['[data-cmbj]', async () => (await import('./cmb-journey')).initCmbJourney()],
-  ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()]
+  ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()],
+  ['[data-story],[data-story-preview]', async () => (await import('./story')).initStories()]
 ];
 
 /** Carrega apenas os instrumentos presentes; o leitor prepara os passos antes das cenas. */

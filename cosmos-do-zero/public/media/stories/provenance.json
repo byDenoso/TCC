@@ -1,0 +1,23 @@
+{
+  "source": "src/lib/story-scenes.ts",
+  "duration": 20,
+  "fps": 24,
+  "dimensions": [
+    1280,
+    720
+  ],
+  "models": "Ilustrações educativas; limites descritos em cada cena",
+  "references": [
+    "https://nssdc.gsfc.nasa.gov/planetary/factsheet/mercuryfact.html",
+    "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+    "https://science.nasa.gov/asset/webb/what-is-cosmological-redshift/"
+  ],
+  "ids": [
+    "galaxias-e-nebulosas",
+    "origem-do-universo",
+    "misterios-do-cosmos",
+    "vida-das-estrelas",
+    "sistema-solar",
+    "terra-e-atmosfera"
+  ]
+}

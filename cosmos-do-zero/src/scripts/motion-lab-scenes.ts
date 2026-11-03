@@ -96,7 +96,7 @@ function luzScene(): SciScene {
       set(off, { opacity: 656 * gr > VISIBLE_MAX_NM ? 1 : 0 });
       const x = fmt(gr, 1);
       let read: string;
-      if (gr <= 1.03) read = 'Sem expansão, a luz azul chega do jeito que saiu. Aperte "Animar" ou mova a barra: o espaço vai crescer.';
+      if (gr <= 1.03) read = 'Sem expansão, a luz azul chega do jeito que saiu. Aperte "Reproduzir" ou mova a barra: o espaço vai crescer.';
       else {
         read = `O espaço cresceu ${x}× e a onda esticou junto: ficou ${x}× mais comprida. `;
         read += vis ? `A luz, que saiu azul, chega ${lightName(nm)}.` : 'A luz, que saiu azul, chega infravermelha: nossos olhos não veem, mas telescópios como o James Webb sim.';
@@ -168,7 +168,7 @@ function expansaoScene(): SciScene {
       set(ring, { r: pulse });
       const x = fmt(s, 1);
       const read = s < 1.03
-        ? 'Aqui o espaço ainda não cresceu. Aperte "Animar" e veja o que acontece com as distâncias. Dica: toque numa galáxia para ver o Universo dali.'
+        ? 'Aqui o espaço ainda não cresceu. Aperte "Reproduzir" e veja o que acontece com as distâncias. Dica: toque numa galáxia para ver o Universo dali.'
         : `O espaço cresceu ${x}×. As setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Toque em outra galáxia (ou no botão) e veja que, neste desenho, o padrão é o mesmo de qualquer ponto.`;
       return { read, value: `${x}×`, aria: `Espaço ${x} vezes maior. Galáxias mais distantes se afastam mais depressa, de qualquer galáxia observadora.` };
     },
@@ -214,7 +214,7 @@ function hubbleScene(): SciScene {
         set(g1, { opacity: a }); set(g2, { opacity: a });
       } else { set(fit, { opacity: 0 }); set(guide, { opacity: 0 }); set(g1, { opacity: 0 }); set(g2, { opacity: 0 }); }
       let read: string;
-      if (n === 0) read = 'Cada ponto vai ser uma galáxia: quanto mais à direita, mais longe ela está; quanto mais alto, mais depressa se afasta. Aperte "Animar" para medir uma a uma.';
+      if (n === 0) read = 'Cada ponto vai ser uma galáxia: quanto mais à direita, mais longe ela está; quanto mais alto, mais depressa se afasta. Aperte "Reproduzir" para medir uma a uma.';
       else if (n < 8) read = `${n} ${plural(n, 'galáxia simulada', 'galáxias simuladas')}. Por enquanto parece só um monte de pontos soltos.`;
       else if (n < 17) read = `${n} galáxias simuladas. Um padrão começa a aparecer: as mais distantes estão mais acima.`;
       else read = `${n} galáxias simuladas. Nesta ilustração, os pontos seguem uma reta: ao dobrar a distância, dobra a rapidez. Um padrão semelhante nas observações ajudou a descobrir a expansão do Universo.`;
@@ -330,7 +330,7 @@ function giroScene(): SciScene {
       rings.forEach((r, i) => set(dots[i], { cx: rx(r), cy: vy(rotationSpeed(r, p)) }));
       const pct = Math.round(p * 100);
       let read: string;
-      if (p < 0.04) read = 'Neste modelo, usando apenas estrelas e gás, a velocidade cai na borda. Aperte "Animar" para comparar com o efeito de acrescentar matéria escura.';
+      if (p < 0.04) read = 'Neste modelo, usando apenas estrelas e gás, a velocidade cai na borda. Aperte "Reproduzir" para comparar com o efeito de acrescentar matéria escura.';
       else if (p > 0.96) read = 'Neste modelo, a matéria escura mantém a velocidade alta na borda. Em muitas galáxias observadas, curvas de rotação mostram um comportamento semelhante.';
       else read = `Com ${pct}% do efeito ilustrativo da matéria escura, a velocidade na borda aumenta. A linha tracejada usa só matéria visível; a linha cheia mostra este modelo.`;
       return { read, value: `${pct}%`, aria: `Efeito ilustrativo da matéria escura em ${pct}%.` };

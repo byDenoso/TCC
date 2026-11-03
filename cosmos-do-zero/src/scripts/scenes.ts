@@ -77,7 +77,7 @@ export function initScenes(): void {
         wave.setAttribute('d',path);
         status.textContent = `Fator de escala ${output.value}. Observador: ${observer.selectedOptions[0].textContent?.toLowerCase()}. Todas as separações crescem pelo mesmo fator; o sistema ligado mantém seu tamanho.`;
       };
-      stopMotion = () => { playing = false; cancelAnimationFrame(frame); play.setAttribute('aria-pressed','false'); play.textContent = Number(range.value)>=1.6 ? 'Repetir expansão' : 'Animar a expansão'; };
+      stopMotion = () => { playing = false; cancelAnimationFrame(frame); play.setAttribute('aria-pressed','false'); play.textContent = Number(range.value)>=1.6 ? 'Repetir expansão' : 'Reproduzir expansão'; };
       // Preserve sub-step precision: range inputs quantize .01, so accumulate time separately.
       let startScale = 1, startTime = 0;
       const animate = (now: number) => {
