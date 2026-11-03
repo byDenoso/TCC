@@ -26,25 +26,34 @@
 **Files:** `cosmos-do-zero/src/lib/demonstration.ts`, `cosmos-do-zero/src/data/lesson-guides.ts`, `cosmos-do-zero/tests/unit/demonstration.test.ts`, `cosmos-do-zero/tests/unit/lesson-guides.test.ts`.
 **Interfaces:** `advanceDemonstration(state, dt, spec)` retorna valor/fase/espera; `LESSON_GUIDES[sectionId]` fornece observe/connect/try.
 
-- [ ] Testes primeiro: escolhas/etapas avançam e repetem; range fica no intervalo e espera antes de repetir; mesmo tempo em 60/120 Hz; todo passo tem guia.
-- [ ] Implementar os dois módulos e executar os testes unitários.
+- [x] Testes primeiro: escolhas/etapas avançam e repetem; range fica no intervalo e espera antes de repetir; mesmo tempo em 60/120 Hz; todo passo tem guia.
+- [x] Implementar os dois módulos e executar os testes unitários.
 
 ### Task 2: Escola e aulas visuais
 
 **Files:** Hero, Header, ChapterList, Micro, página inicial, página de capítulos, Base, cosmic-theme.css, school.css.
 **Interfaces:** consome `LESSON_GUIDES`; mantém seletores de progresso e controles existentes.
 
-- [ ] Catálogo das seis aulas, home com prioridade para aprender, abertura e identidade cósmica.
-- [ ] Cena antes de texto longo, guias individuais e instrumentos extras opcionais.
-- [ ] Tema escuro padrão e tema claro explícito; controles responsivos.
-- [ ] Validar com `npm run check` e `npm run build`.
+- [x] Catálogo das seis aulas, home com prioridade para aprender, abertura e identidade cósmica.
+- [x] Cena antes de texto longo, guias individuais e instrumentos extras opcionais.
+- [x] Tema escuro padrão e tema claro explícito; controles responsivos.
+- [x] Validar com `npm run check` e `npm run build`.
 
 ### Task 3: Integração e entrega
 
 **Files:** micro/engine.ts, visible-motion.ts, cmb-journey.ts, experience.ts.
 **Interfaces:** consome relógio da Task 1; `visibleMotion.automatic()` retoma demonstração explicitamente.
 
-- [ ] Integrar reprodução contínua com controle manual e sem alterar progresso automaticamente.
-- [ ] Percorrer as três etapas CMB e preservar navegação manual/URL.
-- [ ] Rodar testes, diagnóstico, build e verificação visual. Revisão independente do diff.
-- [ ] Persistir código em branch/PR e publicar a experiência no destino autorizado, conferindo o resultado.
+- [x] Integrar reprodução contínua com controle manual e sem alterar progresso automaticamente.
+- [x] Percorrer as três etapas CMB e preservar navegação manual/URL.
+- [x] Rodar testes, diagnóstico, build e verificação visual. Revisão independente do diff.
+- [x] Persistir código em branch/PR e publicar a experiência no destino autorizado, conferindo o resultado.
+
+## Verificação de entrega
+
+- 165 testes unitários, Astro zero erros e build de11 páginas.
+- 258 fragmentos e546 recursos/URLs verificados; testesHTTP aprovados.
+- Revisão independente: sete orientações alinhadas às cenas; quatro correções de movimento/visibilidade aplicadas.
+- QA de navegação, reprodução, pausa persistente e preferência de movimento pelo navegador.
+- CI:54 verificaçõesWebGL aprovadas em390/1440px. Espera de reprodução ajustada para condição observável, e testes de instrumentos seguem o disclosure explícito da nova interface.
+- VercelproduçãoREADY emdpl_3GEDcn18dYMGhPzCpy5h54e5HRo9; PR189 integrado emf55ef293.

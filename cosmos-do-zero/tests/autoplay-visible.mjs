@@ -21,7 +21,8 @@ try {
     await stage.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector('[data-e-play]')?.getAttribute('aria-pressed') === 'true', null, { timeout: 5000 });
     const first = Number(await range.inputValue());
-    await page.waitForTimeout(350);
+    // Compilar o primeiro shader no SwiftShader pode bloquear mais de um quadro.
+    await page.waitForFunction(first => Number(document.querySelector('[data-e-range]')?.value) > first, first, { timeout: 5000 });
     expect(Number(await range.inputValue()) > first, `${width}: expansão começa ao ficar visível`);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     await page.waitForFunction(() => document.querySelector('[data-e-play]')?.getAttribute('aria-pressed') === 'false');

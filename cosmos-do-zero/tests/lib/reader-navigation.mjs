@@ -9,3 +9,9 @@ export async function lastLessonStep(page) {
   const count = await page.locator('[data-step-dot]').count();
   if (count) await selectLessonStep(page, count - 1);
 }
+
+/** Abre o instrumento pelo mesmo disclosure nativo que o aluno usa. */
+export async function openExtraExperiments(page) {
+  const extra = page.locator('.school-extra');
+  if (await extra.count() && !await extra.evaluate(node => node.open)) await extra.locator(':scope > summary').click();
+}
