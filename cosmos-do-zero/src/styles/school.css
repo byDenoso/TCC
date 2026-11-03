@@ -3,7 +3,8 @@ html:root { --radius:18px; }
 html:root .header-shell { background:color-mix(in srgb,var(--bg) 93%,transparent); backdrop-filter:blur(18px); }
 html:root .header-cta { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
 html:root .header-cta:hover { background:var(--accent-strong); color:var(--on-accent); }
-html:root .hero-root .header-shell:not(.is-stuck) .header-cta { color:#07202c; border-color:#8de4f5; background:#8de4f5; }
+html:root .school-home .hero-root .header-shell:not(.is-stuck) { background:#070b19ed; }
+html:root .school-home .hero-root .header-shell:not(.is-stuck) .header-cta { color:#07202c; border-color:#8de4f5; background:#8de4f5; }
 html:root .identity-mark::after { background:#89e5f5; box-shadow:0 0 14px #89e5f550; }
 html:root .main-nav a { font-size:12px; letter-spacing:.04em; }
 html:root .hero-shell { background:radial-gradient(ellipse at 75% 26%,#28336765,transparent 55%),radial-gradient(ellipse at 12% 85%,#11425340,transparent 52%),#070b19; }
@@ -94,6 +95,7 @@ html:root .lesson-section .lesson-try { font-size:14px; line-height:1.7; color:v
 html:root .mx { margin-top:20px; padding:20px; border:1px solid var(--line); box-shadow:0 15px 40px var(--shadow); background:var(--surface); }
 html:root .mx-head h3 { font:550 22px/1.3 var(--sans); letter-spacing:-.02em; }
 html:root .mx .mx-stage { aspect-ratio:16/9; min-height:240px; border-radius:12px; }
+html:root .mx :is(.mx-head,.mx-lab,.mx-controls,.mx-visuals,.experience-toolbar) { min-width:0; }
 html:root .mx .mx-volume-stage + .mx-stage { min-height:0; }
 html:root .mx-caption { border:1px solid var(--line); background:var(--bg); padding:16px; color:var(--ink); }
 html:root .mx-seg { gap:8px; }
@@ -171,6 +173,11 @@ html:root .lesson-stepper { border-color:var(--line-strong); box-shadow:0 -4px 3
   html:root .mx-transport [data-mx-auto] { margin-left:0; }
   html:root .reader-opening .lesson-path { padding:12px; }
   html:root .reader-opening .lesson-path ol a { flex-direction:column; font-size:11px; padding:8px; }
+}
+@media(max-width:600px) {
+  html:root .mx-transport { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  html:root .mx-transport button { min-width:0; white-space:normal; }
+  html:root .mx-transport :is([data-mx-auto],[data-cmbj-auto]) { grid-column:1/-1; width:100%; margin-left:0; }
 }
 html[data-motion='reduced'] :is(.school-course,.school-course-image img) { transition:none; }
 @media(forced-colors:active) { .school-course,.lesson-observe,.lesson-connection { border:1px solid CanvasText; } }
