@@ -25,8 +25,12 @@ try {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference', colorScheme: 'dark' });
     await page.addInitScript(installGpuProbe);
     const errors = [];
+    const warnings = [];
+    const failedResources = [];
     page.on('pageerror', e => { if (!/Transition was aborted/.test(String(e))) errors.push(String(e)); });
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('console', m => { if (m.type() === 'warning') warnings.push(m.text()); });
+    page.on('requestfailed', request => failedResources.push({ url: request.url(), error: request.failure()?.errorText }));
     await page.goto(`${base}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
     const tempo = page.locator('[data-t-3d]');
     const canvas = tempo.locator('canvas');
@@ -55,7 +59,23 @@ try {
     await selectLessonStep(page,dot);
     await root.locator('.mx-stage').first().scrollIntoViewIfNeeded();
     const web = root.locator('.mx-gl');
-    await web.waitFor({ state: 'visible' });
+    try { await web.waitFor({ state: 'visible' }); }
+    catch (error) {
+      const state = await root.evaluate(root => ({
+        root: { ...root.dataset },
+        viewport: { height: innerHeight, width: innerWidth, scrollY },
+        parentHidden: !!root.closest('[hidden]'),
+        stages: [...root.querySelectorAll('.mx-stage')].map(stage => {
+          const rect = stage.getBoundingClientRect();
+          return { class: stage.className, data: { ...stage.dataset }, top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height, canvas: !!stage.querySelector('canvas') };
+        }),
+        visualNotice: root.querySelector('[data-mx-visual-state]')?.textContent,
+        activeContexts: document.documentElement.dataset.cosmosContexts,
+        currentStep: document.querySelector('[data-step-select]')?.value,
+      }));
+      console.error('GRAPHICS_DIAGNOSTIC', JSON.stringify({ id: 'teia', width, state, errors, warnings, failedResources }));
+      throw error;
+    }
     await root.locator('[data-mx-range]').focus(); await page.keyboard.press('End');
     for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowLeft');
     await root.locator('[data-mx-play]').click();
