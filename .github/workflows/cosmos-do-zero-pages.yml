@@ -86,8 +86,8 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
-          npm run test:e2e
           npm run test:graphics
+          npm run test:e2e
           npm run test:renders
       - name: Empacotar destino selecionado
         run: node scripts/package-pages.mjs
