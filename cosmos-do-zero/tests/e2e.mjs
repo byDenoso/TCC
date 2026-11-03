@@ -28,7 +28,11 @@ async function page(width = 1280, opts = {}) {
   p.on('requestfailed', (r) => { if (!/ERR_ABORTED/.test(r.failure()?.errorText ?? '')) p.errors.push('requestfailed ' + r.url() + ' ' + (r.failure()?.errorText ?? '')); });
   return p;
 }
-const unlockLab = async (p) => { await openExtraExperiments(p); await p.evaluate(() => document.querySelectorAll('[data-guess-skip]').forEach((b) => b.click())); };
+const unlockLab = async (p) => {
+  await openExtraExperiments(p);
+  await p.evaluate(() => document.querySelectorAll('[data-guess-skip]').forEach((b) => b.click()));
+  await p.waitForFunction(() => [...document.querySelectorAll('[data-station]')].filter(node => !node.hidden).every(node => node.dataset.stationReady === 'true'));
+};
 const toLessonEnd = async (p) => { await lastLessonStep(p); await p.waitForTimeout(150); };
 const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
@@ -345,8 +349,11 @@ section('Imagens, créditos e links');
   await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); } });
   await p.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   ok('abertura desenha o mapa da luz mais antiga', await p.locator('[data-cmb-canvas]').evaluate((c) => { const d = c.getContext('2d').getImageData(c.width / 2, c.height / 2, 1, 1).data; return d[3] === 255; }));
-  const frame = p.locator('[data-cmb-frame]'); const box = await frame.boundingBox();
-  await p.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.5);
+  const frame = p.locator('[data-cmb-frame]');
+  await frame.scrollIntoViewIfNeeded();
+  const box = await frame.boundingBox();
+  await frame.hover({ position: { x: box.width * 0.4, y: box.height * 0.5 } });
+  await p.waitForFunction(() => /mapa simulado/.test(document.querySelector('[data-cmb-read]')?.textContent ?? ''));
   ok('mapa responde ao ponteiro com temperatura ilustrativa', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()) && /milionésimos de kelvin|na média/.test(await p.locator('[data-cmb-read]').innerText()), await p.locator('[data-cmb-read]').innerText());
   await frame.focus(); await p.keyboard.press('ArrowRight');
   ok('mapa explorável pelo teclado', !(await p.locator('[data-cmb-probe]').isHidden()));
@@ -452,7 +459,7 @@ section('Três jornadas e explorações');
     const before=await galaxies.nth(1).getAttribute('transform');
     await st.locator('[data-e-range]').evaluate(e=>{e.value='1.5';e.dispatchEvent(new Event('input',{bubbles:true}))});
     ok('expansão: escala altera a separação das galáxias', await galaxies.nth(1).getAttribute('transform') !== before);
-    ok('expansão: leitura explica a proporção', /mesma proporção/.test(await st.locator('[data-e-reading]').innerText()));
+    ok('expansão: leitura explica a proporção', /mesma proporção/.test(await st.locator('[data-e-reading]').textContent()));
     const all=await galaxies.evaluateAll(n=>n.map(x=>x.getAttribute('transform')));
     await st.locator('[data-e-observer="1"]').click();
     ok('expansão: tocar numa galáxia muda o referencial', JSON.stringify(all)!==JSON.stringify(await galaxies.evaluateAll(n=>n.map(x=>x.getAttribute('transform')))));
@@ -713,7 +720,7 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
       const failuresBefore = fails.length;
       await selectLessonStep(p,dots[i]);
       const root = p.locator(`[data-mx="${id}"]`);
-      await root.scrollIntoViewIfNeeded();
+      await root.locator('[data-mx-visuals]').scrollIntoViewIfNeeded();
       await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"]`)?.classList.contains('is-ready'), id);
       const svg = root.locator('[data-mx-svg]');
       const play = root.locator('[data-mx-play]');

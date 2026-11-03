@@ -12,6 +12,8 @@ const FROM_URL: Record<string, DepthLevel> = { essencial: 'essential', entender:
 export function initReader(): void {
   const root = $('.chapter-reader');
   if (!root) return;
+  // Sem JavaScript, os instrumentos e seus textos continuam abertos no HTML.
+  root.querySelectorAll<HTMLDetailsElement>('.school-extra').forEach(detail => { detail.open = false; });
   const buttons = $$<HTMLButtonElement>('[data-depth]', root);
   const layers = $$<HTMLDetailsElement>('[data-layer]', root);
   const apply = (level: DepthLevel, persist = true) => {
