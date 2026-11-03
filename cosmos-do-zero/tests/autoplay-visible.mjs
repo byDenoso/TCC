@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { openExtraExperiments } from './lib/reader-navigation.mjs';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -91,6 +92,7 @@ try {
   const solar = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
   const errors = []; solar.on('pageerror', error => errors.push(String(error)));
   await solar.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
+  await openExtraExperiments(solar);
   const earthStage = solar.locator('[data-solar-stage]'); await earthStage.scrollIntoViewIfNeeded();
   await earthStage.locator('.cosmos-volume').waitFor();
   const earthPlay = solar.locator('[data-solar-play]');
@@ -105,6 +107,7 @@ try {
 
   const stillEarth = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
   await stillEarth.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
+  await openExtraExperiments(stillEarth);
   await stillEarth.locator('[data-solar-stage]').scrollIntoViewIfNeeded();
   await stillEarth.locator('[data-solar-stage] .cosmos-volume').waitFor(); await stillEarth.waitForTimeout(300);
   expect(await pressed(stillEarth.locator('[data-solar-play]')) === 'false', 'a Terra não gira sozinha com movimento reduzido');
@@ -113,6 +116,7 @@ try {
   const fallback = await browser.newPage({ viewport: { width: 390, height: 900 } });
   await fallback.route('**/models/mundos.glb', route => route.abort());
   await fallback.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
+  await openExtraExperiments(fallback);
   await fallback.locator('[data-solar-stage]').scrollIntoViewIfNeeded();
   await fallback.waitForFunction(() => document.querySelector('[data-solar-play]')?.disabled === true);
   expect(await fallback.locator('[data-solar-poster]').isVisible(), 'imagem da Terra continua visível quando o modelo 3D falha');

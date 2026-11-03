@@ -1,6 +1,6 @@
 // Exercita os shaders de produção em WebGL (ANGLE/SwiftShader), incluindo emulação de viewport390; não é celular físico.
 import assert from 'node:assert/strict';
-import {selectLessonStep} from './lib/reader-navigation.mjs';
+import {openExtraExperiments, selectLessonStep} from './lib/reader-navigation.mjs';
 import { mkdirSync } from 'node:fs';
 import {installGpuProbe} from './lib/gpu-probe.mjs';
 import { chromium } from 'playwright';
@@ -53,7 +53,7 @@ try {
     // Seleciona o passo que contém a teia a partir da estrutura da própria aula.
     const dot = await root.evaluate(r => [...document.querySelectorAll('.lesson-section')].indexOf(r.closest('.lesson-section')));
     await selectLessonStep(page,dot);
-    await root.scrollIntoViewIfNeeded();
+    await root.locator('.mx-stage').first().scrollIntoViewIfNeeded();
     const web = root.locator('.mx-gl');
     await web.waitFor({ state: 'visible' });
     await root.locator('[data-mx-range]').focus(); await page.keyboard.press('End');
@@ -93,7 +93,7 @@ try {
       await still(stage.locator('.cosmos-volume'), `${id} ${width}`);
       assert.equal(await page.evaluate(() => __GPU_PROBE.active()), 1); checked++;
     }
-    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await page.locator('[data-solar-reset]').click();await solar.scrollIntoViewIfNeeded();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
+    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);await openExtraExperiments(page);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await page.locator('[data-solar-reset]').click();await solar.scrollIntoViewIfNeeded();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();
   }
