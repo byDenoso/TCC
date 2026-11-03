@@ -4,9 +4,9 @@ import { u } from '../lib/url';
 
 /** Moldura compartilhada: informa o estado sem criar outro relógio de animação. */
 export function initExperience(): void {
- const roots=document.querySelectorAll<HTMLElement>('[data-station],[data-sci-panel],[data-mx],[data-cmbj],[data-solar-studio]');
+ const roots=document.querySelectorAll<HTMLElement>('[data-station],[data-sci-panel],[data-mx],[data-cmbj],[data-solar-studio],[data-story]');
  for(const root of roots){
-  const stage=root.querySelector<HTMLElement>('[data-e-volume],[data-sci-stage],[data-mx-visuals],[data-cmbj-stage],.obs-viz');
+  const stage=root.querySelector<HTMLElement>('[data-e-volume],[data-sci-stage],[data-mx-visuals],[data-cmbj-stage],[data-story-viewport],.obs-viz');
   if(!stage)continue;
   const toolbar=document.createElement('div');toolbar.className='experience-toolbar';
   const status=document.createElement('span');status.className='experience-status';status.textContent='Explore no seu ritmo';
@@ -16,15 +16,15 @@ export function initExperience(): void {
   anchor.before(toolbar);
   let manual=false,visible=false;
   const update=()=>{
-   const play=root.querySelector<HTMLElement>('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-3d-play]');
+   const play=root.querySelector<HTMLElement>('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-3d-play],[data-story-play]');
    const running=play?.getAttribute('aria-pressed')==='true';
-   const range=root.querySelector<HTMLInputElement>('[data-e-range],[data-sci-range],[data-mx-range]');
+   const range=root.querySelector<HTMLInputElement>('[data-e-range],[data-sci-range],[data-mx-range],[data-story-time]');
    const complete=range&&Number(range.max)>Number(range.min)&&Number(range.value)>=Number(range.max);
-   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Concluído · reveja ou compare':visible?'Pronto para explorar':'Pausado fora da tela';
+   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Fim da cena · você pode rever':visible?'Pronto para explorar':'Pronto para começar';
    if(status.textContent!==text)status.textContent=text;
    const state=running&&visible?'playing':complete?'complete':'paused';if(root.dataset.playback!==state)root.dataset.playback=state;
   };
-  root.addEventListener('click',event=>{const target=(event.target as Element).closest('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-mx-step],[data-mx-reset],[data-mx-opt]');if(target){manual=true;queueMicrotask(update);}if((event.target as Element).closest('[data-mx-auto],[data-cmbj-auto]')){manual=false;queueMicrotask(update);}});
+  root.addEventListener('click',event=>{const target=(event.target as Element).closest('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-mx-step],[data-mx-reset],[data-mx-opt],[data-story-play],[data-story-reset],[data-story-phase]');if(target){manual=true;queueMicrotask(update);}if((event.target as Element).closest('[data-mx-auto],[data-cmbj-auto]')){manual=false;queueMicrotask(update);}});
   root.addEventListener('click',event=>{
    const guess=(event.target as Element).closest<HTMLElement>('[data-opt],[data-mx-guess]');if(!guess)return;
    const result=root.querySelector<HTMLElement>('[data-guess-result],.mx-verdict');if(!result)return;
@@ -40,6 +40,7 @@ export function initExperience(): void {
    const position=window.scrollY,placeholder=document.createComment('posição da experiência');
    root.before(placeholder);
    const dialog=document.createElement('dialog');dialog.className='experience-dialog';dialog.setAttribute('aria-label',root.querySelector('h3,h2')?.textContent?.trim()||'Experiência ampliada');
+   dialog.dataset.family=root.matches('[data-story]')?'story':root.matches('[data-mx]')?'micro':root.matches('[data-cmbj]')?'cmb':'instrument';
    const close=document.createElement('button');close.type='button';close.className='experience-close';close.textContent='Fechar experiência ×';
    placeholder.parentElement!.append(dialog);dialog.append(close,root,panel);root.dataset.expanded='true';
    const finish=()=>{panel.hidePopover();document.body.append(panel);delete root.dataset.expanded;placeholder.replaceWith(root);dialog.remove();window.scrollTo({top:position,behavior:'instant'});expand.focus({preventScroll:true});window.dispatchEvent(new Event('resize'));};

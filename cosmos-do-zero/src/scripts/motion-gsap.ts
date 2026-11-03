@@ -106,7 +106,7 @@ export async function initGsapMotion(): Promise<void> {
     once(el, gsap.from(el, { clipPath: 'inset(0 100% 0 0)', duration: 1 * k, ease: 'power3.out', paused: true }));
   });
   // cartões entram em leque
-  document.querySelectorAll<HTMLElement>('.continue-cards, .chapters').forEach((group) => {
+  document.querySelectorAll<HTMLElement>('.continue-cards, .chapters, .school-catalog').forEach((group) => {
     const items = group.querySelectorAll(':scope > *');
     if (items.length) once(group, gsap.from(items, { y: 40, opacity: 0, rotateX: -18, transformPerspective: 900, transformOrigin: '50% 0%', stagger: 0.08 * k, duration: 1 * k, paused: true }));
   });

@@ -43,7 +43,7 @@ try {
   if(width>1000)ok(Math.abs(boxes.ay-boxes.by)<10,'desktop: ilustração e comandos lado a lado');
   await motion.locator('[data-sci-play]').click();
   await page.locator('.motion-settings summary').click();await preference.selectOption('reduced');await preference.selectOption('full');await page.locator('.motion-settings summary').click();
-  ok(await motion.locator('[data-sci-play-label]').textContent().then(t=>t==='Animar'),`${width}: rótulo retorna ao modo completo`);
+  ok(await motion.locator('[data-sci-play-label]').textContent().then(t=>t==='Reproduzir'),`${width}: rótulo retorna ao modo completo`);
   await page.close();
  }
  const page=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'});

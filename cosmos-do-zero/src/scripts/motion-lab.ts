@@ -110,7 +110,7 @@ class SciPanel {
 
   private syncLabel(): void {
     const reduced = reducedQuery.matches;
-    this.playLabel.textContent = this.playing ? 'Pausar' : reduced ? 'Avançar' : 'Animar';
+    this.playLabel.textContent = this.playing ? 'Pausar' : reduced ? 'Avançar' : 'Reproduzir';
     this.play.setAttribute('aria-pressed', String(this.playing));
     this.play.querySelector('[data-sci-ico]')!.textContent = this.playing ? '❚❚' : reduced ? '⏭' : '▶';
     this.root.classList.toggle('is-playing', this.playing);

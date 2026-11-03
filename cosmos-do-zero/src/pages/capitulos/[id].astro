@@ -11,9 +11,11 @@ import Micro from '../../components/Micro.astro';
 import Lensing from '../../components/Lensing.astro';
 import SolarStudio from '../../components/SolarStudio.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
+import StoryLesson from '../../components/StoryLesson.astro';
+import { STORIES } from '../../lib/story-scenes';
 import { MICRO } from '../../data/micro';
 import { LESSON_GUIDES } from '../../data/lesson-guides';
-import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
+import { adjacentChapters, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
 import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
 import { chapterUrl, u } from '../../lib/url';
@@ -28,7 +30,7 @@ export function getStaticPaths() {
 }
 const { id } = Astro.props;
 const ch = chapters.find((c) => c.id === id)!;
-const n = chapterNumber(ch.id);
+const n = chapterOrder.indexOf(ch.id)+1;
 const isPrimary = chapterTrack(ch.id) === 'primary';
 const { prev, next } = adjacentChapters(ch.id);
 const photoKey = chapterPhotoKey[ch.id];
@@ -44,18 +46,19 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
   <main id="principal">
     <article class="chapter-reader" data-reader={ch.id}>
       <div class="reader-opening page-width">
-        <a class="back-link" href={u(isPrimary ? '/#capitulos' : '/laboratorio/')}>← {isPrimary ? 'Todas as aulas' : 'Mais experimentos'}</a>
-        <div class="section-id">{isPrimary ? `Aula ${pad2(n)} de 03` : 'Leitura complementar'} · {ch.minutes} min · {ch.sections.length} passos</div>
+        <div class="reader-welcome">
+        <a class="back-link" href={u('/#capitulos')}>← Todas as aulas</a>
+        <div class="section-id">Aula {pad2(n)} de 06 · {ch.minutes} min · {ch.sections.length} passos</div>
         <h1>{ch.title}</h1>
-        <p class="reader-intro">{ch.intro}</p>
+        <p class="reader-intro">{STORIES[ch.id].lede}</p>
         <nav class="reader-entry" aria-label="Por onde começar esta aula">
           <a class="cta" href={`#${ch.sections[0].id}`}>Começar a aula <span aria-hidden="true">↓</span></a>
           {labStations && <a class="textlink" href={`#${ch.experience === 'expansion' ? 'exploracao' : 'observatorio'}`}>Instrumentos extras <span aria-hidden="true">↓</span></a>}
         </nav>
-        <LessonPath id={ch.id}/>
-        {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
-        <p class="school-lesson-note"><span aria-hidden="true">▶</span> As cenas começam automaticamente. Pause ou use os controles para investigar.</p>
-        <details class="reader-overview"><summary>A ideia que conecta esta aula</summary><div class="reader-idea"><p>{ch.idea}</p></div></details>
+        <details class="reader-overview"><summary>O que você vai descobrir</summary><div class="reader-idea"><p>{ch.intro}</p>{ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}<p>{ch.idea}</p></div></details>
+        </div>
+        <StoryLesson id={ch.id}/>
+        <div class="reader-path-row"><LessonPath id={ch.id}/></div>
       </div>
       <div class="reader-grid page-width" id="leitura">
         <aside class="reader-aside">

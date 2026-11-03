@@ -21,6 +21,7 @@
     "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",
     "test:autoplay": "node tests/autoplay-visible.mjs",
     "test:motion": "node tests/motion-lab.mjs",
+    "test:cinema": "node tests/story-cinema.mjs",
     "test:experience": "node tests/ambient-motion.mjs && node tests/beginner-flow.mjs && node tests/visual-fallback.mjs",
     "test:dynamic": "node tests/dynamic-experience.mjs"
   },

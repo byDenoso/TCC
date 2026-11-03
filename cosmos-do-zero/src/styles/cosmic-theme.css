@@ -1,11 +1,11 @@
-/* Paleta da escola: espaço profundo, luz ciano e violeta. As cores físicas são preservadas. */
+/* Paleta da escola: espaço profundo, luz ciano e azul. As cores físicas são preservadas. */
 html:root, html:root[data-theme='dark'] {
-  --bg:#070b19; --bg-alt:#0b1123; --surface:#101a30; --surface-2:#18243d;
+  --bg:#031226; --bg-alt:#051a31; --surface:#08233d; --surface-2:#10314c;
   --ink:#edf4ff; --ink-2:#c0cee4; --muted:#96a9c7;
-  --line:#263853; --line-strong:#607c9e;
+  --line:#254661; --line-strong:#688eab;
   --accent:#7de2f5; --accent-strong:#a6ecfa; --accent-ink:#8ce5f4; --accent-soft:#123646; --on-accent:#07202c;
-  --accent-2:#b7a4fa; --shadow:rgba(0,0,0,.32); --focus:#a8edfa;
-  --glow-core:#7de2f5; --glow-mid:#b7a4fa;
+  --accent-2:#83b6ff; --shadow:rgba(0,0,0,.32); --focus:#a8edfa;
+  --glow-core:#7de2f5; --glow-mid:#83b6ff;
   color-scheme:dark;
 }
 html:root[data-theme='light'] {
@@ -13,8 +13,8 @@ html:root[data-theme='light'] {
   --ink:#172b47; --ink-2:#3c536e; --muted:#506783;
   --line:#c9d6e7; --line-strong:#7189a8;
   --accent:#086d89; --accent-strong:#07576f; --accent-ink:#075e78; --accent-soft:#daf1f7; --on-accent:#fff;
-  --accent-2:#6950ae; --shadow:rgba(12,35,67,.1); --focus:#075e78;
-  --glow-core:#086d89; --glow-mid:#6950ae;
+  --accent-2:#28659d; --shadow:rgba(12,35,67,.1); --focus:#075e78;
+  --glow-core:#086d89; --glow-mid:#28659d;
   color-scheme:light;
 }
 

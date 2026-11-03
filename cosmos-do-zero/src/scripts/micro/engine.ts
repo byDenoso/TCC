@@ -3,7 +3,7 @@ import { advanceDemonstration } from '../../lib/demonstration';
 /**
  * Motor das microexperiências. Cada cena só é carregada quando chega perto da tela,
  * só uma anima por vez, e tudo para fora da tela ou com a aba escondida.
- * Com movimento reduzido, "Animar" mostra o estado final de cada passo, sem movimento.
+ * Com movimento reduzido, "Reproduzir" mostra o estado final de cada passo, sem movimento.
  */
 export interface Scene {
   /** Desenha as partes fixas. */
@@ -141,7 +141,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   const setPlaying = (on: boolean) => {
     playing = on;
     play.setAttribute('aria-pressed', String(on));
-    playLabel.textContent = on ? 'Pausar' : reducedQuery.matches ? 'Avançar' : 'Animar';
+    playLabel.textContent = on ? 'Pausar' : reducedQuery.matches ? 'Avançar' : 'Reproduzir';
     play.querySelector('.mx-ico')!.textContent = on ? '❚❚' : '▶';
     root.classList.toggle('is-playing', on);
     scene.setPlaying?.(on);

@@ -1,0 +1,34 @@
+---
+import { STORIES, renderStory } from '../lib/story-scenes';
+import { u } from '../lib/url';
+interface Props { id:string }
+const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
+---
+<section class="story-lesson" data-story={id} data-story-mode-active="scene" role="group" aria-labelledby={`${prefix}-title`}>
+  <header class="story-heading"><span class="meta">Uma ideia em 20 segundos</span><h2 id={`${prefix}-title`}>{story.title}</h2></header>
+  <div class="story-modes" role="group" aria-label="Como você quer ver esta ideia">
+    <button type="button" data-story-mode="scene" aria-pressed="true">Explorar a cena</button>
+    <button type="button" data-story-mode="film" aria-pressed="false">Ver em vídeo <span aria-hidden="true">▶</span></button>
+  </div>
+  <ol class="story-phases" aria-label="Momentos da explicação">
+    {story.phases.map((phase,i)=><li><button type="button" data-story-phase={i} aria-current={i===0?'step':'false'}><span aria-hidden="true">{i+1}</span>{phase.label}</button></li>)}
+  </ol>
+  <div class="story-viewport" data-story-viewport>
+    <div class="story-stage" data-story-stage set:html={renderStory(id,0,prefix)} />
+    <video data-story-film controls playsinline preload="none" poster={u(`/media/stories/${id}.webp`)} aria-label={`Vídeo: ${story.title}`} hidden>
+      <source src={u(`/media/stories/${id}.mp4`)} type="video/mp4" />
+      <track kind="captions" src={u(`/media/stories/${id}.vtt`)} srclang="pt-BR" label="Português" />
+      <p>Você pode <a href={u(`/media/stories/${id}.mp4`)}>abrir o vídeo</a> e ler a explicação abaixo.</p>
+    </video>
+  </div>
+  <div class="story-transport" role="group" aria-label="Controle da explicação">
+    <button type="button" data-story-play aria-pressed="false"><span data-story-play-label>Reproduzir</span></button>
+    <button type="button" data-story-reset>Recomeçar</button>
+    <label class="story-time-label" for={`${prefix}-time`}>Momento <input type="range" id={`${prefix}-time`} min="0" max="20" step=".05" value="0" data-story-time /></label>
+    <output for={`${prefix}-time`} data-story-clock>0:00 / 0:20</output>
+  </div>
+  <p class="story-caption" data-story-caption>{story.phases[0].say}</p>
+  <p class="story-limit">{story.limit}</p>
+  <details class="story-transcript"><summary>Ler a explicação</summary><ol>{story.phases.map(phase=><li><strong>{phase.label}.</strong> {phase.say}</li>)}</ol><p>Vídeo ilustrativo, sem narração. Você escolhe o ritmo pelos controles.</p><a href={u(`/media/stories/${id}.mp4`)}>Abrir o vídeo de 20 segundos ↗</a></details>
+  <noscript><p>A cena acima mostra o primeiro momento. Leia as três etapas em “Ler a explicação” ou abra o vídeo.</p></noscript>
+</section>

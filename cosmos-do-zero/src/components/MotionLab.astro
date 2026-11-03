@@ -64,7 +64,7 @@ const panels: Panel[] = [
     <p class="section-id">Ciência em movimento</p>
     <header class="sci-head">
       <h2 class="display" id="sci-title">Veja o Universo<br /><em>se mexer.</em></h2>
-      <p>Cinco ilustrações mostram como luz, espaço e galáxias ajudam a entender o Universo. Escolha um tema e mova a barra para descobrir o que muda.</p>
+      <p>Comece por uma pergunta. A cena se move sozinha; você pode pausar, voltar e mudar o que quiser comparar.</p>
     </header>
 
     <div class="sci-tabs" role="tablist" aria-label="Animações científicas" data-sci-tabs hidden>
@@ -93,7 +93,7 @@ const panels: Panel[] = [
                 <input id={`movimento-barra-${p.id}`} type="range" min="0" max="1" step="0.005" value="0" data-sci-range />
               </div>
               <div class="sci-buttons" role="group" aria-label="Controle da animação">
-                <button type="button" data-sci-play aria-pressed="false"><span aria-hidden="true" data-sci-ico>▶</span><span data-sci-play-label>Animar</span></button>
+                <button type="button" data-sci-play aria-pressed="false"><span aria-hidden="true" data-sci-ico>▶</span><span data-sci-play-label>Reproduzir</span></button>
                 <button type="button" data-sci-reset><span aria-hidden="true">↺</span>Reiniciar</button>
                 <button type="button" data-sci-action hidden><span aria-hidden="true">⇄</span><span data-sci-action-label>Ver de outra galáxia</span></button>
               </div>

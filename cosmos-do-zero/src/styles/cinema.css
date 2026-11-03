@@ -1,0 +1,178 @@
+/* Escola audiovisual: azul profundo, cenas legíveis e comandos ao alcance. */
+html:root .hero-shell { background:radial-gradient(ellipse at 78% 24%,#12639838,transparent 58%),radial-gradient(ellipse at 14% 90%,#105d7830,transparent 55%),#031226; }
+html:root .hero-shell::before { background:radial-gradient(circle at 18% 36%,#d6edff 0 1px,transparent 1.5px),radial-gradient(circle at 78% 24%,#edfaff 0 1px,transparent 1.5px);background-size:179px 193px,241px 211px; }
+html:root .hero-shell .star { background:#eefaff;box-shadow:0 0 7px #85cfff; }
+html:root .hero-main .cmb-hero { background:linear-gradient(150deg,#0b304edb,#04172ded);border-color:#507e9e70; }
+html:root .cmb-hero::before { background:radial-gradient(ellipse at 54% 38%,#2385b735,transparent 62%); }
+html:root .sky-orbit { stroke:#83b6ff60; }
+html:root .sky-orbit circle { fill:#a2e6f5;filter:drop-shadow(0 0 4px #74dceb); }
+html:root .sky-crosshair { stroke:#82bad4; }
+html:root .cmb-observation .cmb-frame { box-shadow:0 0 0 1px #a4d8eb80,0 0 36px #167aab35; }
+html:root .cmb-probe { box-shadow:0 0 0 6px #ffffff22,0 0 20px #7dd8f599; }
+html:root .hero-routes a strong::after { color:#aec7db; }
+html:root .sci-head>p::after { content:none; }
+html:root .school-home .sci-lab { padding-block:56px; }
+html:root .school-home .sci-head h2 { font-size:clamp(34px,4vw,54px); }
+html:root .school-home .sci-head>p { max-width:480px; }
+html:root .obs-expansion-grid>.obs-viz,html:root .obs-expansion-grid .expansion-stage,html:root .obs-expansion-grid .obs-viz>figcaption { background:#061b31!important; }
+html:root .obs-expansion-grid .expansion-stage { background:radial-gradient(ellipse at 45% 40%,#174b6b,#061b31 72%)!important; }
+html:root .school-catalog-tools { display:flex;gap:16px;align-items:center;justify-content:space-between;margin:0 0 18px;color:var(--muted);font-size:13px; }
+.school-catalog-tools button { min-height:44px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);cursor:pointer;font:600 12px var(--sans); }
+.school-catalog-tools [hidden] { display:none; }
+.school-course-image [data-story-preview],.school-course-image svg { display:block;width:100%;height:100%; }
+.school-course-image .story-graphic text { display:none; }
+html:root .school-course-image { background:#031226; }
+html:root .school-course-body>p { font-size:14px;line-height:1.65; }
+
+/* A pergunta e uma visão geral ficam juntas antes dos seis assuntos. */
+html:root .reader-opening { display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:start;gap:28px 40px;padding-block:34px 20px; }
+.reader-welcome { min-width:0;padding-top:8px; }
+html:root .reader-opening h1 { font-size:clamp(34px,3.5vw,50px);line-height:1.13;margin:20px 0; }
+html:root .reader-intro { font-size:17px;line-height:1.7;max-width:530px; }
+html:root .reader-entry { margin-top:24px; }
+html:root .reader-overview { margin-top:24px;font-size:14px; }
+.reader-path-row { grid-column:1/-1; }
+html:root .reader-path-row .lesson-path { max-width:none;margin:0;padding:12px 16px; }
+html:root .reader-path-row .lesson-path ol a { min-height:44px; }
+html:root .reader-path-row .lesson-path-label { margin-bottom:6px; }
+html:root .reader-grid { padding-top:20px; }
+html:root .lesson-section>h2 { font-size:clamp(28px,2.8vw,38px);margin:14px 0 16px; }
+html:root .lesson-observe { padding:12px 15px; }
+html:root .lesson-section .mx { margin-top:14px;padding:16px;box-shadow:none; }
+.lesson-section .mx .mx-head>h3,.lesson-section .mx .mx-head>.meta { display:none; }
+html:root .lesson-section .mx .mx-head { margin:0; }
+html:root .experience-toolbar { margin:8px 0 12px;padding-bottom:8px; }
+html:root .mx>.experience-toolbar { min-height:54px; }
+html:root .mx-lab { gap:10px; }
+html:root .mx .mx-stage { border-radius:12px; }
+html:root .mx-caption { padding:13px;font-size:15px;line-height:1.65; }
+html:root .mx-limit { font-size:12px;line-height:1.6; }
+html:root .mx-transport button { padding-inline:12px;font-size:13px; }
+
+/* Cada abertura é uma história SVG; o filme equivalente é uma opção. */
+.story-lesson { min-width:0;border:1px solid var(--line);border-radius:20px;padding:18px;background:var(--surface);box-shadow:0 20px 60px var(--shadow); }
+.story-heading .meta { font-size:10px;color:var(--accent-ink);letter-spacing:.09em; }
+.story-heading h2 { font:600 clamp(20px,2vw,26px)/1.25 var(--sans);color:var(--ink);margin:7px 0 15px;letter-spacing:-.025em; }
+.story-modes { display:flex;gap:6px;border:1px solid var(--line);border-radius:11px;padding:4px;margin-bottom:12px; }
+.story-modes button { flex:1;min-width:0;min-height:40px;border:0;background:transparent;border-radius:8px;color:var(--muted);font:600 13px var(--sans);cursor:pointer; }
+.story-modes [aria-pressed='true'] { color:var(--on-accent);background:var(--accent); }
+.story-phases { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));list-style:none;gap:5px;padding:0;margin:0 0 10px; }
+.story-phases li { min-width:0; }
+.story-phases button { width:100%;height:100%;min-height:44px;padding:8px 6px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:7px;text-align:left;color:var(--muted);background:var(--bg);font:500 11px/1.4 var(--sans);cursor:pointer; }
+.story-phases button>span { flex:none;display:grid;place-items:center;border:1px solid var(--line-strong);border-radius:50%;width:18px;height:18px;font-size:10px; }
+.story-phases [aria-current='step'] { color:var(--ink);border-color:var(--accent);background:var(--accent-soft); }
+.story-viewport { min-width:0;position:relative;aspect-ratio:16/9;background:#031226;border-radius:12px;overflow:hidden; }
+.story-stage,.story-stage>svg,.story-viewport video { display:block;width:100%;height:100%; }
+.story-viewport video { object-fit:contain; }
+.story-viewport [hidden] { display:none!important; }
+.story-transport { display:grid;grid-template-columns:auto auto minmax(90px,1fr) auto;align-items:center;gap:8px;margin-top:12px; }
+.story-transport button { min-height:42px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:10px;background:transparent;color:var(--ink);font:600 12px var(--sans);cursor:pointer; }
+.story-transport [data-story-play] { background:var(--accent);border-color:var(--accent);color:var(--on-accent); }
+.story-time-label { font-size:10px;line-height:1.4;color:var(--muted);display:block;min-width:0; }
+.story-time-label input { display:block;width:100%;min-height:26px;margin:0;padding:0; }
+.story-transport output { color:var(--muted);font:500 10px var(--sans);white-space:nowrap; }
+html:root .story-caption { font-size:14px;line-height:1.65;color:var(--ink);padding:12px 14px;border-left:2px solid var(--accent);background:var(--bg);border-radius:0 8px 8px 0;margin:12px 0 0;min-height:5em; }
+html:root .story-limit { color:var(--muted);font-size:11px;line-height:1.6;margin:10px 0 0; }
+.story-transcript { border-top:1px solid var(--line);margin-top:12px;padding-top:6px;font-size:13px; }
+.story-transcript summary { min-height:38px;display:flex;align-items:center;color:var(--ink-2);cursor:pointer; }
+.story-transcript ol { padding-left:20px;line-height:1.65; }
+.story-transcript li { margin-block:10px; }
+.story-transcript a { color:var(--accent-ink); }
+.story-lesson>.experience-toolbar { margin-top:0; }
+
+/* O cinema reserva altura para os comandos. A leitura completa fica na aula. */
+html:root .experience-dialog { width:min(1440px,calc(100vw - 24px));max-width:calc(100vw - 24px);height:calc(100dvh - 24px);max-height:calc(100dvh - 24px);padding:16px;border-radius:18px;background:var(--bg);overflow:hidden; }
+.experience-dialog[open] { display:flex;flex-direction:column;gap:10px; }
+html:root .experience-close { position:static;flex:none;min-height:40px;margin:0 0 0 auto; }
+html:root .experience-dialog [data-expanded] { width:100%;max-width:none;min-width:0;min-height:0;flex:1;margin:0;overflow:auto; }
+html:root .experience-dialog .story-lesson { display:flex;flex-direction:column;gap:8px;padding:0;border:0;box-shadow:none;overflow:hidden; }
+.experience-dialog .story-heading .meta { display:none; }
+.experience-dialog .story-heading h2 { font-size:21px;margin:0; }
+.experience-dialog .story-phases,.experience-dialog .story-modes { margin:0;flex:none; }
+.experience-dialog .story-viewport { flex:1;min-height:110px;aspect-ratio:auto; }
+.experience-dialog .story-stage svg { width:100%;height:100%; }
+.experience-dialog .story-transport { flex:none;margin:0; }
+html:root .experience-dialog .story-caption { flex:none;margin:0;min-height:0;max-height:4.5em;overflow:auto;padding:9px 12px; }
+html:root .experience-dialog .story-limit { flex:none;font-size:11px;max-height:3.2em;overflow:auto;margin:0; }
+.experience-dialog .story-transcript { display:none; }
+html:root .experience-dialog .mx[data-expanded] { display:flex;flex-direction:column;padding:0;border:0;box-shadow:none;overflow:hidden; }
+html:root .experience-dialog .mx-head { margin:0 0 8px;flex:none; }
+html:root .experience-dialog .mx-head>h3 { display:block;font:600 22px/1.3 var(--sans);margin:0; }
+.experience-dialog .mx-head>.meta,.experience-dialog .mx-head>.mx-hint { display:none; }
+html:root .experience-dialog .mx-lab { display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,.42fr);grid-auto-rows:max-content;align-items:start;gap:10px 18px;flex:1;min-height:0;overflow:auto; }
+.experience-dialog .mx-visuals { grid-column:1;grid-row:1/span 12;min-height:0;position:sticky;top:0;height:calc(100dvh - 142px);display:flex;flex-direction:column;gap:8px; }
+html:root .experience-dialog .mx .mx-stage { flex:1;width:100%;height:0;min-height:0;aspect-ratio:auto; }
+.experience-dialog .mx-stage svg { width:100%;height:100%; }
+.experience-dialog .mx-lab>:not(.mx-visuals) { grid-column:2;min-width:0; }
+.experience-dialog .mx-lab .mx-visual-state { font-size:12px; }
+.experience-dialog .mx-controls { margin-top:0; }
+.experience-dialog .mx-caption { margin:0; }
+.experience-dialog .mx-lab>.mx-detail-note { font-size:11px;line-height:1.5; }
+.experience-dialog .mx>.mx-check,.experience-dialog .mx>.school-prediction,.experience-dialog .mx>.experience-terms { display:none; }
+html:root .experience-dialog .sci-fig .sci-stage { height:min(52dvh,520px);min-height:160px;aspect-ratio:auto; }
+.experience-dialog .sci-stage>svg { width:100%;height:100%; }
+html:root .experience-dialog .obs-expansion-grid { grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr); }
+html:root .experience-dialog .obs-expansion-grid>.obs-viz { position:sticky!important;top:0!important; }
+html:root .experience-dialog .obs-expansion-grid .expansion-stage { min-height:160px;height:min(57dvh,550px);aspect-ratio:auto; }
+html:root .experience-dialog .cmbj-stage { height:min(43dvh,420px);min-height:180px; }
+html:root .experience-dialog .cmbj-transport { margin-block:10px; }
+.experience-dialog .cmbj-checks,.experience-dialog .cmbj-more { display:none; }
+
+@media(max-width:1100px) {
+ html:root .reader-opening { grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px; }
+ .story-transport { grid-template-columns:auto auto minmax(80px,1fr); }
+ .story-transport output { grid-column:3;justify-self:end;margin-top:-5px; }
+}
+@media(max-width:800px) {
+ html:root .reader-opening { display:block;padding-top:24px; }
+ .reader-welcome { margin-bottom:24px; }
+ .reader-path-row { margin-top:20px; }
+ html:root .reader-opening h1 { font-size:clamp(34px,7vw,46px); }
+ .story-lesson { padding:16px; }
+ .story-heading h2 { font-size:23px; }
+ .story-transport { grid-template-columns:auto auto minmax(80px,1fr) auto; }
+ .story-transport output { grid-column:auto;margin:0; }
+ html:root .experience-dialog .mx-lab { display:block; }
+ .experience-dialog .mx-visuals { position:static;height:clamp(150px,39dvh,340px);margin-bottom:12px; }
+ html:root .experience-dialog .mx-controls { margin-bottom:10px; }
+ html:root .experience-dialog .mx-caption { margin-bottom:10px; }
+ html:root .experience-dialog .obs-expansion-grid { display:flex;flex-direction:column; }
+ html:root .experience-dialog .obs-expansion-grid .expansion-stage { height:33dvh;min-height:160px; }
+ html:root .experience-dialog .obs-expansion-grid>.obs-viz { position:static!important;width:100%; }
+}
+@media(max-width:600px) {
+ html:root .mx:not(.cmbj) .mx-transport { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ html:root .mx:not(.cmbj) .mx-transport [data-mx-auto] { grid-column:auto; }
+}
+@media(max-width:500px) {
+ .school-catalog-tools { align-items:flex-start!important; }
+ .school-catalog-tools>span { max-width:165px; }
+ .story-transport { grid-template-columns:1fr 1fr; }
+ .story-time-label { grid-column:1/-1;display:flex;gap:12px;align-items:center;font-size:12px; }
+ .story-time-label input { flex:1;min-width:0;min-height:34px; }
+ .story-transport output { grid-column:1/-1;justify-self:end; }
+ .story-phases button { font-size:10px;gap:5px;padding:7px 5px; }
+ .story-phases button>span { width:16px;height:16px; }
+ html:root .experience-dialog { padding:10px;width:calc(100vw - 12px);max-width:calc(100vw - 12px);height:calc(100dvh - 12px);max-height:calc(100dvh - 12px); }
+ .experience-dialog[open] { gap:7px; }
+ .experience-dialog .story-heading h2 { font-size:18px; }
+ .experience-dialog .story-phases button { min-height:48px; }
+ .experience-dialog .story-transport { gap:5px; }
+ .experience-dialog .story-transport output { display:none; }
+ .experience-dialog .story-transport button { min-height:38px; }
+ .experience-dialog .story-limit { font-size:10px!important; }
+ .experience-dialog .story-caption { font-size:13px!important; }
+}
+@media(prefers-reduced-motion:reduce) { .story-lesson * { scroll-behavior:auto; } }
+html[data-motion='reduced'] :is(.story-lesson,.school-course) * { transition:none; }
+/* Celular deitado: o conteúdo pode rolar; Fechar permanece fora da área rolável. */
+@media(max-height:620px) {
+ html:root .experience-dialog .story-lesson { display:block;overflow:auto; }
+ .experience-dialog .story-heading h2 { margin-bottom:10px; }
+ .experience-dialog .story-modes,.experience-dialog .story-phases { margin-bottom:8px; }
+ .experience-dialog .story-viewport { height:clamp(140px,48dvh,280px);min-height:0; }
+ .experience-dialog .story-transport { margin-block:12px;grid-template-columns:auto auto minmax(80px,1fr); }
+ .experience-dialog .story-transport output { display:none; }
+ html:root .experience-dialog .story-caption { max-height:none;overflow:visible; }
+ html:root .experience-dialog .story-limit { max-height:none;overflow:visible;margin-top:10px; }
+}
