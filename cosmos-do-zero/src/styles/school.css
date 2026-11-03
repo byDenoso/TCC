@@ -175,6 +175,7 @@ html:root .lesson-stepper { border-color:var(--line-strong); box-shadow:0 -4px 3
   html:root .reader-opening .lesson-path ol a { flex-direction:column; font-size:11px; padding:8px; }
 }
 @media(max-width:600px) {
+  html:root .mx > .experience-toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:74px; }
   html:root .mx-transport { grid-template-columns:repeat(3,minmax(0,1fr)); }
   html:root .mx-transport button { min-width:0; white-space:normal; }
   html:root .mx-transport :is([data-mx-auto],[data-cmbj-auto]) { grid-column:1/-1; width:100%; margin-left:0; }
