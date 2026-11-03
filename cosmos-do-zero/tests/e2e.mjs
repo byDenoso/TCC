@@ -745,8 +745,8 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
         await p.waitForTimeout(80);
         ok(`${id}: movimento reduzido avança sem animar`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === still);
       } else {
-        await p.waitForTimeout(100);
-        ok(`${id}: iniciar explicita estado ativo`, await play.getAttribute('aria-pressed') === 'true');
+        const active = await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"] [data-mx-play]`)?.getAttribute('aria-pressed') === 'true', id, { timeout: 3000 }).then(() => true, () => false);
+        ok(`${id}: iniciar explicita estado ativo`, active);
         await play.click();
         const paused = await svg.innerHTML(); await p.waitForTimeout(80);
         ok(`${id}: pausar interrompe o desenho`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === paused);

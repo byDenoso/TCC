@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { selectLessonStep } from './lib/reader-navigation.mjs';
 const base=(process.env.BASE_URL||'http://127.0.0.1:4321').replace(/\/$/,'');
 const ids=['galaxias-e-nebulosas','origem-do-universo','misterios-do-cosmos','vida-das-estrelas','sistema-solar','terra-e-atmosfera'];
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache']});
@@ -72,5 +73,26 @@ try{
  ok(await page.locator('[data-story-preview] svg').count()===6,'seis capas vetoriais');
  ok(await page.locator('#movimento').evaluate(e=>e.getBoundingClientRect().top+scrollY<2200),'demonstração próxima da entrada');
  await page.close();
+ const transport=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'no-preference'});
+ // A entrega do observador pode atrasar em uma página ocupada. O pedido de Play deve sobreviver.
+ await transport.addInitScript(()=>{const IO=window.IntersectionObserver;window.IntersectionObserver=class extends IO{constructor(cb,options){super((entries,observer)=>{if(entries.some(e=>e.target.matches('[data-mx-visuals]')&&e.target.closest('[data-mx]')?.dataset.mx==='origem-do-universo-primeiras-estruturas'))setTimeout(()=>cb(entries,observer),200);else cb(entries,observer);},options);}};});
+ await transport.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});await selectLessonStep(transport,4);
+ const micro=transport.locator('[data-mx="origem-do-universo-primeiras-estruturas"]'),microPlay=micro.locator('[data-mx-play]');
+ await micro.locator('[data-mx-reset]').click();await transport.locator('footer').scrollIntoViewIfNeeded();await transport.waitForTimeout(280);
+ await microPlay.click();await transport.waitForFunction(()=>document.querySelector('[data-mx="origem-do-universo-primeiras-estruturas"] [data-mx-play]')?.getAttribute('aria-pressed')==='true',null,{timeout:3000});
+ ok(true,'pedido de reprodução aguarda a visibilidade sem perder o primeiro clique');
+ await transport.waitForFunction(()=>Number(document.querySelector('[data-mx="origem-do-universo-primeiras-estruturas"] [data-mx-range]')?.value)>0,null,{timeout:3000});
+ ok(true,'a reprodução solicitada avança a cena');
+ await microPlay.click();const frozen=await micro.locator('[data-mx-svg]').innerHTML();await transport.locator('footer').scrollIntoViewIfNeeded();await transport.waitForTimeout(280);await microPlay.scrollIntoViewIfNeeded();await transport.waitForTimeout(280);
+ ok(await microPlay.getAttribute('aria-pressed')==='false'&&await micro.locator('[data-mx-svg]').innerHTML()===frozen,'pausa manual prevalece depois de sair e voltar à cena');
+ await transport.locator('footer').scrollIntoViewIfNeeded();await transport.waitForTimeout(280);await microPlay.click();await micro.locator('[data-mx-range]').focus();await transport.keyboard.press('End');await transport.waitForTimeout(400);
+ ok(await microPlay.getAttribute('aria-pressed')==='false'&&await micro.locator('[data-mx-range]').inputValue()==='1','a régua cancela uma reprodução solicitada');
+ await transport.close();
+ const still=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
+ await still.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});await selectLessonStep(still,4);
+ const quiet=still.locator('[data-mx="origem-do-universo-primeiras-estruturas"]');await quiet.locator('[data-mx-reset]').click();const before=Number(await quiet.locator('[data-mx-range]').inputValue());await quiet.locator('[data-mx-play]').click();
+ ok(Number(await quiet.locator('[data-mx-range]').inputValue())>before,'Avançar muda o valor com movimento reduzido');
+ const quietSvg=await quiet.locator('[data-mx-svg]').innerHTML();await still.waitForTimeout(180);
+ ok(await quiet.locator('[data-mx-play]').getAttribute('aria-pressed')==='false'&&await quiet.locator('[data-mx-svg]').innerHTML()===quietSvg,'movimento reduzido conserva o novo quadro estático');await still.close();
  console.log(`Cinema: ${checks} verificações aprovadas`);
 }finally{await browser.close();}

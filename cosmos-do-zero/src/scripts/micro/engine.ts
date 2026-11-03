@@ -199,7 +199,13 @@ function setup(root: HTMLElement, scene: Scene): void {
   };
 
   const takeControl = () => { automatic?.manual(); guided = false; root.dataset.guide = 'manual'; };
-  play.addEventListener('click', () => { takeControl(); touched(); if (playing) stop(); else start(); });
+  // Uma solicitação explícita aguarda o observador; a leitura de visibilidade pode chegar após o clique.
+  play.addEventListener('click', () => {
+    takeControl(); touched();
+    if (playing) stop();
+    else if (reducedQuery.matches) step();
+    else automatic?.automatic();
+  });
   stepBtn.addEventListener('click', () => { takeControl(); step(); });
   reset.addEventListener('click', () => { takeControl(); stop(); v = initial; t = 1; render(); });
   root.querySelector('[data-mx-auto]')?.addEventListener('click', () => {
