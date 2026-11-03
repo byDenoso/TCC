@@ -568,7 +568,7 @@ section('Tema claro e escuro');
 {
   const p=await page(1280,{colorScheme:'dark'});
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('segue o sistema (escuro)', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark');
+  ok('escola começa com a paleta cósmica escura', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark');
   const bgDark=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
   await p.locator('[data-theme-toggle]').click();
   ok('botão troca para claro', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && bgDark!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor));
@@ -579,8 +579,9 @@ section('Tema claro e escuro');
   const q=await page(1280,{colorScheme:'light'});
   await q.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }); });
   await q.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('tema escuro padrão independe do sistema e do armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark');
   await q.locator('[data-theme-toggle]').click();
-  ok('tema funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark' && q.errors.length===0, q.errors.join(' | '));
+  ok('tema claro funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='light' && q.errors.length===0, q.errors.join(' | '));
   await q.context().close();
 }
 
