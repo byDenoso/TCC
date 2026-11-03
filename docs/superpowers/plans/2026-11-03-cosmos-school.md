@@ -51,9 +51,13 @@
 
 ## Verificação de entrega
 
-- 165 testes unitários, Astro zero erros e build de11 páginas.
-- 258 fragmentos e546 recursos/URLs verificados; testesHTTP aprovados.
+- 165 testes unitários, Astro com zero erros, avisos e hints; build de 11 páginas.
+- 258 fragmentos e 546 recursos/URLs verificados; testes HTTP aprovados.
 - Revisão independente: sete orientações alinhadas às cenas; quatro correções de movimento/visibilidade aplicadas.
 - QA de navegação, reprodução, pausa persistente e preferência de movimento pelo navegador.
-- CI:54 verificaçõesWebGL aprovadas em390/1440px. Espera de reprodução ajustada para condição observável, e testes de instrumentos seguem o disclosure explícito da nova interface.
-- VercelproduçãoREADY emdpl_3GEDcn18dYMGhPzCpy5h54e5HRo9; PR189 integrado emf55ef293.
+- CI 41663486819: 1.109 verificações de interface sem falhas, 54 verificações WebGL em 390/1440 px, 26 verificações de reprodução por visibilidade, 34 verificações de controles e 20 imagens decodificadas, sem erros HTTP.
+- Interface conferida em cinco larguras; todas as microexperiências passaram no mobile e no modo de movimento reduzido. Leituras sem JavaScript, quizzes, histórico, popovers e foco ao sair da ampliação preservados.
+- Publicação no GitHub Pages aprovada após conferência de DNS e CNAME. Domínio principal confirmado no navegador: https://cosmos.denerpereira.com.br/ — seis aulas, miniaturas carregadas e sem overflow. Reprodução automática, pausa e ampliação conferidas numa aula publicada.
+- Vercel de produção READY em `dpl_5umVsn682LBo3A8Dv51edsZeSw1q`, com a mesma implementação. Fonte publicada no Pages: `a461b84df137196e22569ea2e42053b30d068e77`.
+- Captura da página inicial publicada: `docs/screenshots/cosmos-school-desktop-20261103.jpg`.
+- A repetição automática dos testes sobre o domínio público também passou: 1.109 verificações de interface, 54 WebGL, 26 de reprodução, 34 de controles e 20 imagens. Capturas desktop/mobile publicadas como artefato da CI. Os três jobs da execução 41663486819 terminaram com sucesso em 2026-11-03.
