@@ -4,9 +4,9 @@ import { u } from '../lib/url';
 
 /** Moldura compartilhada: informa o estado sem criar outro relógio de animação. */
 export function initExperience(): void {
- const roots=document.querySelectorAll<HTMLElement>('[data-station],[data-sci-panel],[data-mx],[data-solar-studio]');
+ const roots=document.querySelectorAll<HTMLElement>('[data-station],[data-sci-panel],[data-mx],[data-cmbj],[data-solar-studio]');
  for(const root of roots){
-  const stage=root.querySelector<HTMLElement>('[data-e-volume],[data-sci-stage],.mx-stage,.obs-viz');
+  const stage=root.querySelector<HTMLElement>('[data-e-volume],[data-sci-stage],[data-mx-visuals],[data-cmbj-stage],.obs-viz');
   if(!stage)continue;
   const toolbar=document.createElement('div');toolbar.className='experience-toolbar';
   const status=document.createElement('span');status.className='experience-status';status.textContent='Explore no seu ritmo';
@@ -16,15 +16,15 @@ export function initExperience(): void {
   anchor.before(toolbar);
   let manual=false,visible=false;
   const update=()=>{
-   const play=root.querySelector<HTMLElement>('[data-e-play],[data-sci-play],[data-mx-play],[data-solar-play],[data-3d-play]');
+   const play=root.querySelector<HTMLElement>('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-3d-play]');
    const running=play?.getAttribute('aria-pressed')==='true';
    const range=root.querySelector<HTMLInputElement>('[data-e-range],[data-sci-range],[data-mx-range]');
    const complete=range&&Number(range.max)>Number(range.min)&&Number(range.value)>=Number(range.max);
-   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?'Reproduzindo':complete?'Concluído · reveja ou compare':manual?'Pausado por você':visible?'Pronto para explorar':'Pausado fora da tela';
+   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Concluído · reveja ou compare':visible?'Pronto para explorar':'Pausado fora da tela';
    if(status.textContent!==text)status.textContent=text;
    const state=running&&visible?'playing':complete?'complete':'paused';if(root.dataset.playback!==state)root.dataset.playback=state;
   };
-  root.addEventListener('click',event=>{const target=(event.target as Element).closest('[data-e-play],[data-sci-play],[data-mx-play],[data-solar-play]');if(target){manual=true;queueMicrotask(update);}});
+  root.addEventListener('click',event=>{const target=(event.target as Element).closest('[data-e-play],[data-sci-play],[data-mx-play],[data-cmbj-play],[data-solar-play],[data-mx-step],[data-mx-reset],[data-mx-opt]');if(target){manual=true;queueMicrotask(update);}if((event.target as Element).closest('[data-mx-auto],[data-cmbj-auto]')){manual=false;queueMicrotask(update);}});
   root.addEventListener('click',event=>{
    const guess=(event.target as Element).closest<HTMLElement>('[data-opt],[data-mx-guess]');if(!guess)return;
    const result=root.querySelector<HTMLElement>('[data-guess-result],.mx-verdict');if(!result)return;

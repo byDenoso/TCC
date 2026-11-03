@@ -1,17 +1,30 @@
 ---
-import { primaryRows, chapters } from '../data';
-import { chapterUrl } from '../lib/url';
+import { primaryRows, chapters, PRIMARY_CHAPTER_IDS } from '../data';
+import { chapterUrl, u } from '../lib/url';
 import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
+const visuals: Record<string, { src: string; label: string; icon: string }> = {
+  'galaxias-e-nebulosas': { src: '/renders/galaxies-small.webp', label: 'Escalas e galáxias', icon: '◎' },
+  'origem-do-universo': { src: '/renders/ancient-light-small.webp', label: 'A história do Universo', icon: '✧' },
+  'misterios-do-cosmos': { src: '/renders/dark-matter-small.webp', label: 'Luz, gravidade e evidências', icon: '⌁' },
+  'vida-das-estrelas': { src: '/renders/star-small.webp', label: 'Nascimento e evolução estelar', icon: '✺' },
+  'sistema-solar': { src: '/renders/solar-system-small.webp', label: 'Planetas e órbitas', icon: '◌' },
+  'terra-e-atmosfera': { src: '/renders/earth-small.webp', label: 'O nosso planeta', icon: '⊕' }
+};
 ---
 <section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
   <div class="page-width">
-    <p class="section-id">O seu percurso</p>
+    <p class="section-id">Uma escola para a sua curiosidade</p>
     <div class="intro-head">
-      <h2 class="display" id="chapters-title">Três aulas.<br /><em>Um novo olhar.</em></h2>
-      <p>Comece pelo nosso endereço cósmico. Depois, acompanhe a história do Universo e as pistas que nos permitem investigá-lo.</p>
+      <h2 class="display" id="chapters-title">Do primeiro olhar<br /><em>às grandes perguntas.</em></h2>
+      <p>Comece pela trilha de cosmologia ou siga uma curiosidade. Cada aula tem seis passos, animações automáticas e espaço para experimentar.</p>
+    </div>
+    <div class="school-method" aria-label="Como você aprende">
+      <div><span aria-hidden="true">01</span><p><strong>Observe acontecer.</strong>A cena começa sozinha. A legenda mostra o que está mudando.</p></div>
+      <div><span aria-hidden="true">02</span><p><strong>Experimente uma ideia.</strong>Pause, altere um controle e compare o resultado.</p></div>
+      <div><span aria-hidden="true">03</span><p><strong>Conecte as descobertas.</strong>Entenda o fenômeno e teste o que aprendeu.</p></div>
     </div>
     <a class="resume-card" href={chapterUrl(primaryRows[0].id)} data-resume data-titles={JSON.stringify(Object.fromEntries(chapters.map((c) => [c.id, c.title])))} hidden>
       <span class="meta">Continuar de onde parou</span>
@@ -19,13 +32,24 @@ import CourseMap from './CourseMap.astro';
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
+    <div class="school-catalog" aria-label="As seis aulas da escola">
+      {chapters.map((ch, i) => {
+        const visual = visuals[ch.id];
+        const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
+        return <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
+          <div class="school-course-image"><img src={u(visual.src)} alt="" loading="lazy" width="600" height="360" /><span class="school-course-number">{pad2(i + 1)}</span><span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span></div>
+          <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{ch.learningGoal ?? ch.intro}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
+        </a>;
+      })}
+    </div>
+    <div class="school-path-heading"><h3>Sua trilha de cosmologia</h3><p>Três grandes perguntas que se conectam.</p></div>
     <CourseMap />
     <div class="journey-status">
       <span data-progress-label>{progressLabel(0)}</span>
       <progress max="3" value="0" aria-label="Jornadas principais concluídas" data-progress-bar></progress>
       <button type="button" data-reset-progress hidden>Reiniciar progresso</button>
     </div>
-    <div class="chapters">
+    <details class="school-syllabus"><summary>Ver o programa das três aulas principais <span aria-hidden="true">+</span></summary><div class="chapters">
       {primaryRows.map((row, i) => {
         const ch = chapters.find((c) => c.id === row.id)!;
         return (
@@ -40,7 +64,7 @@ import CourseMap from './CourseMap.astro';
               <div class="chapter-body-main">
                 <p>{row.summary}</p>
                 {ch.learningGoal && <p class="chapter-learning"><strong>Você vai conseguir:</strong> {ch.learningGoal}</p>}
-                <a class="textlink" href={chapterUrl(row.id)}>Ler a jornada · {ch.minutes} min <span aria-hidden="true">↗</span></a>
+                <a class="textlink" href={chapterUrl(row.id)}>Entrar na aula · {ch.minutes} min <span aria-hidden="true">↗</span></a>
               </div>
               <div class="chapter-body-side">
                 <aside>{row.aside}</aside>
@@ -54,7 +78,7 @@ import CourseMap from './CourseMap.astro';
           </details>
         );
       })}
-    </div>
+    </div></details>
     <Badges />
   </div>
 </section>

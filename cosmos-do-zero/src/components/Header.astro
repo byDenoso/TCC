@@ -3,10 +3,10 @@ import { u } from '../lib/url';
 interface Props { variant?: 'hero' | 'solid'; }
 const { variant = 'hero' } = Astro.props;
 const nav = [
-  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
+  { href: '/#capitulos', label: 'As aulas', mobile: 'As seis aulas da escola', spy: 'capitulos' },
   { href: '/#movimento', label: 'Em movimento', mobile: 'Ciência em movimento: cinco animações', spy: 'movimento' },
-  { href: '/#capitulos', label: 'Aulas', mobile: 'As três aulas', spy: 'capitulos' },
-  { href: '/laboratorio/', label: 'Mais experimentos', mobile: 'Mais experimentos', spy: 'laboratorio' },
+  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
+  { href: '/laboratorio/', label: 'Laboratório', mobile: 'Laboratório e explorações', spy: 'laboratorio' },
   { href: '/glossario/', label: 'Dicionário', mobile: 'Dicionário do cosmos', spy: 'glossario' }
 ];
 const more = [

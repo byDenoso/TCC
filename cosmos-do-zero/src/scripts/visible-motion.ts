@@ -7,7 +7,7 @@ export function visibleMotion(stage: Element, controls: {
   ready?(): boolean;
   visibility?(visible: boolean): void;
   pauseTarget?: Element;
-}): { manual(): void; refresh(): void; dispose(): void } {
+}): { manual(): void; automatic(): void; refresh(): void; dispose(): void } {
   const reduced = motionPreference;
   let visible = false, started = false, suspended = false, manual = false;
 
@@ -18,7 +18,11 @@ export function visibleMotion(stage: Element, controls: {
     if (controls.running()) { started = true; suspended = false; }
   };
   const suspend = () => {
-    if (!controls.running()) return;
+    if (!controls.running()) {
+      // Um renderizador pode já ter parado no mesmo evento de preferência/visibilidade.
+      if (started && !manual && (document.hidden || reduced.matches)) suspended = true;
+      return;
+    }
     suspended = !manual;
     controls.stop();
   };
@@ -36,6 +40,7 @@ export function visibleMotion(stage: Element, controls: {
   reduced.addEventListener('change', change);
   return {
     manual() { manual = true; suspended = false; },
+    automatic() { manual = false; started = false; suspended = false; start(); },
     refresh: start,
     dispose() { observer?.disconnect(); controls.pauseTarget?.removeEventListener('cosmos:autopause', externalPause); document.removeEventListener('visibilitychange', change); reduced.removeEventListener('change', change); }
   };

@@ -47,7 +47,7 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   canvas.className = 'cosmos-volume mx-gl'; canvas.setAttribute('aria-hidden', 'true');
   let renderer: THREE.WebGLRenderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' }); }
-  catch { exhibit.dispose?.(); disposeObjects(exhibit.group); return null; }
+  catch (error) { console.warn('[cosmos] WebGL indisponível', error); exhibit.dispose?.(); disposeObjects(exhibit.group); return null; }
   renderer.setClearColor(0x070c18); renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = exhibit.lighting?.exposure??0.9;
   const scene = new THREE.Scene(); scene.add(exhibit.group);
@@ -176,7 +176,7 @@ export function observeScene(stage: HTMLElement, create: () => Exhibit): Mounted
     if (disposed || failed || stage.closest('[hidden]')) return;
     if(view){view.state(latest);return;}
     try { view = mount(stage, create(), () => { view = null; }); }
-    catch { view=null; }
+    catch (error) { console.warn('[cosmos] falha ao montar cena 3D', error); view=null; }
     if (!view) { failed = true; stage.dataset.visualFallback = 'true'; stage.dispatchEvent(new CustomEvent('cosmos:unavailable')); }
     view?.state(latest);
     if (view) stage.dispatchEvent(new CustomEvent('cosmos:ready'));

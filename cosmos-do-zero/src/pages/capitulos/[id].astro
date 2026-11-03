@@ -12,6 +12,7 @@ import Lensing from '../../components/Lensing.astro';
 import SolarStudio from '../../components/SolarStudio.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
 import { MICRO } from '../../data/micro';
+import { LESSON_GUIDES } from '../../data/lesson-guides';
 import { adjacentChapters, chapterNumber, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
 import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
@@ -48,25 +49,15 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
         <h1>{ch.title}</h1>
         <p class="reader-intro">{ch.intro}</p>
         <nav class="reader-entry" aria-label="Por onde começar esta aula">
-          <a class="cta" href={`#${ch.sections[0].id}`}>Começar a leitura <span aria-hidden="true">↓</span></a>
-          {labStations && <a class="textlink" href={`#${ch.experience === 'expansion' ? 'exploracao' : 'observatorio'}`}>Experimentar primeiro <span aria-hidden="true">↓</span></a>}
+          <a class="cta" href={`#${ch.sections[0].id}`}>Começar a aula <span aria-hidden="true">↓</span></a>
+          {labStations && <a class="textlink" href={`#${ch.experience === 'expansion' ? 'exploracao' : 'observatorio'}`}>Instrumentos extras <span aria-hidden="true">↓</span></a>}
         </nav>
         <LessonPath id={ch.id}/>
         {ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}
-        <div class="reader-idea"><span class="meta">A ideia que conecta tudo</span><p>{ch.idea}</p></div>
+        <p class="school-lesson-note"><span aria-hidden="true">▶</span> As cenas começam automaticamente. Pause ou use os controles para investigar.</p>
+        <details class="reader-overview"><summary>A ideia que conecta esta aula</summary><div class="reader-idea"><p>{ch.idea}</p></div></details>
       </div>
-      {photoKey && credit ? (
-        <figure class="chapter-photo">
-          <Image src={photos[photoKey]} alt={credit.alt} widths={[640, 1000, 1600]} sizes="100vw" width={1600} height={480} fit="cover" position="center" format="webp" quality={80} loading="lazy" />
-          <figcaption class="page-width">
-            <strong>{credit.title}</strong> · <span>{credit.kind}</span> · {credit.credit}.
-            <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>
-          </figcaption>
-        </figure>
-      ) : null}
-      {labStations && <Observatorio variant="chapter" stations={labStations} id={ch.experience === 'expansion' ? 'exploracao' : 'observatorio'} />}
-      {ch.experience && ch.experience !== 'expansion' && <CosmosScene experience={ch.experience} />}
-      <div class="reader-grid page-width">
+      <div class="reader-grid page-width" id="leitura">
         <aside class="reader-aside">
           <div class="meta">Neste capítulo</div>
           <nav aria-label="Seções do capítulo" data-toc>
@@ -87,13 +78,17 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
                 <span class="evidence-label" data-kind={s.evidence} title={s.evidence}>{({ 'Observação': 'Sabemos · observado', 'Modelo físico': 'Calculamos · modelo', 'Questão aberta': 'Ainda não sabemos' } as Record<string, string>)[s.evidence] ?? s.evidence}</span>
               </div>
               <h2>{s.title}</h2>
-              <p>{bodies[i].map((seg, k) => 'term' in seg ? (
-                <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u(`/glossario/?q=${encodeURIComponent(seg.term.term)}#termo-${seg.index}`)}>Ver no dicionário →</a></span></>
-              ) : seg.text)}</p>
+              <div class="lesson-observe"><span aria-hidden="true">◎</span><p><strong>O que observar. </strong>{LESSON_GUIDES[s.id].observe}</p></div>
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.id === 'misterios-do-cosmos-materia-escura' && <Lensing id={s.id} />}
               {s.id === 'sistema-solar-sol-e-planetas' && <SolarStudio id={s.id} />}
               {s.id === 'origem-do-universo-expansao' && <HubbleLesson/>}
+              <aside class="lesson-connection"><span>A ideia por trás da cena</span><p>{LESSON_GUIDES[s.id].connect}</p></aside>
+              <p class="lesson-try"><strong>Agora experimente. </strong>{LESSON_GUIDES[s.id].try}</p>
+              <p>{bodies[i].map((seg, k) => 'term' in seg ? (
+                <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u(`/glossario/?q=${encodeURIComponent(seg.term.term)}#termo-${seg.index}`)}>Ver no dicionário →</a></span></>
+              ) : seg.text)}</p>
+
               {s.more && (
                 <details class="depth-detail" data-layer="more">
                   <summary>Entenda melhor</summary>
@@ -122,6 +117,19 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           </section>
         </div>
       </div>
+      <details class="school-extra page-width"><summary><span><strong>Continue investigando</strong><small>Imagens, instrumentos e explorações desta aula</small></span><span aria-hidden="true">+</span></summary><div class="school-extra-content">
+      {photoKey && credit ? (
+        <figure class="chapter-photo">
+          <Image src={photos[photoKey]} alt={credit.alt} widths={[640, 1000, 1600]} sizes="100vw" width={1600} height={480} fit="cover" position="center" format="webp" quality={80} loading="lazy" />
+          <figcaption class="page-width">
+            <strong>{credit.title}</strong> · <span>{credit.kind}</span> · {credit.credit}.
+            <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>
+          </figcaption>
+        </figure>
+      ) : null}
+      {labStations && <Observatorio variant="chapter" stations={labStations} id={ch.experience === 'expansion' ? 'exploracao' : 'observatorio'} />}
+      {ch.experience && ch.experience !== 'expansion' && <CosmosScene experience={ch.experience} />}
+      </div></details>
       <div class="reader-finish page-width">
         <button class="cta" type="button" data-complete={ch.id} aria-pressed="false"><span data-complete-label>Concluir este capítulo</span> <span class="arrow" aria-hidden="true">✓</span></button>
         <p data-complete-status role="status">Seu progresso fica neste navegador.</p>

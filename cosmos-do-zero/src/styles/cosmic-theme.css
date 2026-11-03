@@ -1,73 +1,21 @@
-/* Cosmos Next: interface palette only. Physical data / CMB colour maps stay unchanged.
-   Imported by Base after the existing theme. Explicit html specificity also wins
-   over older dark-mode declarations in route-level CSS without !important. */
-html:root {
-  --bg: #f4f5fb;
-  --bg-alt: #ebedf7;
-  --surface: #ffffff;
-  --surface-2: #e3e6f3;
-  --ink: #18213b;
-  --ink-2: #354461;
-  --muted: #526079;
-  --line: #cdd3e5;
-  --line-strong: #77829d;
-  --accent: #6540bb;
-  --accent-strong: #4f2c9c;
-  --accent-ink: #5935ad;
-  --accent-soft: #eae3fb;
-  --on-accent: #ffffff;
-  --accent-2: #08707a;
-  --shadow: rgba(7, 11, 27, 0.12);
-  --focus: #08707a;
-  --glow-core: #6540bb;
-  --glow-mid: #08707a;
-  color-scheme: light;
+/* Paleta da escola: espaço profundo, luz ciano e violeta. As cores físicas são preservadas. */
+html:root, html:root[data-theme='dark'] {
+  --bg:#070b19; --bg-alt:#0b1123; --surface:#101a30; --surface-2:#18243d;
+  --ink:#edf4ff; --ink-2:#c0cee4; --muted:#96a9c7;
+  --line:#263853; --line-strong:#607c9e;
+  --accent:#7de2f5; --accent-strong:#a6ecfa; --accent-ink:#8ce5f4; --accent-soft:#123646; --on-accent:#07202c;
+  --accent-2:#b7a4fa; --shadow:rgba(0,0,0,.32); --focus:#a8edfa;
+  --glow-core:#7de2f5; --glow-mid:#b7a4fa;
+  color-scheme:dark;
 }
-html:root[data-theme='dark'] {
-  --bg: #070b1b;
-  --bg-alt: #0c1226;
-  --surface: #121a30;
-  --surface-2: #1b2540;
-  --ink: #f5f3ff;
-  --ink-2: #d4d9ed;
-  --muted: #aab6d1;
-  --line: #2b3854;
-  --line-strong: #697a9b;
-  --accent: #bda4ff;
-  --accent-strong: #d0bcff;
-  --accent-ink: #c9b4ff;
-  --accent-soft: #282044;
-  --on-accent: #160e2a;
-  --accent-2: #5ce1e6;
-  --shadow: rgba(0, 0, 0, 0.4);
-  --focus: #5ce1e6;
-  --glow-core: #bda4ff;
-  --glow-mid: #5ce1e6;
-  color-scheme: dark;
-}
-@media (prefers-color-scheme: dark) {
-html:root:not([data-theme='light']) {
-  --bg: #070b1b;
-  --bg-alt: #0c1226;
-  --surface: #121a30;
-  --surface-2: #1b2540;
-  --ink: #f5f3ff;
-  --ink-2: #d4d9ed;
-  --muted: #aab6d1;
-  --line: #2b3854;
-  --line-strong: #697a9b;
-  --accent: #bda4ff;
-  --accent-strong: #d0bcff;
-  --accent-ink: #c9b4ff;
-  --accent-soft: #282044;
-  --on-accent: #160e2a;
-  --accent-2: #5ce1e6;
-  --shadow: rgba(0, 0, 0, 0.4);
-  --focus: #5ce1e6;
-  --glow-core: #bda4ff;
-  --glow-mid: #5ce1e6;
-  color-scheme: dark;
-}
+html:root[data-theme='light'] {
+  --bg:#f1f5fc; --bg-alt:#e7eef9; --surface:#fff; --surface-2:#dfe9f6;
+  --ink:#172b47; --ink-2:#3c536e; --muted:#506783;
+  --line:#c9d6e7; --line-strong:#7189a8;
+  --accent:#086d89; --accent-strong:#07576f; --accent-ink:#075e78; --accent-soft:#daf1f7; --on-accent:#fff;
+  --accent-2:#6950ae; --shadow:rgba(12,35,67,.1); --focus:#075e78;
+  --glow-core:#086d89; --glow-mid:#6950ae;
+  color-scheme:light;
 }
 
 /* Reuse existing semantic aliases, fonts and layout. No added font downloads. */
