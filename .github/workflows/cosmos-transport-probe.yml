@@ -4,6 +4,9 @@ on:
     branches: [codex/cosmos-transport-probe-20261103]
 permissions:
   contents: read
+concurrency:
+  group: cosmos-transport-probe
+  cancel-in-progress: true
 jobs:
   diagnose:
     runs-on: ubuntu-latest
