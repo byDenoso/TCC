@@ -1,0 +1,25 @@
+name: Cosmos transport probe
+on:
+  push:
+    branches: [codex/cosmos-transport-probe-20261103]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: cosmos-do-zero
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: cosmos-do-zero/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/micro-transport-probe.mjs
