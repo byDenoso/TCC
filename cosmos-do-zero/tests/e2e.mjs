@@ -1,7 +1,7 @@
 // E2E (Playwright/Chromium) contra o build servido em BASE_URL (padrão http://localhost:4321).
 // Uso: npm run build && npm run preview &  →  npm run test:e2e   (SHOTS=1 salva capturas em docs/screenshots)
 import { chromium } from 'playwright';
-import {selectLessonStep,lastLessonStep} from './lib/reader-navigation.mjs';
+import {selectLessonStep,lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL ?? 'http://localhost:4321').replace(/\/$/, '');
@@ -28,7 +28,7 @@ async function page(width = 1280, opts = {}) {
   p.on('requestfailed', (r) => { if (!/ERR_ABORTED/.test(r.failure()?.errorText ?? '')) p.errors.push('requestfailed ' + r.url() + ' ' + (r.failure()?.errorText ?? '')); });
   return p;
 }
-const unlockLab = (p) => p.evaluate(() => document.querySelectorAll('[data-guess-skip]').forEach((b) => b.click()));
+const unlockLab = async (p) => { await openExtraExperiments(p); await p.evaluate(() => document.querySelectorAll('[data-guess-skip]').forEach((b) => b.click())); };
 const toLessonEnd = async (p) => { await lastLessonStep(p); await p.waitForTimeout(150); };
 const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 
@@ -243,6 +243,7 @@ section('Microexperiências e continuidade');
   const mx = p.locator('#sistema-solar-orbitas .mx');
   await mx.scrollIntoViewIfNeeded();
   await p.waitForFunction(() => document.querySelector('#sistema-solar-orbitas .mx')?.classList.contains('is-ready'));
+  await mx.locator('.school-prediction > summary').click();
   await mx.locator('[data-mx-guess="1"]').click();
   ok('palpite espera a experiência', await mx.locator('[data-mx-guess-hint]').isVisible() && !(await mx.locator('[data-mx-verdict]').isVisible()));
   const range = mx.locator('[data-mx-range]');
@@ -408,6 +409,7 @@ section('Três jornadas e explorações');
   ok('jornadas na ordem aprovada', JSON.stringify(journeys) === JSON.stringify(PRIMARY));
   ok('home enxuta: dicionário e fontes em páginas próprias', await p.locator('#glossario, #fontes, #planetas').count() === 0);
   ok('trilha do curso com 3 aulas e desafio', await p.locator('[data-course-node]').count() === 4);
+  ok('escola apresenta as seis aulas', await p.locator('[data-school-course]').count() === 6);
   await p.goto(BASE + '/#planetas', { waitUntil: 'networkidle' }); await p.waitForURL(/laboratorio/);
   ok('endereço antigo leva aos planetas', /\/laboratorio\/#planetas$/.test(p.url()) && await p.locator('#planetas').isVisible());
   await p.goto(BASE + '/#glossario', { waitUntil: 'networkidle' }); await p.waitForURL(/glossario/);
@@ -417,6 +419,7 @@ section('Três jornadas e explorações');
     await new Promise(resolve => setTimeout(resolve, 2200)); await route.continue();
   });
   await p.goto(BASE + '/capitulos/galaxias-e-nebulosas/');
+  await openExtraExperiments(p);
   ok('primeira jornada leva à expansão', /origem-do-universo/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
   ok('cinco escalas disponíveis', await p.locator('[data-scale-step]').count() === 5);
   ok('cinco escalas usam ilustrações vetoriais da identidade', await p.locator('svg [data-scale-visual]').count() === 5);
@@ -462,6 +465,7 @@ section('Três jornadas e explorações');
     ok('expansão pausa sem continuar', await st.locator('[data-e-range]').inputValue() === scale);
   }
   await p.goto(BASE + '/capitulos/misterios-do-cosmos/');
+  await openExtraExperiments(p);
   ok('terceira jornada fecha no quiz', /#desafio/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
   for(let i=0;i<4;i++) {
     await p.locator(`[data-evidence-select="${i}"]`).click();
@@ -488,6 +492,7 @@ section('Cenas sem movimento e sem JavaScript');
   const n=await page(390,{javaScriptEnabled:false});
   for(const [id,kind] of [['galaxias-e-nebulosas','scale'],['misterios-do-cosmos','evidence']]) {
     await n.goto(BASE + '/capitulos/'+id+'/');
+    await openExtraExperiments(n);
     ok(`cena ${kind} tem conteúdo declarativo`, (await n.locator('[data-scene]').innerText()).length>500 && await n.locator('[data-scene] img, [data-scene] svg').count()>0);
     if(kind==='evidence') ok('quatro evidências legíveis sem JS', await n.locator('[data-evidence-panel]:visible').count()===4);
   }
