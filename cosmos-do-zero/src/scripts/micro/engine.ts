@@ -1,4 +1,5 @@
 import { motionPreference, motionFactor } from '../motion-preference';
+import { advanceDemonstration } from '../../lib/demonstration';
 /**
  * Motor das microexperiências. Cada cena só é carregada quando chega perto da tela,
  * só uma anima por vez, e tudo para fora da tela ou com a aba escondida.
@@ -96,6 +97,8 @@ function setup(root: HTMLElement, scene: Scene): void {
   const sweep = kind === 'range' && scene.animate !== 'time';
 
   let v = initial, t = 1, playing = false, frame = 0, last = 0, interacted = false, visible = true;
+  let guided = true, hold = 0;
+  root.dataset.guide = 'automatic';
   scene.init(svg);
   let volume: import('../visual/runtime').MountedScene | null = null;
   let visualStage = svg.parentElement!;
@@ -158,7 +161,13 @@ function setup(root: HTMLElement, scene: Scene): void {
   const tick = (now: number) => {
     if (!playing) return;
     const dt = (last ? Math.min(now - last, 64) : 16) * motionFactor(); last = now;
-    if (sweep) {
+    if (guided) {
+      const next = advanceDemonstration({ value: v, phase: t, hold }, dt, {
+        kind: sweep ? 'sweep' : kind === 'range' ? 'time' : kind,
+        min, max, duration: sweep ? Math.max(dur * 2.2, 8000) : Math.max(dur, 2200), hold: 1800
+      });
+      v = next.value; t = next.phase; hold = next.hold;
+    } else if (sweep) {
       v = Math.min(max, v + ((max - min) * dt) / (dur * 2.2));
       if (v >= max) { v = max; render(false); stop(); return; }
     } else {
@@ -175,9 +184,9 @@ function setup(root: HTMLElement, scene: Scene): void {
     if (!visible) return;
     running?.stop();
     if (reducedQuery.matches) { step(); return; }
-    if (sweep && v >= max) v = min;
-    if (kind === 'stages' && v >= max && t >= 1) v = 0;
-    if (!sweep && !resume) t = 0;
+    if (!resume && sweep && v >= max) v = min;
+    if (!resume && kind === 'stages' && v >= max && t >= 1) v = 0;
+    if (!resume) { if (!sweep || guided) t = 0; hold = 0; }
     running = runner; last = 0; setPlaying(true);
     frame = requestAnimationFrame(tick);
   };
@@ -189,12 +198,16 @@ function setup(root: HTMLElement, scene: Scene): void {
     t = 1; touched(); render();
   };
 
-  play.addEventListener('click', () => { automatic?.manual(); touched(); if (playing) stop(); else start(); });
-  stepBtn.addEventListener('click', () => { automatic?.manual(); step(); });
-  reset.addEventListener('click', () => { automatic?.manual(); stop(); v = initial; t = 1; render(); });
-  range?.addEventListener('input', () => { const next = Number(range.value); automatic?.manual(); stop(); v = next; t = 1; touched(); render(); });
+  const takeControl = () => { automatic?.manual(); guided = false; root.dataset.guide = 'manual'; };
+  play.addEventListener('click', () => { takeControl(); touched(); if (playing) stop(); else start(); });
+  stepBtn.addEventListener('click', () => { takeControl(); step(); });
+  reset.addEventListener('click', () => { takeControl(); stop(); v = initial; t = 1; render(); });
+  root.querySelector('[data-mx-auto]')?.addEventListener('click', () => {
+    stop(); v = initial; t = reducedQuery.matches ? 1 : 0; hold = 0; guided = true; root.dataset.guide = 'automatic'; render(false); automatic?.automatic();
+  });
+  range?.addEventListener('input', () => { const next = Number(range.value); takeControl(); stop(); v = next; t = 1; touched(); render(); });
   opts.forEach((b, i) => b.addEventListener('click', () => {
-    automatic?.manual();
+    takeControl();
     stop(); v = i; touched();
     // escolher uma opção numa cena com movimento já toca o movimento dela (exceto com movimento reduzido)
     if (kind === 'choice' && !reducedQuery.matches) { t = 0; running = runner; last = 0; setPlaying(true); frame = requestAnimationFrame(tick); render(false); }
@@ -265,5 +278,5 @@ function setup(root: HTMLElement, scene: Scene): void {
   root.classList.add('is-ready');
   setPlaying(false);
   render(false);
-  automatic = visibleMotion(root.querySelector('.mx-lab')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
+  automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
 }

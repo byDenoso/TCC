@@ -26,6 +26,15 @@ export function refreshProgress(): void {
   $$<HTMLProgressElement>('[data-progress-bar]').forEach((b) => (b.value = mainCount));
   $$('[data-progress-label]').forEach((n) => setText(n, progressLabel(mainCount)));
   $$('[data-journey]').forEach((row) => { const m = $('.completion-mark', row); if (m) m.hidden = !done.includes(row.dataset.journey as ChapterId); });
+  $$('[data-school-course]').forEach((card) => {
+    const completed = done.includes(card.dataset.schoolCourse as ChapterId);
+    card.dataset.done = String(completed);
+    const label = card.querySelector<HTMLElement>('.school-course-type');
+    if (label) {
+      if (!label.dataset.originalLabel) label.dataset.originalLabel = label.textContent ?? '';
+      label.textContent = completed ? 'Aula concluída ✓' : label.dataset.originalLabel;
+    }
+  });
   $$('[data-reset-progress]').forEach((b) => (b.hidden = done.length === 0));
   $$<HTMLButtonElement>('[data-complete]').forEach((b) => {
     const isDone = done.includes(b.dataset.complete as ChapterId);

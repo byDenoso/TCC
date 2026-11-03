@@ -9,6 +9,7 @@ import '../styles/reading-refinements.css';
 import '../styles/cosmic-theme.css';
 import '../styles/experience-design.css';
 import '../styles/dynamic-experience.css';
+import '../styles/school.css';
 import Footer from '../components/Footer.astro';
 import { u } from '../lib/url';
 
@@ -28,8 +29,8 @@ const indexingAllowed = import.meta.env.PUBLIC_SITE_INDEXING === 'true';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f4f5fb" />
-    <script is:inline>(function () { var t = null; try { t = localStorage.getItem('cosmos-theme'); } catch (e) {} if (t !== 'light' && t !== 'dark') t = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.dataset.theme = t; })();</script>
+    <meta name="theme-color" content="#070b19" />
+    <script is:inline>(function () { var t = null; try { t = localStorage.getItem('cosmos-theme'); } catch (e) {} if (t !== 'light' && t !== 'dark') t = 'dark'; document.documentElement.dataset.theme = t; })();</script>
     <script is:inline>(function(){var m='full';try{m=localStorage.getItem('cosmos-motion')||m;}catch(e){}document.documentElement.dataset.motion=matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':m;})();</script>
     <meta name="description" content={description} />
     <meta property="og:type" content="website" />

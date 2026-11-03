@@ -1,4 +1,5 @@
 import { motionPreference, motionFactor } from './motion-preference';
+import { advanceDemonstration } from '../lib/demonstration';
 /**
  * A luz mais antiga em três etapas (Canvas 2D):
  *  A. Universo quente: elétrons livres desviam a luz (espalhamento). Sem fonte central: a caixa é um pedaço de um meio uniforme e se repete nas bordas.
@@ -119,6 +120,8 @@ function setup(root: HTMLElement): void {
 
   let step = stepFromParam(getParam(URL_PARAM));
   let t = 0, elapsed = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false, autoStarted = false;
+  let guided = true, guideHold = 0;
+  root.dataset.guide = 'automatic';
   let pal = palette();
   let W = 0, H = 0, dpr = 1;
   const plasma = new Plasma(0.56);
@@ -281,7 +284,7 @@ function setup(root: HTMLElement): void {
     if (um !== null) panel.marker.style.setProperty('--pos', String(rulerPos(um)));
     panel.ruler.setAttribute('aria-valuetext', um === null ? 'sem valor nesta etapa' : `${fmtLength(um)}, ${bandOf(um)}`);
     fields.ask.textContent = st.ask; fields.say.textContent = st.say; fields.act.textContent = st.act; fields.changed.textContent = st.changed;
-    root.classList.toggle('show-changed', done || reduced.matches || !playing && t > 0.5);
+    root.classList.toggle('show-changed', done || reduced.matches || guided && t >= 1 || !playing && t > 0.5);
   };
 
   const announce = () => { const st = STEP_TEXT[step]; live.textContent = `Etapa ${step + 1} de 3: ${st.label}. ${st.say}`; };
@@ -296,26 +299,38 @@ function setup(root: HTMLElement): void {
     if (!playing) return;
     const dt = (last ? Math.min(now - last, 50) : 16) * motionFactor(); last = now;
     elapsed += dt;
-    t += dt / DUR[step];
+    if (guided) {
+      const next = advanceDemonstration({ value: step, phase: t, hold: guideHold }, dt, { kind: 'stages', min: 0, max: 2, duration: DUR[step], hold: 2000 });
+      guideHold = next.hold;
+      if (next.value !== step) { go(next.value, true, false); return; }
+      t = next.phase;
+    } else t += dt / DUR[step];
     if (step !== 2) plasma.step(dt / 1000, step === 0 ? null : ease(clamp(t)), r);
-    if (t >= 1) {
+    if (t >= 1 && !guided) {
       if (step === 0) { t = 0; done = true; } // o meio quente não "termina": a cena repete
       else { t = 1; done = true; draw(); setPlaying(false); return; }
     }
     draw();
     frame = requestAnimationFrame(tick);
   };
-  const play = () => { if (!visible || document.hidden || reduced.matches) { if (!reduced.matches) autoPaused = true; draw(); return; } if (t >= 1) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
+  const play = () => { if (!visible || document.hidden || reduced.matches) { if (!reduced.matches) autoPaused = true; draw(); return; } if (t >= 1 && !guided) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
   const pause = () => { cancelAnimationFrame(frame); setPlaying(false); draw(); };
-  const go = (i: number, autoplay = true) => {
+  const go = (i: number, autoplay = true, user = true) => {
     autoStarted = true;
-    step = clamp(i, 0, STEPS.length - 1); t = 0; elapsed = 0; done = false;
+    step = clamp(i, 0, STEPS.length - 1); t = 0; elapsed = 0; done = false; guideHold = 0;
     if (step <= 1) { plasma.reset(plasma.h); warm(); } // A: elétrons livres; B: recomeça a captura
-    setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) });
-    announce();
+    if (user) { setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) }); announce(); }
     draw(); // painel e etapa atualizados já no clique, sem esperar o próximo quadro
     if (autoplay && !reduced.matches) play(); else { pause(); }
   };
+  root.addEventListener('click', (event) => {
+    if ((event.target as Element).closest('[data-cmbj-prev],[data-cmbj-next],[data-cmbj-play],[data-cmbj-replay],[data-cmbj-goto]')) {
+      guided = false; root.dataset.guide = 'manual';
+    }
+  }, true);
+  root.querySelector('[data-cmbj-auto]')?.addEventListener('click', () => {
+    guided = true; root.dataset.guide = 'automatic'; autoPaused = false; go(0, true, false);
+  });
   btnPrev.addEventListener('click', () => go(step - 1));
   btnNext.addEventListener('click', () => go(step + 1));
   btnReplay.addEventListener('click', () => { autoStarted = true; t = 0; done = false; if (step === 1) { plasma.reset(plasma.h); warm(); } play(); });
@@ -323,8 +338,8 @@ function setup(root: HTMLElement): void {
   stepBtns.forEach((b, i) => b.addEventListener('click', () => go(i)));
   root.addEventListener('keydown', (ev) => {
     if ((ev.target as HTMLElement).closest('button, a, input, summary')) {
-      if (ev.key === 'ArrowRight' && (ev.target as HTMLElement).matches('[data-cmbj-goto]')) { ev.preventDefault(); stepBtns[Math.min(2, step + 1)].focus(); go(step + 1); }
-      if (ev.key === 'ArrowLeft' && (ev.target as HTMLElement).matches('[data-cmbj-goto]')) { ev.preventDefault(); stepBtns[Math.max(0, step - 1)].focus(); go(step - 1); }
+      if (ev.key === 'ArrowRight' && (ev.target as HTMLElement).matches('[data-cmbj-goto]')) { ev.preventDefault(); guided = false; root.dataset.guide = 'manual'; stepBtns[Math.min(2, step + 1)].focus(); go(step + 1); }
+      if (ev.key === 'ArrowLeft' && (ev.target as HTMLElement).matches('[data-cmbj-goto]')) { ev.preventDefault(); guided = false; root.dataset.guide = 'manual'; stepBtns[Math.max(0, step - 1)].focus(); go(step - 1); }
     }
   });
 
@@ -342,7 +357,10 @@ function setup(root: HTMLElement): void {
     else if (!document.hidden && autoPaused && visible) { autoPaused = false; play(); }
     else if (!document.hidden && visible && !autoStarted && !reduced.matches) { autoStarted = true; play(); }
   });
-  reduced.addEventListener('change', () => { if (reduced.matches) pause(); else if (visible && !autoStarted && !document.hidden) { autoStarted = true; play(); } });
+  reduced.addEventListener('change', () => {
+    if (reduced.matches) { if (playing) autoPaused = true; pause(); }
+    else if (visible && !document.hidden && (autoPaused || !autoStarted)) { autoPaused = false; autoStarted = true; play(); }
+  });
   const refreshPalette = () => { pal = palette(); sprites.clear(); draw(); };
   new MutationObserver(refreshPalette).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', refreshPalette);
