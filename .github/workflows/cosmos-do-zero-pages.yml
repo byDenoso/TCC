@@ -78,6 +78,20 @@ jobs:
         run: npm run test:pages
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
+      - name: Conferir azul do céu WebGL
+        run: |
+          export BASE_URL="http://127.0.0.1:4322${SITE_BASE%/}"
+          set -euo pipefail
+          node scripts/astro-local.mjs preview --host 127.0.0.1 --port 4322 > /tmp/cosmos-hero-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..40}; do
+            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-hero-preview.log; exit 1; fi
+          npm run test:hero
       - name: E2E e renders no preview com caminho base
         run: |
           export BASE_URL="http://127.0.0.1:4321${SITE_BASE%/}"
@@ -182,6 +196,7 @@ jobs:
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
       - name: Jornada, escalas, interacoes, progresso e renders publicados
         run: |
+          npm run test:hero
           npm run test:cinema
           npm run test:e2e
           npm run test:graphics

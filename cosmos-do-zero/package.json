@@ -19,6 +19,7 @@
     "test:renders": "node tests/renders.mjs",
     "test:pages": "node tests/pages-base.mjs",
     "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",
+    "test:hero": "node tests/hero-blue.mjs",
     "test:autoplay": "node tests/autoplay-visible.mjs",
     "test:motion": "node tests/motion-lab.mjs",
     "test:cinema": "node tests/story-cinema.mjs",
