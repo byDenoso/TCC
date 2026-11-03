@@ -92,6 +92,20 @@ jobs:
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-hero-preview.log; exit 1; fi
           npm run test:hero
+      - name: Conferir cinema e transporte no preview
+        run: |
+          export BASE_URL="http://127.0.0.1:4323${SITE_BASE%/}"
+          set -euo pipefail
+          node scripts/astro-local.mjs preview --host 127.0.0.1 --port 4323 > /tmp/cosmos-cinema-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in {1..40}; do
+            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-cinema-preview.log; exit 1; fi
+          npm run test:cinema
       - name: E2E e renders no preview com caminho base
         run: |
           export BASE_URL="http://127.0.0.1:4321${SITE_BASE%/}"
@@ -105,7 +119,6 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
-          npm run test:cinema
           npm run test:graphics
           npm run test:e2e
           npm run test:renders
@@ -194,10 +207,12 @@ jobs:
           curl -fLsS "$BASE_URL/sitemap.xml" | grep -F "$BASE_URL/"
           curl -fLsS "$BASE_URL/renders/hero-eclipse.webp" -o /tmp/cosmos-hero.webp
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
-      - name: Jornada, escalas, interacoes, progresso e renders publicados
+      - name: Céu e cinema publicados
         run: |
           npm run test:hero
           npm run test:cinema
+      - name: Jornada, escalas, interacoes, progresso e renders publicados
+        run: |
           npm run test:e2e
           npm run test:graphics
           npm run test:renders
