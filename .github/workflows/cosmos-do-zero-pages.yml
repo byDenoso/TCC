@@ -107,6 +107,7 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-cinema-preview.log; exit 1; fi
           npm run test:cinema
       - name: Guardar capturas do cinema em desktop e celular
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: cosmos-cinema-continuidade

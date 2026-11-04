@@ -56,12 +56,14 @@ try{
    const recap=page.locator('[data-story-open]');
    ok(await recap.count()===1,`${id}/${width}: leitura oferece acesso ao resumo animado`);
    await recap.scrollIntoViewIfNeeded();
-   const reading=await page.evaluate(()=>({hash:location.hash,y:scrollY,place:localStorage.getItem('cosmos-v6-onde')}));
+   // Mede o momento do acionamento, após a rolagem que torna o botão clicável.
+   await recap.evaluate(b=>b.addEventListener('click',()=>{window.__recapStart={hash:location.hash,y:scrollY,place:localStorage.getItem('cosmos-v6-onde')};},{capture:true,once:true}));
    await recap.click();
+   const reading=await page.evaluate(()=>window.__recapStart);
    ok(await root.getAttribute('data-expanded')==='true',`${id}/${width}: resumo abre no cinema sem sair da leitura`);
    await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('[data-expanded]'));
    const returned=await page.evaluate(()=>({hash:location.hash,y:scrollY,place:localStorage.getItem('cosmos-v6-onde')}));
-   ok(returned.hash===reading.hash&&returned.place===reading.place&&Math.abs(returned.y-reading.y)<2,`${id}/${width}: resumo preserva endereço, posição e progresso da leitura`);
+   ok(returned.hash===reading.hash&&returned.place===reading.place&&Math.abs(returned.y-reading.y)<2,`${id}/${width}: resumo preserva endereço, posição e progresso da leitura ${JSON.stringify({reading,returned})}`);
    ok(await recap.evaluate(b=>b===document.activeElement),`${id}/${width}: Escape devolve foco ao atalho do resumo`);
    ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${id}/${width}: sem overflow`);
   }
@@ -88,6 +90,31 @@ try{
  ok(true,'retorno pelo histórico preserva reprodução e pausa fora da tela');
  console.log('Histórico: cache restaurado = '+await history.locator('html').getAttribute('data-history-cache'));
  await history.close();
+ const switching=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'no-preference'});
+ let releaseMedia;const mediaGate=new Promise(resolve=>{releaseMedia=resolve;});
+ await switching.route('**/media/stories/origem-do-universo.mp4',async route=>{await mediaGate;await route.continue();});
+ await switching.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
+ const swap=switching.locator('[data-story]'),swapVideo=swap.locator('video');
+ await swap.locator('[data-story-phase="1"]').click();
+ await swap.locator('[data-story-mode="film"]').click();
+ await swap.locator('[data-story-mode="scene"]').click();
+ await swap.locator('[data-story-phase="2"]').click();
+ releaseMedia();
+ await switching.waitForFunction(()=>Number.isFinite(document.querySelector('[data-story] video')?.duration));
+ ok(await swap.locator('[data-story-time]').inputValue()==='12.6','metadados atrasados não sobrescrevem a posição mais recente da cena');
+ await swap.locator('[data-story-mode="film"]').click();
+ ok(await swapVideo.evaluate(v=>Math.abs(v.currentTime-12.6)<.08&&v.paused),'segunda troca usa a posição mais recente, sem retomar sozinha');
+ await swap.locator('[data-story-mode="scene"]').click();await swap.locator('[data-story-play]').click();
+ await switching.waitForFunction(()=>document.querySelector('[data-story-play]')?.getAttribute('aria-pressed')==='true');
+ const runningScene=Number(await swap.locator('[data-story-time]').inputValue());
+ await swap.locator('[data-story-mode="film"]').click();
+ ok(await swapVideo.evaluate((v,t)=>v.paused&&Math.abs(v.currentTime-t)<.5,runningScene),'trocar uma cena em reprodução conserva o instante e pausa o vídeo');
+ await swap.locator('[data-story-play]').click();
+ await switching.waitForFunction(()=>{const v=document.querySelector('[data-story] video');return v&&!v.paused&&v.currentTime>13;});
+ const runningFilm=await swapVideo.evaluate(v=>v.currentTime);
+ await swap.locator('[data-story-mode="scene"]').click();
+ ok(Math.abs(Number(await swap.locator('[data-story-time]').inputValue())-runningFilm)<.5&&await swap.locator('[data-story-play]').getAttribute('aria-pressed')==='false','trocar um vídeo em reprodução conserva o instante e pausa o SVG');
+ await switching.close();
  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await page.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
  const story=page.locator('[data-story]');await story.locator('[data-story-viewport]').scrollIntoViewIfNeeded();
