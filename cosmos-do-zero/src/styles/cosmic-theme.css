@@ -1,18 +1,19 @@
 /* Paleta da escola: espaço profundo, luz ciano e azul. As cores físicas são preservadas. */
 html:root, html:root[data-theme='dark'] {
-  --bg:#031226; --bg-alt:#051a31; --surface:#08233d; --surface-2:#10314c;
-  --ink:#edf4ff; --ink-2:#c0cee4; --muted:#96a9c7;
-  --line:#254661; --line-strong:#688eab;
-  --accent:#7de2f5; --accent-strong:#a6ecfa; --accent-ink:#8ce5f4; --accent-soft:#123646; --on-accent:#07202c;
-  --accent-2:#83b6ff; --shadow:rgba(0,0,0,.32); --focus:#a8edfa;
-  --glow-core:#7de2f5; --glow-mid:#83b6ff;
+  --bg:#313c4c; --bg-alt:#283444; --surface:#263345; --surface-2:#3c4b5f;
+  --ink:#f4f7fb; --ink-2:#dde5f0; --muted:#bdcbdc;
+  --line:#7389a3; --line-strong:#a1b5cf;
+  --accent:#99cfff; --accent-strong:#b2d7ff; --accent-ink:#a4d3ff; --accent-soft:#263e58; --on-accent:#102234;
+  --action:#0063b1; --action-hover:#07518b; --on-action:#fff;
+  --accent-2:#80b8ff; --shadow:rgba(0,0,0,.25); --focus:#b1daff;
+  --glow-core:#99cfff; --glow-mid:#80b8ff;
   color-scheme:dark;
 }
 html:root[data-theme='light'] {
   --bg:#f1f5fc; --bg-alt:#e7eef9; --surface:#fff; --surface-2:#dfe9f6;
   --ink:#172b47; --ink-2:#3c536e; --muted:#506783;
   --line:#c9d6e7; --line-strong:#7189a8;
-  --accent:#086d89; --accent-strong:#07576f; --accent-ink:#075e78; --accent-soft:#daf1f7; --on-accent:#fff;
+  --accent:#0063b1; --accent-strong:#07518b; --accent-ink:#07518b; --accent-soft:#dcecf9; --on-accent:#fff;
   --accent-2:#28659d; --shadow:rgba(12,35,67,.1); --focus:#075e78;
   --glow-core:#086d89; --glow-mid:#28659d;
   color-scheme:light;
@@ -28,8 +29,8 @@ body { background: var(--bg); }
 .main-nav a { font-size: 13px; letter-spacing: .07em; }
 .header-cta { border-color: var(--line-strong); }
 .header-cta:hover { background: var(--surface-2); color: var(--ink); }
-.cta { box-shadow: none; border-color: var(--accent); }
-.cta:hover { border-color: var(--accent-strong); }
+.cta { box-shadow:none; border-color:var(--action); background:var(--action); color:var(--on-action); }
+.cta:hover { border-color:var(--action-hover); background:var(--action-hover); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 :is(input, select, textarea) { accent-color: var(--accent); }
 :is(button, a, input, select, summary) { scroll-margin-block: 110px 28px; }

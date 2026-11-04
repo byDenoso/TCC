@@ -1,23 +1,23 @@
 /* Escola Cosmos: hierarquia de leitura, navegação e mediação das experiências. */
 html:root { --radius:18px; }
 html:root .header-shell { background:color-mix(in srgb,var(--bg) 93%,transparent); backdrop-filter:blur(18px); }
-html:root .header-cta { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
-html:root .header-cta:hover { background:var(--accent-strong); color:var(--on-accent); }
-html:root .school-home .hero-root .header-shell:not(.is-stuck) { background:#031226ed; }
-html:root .school-home .hero-root .header-shell:not(.is-stuck) .header-cta { color:#07202c; border-color:#8de4f5; background:#8de4f5; }
-html:root .identity-mark::after { background:#89e5f5; box-shadow:0 0 14px #89e5f550; }
+html:root .header-cta { background:var(--action); color:var(--on-action); border-color:var(--action); }
+html:root .header-cta:hover { background:var(--action-hover); color:var(--on-action); }
+html:root .school-home .hero-root .header-shell:not(.is-stuck) { background:#313c4ced; }
+html:root .school-home .hero-root .header-shell:not(.is-stuck) .header-cta { color:#fff; border-color:#80b8ff; background:#0063b1; }
+html:root .identity-mark::after { background:#80b8ff; box-shadow:0 0 14px #80b8ff50; }
 html:root .main-nav a { font-size:12px; letter-spacing:.04em; }
-html:root .hero-shell { background:radial-gradient(ellipse at 75% 26%,#12639845,transparent 55%),radial-gradient(ellipse at 12% 85%,#11506b40,transparent 52%),#031226; }
+html:root .hero-shell { background:radial-gradient(ellipse at 75% 26%,#12639845,transparent 55%),radial-gradient(ellipse at 12% 85%,#11506b40,transparent 52%),#313c4c; }
 html:root .hero-main { padding-top:clamp(76px,9vw,130px); padding-bottom:54px; gap:clamp(32px,5vw,76px); align-items:center; }
 html:root .hero-copy h1 { font-size:clamp(56px,6.6vw,102px); letter-spacing:-.055em; line-height:1.04; margin:24px 0; }
-html:root .hero-copy h1 .serif { color:#a8e8fa; font-family:var(--serif); font-weight:450; letter-spacing:-.055em; }
+html:root .hero-copy h1 .serif { color:#a4d3ff; font-family:var(--serif); font-weight:450; letter-spacing:-.055em; }
 html:root .hero-copy .hero-overline { color:#9fbed5; letter-spacing:.14em; font-size:11px; }
 html:root .hero-introduction { max-width:490px; font-size:clamp(17px,1.5vw,20px); line-height:1.75; color:#b5c7e0; }
 html:root .hero-actions { gap:18px 28px; margin-top:30px; flex-wrap:wrap; }
-html:root .hero-actions .cta { color:#07202c; background:#8de4f5; border-color:#8de4f5; padding-inline:24px; font-size:14px; gap:20px; }
-html:root .hero-actions .cta:hover { background:#b0effa; }
+html:root .hero-actions .cta { color:#fff; background:#0063b1; border-color:#80b8ff; padding-inline:24px; font-size:14px; gap:20px; }
+html:root .hero-actions .cta:hover { background:#07518b; }
 html:root .hero-actions .textlink { color:#d0def3; font-size:13px; }
-html:root .hero-main .cmb-hero { border-radius:24px; background:linear-gradient(150deg,#103650c9,#051b31dd); border:1px solid #7593cc40; padding:clamp(20px,2.5vw,36px); box-shadow:0 30px 100px #0004; }
+html:root .hero-main .cmb-hero { border-radius:24px; background:linear-gradient(150deg,#3c4b5fc9,#263345dd); border:1px solid #7593cc40; padding:clamp(20px,2.5vw,36px); box-shadow:0 30px 100px #0004; }
 html:root .cmb-instrument-label, html:root .cmb-instrument-label .meta { color:#bddcf2; }
 html:root .cmb-hero .cmb-read { color:#d5e2f6; font-size:15px; line-height:1.75; }
 html:root .cmb-hero .cmb-note { color:#8da6c8; font-size:12px; line-height:1.65; }
