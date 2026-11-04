@@ -1,8 +1,8 @@
-/** Cosmic interface. Preserve the system preference and the saved choice. */
+/** A escola abre no céu escuro; a escolha explícita do leitor sempre é preservada. */
 const KEY = 'cosmos-theme';
 type Theme = 'light' | 'dark';
-const system = (): Theme => 'light';
-const current = (): Theme => (document.documentElement.dataset.theme as Theme | undefined) ?? system();
+const defaultTheme = (): Theme => 'dark';
+const current = (): Theme => (document.documentElement.dataset.theme as Theme | undefined) ?? defaultTheme();
 
 export function initTheme(): void {
   const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')];
@@ -25,15 +25,9 @@ export function initTheme(): void {
     try { localStorage.setItem(KEY, next); } catch { /* sem armazenamento: vale só nesta visita */ }
     sync();
   });
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    let stored: string | null = null;
-    try { stored = localStorage.getItem(KEY); } catch { /* ignora */ }
-    if (stored !== 'light' && stored !== 'dark') document.documentElement.dataset.theme = system();
-    sync();
-  });
   window.addEventListener('storage', (e) => {
     if (e.key === KEY || e.key === null) {
-      document.documentElement.dataset.theme = e.newValue === 'light' || e.newValue === 'dark' ? e.newValue : system();
+      document.documentElement.dataset.theme = e.newValue === 'light' || e.newValue === 'dark' ? e.newValue : defaultTheme();
       sync();
     }
   });

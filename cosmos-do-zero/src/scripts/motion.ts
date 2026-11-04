@@ -37,10 +37,11 @@ export function initMotion(): void {
   const hero = document.querySelector<HTMLElement>('.hero-shell');
   if (field && hero && matchMedia('(pointer: fine)').matches) {
     hero.addEventListener('pointermove', (e) => {
-      if (hero.dataset.ambientPaused === 'true') return;
+      if (motionPreference.matches || document.hidden || hero.dataset.ambientPaused === 'true' || hero.dataset.ambientSuspended === 'true') return;
       const r = hero.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
       field.style.transform = `translate(${(-x * 18).toFixed(1)}px, ${(-y * 12).toFixed(1)}px)`;
     });
+    hero.addEventListener('pointerleave', () => { field.style.transform = ''; });
   }
 }

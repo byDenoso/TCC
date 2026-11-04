@@ -1,4 +1,4 @@
-/* Escola audiovisual: fundo branco e identidade Pantone nos títulos e ações. */
+/* Escola audiovisual: enquadramento, transporte e legendas compartilhados. */
 html:root .hero-shell { background:var(--bg); }
 html:root .hero-shell::before { background:radial-gradient(circle at 18% 36%,#d6edff 0 1px,transparent 1.5px),radial-gradient(circle at 78% 24%,#edfaff 0 1px,transparent 1.5px);background-size:179px 193px,241px 211px; }
 html:root .hero-shell .star { background:#eefaff;box-shadow:0 0 7px #85cfff; }
@@ -183,9 +183,9 @@ html[data-motion='reduced'] :is(.story-lesson,.school-course) * { transition:non
  html:root .experience-dialog .story-limit { max-height:none;overflow:visible;margin-top:10px; }
 }
 
-/* A identidade azul fica no primeiro plano; o céu continua dentro das experiências. */
-html:root[data-theme='light'] :is(h1,h2,h3,h4,h5,h6),
-html:root[data-theme='light'] .hero-copy h1 .serif { color:#06038d; }
+/* A escolha clara também acompanha os tokens da interface espacial. */
+html:root[data-theme='light'] :is(h1,h2,h3,h4,h5,h6) { color:var(--ink); }
+html:root[data-theme='light'] .hero-copy h1 .serif { color:var(--accent-ink); }
 html:root[data-theme='light'] .hero-shell > .hero-gl { opacity:0; }
 html:root[data-theme='light'] .hero-shell::before { opacity:.15; }
 html:root[data-theme='light'] .hero-main .cmb-hero { border-color:var(--line);box-shadow:0 16px 48px var(--shadow); }
