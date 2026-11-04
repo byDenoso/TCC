@@ -1,8 +1,8 @@
-/* Escola audiovisual: azul profundo, cenas legíveis e comandos ao alcance. */
-html:root .hero-shell { background:radial-gradient(ellipse at 78% 24%,#12639838,transparent 58%),radial-gradient(ellipse at 14% 90%,#105d7830,transparent 55%),#313c4c; }
+/* Escola audiovisual: fundo branco e identidade Pantone nos títulos e ações. */
+html:root .hero-shell { background:var(--bg); }
 html:root .hero-shell::before { background:radial-gradient(circle at 18% 36%,#d6edff 0 1px,transparent 1.5px),radial-gradient(circle at 78% 24%,#edfaff 0 1px,transparent 1.5px);background-size:179px 193px,241px 211px; }
 html:root .hero-shell .star { background:#eefaff;box-shadow:0 0 7px #85cfff; }
-html:root .hero-main .cmb-hero { background:linear-gradient(150deg,#3c4b5fdb,#263345ed);border-color:#507e9e70; }
+html:root .hero-main .cmb-hero { background:var(--surface);border-color:#507e9e70; }
 html:root .cmb-hero::before { background:radial-gradient(ellipse at 54% 38%,#2385b735,transparent 62%); }
 html:root .sky-orbit { stroke:#83b6ff60; }
 html:root .sky-orbit circle { fill:#a2e6f5;filter:drop-shadow(0 0 4px #74dceb); }
@@ -14,14 +14,14 @@ html:root .sci-head>p::after { content:none; }
 html:root .school-home .sci-lab { padding-block:56px; }
 html:root .school-home .sci-head h2 { font-size:clamp(34px,4vw,54px); }
 html:root .school-home .sci-head>p { max-width:480px; }
-html:root .obs-expansion-grid>.obs-viz,html:root .obs-expansion-grid .expansion-stage,html:root .obs-expansion-grid .obs-viz>figcaption { background:#263345!important; }
-html:root .obs-expansion-grid .expansion-stage { background:radial-gradient(ellipse at 45% 40%,#3c4b5f,#263345 72%)!important; }
+html:root .obs-expansion-grid>.obs-viz,html:root .obs-expansion-grid .expansion-stage,html:root .obs-expansion-grid .obs-viz>figcaption { background:var(--surface)!important; }
+html:root .obs-expansion-grid .expansion-stage { background:var(--surface-2)!important; }
 html:root .school-catalog-tools { display:flex;gap:16px;align-items:center;justify-content:space-between;margin:0 0 18px;color:var(--muted);font-size:13px; }
 .school-catalog-tools button { min-height:44px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);cursor:pointer;font:600 12px var(--sans); }
 .school-catalog-tools [hidden] { display:none; }
 .school-course-image [data-story-preview],.school-course-image svg { display:block;width:100%;height:100%; }
 .school-course-image .story-graphic text { display:none; }
-html:root .school-course-image { background:#313c4c; }
+html:root .school-course-image { background:var(--surface-2); }
 html:root .school-course-body>p { font-size:14px;line-height:1.65; }
 
 /* A pergunta e uma visão geral ficam juntas antes dos seis assuntos. */
@@ -65,10 +65,10 @@ html:root .mx-transport button { padding-inline:12px;font-size:13px; }
 .story-phases button { width:100%;height:100%;min-height:44px;padding:8px 6px;border:1px solid var(--line);border-radius:9px;display:flex;align-items:center;gap:7px;text-align:left;color:var(--muted);background:var(--bg);font:500 11px/1.4 var(--sans);cursor:pointer; }
 .story-phases button>span { flex:none;display:grid;place-items:center;border:1px solid var(--line-strong);border-radius:50%;width:18px;height:18px;font-size:10px; }
 .story-phases [aria-current='step'] { color:var(--ink);border-color:var(--accent);background:var(--accent-soft); }
-.story-viewport { min-width:0;position:relative;aspect-ratio:16/9;background:#313c4c;border-radius:12px;overflow:hidden; }
+.story-viewport { min-width:0;position:relative;aspect-ratio:16/9;background:#06038d;border-radius:12px;overflow:hidden; }
 .story-stage,.story-stage>svg,.story-viewport video { display:block;width:100%;height:100%; }
 .story-viewport video { object-fit:contain; }
-.story-viewport video::cue { color:#eef6ff;background:#313c4c;font-family:Arial,Helvetica,sans-serif;font-size:clamp(12px,1.05vw,16px); }
+.story-viewport video::cue { color:#eef6ff;background:#06038d;font-family:Arial,Helvetica,sans-serif;font-size:clamp(12px,1.05vw,16px); }
 .story-viewport [hidden] { display:none!important; }
 .story-transport { display:grid;grid-template-columns:auto auto minmax(90px,1fr) auto;align-items:center;gap:8px;margin-top:12px; }
 .story-transport button { min-height:42px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:10px;background:transparent;color:var(--ink);font:600 12px var(--sans);cursor:pointer; }
@@ -182,3 +182,15 @@ html[data-motion='reduced'] :is(.story-lesson,.school-course) * { transition:non
  html:root .experience-dialog .story-caption { max-height:none;overflow:visible; }
  html:root .experience-dialog .story-limit { max-height:none;overflow:visible;margin-top:10px; }
 }
+
+/* A identidade azul fica no primeiro plano; o céu continua dentro das experiências. */
+html:root[data-theme='light'] :is(h1,h2,h3,h4,h5,h6),
+html:root[data-theme='light'] .hero-copy h1 .serif { color:#06038d; }
+html:root[data-theme='light'] .hero-shell > .hero-gl { opacity:0; }
+html:root[data-theme='light'] .hero-shell::before { opacity:.15; }
+html:root[data-theme='light'] .hero-main .cmb-hero { border-color:var(--line);box-shadow:0 16px 48px var(--shadow); }
+html:root[data-theme='light'] .cmb-hero::before { background:none; }
+html:root[data-theme='light'] .hero-routes a strong::after { color:var(--accent-ink); }
+html:root[data-theme='light'] .hero-foot { color:var(--ink); }
+html:root[data-theme='light'] .hero-foot .number { color:var(--accent-ink); }
+html:root[data-theme='light'] .hero-foot .meta,html:root[data-theme='light'] .hero-foot .statcopy { color:var(--muted); }
