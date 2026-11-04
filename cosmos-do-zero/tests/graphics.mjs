@@ -24,6 +24,7 @@ try {
   for (const width of [390, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference', colorScheme: 'dark' });
     await page.addInitScript(installGpuProbe);
+    await page.addInitScript(() => localStorage.setItem('cosmos-theme', 'dark'));
     const errors = [];
     const warnings = [];
     const failedResources = [];
