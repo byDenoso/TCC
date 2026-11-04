@@ -5,7 +5,7 @@ const { spec, id, chapter } = Astro.props;
 const c = spec.control;
 const letters = 'ABCDE';
 ---
-<div class="mx" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
+<fieldset class="mx" disabled aria-busy="true" data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
   <div class="mx-head">
     <span class="meta">Demonstração visual</span>
     <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
@@ -64,4 +64,4 @@ const letters = 'ABCDE';
     </div>
     <div class="mx-verdict" data-mx-check-out hidden role="status"><p><strong data-mx-check-label></strong> {spec.check.why}</p></div>
   </div>
-</div>
+</fieldset>

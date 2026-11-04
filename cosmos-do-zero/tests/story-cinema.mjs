@@ -14,10 +14,14 @@ try{
  await cold.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'domcontentloaded'});
  await selectLessonStep(cold,4);await sceneRequested;
  const coldScene=cold.locator('[data-mx="origem-do-universo-primeiras-estruturas"]');
- try{ok(await coldScene.locator('[data-mx-play]').isDisabled(),'controles aguardam o carregamento da cena antes de aceitar o primeiro clique');}finally{releaseScene();}
+ try{
+  ok(await coldScene.locator('[data-mx-play]').isDisabled(),'controles aguardam o carregamento da cena antes de aceitar o primeiro clique');
+  ok(await coldScene.getAttribute('aria-busy')==='true','preparação da cena é informada à tecnologia assistiva');
+ }finally{releaseScene();}
  await coldScene.locator('[data-mx-reset]').click();const coldBefore=Number(await coldScene.locator('[data-mx-range]').inputValue());
  await coldScene.locator('[data-mx-play]').click();
  ok(Number(await coldScene.locator('[data-mx-range]').inputValue())>coldBefore,'primeiro clique após carregamento avança com movimento reduzido');
+ ok(await coldScene.getAttribute('aria-busy')==='false','cena pronta encerra o estado de preparação');
  await cold.close();
  for(const width of [390,1280]){
   const page=await browser.newPage({viewport:{width,height:width<500?667:900},reducedMotion:'no-preference'});

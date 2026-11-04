@@ -55,7 +55,10 @@ export function initMicro(): void {
     root.dataset.mxBooted = '1';
     const load = loaders[root.dataset.mxChapter ?? ''];
     if (!load) return;
-    load().then((m) => { const make = m.scenes[root.dataset.mx!]; if (make) setup(root, make()); }).catch((err) => console.error('[cosmos] cena', root.dataset.mx, err));
+    load().then((m) => { const make = m.scenes[root.dataset.mx!]; if (make) setup(root, make()); }).catch((err) => {
+      root.dataset.mxLoad = 'error'; root.setAttribute('aria-busy', 'false');
+      console.error('[cosmos] cena', root.dataset.mx, err);
+    });
   };
   if (!('IntersectionObserver' in window)) { roots.forEach(boot); return; }
   const io = new IntersectionObserver((entries) => {
@@ -285,4 +288,8 @@ function setup(root: HTMLElement, scene: Scene): void {
   setPlaying(false);
   render(false);
   automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
+  // Os controles só aceitam ações depois do SVG e de todos os listeners estarem prontos.
+  root.dataset.mxLoad = 'ready';
+  root.setAttribute('aria-busy', 'false');
+  root.removeAttribute('disabled');
 }
