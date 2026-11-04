@@ -36,17 +36,21 @@ export function initExperience(): void {
   new MutationObserver(update).observe(root,{subtree:true,attributes:true,attributeFilter:['aria-pressed','disabled']});
   new IntersectionObserver(([e])=>{visible=e.isIntersecting;update();},{threshold:.15}).observe(stage);
   document.addEventListener('cosmos:motionchange',update);
-  expand.addEventListener('click',()=>{
+  const openExperience=(opener:HTMLElement)=>{
    const position=window.scrollY,placeholder=document.createComment('posição da experiência');
    root.before(placeholder);
    const dialog=document.createElement('dialog');dialog.className='experience-dialog';dialog.setAttribute('aria-label',root.querySelector('h3,h2')?.textContent?.trim()||'Experiência ampliada');
    dialog.dataset.family=root.matches('[data-story]')?'story':root.matches('[data-mx]')?'micro':root.matches('[data-cmbj]')?'cmb':'instrument';
    const close=document.createElement('button');close.type='button';close.className='experience-close';close.textContent='Fechar experiência ×';
    placeholder.parentElement!.append(dialog);dialog.append(close,root,panel);root.dataset.expanded='true';
-   const finish=()=>{panel.hidePopover();document.body.append(panel);delete root.dataset.expanded;placeholder.replaceWith(root);dialog.remove();window.scrollTo({top:position,behavior:'instant'});expand.focus({preventScroll:true});window.dispatchEvent(new Event('resize'));};
+   const finish=()=>{panel.hidePopover();document.body.append(panel);delete root.dataset.expanded;placeholder.replaceWith(root);dialog.remove();window.scrollTo({top:position,behavior:'instant'});opener.focus({preventScroll:true});window.dispatchEvent(new Event('resize'));};
    dialog.addEventListener('close',finish,{once:true});close.addEventListener('click',()=>dialog.close());
    dialog.showModal();close.focus();window.dispatchEvent(new Event('resize'));
-  });
+  };
+  expand.addEventListener('click',()=>openExperience(expand));
+  if(root.matches('[data-story]'))for(const shortcut of document.querySelectorAll<HTMLButtonElement>('[data-story-open]')){
+   shortcut.addEventListener('click',()=>openExperience(shortcut));shortcut.hidden=false;
+  }
  }
  // Definições próximas à leitura: uma seleção deliberada, sem transformar todo o texto em links.
  const panel=document.createElement('div');panel.className='term-pop';panel.id='cosmos-term';panel.setAttribute('popover','auto');document.body.append(panel);

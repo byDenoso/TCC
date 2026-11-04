@@ -10,9 +10,9 @@ export function initStories():void {
   const film=root.querySelector<HTMLVideoElement>('[data-story-film]')!,play=root.querySelector<HTMLButtonElement>('[data-story-play]')!,label=root.querySelector<HTMLElement>('[data-story-play-label]')!;
   const range=root.querySelector<HTMLInputElement>('[data-story-time]')!,clock=root.querySelector<HTMLOutputElement>('[data-story-clock]')!,caption=root.querySelector<HTMLElement>('[data-story-caption]')!;
   const phases=[...root.querySelectorAll<HTMLButtonElement>('[data-story-phase]')],modes=[...root.querySelectorAll<HTMLButtonElement>('[data-story-mode]')];
-  let seconds=motionPreference.matches?20:0,running=false,raf=0,last=0,lastPaint=0,lastProgress=-1,visible=false,mode='scene',sceneAutomatic=true;
+  let seconds=motionPreference.matches?20:0,running=false,raf=0,last=0,lastPaint=0,lastProgress=-1,visible=false,mode='scene',sceneAutomatic=true,pendingFilmTime:number|null=null;
   const paint=()=>{
-   const t=mode==='film'?film.currentTime:seconds,p=storyProgress(t),state=sampleStory(id,p);
+   const t=mode==='film'?(pendingFilmTime??film.currentTime):seconds,p=storyProgress(t),state=sampleStory(id,p);
    if(mode==='scene'&&p!==lastProgress){stage.innerHTML=renderStory(id,p,`story-${id}`);lastProgress=p;}
    const value=t.toFixed(2);if(range.value!==value)range.value=value;
    range.setAttribute('aria-valuetext',`${t.toFixed(1).replace('.',',')} segundos; ${story.phases[state.phase].label}`);
@@ -31,7 +31,9 @@ export function initStories():void {
   };
   const start=()=>{if(mode!=='scene'||!visible||motionPreference.matches)return;if(seconds>=20)seconds=0;running=true;last=0;lastPaint=0;paint();raf=requestAnimationFrame(tick);};
   const automatic=visibleMotion(viewport,{start,stop,running:()=>running,ready:()=>mode==='scene',visibility:on=>{visible=on;if(!on)film.pause();}});
-  const seek=(value:number)=>{if(mode==='scene')sceneAutomatic=false;automatic.manual();stop();if(mode==='film'){if(Number.isFinite(film.duration)){film.pause();film.currentTime=value;}}else seconds=value;paint();};
+  // Metadados podem chegar depois de outra escolha. Só a posição mais recente é aplicada.
+  const alignFilm=()=>{if(mode==='film'&&pendingFilmTime!==null&&Number.isFinite(film.duration)){film.currentTime=Math.min(pendingFilmTime,film.duration);pendingFilmTime=null;}paint();};
+  const seek=(value:number)=>{sceneAutomatic=false;automatic.manual();stop();seconds=value;if(mode==='film'){film.pause();pendingFilmTime=value;alignFilm();}else paint();};
   play.addEventListener('click',()=>{
    if(mode==='film'){if(film.paused)void film.play().catch(()=>{caption.textContent='Use o botão de reprodução do vídeo para começar.';});else film.pause();return;}
    if(running){sceneAutomatic=false;automatic.manual();stop();return;}
@@ -42,13 +44,17 @@ export function initStories():void {
   phases.forEach((button,i)=>button.addEventListener('click',()=>seek(i===0?0:3+story.phases[i].at*12)));
   root.querySelector('[data-story-reset]')!.addEventListener('click',()=>seek(0));
   modes.forEach(button=>button.addEventListener('click',()=>{
-   const next=button.dataset.storyMode!;if(mode===next)return;automatic.manual();stop();film.pause();mode=next;
+   const next=button.dataset.storyMode!;if(mode===next)return;
+   const position=mode==='film'?(pendingFilmTime??film.currentTime):seconds;
+   sceneAutomatic=false;automatic.manual();stop();film.pause();seconds=position;mode=next;
    root.dataset.storyModeActive=mode;stage.hidden=mode!=='scene';film.hidden=mode!=='film';
    modes.forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+   pendingFilmTime=mode==='film'?seconds:null;
    if(mode==='film'&&film.readyState===0){film.preload='metadata';film.load();}
-   if(mode==='scene'&&sceneAutomatic)automatic.automatic();paint();
+   alignFilm();
   }));
-  for(const event of ['play','pause','ended','timeupdate','loadedmetadata'])film.addEventListener(event,paint);
+  film.addEventListener('loadedmetadata',alignFilm);
+  for(const event of ['play','pause','ended','timeupdate'])film.addEventListener(event,paint);
   const preference=()=>{if(motionPreference.matches){stop();seconds=20;film.pause();}paint();};
   motionPreference.addEventListener('change',preference);
   const hidden=()=>{if(document.hidden)film.pause();};document.addEventListener('visibilitychange',hidden);

@@ -66,6 +66,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           <nav aria-label="Seções do capítulo" data-toc>
             {ch.sections.map((s, i) => <a href={`#${s.id}`}><span>{pad2(i + 1)}</span>{s.title}</a>)}
           </nav>
+          <button class="reader-summary" type="button" data-story-open hidden>Rever resumo animado <span>20 segundos · cena ou vídeo</span></button>
           <div class="depth-controls" role="group" aria-label="Nível de aprofundamento">
             <button type="button" data-depth="essential" aria-pressed="true">Essencial</button>
             <button type="button" data-depth="more" aria-pressed="false">Entenda melhor</button>

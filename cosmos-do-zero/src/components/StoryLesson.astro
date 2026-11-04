@@ -10,6 +10,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <button type="button" data-story-mode="scene" aria-pressed="true">Explorar a cena</button>
     <button type="button" data-story-mode="film" aria-pressed="false">Ver em vídeo <span aria-hidden="true">▶</span></button>
   </div>
+  <p class="story-mode-note">Troque de formato no mesmo ponto. A cena fica pausada para você comparar.</p>
   <ol class="story-phases" aria-label="Momentos da explicação">
     {story.phases.map((phase,i)=><li><button type="button" data-story-phase={i} aria-current={i===0?'step':'false'}><span aria-hidden="true">{i+1}</span>{phase.label}</button></li>)}
   </ol>
@@ -17,7 +18,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <div class="story-stage" data-story-stage set:html={renderStory(id,0,prefix)} />
     <video data-story-film controls playsinline preload="none" poster={u(`/media/stories/${id}.webp`)} aria-label={`Vídeo: ${story.title}`} hidden>
       <source src={u(`/media/stories/${id}.mp4`)} type="video/mp4" />
-      <track kind="captions" src={u(`/media/stories/${id}.vtt`)} srclang="pt-BR" label="Português" />
+      <track kind="captions" src={u(`/media/stories/${id}.vtt`)} srclang="pt-BR" label="Português" default />
       <p>Você pode <a href={u(`/media/stories/${id}.mp4`)}>abrir o vídeo</a> e ler a explicação abaixo.</p>
     </video>
   </div>
