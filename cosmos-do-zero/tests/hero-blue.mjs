@@ -22,10 +22,10 @@ try{
    colored++;if(h>=185&&h<240)blue++;if(h>=240&&h<=335)purple++;light+=(r+g+b)/3;
   }
   assert.ok(colored>1000,`${width}: céu contém uma nebulosa visível`);checks++;
-  assert.ok(blue/colored>.9,`${width}: azul e ciano predominam no fundo WebGL (${(blue/colored*100).toFixed(1)}%)`);checks++;
-  assert.ok(purple/colored<.02,`${width}: fundo não recupera a paleta roxa (${(purple/colored*100).toFixed(1)}%)`);checks++;
-  assert.ok(light/colored<.3,`${width}: fundo mantém azul profundo`);checks++;
+  assert.ok((blue+purple)/colored>.9,`${width}: a nebulosa usa azul, ciano e violeta (${((blue+purple)/colored*100).toFixed(1)}%)`);checks++;
+  assert.ok(blue/colored>.1&&purple/colored>.05,`${width}: há regiões frias e violetas distintas`);checks++;
+  assert.ok(light/colored<.3,`${width}: fundo mantém a leitura sobre o céu profundo`);checks++;
   await page.close();
  }
- console.log(`Céu azul em WebGL: ${checks} verificações aprovadas`);
+ console.log(`Céu espacial em WebGL: ${checks} verificações aprovadas`);
 }finally{await browser.close();}

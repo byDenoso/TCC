@@ -21,6 +21,25 @@ try {
   assert.equal(await page.getByRole('button', { name: 'Pausar o céu animado' }).isVisible(), true);
   assert.equal(await orbit.evaluate(el => getComputedStyle(el).animationPlayState), 'running');
   assert.equal(await star.evaluate(el => getComputedStyle(el).animationPlayState), 'running');
+  // A preferência pode mudar com a página aberta; o leitor e o instrumento continuam disponíveis.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.waitForFunction(() => document.documentElement.dataset.motion === 'reduced');
+  assert.equal(await page.getByRole('button', { name: /céu animado/i }).count(), 0);
+  assert.equal(await orbit.evaluate(el => getComputedStyle(el).animationName), 'none');
+  assert.equal(await page.locator('#hero-title .gs-unit').count(), 0, 'o título mantém seu texto nativo');
+  assert.equal(await page.locator('[data-cmb-frame]').isVisible(), true);
+  const field = page.locator('.starfield');
+  const stopped = await field.getAttribute('style');
+  await page.locator('.hero-shell').dispatchEvent('pointermove', { clientX: 20, clientY: 20, pointerType: 'mouse' });
+  assert.equal(await field.getAttribute('style'), stopped, 'a paralaxe respeita a mudança para movimento reduzido');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.getByRole('button', { name: 'Pausar o céu animado' }).waitFor();
+  await page.locator('#desafio').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('.hero-shell')?.dataset.ambientSuspended === 'true');
+  assert.equal(await orbit.evaluate(el => getComputedStyle(el).animationPlayState), 'paused', 'a moldura para fora da tela');
+  await page.locator('#topo').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelector('.hero-shell')?.dataset.ambientSuspended === 'false');
+  assert.equal(await orbit.evaluate(el => getComputedStyle(el).animationPlayState), 'running');
   const compact = await browser.newPage({ viewport: { width: 320, height: 760 } });
   await compact.goto(`${base}/`, { waitUntil: 'load' });
   for (const link of await compact.locator('.hero-routes a').all()) {
@@ -36,7 +55,8 @@ try {
   assert.equal(await reduced.locator('.sky-orbit--outer').evaluate(el => getComputedStyle(el).animationName), 'none');
   const noJs = await browser.newPage({ javaScriptEnabled: false });
   await noJs.goto(`${base}/`, { waitUntil: 'load' });
+  assert.equal(await noJs.locator('html').getAttribute('data-theme'), 'dark');
   assert.equal(await noJs.getByRole('button', { name: /céu animado/i }).count(), 0);
   assert.equal(await noJs.getByRole('heading', { name: /Cosmos do Zero/i }).count(), 1);
-  console.log('Controle de efeitos: teclado, pausa, retomada, movimento reduzido e ausência de JavaScript OK.');
+  console.log('Controle de efeitos: teclado, pausa, retomada, preferência ao vivo, saída da tela e ausência de JavaScript OK.');
 } finally { await browser.close(); }
