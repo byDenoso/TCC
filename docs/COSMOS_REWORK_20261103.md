@@ -1,5 +1,7 @@
 # Cosmos do Zero — escola audiovisual em azul profundo
 
+A continuação desta entrega está registrada em [COSMOS_CONTINUIDADE_20261103.md](COSMOS_CONTINUIDADE_20261103.md), com sincronização entre formatos, legendas e revisão durante a leitura.
+
 ## Resultado
 
 O rework usa azul profundo como fundo e aproxima as explicações de cenas que o aluno pode observar e controlar. A entrada apresenta uma demonstração antes do catálogo; as seis aulas têm capas em SVG e uma abertura visual de 20 segundos, com três momentos nomeados e a opção de assistir ao vídeo equivalente.

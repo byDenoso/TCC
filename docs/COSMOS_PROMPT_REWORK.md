@@ -16,6 +16,10 @@ Crie uma história visual de 20 segundos para cada aula: endereço cósmico; alo
 
 Reproduza as cenas automaticamente quando estiverem visíveis. Pause ao sair da tela ou ocultar a página. Uma pausa manual, a escolha de uma etapa ou a mudança da régua deve prevalecer. Ofereça reproduzir, pausar, recomeçar e escolher o momento. Carregue vídeos apenas quando solicitados. Faça uma capa se mover por vez e ofereça um botão para pausar as capas.
 
+Habilite os controles depois de a cena registrar suas interações. Mostre que ela está sendo preparada e informe uma falha de carregamento, mantendo o texto da aula disponível. O primeiro clique após a preparação deve funcionar também com movimento reduzido.
+
+Ao trocar entre cena e vídeo, conserve o mesmo instante e pause para permitir comparação. Metadados atrasados devem respeitar a escolha mais recente. Mostre as legendas em português desde a primeira reprodução e mantenha uma única fala visível, com os valores do desenho desobstruídos. Durante a leitura, ofereça “Rever resumo animado”; ao fechar, restaure o passo, o endereço, a posição e o foco do acionador.
+
 Use o Three.js existente quando a profundidade ajudar a compreender; use SVG para diagramas, curvas, comparações e alternativas ao WebGL. Use GSAP nas transições que orientam a leitura. Adicione bibliotecas apenas quando resolverem uma necessidade concreta. Preserve uma explicação estática útil quando JavaScript, WebGL ou movimento não estiverem disponíveis.
 
 ## Modo ampliado e acessibilidade
@@ -27,6 +31,8 @@ No modo cinema, mantenha a cena, os controles e o botão de fechar acessíveis i
 Identifique ilustrações, modelos e dados observados. Declare simplificações de escala, tempo e geometria. Confira relações como comprimento de onda proporcional ao fator de escala e períodos orbitais compatíveis com Kepler. Não apresente curvas inventadas como medições. Preserve as fontes de cada explicação.
 
 Implemente, confira as seis aulas, navegação por teclado, celular, modo ampliado, vídeos, pausa manual, movimento reduzido e retorno à cena. Execute as verificações do projeto e publique pelos destinos já configurados. Entregue a URL funcionando e uma imagem real do resultado.
+
+Verifique as trocas nos dois sentidos, também durante reprodução e com carregamento de mídia atrasado. Na conferência do retorno à leitura, compare com a posição no próprio acionamento do resumo.
 
 ## Implementação desta versão
 
