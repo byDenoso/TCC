@@ -9,7 +9,7 @@ try{
  for(const width of [390,1440]){
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce',colorScheme:'dark'});
   // Preserva o buffer apenas para ler os pixels; a geometria e o shader são os de produção.
-  await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,/webgl/.test(type)&&this.classList.contains('hero-gl')?{...options,preserveDrawingBuffer:true}:options);};});
+  await page.addInitScript(()=>{localStorage.setItem('cosmos-theme','dark');const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,/webgl/.test(type)&&this.classList.contains('hero-gl')?{...options,preserveDrawingBuffer:true}:options);};});
   await page.goto(base+'/?gl',{waitUntil:'networkidle'});
   const sky=page.locator('.hero-shell.has-gl>.hero-gl');await sky.waitFor();
   const encoded=await sky.evaluate(c=>c.toDataURL('image/png'));

@@ -1,7 +1,7 @@
 /** Cosmic interface. Preserve the system preference and the saved choice. */
 const KEY = 'cosmos-theme';
 type Theme = 'light' | 'dark';
-const system = (): Theme => 'dark';
+const system = (): Theme => 'light';
 const current = (): Theme => (document.documentElement.dataset.theme as Theme | undefined) ?? system();
 
 export function initTheme(): void {

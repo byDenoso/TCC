@@ -21,6 +21,7 @@ async function open(vp, { reduced = false, scheme = 'light' } = {}) {
   const touch = vp.width <= 430;
   const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: 1, isMobile: touch, hasTouch: touch, colorScheme: scheme, reducedMotion: reduced ? 'reduce' : 'no-preference', locale: 'pt-BR' });
   const page = await ctx.newPage();
+  await page.addInitScript(theme => localStorage.setItem('cosmos-theme', theme), scheme);
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
