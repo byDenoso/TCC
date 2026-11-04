@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { mkdir } from 'node:fs/promises';
 import { selectLessonStep } from './lib/reader-navigation.mjs';
 const base=(process.env.BASE_URL||'http://127.0.0.1:4321').replace(/\/$/,'');
 const ids=['galaxias-e-nebulosas','origem-do-universo','misterios-do-cosmos','vida-das-estrelas','sistema-solar','terra-e-atmosfera'];
@@ -45,6 +46,10 @@ try{
    ok(await root.getAttribute('data-expanded')==='true',`${id}/${width}: cinema aberto`);
    const fit=await root.evaluate(r=>{const stage=r.querySelector('[data-story-viewport]').getBoundingClientRect(),controls=r.querySelector('.story-transport').getBoundingClientRect();return stage.top>=0&&stage.bottom<=innerHeight&&controls.top>=0&&controls.bottom<=innerHeight;});
    ok(fit,`${id}/${width}: palco e comandos cabem na janela`);
+   if(id==='origem-do-universo'){
+    await mkdir('docs/screenshots',{recursive:true});
+    await page.screenshot({path:`docs/screenshots/continuity-cinema-${width}.png`});
+   }
    await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('[data-expanded]'));
    ok(await root.locator('[data-experience-expand]').evaluate(b=>b===document.activeElement),`${id}/${width}: Escape devolve foco`);
    await selectLessonStep(page,2);
