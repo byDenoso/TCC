@@ -4,7 +4,7 @@ Refaça o Cosmos do Zero como uma escola interativa de cosmologia em português 
 
 ## Direção visual
 
-Use azul profundo `#031226` como fundo, superfícies `#08233d`, ciano `#74dceb` nos controles e azul claro `#83b6ff` nas comparações. Combine o céu escuro com textos claros, bom contraste e espaços confortáveis. Preserve cores científicas quando elas comunicarem temperatura, comprimento de onda ou categorias. Mantenha a opção de tema claro.
+Use o azul acinzentado `#313C4C` da referência como fundo, superfícies `#263345`, azul `#0063B1` nos botões e azul claro `#A4D3FF` nos textos de destaque. Botões azuis usam texto branco. Combine o céu escuro com textos claros, bom contraste e espaços confortáveis. Preserve cores científicas quando elas comunicarem temperatura, comprimento de onda ou categorias. Mantenha a opção de tema claro.
 
 ## Escola e navegação
 
