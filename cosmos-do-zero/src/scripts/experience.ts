@@ -20,7 +20,7 @@ export function initExperience(): void {
    const running=play?.getAttribute('aria-pressed')==='true';
    const range=root.querySelector<HTMLInputElement>('[data-e-range],[data-sci-range],[data-mx-range],[data-story-time]');
    const complete=range&&Number(range.max)>Number(range.min)&&Number(range.value)>=Number(range.max);
-   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Fim da cena · você pode rever':visible?'Pronto para explorar':'Pronto para começar';
+   const text=root.dataset.mxLoad==='error'?'A cena não carregou. Recarregue a página para tentar de novo.':root.matches('[data-mx]')&&!root.classList.contains('is-ready')?'Preparando a cena…':play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Fim da cena · você pode rever':visible?'Pronto para explorar':'Pronto para começar';
    if(status.textContent!==text)status.textContent=text;
    const state=running&&visible?'playing':complete?'complete':'paused';if(root.dataset.playback!==state)root.dataset.playback=state;
   };
@@ -33,7 +33,7 @@ export function initExperience(): void {
   root.addEventListener('input',()=>{manual=true;update();});
   root.addEventListener('focusin',event=>{if((event.target as Element).closest('input,select,[data-e-target]'))stage.dataset.focusDiagram='true';});
   root.addEventListener('focusout',()=>{delete stage.dataset.focusDiagram;});
-  new MutationObserver(update).observe(root,{subtree:true,attributes:true,attributeFilter:['aria-pressed','disabled']});
+  new MutationObserver(update).observe(root,{subtree:true,attributes:true,attributeFilter:['aria-pressed','disabled','data-mx-load']});
   new IntersectionObserver(([e])=>{visible=e.isIntersecting;update();},{threshold:.15}).observe(stage);
   document.addEventListener('cosmos:motionchange',update);
   const openExperience=(opener:HTMLElement)=>{
