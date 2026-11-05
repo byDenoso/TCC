@@ -6,7 +6,8 @@ import * as THREE from 'three';
 import {observeScene} from '/src/scripts/visual/runtime.ts';
 import {moveWorldPosition,relativePositionMeters,worldPositionMeters} from '/src/scripts/visual/world-frame.ts';
 const stage=document.querySelector('.mx-stage');
-if(new URL(location.href).searchParams.get('backend')==='webgl2')stage.dataset.forceWebgl='true';
+const params=new URL(location.href).searchParams;
+if(params.get('backend')==='webgl2')stage.dataset.forceWebgl='true';
 const distance=10n**27n, anchor=worldPositionMeters(distance,0n,0n);
 const originalCamera=moveWorldPosition(anchor,[0,0,3]), originalTarget=anchor;
 const closeWorld=moveWorldPosition(anchor,[0,0,1]);
@@ -14,21 +15,34 @@ const farWorld=worldPositionMeters(distance,0n,-distance);
 let cameraWorld=originalCamera,targetWorld=originalTarget,badFrame=false,updates=0;
 const group=new THREE.Group();
 const close=new THREE.Mesh(new THREE.PlaneGeometry(.8,.8),new THREE.MeshBasicMaterial({color:0xff2222}));
+if(params.has('custom'))close.material.onBeforeCompile=()=>{};
 const far=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x2222ff}));
 far.scale.setScalar(1.5e27);close.renderOrder=0;far.renderOrder=1;group.add(close,far);
+if(params.has('normalized-ortho')){close.position.z=1;far.position.z=-1;far.scale.setScalar(5);}
 const view=observeScene(stage,()=>({
   group,camera:[0,0,7],cameraClip:{near:.02,far:2e27},
-  worldFrame:{
+  ...(params.has('ortho')||params.has('normalized-ortho')?{orthographicHeight:()=>2.5}:{}),
+  ...(params.has('normalized-ortho')?{cameraClip:{near:.02,far:150}}:{}),
+  ...(params.has('ortho-extreme')?{cameraClip:{near:1e-30,far:1e-20},orthographicHeight:()=>1}:{}),
+  ...(params.has('shadows')?{lighting:{ambient:1,key:1,fill:1,exposure:1,shadows:true}}:{}),
+  ...(!params.has('normalized-ortho')?{worldFrame:{
     origin:state=>moveWorldPosition(anchor,[state.value*.25,0,0]),
     camera:()=>cameraWorld,target:()=>targetWorld,
     setView:(camera,target)=>{cameraWorld=camera;targetWorld=target;},
     resetView:()=>{cameraWorld=originalCamera;targetWorld=originalTarget;},
     anchors:()=>[{object:close,position:badFrame?moveWorldPosition(anchor,[NaN,0,0]):closeWorld},{object:far,position:farWorld}]
-  },
+  }}:{}),
   update(){updates++;}
 }));
+let dynamic=null;
 window.__WORLD_FRAME_FIXTURE={
   rebase(value){view.state({value});},
+  nearVisible(on){close.visible=on;view.state({phase:on ? .2 : .1});},
+  farVisible(on){far.visible=on;view.state({phase:on ? .4 : .3});},
+  foregroundColor(color){close.material.color.setHex(color);view.state({phase:.5});},
+  addStandard(){dynamic=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());dynamic.visible=false;group.add(dynamic);view.state({phase:.6});return dynamic.material.onBeforeCompile!==THREE.Material.prototype.onBeforeCompile;},
+  removeStandard(){group.remove(dynamic);view.state({phase:.7});return dynamic.material.onBeforeCompile===THREE.Material.prototype.onBeforeCompile;},
+  addUnsupported(){group.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.ShaderMaterial()));view.state({phase:.8});},
   cameraDelta(){return relativePositionMeters(cameraWorld,originalCamera);},
   cameraDistance(){return Math.hypot(...relativePositionMeters(cameraWorld,targetWorld));},
   targetDelta(){return relativePositionMeters(targetWorld,originalTarget);},

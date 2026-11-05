@@ -4,6 +4,7 @@ import { registerDiagnostics } from './diagnostics';
 import { canUseWebGPU, FrameBudget, isSoftwareAdapter } from './render-policy';
 import { photographicExposure, type CameraExposure } from './camera-exposure';
 import { moveWorldPosition, rebaseWorld, relativePositionMeters, type WorldAnchor, type WorldPosition } from './world-frame';
+import { worldFrameWebGLMaterials } from './world-frame-webgl';
 import { motionPreference } from '../motion-preference';
 
 /** A página possui uma única licença de GPU. Uma cena nova devolve a anterior ao SVG. */
@@ -134,15 +135,21 @@ async function prepareRenderer(exhibit: Exhibit, forceWebGL: boolean): Promise<P
     canvas = makeCanvas();
   }
   // GLSL shaders without log-depth chunks must not mix with log-depth standard materials.
-  try { return {renderer:new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'low-power',logarithmicDepthBuffer:canUseWebGPU(exhibit.group)}),canvas,backend:'webgl2'}; }
+  try { return {renderer:new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'low-power',logarithmicDepthBuffer:!!exhibit.worldFrame||canUseWebGPU(exhibit.group)}),canvas,backend:'webgl2'}; }
   catch (error) { console.warn('[cosmos] WebGL2 indisponível', error); return null; }
 }
 
 /** Sem relógio paralelo: o motor envia fase/tempo. Câmera só muda por ação explícita. */
 function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer, onDispose?: () => void): MountedScene {
+  const {canvas,renderer,backend} = prepared;
+  const {near,far}=exhibit.cameraClip??{near:.02,far:150};
+  if(!Number.isFinite(near)||!Number.isFinite(far)||near<=0||far<=near)throw new RangeError('planos da câmera inválidos');
+  if(exhibit.worldFrame&&(exhibit.cameraForValue||exhibit.cameraForAspect))throw new Error('câmera física não aceita enquadramento normalizado');
+  if(exhibit.worldFrame&&exhibit.orthographicHeight)throw new Error('câmera ortográfica não suportada no frame físico');
+  if(exhibit.worldFrame&&backend==='webgl2'&&exhibit.lighting?.shadows)throw new Error('sombras não suportadas no frame físico WebGL');
+  const worldMaterials=exhibit.worldFrame&&backend==='webgl2'?worldFrameWebGLMaterials(exhibit.group,near,far):null;
   active?.();
   stage.querySelector('.cosmos-preview')?.remove();
-  const {canvas,renderer,backend} = prepared;
   stage.dataset.renderer = backend;
   renderer.setClearColor(0x070c18); renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -153,9 +160,6 @@ function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer,
   const key = new THREE.DirectionalLight(exhibit.lighting?.neutral?0xffffff:0xfff2df, exhibit.lighting?.key??3); key.position.set(...(exhibit.lighting?.keyPosition??[-5,4,6])); scene.add(key);
   const fill = new THREE.DirectionalLight(0x477ccf, exhibit.lighting?.fill??2); fill.position.set(4, -1, -4); scene.add(fill);
   if(exhibit.lighting?.shadows){renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;key.shadow.normalBias=.015;}
-  const {near,far}=exhibit.cameraClip??{near:.02,far:150};
-  if(!Number.isFinite(near)||!Number.isFinite(far)||near<=0||far<=near)throw new RangeError('planos da câmera inválidos');
-  if(exhibit.worldFrame&&(exhibit.cameraForValue||exhibit.cameraForAspect))throw new Error('câmera física não aceita enquadramento normalizado');
   const camera = exhibit.orthographicHeight?new THREE.OrthographicCamera(-2,2,2,-2,near,far):new THREE.PerspectiveCamera(42, 1, near, far);
   const home = new THREE.Vector3(...(exhibit.camera ?? [0, 3.3, 9.5])); camera.position.copy(home);
   const homeDistance=exhibit.worldFrame?Math.hypot(...relativePositionMeters(exhibit.worldFrame.camera(),exhibit.worldFrame.target()))*(exhibit.worldFrame.sceneUnitsPerMeter??1):home.length();
@@ -178,6 +182,7 @@ function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer,
   const render = (animationFrame=false,forceCinematic=false) => { if (!alive || document.hidden) return; const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight){lastFrame=0;return;}const updateStart=diagnostics.enabled?performance.now():0;
     try {
       exhibit.update(state);
+      worldMaterials?.sync();
       const frame=exhibit.worldFrame;
       if(frame){
         const origin=frame.origin(state),scale=frame.sceneUnitsPerMeter??1;
@@ -355,7 +360,7 @@ function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer,
     canvas.removeEventListener('webglcontextlost', lost); controls.dispose();
     // A preserved scientific chart lives below this stage; retain a lightweight preview here.
     if(backend==='webgl2'&&!stage.querySelector('svg')&&!(renderer as THREE.WebGLRenderer).getContext().isContextLost()){try{renderer.render(scene,camera);const image=document.createElement('img');image.className='cosmos-preview';image.alt='Prévia da experiência no último estado; os controles e o esquema permanecem disponíveis.';image.src=canvas.toDataURL('image/webp',.82);stage.querySelector('.cosmos-preview')?.remove();stage.prepend(image);}catch{/* The functional2D chart remains available if a snapshot is unavailable. */}}
-    cinematicRevision++;cinematic?.dispose();cinematic=null;exhibit.dispose?.();diagnostics.dispose();disposeObjects(scene);
+    cinematicRevision++;cinematic?.dispose();cinematic=null;worldMaterials?.restore();exhibit.dispose?.();diagnostics.dispose();disposeObjects(scene);
     if ('isWebGPURenderer' in renderer) {
       gpuDisposal=gpuDisposal.then(()=>renderer.dispose());
       void gpuDisposal.catch(error=>{gpuPermanentBlock=true;console.warn('[cosmos] descarte da GPU falhou; 3D suspenso',error);});
