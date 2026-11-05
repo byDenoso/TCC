@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {lastLessonStep} from './lib/reader-navigation.mjs';
+import {lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
 import { firefox, webkit } from 'playwright';
 
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:4321';
@@ -24,6 +24,8 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     check(`${name}: sem rolagem horizontal no celular`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     await page.locator('.hero-actions .cta').click();
     await page.locator('[data-scene="scale"]').waitFor();
+    await openExtraExperiments(page);
+    check(`${name}: explorações adicionais abertas`, await page.locator('.school-extra').evaluate(node=>node.open));
     await page.locator('[data-scale-step="3"]').click();
     check(`${name}: contexto da escala selecionada`, /2,5 milhões/.test(await page.locator('[data-scale-panel="3"]').innerText()));
     const light = page.locator('[data-light-play]');
@@ -46,7 +48,11 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     await page.reload({ waitUntil: 'networkidle' });
     check(`${name}: progresso após recarregar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.goto(base + second, { waitUntil: 'networkidle' });
+    await openExtraExperiments(page);
     const exp = page.locator('[data-station="expansao"]');
+    const skip = exp.locator('[data-guess-skip]');
+    if (await skip.isVisible()) await skip.click();
+    await page.waitForFunction(() => document.querySelector('[data-station="expansao"]')?.dataset.stationReady === 'true');
     const snapshot = () => exp.locator('.e-galaxy').evaluateAll((n) => n.map((x) => x.getAttribute('transform')).join('|'));
     const before = await snapshot();
     await exp.locator('[data-e-observer="1"]').click();
@@ -54,8 +60,11 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     check(`${name}: observador fica no centro`, await exp.locator('.e-galaxy.is-observer').getAttribute('transform') === 'translate(320.00 200.00)');
     await exp.locator('[data-e-range]').evaluate((input) => { input.value = '1.4'; input.dispatchEvent(new Event('input', { bubbles: true })); });
     check(`${name}: expansão altera a escala`, /1,40/.test(await exp.locator('[data-e-scale]').innerText()));
-    await page.getByRole('link', { name: /Próximo:/ }).click();
+    const nextLesson = page.locator('nav[aria-label="Continuar a jornada"] a.next-lesson-card');
+    check(`${name}: destino do próximo capítulo`, (await nextLesson.getAttribute('href'))?.includes(third));
+    await nextLesson.click();
     check(`${name}: ordem da viagem preservada`, page.url().includes(third));
+    await openExtraExperiments(page);
     await page.locator('[data-evidence-select="2"]').click();
     check(`${name}: limite da interpretação disponível`, /desconhecida|desconhecemos|não houve/i.test(await page.locator('[data-evidence-panel="2"]').innerText()));
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -75,6 +84,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     check(`${name}: aviso de progresso da sessão`, /sessão/.test(await blocked.locator('[data-complete-status]').innerText()));
     await blocked.locator('[data-complete]').click();
     check(`${name}: desmarcação com gravação falhando`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'false');
+    await openExtraExperiments(blocked);
     await blocked.locator('[data-light-play]').click();
     check(`${name}: alternativa sem animação`, /Movimento reduzido/.test(await blocked.locator('[data-light-status]').innerText()));
     await failedStorage.close();
