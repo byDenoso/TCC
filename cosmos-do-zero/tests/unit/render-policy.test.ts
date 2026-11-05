@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { canUseWebGPU, FrameBudget } from '../../src/scripts/visual/render-policy';
+import { canUseWebGPU, isSoftwareAdapter, FrameBudget } from '../../src/scripts/visual/render-policy';
 
 describe('renderer safety and quality', () => {
+  it('only selects WebGL for an explicitly reported fallback adapter', () => {
+    expect(isSoftwareAdapter({isFallbackAdapter:true})).toBe(true);
+    expect(isSoftwareAdapter({isFallbackAdapter:false})).toBe(false);
+    expect(isSoftwareAdapter({})).toBe(false);
+    expect(isSoftwareAdapter(undefined)).toBe(false);
+    expect(isSoftwareAdapter(null)).toBe(false);
+  });
   it('allows built-in materials and rejects every legacy custom shader, including hidden objects', () => {
     const root = new THREE.Group();
     root.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial()));

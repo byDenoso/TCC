@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 
+/** An absent flag is unknown, not evidence of a software adapter. */
+export function isSoftwareAdapter(info: {isFallbackAdapter?: boolean} | null | undefined): boolean {
+  return info?.isFallbackAdapter === true;
+}
+
 /** WebGPURenderer cannot compile GLSL ShaderMaterial or onBeforeCompile patches. */
 export function canUseWebGPU(root: THREE.Object3D): boolean {
   let compatible = true;

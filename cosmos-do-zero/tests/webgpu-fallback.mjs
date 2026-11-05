@@ -13,12 +13,13 @@ const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, ''
 const screenshots=process.env.SCREENSHOTS_DIR;
 if(screenshots)await mkdir(screenshots,{recursive:true});
 const rows=[];let blockedFrame=null;
-const allModes=['missing', 'rejected', 'no3d', 'pipeline-blocked', 'native'];
+const defaultModes=['missing', 'rejected', 'software', 'software-no3d', 'no3d', 'pipeline-blocked', 'native'];
+const allModes=[...defaultModes,'adapter-switch'];
 const requested=process.env.COSMOS_WEBGPU_MODES?.split(',');
 if(requested?.some(mode=>!allModes.includes(mode)))throw new Error('Modo de teste WebGPU desconhecido');
-for (const mode of requested??allModes) {
+for (const mode of requested??defaultModes) {
   console.log(`WEBGPU_CASE ${mode}`);
-  const nativeWindows=['native','pipeline-blocked'].includes(mode)&&process.platform==='win32'&&process.env.COSMOS_SOFTWARE_BACKEND!=='1';
+  const nativeWindows=['native','pipeline-blocked','adapter-switch'].includes(mode)&&process.platform==='win32'&&process.env.COSMOS_SOFTWARE_BACKEND!=='1';
   const args=nativeWindows?['--enable-unsafe-webgpu','--ignore-gpu-blocklist','--use-angle=d3d11']:
     ['--enable-unsafe-webgpu','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'];
   if(process.env.COSMOS_CHROME_GPU_FLAGS)args.push(...process.env.COSMOS_CHROME_GPU_FLAGS.split(',').filter(Boolean));
@@ -28,10 +29,34 @@ for (const mode of requested??allModes) {
     if(mode==='pipeline-blocked')await page.route('**/cinematic-pipeline.*.js',route=>route.abort());
     await page.addInitScript(installGpuProbe);
     await page.addInitScript(installGpuLifecycleObserver);
+    await page.addInitScript(()=>{
+      window.__TEST_ADAPTER_REQUESTS=[];
+      const original=globalThis.GPU?.prototype.requestAdapter;
+      if(original)GPU.prototype.requestAdapter=function(...args){return original.apply(this,args).then(adapter=>{
+        window.__TEST_ADAPTER_REQUESTS.push(adapter?{fallback:adapter.info?.isFallbackAdapter??null,vendor:adapter.info?.vendor??'',architecture:adapter.info?.architecture??''}:null);
+        return adapter;
+      });};
+    });
     await page.addInitScript(()=>{if(window.__COSMOS_QA)window.__COSMOS_QA.objects=new Map();});
     if(mode==='missing'||mode==='no3d')await page.addInitScript(()=>Object.defineProperty(navigator,'gpu',{configurable:true,value:undefined}));
     if(mode==='rejected')await page.addInitScript(()=>Object.defineProperty(navigator,'gpu',{configurable:true,value:{requestAdapter:async()=>null}}));
-    if(mode==='no3d')await page.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl2'?null:get.call(this,type,...args);};});
+    if(mode==='software'||mode==='software-no3d')await page.addInitScript(()=>{
+      window.__TEST_SOFTWARE_DEVICE_REQUESTS=0;window.__TEST_SOFTWARE_ADAPTER_REQUESTS=0;
+      Object.defineProperty(navigator,'gpu',{configurable:true,value:{requestAdapter:async()=>{window.__TEST_SOFTWARE_ADAPTER_REQUESTS++;return {info:{isFallbackAdapter:true},requestDevice:async()=>{window.__TEST_SOFTWARE_DEVICE_REQUESTS++;throw new Error('software device should not be requested');}};}}});
+    });
+    if(mode==='adapter-switch')await page.addInitScript(()=>{
+      const request=GPU.prototype.requestAdapter;let first=true;
+      GPU.prototype.requestAdapter=function(...args){return request.apply(this,args).then(adapter=>{
+        if(first&&adapter){first=false;return {info:{isFallbackAdapter:false}};}return adapter;
+      });};
+      const descriptor=Object.getOwnPropertyDescriptor(GPUDevice.prototype,'adapterInfo');
+      if(descriptor&&!descriptor.configurable)throw new Error('adapterInfo cannot be injected in this browser');
+      Object.defineProperty(GPUDevice.prototype,'adapterInfo',{configurable:true,get(){return {isFallbackAdapter:true};}});
+      window.__TEST_WEBGL_CREATED_AT=null;
+      const get=HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext=function(type,...args){const context=get.call(this,type,...args);if(type==='webgl2'&&context&&window.__TEST_WEBGL_CREATED_AT===null)window.__TEST_WEBGL_CREATED_AT=performance.now();return context;};
+    });
+    if(mode==='no3d'||mode==='software-no3d')await page.addInitScript(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return type==='webgl2'?null:get.call(this,type,...args);};});
     if(mode==='native')await page.addInitScript(()=>{
       const descriptor=globalThis.GPUDevice && Object.getOwnPropertyDescriptor(GPUDevice.prototype,'lost');
       if(!descriptor?.configurable || !descriptor.get)return;
@@ -43,7 +68,7 @@ for (const mode of requested??allModes) {
     });
     const errors=[],pageErrors=[];
     page.on('pageerror',e=>{console.error(`WEBGPU_PAGE_ERROR ${mode}: ${e.stack||e.message}`);pageErrors.push(e.message);errors.push(e.message);});
-    page.on('console',m=>{const where=m.location();const blocked=mode==='pipeline-blocked'&&m.text().includes('ERR_FAILED')&&/\/_astro\/cinematic-pipeline\.[^/]+\.js(?:\?.*)?$/.test(where.url);if(m.type()==='error'&&!blocked){const expected=mode==='no3d'&&m.text()==='THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.';console[expected?'log':'error'](`WEBGPU_${expected?'EXPECTED_':'CONSOLE_'}ERROR ${mode}: ${m.text()} at ${JSON.stringify(where)}`);errors.push(m.text());}});
+    page.on('console',m=>{const where=m.location();const blocked=mode==='pipeline-blocked'&&m.text().includes('ERR_FAILED')&&/\/_astro\/cinematic-pipeline\.[^/]+\.js(?:\?.*)?$/.test(where.url);if(m.type()==='error'&&!blocked){const expected=['no3d','software-no3d'].includes(mode)&&m.text()==='THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.';console[expected?'log':'error'](`WEBGPU_${expected?'EXPECTED_':'CONSOLE_'}ERROR ${mode}: ${m.text()} at ${JSON.stringify(where)}`);errors.push(m.text());}});
     const assertNoErrors=async()=>{
       if(errors.length)console.error(`WEBGPU_FAILURE_STATE ${mode}: ${JSON.stringify(await page.evaluate(()=>({contexts:document.documentElement.dataset.cosmosContexts,stages:[...document.querySelectorAll('[data-renderer]')].map(s=>({backend:s.dataset.renderer,cinematic:s.dataset.cinematic})),lifecycle:window.__TEST_GPU_LIFECYCLE})))}`);
       assert.deepEqual(errors,[]);
@@ -51,7 +76,7 @@ for (const mode of requested??allModes) {
     await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
     const stage=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
     await stage.scrollIntoViewIfNeeded();
-    if(mode==='no3d'){
+    if(mode==='no3d'||mode==='software-no3d'){
       await page.waitForFunction(()=>document.querySelector('[data-mx="origem-do-universo-fase-quente"] [data-visual-fallback="true"]'));
       assert.equal(await stage.locator('.cosmos-volume').count(),0);
       assert.ok(await page.locator('[data-mx="origem-do-universo-fase-quente"] [data-mx-svg]').isVisible());
@@ -60,18 +85,38 @@ for (const mode of requested??allModes) {
       // Any additional or different error remains a test failure.
       assert.deepEqual(pageErrors,[]);
       assert.deepEqual(errors,['THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.']);
+      if(mode==='software-no3d'){
+        assert.ok(await page.evaluate(()=>window.__TEST_SOFTWARE_ADAPTER_REQUESTS)>0,'reported adapter was inspected');
+        assert.equal(await page.evaluate(()=>window.__TEST_SOFTWARE_DEVICE_REQUESTS),0,'software adapter did not create a GPU device');
+      }
       rows.push({mode,backend:'svg',webglMax:await page.evaluate(()=>__GPU_PROBE.maxActive())});
       await page.close();continue;
     }
     await stage.locator('.cosmos-volume').waitFor({timeout:30000});
     const backend=await stage.getAttribute('data-renderer');
-    const adapter=mode==='native'?await page.evaluate(async()=>{const a=await navigator.gpu?.requestAdapter();return a?{vendor:a.info?.vendor||'',architecture:a.info?.architecture||'',description:a.info?.description||''}:null;}):null;
+    const adapter=await page.evaluate(()=>window.__TEST_ADAPTER_REQUESTS?.[0]??null);
     if(!['native','pipeline-blocked'].includes(mode))assert.equal(backend,'webgl2');
+    if(mode==='software'){
+      assert.ok(await page.evaluate(()=>window.__TEST_SOFTWARE_ADAPTER_REQUESTS)>0,'reported adapter was inspected');
+      assert.equal(await page.evaluate(()=>window.__TEST_SOFTWARE_DEVICE_REQUESTS),0,'software adapter did not create a GPU device');
+    }
+    if(adapter?.fallback===true&&mode!=='adapter-switch'){
+      assert.equal(backend,'webgl2','reported software adapter uses WebGL2');
+      assert.equal((await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE)).filter(e=>e.event==='request-device').length,0,'no device is created for the reported software adapter');
+    }
     const img=await stage.locator('.cosmos-volume').screenshot();
     const {channels}=await sharp(img).stats();assert.ok(channels.slice(0,3).some(c=>c.stdev>4),'scene has visible detail');
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),backend==='webgl2'?1:0,'at most one WebGL context');
     await assertNoErrors();
     const row={mode,scene:'origem-do-universo-fase-quente',backend,adapter,nativeWebGPU:backend==='webgpu',webglMax:await page.evaluate(()=>__GPU_PROBE.maxActive())};
+    if(mode==='adapter-switch'){
+      const lifecycle=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE);
+      assert.ok(lifecycle.some(e=>e.event==='device-ready'),'actual device initialized after first adapter');
+      const destroyed=lifecycle.find(e=>e.event==='destroy-device'&&e.pending===0);
+      const webglCreated=await page.evaluate(()=>window.__TEST_WEBGL_CREATED_AT);
+      assert.ok(destroyed&&webglCreated!==null&&destroyed.time<=webglCreated,'changed adapter was disposed before WebGL fallback');
+      row.changedAdapter='injected-device-info';row.disposedBeforeWebgl=true;
+    }
     if(backend==='webgpu'){
       const lifecycle=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE);
       row.scopeTracker={devices:lifecycle.filter(e=>e.event==='device-ready').length,popped:lifecycle.filter(e=>e.event==='scope-popped').length,adapters:lifecycle.filter(e=>e.event==='request-device').map(e=>({fallback:e.fallback,vendor:e.vendor,architecture:e.architecture}))};
@@ -89,7 +134,7 @@ for (const mode of requested??allModes) {
       assert.ok(blockedFrame.equals(await sharp(await stage.locator('.cosmos-volume').screenshot()).raw().toBuffer()),'fallback image stays fixed while paused');
       assert.ok((await sharp(await stage.locator('.cosmos-volume').screenshot()).stats()).channels.slice(0,3).some(c=>c.stdev>4));
       row.pipelineFailure='direct-webgpu-visible';
-    }
+    } else if(mode==='pipeline-blocked')row.pipelineFailure='not-exercised: WebGPU not selected';
     if(mode==='native'){
       if(backend==='webgpu'){
         const module=page.locator('[data-mx="origem-do-universo-fase-quente"]');

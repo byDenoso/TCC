@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { registerDiagnostics } from './diagnostics';
-import { canUseWebGPU, FrameBudget } from './render-policy';
+import { canUseWebGPU, FrameBudget, isSoftwareAdapter } from './render-policy';
 
 /** A página possui uma única licença de GPU. Uma cena nova devolve a anterior ao SVG. */
 let active: (() => void) | null = null;
@@ -63,11 +63,17 @@ async function prepareRenderer(exhibit: Exhibit, forceWebGL: boolean): Promise<P
   if (!forceWebGL && 'gpu' in navigator && navigator.gpu && canUseWebGPU(exhibit.group)) {
     let candidate: import('three/webgpu').WebGPURenderer | undefined;
     try {
-      const {WebGPURenderer} = await import('three/webgpu');
-      candidate = new WebGPURenderer({canvas, antialias:true, logarithmicDepthBuffer:true, powerPreference:'low-power'});
-      await candidate.init();
-      if ((candidate.backend as unknown as {isWebGPUBackend?:boolean}).isWebGPUBackend) return {renderer:candidate,canvas,backend:'webgpu'};
-      await discardCandidate(candidate);
+      const gpu = navigator.gpu as {requestAdapter(options:{powerPreference:'low-power';featureLevel:'compatibility';xrCompatible:false}):Promise<{info?:{isFallbackAdapter?:boolean}} | null>};
+      const adapter = await gpu.requestAdapter({powerPreference:'low-power',featureLevel:'compatibility',xrCompatible:false});
+      if (adapter && !isSoftwareAdapter(adapter.info)) {
+        const {WebGPURenderer} = await import('three/webgpu');
+        candidate = new WebGPURenderer({canvas, antialias:true, logarithmicDepthBuffer:true, powerPreference:'low-power'});
+        await candidate.init();
+        // Three.js requests its own adapter; check its actual device too when the browser exposes it.
+        const backend = candidate.backend as unknown as {isWebGPUBackend?:boolean;device?:{adapterInfo?:{isFallbackAdapter?:boolean}}};
+        if (backend.isWebGPUBackend && !isSoftwareAdapter(backend.device?.adapterInfo)) return {renderer:candidate,canvas,backend:'webgpu'};
+        await discardCandidate(candidate);
+      }
     } catch (error) {
       console.warn('[cosmos] WebGPU indisponível; usando WebGL2', error);
       if (candidate) await discardCandidate(candidate).catch(disposeError => console.warn('[cosmos] falha ao liberar candidato',disposeError));
