@@ -7,6 +7,11 @@ import { chromium } from 'playwright';
 import sharp from 'sharp';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
+const tempoOnly = process.env.COSMOS_GRAPHICS_TEMPO_ONLY === '1';
+const cpuRate = Number(process.env.COSMOS_GRAPHICS_CPU_RATE ?? '1');
+assert.ok(Number.isFinite(cpuRate) && cpuRate >= 1, 'CPU throttling rate must be at least 1');
+const widths = process.env.COSMOS_GRAPHICS_WIDTH ? [Number(process.env.COSMOS_GRAPHICS_WIDTH)] : [390, 1440];
+assert.ok(widths.every(width => [390, 1440].includes(width)), 'graphics test width must be 390 or 1440');
 const browser = await chromium.launch({ executablePath:process.env.CHROMIUM||undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 let checked = 0;
 const still = async (canvas, label) => {
@@ -21,8 +26,9 @@ const still = async (canvas, label) => {
   checked += 2;
 };
 try {
-  for (const width of [390, 1440]) {
+  for (const width of widths) {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference', colorScheme: 'dark' });
+    if(cpuRate>1){const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuRate});}
     await page.addInitScript(installGpuProbe);
     await page.addInitScript(() => localStorage.setItem('cosmos-theme', 'dark'));
     const errors = [];
@@ -39,6 +45,17 @@ try {
     await canvas.waitFor({ state: 'visible' });
     await tempo.scrollIntoViewIfNeeded();
     await page.waitForTimeout(400);
+    // Isolate pause from the separate automatic quality calibration: the latter
+    // may legitimately replace textures after the animation has been stopped.
+    const options=page.locator('[data-station="tempo"] .cosmos-view-options').first();
+    await options.locator('summary').click();
+    await options.getByRole('combobox',{name:'Qualidade da cena'}).selectOption('standard');
+    await tempo.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{
+      const stage=document.querySelector('[data-t-3d]');if(!stage)return false;
+      const expected=stage.clientWidth<600?'768':'1536';
+      return stage.dataset.cosmosQuality==='standard'&&stage.dataset.calibrationStatus==='manual'&&stage.dataset.qualityPending==='false'&&stage.dataset.textureQuality===expected;
+    },null,{timeout:30000});
     if(await tempo.locator('[data-3d-play]').getAttribute('aria-pressed')==='true')await tempo.locator('[data-3d-play]').click();
     assert.equal(await tempo.locator('[data-3d-play]').getAttribute('aria-pressed'),'false','Tempo realmente pausado antes de verificar pixels');
     await still(canvas, `tempo ${width}`);
@@ -52,6 +69,7 @@ try {
     await canvas.evaluate(c => c.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
     await page.waitForFunction(() => document.querySelector('[data-t-3d]').hidden);
     assert.equal(await page.locator('[data-t-svg]').getAttribute('viewBox'), '0 0 640 420'); checked++;
+    if(tempoOnly){assert.deepEqual(errors,[],`Tempo sem erros de shader ${width}`);await page.context().close();continue;}
 
     await page.goto(`${base}/capitulos/galaxias-e-nebulosas/`, { waitUntil: 'networkidle' });
     const root = page.locator('[data-mx="galaxias-e-nebulosas-teia-cosmica"]');
@@ -118,5 +136,5 @@ try {
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();
   }
-  console.log(`${checked} verificações WebGL: shaders, pausa completa, retomada, cor, saturação e perda de contexto; 390 e 1440 px.`);
+  console.log(tempoOnly?`${checked} verificações WebGL de Tempo: pausa, retomada e perda de contexto; ${widths.join(' e ')} px.`:`${checked} verificações WebGL: shaders, pausa completa, retomada, cor, saturação e perda de contexto; ${widths.join(' e ')} px.`);
 } finally { await browser.close(); }
