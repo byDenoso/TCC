@@ -21,3 +21,5 @@ A opção Automática começa em Padrão e passa para Econômica se o percentil 
 - Teste de perda real de dispositivo WebGPU e regressão visual por captura em todas as escalas.
 
 O modelo das cenas continua didático. O renderer não transforma ilustrações em dados observados. Para testar a seleção e o fallback: `npm run test:webgpu` com `BASE_URL` apontando para um build local servido e `CHROMIUM` para o navegador disponível. A suíte injeta ausência e rejeição de GPU apenas para testar falhas; a execução nativa é identificada separadamente.
+
+O teste registra scopes `popErrorScope` por dispositivo para diagnosticar destruição com validações pendentes. O observador de teste repassa valores e relança rejeições, mas acrescenta reações de Promise que podem alterar a temporização; uma execução sem falhas sob observação não demonstra que a corrida desapareceu. `COSMOS_WEBGPU_MODES` permite isolar casos: sem executar `pipeline-blocked` e `native` na mesma chamada, a comparação de pixels entre os dois fica indisponível. No caso `no3d`, o único erro de console esperado é o de criação WebGL intencionalmente negada; qualquer erro de página ou mensagem adicional falha o teste.

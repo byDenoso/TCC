@@ -16,7 +16,7 @@
     "test:e2e": "node tests/e2e.mjs",
     "serve": "node scripts/serve-dist.mjs",
     "test:browsers": "node tests/browser-smoke.mjs",
-    "test:webgpu": "node tests/webgpu-fallback.mjs",
+    "test:webgpu": "node tests/verify-lifecycle-unhandled.mjs && node tests/webgpu-fallback.mjs",
     "test:renders": "node tests/renders.mjs",
     "test:pages": "node tests/pages-base.mjs",
     "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",

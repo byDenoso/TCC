@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import {mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import { installGpuProbe } from './lib/gpu-probe.mjs';
+import { installGpuLifecycleObserver } from './lib/gpu-lifecycle-observer.mjs';
 import { selectLessonStep } from './lib/reader-navigation.mjs';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
@@ -26,22 +27,7 @@ for (const mode of requested??allModes) {
     const page=await browser.newPage({viewport:{width:390,height:900},colorScheme:'dark'});
     if(mode==='pipeline-blocked')await page.route('**/cinematic-pipeline.*.js',route=>route.abort());
     await page.addInitScript(installGpuProbe);
-    await page.addInitScript(()=>{
-      window.__TEST_GPU_LIFECYCLE=[];
-      const request=globalThis.GPUAdapter?.prototype.requestDevice;
-      if(!request)return;
-      GPUAdapter.prototype.requestDevice=async function(...args){
-        const sequence=window.__TEST_GPU_LIFECYCLE.length;
-        window.__TEST_GPU_LIFECYCLE.push({event:'request-device',sequence,time:performance.now()});
-        try{
-          const device=await request.apply(this,args);
-          window.__TEST_GPU_LIFECYCLE.push({event:'device-ready',sequence,time:performance.now()});
-          const destroy=device.destroy.bind(device);
-          device.destroy=()=>{window.__TEST_GPU_LIFECYCLE.push({event:'destroy-device',sequence,time:performance.now()});return destroy();};
-          return device;
-        }catch(error){window.__TEST_GPU_LIFECYCLE.push({event:'device-rejected',sequence,time:performance.now()});throw error;}
-      };
-    });
+    await page.addInitScript(installGpuLifecycleObserver);
     await page.addInitScript(()=>{if(window.__COSMOS_QA)window.__COSMOS_QA.objects=new Map();});
     if(mode==='missing'||mode==='no3d')await page.addInitScript(()=>Object.defineProperty(navigator,'gpu',{configurable:true,value:undefined}));
     if(mode==='rejected')await page.addInitScript(()=>Object.defineProperty(navigator,'gpu',{configurable:true,value:{requestAdapter:async()=>null}}));
@@ -55,9 +41,13 @@ for (const mode of requested??allModes) {
         return Promise.race([actual,injected]);
       }});
     });
-    const errors=[];
-    page.on('pageerror',e=>{console.error(`WEBGPU_PAGE_ERROR ${mode}: ${e.stack||e.message}`);errors.push(e.message);});
+    const errors=[],pageErrors=[];
+    page.on('pageerror',e=>{console.error(`WEBGPU_PAGE_ERROR ${mode}: ${e.stack||e.message}`);pageErrors.push(e.message);errors.push(e.message);});
     page.on('console',m=>{const where=m.location();const blocked=mode==='pipeline-blocked'&&m.text().includes('ERR_FAILED')&&/\/_astro\/cinematic-pipeline\.[^/]+\.js(?:\?.*)?$/.test(where.url);if(m.type()==='error'&&!blocked){const expected=mode==='no3d'&&m.text()==='THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.';console[expected?'log':'error'](`WEBGPU_${expected?'EXPECTED_':'CONSOLE_'}ERROR ${mode}: ${m.text()} at ${JSON.stringify(where)}`);errors.push(m.text());}});
+    const assertNoErrors=async()=>{
+      if(errors.length)console.error(`WEBGPU_FAILURE_STATE ${mode}: ${JSON.stringify(await page.evaluate(()=>({contexts:document.documentElement.dataset.cosmosContexts,stages:[...document.querySelectorAll('[data-renderer]')].map(s=>({backend:s.dataset.renderer,cinematic:s.dataset.cinematic})),lifecycle:window.__TEST_GPU_LIFECYCLE})))}`);
+      assert.deepEqual(errors,[]);
+    };
     await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
     const stage=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
     await stage.scrollIntoViewIfNeeded();
@@ -68,6 +58,7 @@ for (const mode of requested??allModes) {
       // This case deliberately denies every WebGL2 context request. Three.js logs
       // this precise constructor error before the application selects its SVG.
       // Any additional or different error remains a test failure.
+      assert.deepEqual(pageErrors,[]);
       assert.deepEqual(errors,['THREE.WebGLRenderer: THREE.WebGLRenderer: Error creating WebGL context.']);
       rows.push({mode,backend:'svg',webglMax:await page.evaluate(()=>__GPU_PROBE.maxActive())});
       await page.close();continue;
@@ -79,9 +70,14 @@ for (const mode of requested??allModes) {
     const img=await stage.locator('.cosmos-volume').screenshot();
     const {channels}=await sharp(img).stats();assert.ok(channels.slice(0,3).some(c=>c.stdev>4),'scene has visible detail');
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),backend==='webgl2'?1:0,'at most one WebGL context');
-    if(errors.length)console.error(`WEBGPU_FAILURE_STATE ${mode}: ${JSON.stringify(await page.evaluate(()=>({contexts:document.documentElement.dataset.cosmosContexts,stages:[...document.querySelectorAll('[data-renderer]')].map(s=>({backend:s.dataset.renderer,cinematic:s.dataset.cinematic})),lifecycle:window.__TEST_GPU_LIFECYCLE})))}`);
-    assert.deepEqual(errors,[]);
+    await assertNoErrors();
     const row={mode,scene:'origem-do-universo-fase-quente',backend,adapter,nativeWebGPU:backend==='webgpu',webglMax:await page.evaluate(()=>__GPU_PROBE.maxActive())};
+    if(backend==='webgpu'){
+      const lifecycle=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE);
+      row.scopeTracker={devices:lifecycle.filter(e=>e.event==='device-ready').length,popped:lifecycle.filter(e=>e.event==='scope-popped').length};
+      assert.ok(row.scopeTracker.devices>0,'actual GPU device is observed');
+      assert.ok(row.scopeTracker.popped>0,'actual GPU validation scopes are observed');
+    }
     if(mode==='pipeline-blocked'&&backend==='webgpu'){
       const module=page.locator('[data-mx="origem-do-universo-fase-quente"]');
       await module.locator('[data-mx-reset]').click();await module.locator('.cosmos-view-options summary').click();
@@ -114,7 +110,7 @@ for (const mode of requested??allModes) {
           let delta=0;for(let i=0;i<activeFrame.length;i++)delta+=Math.abs(activeFrame[i]-blockedFrame[i]);
           row.cinematicMeanPixelDelta=delta/activeFrame.length;
           assert.ok(row.cinematicMeanPixelDelta>.01,'fixed-scene pixels change when cinematic pipeline is applied');
-        }
+        } else {row.cinematicComparison='not-run: no blocked reference frame';console.log('WEBGPU_NO_COMPARISON native: no blocked reference frame');}
         await module.getByRole('combobox',{name:'Qualidade da cena'}).selectOption('standard');
         assert.equal(await stage.getAttribute('data-cinematic'),null);
         const injected=await page.evaluate(()=>{if(typeof window.__TEST_INJECT_GPU_LOSS!=='function')return false;window.__TEST_INJECT_GPU_LOSS();return true;});
@@ -122,6 +118,8 @@ for (const mode of requested??allModes) {
           await page.waitForFunction(()=>document.querySelector('[data-mx="origem-do-universo-fase-quente"] .mx-stage[data-renderer="webgl2"]'),null,{timeout:30000});
           assert.equal(await page.evaluate(()=>__GPU_PROBE.active()),1);
           row.injectedDeviceLoss='fallback-webgl2';
+          row.destroyAtInjectedLoss=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE.filter(e=>e.event==='destroy-device').map(e=>({deviceId:e.deviceId,pending:e.pending})));
+          assert.ok(row.destroyAtInjectedLoss.length>0,'lost GPU device was destroyed');
         } else row.injectedDeviceLoss='not-available';
         await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
         const changed=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
@@ -146,7 +144,7 @@ for (const mode of requested??allModes) {
       if(screenshots)await legacy.screenshot({path:join(screenshots,'sol-webgl2-390.png')});
       const legacyImg=await legacy.locator('.cosmos-volume').screenshot();
       const legacyStats=await sharp(legacyImg).stats();assert.ok(legacyStats.channels.slice(0,3).some(c=>c.stdev>4),'GLSL scene is visible');
-      assert.deepEqual(errors,[]);
+      await assertNoErrors();
       if(screenshots){
         await page.setViewportSize({width:1440,height:900});
         await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
@@ -160,8 +158,9 @@ for (const mode of requested??allModes) {
       await orbit.scrollIntoViewIfNeeded();await orbit.locator('.cosmos-volume').waitFor({timeout:30000});
       row.lineLoopScene='sistema-solar-orbitas';row.lineLoopBackend=await orbit.getAttribute('data-renderer');
       assert.equal(row.lineLoopBackend,'webgl2','LineLoop scene remains on WebGL2');
-      assert.deepEqual(errors,[]);
+      await assertNoErrors();
     }
+    await assertNoErrors();
     rows.push(row);
     await page.close();
   } finally { await browser.close(); }
