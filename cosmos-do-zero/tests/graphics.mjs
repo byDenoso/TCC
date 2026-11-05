@@ -1,7 +1,8 @@
 // Exercita os shaders de produção em WebGL (ANGLE/SwiftShader), incluindo emulação de viewport390; não é celular físico.
 import assert from 'node:assert/strict';
 import {openExtraExperiments, selectLessonStep} from './lib/reader-navigation.mjs';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync,writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {installGpuProbe} from './lib/gpu-probe.mjs';
 import { chromium } from 'playwright';
 import sharp from 'sharp';
@@ -14,13 +15,54 @@ const widths = process.env.COSMOS_GRAPHICS_WIDTH ? [Number(process.env.COSMOS_GR
 assert.ok(widths.every(width => [390, 1440].includes(width)), 'graphics test width must be 390 or 1440');
 const browser = await chromium.launch({ executablePath:process.env.CHROMIUM||undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 let checked = 0;
+// A captura mede apenas o canvas 3D; a interface continua visível e interativa fora dela.
+const sceneCapture={animations:'disabled',style:'[data-3d-play],.obs3d-label,.obs3d-tag,.cosmos-object-label { visibility:hidden !important; }'};
+const captureState = async canvas => canvas.evaluate(element=>{
+  const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,bottom:r.bottom,left:r.left,right:r.right};};
+  const nodes=[];for(let node=element;node instanceof Element;node=node.parentElement){const css=getComputedStyle(node);nodes.push({tag:node.tagName,id:node.id,class:node.getAttribute('class'),rect:rect(node),client:[node.clientWidth,node.clientHeight],offset:[node.offsetWidth,node.offsetHeight],scroll:[node.scrollLeft,node.scrollTop],transform:css.transform,opacity:css.opacity,position:css.position,overflow:[css.overflowX,css.overflowY]});}
+  const ancestors=new Set();for(let node=element;node instanceof Element;node=node.parentElement)ancestors.add(node);
+  const animations=document.getAnimations().filter(animation=>{const target=animation.effect?.target;if(!(target instanceof Element))return false;if(ancestors.has(target))return true;const r=target.getBoundingClientRect(),c=element.getBoundingClientRect();return r.right>c.left&&r.left<c.right&&r.bottom>c.top&&r.top<c.bottom;}).map(animation=>({playState:animation.playState,currentTime:animation.currentTime,target:animation.effect?.target?.tagName,class:animation.effect?.target?.getAttribute('class')}));
+  const stage=element.closest('[data-t-3d],.mx-stage,[data-solar-stage]')??element.parentElement;
+  const tempo=document.querySelector('[data-station="tempo"]');
+  const overlays=[...document.querySelectorAll('[data-3d-play],.obs3d-label,.obs3d-tag,.cosmos-object-label,header')].filter(node=>{const r=node.getBoundingClientRect(),c=element.getBoundingClientRect();return r.right>c.left&&r.left<c.right&&r.bottom>c.top&&r.top<c.bottom;}).map(node=>{const css=getComputedStyle(node);return {tag:node.tagName,class:node.getAttribute('class'),rect:rect(node),hidden:node.hidden,transform:css.transform,opacity:css.opacity,display:css.display,visibility:css.visibility,zIndex:css.zIndex,backgroundColor:css.backgroundColor,color:css.color,borderColor:css.borderColor,transitionProperty:css.transitionProperty,transitionDuration:css.transitionDuration,ariaPressed:node.getAttribute('aria-pressed')};});
+  const inputs=[...(tempo?.querySelectorAll('input,select')??[])].map(input=>({tag:input.tagName,type:input.type,name:input.name,value:input.value,min:input.min,max:input.max,dataset:{...input.dataset}}));
+  const registry=window.__COSMOS_QA,scenes=[];for(const get of registry?.scenes?.values()??[]){try{const scene=get();scenes.push({name:scene.name,frames:scene.frames,quality:scene.quality,visibleTextureDimensions:scene.visibleTextureDimensions,render:scene.render});}catch(error){scenes.push({error:String(error)});}}
+  const objects=[...(registry?.objects?.values()??[])].map(group=>group.children.map(object=>({name:object.name,visible:object.visible,position:object.position.toArray(),rotation:object.rotation.toArray(),scale:object.scale.toArray()})));
+  const gl=element.getContext('webgl2');
+  return {time:performance.now(),viewport:{width:innerWidth,height:innerHeight,devicePixelRatio,scrollX,scrollY,hidden:document.hidden},canvas:{rect:rect(element),client:[element.clientWidth,element.clientHeight],offset:[element.offsetWidth,element.offsetHeight],buffer:[element.width,element.height],drawingBuffer:gl?[gl.drawingBufferWidth,gl.drawingBufferHeight]:null,glViewport:gl?Array.from(gl.getParameter(gl.VIEWPORT)):null},stage:stage?{rect:rect(stage),dataset:{...stage.dataset}}:null,ariaPlay:tempo?.querySelector('[data-3d-play]')?.getAttribute('aria-pressed')??null,inputs,ancestors:nodes,overlays,animations,scenes,objects,matrices:window.__GRAPHICS_MATRIX_QA?[...window.__GRAPHICS_MATRIX_QA.values()]:[]};
+});
+const saveMismatch=async(label,a,b,first,second,states,expectation)=>{
+  const directory=join(process.cwd(),'test-results','graphics');mkdirSync(directory,{recursive:true});
+  const name=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const width=Math.max(first.info.width,second.info.width),height=Math.max(first.info.height,second.info.height),diff=Buffer.alloc(width*height*3);
+  let changed=0,maxDifference=0,minX=width,minY=height,maxX=-1,maxY=-1;
+  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    let max=0;for(let c=0;c<Math.max(first.info.channels,second.info.channels);c++){
+      const read=(image)=>x<image.info.width&&y<image.info.height&&c<image.info.channels?image.data[(y*image.info.width+x)*image.info.channels+c]:0;
+      max=Math.max(max,Math.abs(read(first)-read(second)));
+    }
+    if(max){changed++;maxDifference=Math.max(maxDifference,max);minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}
+    diff.fill(Math.min(255,max*8),(y*width+x)*3,(y*width+x)*3+3);
+  }
+  writeFileSync(join(directory,`${name}-a.png`),a);writeFileSync(join(directory,`${name}-b.png`),b);
+  await sharp(diff,{raw:{width,height,channels:3}}).png().toFile(join(directory,`${name}-diff.png`));
+  writeFileSync(join(directory,`${name}-state.json`),JSON.stringify({label,expectation,capturePolicy:sceneCapture,first:first.info,second:second.info,changedPixels:changed,maxDifference,diffGain:8,boundingBox:changed?{minX,minY,maxX,maxY}:null,states},null,2));
+  console.error(`GRAPHICS_MISMATCH ${label}: ${changed} pixels; evidence in ${directory}`);
+};
 const still = async (canvas, label) => {
   console.log('GRAPHICS_CASE',label); 
   await canvas.page().waitForTimeout(100);
-  const a = await canvas.screenshot();
+  const aBefore=await captureState(canvas);
+  const a = await canvas.screenshot(sceneCapture);
+  const aAfter=await captureState(canvas);
   await canvas.page().waitForTimeout(450);
-  const b = await canvas.screenshot();
-  const rawA=await sharp(a).raw().toBuffer(),rawB=await sharp(b).raw().toBuffer();assert.ok(rawA.equals(rawB),`${label}: pausa congela todos os pixels`);
+  const bBefore=await captureState(canvas);
+  const b = await canvas.screenshot(sceneCapture);
+  const bAfter=await captureState(canvas);
+  const first=await sharp(a).raw().toBuffer({resolveWithObject:true}),second=await sharp(b).raw().toBuffer({resolveWithObject:true});
+  const equal=first.info.width===second.info.width&&first.info.height===second.info.height&&first.info.channels===second.info.channels&&first.data.equals(second.data);
+  if(!equal)await saveMismatch(label,a,b,first,second,{aBefore,aAfter,bBefore,bAfter},'equal');
+  assert.ok(equal,`${label}: pausa congela todos os pixels da cena 3D`);
   const { channels } = await sharp(a).stats();
   assert.ok(channels.slice(0, 3).some(c => c.stdev > 4), `${label}: cena tem conteúdo gráfico`);
   checked += 2;
@@ -29,7 +71,7 @@ try {
   for (const width of widths) {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference', colorScheme: 'dark' });
     if(cpuRate>1){const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuRate});}
-    await page.addInitScript(installGpuProbe);
+    await page.addInitScript({content:`(${installGpuProbe.toString()})();window.__COSMOS_QA.objects=new Map();window.__GRAPHICS_MATRIX_QA=new Map();(()=>{const ids=new WeakMap();let next=0;const original=WebGL2RenderingContext.prototype.uniformMatrix4fv;WebGL2RenderingContext.prototype.uniformMatrix4fv=function(location,transpose,values,...rest){if(this.canvas.closest('[data-t-3d]')&&location){let id=ids.get(location);if(!id){id=++next;ids.set(location,id);}window.__GRAPHICS_MATRIX_QA.set(id,Array.from(values).slice(0,16));}return original.call(this,location,transpose,values,...rest);};})();`});
     await page.addInitScript(() => localStorage.setItem('cosmos-theme', 'dark'));
     const errors = [];
     const warnings = [];
@@ -56,14 +98,22 @@ try {
       const expected=stage.clientWidth<600?'768':'1536';
       return stage.dataset.cosmosQuality==='standard'&&stage.dataset.calibrationStatus==='manual'&&stage.dataset.qualityPending==='false'&&stage.dataset.textureQuality===expected;
     },null,{timeout:30000});
-    if(await tempo.locator('[data-3d-play]').getAttribute('aria-pressed')==='true')await tempo.locator('[data-3d-play]').click();
-    assert.equal(await tempo.locator('[data-3d-play]').getAttribute('aria-pressed'),'false','Tempo realmente pausado antes de verificar pixels');
+    const playButton=tempo.locator('[data-3d-play]'),playLabel=playButton.locator('[data-3d-play-label]');
+    if(await playButton.getAttribute('aria-pressed')==='true')await playButton.click();
+    assert.equal(await playButton.getAttribute('aria-pressed'),'false','Tempo realmente pausado antes de verificar pixels');
+    assert.ok(await playButton.isVisible());assert.ok(await playLabel.isVisible());const pausedLabel=await playLabel.textContent();assert.ok(pausedLabel?.trim());
     await still(canvas, `tempo ${width}`);
-    const before = await canvas.screenshot();
-    await tempo.locator('[data-3d-play]').click();
+    assert.equal(await playButton.getAttribute('aria-pressed'),'false');assert.equal(await playLabel.textContent(),pausedLabel);assert.ok(await playButton.isVisible());assert.ok(await playLabel.isVisible());
+    await playButton.click();assert.equal(await playButton.getAttribute('aria-pressed'),'true');
+    const playingLabel=await playLabel.textContent();assert.ok(playingLabel?.trim());
+    const aBefore=await captureState(canvas),a=await canvas.screenshot(sceneCapture),aAfter=await captureState(canvas);
     await page.waitForTimeout(300);
-    assert.ok(!(await canvas.screenshot()).equals(before), 'continuar retoma a viagem'); checked++;
-    await tempo.locator('[data-3d-play]').click();
+    const bBefore=await captureState(canvas),b=await canvas.screenshot(sceneCapture),bAfter=await captureState(canvas);
+    const first=await sharp(a).raw().toBuffer({resolveWithObject:true}),second=await sharp(b).raw().toBuffer({resolveWithObject:true});
+    const sameDimensions=first.info.width===second.info.width&&first.info.height===second.info.height&&first.info.channels===second.info.channels;
+    if(!sameDimensions||first.data.equals(second.data))await saveMismatch(`retomada-tempo-${width}`,a,b,first,second,{aBefore,aAfter,bBefore,bAfter},'same dimensions, different pixels');
+    assert.ok(sameDimensions,'retomada mantém as dimensões da captura');assert.ok(!first.data.equals(second.data),'continuar retoma a cena 3D');assert.equal(await playButton.getAttribute('aria-pressed'),'true');assert.equal(await playLabel.textContent(),playingLabel);assert.ok(await playButton.isVisible());assert.ok(await playLabel.isVisible());checked++;
+    await playButton.click();assert.equal(await playButton.getAttribute('aria-pressed'),'false');
     mkdirSync('docs/screenshots', { recursive: true });
     await tempo.screenshot({ path: `docs/screenshots/render-tempo-${width}.png` });
     await canvas.evaluate(c => c.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
