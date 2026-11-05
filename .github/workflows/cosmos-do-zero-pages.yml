@@ -126,6 +126,7 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
+          npm run test:browsers
           npm run test:budget
           npm run test:world-frame
           npm run test:quality-calibration
@@ -134,7 +135,6 @@ jobs:
           npm run test:webgpu
           npm run test:e2e
           npm run test:renders
-          npm run test:browsers
       - name: Guardar diagnósticos visuais das escalas e gráficos
         if: always()
         uses: actions/upload-artifact@v7
@@ -144,6 +144,8 @@ jobs:
             cosmos-do-zero/test-results/scale-visual/*.png
             cosmos-do-zero/test-results/graphics/*.png
             cosmos-do-zero/test-results/graphics/*.json
+            cosmos-do-zero/test-results/browser-smoke/*.png
+            cosmos-do-zero/test-results/browser-smoke/*.json
           if-no-files-found: ignore
           retention-days: 14
       - name: Empacotar destino selecionado

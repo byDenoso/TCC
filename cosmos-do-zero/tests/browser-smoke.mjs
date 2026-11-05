@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
 import {lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
 import { firefox, webkit } from 'playwright';
 
@@ -13,10 +15,33 @@ const check = (name, condition) => { assert.ok(condition, name); checks++; };
 
 for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])=>!process.env.BROWSER_ENGINES||process.env.BROWSER_ENGINES.split(',').includes(name))) {
   let browser;
+  let activePage;
+  const diagnostics = {events: [], states: []};
+  const trackPage = page => {
+    activePage = page;
+    page.on('pageerror', error => diagnostics.events.push({type:'pageerror',message:error.message}));
+    page.on('console', message => { if (message.type() === 'error') diagnostics.events.push({type:'console-error',message:message.text()}); });
+    page.on('response', response => { if (response.request().isNavigationRequest() || response.status() >= 400) diagnostics.events.push({type:'response',path:new URL(response.url()).pathname,status:response.status()}); });
+    page.on('requestfailed', request => diagnostics.events.push({type:'requestfailed',path:new URL(request.url()).pathname,reason:request.failure()?.errorText}));
+  };
+  const captureState = async (page, stage) => {
+    const state = await page.evaluate(() => {
+      const button = document.querySelector('[data-complete]');
+      const status = document.querySelector('[data-complete-status]');
+      let stored;
+      try { stored = localStorage.getItem('cosmos-v3-progress'); } catch (error) { stored = `error:${error.name}`; }
+      return {path:location.pathname,readyState:document.readyState,pressed:button?.getAttribute('aria-pressed') ?? null,
+        done:button?.getAttribute('data-done') ?? null,label:button?.textContent?.trim() ?? null,
+        status:status?.textContent?.trim() ?? null,stored,stepper:!!document.querySelector('.lesson-stepper'),
+        storageProbe:window.__cosmosStorageProbe ?? null};
+    });
+    diagnostics.states.push({stage,...state});
+  };
   try {
     browser = await engine.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
+    trackPage(page);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
     const initialHome = await page.goto(home, { waitUntil: 'networkidle' });
@@ -83,16 +108,39 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
 
     const failedStorage = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     const blocked = await failedStorage.newPage();
+    trackPage(blocked);
     await blocked.addInitScript(() => {
+      const probe = {seeded:false,overrideInstalled:false,attempts:[],clicks:[]};
+      window.__cosmosStorageProbe = probe;
       localStorage.setItem('cosmos-v3-progress', '[]');
-      Object.defineProperty(Storage.prototype, 'setItem', { value() { throw new DOMException('quota', 'QuotaExceededError'); } });
+      probe.seeded = localStorage.getItem('cosmos-v3-progress') === '[]';
+      Object.defineProperty(Storage.prototype, 'setItem', { value(key) { probe.attempts.push(String(key)); throw new DOMException('quota', 'QuotaExceededError'); } });
+      probe.overrideInstalled = localStorage.setItem === Storage.prototype.setItem;
+      const traceClick = (event, phase) => {
+        const target = event.target instanceof Node ? event.target : null;
+        const element = target instanceof Element ? target : target?.parentElement;
+        const button = element?.closest('[data-complete]');
+        if (!button) return;
+        probe.clicks.push({phase,nodeType:target?.nodeType ?? null,tag:target instanceof Element ? target.tagName : null,
+          parentNodeType:target?.parentNode?.nodeType ?? null,parentTag:target?.parentElement?.tagName ?? null,
+          pressed:button.getAttribute('aria-pressed'),trusted:event.isTrusted});
+      };
+      document.addEventListener('click', event => traceClick(event, 'capture'), true);
+      document.addEventListener('click', event => traceClick(event, 'bubble'));
     });
     await blocked.goto(base + first, { waitUntil: 'networkidle' });await blocked.locator('.lesson-stepper').waitFor({ state: 'attached' });await lastLessonStep(blocked);
+    await captureState(blocked, 'before-complete');
     await blocked.locator('[data-complete]').click();
-    check(`${name}: leitura antiga não apaga gravação que falhou`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'true');
+    const marked = await blocked.locator('[data-complete]').getAttribute('aria-pressed');
+    diagnostics.states.push({stage:'after-complete-attribute',pressed:marked});
+    check(`${name}: leitura antiga não apaga gravação que falhou`, marked === 'true');
+    await captureState(blocked, 'after-complete');
     check(`${name}: aviso de progresso da sessão`, /sessão/.test(await blocked.locator('[data-complete-status]').innerText()));
     await blocked.locator('[data-complete]').click();
-    check(`${name}: desmarcação com gravação falhando`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'false');
+    const unmarked = await blocked.locator('[data-complete]').getAttribute('aria-pressed');
+    diagnostics.states.push({stage:'after-unmark-attribute',pressed:unmarked});
+    check(`${name}: desmarcação com gravação falhando`, unmarked === 'false');
+    await captureState(blocked, 'after-unmark');
     await openExtraExperiments(blocked);
     await blocked.locator('[data-light-play]').click();
     check(`${name}: alternativa sem animação`, /Movimento reduzido/.test(await blocked.locator('[data-light-status]').innerText()));
@@ -101,6 +149,20 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
   } catch (error) {
     failures.push(`${name}: ${error.message}`);
     console.error(`${name}: verificações interrompidas: ${error.message}`);
+    try {
+      const output = join(process.cwd(), 'test-results', 'browser-smoke');
+      await mkdir(output, {recursive:true});
+      if (activePage && !activePage.isClosed()) {
+        try { await captureState(activePage, 'failure'); }
+        catch (diagnosticError) { diagnostics.events.push({type:'state-capture-error',message:diagnosticError.message}); }
+        try { await activePage.screenshot({path:join(output, `${name}-failure.png`),timeout:5000}); }
+        catch (diagnosticError) { diagnostics.events.push({type:'screenshot-error',message:diagnosticError.message}); }
+      } else diagnostics.events.push({type:'page-unavailable'});
+      await writeFile(join(output, `${name}-failure.json`), JSON.stringify({engine:name,error:error.message,...diagnostics}, null, 2));
+      console.error(`${name}: diagnóstico sintético salvo em test-results/browser-smoke/`);
+    } catch (diagnosticError) {
+      console.error(`${name}: não foi possível salvar o diagnóstico: ${diagnosticError.message}`);
+    }
   } finally { if (browser) await browser.close(); }
 }
 if (failures.length) {
