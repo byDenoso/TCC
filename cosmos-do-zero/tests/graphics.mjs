@@ -15,8 +15,8 @@ const widths = process.env.COSMOS_GRAPHICS_WIDTH ? [Number(process.env.COSMOS_GR
 assert.ok(widths.every(width => [390, 1440].includes(width)), 'graphics test width must be 390 or 1440');
 const browser = await chromium.launch({ executablePath:process.env.CHROMIUM||undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 let checked = 0;
-// A captura mede apenas o canvas 3D; a interface continua visível e interativa fora dela.
-const sceneCapture={animations:'disabled',style:'[data-3d-play],.obs3d-label,.obs3d-tag,.cosmos-object-label { visibility:hidden !important; }'};
+// QA retains the WebGL drawing buffer so the full 3D frame can be read without browser composition.
+const sceneCapture={source:'canvas.toDataURL(image/png)',context:'WebGL2 preserveDrawingBuffer=true only in QA',composition:'not measured'};
 const captureState = async canvas => canvas.evaluate(element=>{
   const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,bottom:r.bottom,left:r.left,right:r.right};};
   const nodes=[];for(let node=element;node instanceof Element;node=node.parentElement){const css=getComputedStyle(node);nodes.push({tag:node.tagName,id:node.id,class:node.getAttribute('class'),rect:rect(node),client:[node.clientWidth,node.clientHeight],offset:[node.offsetWidth,node.offsetHeight],scroll:[node.scrollLeft,node.scrollTop],transform:css.transform,opacity:css.opacity,position:css.position,overflow:[css.overflowX,css.overflowY]});}
@@ -29,8 +29,18 @@ const captureState = async canvas => canvas.evaluate(element=>{
   const registry=window.__COSMOS_QA,scenes=[];for(const get of registry?.scenes?.values()??[]){try{const scene=get();scenes.push({name:scene.name,frames:scene.frames,quality:scene.quality,visibleTextureDimensions:scene.visibleTextureDimensions,render:scene.render});}catch(error){scenes.push({error:String(error)});}}
   const objects=[...(registry?.objects?.values()??[])].map(group=>group.children.map(object=>({name:object.name,visible:object.visible,position:object.position.toArray(),rotation:object.rotation.toArray(),scale:object.scale.toArray()})));
   const gl=element.getContext('webgl2');
-  return {time:performance.now(),viewport:{width:innerWidth,height:innerHeight,devicePixelRatio,scrollX,scrollY,hidden:document.hidden},canvas:{rect:rect(element),client:[element.clientWidth,element.clientHeight],offset:[element.offsetWidth,element.offsetHeight],buffer:[element.width,element.height],drawingBuffer:gl?[gl.drawingBufferWidth,gl.drawingBufferHeight]:null,glViewport:gl?Array.from(gl.getParameter(gl.VIEWPORT)):null},stage:stage?{rect:rect(stage),dataset:{...stage.dataset}}:null,ariaPlay:tempo?.querySelector('[data-3d-play]')?.getAttribute('aria-pressed')??null,inputs,ancestors:nodes,overlays,animations,scenes,objects,matrices:window.__GRAPHICS_MATRIX_QA?[...window.__GRAPHICS_MATRIX_QA.values()]:[]};
+  return {time:performance.now(),viewport:{width:innerWidth,height:innerHeight,devicePixelRatio,scrollX,scrollY,hidden:document.hidden},canvas:{rect:rect(element),client:[element.clientWidth,element.clientHeight],offset:[element.offsetWidth,element.offsetHeight],buffer:[element.width,element.height],drawingBuffer:gl?[gl.drawingBufferWidth,gl.drawingBufferHeight]:null,preserved:gl?.getContextAttributes()?.preserveDrawingBuffer??null,glViewport:gl?Array.from(gl.getParameter(gl.VIEWPORT)):null},stage:stage?{rect:rect(stage),dataset:{...stage.dataset}}:null,ariaPlay:tempo?.querySelector('[data-3d-play]')?.getAttribute('aria-pressed')??null,inputs,ancestors:nodes,overlays,animations,scenes,objects,matrices:window.__GRAPHICS_MATRIX_QA?[...window.__GRAPHICS_MATRIX_QA.values()]:[]};
 });
+const captureFramebuffer=async canvas=>{
+  const frame=await canvas.evaluate(element=>{const gl=element.getContext('webgl2'),attributes=gl?.getContextAttributes();return {png:element.toDataURL('image/png'),preserved:attributes?.preserveDrawingBuffer??false,drawingBuffer:gl?[gl.drawingBufferWidth,gl.drawingBufferHeight]:null,canvas:[element.width,element.height]};});
+  assert.equal(frame.preserved,true,'QA WebGL drawing buffer is preserved');
+  assert.ok(frame.drawingBuffer&&frame.drawingBuffer[0]>0&&frame.drawingBuffer[1]>0,'drawing buffer has positive dimensions');
+  assert.deepEqual(frame.canvas,frame.drawingBuffer,'canvas and drawing buffer dimensions agree');
+  assert.ok(frame.png.startsWith('data:image/png;base64,'),'canvas produced a PNG');
+  const png=Buffer.from(frame.png.slice('data:image/png;base64,'.length),'base64'),meta=await sharp(png).metadata();
+  assert.deepEqual([meta.width,meta.height],frame.drawingBuffer,'PNG contains the entire drawing buffer');
+  return png;
+};
 const saveMismatch=async(label,a,b,first,second,states,expectation)=>{
   const directory=join(process.cwd(),'test-results','graphics');mkdirSync(directory,{recursive:true});
   const name=label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -53,11 +63,11 @@ const still = async (canvas, label) => {
   console.log('GRAPHICS_CASE',label); 
   await canvas.page().waitForTimeout(100);
   const aBefore=await captureState(canvas);
-  const a = await canvas.screenshot(sceneCapture);
+  const a = await captureFramebuffer(canvas);
   const aAfter=await captureState(canvas);
   await canvas.page().waitForTimeout(450);
   const bBefore=await captureState(canvas);
-  const b = await canvas.screenshot(sceneCapture);
+  const b = await captureFramebuffer(canvas);
   const bAfter=await captureState(canvas);
   const first=await sharp(a).raw().toBuffer({resolveWithObject:true}),second=await sharp(b).raw().toBuffer({resolveWithObject:true});
   const equal=first.info.width===second.info.width&&first.info.height===second.info.height&&first.info.channels===second.info.channels&&first.data.equals(second.data);
@@ -67,11 +77,29 @@ const still = async (canvas, label) => {
   assert.ok(channels.slice(0, 3).some(c => c.stdev > 4), `${label}: cena tem conteúdo gráfico`);
   checked += 2;
 };
+// Separate a paused frame from the independent automatic quality calibration.
+const useStandardQuality = async(stage,owner,label,textureKind=null) => {
+  const options=owner.locator('.cosmos-view-options').first();
+  await options.locator('summary').click();
+  await options.getByRole('combobox',{name:'Qualidade da cena'}).selectOption('standard');
+  await stage.scrollIntoViewIfNeeded();
+  const element=await stage.elementHandle();assert.ok(element,`${label}: palco disponível`);
+  try {
+    await stage.page().waitForFunction(({element,textureKind})=>{
+      const data=element.dataset;
+      const expected=textureKind==='galaxy'?(element.clientWidth<600?'768':'1536'):textureKind==='world'?(element.clientWidth<600?'1024':'2048'):null;
+      const settled=expected===null?(data.qualityPending===undefined||data.qualityPending==='false'):data.qualityPending==='false';
+      return element.isConnected&&data.cosmosQuality==='standard'&&data.calibrationStatus==='manual'&&data.qualityError!=='true'&&settled&&(expected===null||data.textureQuality===expected);
+    },{element,textureKind},{timeout:30000});
+    const state=await stage.evaluate(element=>({quality:element.dataset.cosmosQuality,calibration:element.dataset.calibrationStatus,pending:element.dataset.qualityPending??null,texture:element.dataset.textureQuality??null,width:element.clientWidth}));
+    console.log(`GRAPHICS_QUALITY ${label} ${JSON.stringify(state)}`);
+  } finally { await element.dispose(); }
+};
 try {
   for (const width of widths) {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference', colorScheme: 'dark' });
     if(cpuRate>1){const cdp=await page.context().newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuRate});}
-    await page.addInitScript({content:`(${installGpuProbe.toString()})();window.__COSMOS_QA.objects=new Map();window.__GRAPHICS_MATRIX_QA=new Map();(()=>{const ids=new WeakMap();let next=0;const original=WebGL2RenderingContext.prototype.uniformMatrix4fv;WebGL2RenderingContext.prototype.uniformMatrix4fv=function(location,transpose,values,...rest){if(this.canvas.closest('[data-t-3d]')&&location){let id=ids.get(location);if(!id){id=++next;ids.set(location,id);}window.__GRAPHICS_MATRIX_QA.set(id,Array.from(values).slice(0,16));}return original.call(this,location,transpose,values,...rest);};})();`});
+    await page.addInitScript({content:`(${installGpuProbe.toString()})();window.__COSMOS_QA.objects=new Map();window.__GRAPHICS_MATRIX_QA=new Map();(()=>{const get=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return get.call(this,type,/^webgl/.test(type)&&this.classList.contains('cosmos-volume')?{...options,preserveDrawingBuffer:true}:options);};const ids=new WeakMap();let next=0;const original=WebGL2RenderingContext.prototype.uniformMatrix4fv;WebGL2RenderingContext.prototype.uniformMatrix4fv=function(location,transpose,values,...rest){if(this.canvas.closest('[data-t-3d]')&&location){let id=ids.get(location);if(!id){id=++next;ids.set(location,id);}window.__GRAPHICS_MATRIX_QA.set(id,Array.from(values).slice(0,16));}return original.call(this,location,transpose,values,...rest);};})();`});
     await page.addInitScript(() => localStorage.setItem('cosmos-theme', 'dark'));
     const errors = [];
     const warnings = [];
@@ -87,17 +115,7 @@ try {
     await canvas.waitFor({ state: 'visible' });
     await tempo.scrollIntoViewIfNeeded();
     await page.waitForTimeout(400);
-    // Isolate pause from the separate automatic quality calibration: the latter
-    // may legitimately replace textures after the animation has been stopped.
-    const options=page.locator('[data-station="tempo"] .cosmos-view-options').first();
-    await options.locator('summary').click();
-    await options.getByRole('combobox',{name:'Qualidade da cena'}).selectOption('standard');
-    await tempo.scrollIntoViewIfNeeded();
-    await page.waitForFunction(()=>{
-      const stage=document.querySelector('[data-t-3d]');if(!stage)return false;
-      const expected=stage.clientWidth<600?'768':'1536';
-      return stage.dataset.cosmosQuality==='standard'&&stage.dataset.calibrationStatus==='manual'&&stage.dataset.qualityPending==='false'&&stage.dataset.textureQuality===expected;
-    },null,{timeout:30000});
+    await useStandardQuality(tempo,page.locator('[data-station="tempo"]'),`tempo ${width}`,'galaxy');
     const playButton=tempo.locator('[data-3d-play]'),playLabel=playButton.locator('[data-3d-play-label]');
     if(await playButton.getAttribute('aria-pressed')==='true')await playButton.click();
     assert.equal(await playButton.getAttribute('aria-pressed'),'false','Tempo realmente pausado antes de verificar pixels');
@@ -106,9 +124,9 @@ try {
     assert.equal(await playButton.getAttribute('aria-pressed'),'false');assert.equal(await playLabel.textContent(),pausedLabel);assert.ok(await playButton.isVisible());assert.ok(await playLabel.isVisible());
     await playButton.click();assert.equal(await playButton.getAttribute('aria-pressed'),'true');
     const playingLabel=await playLabel.textContent();assert.ok(playingLabel?.trim());
-    const aBefore=await captureState(canvas),a=await canvas.screenshot(sceneCapture),aAfter=await captureState(canvas);
+    const aBefore=await captureState(canvas),a=await captureFramebuffer(canvas),aAfter=await captureState(canvas);
     await page.waitForTimeout(300);
-    const bBefore=await captureState(canvas),b=await canvas.screenshot(sceneCapture),bAfter=await captureState(canvas);
+    const bBefore=await captureState(canvas),b=await captureFramebuffer(canvas),bAfter=await captureState(canvas);
     const first=await sharp(a).raw().toBuffer({resolveWithObject:true}),second=await sharp(b).raw().toBuffer({resolveWithObject:true});
     const sameDimensions=first.info.width===second.info.width&&first.info.height===second.info.height&&first.info.channels===second.info.channels;
     if(!sameDimensions||first.data.equals(second.data))await saveMismatch(`retomada-tempo-${width}`,a,b,first,second,{aBefore,aAfter,bBefore,bAfter},'same dimensions, different pixels');
@@ -150,6 +168,7 @@ try {
     await root.locator('[data-mx-play]').click();
     await page.waitForTimeout(350);
     await root.locator('[data-mx-play]').click();
+    await useStandardQuality(root.locator('.mx-stage').first(),root,`teia ${width}`,'galaxy');
     await still(web, `teia ${width}`);
     await root.locator('[data-mx-range]').focus(); await page.keyboard.press('End');
     const { data, info } = await sharp(await web.screenshot()).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -179,10 +198,11 @@ try {
       }
       await module.locator('[data-mx-reset]').click();
       await stage.scrollIntoViewIfNeeded();
+      await useStandardQuality(stage,module,`${id} ${width}`);
       await still(stage.locator('.cosmos-volume'), `${id} ${width}`);
       assert.equal(await page.evaluate(() => __GPU_PROBE.active()), 1); checked++;
     }
-    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);await openExtraExperiments(page);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await page.locator('[data-solar-reset]').click();await solar.scrollIntoViewIfNeeded();await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
+    await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`);await openExtraExperiments(page);const solar=page.locator('[data-solar-stage]');await solar.scrollIntoViewIfNeeded();await solar.locator('.cosmos-volume').waitFor();await page.locator('[data-solar-reset]').click();await solar.scrollIntoViewIfNeeded();await useStandardQuality(solar,page.locator('[data-solar-studio]'),`Solar ${width}`,'world');await still(solar.locator('.cosmos-volume'),`Solar ${width}`);assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1);checked++;
     assert.deepEqual(errors,[],`novas famílias sem erros de shader${width}`);checked++;
     await page.context().close();
   }
