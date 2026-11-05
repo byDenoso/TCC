@@ -135,12 +135,15 @@ jobs:
           npm run test:e2e
           npm run test:renders
           npm run test:browsers
-      - name: Guardar diferenças visuais das escalas quando houver falha
-        if: failure()
+      - name: Guardar diagnósticos visuais das escalas e gráficos
+        if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: cosmos-escalas-diferencas
-          path: cosmos-do-zero/test-results/scale-visual/*.png
+          name: cosmos-diagnosticos-visuais
+          path: |
+            cosmos-do-zero/test-results/scale-visual/*.png
+            cosmos-do-zero/test-results/graphics/*.png
+            cosmos-do-zero/test-results/graphics/*.json
           if-no-files-found: ignore
           retention-days: 14
       - name: Empacotar destino selecionado

@@ -43,6 +43,14 @@ A primeira execução Linux (`41970576888`) falhou ao comparar os pixels de Temp
 
 O teste de pausa passou a selecionar Padrão e aguardar o perfil manual e a textura correspondente antes de comparar. A igualdade exata de pixels continua exigida; não foi acrescentada tolerância nem alterado o runtime. O focal com CPU limitada em 4× passou em pausa, retomada e alternativa após perda de contexto. A seleção Automática permanece na suíte específica de dez cenários, sem ser desativada na aplicação. Em Automática, a calibração inicial ainda pode trocar resolução ou textura após o visitante pausar o movimento; a prova de igualdade exata em Padrão não demonstra pixels imutáveis nesse modo.
 
+## Captura da cena e controle da retomada
+
+A execução `41977345415` aprovou a prova de projeção reforçada no Linux, mas voltou a divergir na pausa de Tempo em 390 px. Essa execução não guardava A/B e estado; sua causa específica não foi diretamente observada. Um controle local prolongou somente a transição visual do botão: 4.337 pixels mudaram no retângulo sobreposto, mantendo quadros, objetos e matrizes. Isso comprova um mecanismo possível de interferência da interface, sem atribuí-lo como causa certa da falha remota.
+
+O screenshot do elemento canvas também capturava botões e rótulos desenhados acima dele. Agora a captura da cena oculta essas sobreposições somente durante a operação e desativa animações CSS transitórias; o site não recebe essa alteração. Controles continuam visíveis e interativos fora das capturas, com estado, rótulo e visibilidade verificados separadamente. A animação 3D por JavaScript permanece ativa quando solicitada.
+
+A pausa exige pixels decodificados exatamente iguais. A retomada compara dois quadros em execução com o mesmo estado do botão, exige dimensões/canais iguais e pixels diferentes. Uma contraprova que alterou apenas a interface para “Pausar”, mantendo a cena parada, foi rejeitada com zero pixels 3D alterados. Não foi acrescentada tolerância. Divergências guardam A/B, diferença amplificada e JSON com quatro leituras de estado, incluindo posição, dimensões, texturas, animações, matrizes e a política de captura. O workflow preserva PNG/JSON nos diretórios específicos de diagnóstico.
+
 ## Projeção extrema e integridade da prova
 
 O predicado inicial para o plano azul aceitava o fundo `[7, 12, 24]` no SwiftShader. Esse resultado não comprovava visibilidade ou oclusão distante. A verificação foi substituída por azul intenso distinto do fundo, revelar o plano distante ao ocultar o próximo e restaurar a oclusão ao reexibi-lo. A geometria e a distância de 10²⁷ m foram preservadas.
