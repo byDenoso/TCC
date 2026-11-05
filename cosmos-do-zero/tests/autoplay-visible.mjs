@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { openExtraExperiments } from './lib/reader-navigation.mjs';
+import { installSceneQa,assertPausedScene,useStandardQuality } from './lib/scene-capture.mjs';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -90,6 +91,7 @@ try {
   await stars.close();
 
   const solar = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
+  await installSceneQa(solar);
   const errors = []; solar.on('pageerror', error => errors.push(String(error)));
   await solar.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
   await openExtraExperiments(solar);
@@ -98,10 +100,13 @@ try {
   const earthPlay = solar.locator('[data-solar-play]');
   await solar.waitForFunction(() => document.querySelector('[data-solar-play]')?.getAttribute('aria-pressed') === 'true');
   expect(await pressed(earthPlay) === 'true', 'rotação da Terra inicia com a cena 3D visível');
+  assert.equal(await earthStage.getAttribute('data-cosmos-quality'),'auto','a cena inicia em qualidade automática');
   await earthPlay.click(); await earthStage.scrollIntoViewIfNeeded();
+  assert.equal(await pressed(earthPlay),'false','a pausa manual interrompe a rotação');
+  await useStandardQuality(earthStage,solar.locator('[data-solar-studio]'),'Autoplay Solar 1280','world');
+  assert.equal(await pressed(earthPlay),'false','a cena permanece pausada após selecionar a qualidade');
   if (process.env.EARTH_CAPTURE) await earthStage.screenshot({ path: process.env.EARTH_CAPTURE });
-  const still = await earthStage.locator('canvas').screenshot(); await solar.waitForTimeout(250);
-  expect(still.equals(await earthStage.locator('canvas').screenshot()), 'pausa congela o planeta e as nuvens');
+  await assertPausedScene(earthStage.locator('canvas'),'Autoplay Solar 1280',250); checks++;
   expect(errors.length === 0, `a cena 3D não produz erros: ${errors.join('; ')}`);
   await solar.close();
 
