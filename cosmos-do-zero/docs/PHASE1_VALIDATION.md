@@ -1,6 +1,6 @@
 # Fase 1: validação do renderer
 
-Este registro descreve os testes locais do código de aplicação no commit `6caf1e65a166f957690e62a8e187c4dab876004e`. A revisão seguinte acrescenta somente este registro e capturas; não altera o pacote de aplicação medido. A conclusão do CI Linux deve ser consultada na PR, separadamente destes resultados locais. Não houve merge nem publicação em produção.
+Este registro descreve os testes locais do código de aplicação no commit `6caf1e65a166f957690e62a8e187c4dab876004e`. Os commits de entrega posteriores acrescentam documentação, capturas e ajustes de pré-condição do teste de pausa; não alteram o pacote de aplicação medido. A conclusão do CI Linux deve ser consultada na PR, separadamente destes resultados locais. Não houve merge nem publicação em produção.
 
 ## Pacote e condições
 
@@ -35,6 +35,12 @@ Em 1440 × 900 e 390 × 844, a home carregou **172.877 bytes gzip** de HTML, CSS
 As cinco referências em `tests/baselines/scale/` foram geradas explicitamente e inspecionadas. A captura repetida teve erro médio zero; o menor erro entre escalas distintas foi 5,96 em 255, acima do limite de comparação de 2. Quadros pretos também são rejeitados. Atualização de referências é proibida quando `CI` está definido; falhas guardam a captura e uma imagem da diferença. A estabilidade no Linux depende do CI da PR.
 
 Essa cobertura corresponde às cinco vistas atuais — Terra, Sistema Solar, Via Láctea, Grupo Local e teia cósmica. A viagem contínua da Fase 3 não está incluída.
+
+## Isolamento do teste de pausa
+
+A primeira execução Linux (`41970576888`) falhou ao comparar os pixels de Tempo em desktop. Na reprodução com SwiftShader e CPU limitada em 4×/8×, o botão permaneceu pausado e o canvas manteve 661 × 413, mas a calibração automática trocou a textura de 1536 para 512. As transformações dos 13 objetos e as oito matrizes registradas permaneceram iguais. A captura mudou durante a troca de qualidade e depois estabilizou.
+
+O teste de pausa passou a selecionar Padrão e aguardar o perfil manual e a textura correspondente antes de comparar. A igualdade exata de pixels continua exigida; não foi acrescentada tolerância nem alterado o runtime. O focal com CPU limitada em 4× passou em pausa, retomada e alternativa após perda de contexto. A seleção Automática permanece na suíte específica de dez cenários, sem ser desativada na aplicação. Em Automática, a calibração inicial ainda pode trocar resolução ou textura após o visitante pausar o movimento; a prova de igualdade exata em Padrão não demonstra pixels imutáveis nesse modo.
 
 [Home desktop com ativação](screenshots/renderer-phase1/home-ativada-1440.png) · [Home em celular emulado](screenshots/renderer-phase1/home-ativada-390.png) · [Palco WebGPU desktop](screenshots/renderer-phase1/fase-quente-desktop-final.png) · [Cinemática em celular emulado](screenshots/renderer-phase1/fase-quente-cinematica-390-final.png).
 
