@@ -1,0 +1,40 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>Fixture de efeitos</title>
+<style>body{margin:0;background:#000}canvas{display:block;width:320px;height:240px}</style></head><body><canvas width="320" height="240"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import {RenderPipeline,WebGPURenderer} from 'three/webgpu';
+import {pass} from 'three/tsl';
+import {createCinematicPipeline} from '/src/scripts/visual/cinematic-pipeline.ts';
+const canvas=document.querySelector('canvas');
+const renderer=new WebGPURenderer({canvas,antialias:false,logarithmicDepthBuffer:true,powerPreference:'low-power'});
+await renderer.init();renderer.setPixelRatio(1);renderer.setSize(320,240,false);
+renderer.setClearColor(0x070c18);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.9;
+const scene=new THREE.Scene(),camera=new URL(location.href).searchParams.get('projection')==='orthographic'?new THREE.OrthographicCamera(-4,4,3,-3,.02,100):new THREE.PerspectiveCamera(42,320/240,.02,100),target=new THREE.Vector3(0,0,0);
+const background=new THREE.Mesh(new THREE.PlaneGeometry(18,12),new THREE.MeshBasicMaterial({color:0x101936}));background.position.z=-8;scene.add(background);
+const bright=new THREE.Mesh(new THREE.PlaneGeometry(.42,.42),new THREE.MeshBasicMaterial({color:new THREE.Color().setRGB(4,3,2)}));bright.position.set(-.1,.3,0);bright.rotation.z=.36;scene.add(bright);
+const near=new THREE.Mesh(new THREE.PlaneGeometry(.9,.9),new THREE.MeshBasicMaterial({color:0xe62731}));near.position.set(-.6,-.25,2);near.rotation.z=.31;scene.add(near);
+for(let i=0;i<10;i++){
+ const object=new THREE.Mesh(new THREE.PlaneGeometry(.65,.65),new THREE.MeshBasicMaterial({color:i%2?0x329bed:0xf3eddb}));
+ object.position.set((i%5-2)*1.2,(Math.floor(i/5)-.5)*1.35,-4);object.rotation.z=.3;scene.add(object);
+}
+let pipeline=null;
+const tick=()=>new Promise(resolve=>requestAnimationFrame(resolve));
+window.__CINEMATIC_FIXTURE={
+ backend:renderer.backend.isWebGPUBackend?'webgpu':'webgl2',
+ async render(options,moving=false,focusZ=0){
+  pipeline?.dispose();target.z=focusZ;camera.position.set(0,0,6);camera.lookAt(target);camera.updateMatrixWorld();
+  pipeline=createCinematicPipeline(renderer,scene,camera,target,options);
+  for(let i=0;i<3;i++){pipeline.render();await tick();}
+  if(moving){camera.position.x=.7;camera.lookAt(target);camera.updateMatrixWorld();pipeline.render();await tick();}
+ },
+ async readHdr(){
+  pipeline?.dispose();pipeline=null;target.z=0;camera.position.set(0,0,6);camera.lookAt(target);camera.updateMatrixWorld();
+  const scenePass=pass(scene,camera),output=new RenderPipeline(renderer);output.outputNode=scenePass.getTextureNode();
+  for(let i=0;i<3;i++){output.render();await tick();}
+  const data=await renderer.readRenderTargetPixelsAsync(scenePass.renderTarget,0,0,320,240);
+  let maximum=0;for(let i=0;i<data.length;i+=4)for(let j=0;j<3;j++)maximum=Math.max(maximum,data.constructor.name==='Uint16Array'?THREE.DataUtils.fromHalfFloat(data[i+j]):data[i+j]);
+  const result={storage:data.constructor.name,maximum};output.dispose();scenePass.dispose();return result;
+ },
+ dispose(){pipeline?.dispose();renderer.dispose();}
+};
+</script></body></html>

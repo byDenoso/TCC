@@ -50,4 +50,12 @@ describe('renderer safety and quality', () => {
     for (let i = 0; i < 10; i++) budget.record(500);
     expect(budget.decide()).toBe('low');
   });
+  it('clears partial samples when a measurement is interrupted', () => {
+    const budget = new FrameBudget();
+    for(let i=0;i<89;i++)budget.record(40);
+    expect(budget.count).toBe(89);budget.reset();
+    expect(budget.count).toBe(0);expect(budget.decide()).toBeNull();
+    for(let i=0;i<90;i++)budget.record(16);
+    expect(budget.decide()).toBe('standard');
+  });
 });

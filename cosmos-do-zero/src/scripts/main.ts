@@ -40,7 +40,28 @@ async function boot(): Promise<void> {
   // Reader still prepares the chapter first; scene assets and 3D remain lazy.
   // Motion graphics (GSAP) e abertura em WebGL: carregados à parte; se falharem, a página continua igual.
   void import('./motion-gsap').then((m) => m.initGsapMotion()).catch((err) => console.error('[cosmos] motion', err));
-  if (document.querySelector('.hero-shell')) void import('./hero-gl').then((m) => m.initHeroGl()).catch((err) => console.error('[cosmos] webgl', err));
+  const hero3d = document.querySelector<HTMLButtonElement>('[data-hero-gl-enable]');
+  if (hero3d) {
+    hero3d.hidden = false;
+    hero3d.closest('.hero-shell')?.addEventListener('cosmos:hero3dlost', () => {
+      hero3d.hidden = false;
+      hero3d.disabled = false;
+      hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
+    });
+    hero3d.addEventListener('click', () => {
+      hero3d.disabled = true;
+      hero3d.textContent = 'Preparando nebulosa 3D…';
+      void import('./hero-gl').then((m) => m.initHeroGl()).then((ready) => {
+        if (ready) { hero3d.hidden = true; return; }
+        hero3d.disabled = false;
+        hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
+      }).catch((err) => {
+        console.warn('[cosmos] nebulosa 3D indisponível', err);
+        hero3d.disabled = false;
+        hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
+      });
+    });
+  }
   if (document.querySelector('[data-scene]')) {
     try { initScenes(); } catch (err) { console.error('[cosmos] instrumento', '[data-scene]', err); }
   }

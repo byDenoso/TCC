@@ -148,7 +148,10 @@ for (const mode of requested??defaultModes) {
         const frozen=await sharp(after).raw().toBuffer();await page.waitForTimeout(200);
         assert.ok(frozen.equals(await sharp(await stage.locator('.cosmos-volume').screenshot()).raw().toBuffer()),'cinematic image stays fixed while paused');
         if(screenshots)await stage.screenshot({path:join(screenshots,'fase-quente-webgpu-cinematica-390.png')});
-        const postStats=await sharp(after).stats();assert.ok(postStats.channels.slice(0,3).some(c=>c.stdev>4),'cinematic pipeline has visible content');
+        const postStats=await sharp(after).stats();
+        console.log(`WEBGPU_CINEMATIC_STATS ${JSON.stringify(postStats.channels.slice(0,3).map(c=>({min:c.min,max:c.max,stdev:c.stdev})))}`);
+        await assertNoErrors();
+        assert.ok(postStats.channels.slice(0,3).some(c=>c.stdev>4),'cinematic pipeline has visible content');
         row.cinematic='bloom+smaa';
         if(blockedFrame){
           const activeFrame=await sharp(after).raw().toBuffer();assert.equal(activeFrame.length,blockedFrame.length);
@@ -201,8 +204,8 @@ for (const mode of requested??defaultModes) {
       await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-orbitas`);
       const orbit=page.locator('[data-mx="sistema-solar-orbitas"] .mx-stage').first();
       await orbit.scrollIntoViewIfNeeded();await orbit.locator('.cosmos-volume').waitFor({timeout:30000});
-      row.lineLoopScene='sistema-solar-orbitas';row.lineLoopBackend=await orbit.getAttribute('data-renderer');
-      assert.equal(row.lineLoopBackend,'webgl2','LineLoop scene remains on WebGL2');
+      row.orbitScene='sistema-solar-orbitas';row.orbitBackend=await orbit.getAttribute('data-renderer');
+      assert.equal(row.orbitBackend,backend,'closed orbit uses the available compatible renderer');
       await assertNoErrors();
     }
     await assertNoErrors();

@@ -23,12 +23,18 @@ export function canUseWebGPU(root: THREE.Object3D): boolean {
 /** Visible, continuous inter-frame intervals only. This is not a GPU benchmark. */
 export class FrameBudget {
   private values: number[] = [];
+  get count(): number { return this.values.length; }
+  reset(): void { this.values = []; }
+  get p90(): number | null {
+    if(!this.values.length)return null;
+    const sorted=[...this.values].sort((a,b)=>a-b);
+    return sorted[Math.ceil(sorted.length*.9)-1];
+  }
   record(interval: number): void {
     if (Number.isFinite(interval) && interval > 0 && this.values.length < 120) this.values.push(interval);
   }
-  decide(): 'low' | 'standard' | null {
-    if (this.values.length < 90) return null;
-    const sorted = [...this.values].sort((a, b) => a - b);
-    return sorted[Math.ceil(sorted.length * .9) - 1] > 30 ? 'low' : 'standard';
+  decide(minimum = 90): 'low' | 'standard' | null {
+    if (this.values.length < minimum) return null;
+    return this.p90! > 30 ? 'low' : 'standard';
   }
 }

@@ -1,0 +1,39 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>Fixture de origem flutuante</title>
+<style>body{margin:0}.mx-stage{width:320px;height:240px;position:relative}.cosmos-volume{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}.cosmos-view-options{display:block}</style></head>
+<body><section class="mx-lab"><div class="mx-stage"><svg viewBox="0 0 320 240" aria-label="alternativa 2D"></svg></div><p class="mx-caption">Geometria sintética para teste de precisão.</p></section>
+<script type="module">
+import * as THREE from 'three';
+import {observeScene} from '/src/scripts/visual/runtime.ts';
+import {moveWorldPosition,relativePositionMeters,worldPositionMeters} from '/src/scripts/visual/world-frame.ts';
+const stage=document.querySelector('.mx-stage');
+if(new URL(location.href).searchParams.get('backend')==='webgl2')stage.dataset.forceWebgl='true';
+const distance=10n**27n, anchor=worldPositionMeters(distance,0n,0n);
+const originalCamera=moveWorldPosition(anchor,[0,0,3]), originalTarget=anchor;
+const closeWorld=moveWorldPosition(anchor,[0,0,1]);
+const farWorld=worldPositionMeters(distance,0n,-distance);
+let cameraWorld=originalCamera,targetWorld=originalTarget,badFrame=false,updates=0;
+const group=new THREE.Group();
+const close=new THREE.Mesh(new THREE.PlaneGeometry(.8,.8),new THREE.MeshBasicMaterial({color:0xff2222}));
+const far=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x2222ff}));
+far.scale.setScalar(1.5e27);close.renderOrder=0;far.renderOrder=1;group.add(close,far);
+const view=observeScene(stage,()=>({
+  group,camera:[0,0,7],cameraClip:{near:.02,far:2e27},
+  worldFrame:{
+    origin:state=>moveWorldPosition(anchor,[state.value*.25,0,0]),
+    camera:()=>cameraWorld,target:()=>targetWorld,
+    setView:(camera,target)=>{cameraWorld=camera;targetWorld=target;},
+    resetView:()=>{cameraWorld=originalCamera;targetWorld=originalTarget;},
+    anchors:()=>[{object:close,position:badFrame?moveWorldPosition(anchor,[NaN,0,0]):closeWorld},{object:far,position:farWorld}]
+  },
+  update(){updates++;}
+}));
+window.__WORLD_FRAME_FIXTURE={
+  rebase(value){view.state({value});},
+  cameraDelta(){return relativePositionMeters(cameraWorld,originalCamera);},
+  cameraDistance(){return Math.hypot(...relativePositionMeters(cameraWorld,targetWorld));},
+  targetDelta(){return relativePositionMeters(targetWorld,originalTarget);},
+  updates(){return updates;},
+  play(on){view.play(on);},
+  fail(){badFrame=true;view.state({phase:.5});}
+};
+</script></body></html>

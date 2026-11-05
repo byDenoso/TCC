@@ -1,0 +1,24 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><link rel="icon" href="data:,"><title>Fixture de falha de GPU</title>
+<style>body{margin:0}#stages{display:flex;gap:8px;flex-wrap:wrap}.mx-stage{width:200px;height:150px;position:relative}.cosmos-volume{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}</style></head>
+<body><div id="stages"></div><script type="module">
+import * as THREE from 'three';
+import {observeScene} from '/src/scripts/visual/runtime.ts';
+const scenario=new URL(location.href).searchParams.get('scenario');
+if(scenario==='dispose-pending'){
+ const {WebGPURenderer}=await import('three/webgpu');
+ const original=WebGPURenderer.prototype.dispose;
+ WebGPURenderer.prototype.dispose=function(){return new Promise((resolve,reject)=>{window.__RELEASE_DISPOSAL=()=>original.call(this).then(resolve,reject);});};
+}
+const views=new Map();
+function add(name){
+ const root=document.createElement('section');root.className='mx-lab';
+ const stage=document.createElement('div');stage.className='mx-stage';stage.dataset.fixture=name;
+ stage.innerHTML='<svg viewBox="0 0 200 150" aria-label="alternativa 2D"></svg>';
+ const caption=document.createElement('p');caption.className='mx-caption';caption.textContent=name;
+ root.append(stage,caption);document.querySelector('#stages').append(root);
+ const view=observeScene(stage,()=>{const group=new THREE.Group();group.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial({color:0x3388cc})));return {group,camera:[0,0,4],update(){}};});
+ views.set(name,view);return stage;
+}
+window.__GPU_PENDING={add,dispose(name){views.get(name)?.dispose();},hide(name){document.querySelector(`[data-fixture="${name}"]`).hidden=true;}};
+add('first');
+</script></body></html>
