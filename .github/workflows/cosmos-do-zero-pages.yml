@@ -76,8 +76,8 @@ jobs:
         run: npm run build
       - name: Validar links, recursos, canônicas, robots e sitemap
         run: npm run test:pages
-      - name: Instalar Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Instalar navegadores de teste
+        run: npx playwright install --with-deps chromium firefox webkit
       - name: Conferir azul do céu WebGL
         run: |
           export BASE_URL="http://127.0.0.1:4322${SITE_BASE%/}"
@@ -126,9 +126,28 @@ jobs:
             sleep 1
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
+          npm run test:browsers
+          npm run test:budget
+          npm run test:world-frame
+          npm run test:quality-calibration
+          npm run test:gpu-quarantine
           npm run test:graphics
+          npm run test:webgpu
           npm run test:e2e
           npm run test:renders
+      - name: Guardar diagnósticos visuais das escalas e gráficos
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cosmos-diagnosticos-visuais
+          path: |
+            cosmos-do-zero/test-results/scale-visual/*.png
+            cosmos-do-zero/test-results/graphics/*.png
+            cosmos-do-zero/test-results/graphics/*.json
+            cosmos-do-zero/test-results/browser-smoke/*.png
+            cosmos-do-zero/test-results/browser-smoke/*.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Empacotar destino selecionado
         run: node scripts/package-pages.mjs
       - name: Guardar artefato para inspeção (sem publicar)

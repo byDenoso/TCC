@@ -129,7 +129,7 @@ function setup(root: HTMLElement, scene: Scene): void {
     visualStage.addEventListener('cosmos:unavailable', showVisualFallback);
     visualStage.addEventListener('cosmos:contextlost', showVisualFallback);
     const { observeScene } = await import('../visual/runtime');
-    volume = observeScene(visualStage, ()=>spec.make(visualStage)); volume.state({ value:v, phase:t });
+    volume = observeScene(visualStage, ()=>spec.make(visualStage)); volume.play(playing); volume.state({ value:v, phase:t });
   }).catch(() => { root.dataset.visualFallback='true'; if (alive) showVisualFallback(); });
 
   let liveTimer = 0;
@@ -143,6 +143,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   };
   const setPlaying = (on: boolean) => {
     playing = on;
+    volume?.play(on);
     play.setAttribute('aria-pressed', String(on));
     playLabel.textContent = on ? 'Pausar' : reducedQuery.matches ? 'Avançar' : 'Reproduzir';
     play.querySelector('.mx-ico')!.textContent = on ? '❚❚' : '▶';

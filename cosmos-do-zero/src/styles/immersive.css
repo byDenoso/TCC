@@ -119,6 +119,7 @@ html:root .footer { border-top:1px solid var(--line); background:radial-gradient
 html:root[data-theme='light'] .hero-shell > .hero-gl { opacity:.1; }
 html:root[data-theme='light'] .hero-shell::before { opacity:.25; }
 html:root[data-theme='light'] .hero-shell .star { background:var(--accent-2) !important; box-shadow:none; }
+html:root[data-theme='light'] [data-hero-gl-enable] { display:none; }
 html:root[data-theme='light'] .cmb-hero::before { background:radial-gradient(ellipse at 60% 30%,var(--space-cyan),transparent 65%); }
 html:root[data-theme='light'] .hero-main .cmb-hero { box-shadow:0 22px 60px var(--shadow); }
 html:root[data-theme='light'] .hero-foot .number { color:var(--ink); }
@@ -154,5 +155,6 @@ html[data-motion='gentle'] .star { animation-duration:12s; }
 @media(forced-colors:active) {
   html:root :is(.hero-shell,.hero-main .cmb-hero,.school-course,.story-lesson,.cosmos-scene,.reader-page .mx,.header-shell,.footer) { background:Canvas; color:CanvasText; box-shadow:none; }
   html:root .hero-shell > .hero-gl { display:none; }
+  [data-hero-gl-enable] { display:none; }
   .hero-explore,.hero-explore-orbit { border-color:LinkText; }
 }

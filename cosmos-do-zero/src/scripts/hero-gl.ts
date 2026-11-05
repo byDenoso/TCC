@@ -6,15 +6,16 @@
  */
 import { motionPreference, motionFactor } from './motion-preference';
 
-export async function initHeroGl(): Promise<void> {
+export async function initHeroGl(): Promise<boolean> {
   const hero = document.querySelector<HTMLElement>('.hero-shell');
-  if (!hero || hero.querySelector('.hero-gl')) return;
+  if (!hero) return false;
+  if (hero.querySelector('.hero-gl')) return true;
   // Sem GPU de verdade (renderização por software), o fundo animado não entra: a abertura em CSS fica.
   const force = new URLSearchParams(location.search).has('gl');
   const probe = document.createElement('canvas');
   const opts = { failIfMajorPerformanceCaveat: !force };
   const context = probe.getContext('webgl2', opts) || probe.getContext('webgl', opts);
-  if (!context) return;
+  if (!context) return false;
   (context as WebGLRenderingContext).getExtension('WEBGL_lose_context')?.loseContext();
   const THREE = await import('three');
 
@@ -24,7 +25,7 @@ export async function initHeroGl(): Promise<void> {
   hero.prepend(canvas);
   let renderer: import('three').WebGLRenderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true, powerPreference: 'low-power', failIfMajorPerformanceCaveat: !force }); }
-  catch { canvas.remove(); return; }
+  catch { canvas.remove(); return false; }
   // O fundo é difuso: renderizar em resolução reduzida custa ~4× menos GPU sem perda visível.
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1) * (innerWidth < 700 ? 0.5 : 0.65));
   const scene = new THREE.Scene();
@@ -172,7 +173,7 @@ export async function initHeroGl(): Promise<void> {
   const scrollHero = () => { if (visible && !paused()) scroll = Math.min(1, Math.max(0, -hero.getBoundingClientRect().top / Math.max(1, hero.offsetHeight))); };
   const hide = (e: PageTransitionEvent) => { if (e.persisted) { leaving = true; kick(); } else dispose(); };
   const show = () => { leaving = false; kick(); };
-  const lost = (e: Event) => { e.preventDefault(); dispose(); };
+  const lost = (e: Event) => { e.preventDefault(); dispose(); hero.dispatchEvent(new Event('cosmos:hero3dlost')); };
   hero.addEventListener('pointermove', point); hero.addEventListener('pointerleave', center);
   window.addEventListener('scroll', scrollHero, { passive:true });
   window.addEventListener('pagehide', hide); window.addEventListener('pageshow', show);
@@ -188,4 +189,5 @@ export async function initHeroGl(): Promise<void> {
     nebula.geometry.dispose(); nebula.material.dispose(); geo.dispose(); starMat.dispose(); renderer.dispose();
     renderer.forceContextLoss(); canvas.remove(); hero!.classList.remove('has-gl');
   }
+  return true;
 }

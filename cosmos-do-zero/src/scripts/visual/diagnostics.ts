@@ -1,8 +1,8 @@
 import type * as THREE from 'three';
 import type {Exhibit} from './runtime';
 /** Opt-in measurement seam. It exists only when the QA harness provides the registry. */
-export function registerDiagnostics(stage:HTMLElement,renderer:THREE.WebGLRenderer,exhibit:Exhibit){
- const qa=(window as unknown as {__COSMOS_QA?:{scenes:Map<number,()=>unknown>;history:unknown[];sequence:number}}).__COSMOS_QA;
+export function registerDiagnostics(stage:HTMLElement,renderer:THREE.WebGLRenderer | import('three/webgpu').WebGPURenderer,exhibit:Exhibit){
+ const qa=(window as unknown as {__COSMOS_QA?:{scenes:Map<number,()=>unknown>;objects?:Map<number,THREE.Object3D>;history:unknown[];sequence:number}}).__COSMOS_QA;
  if(!qa)return {enabled:false,frame(_ms:number,_updateMs?:number){},dispose(){}};
  const id=++qa.sequence, times:number[]=[],updateTimes:number[]=[];let frames=0;
  const name=stage.closest<HTMLElement>('[data-mx]')?.dataset.mx??(stage.hasAttribute('data-e-volume')?'expansao':stage.hasAttribute('data-t-3d')?'tempo':stage.hasAttribute('data-solar-stage')?'solar':stage.hasAttribute('data-lens-stage')?'lente':'cena');
@@ -13,8 +13,10 @@ export function registerDiagnostics(stage:HTMLElement,renderer:THREE.WebGLRender
   let geometryBytes=0,textureBytes=0,textureStorageBytes=0;
   for(const g of geometries){for(const a of Object.values(g.attributes))geometryBytes+=a.array.byteLength;if(g.index)geometryBytes+=g.index.array.byteLength;}
   for(const t of textures){for(const image of(Array.isArray(t.image)?t.image:[t.image]) as {width?:number;height?:number;depth?:number;data?:ArrayBufferView}[]){const rgba=(image?.width??0)*(image?.height??0)*(image?.depth??1)*4;textureBytes+=rgba;textureStorageBytes+=image?.data?.byteLength??rgba;}}
-  return {id,name,frames,visibleTextureDimensions:[...visibleTextures].map(t=>({source:t.source.id,name:t.name,width:t.image?.width??0,height:t.image?.height??0,depth:t.image?.depth??1})),textureDimensions:[...textures].map(t=>({source:t.source.id,name:t.name,width:t.image?.width??0,height:t.image?.height??0,depth:t.image?.depth??1})),readback:exhibit.inspect?.(),frameCpuMs:[...times],updateCpuMs:[...updateTimes],rendererMemory:{...renderer.info.memory},render:{...renderer.info.render},owned:{geometries:geometries.size,materials:materials.size,textures:textures.size,geometryBytes,textureRgbaBytesWithoutMips:textureBytes,textureStorageBytesWithoutMips:textureStorageBytes},objects:exhibit.group.children.filter(g=>g.name.startsWith('galaxy-')||g.name.startsWith('world-')).map(g=>({name:g.name,position:g.position.toArray(),scale:g.scale.toArray(),rotation:g.rotation.toArray()})),quality:stage.dataset.textureQuality};
+  const dimensions=(t:THREE.Texture)=>{const image=t.image as {width?:number;height?:number;depth?:number}|null;return {source:t.source.id,name:t.name,width:image?.width??0,height:image?.height??0,depth:image?.depth??1};};
+  return {id,name,frames,visibleTextureDimensions:[...visibleTextures].map(dimensions),textureDimensions:[...textures].map(dimensions),readback:exhibit.inspect?.(),frameCpuMs:[...times],updateCpuMs:[...updateTimes],rendererMemory:{...renderer.info.memory},render:{...renderer.info.render},owned:{geometries:geometries.size,materials:materials.size,textures:textures.size,geometryBytes,textureRgbaBytesWithoutMips:textureBytes,textureStorageBytesWithoutMips:textureStorageBytes},objects:exhibit.group.children.filter(g=>g.name.startsWith('galaxy-')||g.name.startsWith('world-')).map(g=>({name:g.name,position:g.position.toArray(),scale:g.scale.toArray(),rotation:g.rotation.toArray()})),quality:stage.dataset.textureQuality};
  };
  qa.scenes.set(id,stats);
- return {enabled:true,frame(ms:number,updateMs=0){frames++;times.push(ms);updateTimes.push(updateMs);if(times.length>600){times.shift();updateTimes.shift();}},dispose(){qa.history.push(stats());if(qa.history.length>500)qa.history.shift();qa.scenes.delete(id);}};
+ qa.objects?.set(id,exhibit.group);
+ return {enabled:true,frame(ms:number,updateMs=0){frames++;times.push(ms);updateTimes.push(updateMs);if(times.length>600){times.shift();updateTimes.shift();}},dispose(){qa.history.push(stats());if(qa.history.length>500)qa.history.shift();qa.scenes.delete(id);qa.objects?.delete(id);}};
 }

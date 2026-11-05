@@ -1,8 +1,11 @@
 import assert from 'node:assert/strict';
-import {lastLessonStep} from './lib/reader-navigation.mjs';
+import {mkdir,writeFile} from 'node:fs/promises';
+import {join} from 'node:path';
+import {lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
 import { firefox, webkit } from 'playwright';
 
-const base = process.env.BASE_URL ?? 'http://127.0.0.1:4321';
+const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/+$/, '');
+const home = `${base}/`;
 const first = '/capitulos/galaxias-e-nebulosas/';
 const second = '/capitulos/origem-do-universo/';
 const third = '/capitulos/misterios-do-cosmos/';
@@ -12,17 +15,46 @@ const check = (name, condition) => { assert.ok(condition, name); checks++; };
 
 for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])=>!process.env.BROWSER_ENGINES||process.env.BROWSER_ENGINES.split(',').includes(name))) {
   let browser;
+  let activePage;
+  const diagnostics = {events: [], states: []};
+  const trackPage = page => {
+    activePage = page;
+    page.on('pageerror', error => diagnostics.events.push({type:'pageerror',message:error.message}));
+    page.on('console', message => { if (message.type() === 'error') diagnostics.events.push({type:'console-error',message:message.text()}); });
+    page.on('response', response => { if (response.request().isNavigationRequest() || response.status() >= 400) diagnostics.events.push({type:'response',path:new URL(response.url()).pathname,status:response.status()}); });
+    page.on('requestfailed', request => diagnostics.events.push({type:'requestfailed',path:new URL(request.url()).pathname,reason:request.failure()?.errorText}));
+  };
+  const captureState = async (page, stage) => {
+    const state = await page.evaluate(() => {
+      const button = document.querySelector('[data-complete]');
+      const status = document.querySelector('[data-complete-status]');
+      let stored;
+      try { stored = localStorage.getItem('cosmos-v3-progress'); } catch (error) { stored = `error:${error.name}`; }
+      return {path:location.pathname,readyState:document.readyState,pressed:button?.getAttribute('aria-pressed') ?? null,
+        done:button?.getAttribute('data-done') ?? null,label:button?.textContent?.trim() ?? null,
+        status:status?.textContent?.trim() ?? null,stored,stepper:!!document.querySelector('.lesson-stepper'),
+        storageProbe:window.__cosmosStorageProbe ?? null};
+    });
+    diagnostics.states.push({stage,...state});
+  };
   try {
     browser = await engine.launch({ headless: true });
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
+    trackPage(page);
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto(base, { waitUntil: 'networkidle' });
+    const initialHome = await page.goto(home, { waitUntil: 'networkidle' });
+    check(`${name}: home responde HTTP 200`, initialHome?.status() === 200);
     check(`${name}: primeira etapa`, (await page.locator('.hero-actions .cta').getAttribute('href')).includes(first));
     check(`${name}: três etapas principais`, await page.locator('#capitulos [data-journey]').count() === 3);
     check(`${name}: sem rolagem horizontal no celular`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     await page.locator('.hero-actions .cta').click();
+    // The no-JS HTML starts with the disclosure open. Wait for the reader's
+    // generated stepper, which is inserted after it initializes the disclosure.
+    await page.locator('.lesson-stepper').waitFor({ state: 'attached' });
+    await openExtraExperiments(page);
+    check(`${name}: explorações adicionais abertas`, await page.locator('.school-extra').evaluate(node=>node.open));
     await page.locator('[data-scene="scale"]').waitFor();
     await page.locator('[data-scale-step="3"]').click();
     check(`${name}: contexto da escala selecionada`, /2,5 milhões/.test(await page.locator('[data-scale-panel="3"]').innerText()));
@@ -41,12 +73,19 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     }
     check(`${name}: resultado das três perguntas`, /\d+\s*(de|\/)\s*3/.test(await quiz.innerText()));
     check(`${name}: quiz conclui automaticamente a aula`,await page.locator('[data-complete]').getAttribute('aria-pressed')==='true');
-    await page.goto(base, { waitUntil: 'networkidle' });
+    const restoredHome = await page.goto(home, { waitUntil: 'networkidle' });
+    // A cached document may be revalidated by the server instead of returned again.
+    check(`${name}: retorno à home responde HTTP 200 ou 304 (recebido ${restoredHome?.status() ?? 'sem navegação de documento'})`, [200, 304].includes(restoredHome?.status()));
     check(`${name}: progresso após navegar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.reload({ waitUntil: 'networkidle' });
     check(`${name}: progresso após recarregar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.goto(base + second, { waitUntil: 'networkidle' });
+    await page.locator('.lesson-stepper').waitFor({ state: 'attached' });
+    await openExtraExperiments(page);
     const exp = page.locator('[data-station="expansao"]');
+    const skip = exp.locator('[data-guess-skip]');
+    if (await skip.isVisible()) await skip.click();
+    await page.waitForFunction(() => document.querySelector('[data-station="expansao"]')?.dataset.stationReady === 'true');
     const snapshot = () => exp.locator('.e-galaxy').evaluateAll((n) => n.map((x) => x.getAttribute('transform')).join('|'));
     const before = await snapshot();
     await exp.locator('[data-e-observer="1"]').click();
@@ -54,8 +93,12 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     check(`${name}: observador fica no centro`, await exp.locator('.e-galaxy.is-observer').getAttribute('transform') === 'translate(320.00 200.00)');
     await exp.locator('[data-e-range]').evaluate((input) => { input.value = '1.4'; input.dispatchEvent(new Event('input', { bubbles: true })); });
     check(`${name}: expansão altera a escala`, /1,40/.test(await exp.locator('[data-e-scale]').innerText()));
-    await page.getByRole('link', { name: /Próximo:/ }).click();
+    const nextLesson = page.locator('nav[aria-label="Continuar a jornada"] a.next-lesson-card');
+    check(`${name}: destino do próximo capítulo`, (await nextLesson.getAttribute('href'))?.includes(third));
+    await nextLesson.click();
     check(`${name}: ordem da viagem preservada`, page.url().includes(third));
+    await page.locator('.lesson-stepper').waitFor({ state: 'attached' });
+    await openExtraExperiments(page);
     await page.locator('[data-evidence-select="2"]').click();
     check(`${name}: limite da interpretação disponível`, /desconhecida|desconhecemos|não houve/i.test(await page.locator('[data-evidence-panel="2"]').innerText()));
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -65,16 +108,40 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
 
     const failedStorage = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
     const blocked = await failedStorage.newPage();
+    trackPage(blocked);
     await blocked.addInitScript(() => {
+      const probe = {seeded:false,overrideInstalled:false,attempts:[],clicks:[]};
+      window.__cosmosStorageProbe = probe;
       localStorage.setItem('cosmos-v3-progress', '[]');
-      Object.defineProperty(Storage.prototype, 'setItem', { value() { throw new DOMException('quota', 'QuotaExceededError'); } });
+      probe.seeded = localStorage.getItem('cosmos-v3-progress') === '[]';
+      Object.defineProperty(Storage.prototype, 'setItem', { value(key) { probe.attempts.push(String(key)); throw new DOMException('quota', 'QuotaExceededError'); } });
+      probe.overrideInstalled = localStorage.setItem === Storage.prototype.setItem;
+      const traceClick = (event, phase) => {
+        const target = event.target instanceof Node ? event.target : null;
+        const element = target instanceof Element ? target : target?.parentElement;
+        const button = element?.closest('[data-complete]');
+        if (!button) return;
+        probe.clicks.push({phase,nodeType:target?.nodeType ?? null,tag:target instanceof Element ? target.tagName : null,
+          parentNodeType:target?.parentNode?.nodeType ?? null,parentTag:target?.parentElement?.tagName ?? null,
+          pressed:button.getAttribute('aria-pressed'),trusted:event.isTrusted});
+      };
+      document.addEventListener('click', event => traceClick(event, 'capture'), true);
+      document.addEventListener('click', event => traceClick(event, 'bubble'));
     });
-    await blocked.goto(base + first, { waitUntil: 'networkidle' });await lastLessonStep(blocked);
+    await blocked.goto(base + first, { waitUntil: 'networkidle' });await blocked.locator('.lesson-stepper').waitFor({ state: 'attached' });await lastLessonStep(blocked);
+    await captureState(blocked, 'before-complete');
     await blocked.locator('[data-complete]').click();
-    check(`${name}: leitura antiga não apaga gravação que falhou`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'true');
+    const marked = await blocked.locator('[data-complete]').getAttribute('aria-pressed');
+    diagnostics.states.push({stage:'after-complete-attribute',pressed:marked});
+    check(`${name}: leitura antiga não apaga gravação que falhou`, marked === 'true');
+    await captureState(blocked, 'after-complete');
     check(`${name}: aviso de progresso da sessão`, /sessão/.test(await blocked.locator('[data-complete-status]').innerText()));
     await blocked.locator('[data-complete]').click();
-    check(`${name}: desmarcação com gravação falhando`, await blocked.locator('[data-complete]').getAttribute('aria-pressed') === 'false');
+    const unmarked = await blocked.locator('[data-complete]').getAttribute('aria-pressed');
+    diagnostics.states.push({stage:'after-unmark-attribute',pressed:unmarked});
+    check(`${name}: desmarcação com gravação falhando`, unmarked === 'false');
+    await captureState(blocked, 'after-unmark');
+    await openExtraExperiments(blocked);
     await blocked.locator('[data-light-play]').click();
     check(`${name}: alternativa sem animação`, /Movimento reduzido/.test(await blocked.locator('[data-light-status]').innerText()));
     await failedStorage.close();
@@ -82,6 +149,20 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
   } catch (error) {
     failures.push(`${name}: ${error.message}`);
     console.error(`${name}: verificações interrompidas: ${error.message}`);
+    try {
+      const output = join(process.cwd(), 'test-results', 'browser-smoke');
+      await mkdir(output, {recursive:true});
+      if (activePage && !activePage.isClosed()) {
+        try { await captureState(activePage, 'failure'); }
+        catch (diagnosticError) { diagnostics.events.push({type:'state-capture-error',message:diagnosticError.message}); }
+        try { await activePage.screenshot({path:join(output, `${name}-failure.png`),timeout:5000}); }
+        catch (diagnosticError) { diagnostics.events.push({type:'screenshot-error',message:diagnosticError.message}); }
+      } else diagnostics.events.push({type:'page-unavailable'});
+      await writeFile(join(output, `${name}-failure.json`), JSON.stringify({engine:name,error:error.message,...diagnostics}, null, 2));
+      console.error(`${name}: diagnóstico sintético salvo em test-results/browser-smoke/`);
+    } catch (diagnosticError) {
+      console.error(`${name}: não foi possível salvar o diagnóstico: ${diagnosticError.message}`);
+    }
   } finally { if (browser) await browser.close(); }
 }
 if (failures.length) {
