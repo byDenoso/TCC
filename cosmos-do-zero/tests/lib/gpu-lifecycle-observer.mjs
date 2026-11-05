@@ -9,7 +9,10 @@ export function installGpuLifecycleObserver() {
   GPUAdapter.prototype.requestDevice=async function(...args){
     const deviceId=++nextDevice;
     const log=(event,extra={})=>window.__TEST_GPU_LIFECYCLE.push({event,deviceId,time:performance.now(),...extra});
-    log('request-device');
+    const info=this.info;
+    const fallback=typeof info?.isFallbackAdapter==='boolean'?info.isFallbackAdapter:
+      typeof this.isFallbackAdapter==='boolean'?this.isFallbackAdapter:null;
+    log('request-device',{fallback,vendor:info?.vendor??'',architecture:info?.architecture??'',description:info?.description??''});
     try{
       const device=await request.apply(this,args);
       log('device-ready');

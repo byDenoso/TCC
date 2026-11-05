@@ -1,12 +1,12 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {installGpuLifecycleObserver} from '../lib/gpu-lifecycle-observer.mjs';
 
-const events=()=> (globalThis as unknown as {__TEST_GPU_LIFECYCLE:Array<{event:string;pending?:number}>}).__TEST_GPU_LIFECYCLE;
+const events=()=> (globalThis as unknown as {__TEST_GPU_LIFECYCLE:Array<{event:string;pending?:number;fallback?:boolean|null}>}).__TEST_GPU_LIFECYCLE;
 afterEach(()=>vi.unstubAllGlobals());
 
-function setup(promise:Promise<unknown>) {
+function setup(promise:Promise<unknown>,fallback?:boolean) {
   const fakeDevice={popErrorScope:()=>promise,destroy:vi.fn()};
-  class FakeAdapter { async requestDevice(){return fakeDevice;} }
+  class FakeAdapter { info=fallback===undefined?{}:{isFallbackAdapter:fallback}; async requestDevice(){return fakeDevice;} }
   vi.stubGlobal('window',globalThis);
   vi.stubGlobal('GPUAdapter',FakeAdapter);
   installGpuLifecycleObserver();
@@ -14,6 +14,16 @@ function setup(promise:Promise<unknown>) {
 }
 
 describe('test-only WebGPU scope observation',()=>{
+  it('records fallback adapter status without inferring an unknown value',async()=>{
+    const {adapter}=setup(Promise.resolve(null),true);
+    await adapter.requestDevice();
+    expect(events().find(e=>e.event==='request-device')?.fallback).toBe(true);
+  });
+  it('records an undisclosed adapter as unknown',async()=>{
+    const {adapter}=setup(Promise.resolve(null));
+    await adapter.requestDevice();
+    expect(events().find(e=>e.event==='request-device')?.fallback).toBeNull();
+  });
   it('preserves a scope value and records pending scope at destruction',async()=>{
     let resolve!:(value:object)=>void;
     const scope=new Promise<object>(done=>{resolve=done;});

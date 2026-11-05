@@ -74,7 +74,7 @@ for (const mode of requested??allModes) {
     const row={mode,scene:'origem-do-universo-fase-quente',backend,adapter,nativeWebGPU:backend==='webgpu',webglMax:await page.evaluate(()=>__GPU_PROBE.maxActive())};
     if(backend==='webgpu'){
       const lifecycle=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE);
-      row.scopeTracker={devices:lifecycle.filter(e=>e.event==='device-ready').length,popped:lifecycle.filter(e=>e.event==='scope-popped').length};
+      row.scopeTracker={devices:lifecycle.filter(e=>e.event==='device-ready').length,popped:lifecycle.filter(e=>e.event==='scope-popped').length,adapters:lifecycle.filter(e=>e.event==='request-device').map(e=>({fallback:e.fallback,vendor:e.vendor,architecture:e.architecture}))};
       assert.ok(row.scopeTracker.devices>0,'actual GPU device is observed');
       assert.ok(row.scopeTracker.popped>0,'actual GPU validation scopes are observed');
     }
