@@ -127,6 +127,7 @@ jobs:
           done
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           npm run test:graphics
+          npm run test:webgpu
           npm run test:e2e
           npm run test:renders
       - name: Empacotar destino selecionado

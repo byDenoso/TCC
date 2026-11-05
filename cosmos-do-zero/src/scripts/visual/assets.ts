@@ -13,12 +13,12 @@ export function createWorldFactory(): ((name:string)=>THREE.Group)&{quality(size
  let maximum=2048;
  const resizeMap=(source:THREE.Texture,target:THREE.Texture)=>{const image=source.image as {width:number;height:number};if(!image?.width)return;let nextImage:THREE.Texture['image'];if(image.width<=maximum){nextImage=source.image;}else{const canvas=document.createElement('canvas');canvas.width=maximum;canvas.height=Math.max(1,Math.round(image.height*maximum/image.width));canvas.getContext('2d')!.drawImage(source.image as CanvasImageSource,0,0,canvas.width,canvas.height);nextImage=canvas;}
   // Immutable GL storage must be released before changing image dimensions.
-  target.dispose();target.source=new THREE.Source(nextImage);target.anisotropy=maximum<=512?1:4;target.needsUpdate=true;
+  target.dispose();target.source=new THREE.TextureSource(nextImage);target.anisotropy=maximum<=512?1:4;target.needsUpdate=true;
  };
  const cloneMaterial=(source:THREE.Material)=>{
   if(materials.has(source))return materials.get(source)!;
   const clone=source.clone() as THREE.MeshStandardMaterial;
-  for(const [key,value] of Object.entries(clone))if(value instanceof THREE.Texture){if(!textures.has(value)){const texture=value.clone();texture.source=new THREE.Source(value.image);textures.set(value,texture);resizeMap(value,texture);}(clone as unknown as Record<string,unknown>)[key]=textures.get(value);}
+  for(const [key,value] of Object.entries(clone))if(value instanceof THREE.Texture){if(!textures.has(value)){const texture=value.clone();texture.source=new THREE.TextureSource(value.image);textures.set(value,texture);resizeMap(value,texture);}(clone as unknown as Record<string,unknown>)[key]=textures.get(value);}
   clone.roughness=source.name.includes('surface')?Math.max(clone.roughness,.7):clone.roughness;
   if(source.name.includes('cloud')){clone.transparent=true;clone.depthWrite=false;clone.opacity=.72;}
   if(source.name.includes('ring')){clone.side=THREE.DoubleSide;clone.alphaTest=.12;clone.transparent=true;clone.depthWrite=true;}

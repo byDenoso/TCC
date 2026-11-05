@@ -1,10 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { registerDiagnostics } from './diagnostics';
+import { canUseWebGPU, FrameBudget } from './render-policy';
 
 /** A página possui uma única licença de GPU. Uma cena nova devolve a anterior ao SVG. */
 let active: (() => void) | null = null;
 let contexts = 0;
+let mountQueue: Promise<void> = Promise.resolve();
+let gpuDisposal: Promise<void> = Promise.resolve();
 export function claimContext(release: () => void): () => void {
   active?.(); active = release; contexts++;
   document.documentElement.dataset.cosmosContexts = String(contexts);
@@ -39,22 +42,57 @@ export interface MountedScene {
   dispose(): void;
 }
 
-/** Sem relógio paralelo: o motor envia fase/tempo. Câmera só muda por ação explícita. */
-export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => void): MountedScene | null {
-  active?.();
-  stage.querySelector('.cosmos-preview')?.remove();
+type Renderer = THREE.WebGLRenderer | import('three/webgpu').WebGPURenderer;
+type PreparedRenderer = {renderer:Renderer;canvas:HTMLCanvasElement;backend:'webgpu'|'webgl2'};
+const makeCanvas = () => {
   const canvas = document.createElement('canvas');
   canvas.className = 'cosmos-volume mx-gl'; canvas.setAttribute('aria-hidden', 'true');
-  let renderer: THREE.WebGLRenderer;
-  try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'low-power' }); }
-  catch (error) { console.warn('[cosmos] WebGL indisponível', error); exhibit.dispose?.(); disposeObjects(exhibit.group); return null; }
+  return canvas;
+};
+async function discardCandidate(candidate: import('three/webgpu').WebGPURenderer): Promise<void> {
+  // The Three.js GPU renderer can internally fall back to a WebGL2 context.
+  // Explicitly release that context before opening the legacy WebGL renderer.
+  const gl = (candidate.backend as unknown as {gl?:WebGL2RenderingContext}).gl;
+  gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  await candidate.dispose();
+}
+
+/** Never send legacy GLSL materials to WebGPURenderer. */
+async function prepareRenderer(exhibit: Exhibit, forceWebGL: boolean): Promise<PreparedRenderer | null> {
+  let canvas = makeCanvas();
+  if (!forceWebGL && 'gpu' in navigator && navigator.gpu && canUseWebGPU(exhibit.group)) {
+    let candidate: import('three/webgpu').WebGPURenderer | undefined;
+    try {
+      const {WebGPURenderer} = await import('three/webgpu');
+      candidate = new WebGPURenderer({canvas, antialias:true, logarithmicDepthBuffer:true, powerPreference:'low-power'});
+      await candidate.init();
+      if ((candidate.backend as unknown as {isWebGPUBackend?:boolean}).isWebGPUBackend) return {renderer:candidate,canvas,backend:'webgpu'};
+      await discardCandidate(candidate);
+    } catch (error) {
+      console.warn('[cosmos] WebGPU indisponível; usando WebGL2', error);
+      if (candidate) await discardCandidate(candidate).catch(disposeError => console.warn('[cosmos] falha ao liberar candidato',disposeError));
+    }
+    // A canvas already bound to WebGPU or the WebGL backend cannot be rebound safely.
+    canvas = makeCanvas();
+  }
+  // GLSL shaders without log-depth chunks must not mix with log-depth standard materials.
+  try { return {renderer:new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'low-power',logarithmicDepthBuffer:canUseWebGPU(exhibit.group)}),canvas,backend:'webgl2'}; }
+  catch (error) { console.warn('[cosmos] WebGL2 indisponível', error); return null; }
+}
+
+/** Sem relógio paralelo: o motor envia fase/tempo. Câmera só muda por ação explícita. */
+function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer, onDispose?: () => void): MountedScene {
+  active?.();
+  stage.querySelector('.cosmos-preview')?.remove();
+  const {canvas,renderer,backend} = prepared;
+  stage.dataset.renderer = backend;
   renderer.setClearColor(0x070c18); renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = exhibit.lighting?.exposure??0.9;
   const scene = new THREE.Scene(); scene.add(exhibit.group);
   scene.add(new THREE.AmbientLight(exhibit.lighting?.neutral?0xffffff:0xb7c4d6, exhibit.lighting?.ambient??1.2));
   const key = new THREE.DirectionalLight(exhibit.lighting?.neutral?0xffffff:0xfff2df, exhibit.lighting?.key??3); key.position.set(...(exhibit.lighting?.keyPosition??[-5,4,6])); scene.add(key);
   const fill = new THREE.DirectionalLight(0x477ccf, exhibit.lighting?.fill??2); fill.position.set(4, -1, -4); scene.add(fill);
-  if(exhibit.lighting?.shadows){renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;key.shadow.normalBias=.015;}
+  if(exhibit.lighting?.shadows){renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-3;key.shadow.camera.right=3;key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.bias=-.0004;key.shadow.normalBias=.015;}
   const camera = exhibit.orthographicHeight?new THREE.OrthographicCamera(-2,2,2,-2,.02,150):new THREE.PerspectiveCamera(42, 1, 0.02, 150);
   const diagnostics=registerDiagnostics(stage,renderer,exhibit);
   const home = new THREE.Vector3(...(exhibit.camera ?? [0, 3.3, 9.5])); camera.position.copy(home);
@@ -63,9 +101,18 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   controls.minDistance = home.length() * 0.5; controls.maxDistance = home.length() * 1.8;
   let alive = true;
   const state: VisualState = { value: 0, phase: 1, elapsed: 0 };
-  let samples=0,slowFrames=0;
-  const render = () => { if (!alive || document.hidden) return; const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight)return;const updateStart=diagnostics.enabled?performance.now():0;exhibit.update(state);const updateMs=diagnostics.enabled?performance.now()-updateStart:0;const start=diagnostics.enabled?performance.now():0; const frameStart=performance.now();renderer.render(scene, camera);
-    if(quality.value==='auto'&&++samples<=24){if(performance.now()-frameStart>35)slowFrames++;if(samples===24&&slowFrames>=8){quality.value='low';stage.dataset.adaptiveQuality='low';queueMicrotask(resize);}}
+  const frameBudget = new FrameBudget();
+  let lastFrame = 0, measuring = false, adaptiveProfile:'low'|'standard'|null = null;
+  let cinematic: ReturnType<typeof import('./cinematic-pipeline').createCinematicPipeline>|null=null, cinematicRevision=0;
+  const render = (animationFrame=false) => { if (!alive || document.hidden) return; const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight){lastFrame=0;return;}const updateStart=diagnostics.enabled?performance.now():0;exhibit.update(state);const updateMs=diagnostics.enabled?performance.now()-updateStart:0;const start=diagnostics.enabled?performance.now():0; const frameStart=performance.now();
+    // Scene updates can add an unsupported material/primitive after initialization.
+    if(backend==='webgpu'&&!canUseWebGPU(exhibit.group)){stage.dataset.forceWebgl='true';queueMicrotask(()=>{if(alive){dispose();stage.dispatchEvent(new CustomEvent('cosmos:gpulost'));}});return;}
+    try { if(cinematic)cinematic.render();else renderer.render(scene, camera); } catch (error) {
+      console.warn('[cosmos] falha ao desenhar',error);
+      if(cinematic){cinematic.dispose();cinematic=null;stage.dataset.cinematic='unavailable';try{renderer.render(scene,camera);return;}catch(fallbackError){console.warn('[cosmos] falha sem pós-processamento',fallbackError);}}
+      if(backend==='webgpu')stage.dataset.forceWebgl='true';queueMicrotask(()=>{if(alive){dispose();stage.dispatchEvent(new CustomEvent(backend==='webgpu'?'cosmos:gpulost':'cosmos:contextlost'));}});return;
+    }
+    if (animationFrame && measuring && quality.value==='auto' && !adaptiveProfile) { if(lastFrame)frameBudget.record(frameStart-lastFrame); lastFrame=frameStart; const measured=frameBudget.decide(); if(measured){adaptiveProfile=measured;stage.dataset.adaptiveQuality=measured;queueMicrotask(resize);} }
     diagnostics.frame(diagnostics.enabled?performance.now()-start:0,updateMs); };
   const details = document.createElement('details'); details.className = 'cosmos-view-options';
   const summary = document.createElement('summary'); summary.textContent = 'Visão e qualidade da cena'; details.append(summary);
@@ -94,9 +141,8 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   function turn(a: number) { camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), a); controls.update(); render(); }
   function pitch(a:number){camera.position.applyAxisAngle(new THREE.Vector3(1,0,0),a);controls.update();render();}
   const quality = document.createElement('select'); quality.setAttribute('aria-label', 'Qualidade da cena');
-  quality.innerHTML = '<option value="auto">Ajustada à tela</option><option value="low">Econômica</option>';
-  if(exhibit.highDefinition)quality.add(new Option('Alta definição','high'));
-  quality.value=stage.dataset.cosmosQuality==='low'?'low':exhibit.highDefinition&&stage.dataset.cosmosQuality==='high'?'high':'auto';
+  quality.innerHTML = `<option value="auto">Automática</option><option value="low">Econômica</option><option value="standard">Padrão</option><option value="high">${backend==='webgpu'?'Cinemática · WebGPU':'Alta definição · WebGL2'}</option>`;
+  quality.value=['low','standard','high'].includes(stage.dataset.cosmosQuality??'')?stage.dataset.cosmosQuality!:'auto';
   tools.append(quality);
   stage.append(canvas); stage.classList.add('cosmos-volume-ready','mx-stage--gl');
   const explanation=stage.closest('.mx-lab,.solar-experiment')?.querySelector('.mx-caption') ?? stage.closest('.obs-expansion-grid')?.querySelector('.obs-reading') ?? stage.closest('[data-island="planets"]')?.querySelector('[data-planet-description]') ?? stage.closest('[data-island="compare"]')?.querySelector('.compare-insight') ?? stage.closest('[data-scene]')?.querySelector('.scene-reading');
@@ -122,33 +168,48 @@ export function mount(stage: HTMLElement, exhibit: Exhibit, onDispose?: () => vo
   const resize = () => {
     stage.dataset.cosmosQuality=quality.value;
     const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h || !alive) return;
-    renderer.setPixelRatio(quality.value==='high'&&exhibit.highDefinition?Math.min(2,Math.max(devicePixelRatio||1,w<600?1.25:1.5)):quality.value==='low'?1:Math.min(devicePixelRatio||1,w<600?1.25:1.5));
+    const profile=quality.value==='auto'?(adaptiveProfile??'standard'):quality.value;
+    renderer.setPixelRatio(profile==='high'?Math.min(2,Math.max(devicePixelRatio||1,w<600?1.25:1.5)):profile==='low'?1:Math.min(devicePixelRatio||1,w<600?1.25:1.5));
     renderer.setSize(w, h, false);const aspect=w/h;
     if(camera instanceof THREE.PerspectiveCamera)camera.aspect=aspect;else{const height=exhibit.orthographicHeight!(aspect);camera.left=-height*aspect/2;camera.right=height*aspect/2;camera.top=height/2;camera.bottom=-height/2;}
     if(exhibit.cameraForAspect&&aspect!==previousAspect){home.set(...exhibit.cameraForAspect(aspect));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.update();}previousAspect=aspect;
-    const nextQualityKey=`${quality.value}:${w<600}`;
-    if(exhibit.quality&&nextQualityKey!==qualityKey){qualityKey=nextQualityKey;stage.dataset.qualityPending='true';Promise.resolve(exhibit.quality(quality.value==='low'?'low':'auto',w)).then(()=>{if(alive){stage.dataset.textureQuality=String(exhibit.group.userData.textureQuality);stage.dataset.qualityPending='false';render();projectLabels();}}).catch(()=>{if(alive){stage.dataset.qualityPending='false';stage.dataset.qualityError='true';}});}
+    const nextQualityKey=`${profile}:${w<600}`;
+    if(exhibit.quality&&nextQualityKey!==qualityKey){qualityKey=nextQualityKey;stage.dataset.qualityPending='true';Promise.resolve(exhibit.quality(profile==='low'?'low':'auto',w)).then(()=>{if(alive){stage.dataset.textureQuality=String(exhibit.group.userData.textureQuality);stage.dataset.qualityPending='false';render();projectLabels();}}).catch(()=>{if(alive){stage.dataset.qualityPending='false';stage.dataset.qualityError='true';}});}
     if(exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,aspect));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.update();}
     camera.updateProjectionMatrix(); render(); projectLabels();
   };
-  quality.addEventListener('change', resize); controls.addEventListener('change', () => {render();projectLabels();});
+  const updateCinematic=()=>{
+    const revision=++cinematicRevision;
+    cinematic?.dispose();cinematic=null;delete stage.dataset.cinematic;
+    if(quality.value!=='high'||!('isWebGPURenderer' in renderer))return;
+    stage.dataset.cinematic='loading';
+    void import('./cinematic-pipeline').then(({createCinematicPipeline})=>{
+      if(!alive||revision!==cinematicRevision)return;
+      cinematic=createCinematicPipeline(renderer,scene,camera);stage.dataset.cinematic='active';render();
+    }).catch(error=>{if(alive&&revision===cinematicRevision){stage.dataset.cinematic='unavailable';console.warn('[cosmos] pós-processamento indisponível',error);}});
+  };
+  quality.addEventListener('change', ()=>{resize();updateCinematic();}); controls.addEventListener('change', () => {render();projectLabels();});
   const ro = new ResizeObserver(resize); ro.observe(stage);
   const release = claimContext(dispose);
-  const hide = () => { if (document.hidden) return; render(); };
+  const hide = () => { lastFrame=0; if (document.hidden) return; render(); };
   document.addEventListener('visibilitychange', hide);
   const lost = (e: Event) => { e.preventDefault(); dispose(); stage.dispatchEvent(new CustomEvent('cosmos:contextlost')); };
   canvas.addEventListener('webglcontextlost', lost);
+  if ('isWebGPURenderer' in renderer) renderer.onDeviceLost = () => { if (!alive) return; stage.dataset.forceWebgl = 'true'; dispose(); stage.dispatchEvent(new CustomEvent('cosmos:gpulost')); };
   function dispose() {
     if (!alive) return; alive = false;
     ro.disconnect(); document.removeEventListener('visibilitychange', hide);
     canvas.removeEventListener('webglcontextlost', lost); controls.dispose();
     // A preserved scientific chart lives below this stage; retain a lightweight preview here.
-    if(!stage.querySelector('svg')&&!renderer.getContext().isContextLost()){try{renderer.render(scene,camera);const image=document.createElement('img');image.className='cosmos-preview';image.alt='Prévia da experiência no último estado; os controles e o esquema permanecem disponíveis.';image.src=canvas.toDataURL('image/webp',.82);stage.querySelector('.cosmos-preview')?.remove();stage.prepend(image);}catch{/* The functional2D chart remains available if a snapshot is unavailable. */}}
-    exhibit.dispose?.();diagnostics.dispose();disposeObjects(scene); renderer.dispose(); renderer.forceContextLoss();
-    canvas.remove(); details.remove(); labels.forEach(({e})=>e.remove()); stage.classList.remove('cosmos-volume-ready','mx-stage--gl'); release(); onDispose?.();
+    if(backend==='webgl2'&&!stage.querySelector('svg')&&!(renderer as THREE.WebGLRenderer).getContext().isContextLost()){try{renderer.render(scene,camera);const image=document.createElement('img');image.className='cosmos-preview';image.alt='Prévia da experiência no último estado; os controles e o esquema permanecem disponíveis.';image.src=canvas.toDataURL('image/webp',.82);stage.querySelector('.cosmos-preview')?.remove();stage.prepend(image);}catch{/* The functional2D chart remains available if a snapshot is unavailable. */}}
+    cinematicRevision++;cinematic?.dispose();cinematic=null;exhibit.dispose?.();diagnostics.dispose();disposeObjects(scene);
+    if ('isWebGPURenderer' in renderer) gpuDisposal = gpuDisposal.catch(error=>console.warn('[cosmos] descarte anterior da GPU',error)).then(() => renderer.dispose());
+    else { renderer.dispose(); renderer.forceContextLoss(); }
+    canvas.remove(); details.remove(); labels.forEach(({e})=>e.remove()); stage.classList.remove('cosmos-volume-ready','mx-stage--gl'); delete stage.dataset.renderer; release(); onDispose?.();
   }
   resize();
-  return { state(next) { const changed=next.value!==undefined&&next.value!==state.value;Object.assign(state, next);if(changed&&exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,stage.clientWidth/stage.clientHeight));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.target.set(0,0,0);controls.update();}render(); projectLabels(); }, play() { /* transporte pertence ao motor */ }, resize, resetView, dispose };
+  updateCinematic();
+  return { state(next) { const changed=next.value!==undefined&&next.value!==state.value;Object.assign(state, next);if(changed&&exhibit.cameraForValue){home.set(...exhibit.cameraForValue(state.value,stage.clientWidth/stage.clientHeight));controls.minDistance=home.length()*.5;controls.maxDistance=home.length()*1.8;camera.position.copy(home);controls.target.set(0,0,0);controls.update();}render(true); projectLabels(); }, play(on) { measuring=on; lastFrame=0; }, resize, resetView, dispose };
 }
 
 export function disposeObjects(root: THREE.Object3D): void {
@@ -168,36 +229,61 @@ export function disposeObjects(root: THREE.Object3D): void {
 
 /** Criação só no palco visível. Revogação e falha preservam controles e estado SVG. */
 export function observeScene(stage: HTMLElement, create: () => Exhibit): MountedScene {
-  let view: MountedScene | null = null, disposed = false, failed = false;
+  let view: MountedScene | null = null, disposed = false, failed = false, pending = false, generation = 0, playing = false;
   const latest: VisualState = { value: 0, phase: 1, elapsed: 0 };
   const interactionRoot=stage.closest('.obs-expansion-grid,.mx-lab,.solar-experiment,[data-island="planets"],[data-island="compare"],[data-scene]')??stage.parentElement;
   const optionsActive=()=>{const options=interactionRoot?.querySelector<HTMLDetailsElement>('.cosmos-view-options');if(!options)return false;const rect=options.getBoundingClientRect();return options.open||!!document.activeElement?.closest('.cosmos-view-options')&&!!interactionRoot?.contains(document.activeElement)||rect.bottom>0&&rect.top<innerHeight;};
+  const cancelPending=()=>{if(pending){generation++;pending=false;}};
   const enter = () => {
     if (disposed || failed || stage.closest('[hidden]')) return;
     if(view){view.state(latest);return;}
-    try { view = mount(stage, create(), () => { view = null; }); }
-    catch (error) { console.warn('[cosmos] falha ao montar cena 3D', error); view=null; }
-    if (!view) { failed = true; stage.dataset.visualFallback = 'true'; stage.dispatchEvent(new CustomEvent('cosmos:unavailable')); }
-    view?.state(latest);
-    if (view) stage.dispatchEvent(new CustomEvent('cosmos:ready'));
+    if(pending)return;
+    pending=true;const ticket=++generation;
+    const valid=()=>!disposed&&!failed&&ticket===generation&&stage.isConnected&&!stage.closest('[hidden]');
+    mountQueue=mountQueue.catch(error=>console.warn('[cosmos] fila de renderização',error)).then(async()=>{
+      if(!valid())return;
+      active?.();
+      await gpuDisposal.catch(error=>console.warn('[cosmos] descarte da GPU',error));
+      if(!valid())return;
+      let exhibit:Exhibit|undefined,prepared:PreparedRenderer|null=null;
+      try{
+        exhibit=create();
+        prepared=await prepareRenderer(exhibit,stage.dataset.forceWebgl==='true');
+        if(!valid()){
+          exhibit.dispose?.();disposeObjects(exhibit.group);
+          if(prepared){if('isWebGPURenderer' in prepared.renderer)await prepared.renderer.dispose();else{prepared.renderer.dispose();prepared.renderer.forceContextLoss();}}
+          return;
+        }
+        if(!prepared)throw new Error('Nenhum backend 3D disponível');
+        view=mount(stage,exhibit,prepared,()=>{view=null;});
+        pending=false;view.play(playing);view.state(latest);stage.dispatchEvent(new CustomEvent('cosmos:ready'));
+      }catch(error){
+        console.warn('[cosmos] falha ao montar cena 3D',error);
+        if(exhibit){exhibit.dispose?.();disposeObjects(exhibit.group);}
+        if(prepared){if('isWebGPURenderer' in prepared.renderer)await prepared.renderer.dispose();else{prepared.renderer.dispose();prepared.renderer.forceContextLoss();}}
+        if(valid()){pending=false;failed=true;stage.dataset.visualFallback='true';stage.dispatchEvent(new CustomEvent('cosmos:unavailable'));}
+      }
+    }).finally(()=>{if(ticket===generation)pending=false;});
   };
   const io = new IntersectionObserver(([e]) => {
-    if (e.isIntersecting) enter(); else if(!optionsActive()) { view?.dispose(); view = null; }
+    if (e.isIntersecting) enter(); else if(!optionsActive()) { cancelPending();view?.dispose(); view = null; }
   }, { threshold: 0.12 }); io.observe(stage);
   const focus = () => {const rect=stage.getBoundingClientRect();if(rect.bottom>0&&rect.top<innerHeight||optionsActive())enter();};interactionRoot?.addEventListener('focusin',focus);
-  const blur=()=>queueMicrotask(()=>{const rect=stage.getBoundingClientRect();if((rect.bottom<=0||rect.top>=innerHeight)&&!optionsActive()){view?.dispose();view=null;}});interactionRoot?.addEventListener('focusout',blur);
-  const optionsToggle=(event:Event)=>{const target=event.target as HTMLDetailsElement;if(!target.matches?.('.cosmos-view-options')||target.open)return;const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight){view?.dispose();view=null;}};
+  const blur=()=>queueMicrotask(()=>{const rect=stage.getBoundingClientRect();if((rect.bottom<=0||rect.top>=innerHeight)&&!optionsActive()){cancelPending();view?.dispose();view=null;}});interactionRoot?.addEventListener('focusout',blur);
+  const optionsToggle=(event:Event)=>{const target=event.target as HTMLDetailsElement;if(!target.matches?.('.cosmos-view-options')||target.open)return;const rect=stage.getBoundingClientRect();if(rect.bottom<=0||rect.top>=innerHeight){cancelPending();view?.dispose();view=null;}};
   interactionRoot?.addEventListener('toggle',optionsToggle,true);
-  const scroll=()=>{const rect=stage.getBoundingClientRect();if((rect.bottom<=0||rect.top>=innerHeight)&&!optionsActive()){view?.dispose();view=null;}};window.addEventListener('scroll',scroll,{passive:true});
+  const scroll=()=>{const rect=stage.getBoundingClientRect();if((rect.bottom<=0||rect.top>=innerHeight)&&!optionsActive()){cancelPending();view?.dispose();view=null;}};window.addEventListener('scroll',scroll,{passive:true});
   const lose = () => { failed = true; stage.dataset.visualFallback = 'true'; };
   stage.addEventListener('cosmos:contextlost', lose);
-  const freeze = () => { view?.dispose(); view=null; };
+  const gpuLost = () => { cancelPending();enter(); };
+  stage.addEventListener('cosmos:gpulost', gpuLost);
+  const freeze = () => { cancelPending();view?.dispose(); view=null; };
   const resume = (event:PageTransitionEvent) => { if(event.persisted) { const r=stage.getBoundingClientRect(); if(r.bottom>0&&r.top<innerHeight)enter(); } };
   window.addEventListener('pagehide',freeze); window.addEventListener('pageshow',resume);
   return {
     state(next) { Object.assign(latest, next); view?.state(latest); },
-    play(on) { view?.play(on); }, resize() { view?.resize(); }, resetView() { view?.resetView(); },
-    dispose() { disposed = true; io.disconnect(); window.removeEventListener('scroll',scroll);view?.dispose(); interactionRoot?.removeEventListener('focusin',focus);interactionRoot?.removeEventListener('focusout',blur);interactionRoot?.removeEventListener('toggle',optionsToggle,true);stage.removeEventListener('cosmos:contextlost', lose); window.removeEventListener('pagehide',freeze);window.removeEventListener('pageshow',resume); }
+    play(on) { playing=on;view?.play(on); }, resize() { view?.resize(); }, resetView() { view?.resetView(); },
+    dispose() { disposed = true;cancelPending();io.disconnect(); window.removeEventListener('scroll',scroll);view?.dispose(); interactionRoot?.removeEventListener('focusin',focus);interactionRoot?.removeEventListener('focusout',blur);interactionRoot?.removeEventListener('toggle',optionsToggle,true);stage.removeEventListener('cosmos:contextlost', lose);stage.removeEventListener('cosmos:gpulost',gpuLost); window.removeEventListener('pagehide',freeze);window.removeEventListener('pageshow',resume); }
   };
 }
 
