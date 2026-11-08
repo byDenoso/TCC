@@ -27,12 +27,12 @@ const shareImage = new URL(u('/social-card.png'), Astro.site);
 const indexingAllowed = import.meta.env.PUBLIC_SITE_INDEXING === 'true';
 ---
 <!doctype html>
-<html lang="pt-BR" data-theme="dark">
+<html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#050814" />
-    <script is:inline>(function () { var t = null; try { t = localStorage.getItem('cosmos-theme'); } catch (e) {} if (t !== 'light' && t !== 'dark') t = 'dark'; document.documentElement.dataset.theme = t; })();</script>
+    <meta name="theme-color" content="#f1e9d6" />
+    <script is:inline>(function () { var t = null; try { t = localStorage.getItem('cosmos-theme'); } catch (e) {} if (t !== 'light' && t !== 'dark') t = 'light'; document.documentElement.dataset.theme = t; })();</script>
     <script is:inline>(function(){var m='full';try{m=localStorage.getItem('cosmos-motion')||m;}catch(e){}document.documentElement.dataset.motion=matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':m;})();</script>
     <meta name="description" content={description} />
     <meta property="og:type" content="website" />

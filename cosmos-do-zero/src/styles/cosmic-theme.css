@@ -1,27 +1,28 @@
-/* Interface espacial. As cores que codificam valores físicos permanecem nos instrumentos. */
-html:root, html:root[data-theme='dark'] {
-  --bg:#050814; --bg-alt:#080e20; --surface:#0d1730; --surface-2:#152443;
-  --ink:#f1f5ff; --ink-2:#c3d0e5; --muted:#a5b5cf;
-  --line:#273851; --line-strong:#54708f;
-  --accent:#73e0f3; --accent-strong:#b2f1fa; --accent-ink:#8de8f6; --accent-soft:#0d3041; --on-accent:#05131d;
-  --action:#7be4f5; --action-hover:#b5f3fc; --on-action:#061923;
-  --accent-2:#beb0ff; --shadow:rgba(0,0,0,.3); --focus:#a5effb;
-  --glow-core:#a6eafa; --glow-mid:#7863d2;
-  --space-halo:rgba(110,75,204,.2); --space-cyan:rgba(33,160,187,.13);
-  --glass:linear-gradient(145deg,rgba(29,44,75,.88),rgba(10,18,39,.94));
-  color-scheme:dark;
-}
-html:root[data-theme='light'] {
-  --bg:#f4f7fc; --bg-alt:#eaf0f8; --surface:#fff; --surface-2:#e3ecf7;
-  --ink:#13233e; --ink-2:#314c6a; --muted:#506581;
-  --line:#ccd9e9; --line-strong:#6884a2;
-  --accent:#00697e; --accent-strong:#005469; --accent-ink:#006277; --accent-soft:#dceff4; --on-accent:#fff;
-  --action:#08697d; --action-hover:#005469; --on-action:#fff;
-  --accent-2:#6250a5; --shadow:rgba(12,35,67,.1); --focus:#006277;
-  --glow-core:#086d89; --glow-mid:#7661b6;
-  --space-halo:rgba(125,101,202,.1); --space-cyan:rgba(49,153,181,.1);
-  --glass:linear-gradient(145deg,rgba(255,255,255,.95),rgba(234,241,250,.96));
+/* Identidade "papel", a mesma dos vídeos: creme, tinta, terracota e azul. As cores que codificam valores físicos permanecem nos instrumentos. */
+html:root, html:root[data-theme='light'] {
+  --bg:#f1e9d6; --bg-alt:#e9dfc7; --surface:#fbf6e9; --surface-2:#e6dcc3;
+  --ink:#1b2330; --ink-2:#33405a; --muted:#5b6472;
+  --line:#d9cfb5; --line-strong:#8a8574;
+  --accent:#c8461f; --accent-strong:#a93a18; --accent-ink:#a93a18; --accent-soft:#f3d9cc; --on-accent:#fbf6e9;
+  --action:#b53d17; --action-hover:#962f10; --on-action:#fbf6e9;
+  --accent-2:#1f5fa8; --shadow:rgba(27,35,48,.12); --focus:#1f5fa8;
+  --glow-core:#c8461f; --glow-mid:#1f5fa8;
+  --space-halo:rgba(200,70,31,.08); --space-cyan:rgba(31,95,168,.08);
+  --glass:linear-gradient(145deg,rgba(251,246,233,.95),rgba(233,223,199,.96));
   color-scheme:light;
+}
+/* Papel noturno: tinta como fundo, creme como texto. */
+html:root[data-theme='dark'] {
+  --bg:#12171f; --bg-alt:#161d28; --surface:#1b2330; --surface-2:#243045;
+  --ink:#f1e9d6; --ink-2:#d6cfbd; --muted:#a9a79c;
+  --line:#2d384a; --line-strong:#5d6b82;
+  --accent:#e8734a; --accent-strong:#f2926e; --accent-ink:#ee835c; --accent-soft:#3a2620; --on-accent:#12171f;
+  --action:#e8734a; --action-hover:#f2926e; --on-action:#12171f;
+  --accent-2:#7aaee6; --shadow:rgba(0,0,0,.3); --focus:#f2926e;
+  --glow-core:#f2926e; --glow-mid:#7aaee6;
+  --space-halo:rgba(232,115,74,.12); --space-cyan:rgba(122,174,230,.1);
+  --glass:linear-gradient(145deg,rgba(27,35,48,.9),rgba(18,23,31,.95));
+  color-scheme:dark;
 }
 
 /* Reuse existing semantic aliases, fonts and layout. No added font downloads. */
