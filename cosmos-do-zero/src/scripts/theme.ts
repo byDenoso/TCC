@@ -1,7 +1,7 @@
-/** A escola abre no céu escuro; a escolha explícita do leitor sempre é preservada. */
+/** A escola abre no tema claro (papel); a escolha explícita do leitor sempre é preservada. */
 const KEY = 'cosmos-theme';
 type Theme = 'light' | 'dark';
-const defaultTheme = (): Theme => 'dark';
+const defaultTheme = (): Theme => 'light';
 const current = (): Theme => (document.documentElement.dataset.theme as Theme | undefined) ?? defaultTheme();
 
 export function initTheme(): void {

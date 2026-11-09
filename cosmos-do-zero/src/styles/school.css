@@ -30,7 +30,7 @@ html:root .hero-routes a span { color:var(--accent-ink); font-size:11px; letter-
 html:root .hero-routes a strong { color:var(--muted); font-size:12px; font-weight:500; }
 html:root .hero-foot { padding-block:26px; }
 html:root .hero-foot .number { font-size:30px; }
-.school-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin:0 7px 2px 0; background:#91e5ec; box-shadow:0 0 10px #91e5ec90; }
+.school-live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin:0 7px 2px 0; background:var(--accent); box-shadow:0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
 html:root .intro-section { padding:90px 0 80px; }
 html:root .intro-head { margin-top:26px; margin-bottom:32px; grid-template-columns:1.35fr 1fr; }
 html:root .intro-head h2 { font-size:clamp(38px,4.4vw,64px); line-height:1.1; letter-spacing:-.035em; }

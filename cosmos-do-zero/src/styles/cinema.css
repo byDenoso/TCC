@@ -2,12 +2,12 @@
 html:root .hero-shell { background:var(--bg); }
 html:root .hero-shell::before { background:radial-gradient(circle at 18% 36%,#d6edff 0 1px,transparent 1.5px),radial-gradient(circle at 78% 24%,#edfaff 0 1px,transparent 1.5px);background-size:179px 193px,241px 211px; }
 html:root .hero-shell .star { background:#eefaff;box-shadow:0 0 7px #85cfff; }
-html:root .hero-main .cmb-hero { background:var(--surface);border-color:#507e9e70; }
-html:root .cmb-hero::before { background:radial-gradient(ellipse at 54% 38%,#2385b735,transparent 62%); }
-html:root .sky-orbit { stroke:#83b6ff60; }
-html:root .sky-orbit circle { fill:#a2e6f5;filter:drop-shadow(0 0 4px #74dceb); }
-html:root .sky-crosshair { stroke:#82bad4; }
-html:root .cmb-observation .cmb-frame { box-shadow:0 0 0 1px #a4d8eb80,0 0 36px #167aab35; }
+html:root .hero-main .cmb-hero { background:var(--surface);border-color:var(--line-strong); }
+html:root .cmb-hero::before { background:radial-gradient(ellipse at 54% 38%,color-mix(in srgb, var(--accent) 14%, transparent),transparent 62%); }
+html:root .sky-orbit { stroke:color-mix(in srgb, var(--accent-2) 55%, transparent); }
+html:root .sky-orbit circle { fill:var(--accent);filter:none; }
+html:root .sky-crosshair { stroke:var(--muted); }
+html:root .cmb-observation .cmb-frame { box-shadow:0 0 0 1px var(--line-strong); }
 html:root .cmb-probe { box-shadow:0 0 0 6px #ffffff22,0 0 20px #7dd8f599; }
 html:root .hero-routes a strong::after { color:#aec7db; }
 html:root .sci-head>p::after { content:none; }

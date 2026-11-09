@@ -573,23 +573,24 @@ section('Observatório');
 
 section('Tema claro e escuro');
 {
+  // Identidade "papel": a escola abre no tema claro (creme, tinta, terracota) mesmo com o sistema em escuro.
   const p=await page(1280,{colorScheme:'dark'});
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('escola começa no céu escuro', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark' && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(5, 8, 20)');
-  ok('título claro e ação ciano mantêm contraste', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(241, 245, 255)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(123, 228, 245)'));
-  const bgDark=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
+  ok('escola começa no tema claro papel', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(241, 233, 214)');
+  ok('título em tinta e ação terracota mantêm contraste', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(27, 35, 48)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(181, 61, 23)'));
+  const bgLight=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
   await p.locator('[data-theme-toggle]').click();
-  ok('botão troca para claro', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && bgDark!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor));
+  ok('botão troca para o papel noturno', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark' && bgLight!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor) && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(18, 23, 31)');
   await p.reload({ waitUntil: 'networkidle' });
-  ok('escolha clara explícita persiste ao recarregar', await p.evaluate(()=>document.documentElement.dataset.theme)==='light');
-  ok('botão anuncia a próxima ação', /escuro/i.test(await p.locator('[data-theme-toggle]').getAttribute('aria-label')));
+  ok('escolha escura explícita persiste ao recarregar', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark');
+  ok('botão anuncia a próxima ação', /claro/i.test(await p.locator('[data-theme-toggle]').getAttribute('aria-label')));
   await p.context().close();
-  const q=await page(1280,{colorScheme:'light'});
+  const q=await page(1280,{colorScheme:'dark'});
   await q.addInitScript(() => { Object.defineProperty(window, 'localStorage', { get() { throw new DOMException('blocked', 'SecurityError'); } }); });
   await q.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('tema escuro padrão independe do sistema e do armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark');
+  ok('tema claro padrão independe do sistema e do armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='light');
   await q.locator('[data-theme-toggle]').click();
-  ok('tema claro funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='light' && q.errors.length===0, q.errors.join(' | '));
+  ok('tema escuro funciona sem armazenamento', await q.evaluate(()=>document.documentElement.dataset.theme)==='dark' && q.errors.length===0, q.errors.join(' | '));
   await q.context().close();
 }
 
