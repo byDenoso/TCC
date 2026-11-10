@@ -15,6 +15,7 @@ await mkdir(siblingRoot, { recursive: true });
 await writeFile(join(distRoot, 'index.html'), '<h1>home</h1>');
 await writeFile(join(distRoot, 'nested', 'index.html'), '<h1>nested</h1>');
 await writeFile(join(distRoot, 'asset.json'), '{"ok":true}');
+await writeFile(join(distRoot, 'film.mp4'), '0123456789');
 await writeFile(join(distRoot, '404.html'), '<h1>not found</h1>');
 await writeFile(join(siblingRoot, 'secret.txt'), 'outside dist secret');
 
@@ -71,6 +72,21 @@ try {
   assert.ok(Number(head.headers.get('content-length')) > 0);
   assert.equal(await head.text(), '');
 
+  const movie = await fetch(`${base}/film.mp4`, { headers: { Range: 'bytes=2-5' } });
+  assert.equal(movie.status, 206);
+  assert.equal(movie.headers.get('accept-ranges'), 'bytes');
+  assert.equal(movie.headers.get('content-range'), 'bytes 2-5/10');
+  assert.equal(movie.headers.get('content-type'), 'video/mp4');
+  assert.equal(await movie.text(), '2345');
+
+  const lastMovieBytes = await fetch(`${base}/film.mp4`, { headers: { Range: 'bytes=-3' } });
+  assert.equal(lastMovieBytes.status, 206);
+  assert.equal(await lastMovieBytes.text(), '789');
+
+  const invalidMovieRange = await fetch(`${base}/film.mp4`, { headers: { Range: 'bytes=10-' } });
+  assert.equal(invalidMovieRange.status, 416);
+  assert.equal(invalidMovieRange.headers.get('content-range'), 'bytes */10');
+
   const unsupported = await fetch(`${base}/`, { method: 'POST' });
   assert.equal(unsupported.status, 405);
   assert.equal(unsupported.headers.get('allow'), 'GET, HEAD');
@@ -88,7 +104,7 @@ try {
 
   const stillAlive = await fetch(`${base}/`);
   assert.equal(stillAlive.status, 200, 'malformed requests must not crash the server');
-  console.log('HTTP server checks passed (GET, HEAD, 404/MIME, method handling, malformed URL, path containment).');
+  console.log('HTTP server checks passed (GET, HEAD, MP4 byte ranges, 404/MIME, method handling, malformed URL, path containment).');
 } catch (error) {
   console.error(error);
   if (stderr) console.error(stderr);

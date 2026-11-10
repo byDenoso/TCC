@@ -45,6 +45,25 @@ function send(res, method, status, body, contentType = 'text/plain; charset=utf-
   res.end(method === 'HEAD' ? undefined : buffer);
 }
 
+function sendVideo(req, res, method, body) {
+  const headers = { 'accept-ranges': 'bytes' };
+  const range = method === 'GET' && !req.headers['if-range'] && /^bytes=(\d*)-(\d*)$/i.exec(req.headers.range ?? '');
+  if (!range || (!range[1] && !range[2])) {
+    send(res, method, 200, body, 'video/mp4', headers);
+    return;
+  }
+  const length = body.byteLength;
+  const start = range[1] ? Number(range[1]) : Math.max(0, length - Number(range[2]));
+  const end = range[1] && range[2] ? Math.min(length - 1, Number(range[2])) : length - 1;
+  if (start > end) {
+    send(res, method, 416, '', 'video/mp4', { ...headers, 'content-range': `bytes */${length}` });
+    return;
+  }
+  send(res, method, 206, body.subarray(start, end + 1), 'video/mp4', {
+    ...headers, 'content-range': `bytes ${start}-${end}/${length}`
+  });
+}
+
 async function readFileIfPresent(candidate) {
   try {
     const info = await stat(candidate);
@@ -85,7 +104,9 @@ async function handle(req, res) {
 
   const result = await readFileIfPresent(candidate);
   if (result) {
-    send(res, method, 200, result.body, types[extname(result.file).toLowerCase()] ?? 'application/octet-stream');
+    const type = types[extname(result.file).toLowerCase()] ?? 'application/octet-stream';
+    if (type === 'video/mp4') sendVideo(req, res, method, result.body);
+    else send(res, method, 200, result.body, type);
     return;
   }
 
