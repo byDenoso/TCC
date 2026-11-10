@@ -6,8 +6,8 @@ import { chapterUrl } from '../lib/url';
 
 const steps = [
   { title: 'Uma imagem, muitas épocas.', tab: 'Imagem', kind: 'Observação', text: 'Neste campo profundo do Webb, galáxias a diferentes distâncias aparecem no mesmo quadro. Como a luz leva tempo para chegar, elas são vistas em épocas diferentes.', detail: 'SMACS 0723 · composição em infravermelho próximo.' },
-  { title: 'A luz carrega uma assinatura.', tab: 'Espectro', kind: 'Diagrama', text: 'Ao separar a luz por comprimento de onda, um espectrógrafo revela linhas características. Compare as marcas de referência com as linhas deslocadas no diagrama.', detail: 'O padrão de linhas ajuda a identificar o que emitiu a luz.' },
-  { title: 'O espaço deixa sua marca.', tab: 'Redshift', kind: 'Modelo', text: 'A expansão aumenta o comprimento de onda da luz em trânsito. Ajuste z e veja as linhas se deslocarem juntas. Quanto maior o redshift cosmológico, menor era o fator de escala na emissão.', detail: 'Para interpretar z como distância ou idade, precisamos de um modelo cosmológico.' }
+  { title: 'A luz carrega uma assinatura.', tab: 'Espectro', kind: 'Diagrama', text: 'Ao separar a luz por comprimento de onda, um espectrógrafo revela linhas características. Compare as linhas do diagrama com os picos medidos pelo Webb.', detail: 'O padrão de linhas ajuda a identificar o que emitiu a luz.' },
+  { title: 'O espaço deixa sua marca.', tab: 'Redshift', kind: 'Modelo', text: 'A expansão aumenta o comprimento de onda da luz em trânsito. As linhas se deslocam ao rolar a página ou ajustar z. Quanto maior o redshift cosmológico, menor era o fator de escala na emissão.', detail: 'Para interpretar z como distância ou idade, precisamos de um modelo cosmológico.' }
 ];
 ---
 <section class="light-exhibit" id="prologo" data-light-exhibit data-light-scene="0" aria-labelledby="light-title">
@@ -19,14 +19,14 @@ const steps = [
   <div class="light-grid page-width">
     <div class="light-sticky">
       <div class="light-instrument" id="light-instrument">
-        <div class="light-plate-bar"><span>Arquivo da luz</span><span data-light-kind>01 / Observação</span></div>
+        <div class="light-plate-bar"><span>Arquivo da luz</span><span data-light-kind>Observação e diagrama</span></div>
         <div class="light-view">
           <figure class="light-photo" data-light-view="photo">
             <Image src={webb} alt="Galáxias e arcos alongados em torno do aglomerado SMACS 0723." width={800} height={460} fit="cover" widths={[520, 800]} sizes="(max-width: 720px) 100vw, 58vw" format="webp" quality={82} loading="lazy" />
             <figcaption><a href="https://esawebb.org/images/weic2209a/" target="_blank" rel="noopener noreferrer">Webb/NIRCam · NASA, ESA, CSA, STScI ↗</a></figcaption>
           </figure>
-          <figure class="light-spectrum" data-light-view="spectrum" data-line-mode="emission" hidden>
-            <svg viewBox="0 0 500 230" role="img" aria-label="Diagrama com três linhas espectrais em duas faixas. Compare as linhas de referência com as que chegam deslocadas. O controle de redshift muda a distância entre elas.">
+          <figure class="light-spectrum" data-light-view="spectrum" data-line-mode="emission">
+            <svg viewBox="0 0 500 230" role="img" aria-label="Três linhas espectrais comparadas na mesma escala. A faixa de cima é a referência. Na faixa de baixo, um redshift maior leva as linhas para comprimentos de onda maiores.">
               <defs>
                 <linearGradient id="light-visible">
                   <stop offset="0" stop-color="#5441a6"/><stop offset=".25" stop-color="#407dcd"/>
@@ -56,7 +56,7 @@ const steps = [
                 <text x="250" y="226">Comprimento de onda (nm)</text>
               </g>
             </svg>
-            <figcaption data-light-caption>Emissão calculada · Hβ, [O III] e Hα.</figcaption>
+            <figcaption><span data-light-caption>Emissão calculada · Hβ, [O III] e Hα.</span> <span data-light-sample>z = 0,35</span></figcaption>
           </figure>
         </div>
         <div class="light-mode" data-light-mode hidden role="group" aria-label="Tipo de linha espectral">
@@ -80,15 +80,13 @@ const steps = [
         <p>{step.text}</p>
         <small>{step.detail}</small>
         <a class="textlink light-manual-link" href="#light-instrument" data-light-choose={i} hidden>Ver no instrumento <span aria-hidden="true">↑</span></a>
-        {i === 1 && <details class="bench-method niriss-case">
-          <summary>Examinar dois espectros observados pelo Webb</summary>
-          <figure>
+        {i === 1 && <figure class="niriss-case">
+            <p class="exhibit-label">Observação · Webb/NIRISS</p>
             <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-niriss-emission-spectra/" target="_blank" rel="noopener noreferrer">
               <Image src={niriss} alt="Gráfico da NASA com dois espectros NIRISS de arcos de SMACS 0723. As linhas de hidrogênio e oxigênio aparecem em posições coincidentes." width={800} widths={[480, 800]} sizes="(max-width: 720px) 88vw, 34vw" format="webp" quality={83} loading="lazy" />
             </a>
-            <figcaption>Observação · NIRISS. Os padrões coincidentes ajudaram a identificar duas imagens da mesma galáxia produzidas por uma lente gravitacional. NASA, ESA, CSA, STScI. <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-niriss-emission-spectra/" target="_blank" rel="noopener noreferrer">Fonte e gráfico em resolução integral</a>.</figcaption>
-          </figure>
-        </details>}
+            <figcaption>Os padrões coincidentes ajudaram a identificar duas imagens da mesma galáxia produzidas por uma lente gravitacional. NASA, ESA, CSA, STScI. <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-niriss-emission-spectra/" target="_blank" rel="noopener noreferrer">Fonte e gráfico em resolução integral</a>.</figcaption>
+        </figure>}
         {i === 2 && <div class="light-redshift-presets bench-presets" role="group" data-light-presets hidden aria-label="Exemplos de redshift">
             <button type="button" data-light-preset="0">Sem deslocamento</button>
             <button type="button" data-light-preset="0.35">Restaurar exemplo</button>

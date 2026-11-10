@@ -1,9 +1,10 @@
 ---
 import '../styles/motion-lab.css';
+import { galaxyField, seenFrom } from '../lib/motion-lab';
 /**
  * Ciência em movimento: cinco animações científicas interativas. O texto e a estrutura vêm do servidor;
  * o desenho e o movimento são montados por src/scripts/motion-lab.ts (sem WebGL).
- * Sem JavaScript, cada painel vira um texto descritivo.
+ * Sem JavaScript, cada painel mantém a descrição e a expansão mostra um exemplo estático.
  */
 interface Key { kind: 'solid' | 'dash' | 'dot' | 'bar'; text: string }
 interface Panel {
@@ -11,6 +12,11 @@ interface Panel {
   range: string; key: Key[];
 }
 const preview:Record<string,string>={luz:'M2 16Q8 2 14 16T26 16T38 16T50 16',expansao:'M8 16H44M26 2V30M8 12L4 16L8 20M44 12L48 16L44 20',hubble:'M5 3V28H49M8 25L22 18L35 11L47 5',frio:'M3 28C12 28 13 3 22 3S30 28 49 28',giro:'M26 16C26 4 45 3 46 15S26 33 14 24S5 3 26 3'};
+const field = galaxyField();
+const expansionExample = field.map((galaxy) => {
+  const [x, y] = seenFrom(galaxy, field[38], 1.6);
+  return { dx: x * 44, dy: y * 44, r: 4.4 + galaxy.size * 3 };
+}).filter(({ dx, dy }) => Math.abs(dx) < 220 && Math.abs(dy) < 135);
 const panels: Panel[] = [
   {
     id: 'luz', tab: 'Luz esticada',
@@ -24,7 +30,7 @@ const panels: Panel[] = [
   {
     id: 'expansao', tab: 'Espaço crescendo',
     title: 'Se tudo se afasta, onde fica o centro?',
-    lede: 'Na expansão descrita pelo modelo cosmológico, não há um centro especial. Em grandes distâncias, as galáxias tendem a se afastar, e as mais distantes se afastam mais depressa.',
+    lede: 'Role a página para esticar a grade ou ajuste a barra. Em grandes distâncias, as galáxias tendem a se afastar, e as mais distantes se afastam mais depressa.',
     alt: 'Galáxias num quadriculado que se estica. Setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Trocando a galáxia de onde se olha, a vista é a mesma.',
     note: 'O quadriculado é uma ilustração que se repete, não um mapa do Universo. O modelo cosmológico usual não tem um centro privilegiado; a extensão do Universo inteiro é desconhecida. Em sistemas ligados pela gravidade, a expansão não aumenta as distâncias dessa forma.',
     range: 'Quanto o espaço cresceu',
@@ -64,7 +70,7 @@ const panels: Panel[] = [
     <p class="section-id">02 · Ciência em movimento</p>
     <header class="sci-head">
       <h2 class="display" id="sci-title">Veja o Universo<br /><em>se mexer.</em></h2>
-      <p>Comece por uma pergunta. A cena se move sozinha; você pode pausar, voltar e mudar o que quiser comparar.</p>
+      <p>Comece por uma pergunta. As cenas respondem à rolagem ou à reprodução. Você pode pausar, voltar e mudar o que quiser comparar.</p>
     </header>
 
     <div class="sci-tabs" role="tablist" aria-label="Animações científicas" data-sci-tabs hidden>
@@ -76,7 +82,27 @@ const panels: Panel[] = [
         <article class="sci-panel" id={`movimento-${p.id}`} role="tabpanel" aria-labelledby={`movimento-aba-${p.id}`} data-sci-panel={p.id} hidden={i > 0}>
           <figure class="sci-fig">
             <div class="sci-stage" data-sci-stage>
-              <svg data-sci-svg viewBox="0 0 480 300" role="img" aria-label={p.alt} preserveAspectRatio="xMidYMid meet"></svg>
+              <svg data-sci-svg viewBox="0 0 480 300" role="img" aria-label={p.alt} preserveAspectRatio="xMidYMid meet">
+                {p.id === 'expansao' && <g data-sci-static-expansion>
+                  <defs>
+                    <pattern id="sci-static-grid" x="28.8" y="9.2" width="70.4" height="70.4" patternUnits="userSpaceOnUse">
+                      <path d="M70.4 0H0V70.4" fill="none" stroke="var(--line-strong)" />
+                    </pattern>
+                    <marker id="sci-static-arrow" viewBox="0 0 5 5" refX="4" refY="2.5" markerWidth="4" markerHeight="4" orient="auto">
+                      <path d="M0 0L5 2.5L0 5Z" fill="var(--accent-ink)" />
+                    </marker>
+                  </defs>
+                  <rect width="480" height="300" fill="url(#sci-static-grid)" />
+                  <g transform="translate(240 150)">
+                    {expansionExample.map(({ dx, dy, r }) => <g>
+                      {(dx !== 0 || dy !== 0) && <line x1={dx} y1={dy} x2={1.17 * dx} y2={1.17 * dy} stroke="var(--accent-ink)" stroke-width="2" marker-end="url(#sci-static-arrow)" />}
+                      <ellipse cx={dx} cy={dy} rx={r} ry={r * 0.5} fill="var(--ink-2)" />
+                    </g>)}
+                    <circle r="12" fill="none" stroke="var(--accent-ink)" stroke-width="3" />
+                    <text x="17" y="-14" class="sci-t strong halo">nós</text>
+                  </g>
+                </g>}
+              </svg>
             </div>
             <ul class="sci-key" aria-label="Legenda">
               {p.key.map((k) => <li><i data-kind={k.kind} aria-hidden="true"></i>{k.text}</li>)}
@@ -107,5 +133,5 @@ const panels: Panel[] = [
     </div>
     <p class="sci-sources">Quer se aprofundar? Consulte as explicações da NASA sobre <a href="https://science.nasa.gov/mission/webb/big-bang-q-and-a/" target="_blank" rel="noopener noreferrer">a expansão e a luz antiga <span class="visually-hidden">(abre em outra aba)</span>↗</a> e <a href="https://science.nasa.gov/mission/webb/galaxies-over-time/" target="_blank" rel="noopener noreferrer">a rotação das galáxias <span class="visually-hidden">(abre em outra aba)</span>↗</a>.</p>
   </div>
-  <noscript><style>.sci-lab [data-sci-panel][hidden]{display:grid}.sci-lab .sci-fig,.sci-lab .sci-controls,.sci-lab .sci-read,.sci-lab .sci-badge{display:none}.sci-lab .sci-panel{grid-template-columns:1fr;padding-block:18px;border-top:1px solid var(--line)}</style></noscript>
+  <noscript><style>.sci-lab [data-sci-panel][hidden]{display:grid!important}.sci-lab .sci-fig,.sci-lab .sci-controls,.sci-lab .sci-read,.sci-lab .sci-badge{display:none}.sci-lab .sci-panel{grid-template-columns:1fr;padding-block:18px;border-top:1px solid var(--line)}.sci-lab [data-sci-panel="expansao"] .sci-fig{display:block;max-width:36rem}.sci-lab .sci-stage::after{display:none}</style></noscript>
 </section>

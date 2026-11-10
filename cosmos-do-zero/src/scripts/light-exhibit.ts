@@ -1,4 +1,5 @@
 import { observedWavelengthNm } from '../lib/cosmology';
+import { motionPreference } from './motion-preference';
 
 const decimal = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const wavelength = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -15,6 +16,7 @@ export function initLightExhibit(): void {
   const lineMode = exhibit.querySelector<HTMLElement>('[data-light-mode]')!;
   const modes = [...exhibit.querySelectorAll<HTMLButtonElement>('[data-light-kind-button]')];
   const caption = exhibit.querySelector<HTMLElement>('[data-light-caption]')!;
+  const sample = exhibit.querySelector<HTMLElement>('[data-light-sample]')!;
   const wavelengths = {
     emission: [486.1, 500.7, 656.3], // Hβ, [O III], Hα
     absorption: [434.0, 486.1, 656.3] // Hγ, Hβ, Hα
@@ -29,7 +31,12 @@ export function initLightExhibit(): void {
   const scale = exhibit.querySelector<HTMLElement>('[data-light-scale]')!;
   const compact = matchMedia('(max-width: 720px)');
   const sticky = matchMedia('(min-height: 651px)');
+  const example = Number(slider.defaultValue);
+  const maxRedshift = Number(slider.max);
+  let z = slider.valueAsNumber;
   let scene = -1;
+  let manual = false;
+  let visible = false;
 
   function show(index: number) {
     if (index === scene) return;
@@ -44,14 +51,15 @@ export function initLightExhibit(): void {
     buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(i === index)));
   }
 
-  function updateSpectrum() {
-    const z = slider.valueAsNumber;
+  function updateSpectrum(next = z) {
+    z = next;
     const wavelengthsNm = wavelengths[mode];
     restLines.setAttribute('d', wavelengthsNm.map((value) => `M${plotX(value)} 45v29`).join(''));
     lines.forEach((line, i) => {
       line.setAttribute('transform', `translate(${plotX(observedWavelengthNm(z, wavelengthsNm[i]))} 0)`);
     });
-    redshift.value = decimal.format(slider.valueAsNumber);
+    redshift.value = decimal.format(z);
+    sample.textContent = `z = ${redshift.value}`;
     slider.setAttribute('aria-valuetext', `z igual a ${redshift.value}`);
     readout.textContent = `${wavelength.format(observedWavelengthNm(z, wavelengthsNm[2]))} nm`;
     scale.textContent = decimal.format(1 / (1 + z));
@@ -60,12 +68,21 @@ export function initLightExhibit(): void {
   const readingLine = () => window.innerHeight * (compact.matches ? 0.62 : 0.78);
 
   function syncToScroll() {
-    if (!sticky.matches) return;
+    if (!visible || !sticky.matches || document.hidden) return;
     // Use a line in the reading column so the active scene stays stable between panels.
     const line = readingLine();
     let index = 0;
     while (index + 1 < steps.length && steps[index + 1].getBoundingClientRect().top <= line) index++;
     show(index);
+    if (index === 0 || manual || motionPreference.matches) return;
+    const plot = spectrum.getBoundingClientRect();
+    if (plot.bottom <= 0 || plot.top >= window.innerHeight) return;
+    const step = steps[index].getBoundingClientRect();
+    const progress = Math.max(0, Math.min(1, (line - step.top) / step.height));
+    const next = index === 1 ? example * progress : example + (maxRedshift - example) * progress;
+    if (next === z) return;
+    slider.value = String(next);
+    updateSpectrum(next);
   }
 
   let scrollFrame = 0;
@@ -76,14 +93,17 @@ export function initLightExhibit(): void {
       syncToScroll();
     });
   }
-  new IntersectionObserver(([entry]) => {
-    if (entry.isIntersecting) {
+  if ('IntersectionObserver' in window) new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible) {
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
       onScroll();
     } else {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      cancelAnimationFrame(scrollFrame);
+      scrollFrame = 0;
     }
   }).observe(exhibit);
   buttons.forEach((button, i) => button.addEventListener('click', () => {
@@ -95,7 +115,10 @@ export function initLightExhibit(): void {
       steps[i].scrollIntoView({ block: 'center', behavior: 'instant' });
     }
   }));
-  slider.addEventListener('input', updateSpectrum);
+  slider.addEventListener('input', () => {
+    manual = true;
+    updateSpectrum(slider.valueAsNumber);
+  });
   function setLineMode(next: keyof typeof wavelengths) {
     mode = next;
     spectrum.dataset.lineMode = mode;
@@ -111,8 +134,10 @@ export function initLightExhibit(): void {
   }));
   exhibit.querySelectorAll<HTMLButtonElement>('[data-light-preset]').forEach((button) => {
     button.addEventListener('click', () => {
+      manual = true;
       slider.value = button.dataset.lightPreset!;
-      if (slider.valueAsNumber === Number(slider.defaultValue)) setLineMode('emission');
+      z = slider.valueAsNumber;
+      if (z === example) setLineMode('emission');
       else updateSpectrum();
     });
   });
@@ -125,10 +150,12 @@ export function initLightExhibit(): void {
     if (step >= 0) show(step);
   }
   window.addEventListener('hashchange', syncHash);
+  document.addEventListener('visibilitychange', onScroll);
+  motionPreference.addEventListener('change', onScroll);
   show(0);
   syncHash();
   exhibit.querySelector<HTMLElement>('[data-light-nav]')!.hidden = false;
   exhibit.querySelector<HTMLElement>('[data-light-presets]')!.hidden = false;
   updateSpectrum();
-  syncToScroll();
+  exhibit.dataset.lightReady = 'true';
 }
