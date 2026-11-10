@@ -48,7 +48,7 @@ export const chapterTitleShort: Record<ChapterId, string> = {
   'vida-das-estrelas': 'A vida das estrelas',
   'sistema-solar': 'O Sistema Solar',
   'terra-e-atmosfera': 'Terra e atmosfera',
-  'misterios-do-cosmos': 'Como sabemos disso?'
+  'misterios-do-cosmos': 'Evidências em cosmologia'
 };
 /** Foto oficial associada a cada capítulo (arquivo em src/assets/photos) e o índice do crédito em site.json. */
 export const chapterPhotoKey: Partial<Record<ChapterId, 'andromeda-wise' | 'carina-cosmic-cliffs' | 'iss-sunrise'>> = {

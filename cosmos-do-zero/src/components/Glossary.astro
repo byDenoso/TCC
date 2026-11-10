@@ -9,13 +9,13 @@ const Title = Astro.props.headingLevel ?? 'h2';
 ---
 <section class="glossary-section paper" id="glossario" aria-labelledby="glossary-title" data-island="glossary">
   <div class="page-width">
-    <p class="exhibit-label"><span>03</span> Dicionário · Conceitos de campo</p>
+    <p class="exhibit-label"><span>03</span> Dicionário · Termos de cosmologia</p>
     <div class="intro-head">
       <Title class="display" id="glossary-title">Dicionário do cosmos</Title>
-      <p>Encontre uma palavra, entenda com um exemplo e veja como ela aparece nas aulas. Você pode buscar pelo termo ou filtrar por jornada.</p>
+      <p>Busque um termo ou filtre por aula. Cada entrada traz uma definição, um exemplo e um link para a aula.</p>
     </div>
     <form class="glossary-search" role="search" onsubmit="return false">
-      <label for="glossary-search">O que você quer entender?</label>
+      <label for="glossary-search">Qual termo você procura?</label>
       <div class="glossary-input-wrap">
         <input type="search" id="glossary-search" data-glossary-input placeholder="Ex.: ano-luz, gravidade, fusão…" autocomplete="off" spellcheck="false" />
         <button type="button" class="glossary-reset" data-glossary-reset aria-label="Limpar o texto da busca" hidden>×</button>

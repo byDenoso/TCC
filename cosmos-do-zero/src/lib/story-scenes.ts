@@ -2,28 +2,28 @@ export interface StoryPhase { at:number; label:string; say:string }
 export interface Story { title:string; short:string; lede:string; phases:StoryPhase[]; limit:string }
 export const STORIES:Record<string,Story>={
  'galaxias-e-nebulosas':{
-  title:'Uma casa dentro de outra',short:'Nosso endereço cósmico',lede:'Afaste o olhar: o que parecia enorme passa a fazer parte de algo maior.',
-  phases:[{at:0,label:'Nossa casa',say:'A Terra orbita o Sol. O Sistema Solar é só uma pequena parte da nossa galáxia.'},{at:.34,label:'Nossa galáxia',say:'A Via Láctea reúne estrelas, gás e poeira. O Sol fica longe do centro.'},{at:.7,label:'A grande teia',say:'Galáxias se agrupam em fios e conjuntos maiores, separados por regiões menos povoadas.'}],
+  title:'Do Sistema Solar à teia cósmica',short:'A Via Láctea em diferentes escalas',lede:'Compare o tamanho do Sistema Solar com o da Via Láctea e a escala dos agrupamentos de galáxias.',
+  phases:[{at:0,label:'Sistema Solar',say:'A Terra orbita o Sol. O Sistema Solar é só uma pequena parte da nossa galáxia.'},{at:.34,label:'Via Láctea',say:'A Via Láctea reúne estrelas, gás e poeira. O Sol fica longe do centro.'},{at:.7,label:'Teia cósmica',say:'Galáxias se agrupam em fios e conjuntos maiores, separados por regiões menos povoadas.'}],
   limit:'Terra com mapa MODIS. A Via Láctea e a teia cósmica são modelos ilustrativos, com saltos de escala.'
  },
  'origem-do-universo':{
-  title:'A luz traz uma pista',short:'O espaço cresce, a onda se alonga',lede:'Compare uma onda quando foi emitida e depois de atravessar um espaço em expansão.',
+  title:'O efeito da expansão sobre a luz',short:'Comprimento de onda e expansão',lede:'Compare uma onda quando foi emitida e depois de atravessar um espaço em expansão.',
   phases:[{at:0,label:'Luz emitida',say:'A onda começa com 400 nanômetros. A distância entre duas cristas é seu comprimento de onda.'},{at:.2,label:'Espaço crescendo',say:'Enquanto o espaço se expande, as cristas se separam. A onda fica mais comprida na mesma proporção.'},{at:.8,label:'Luz recebida',say:'Se o espaço duplica, 400 nm passam a 800 nm: infravermelho, fora da nossa visão.'}],
   limit:'As ondas representam o campo elétrico. Amplitudes e comprimentos foram ampliados. A faixa de cor é ilustrativa.'
  },
  'misterios-do-cosmos':{
-  title:'Uma pista no giro das galáxias',short:'Compare a previsão com o padrão',lede:'O movimento das estrelas revela a gravidade que age sobre elas.',
-  phases:[{at:0,label:'O que enxergamos',say:'Começamos com uma curva de giro que considera apenas a matéria visível do modelo.'},{at:.3,label:'A pista do movimento',say:'Em muitas galáxias, as regiões externas giram mais depressa do que essa previsão simples.'},{at:.75,label:'Uma explicação',say:'Um halo de matéria escura acrescenta gravidade e ajuda a explicar o padrão. Outras evidências também entram na investigação.'}],
+  title:'Rotação das galáxias',short:'Curvas de rotação com e sem halo',lede:'O movimento das estrelas revela a gravidade que age sobre elas.',
+  phases:[{at:0,label:'Matéria visível',say:'Começamos com uma curva de giro que considera apenas a matéria visível do modelo.'},{at:.3,label:'Padrão de rotação',say:'Em muitas galáxias, as regiões externas giram mais depressa do que essa previsão simples.'},{at:.75,label:'Modelo com halo',say:'Um halo de matéria escura acrescenta gravidade e ajuda a explicar o padrão. Outras evidências também entram na investigação.'}],
   limit:'Curvas de um modelo ilustrativo, sem medições de uma galáxia real. A comparação isolada não estabelece uma explicação única.'
  },
  'vida-das-estrelas':{
-  title:'Um começo parecido, dois caminhos',short:'A massa muda a história',lede:'Uma estrela nasce do colapso de uma nuvem. Sua massa ajuda a definir o que vem depois.',
-  phases:[{at:0,label:'Nascer',say:'A gravidade concentra gás. O centro aquece até a fusão sustentar uma estrela.'},{at:.3,label:'Brilhar',say:'A fusão libera energia. Estrelas mais massivas gastam seu combustível mais depressa.'},{at:.72,label:'Transformar',say:'Uma estrela como o Sol termina como anã branca. Estrelas muito massivas podem deixar uma estrela de nêutrons ou um buraco negro.'}],
+  title:'Evolução estelar em duas massas',short:'Da fusão ao remanescente',lede:'Uma estrela nasce do colapso de uma nuvem. Sua massa ajuda a definir o que vem depois.',
+  phases:[{at:0,label:'Colapso da nuvem',say:'A gravidade concentra gás. O centro aquece até a fusão sustentar uma estrela.'},{at:.3,label:'Fusão nuclear',say:'A fusão libera energia. Estrelas mais massivas gastam seu combustível mais depressa.'},{at:.72,label:'Remanescentes',say:'Uma estrela como o Sol termina como anã branca. Estrelas muito massivas podem deixar uma estrela de nêutrons ou um buraco negro.'}],
   limit:'Caminhos simplificados, com tamanhos e durações fora de escala. Massa, composição e companheiras influenciam a evolução.'
  },
  'sistema-solar':{
-  title:'Cada órbita tem seu ritmo',short:'Mais longe, uma volta demora mais',lede:'Observe três planetas. Eles avançam juntos no tempo, mas completam voltas em ritmos diferentes.',
-  phases:[{at:0,label:'Mesmo Sol',say:'Os planetas seguem órbitas ao redor do Sol. Cada órbita tem seu próprio tamanho.'},{at:.25,label:'Ritmos diferentes',say:'Um planeta mais próximo completa sua volta antes de um planeta mais distante.'},{at:.72,label:'Uma relação',say:'Na aproximação de Kepler, o quadrado do período é proporcional ao cubo do tamanho da órbita.'}],
+  title:'Períodos das órbitas planetárias',short:'Distância ao Sol e período orbital',lede:'Compare quantas voltas Mercúrio, a Terra e Marte completam no mesmo intervalo de tempo.',
+  phases:[{at:0,label:'Órbitas planetárias',say:'Os planetas seguem órbitas ao redor do Sol. Cada órbita tem seu próprio tamanho.'},{at:.25,label:'Períodos orbitais',say:'Um planeta mais próximo completa sua volta antes de um planeta mais distante.'},{at:.72,label:'Lei de Kepler',say:'Na aproximação de Kepler, o quadrado do período é proporcional ao cubo do tamanho da órbita.'}],
   limit:'Órbitas circulares e coplanares para comparar períodos. Raios desenhados e tamanhos dos planetas são ilustrativos.'
  },
  'terra-e-atmosfera':{

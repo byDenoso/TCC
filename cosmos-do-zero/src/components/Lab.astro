@@ -17,19 +17,19 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
 <section class="lab-section dark" id="laboratorio" aria-labelledby="lab-title">
   <div class="page-width">
     <div class="lab-intro">
-      <h2 class="display" id="lab-title">Mude uma escolha.<br /><em>Descubra uma relação.</em></h2>
+      <h2 class="display" id="lab-title">Planetas<br /><em>e estrelas</em></h2>
       <nav aria-label="Experiências">
-        <a href="#comparador">01 Comparar mundos ↓</a>
-        <a href="#estrelas">02 Seguir uma estrela ↓</a>
-        <a href={u('/desafio/#desafio')}>03 Testar suas ideias ↓</a>
+        <a href="#comparador">01 Comparar planetas ↓</a>
+        <a href="#estrelas">02 Evolução estelar ↓</a>
+        <a href={u('/desafio/#desafio')}>03 Revisar as aulas ↓</a>
       </nav>
     </div>
 
     <section id="comparador" class="compare-section" aria-labelledby="compare-title" data-island="compare">
       <div class="experience-heading">
         <span class="meta">EXPERIÊNCIA / 01</span>
-        <h3 id="compare-title">Dois mundos. A mesma régua.</h3>
-        <p>Escolha os planetas e veja o que muda quando tamanho, massa e gravidade deixam de ser a mesma coisa.</p>
+        <h3 id="compare-title">Dois planetas na mesma escala</h3>
+        <p>Selecione dois planetas. A imagem compara o tamanho, e a tabela mostra massa e gravidade.</p>
       </div>
       <div class="compare-selectors">
         <label for="compare-a">Planeta 1
@@ -67,14 +67,14 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
     <section id="estrelas" class="stellar-section" aria-labelledby="stellar-title" data-island="stars">
       <div class="experience-heading">
         <span class="meta">EXPERIÊNCIA / 02</span>
-        <h3 id="stellar-title">A massa escreve parte da história.</h3>
+        <h3 id="stellar-title">Evolução estelar por massa inicial</h3>
         <p>Selecione uma massa inicial para acompanhar um caminho de evolução estelar. A composição e a história também importam.</p>
       </div>
       <div class="star-controls">
         <label for="star-mass">Massa inicial: <output for="star-mass" data-star-value>{massLabel(1, (n) => format(n))}</output></label>
         <input type="range" id="star-mass" data-star-mass min="0.2" max="30" step="0.1" value="1" aria-describedby="star-hint" />
         <p class="visually-hidden" id="star-hint">Use as setas do teclado para ajustar a massa em passos de 0,1 massa solar.</p>
-        <div class="star-presets" role="group" aria-label="Exemplos de massas">
+        <div class="star-presets" role="group" aria-label="Exemplos em massas solares">
           <button type="button" data-mass="0.3" aria-pressed="false">0,3 · anã vermelha</button>
           <button type="button" data-mass="1" aria-pressed="true">1 · como o Sol</button>
           <button type="button" data-mass="5" aria-pressed="false">5 · intermediária</button>
@@ -103,7 +103,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         {star.steps.map((s, i) => <li><button type="button" data-star-step={i} aria-pressed={i === 2 ? 'true' : 'false'}><span>{String(i + 1).padStart(2, '0')}</span><p>{s}</p></button></li>)}
       </ol>
       <p class="experience-note" data-star-note>{star.note}</p>
-      <a class="textlink" href={chapterUrl('vida-das-estrelas')}>Entender o mecanismo por trás do caminho <span aria-hidden="true">↗</span></a>
+      <a class="textlink" href={chapterUrl('vida-das-estrelas')}>Ler a aula sobre evolução estelar <span aria-hidden="true">↗</span></a>
     </section>
   </div>
 </section>

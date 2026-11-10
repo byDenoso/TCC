@@ -7,25 +7,25 @@ const Title = Astro.props.heading ?? 'h3';
 const StageTitle = Title === 'h3' ? 'h4' : 'h3';
 const stages = [
   {
-    id: 'orbitas', label: 'Órbitas', title: 'As estrelas revelam a massa.',
+    id: 'orbitas', label: 'Órbitas', title: 'A órbita de S2',
     text: 'A estrela S2 leva cerca de 16 anos para dar uma volta em torno de Sagittarius A*, no centro da Via Láctea. Acompanhar o movimento de estrelas como S2 revelou uma massa de cerca de quatro milhões de sóis concentrada numa região pequena.',
     caption: 'Órbita ilustrativa em torno de Sgr A*. As proporções são esquemáticas.',
     source: 'https://www.eso.org/public/news/eso2006/', sourceLabel: 'ESO · Órbita de S2'
   },
   {
-    id: 'acrecao', label: 'Acreção', title: 'O gás brilha. A luz muda de rumo.',
+    id: 'acrecao', label: 'Acreção', title: 'Luz do disco de acreção',
     text: 'Gás quente em órbita pode emitir luz enquanto se aproxima do buraco negro. A curvatura do espaço-tempo desvia essa luz. Dependendo de onde observamos, parte da luz do lado distante do disco chega por cima da região escura.',
     caption: 'Esquema de um disco de acreção e de uma trajetória desviada pela gravidade.',
     source: 'https://science.nasa.gov/universe/black-holes/anatomy/', sourceLabel: 'NASA · Disco de acreção'
   },
   {
-    id: 'horizonte', label: 'Horizonte', title: 'Há um limite para o retorno.',
+    id: 'horizonte', label: 'Horizonte', title: 'Horizonte de eventos',
     text: 'O horizonte de eventos é a fronteira a partir da qual nenhum sinal pode escapar para o exterior. A luz emitida do lado de fora pode chegar até nós, dependendo da trajetória.',
     caption: 'Esquema da fronteira. As setas indicam dois destinos possíveis para a luz emitida do lado de fora.',
     source: 'https://science.nasa.gov/universe/black-holes/anatomy/', sourceLabel: 'NASA · Horizonte de eventos'
   },
   {
-    id: 'eht', label: 'Observação', title: 'O EHT reconstrói o anel.',
+    id: 'eht', label: 'Observação', title: 'Imagem de Sagittarius A*',
     text: 'O Event Horizon Telescope combinou observações em rádio feitas em 2017 e publicou esta imagem de Sagittarius A* em 2022. O anel marca emissão do gás ao redor do buraco negro. A região central escura é a sombra aparente produzida pelo desvio e pela captura da luz, maior que o horizonte de eventos.',
     source: 'https://eventhorizontelescope.org/blog/astronomers-reveal-first-image-black-hole-heart-our-galaxy', sourceLabel: 'EHT · Como a imagem foi obtida'
   }
@@ -35,7 +35,7 @@ const stages = [
   <header class="cosmic-exhibit-heading">
     <div class="exhibit-label">Exposição · Centro da Via Láctea</div>
     <Title id="black-hole-exhibit-title">Como vemos <em>um buraco negro?</em></Title>
-    <p>Siga as pistas em Sagittarius A*. Primeiro as estrelas em órbita, depois o caminho da luz até o telescópio.</p>
+    <p>Em Sagittarius A*, as órbitas das estrelas indicam a massa central. A imagem em rádio mostra a emissão do gás ao redor.</p>
   </header>
 
   <nav class="cosmic-exhibit-nav" aria-label="Etapas da exposição sobre buracos negros">

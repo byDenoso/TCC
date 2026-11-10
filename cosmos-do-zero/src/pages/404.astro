@@ -5,14 +5,14 @@ import PhotoBand from '../components/PhotoBand.astro';
 import { u } from '../lib/url';
 import '../styles/ux-refinements.css';
 ---
-<Base title="Página não encontrada · Cosmos do Zero" description="A página procurada não existe neste observatório." bodyClass="missing-page" noindex>
+<Base title="Página não encontrada · Cosmos do Zero" description="A página solicitada não foi encontrada no Cosmos do Zero." bodyClass="missing-page" noindex>
   <div id="topo"><Header variant="solid" /></div>
   <PhotoBand photo="andromeda-wise" focus="50% 50%" />
   <main id="principal" class="paper" style="padding:110px 0 130px">
     <div class="page-width" style="max-width:760px">
-      <div class="exhibit-label"><span>404</span> Fora da rota</div>
-      <h1 class="display" style="font-size:clamp(46px,8vw,92px);margin:32px 0 24px">Essa região do céu<br /><em>ainda não foi mapeada.</em></h1>
-      <p style="font-size:18px;line-height:1.7;color:var(--muted);max-width:520px">Não encontramos esta página. Volte ao início ou continue por uma das seis aulas.</p>
+      <div class="exhibit-label"><span>404</span> Endereço inválido</div>
+      <h1 class="display" style="font-size:clamp(46px,8vw,92px);margin:32px 0 24px">Página<br /><em>não encontrada</em></h1>
+      <p style="font-size:18px;line-height:1.7;color:var(--muted);max-width:520px">Confira o endereço ou abra uma das aulas.</p>
       <p style="margin-top:34px;display:flex;gap:28px;flex-wrap:wrap;align-items:center"><a class="cta" href={u('/')}>Voltar ao início <span class="arrow" aria-hidden="true">↗</span></a><a class="textlink" href={u('/#capitulos')}>Ver as aulas →</a></p>
     </div>
   </main>
