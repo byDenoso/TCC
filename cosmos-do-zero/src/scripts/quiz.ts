@@ -17,7 +17,7 @@ function offerQuizReturn(context?: Review): void {
     review = context ?? JSON.parse(sessionStorage.getItem(REVIEW_KEY) ?? 'null') as Review;
     if (!review || !questions.some(q => q.id === review.question && q.chapter === review.chapter && q.section === review.section)) return;
     const from = new URL(review.from, location.origin);
-    if (from.origin !== location.origin || ![u('/'), chapterUrl(review.chapter)].includes(from.pathname)) return;
+    if (from.origin !== location.origin || ![u('/'), u('/desafio/'), chapterUrl(review.chapter)].includes(from.pathname)) return;
     if (location.pathname !== chapterUrl(review.chapter)) return;
   } catch { return; }
   const target = review.section ? document.getElementById(review.section) : document.querySelector('.reader-opening');
@@ -55,7 +55,7 @@ function mount(root: HTMLElement, opts: { chapter: ChapterId | ''; inChapter: bo
   let state: QuizState = createQuiz(quizPool(opts.chapter));
   let chapterNow = opts.chapter;
   // A tentativa sobrevive a ir rever um trecho e voltar.
-  const key = () => `cosmos-quiz:${location.pathname}:${chapterNow}`;
+  const key = () => `cosmos-quiz:${opts.inChapter ? location.pathname : u('/')}:${chapterNow}`;
   const save = () => { try { sessionStorage.setItem(key(), JSON.stringify({ ids: state.pool.map((q) => q.id), position: state.position, answered: state.answered, choice: state.choice, history: state.history, finished: state.finished })); } catch { /* sem armazenamento */ } };
   const restore = (): boolean => {
     try {

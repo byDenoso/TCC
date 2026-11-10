@@ -2,7 +2,7 @@
 import '../styles/interactive-grid.css';
 import { Image } from 'astro:assets';
 import { photos, planetArt } from '../lib/images';
-import { u, chapterUrl } from '../lib/url';
+import { u } from '../lib/url';
 /**
  * Vitrine dos interativos que já existem no site. Cada cartão diz o que a imagem é
  * (foto real, simulação ou ilustração), para ninguém confundir desenho com observação.
@@ -13,11 +13,11 @@ type Card = { href: string; kind: string; title: string; text: string; action: s
   | { planet: keyof typeof planetArt }
 );
 const cards: Card[] = [
-  { href: `${chapterUrl('galaxias-e-nebulosas')}#exploracao`, kind: 'Simulação 3D', title: 'Do seu quintal à teia cósmica', text: 'Gire a Terra, afaste a câmera e veja onde a Via Láctea fica entre as outras galáxias.', action: 'Abrir o Universo em 3D', poster: 'earth' },
-  { href: '#imagens', kind: 'Fotos reais · NASA', title: 'Imagens de telescópio, lidas de perto', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
+  { href: u('/escalas/'), kind: 'Simulação 3D', title: 'Do seu quintal à teia cósmica', text: 'Gire a Terra, afaste a câmera e veja onde a Via Láctea fica entre as outras galáxias.', action: 'Abrir o Universo em 3D', poster: 'earth' },
+  { href: u('/imagens/'), kind: 'Fotos reais · NASA', title: 'Imagens de telescópio, lidas de perto', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
   { href: `${u('/laboratorio/')}#planetas`, kind: 'Ilustração artística', title: 'Oito mundos, nenhum igual', text: 'Escolha um planeta e compare composição, atmosfera e os números que dão forma a cada um.', action: 'Conhecer os planetas', planet: 'saturno' },
-  { href: '#viagem', kind: 'Animação guiada', title: '13,8 bilhões de anos em uma rolagem', text: 'Do plasma quente às galáxias de hoje: role a página e o Universo muda na sua frente.', action: 'Fazer a viagem', poster: 'galaxies' },
-  { href: '#observatorio', kind: 'Mapa simulado', title: 'A luz mais antiga que existe', text: 'Na máquina do tempo, descubra de que época vem a luz que chega até nós.', action: 'Ligar a máquina do tempo', poster: 'cmb' },
+  { href: u('/#viagem'), kind: 'Animação guiada', title: '13,8 bilhões de anos em uma rolagem', text: 'Do plasma quente às galáxias de hoje: role a página e o Universo muda na sua frente.', action: 'Fazer a viagem', poster: 'galaxies' },
+  { href: u('/observatorio/?lab=tempo#observatorio'), kind: 'Mapa simulado', title: 'A luz mais antiga que existe', text: 'Na máquina do tempo, descubra de que época vem a luz que chega até nós.', action: 'Ligar a máquina do tempo', poster: 'cmb' },
   { href: `${u('/laboratorio/')}#estrelas`, kind: 'Foto real · Webb', title: 'A vida de uma estrela', text: 'Estrelas nascem em nuvens como esta. Escolha a massa inicial e acompanhe o caminho da evolução.', action: 'Seguir uma estrela', photo: 'carina-cosmic-cliffs', focus: '30% 40%' }
 ];
 ---

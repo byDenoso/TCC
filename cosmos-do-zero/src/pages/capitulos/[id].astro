@@ -159,7 +159,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
       </div>
       <nav class="chapter-pagination page-width" aria-label="Continuar a jornada">
         {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}
-        <a class="next-lesson-card" href={next ? chapterUrl(next.id) : u(isPrimary ? '/#desafio' : '/laboratorio/')}>
+        <a class="next-lesson-card" href={next ? chapterUrl(next.id) : u(isPrimary ? '/desafio/#desafio' : '/laboratorio/')}>
           <span class="next-lesson-copy">
             <span class="meta">{next ? `A seguir · ${next.minutes} min` : isPrimary ? 'Sua próxima descoberta' : 'Continue explorando'}</span>
             <strong>{next ? chapterTitleShort[next.id] : isPrimary ? 'Conecte as três ideias' : 'Volte ao laboratório'}</strong>

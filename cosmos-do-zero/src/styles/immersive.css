@@ -125,7 +125,6 @@ html:root[data-theme='light'] .hero-main .cmb-hero { box-shadow:0 22px 60px var(
 html:root[data-theme='light'] .hero-foot .number { color:var(--ink); }
 
 /* Um único dono para as entradas; a moldura para quando deixa de estar visível. */
-html.gsap-on :is(.hero-copy > *,.hero-main .cmb-hero,.hero-foot) { animation:none !important; }
 .hero-shell:is([data-ambient-paused='true'],[data-ambient-suspended='true']) :is(.star,.sky-orbit) { animation-play-state:paused; }
 html[data-motion='gentle'] .sky-orbit { animation-duration:80s; }
 html[data-motion='gentle'] .star { animation-duration:12s; }

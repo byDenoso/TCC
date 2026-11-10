@@ -59,11 +59,12 @@ html:root .premiere :focus-visible, .light-exhibit :focus-visible, .orbit-exhibi
 .premiere-credit strong svg { display: inline-block; margin-inline-start: 3px; }
 .premiere-credit:hover strong { color: var(--exhibit-accent); }
 html:root .school-home .hero-shell .hero-main { padding-block: clamp(54px, 7vw, 104px); min-height: 0; }
-.hero-instrument-copy h2 { font-size: clamp(43px, 5.5vw, 84px); margin-block: 18px; }
-.hero-instrument-copy h2 em { color: var(--accent-ink); }
+.hero-instrument-copy :is(h1, h2) { font-size: clamp(43px, 5.5vw, 84px); margin-block: 18px; }
+.hero-instrument-copy :is(h1, h2) em { color: var(--accent-ink); }
 .hero-instrument-copy > p:not(.section-id) { max-width: 46ch; color: var(--ink-2); line-height: 1.7; }
 html:root .hero-instrument-copy .hero-routes { margin-top: 24px; }
 .hero-instrument-copy .hero-explore { border-radius: 5px; }
+.cmb-frame noscript img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
 
 /* Prólogo. Uma cena fixa acompanha os três painéis de leitura. */
 .light-exhibit, .orbit-exhibit { background: var(--exhibit-night); color: var(--exhibit-ink); }

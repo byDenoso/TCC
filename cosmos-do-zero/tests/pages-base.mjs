@@ -1,6 +1,7 @@
 // Valida builds públicos do Cosmos sem depender de navegador ou rede.
 // Executar após npm run build, com SITE_URL/SITE_BASE/SITE_PUBLIC do workflow.
 import assert from 'node:assert/strict';
+import './home-lobby.mjs';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, relative, resolve, sep } from 'node:path';
 
@@ -54,7 +55,7 @@ function walk(dir) {
   }
 }
 walk(dist);
-assert.equal(html.length, 11, 'Esperadas home, seis capítulos, laboratório, dicionário, fontes e 404');
+assert.equal(html.length, 18, 'Esperadas 18 páginas, incluindo os sete destinos de exploração');
 
 for (const file of html) {
   const text = readFileSync(file, 'utf8');
@@ -111,7 +112,7 @@ for (const slug of ['', 'galaxias-e-nebulosas/', 'origem-do-universo/', 'misteri
   const path = slug ? `capitulos/${slug}` : '';
   assert.ok(xml.includes(`<loc>${expectedRoot}${path}</loc>`), `Sitemap sem ${path || '/'}`);
 }
-assert.equal((xml.match(/<loc>/g) ?? []).length, 10, 'Sitemap deve conter dez URLs públicas');
+assert.equal((xml.match(/<loc>/g) ?? []).length, 17, 'Sitemap deve conter 17 URLs públicas');
 checks += 9;
 
 // A compilação de estilos pode incorporar fontes com url() relativo ou com o base.

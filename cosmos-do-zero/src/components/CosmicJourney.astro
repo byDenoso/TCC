@@ -11,12 +11,12 @@ import { JOURNEY_ERAS } from '../lib/journey';
 const marks = JOURNEY_ERAS.map((id) => eras.find((era) => era.id === id)).filter((era) => era !== undefined);
 const total = pad2(marks.length);
 ---
-<section class="journey" id="viagem" aria-labelledby="journey-title" data-journey>
+<section class="journey" id="viagem" data-home-section="04" aria-labelledby="journey-title" data-journey>
   <div class="journey-intro page-width">
-    <p class="section-id">A história em uma rolagem</p>
+    <p class="section-id">04 · A história em uma rolagem</p>
     <h2 class="display" id="journey-title">13,8 bilhões de anos,<br /><em>um marco por vez.</em></h2>
     <p class="journey-lede">Role a página e acompanhe {marks.length} marcos, da fase quente e densa ao Universo observado hoje. A cada marco, os pontos da cena se reorganizam.</p>
-    <a class="textlink" href="#capitulos">Pular para as aulas <span aria-hidden="true">↓</span></a>
+    <a class="textlink" href="#capitulos">Voltar às aulas <span aria-hidden="true">↑</span></a>
   </div>
   <div class="journey-body">
     <div class="journey-stage" aria-hidden="true">

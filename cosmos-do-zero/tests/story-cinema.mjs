@@ -142,15 +142,17 @@ try{
  await story.locator('[data-story-phase]').first().click();
  ok(await story.locator('[data-story-caption]').innerText().then(t=>t.includes('400')),'movimento reduzido: etapas manuais disponíveis');
  await page.goto(base+'/',{waitUntil:'networkidle'});
- const entry=page.locator('.hero-actions a[href="#prologo"]');
- ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso ao prólogo na primeira tela móvel');
+ const entry=page.locator('.hero-actions a[href="#movimento"]');
+ ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso a Ciência em movimento na primeira tela móvel');
  await entry.click();
- ok(new URL(page.url()).hash==='#prologo','abertura leva ao prólogo');
+ ok(new URL(page.url()).hash==='#movimento','abertura leva a Ciência em movimento');
+ await page.goto(base+'/luz/',{waitUntil:'networkidle'});
  await page.locator('[data-light-go="2"]').click();
  const redshift=page.locator('#light-redshift');
  await redshift.waitFor({state:'visible'});
  await redshift.press('End');
  ok((await page.locator('[data-light-readout]').innerText())==='1.050,1 nm','a demonstração do prólogo responde ao controle de redshift');
+ await page.goto(base+'/',{waitUntil:'networkidle'});
  const covers=page.locator('img[data-course-cover]');
  ok(await covers.count()===6,'seis capas observacionais');
  for(const cover of await covers.all()){

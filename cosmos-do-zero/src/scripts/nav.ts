@@ -3,15 +3,30 @@ import { $, $$ } from './dom';
 import { u } from '../lib/url';
 
 /** Endereços antigos da página inicial que mudaram para páginas próprias. */
-const MOVED: Record<string, string> = { tempo: '/laboratorio/#tempo', planetas: '/laboratorio/#planetas', laboratorio: '/laboratorio/#laboratorio', comparador: '/laboratorio/#comparador', estrelas: '/laboratorio/#estrelas', extras: '/laboratorio/', glossario: '/glossario/', fontes: '/fontes/', explorar: '/#observatorio' };
+const MOVED: Record<string, string> = { tempo: '/laboratorio/#tempo', planetas: '/laboratorio/#planetas', laboratorio: '/laboratorio/#laboratorio', comparador: '/laboratorio/#comparador', estrelas: '/laboratorio/#estrelas', extras: '/laboratorio/', glossario: '/glossario/', fontes: '/fontes/', explorar: '/observatorio/#observatorio', observatorio: '/observatorio/#observatorio',
+  prologo: '/luz/#prologo', 'light-instrument': '/luz/#light-instrument', 'escala-cosmica': '/escalas/#escala-cosmica',
+  imagens: '/imagens/#imagens', desafio: '/desafio/#desafio', interativos: '/explorar/#interativos', continue: '/explorar/#continue',
+  'hero-instrument-title': '/ceu/#hero-instrument-title' };
 
 const hashId = (hash = location.hash): string => { try { return decodeURIComponent(hash.slice(1)); } catch { return ''; } };
 
 export function initNav(): void {
   const isHome = location.pathname === u('/') || location.pathname === u('/').replace(/\/$/, '');
-  const movedTo = isHome && location.hash ? MOVED[hashId()] : undefined;
-  if (movedTo && !document.getElementById(hashId())) { location.replace(u(movedTo)); return; }
-  if (isHome) addEventListener('hashchange', () => { const to = MOVED[hashId()]; if (to && !document.getElementById(hashId())) location.replace(u(to)); });
+  const followMoved = (): boolean => {
+    const id = hashId();
+    if (id && document.getElementById(id)) return false;
+    const query = new URLSearchParams(location.search);
+    const lab = /^(tempo|expansao|hubble|receita)$/.test(query.get('lab') ?? '') || ['z', 'om', 'ol', 'h0'].some(key => query.has(key));
+    const moved = !id && lab ? MOVED.observatorio : !id && query.has('assunto') ? MOVED.desafio : Object.hasOwn(MOVED, id) ? MOVED[id] : /^luz-cena-[1-3]$/.test(id) ? `/luz/#${id}` :
+      /^escala-(terra|sistema-solar|via-lactea|grupo-local|teia-cosmica)$/.test(id) ? `/escalas/#${id}` : undefined;
+    if (!moved) return false;
+    const destination = new URL(u(moved), location.origin);
+    destination.search = location.search;
+    location.replace(destination);
+    return true;
+  };
+  if (isHome && followMoved()) return;
+  if (isHome) addEventListener('hashchange', followMoved);
   // Old deep links still reveal content inside the complementary explorer.
   const revealHash = () => {
     let target: HTMLElement | null = null;

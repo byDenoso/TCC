@@ -11,12 +11,16 @@ const SELECTORS = [
 
 export function initMotion(): void {
   if (motionPreference.matches || !('IntersectionObserver' in window)) return;
-  // Quando o GSAP coreografa títulos, marcadores e cartões, a revelação em CSS não os anima de novo.
-  const gsapOwned = document.documentElement.classList.contains('gsap-on') ? 'main .display, main .section-id, .continue-cards > *, .chapters > *' : '';
-  const nodes = [...document.querySelectorAll<HTMLElement>(SELECTORS.join(','))].filter((n) => !n.closest('.hero-shell, [hidden], .obs-station') && !(gsapOwned && n.matches(gsapOwned)));
+  const nodes = [...document.querySelectorAll<HTMLElement>(SELECTORS.join(','))].filter((n) => !n.closest('.hero-shell, [hidden], .obs-station'));
   const io = new IntersectionObserver((entries) => {
-    for (const e of entries) if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
-  }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    for (const entry of entries) {
+      if (entry.isIntersecting) entry.target.classList.add('is-in');
+      else if (entry.target.classList.contains('is-in')) {
+        entry.target.classList.remove('is-in');
+        io.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 0 });
   const seen = new Map<Element, number>();
   for (const n of nodes) {
     const parent = n.parentElement!;
@@ -24,12 +28,12 @@ export function initMotion(): void {
     n.style.setProperty('--rv-delay', `${Math.min(i, 5) * 0.07}s`);
     n.classList.add('rv');
     const rect = n.getBoundingClientRect();
-    if (rect.top < innerHeight && rect.bottom > 0) n.classList.add('is-in');
+    if (rect.top < innerHeight && rect.bottom > 0) continue;
     if (n.matches('.continue-card, .quiz-card, .chapter-photo, .chapter-concept, .image-credits figure, .cosmos-scene')) n.classList.add('rv-scale');
     io.observe(n);
   }
   motionPreference.addEventListener('change', () => {
-    if (motionPreference.matches) { nodes.forEach((n) => n.classList.add('is-in')); io.disconnect(); }
+    if (motionPreference.matches) { nodes.forEach((n) => n.classList.remove('is-in')); io.disconnect(); }
   });
 
   // Estrelas acompanham o ponteiro (profundidade)

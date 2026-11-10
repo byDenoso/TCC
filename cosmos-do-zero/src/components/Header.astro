@@ -5,17 +5,20 @@ const { variant = 'hero' } = Astro.props;
 const nav = [
   { href: '/#capitulos', label: 'As aulas', mobile: 'As seis aulas da escola', spy: 'capitulos' },
   { href: '/#movimento', label: 'Em movimento', mobile: 'Ciência em movimento: cinco animações', spy: 'movimento' },
-  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
+  { href: '/observatorio/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
   { href: '/laboratorio/', label: 'Laboratório', mobile: 'Laboratório e explorações', spy: 'laboratorio' },
   { href: '/glossario/', label: 'Dicionário', mobile: 'Dicionário do cosmos', spy: 'glossario' }
 ];
 const more = [
-  { href: '/#prologo', label: 'Prólogo: a luz guarda o passado' },
-  { href: '/#escala-cosmica', label: 'Exposição: Escalas do Universo' },
+  { href: '/luz/', label: 'Prólogo: a luz guarda o passado' },
+  { href: '/escalas/', label: 'Exposição: Escalas do Universo' },
   { href: '/laboratorio/#bancadas', label: 'Bancadas de investigação' },
   { href: '/laboratorio/#tempo', label: 'Linha do tempo' },
   { href: '/laboratorio/#planetas', label: 'Os oito planetas' },
-  { href: '/#desafio', label: 'Desafio' },
+  { href: '/desafio/', label: 'Desafio' },
+  { href: '/imagens/', label: 'Leia a imagem' },
+  { href: '/ceu/', label: 'A primeira luz' },
+  { href: '/explorar/', label: 'Todas as experiências' },
   { href: '/fontes/', label: 'Fontes e imagens' }
 ];
 ---
