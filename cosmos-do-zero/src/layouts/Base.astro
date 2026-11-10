@@ -13,6 +13,7 @@ import '../styles/school.css';
 import '../styles/cinema.css';
 import '../styles/immersive.css';
 import '../styles/museum.css';
+import '../styles/planetarium.css';
 import Footer from '../components/Footer.astro';
 import { u } from '../lib/url';
 
@@ -21,10 +22,24 @@ interface Props {
   description: string;
   bodyClass?: string;
   noindex?: boolean;
+  websiteSchema?: boolean;
+  learningResource?: boolean;
 }
-const { title, description, bodyClass = '', noindex = false } = Astro.props;
+const { title, description, bodyClass = '', noindex = false, websiteSchema = false, learningResource = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const shareImage = new URL(u('/social-card.png'), Astro.site);
+const schema = websiteSchema || learningResource ? {
+  '@context': 'https://schema.org',
+  '@type': websiteSchema ? 'WebSite' : 'LearningResource',
+  name: websiteSchema ? 'Cosmos do Zero' : title,
+  description,
+  url: canonical.href,
+  inLanguage: 'pt-BR',
+  ...(learningResource ? {
+    learningResourceType: 'Aula interativa',
+    isPartOf: { '@type': 'WebSite', name: 'Cosmos do Zero', url: new URL(u('/'), Astro.site).href }
+  } : {})
+} : null;
 const indexingAllowed = import.meta.env.PUBLIC_SITE_INDEXING === 'true';
 ---
 <!doctype html>
@@ -51,6 +66,7 @@ const indexingAllowed = import.meta.env.PUBLIC_SITE_INDEXING === 'true';
     {(noindex || !indexingAllowed) && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" href={u('/favicon.svg')} type="image/svg+xml" />
     <title>{title}</title>
+    {schema && <script is:inline type="application/ld+json" set:html={JSON.stringify(schema).replace(/</g, '\\u003c')} />}
   </head>
   <body class={bodyClass}>
     <a class="skip" href="#principal">Ir para o conteúdo</a>

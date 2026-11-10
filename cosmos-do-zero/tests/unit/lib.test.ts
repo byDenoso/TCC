@@ -12,7 +12,7 @@ const byId = (id: string) => planets.find((p) => p.id === id)!;
 describe('dados', () => {
   it('mantém as contagens aprovadas', () => {
     expect(chapters).toHaveLength(6);
-    expect(eras).toHaveLength(10);
+    expect(eras).toHaveLength(12);
     expect(planets).toHaveLength(8);
     expect(questions).toHaveLength(15);
     expect(terms).toHaveLength(26);

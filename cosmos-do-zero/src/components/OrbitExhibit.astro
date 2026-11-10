@@ -1,0 +1,62 @@
+---
+import { orbitSectorPath } from '../lib/kepler';
+import { chapterUrl } from '../lib/url';
+interface Props { heading?: 'h2' | 'h3'; }
+const Title = Astro.props.heading ?? 'h2';
+---
+<section class="orbit-exhibit" id="orbitas" data-orbit-exhibit aria-labelledby="orbit-title">
+  <header class="orbit-heading">
+    <p class="exhibit-label"><span>02</span> Bancada · Mecânica orbital</p>
+    <Title id="orbit-title">Por que um planeta<br /><em>muda de velocidade?</em></Title>
+    <p>Deforme a órbita e compare duas fatias de igual duração. Em uma órbita alongada, o planeta percorre um arco maior perto da estrela, no mesmo intervalo.</p>
+  </header>
+  <div class="orbit-console">
+    <figure class="orbit-view">
+      <div class="light-plate-bar"><span>Kepler / 02</span><span>Simulação física</span></div>
+      <svg viewBox="0 0 560 328" role="img" aria-label="Órbita elíptica vista de cima. A estrela ocupa um dos focos no referencial relativo. Dois setores sombreados correspondem a um oitavo do período cada.">
+        <defs>
+          <pattern id="orbit-grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#253047" stroke-width="1"/></pattern>
+          <radialGradient id="orbit-star"><stop stop-color="#fff9e1"/><stop offset=".65" stop-color="#ffd587"/><stop offset="1" stop-color="#f3a462"/></radialGradient>
+        </defs>
+        <rect width="560" height="328" fill="url(#orbit-grid)"/>
+        <path d="M28 164H532M300 22V306" class="orbit-axis"/>
+        <ellipse cx="252.7" cy="164" rx="86" ry="71.83" class="orbit-path" data-orbit-path/>
+        <g data-orbit-wedges>{[0, Math.PI].map((center) => <path d={orbitSectorPath(1, 0.55, center)} />)}</g>
+        <line x1="300" x2="338.7" y1="164" y2="164" class="orbit-radius" data-orbit-radius/>
+        <circle cx="300" cy="164" r="10" fill="url(#orbit-star)" class="orbit-star"/>
+        <circle cx="338.7" cy="164" r="6" class="orbit-planet" data-orbit-planet/>
+      </svg>
+      <figcaption><span><i></i> ⅛ do período perto da estrela</span><span><i></i> ⅛ do período longe da estrela</span></figcaption>
+    </figure>
+    <div class="orbit-controls">
+      <dl class="orbit-readout">
+        <div><dt>Distância</dt><dd data-orbit-distance>0,45 UA</dd></div>
+        <div><dt>Velocidade</dt><dd data-orbit-speed>55,3 km/s</dd></div>
+        <div><dt>Período orbital</dt><dd data-orbit-period>365 dias</dd></div>
+        <div><dt>Energia específica</dt><dd data-orbit-energy>−443,6 km²/s²</dd></div>
+      </dl>
+      <div class="orbit-fields" data-orbit-fields hidden>
+        <label>Excentricidade <output data-orbit-value="ecc" for="orbit-ecc">0,55</output><input id="orbit-ecc" aria-label="Excentricidade" data-orbit-input="ecc" type="range" min="0" max="0.8" step="0.01" value="0.55" /></label>
+        <label>Semieixo maior <output data-orbit-value="axis" for="orbit-axis">1,00 UA</output><input id="orbit-axis" aria-label="Semieixo maior" data-orbit-input="axis" type="range" min="0.6" max="1.6" step="0.01" value="1" /></label>
+        <label>Massa da estrela <output data-orbit-value="mass" for="orbit-mass">1,00 M☉</output><input id="orbit-mass" aria-label="Massa da estrela" data-orbit-input="mass" type="range" min="0.5" max="2" step="0.01" value="1" /></label>
+        <label>Massa do planeta <output data-orbit-value="companion" for="orbit-companion">0,0 M♃</output><input id="orbit-companion" aria-label="Massa do planeta" data-orbit-input="companion" type="range" min="0" max="13" step="0.1" value="0" /></label>
+        <label>Fase orbital <output data-orbit-value="phase" for="orbit-phase">0%</output><input id="orbit-phase" aria-label="Fase orbital" data-orbit-input="phase" type="range" min="0" max="100" step="0.1" value="0" /></label>
+        <div class="bench-presets" role="group" aria-label="Cenários orbitais">
+          <button type="button" data-orbit-preset="circle">Círculo</button>
+          <button type="button" data-orbit-preset="eccentric">Órbita alongada</button>
+          <button type="button" data-orbit-preset="heavy">Estrela mais massiva</button>
+        </div>
+        <div class="orbit-actions">
+          <button type="button" class="cta" data-orbit-play aria-pressed="false">Animar órbita</button>
+          <button type="button" class="textlink" data-orbit-reset>Reiniciar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="orbit-note">Modelo newtoniano de dois corpos pontuais. O desenho acompanha a separação relativa e fixa a estrela no foco. Os tamanhos desenhados são ilustrativos. <a href="https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/" target="_blank" rel="noopener noreferrer">Leis de Kepler · NASA ↗</a></p>
+  <details class="bench-method">
+    <summary>Equações e limites do modelo</summary>
+    <p>A fase escolhe a fração do período desde o periélio. A equação de Kepler <span class="bench-formula">M = E − e sen E</span> converte tempo em posição. O período é <span class="bench-formula">P = 2π√(a³/μ)</span>, e a energia por unidade de massa reduzida é <span class="bench-formula">ε = −μ/(2a)</span>, com <span class="bench-formula">μ = G(M₁ + M₂)</span>. O modelo exclui perturbações de outros corpos, marés e correções relativísticas.</p>
+  </details>
+  {Astro.props.heading !== 'h3' && <a class="textlink orbit-lesson" href={`${chapterUrl('sistema-solar')}#sistema-solar-sol-e-planetas`}>Abrir a aula do Sistema Solar <span aria-hidden="true">↗</span></a>}
+</section>

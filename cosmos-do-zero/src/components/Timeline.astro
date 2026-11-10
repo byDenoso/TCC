@@ -3,21 +3,28 @@ import { eras } from '../data';
 import { u, chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 const first = eras[0];
-const eraRenders: Record<string, string> = { 'primordial': 'plasma', 'nucleosynthesis': 'nuclei', 'cmb': 'cmb', 'first-stars': 'star', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'earth', 'present': 'cosmic-web' };
-const eraAlt=(id:string,title:string)=>id==='cmb'?'Mapa ilustrativo do céu na CMB; contraste ampliado, sem dados observacionais.':id==='primordial'?'Esquema de plasma primordial: luz, elétrons e núcleos; sem estrelas ou galáxias.':id==='nucleosynthesis'?'Esquema dos primeiros núcleos; partículas ampliadas, sem átomos completos ou estrelas.':`Representação ilustrativa para ${title}; sem escala física.`;
+const eraRenders: Record<string, string> = { 'primordial': 'plasma', 'nucleosynthesis': 'nuclei', 'cmb': 'cmb', 'dark-ages': 'dark-ages', 'first-stars': 'star', 'reionization': 'reionization', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'earth', 'present': 'cosmic-web' };
+const altByEra: Record<string, string> = {
+  cmb: 'Mapa ilustrativo do céu na CMB, com contraste ampliado.',
+  primordial: 'Esquema de plasma primordial, com luz, elétrons e núcleos.',
+  nucleosynthesis: 'Esquema dos primeiros núcleos, com partículas ampliadas.',
+  'dark-ages': 'Esquema da Idade das Trevas cósmica. Pontos suaves representam gás neutro antes das primeiras estrelas.',
+  reionization: 'Esquema da reionização. Regiões azuis de gás ionizado cercam fontes de luz ultravioleta, com gás neutro ao redor.',
+};
+const eraAlt = (id: string, title: string) => altByEra[id] ?? `Representação ilustrativa para ${title}, fora de escala.`;
 const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
 ---
 <section class="timeline-section dark" id="tempo" aria-labelledby="timeline-title" data-island="timeline">
   <div class="page-width">
     <div class="timeline-head">
       <h2 class="display" id="timeline-title">O tempo muda.<br /><em>Tudo muda com ele.</em></h2>
-      <p>Dos primeiros núcleos ao ar que você respira. Navegue pelos marcos e entre na história.</p>
+      <p>Do plasma primordial ao Universo atual. Escolha um marco para explorar sua época e as evidências que a situam.</p>
     </div>
     <div class="timeline-window">
       <figure class={`timeline-visual ${first.visual}`} data-era="0" data-timeline-visual>
         <img class="era-render" data-era-render src={u(`/posters/${eraRender(first.id)}.webp`)} srcset={`${u(`/posters/${eraRender(first.id)}-small.webp`)} 600w, ${u(`/posters/${eraRender(first.id)}.webp`)} 1200w`} sizes="(max-width: 760px) calc(100vw - 34px), 45vw" alt={eraAlt(first.id,first.title)} width="1200" height="800" loading="lazy" decoding="async" />
         <span class="era-number" data-era-number>01 / {pad2(eras.length)}</span>
-        
+        <figcaption class="era-bottom">Ilustração fora de escala</figcaption>
       </figure>
       <div class="timeline-detail" aria-live="polite" aria-atomic="true">
         <div class="detail-kicker" data-era-evidence>{first.evidence}</div>
@@ -29,7 +36,7 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
     </div>
     <div class="time-nav" role="group" aria-label="Marcos da história do Universo" data-era-nav>
       {eras.map((e, i) => (
-        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-render-alt={eraAlt(e.id,e.title)} data-render-src={u(`/posters/${eraRender(e.id)}.webp`)} aria-pressed={i === 0 ? 'true' : 'false'}>
+        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-era-id={e.id} data-render-alt={eraAlt(e.id,e.title)} data-render-src={u(`/posters/${eraRender(e.id)}.webp`)} aria-pressed={i === 0 ? 'true' : 'false'}>
           <b>{e.title}</b><span>{e.short}</span>
         </button>
       ))}
@@ -40,6 +47,6 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
       <span data-era-position>01 / {pad2(eras.length)}</span>
       <button type="button" data-era-next>Próximo →</button>
     </div>
-    <p class="timeline-footnote">Datas aproximadas. Os marcos têm o mesmo espaçamento na tela, mas representam durações diferentes. “Depois” conta a partir da fase quente; “atrás” conta a partir de hoje. As imagens são ilustrativas, sem reconstruir a aparência exata de cada época.</p>
+    <p class="timeline-footnote">Datas aproximadas. Cada marco ocupa o mesmo espaço na tela e as durações variam. “Depois” conta a partir da fase quente. “Atrás” conta a partir de hoje. <a class="textlink" href="https://science.nasa.gov/mission/webb/early-universe/">Cronologia do Universo primordial na NASA <span aria-hidden="true">↗</span></a></p>
   </div>
 </section>

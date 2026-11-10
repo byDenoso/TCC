@@ -1,0 +1,133 @@
+---
+import {
+  EXPANSION_CHARTS, EXPANSION_DEFAULT_Z, EXPANSION_FIELDS, EXPANSION_MAX_Z, EXPANSION_PLOT,
+  EXPANSION_PRESETS, EXPANSION_READINGS, expansionHistory, expansionNumber, expansionPlotPath,
+  expansionPlotPoint, expansionPlotPosition, expansionPoint,
+} from '../lib/expansion-exhibit';
+import '../styles/expansion-exhibit.css';
+
+interface Props { heading?: 'h2' | 'h3'; }
+const Title = Astro.props.heading ?? 'h2';
+const PlotTitle = Title === 'h3' ? 'h4' : 'h3';
+const p = EXPANSION_PRESETS.planck;
+const z = EXPANSION_DEFAULT_Z;
+const reference = expansionHistory(p);
+const selection = expansionPoint(z, p);
+const { width, height, left, right, top, bottom } = EXPANSION_PLOT;
+---
+
+<section class="expansion-exhibit" id="expansao-modelos" data-expansion-exhibit aria-labelledby="expansion-title">
+  <header class="expansion-heading">
+    <p class="exhibit-label"><span>03</span> Bancada · Expansão cósmica</p>
+    <Title id="expansion-title">A expansão muda <em>com o tempo?</em></Title>
+    <p>Compare a expansão de um universo de referência com a de um universo que você configura. A mesma luz pode ter viajado por tempos e distâncias diferentes em cada modelo.</p>
+  </header>
+
+  <div class="expansion-controls" data-expansion-controls hidden>
+    <div class="expansion-presets" role="group" aria-label="Modelos predefinidos">
+      <button type="button" data-expansion-preset="planck" aria-pressed="true">ΛCDM de referência</button>
+      <button type="button" data-expansion-preset="dynamic" aria-pressed="false">Energia escura variável</button>
+      <button type="button" data-expansion-preset="matter" aria-pressed="false">Mais matéria</button>
+      <button type="button" data-expansion-reset>Restaurar bancada</button>
+    </div>
+
+    <fieldset class="expansion-parameters">
+      <legend>Parâmetros do seu modelo</legend>
+      <div class="expansion-fields">
+        {EXPANSION_FIELDS.map(({ key, label, help, min, max, step, digits }) => (
+          <div class="expansion-field">
+            <label for={`expansion-${key}`}><span>{label}</span> <output for={`expansion-${key}`} data-expansion-value={key} aria-live="off">{expansionNumber(p[key], digits)}</output></label>
+            <span class="expansion-help">{help}</span>
+            <input id={`expansion-${key}`} type="range" min={min} max={max} step={step} value={p[key]} data-expansion-input={key} aria-label={`${label}, ${help}`} aria-valuetext={expansionNumber(p[key], digits)} />
+          </div>
+        ))}
+      </div>
+      <p class="expansion-geometry">Curvatura do seu modelo <span data-expansion-geometry>Ωₖ = 0,000 · geometria plana</span></p>
+    </fieldset>
+
+    <div class="expansion-epoch">
+      <label for="expansion-z">Redshift da luz <output for="expansion-z" data-expansion-value="z" aria-live="off">z = {expansionNumber(z, 2)}</output></label>
+      <input id="expansion-z" type="range" min="0" max={EXPANSION_MAX_Z} step="0.05" value={z} data-expansion-input="z" aria-label="Redshift da luz" aria-valuetext={expansionNumber(z, 2)} aria-describedby="expansion-z-help" />
+      <p id="expansion-z-help">Maior <var>z</var> indica emissão quando o universo era menor. Em <var>z</var> = 0, observamos o universo de hoje.</p>
+    </div>
+  </div>
+
+  <div class="expansion-comparison">
+    <ul class="expansion-legend" aria-label="Legenda dos gráficos">
+      <li><span aria-hidden="true"></span>Seu modelo</li>
+      <li><span aria-hidden="true"></span>ΛCDM de referência</li>
+    </ul>
+    <div class="expansion-plots">
+      {Object.entries(EXPANSION_CHARTS).map(([key, chart]) => {
+        const [mx, my] = expansionPlotPoint(chart, selection);
+        const path = expansionPlotPath(chart, reference);
+        return (
+          <figure class="expansion-plot" data-expansion-plot={key}>
+            <figcaption>
+              <PlotTitle id={`expansion-plot-${key}`}>{chart.name}</PlotTitle>
+              <span>{chart.unit}</span>
+            </figcaption>
+            <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={`expansion-plot-${key} expansion-plot-desc-${key}`}>
+              <desc id={`expansion-plot-desc-${key}`}>Comparação entre seu modelo e o ΛCDM de referência. Os marcadores acompanham o redshift selecionado. Os valores numéricos estão na tabela abaixo.</desc>
+              <g class="expansion-grid" aria-hidden="true">
+                {chart.yTicks.map((tick) => {
+                  const [, y] = expansionPlotPosition(chart, 0, tick);
+                  return <><line x1={left} x2={right} y1={y} y2={y} /><text x={left - 8} y={y} dy=".34em" text-anchor="end">{expansionNumber(tick, Number.isInteger(tick) ? 0 : tick === 0.5 ? 1 : 2)}</text></>;
+                })}
+                {chart.xTicks.map((tick) => {
+                  const [x] = expansionPlotPosition(chart, tick, 0);
+                  return <><line x1={x} x2={x} y1={top} y2={bottom} /><text x={x} y={bottom + 20} text-anchor="middle">{expansionNumber(tick, 0)}</text></>;
+                })}
+                <path class="expansion-axis" d={`M${left} ${top}V${bottom}H${right}`} />
+                <text x={(left + right) / 2} y={height - 5} text-anchor="middle">{chart.xTitle}</text>
+              </g>
+              <path class="expansion-curve-active" data-expansion-curve d={path} />
+              <path class="expansion-curve-reference" d={path} />
+              <line class="expansion-guide" data-expansion-guide x1={mx} x2={mx} y1={my} y2={bottom} />
+              <circle class="expansion-dot-active" data-expansion-dot="active" cx={mx} cy={my} r="4.3" />
+              <circle class="expansion-dot-reference" data-expansion-dot="reference" cx={mx} cy={my} r="6.5" />
+            </svg>
+          </figure>
+        );
+      })}
+    </div>
+  </div>
+
+  <div class="expansion-data">
+    <PlotTitle id="expansion-readout-title">Comparação no redshift selecionado</PlotTitle>
+    <p data-expansion-epoch>Em z = {expansionNumber(z, 2)}, a = {expansionNumber(selection.a, 3)} nos dois modelos.</p>
+    <table aria-labelledby="expansion-readout-title">
+      <thead><tr><th scope="col">Grandeza</th><th scope="col">Seu modelo</th><th scope="col">Referência</th></tr></thead>
+      <tbody>
+        {EXPANSION_READINGS.map(({ key, label, unit, digits }) => (
+          <tr>
+            <th scope="row">{label} <span>{unit}</span></th>
+            <td data-expansion-reading={key}>{expansionNumber(selection[key], digits)}</td>
+            <td data-expansion-reference={key}>{expansionNumber(selection[key], digits)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <p class="expansion-status" data-expansion-status role="status" aria-atomic="true"></p>
+  </div>
+
+  <details class="expansion-method">
+    <summary>Como calculamos · modelo e limites</summary>
+    <div>
+      <p>Usamos FLRW, que descreve um universo homogêneo e isotrópico. A referência ΛCDM é plana, com H₀ = 67,4 km/s/Mpc e Ωₘ = 0,315, conforme Planck 2018. Com o fechamento plano, ΩΛ ≈ 0,685. A radiação segue Ωᵣh² = 4,18 × 10⁻⁵, com <var>h</var> = H₀/100 na unidade indicada. A curvatura vem do fechamento Ωₖ = 1 − Ωₘ − Ωde − Ωᵣ. Ωₖ positivo indica geometria aberta e negativo indica geometria fechada.</p>
+      <p>A parametrização CPL descreve a equação de estado da energia escura por <var>w(a)</var> = w₀ + wₐ(1 − <var>a</var>), com <var>a</var> = 1/(1 + <var>z</var>). Na constante cosmológica, w₀ = −1 e wₐ = 0, de modo que Ωde = ΩΛ.</p>
+      <div class="expansion-equations" aria-label="Equações de expansão">
+        <p><var>H(z)</var> = H₀ √(<var>E²(z)</var>)</p>
+        <p><var>E²(z)</var> = Ωᵣ(1 + <var>z</var>)<sup>4</sup> + Ωₘ(1 + <var>z</var>)<sup>3</sup> + Ωₖ(1 + <var>z</var>)<sup>2</sup> + Ωde <var>f(z)</var></p>
+        <p><var>f(z)</var> = (1 + <var>z</var>)<sup>3(1 + w₀ + wₐ)</sup> exp[−3 wₐ <var>z</var>/(1 + <var>z</var>)]</p>
+      </div>
+      <p>Integramos 1/<var>H(z)</var> com o fator 1/(1 + <var>z</var>) para o tempo de viagem e com o fator <var>c</var> para a distância comóvel radial. O gráfico de <var>a(t)</var> usa Gyr, bilhões de anos, e põe o presente em zero. A distância de luminosidade usa <var>Dₗ</var> = (1 + <var>z</var>)<var>Dₘ</var>, com <var>Dₘ</var> comóvel transversal e corrigida pela curvatura. A tabela usa Mpc, megaparsecs, e o gráfico usa Gpc, iguais a 1.000 Mpc.</p>
+      <p>O gráfico apresenta previsões de modelo para 0 ≤ <var>z</var> ≤ 3. Os controles variam condições hipotéticas.</p>
+      <ul>
+        <li><a href="https://arxiv.org/abs/astro-ph/0208512">Linder (2003) · história de expansão e CPL ↗</a></li>
+        <li><a href="https://arxiv.org/abs/1807.06209">Planck Collaboration (2020) · parâmetros cosmológicos ↗</a></li>
+        <li><a href="https://arxiv.org/abs/astro-ph/9905116">Hogg (1999) · distâncias cosmológicas ↗</a></li>
+      </ul>
+    </div>
+  </details>
+</section>

@@ -12,6 +12,11 @@ import { initReader } from './reader';
 import { initScenes } from './scenes';
 
 const instruments: [string, () => Promise<void>][] = [
+  ['[data-light-exhibit]', async () => (await import('./light-exhibit')).initLightExhibit()],
+  ['[data-orbit-exhibit]', async () => (await import('./orbit-exhibit')).initOrbitExhibit()],
+  ['[data-expansion-exhibit]', async () => (await import('./expansion-exhibit')).initExpansionExhibit()],
+  ['[data-transit-exhibit]', async () => (await import('./transit-exhibit')).initTransitExhibit()],
+  ['[data-hr-exhibit]', async () => (await import('./hr-exhibit')).initHRExhibit()],
   ['[data-lens]', async () => (await import('./visual/lensing')).initLensing()],
   ['[data-solar-studio]', async () => (await import('./visual/solar-studio')).initSolarStudio()],
   ['[data-cmb]', async () => (await import('./cmb')).initCmb()],

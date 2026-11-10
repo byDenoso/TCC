@@ -5,6 +5,12 @@ import { getParam, setParams } from '../lib/url-state';
 import { chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 
+// Os códigos de links publicados são independentes da ordem de exibição.
+const MARCO_IDS: readonly string[] = [
+  'primordial', 'nucleosynthesis', 'cmb', 'first-stars', 'galaxies', 'acceleration',
+  'solar-system', 'earth', 'oxygen', 'present', 'dark-ages', 'reionization',
+];
+
 export function initTimeline(): void {
   const root = $('[data-island="timeline"]');
   if (!root) return;
@@ -40,7 +46,7 @@ export function initTimeline(): void {
     prev.disabled = selected === 0; next.disabled = selected === eras.length - 1;
     if (o.focus) buttons[selected].focus({ preventScroll: true });
     if (o.scroll) buttons[selected].scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: behavior() });
-    if (o.url !== false) setParams({ marco: selected === 0 ? null : String(selected + 1) });
+    if (o.url !== false) setParams({ marco: selected === 0 ? null : String(MARCO_IDS.indexOf(era.id) + 1) });
   };
   buttons.forEach((b, i) => {
     b.addEventListener('click', () => render(i));
@@ -53,7 +59,7 @@ export function initTimeline(): void {
   });
   prev.addEventListener('click', () => render(selected - 1, { scroll: true }));
   next.addEventListener('click', () => render(selected + 1, { scroll: true }));
-  const fromUrl = Number(getParam('marco'));
-  render(Number.isInteger(fromUrl) && fromUrl >= 1 && fromUrl <= eras.length ? fromUrl - 1 : 0, { url: false });
+  const requested = MARCO_IDS[Number(getParam('marco')) - 1];
+  render(eras.findIndex(era => era.id === requested), { url: false });
   range.disabled=false;root.dataset.timelineReady='true';
 }

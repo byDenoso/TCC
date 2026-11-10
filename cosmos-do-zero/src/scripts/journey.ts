@@ -1,9 +1,9 @@
 /**
- * Viagem pelo tempo: a rolagem conduz uma única cena de partículas pelos dez marcos de eras.json.
+ * Viagem pelo tempo: a rolagem conduz uma única cena de partículas pelos marcos de eras.json.
  * Canvas 2D (não disputa o contexto WebGL das cenas 3D). Só desenha com a seção visível e a aba aberta.
  * Com movimento reduzido, nada se move sozinho: a cena salta de um marco ao outro conforme a leitura.
  */
-import { buildJourney, journeyPoint, journeyProgress, smooth, type JourneyLayout } from '../lib/journey';
+import { buildJourney, JOURNEY_ERAS, journeyPoint, journeyProgress, smooth, type JourneyEra, type JourneyLayout } from '../lib/journey';
 import { motionPreference, motionFactor } from './motion-preference';
 
 export function initJourney(): void {
@@ -67,7 +67,9 @@ export function initJourney(): void {
     }
   };
 
-  const weight = (index: number) => Math.max(0, 1 - Math.abs(progress - index));
+  const eraIndex = (id: JourneyEra) => JOURNEY_ERAS.indexOf(id);
+  const layout = (id: JourneyEra) => layouts[eraIndex(id)];
+  const weight = (id: JourneyEra) => Math.max(0, 1 - Math.abs(progress - eraIndex(id)));
   const fill = (color: string, alpha: number) => { ctx.fillStyle = color; ctx.globalAlpha = Math.max(0, Math.min(1, alpha)); };
   const glow = (x: number, y: number, r: number, color: string, alpha: number) => {
     if (alpha <= 0.01 || r <= 0) return;
@@ -88,11 +90,11 @@ export function initJourney(): void {
       const mark = L.marks[m]; if (!mark) return [f.cx, f.cy, 0];
       return L.fill ? [W / 2 + mark.x * W / 2, H / 2 + mark.y * H / 2, mark.r * f.k] : [f.cx + mark.x * f.k, f.cy - mark.y * f.k, mark.r * f.k];
     };
-    let w = weight(0);
+    let w = weight('primordial');
     if (w > 0) glow(W / 2, H / 2, Math.max(W, H) * 0.75, colors.hot, 0.2 * w);
-    w = weight(1);
-    if (w > 0) { const [x, y] = at(layouts[1], 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.stroke(); label('núcleo de hélio', x, y - 36, w, colors.hot); }
-    w = weight(2);
+    w = weight('nucleosynthesis');
+    if (w > 0) { const [x, y] = at(layout('nucleosynthesis'), 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.stroke(); label('núcleo de hélio', x, y - 36, w, colors.hot); }
+    w = weight('cmb');
     if (w > 0) {
       ctx.lineWidth = 2; ctx.strokeStyle = colors.light;
       for (let ray = 0; ray < 7; ray++) {
@@ -103,33 +105,56 @@ export function initJourney(): void {
       }
       label('luz livre para viajar', f.cx, H * (small.matches ? 0.56 : 0.182), w, colors.light);
     }
-    w = weight(3);
-    if (w > 0) layouts[3].marks.forEach((_, m) => { const [x, y, r] = at(layouts[3], m); glow(x, y, r * (1.5 + 0.12 * Math.sin(t * 1.3 + m)), colors.hot, 0.5 * w); });
-    w = weight(5);
+    w = weight('dark-ages');
+    if (w > 0) {
+      glow(f.cx, f.cy, f.k * 1.24, colors.muted, 0.14 * w);
+      label('gás neutro antes das estrelas', f.cx, f.cy + f.k * 1.08, w);
+    }
+    w = weight('first-stars');
+    if (w > 0) {
+      const stars = layout('first-stars');
+      stars.marks.forEach((_, m) => { const [x, y, r] = at(stars, m); glow(x, y, r * (1.5 + 0.12 * Math.sin(t * 1.3 + m)), colors.hot, 0.5 * w); });
+    }
+    w = weight('reionization');
+    if (w > 0) {
+      const ionized = layout('reionization');
+      ctx.strokeStyle = colors.light; ctx.lineWidth = 1.2; ctx.setLineDash([4, 6]);
+      ionized.marks.forEach((_, m) => {
+        const [x, y, r] = at(ionized, m);
+        glow(x, y, r, colors.light, 0.24 * w);
+        glow(x, y, r * 0.32, colors.hot, 0.85 * w);
+        fill(colors.hot, w); ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fill();
+        ctx.globalAlpha = 0.48 * w; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+      label('gás ionizado em torno das fontes', f.cx, f.cy + f.k * 1.08, w, colors.light);
+    }
+    w = weight('acceleration');
     if (w > 0) {
       ctx.strokeStyle = colors.light; ctx.lineWidth = 1.2; ctx.setLineDash([5, 7]);
-      for (let ring = 1; ring <= 3; ring++) { ctx.globalAlpha = 0.4 * w; ctx.beginPath(); ctx.arc(f.cx, f.cy, f.k * 0.42 * ring * (0.9 + 0.1 * smooth(progress - 4)), 0, Math.PI * 2); ctx.stroke(); }
+      for (let ring = 1; ring <= 3; ring++) { ctx.globalAlpha = 0.4 * w; ctx.beginPath(); ctx.arc(f.cx, f.cy, f.k * 0.42 * ring * (0.9 + 0.1 * smooth(progress - eraIndex('galaxies'))), 0, Math.PI * 2); ctx.stroke(); }
       ctx.setLineDash([]);
       label('o espaço entre as galáxias cresce', f.cx, f.cy - f.k * 0.3, w, colors.light);
     }
-    w = weight(6);
+    w = weight('solar-system');
     if (w > 0) {
       glow(f.cx, f.cy, f.k * 0.2, colors.hot, 0.6 * w);
       ctx.strokeStyle = colors.ink; ctx.lineWidth = 1;
-      layouts[6].marks.forEach(mark => { ctx.globalAlpha = 0.22 * w; ctx.beginPath(); ctx.ellipse(f.cx, f.cy, mark.r * f.k, mark.r * f.k * 0.44, 0, 0, Math.PI * 2); ctx.stroke(); });
+      layout('solar-system').marks.forEach(mark => { ctx.globalAlpha = 0.22 * w; ctx.beginPath(); ctx.ellipse(f.cx, f.cy, mark.r * f.k, mark.r * f.k * 0.44, 0, 0, Math.PI * 2); ctx.stroke(); });
       label('perto do Sol, as órbitas são mais rápidas', f.cx, f.cy + f.k * 0.52, w);
     }
-    const we = Math.min(1, weight(7) + weight(8));
+    const we = Math.min(1, weight('earth') + weight('oxygen'));
     if (we > 0) {
-      const [x, y, r] = at(layouts[7], 0);
+      const earth = layout('earth');
+      const [x, y, r] = at(earth, 0);
       ctx.globalAlpha = 0.5 * we; ctx.strokeStyle = colors.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      const [mx, my, mr] = at(layouts[7], 1);
+      const [mx, my, mr] = at(earth, 1);
       label('Lua', mx, my - mr - 16, we);
-      const wo = weight(8);
+      const wo = weight('oxygen');
       if (wo > 0) { ctx.globalAlpha = 0.5 * wo; ctx.strokeStyle = colors.light; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(x, y, r * 1.12, 0, Math.PI * 2); ctx.stroke(); label('atmosfera com oxigênio', x, y - r * 1.3, wo, colors.light); }
     }
-    w = weight(9);
-    if (w > 0) { const [x, y] = at(layouts[9], 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 20 + 3 * Math.sin(t * 2), 0, Math.PI * 2); ctx.stroke(); label('estamos em uma destas', x, y - 36, w, colors.hot); }
+    w = weight('present');
+    if (w > 0) { const [x, y] = at(layout('present'), 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 20 + 3 * Math.sin(t * 2), 0, Math.PI * 2); ctx.stroke(); label('estamos em uma destas', x, y - 36, w, colors.hot); }
     ctx.globalAlpha = 1;
   };
 

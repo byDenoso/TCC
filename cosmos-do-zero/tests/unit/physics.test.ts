@@ -27,3 +27,10 @@ describe('expansão usa uma única geometria',()=>{
     }
   });
 });
+
+it('raio de Einstein relativo cresce com a raiz da massa e as imagens resolvem a equação', () => {
+  expect(pointImages(0, 4)).toEqual([2, -2]);
+  for (const theta of pointImages(0.35, 1.75)) {
+    expect(lensSource(theta, 0, 1.75)[0]).toBeCloseTo(0.35, 12);
+  }
+});

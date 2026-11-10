@@ -39,7 +39,8 @@ try {
     await loaded(`[data-evidence-panel="${i}"] img`);
   }
   await page.goto(`${base}/laboratorio/#tempo`, { waitUntil: 'networkidle' });
-  for (let i = 0; i < 10; i++) {
+  const eraCount = await page.locator('[data-era-index]').count();
+  for (let i = 0; i < eraCount; i++) {
     await page.locator(`[data-era-index="${i}"]`).click();
     await loaded('[data-era-render]');
     const state = await page.locator('[data-era-render]').evaluate(image => ({ src: image.src, srcset: image.srcset, current: image.currentSrc }));

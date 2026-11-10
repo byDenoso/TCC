@@ -9,6 +9,11 @@ import CosmosScene from '../../components/CosmosScene.astro';
 import Observatorio from '../../components/Observatorio.astro';
 import Micro from '../../components/Micro.astro';
 import Lensing from '../../components/Lensing.astro';
+import ExpansionExhibit from '../../components/ExpansionExhibit.astro';
+import TransitExhibit from '../../components/TransitExhibit.astro';
+import HRExhibit from '../../components/HRExhibit.astro';
+import BlackHoleExhibit from '../../components/BlackHoleExhibit.astro';
+import OrbitExhibit from '../../components/OrbitExhibit.astro';
 import SolarStudio from '../../components/SolarStudio.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
 import StoryLesson from '../../components/StoryLesson.astro';
@@ -19,6 +24,7 @@ import { adjacentChapters, chapterOrder, chapterPhotoKey, chapters, chapterTitle
 import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
 import { chapterUrl, u } from '../../lib/url';
+import type { ChapterId } from '../../types';
 import { pad2 } from '../../lib/format';
 import '../../styles/reader.css';
 import '../../styles/micro.css';
@@ -39,16 +45,26 @@ const [checkA, checkB] = ch.checkTitle.split('|');
 const ext = ' (abre em outra aba)';
 const usedTerms = new Set<string>();
 const bodies = ch.sections.map((s) => linkTerms(s.body, terms, usedTerms));
+const openingPoster: Record<ChapterId, string> = {
+  'galaxias-e-nebulosas': 'galaxies',
+  'origem-do-universo': 'cmb',
+  'misterios-do-cosmos': 'cosmic-web',
+  'vida-das-estrelas': 'star',
+  'sistema-solar': 'solar-system',
+  'terra-e-atmosfera': 'earth'
+};
+const poster = openingPoster[ch.id];
 const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': ['expansao', 'receita'], 'misterios-do-cosmos': ['hubble', 'receita'] } as Record<string, ('tempo' | 'expansao' | 'hubble' | 'receita')[]>)[ch.id];
 ---
-<Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page">
+<Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page" learningResource>
   <div id="topo"><Header variant="solid" /></div>
   <main id="principal">
     <article class="chapter-reader" data-reader={ch.id}>
       <div class="reader-opening page-width">
+        {poster && <div class="reader-plate" aria-hidden="true"><img src={u(`/posters/${poster}-small.webp`)} width="600" height="400" alt="" fetchpriority="low" decoding="async" /></div>}
         <div class="reader-welcome">
         <a class="back-link" href={u('/#capitulos')}>← Todas as aulas</a>
-        <div class="section-id">Aula {pad2(n)} de 06 · {ch.minutes} min · {ch.sections.length} passos</div>
+        <div class="exhibit-label"><span>{pad2(n)}</span> {ch.minutes} min · {ch.sections.length} passos</div>
         <h1>{ch.title}</h1>
         <p class="reader-intro">{STORIES[ch.id].lede}</p>
         <nav class="reader-entry" aria-label="Por onde começar esta aula">
@@ -68,9 +84,9 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           </nav>
           <button class="reader-summary" type="button" data-story-open hidden>Rever resumo animado <span>20 segundos · cena ou vídeo</span></button>
           <div class="depth-controls" role="group" aria-label="Nível de aprofundamento">
-            <button type="button" data-depth="essential" aria-pressed="true">Essencial</button>
-            <button type="button" data-depth="more" aria-pressed="false">Entenda melhor</button>
-            <button type="button" data-depth="deep" aria-pressed="false">Aprofundamento</button>
+            <button type="button" data-depth="essential" aria-pressed="true">Explorar</button>
+            <button type="button" data-depth="more" aria-pressed="false">Compreender</button>
+            <button type="button" data-depth="deep" aria-pressed="false">Aprofundar</button>
           </div>
           <a href={u('/glossario/')} class="glossary-link">Abrir o dicionário ↗</a>
         </aside>
@@ -85,8 +101,11 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               <div class="lesson-observe"><span aria-hidden="true">◎</span><p><strong>O que observar. </strong>{LESSON_GUIDES[s.id].observe}</p></div>
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.id === 'misterios-do-cosmos-materia-escura' && <Lensing id={s.id} />}
-              {s.id === 'sistema-solar-sol-e-planetas' && <SolarStudio id={s.id} />}
-              {s.id === 'origem-do-universo-expansao' && <HubbleLesson/>}
+              {s.id === 'sistema-solar-sol-e-planetas' && <><SolarStudio id={s.id} /><OrbitExhibit heading="h3" /></>}
+              {s.id === 'origem-do-universo-expansao' && <><HubbleLesson/><ExpansionExhibit heading="h3" /></>}
+              {s.id === 'misterios-do-cosmos-exoplanetas' && <TransitExhibit heading="h3" />}
+              {s.id === 'vida-das-estrelas-fusao' && <HRExhibit heading="h3" />}
+              {s.id === 'galaxias-e-nebulosas-centros-galacticos' && <BlackHoleExhibit heading="h3" />}
               <aside class="lesson-connection"><span>A ideia por trás da cena</span><p>{LESSON_GUIDES[s.id].connect}</p></aside>
               <p class="lesson-try"><strong>Agora experimente. </strong>{LESSON_GUIDES[s.id].try}</p>
               <p>{bodies[i].map((seg, k) => 'term' in seg ? (

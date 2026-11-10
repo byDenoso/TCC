@@ -1,0 +1,104 @@
+---
+import { Image } from 'astro:assets';
+import webb from '../assets/photos/webb-deep-field.webp';
+import niriss from '../assets/photos/webb-niriss-spectra.webp';
+import { chapterUrl } from '../lib/url';
+
+const steps = [
+  { title: 'Uma imagem, muitas épocas.', tab: 'Imagem', kind: 'Observação', text: 'Neste campo profundo do Webb, galáxias a diferentes distâncias aparecem no mesmo quadro. Como a luz leva tempo para chegar, elas são vistas em épocas diferentes.', detail: 'SMACS 0723 · composição em infravermelho próximo.' },
+  { title: 'A luz carrega uma assinatura.', tab: 'Espectro', kind: 'Diagrama', text: 'Ao separar a luz por comprimento de onda, um espectrógrafo revela linhas características. Compare as marcas de referência com as linhas deslocadas no diagrama.', detail: 'O padrão de linhas ajuda a identificar o que emitiu a luz.' },
+  { title: 'O espaço deixa sua marca.', tab: 'Redshift', kind: 'Modelo', text: 'A expansão aumenta o comprimento de onda da luz em trânsito. Ajuste z e veja as linhas se deslocarem juntas. Quanto maior o redshift cosmológico, menor era o fator de escala na emissão.', detail: 'Para interpretar z como distância ou idade, precisamos de um modelo cosmológico.' }
+];
+---
+<section class="light-exhibit" id="prologo" data-light-exhibit data-light-scene="0" aria-labelledby="light-title">
+  <header class="light-heading page-width">
+    <p class="exhibit-label"><span>01</span> Prólogo · Da imagem à evidência</p>
+    <h2 class="display" id="light-title">A luz guarda<br /><em>o passado.</em></h2>
+    <p>Uma imagem abre a investigação. Um espectro permite medir o quanto a luz se alongou pelo caminho.</p>
+  </header>
+  <div class="light-grid page-width">
+    <div class="light-sticky">
+      <div class="light-instrument" id="light-instrument">
+        <div class="light-plate-bar"><span>Arquivo da luz</span><span data-light-kind>01 / Observação</span></div>
+        <div class="light-view">
+          <figure class="light-photo" data-light-view="photo">
+            <Image src={webb} alt="Galáxias e arcos alongados em torno do aglomerado SMACS 0723." width={800} height={460} fit="cover" widths={[520, 800]} sizes="(max-width: 720px) 100vw, 58vw" format="webp" quality={82} loading="lazy" />
+            <figcaption><a href="https://esawebb.org/images/weic2209a/" target="_blank" rel="noopener noreferrer">Webb/NIRCam · NASA, ESA, CSA, STScI ↗</a></figcaption>
+          </figure>
+          <figure class="light-spectrum" data-light-view="spectrum" data-line-mode="emission" hidden>
+            <svg viewBox="0 0 500 230" role="img" aria-label="Diagrama com três linhas espectrais em duas faixas. Compare as linhas de referência com as que chegam deslocadas. O controle de redshift muda a distância entre elas.">
+              <defs>
+                <linearGradient id="light-visible">
+                  <stop offset="0" stop-color="#5441a6"/><stop offset=".25" stop-color="#407dcd"/>
+                  <stop offset=".48" stop-color="#59a382"/><stop offset=".69" stop-color="#e5b959"/>
+                  <stop offset="1" stop-color="#d9644e"/>
+                </linearGradient>
+              </defs>
+              <path d="M40 40V183M100 40V183M160 40V183M220 40V183M280 40V183M340 40V183M400 40V183M460 40V183" class="light-guide"/>
+              <text x="40" y="31">Referência</text>
+              <text x="40" y="105">Linhas deslocadas</text>
+              <rect x="40" y="45" width="420" height="29" rx="3" class="light-track"/>
+              <rect x="40" y="119" width="420" height="29" rx="3" class="light-track"/>
+              <rect x="40" y="45" width="180" height="29" rx="3" class="light-continuum" fill="url(#light-visible)"/>
+              <rect x="40" y="119" width="180" height="29" rx="3" class="light-continuum" fill="url(#light-visible)"/>
+              <g class="light-rest">
+                <path d="M91.66 45v29M100.42 45v29M193.78 45v29"/>
+              </g>
+              <g class="light-shifts">
+                <path d="M0 116v35" transform="translate(193.74 0)" data-light-line="486.1"/>
+                <path d="M0 116v35" transform="translate(205.57 0)" data-light-line="500.7"/>
+                <path d="M0 116v35" transform="translate(331.60 0)" data-light-line="656.3"/>
+              </g>
+              <path d="M40 177H460" class="light-guide light-axis"/>
+              <g class="light-ticks" text-anchor="middle">
+                <text x="40" y="200">400</text><text x="160" y="200">600</text>
+                <text x="280" y="200">800</text><text x="400" y="200">1.000</text>
+                <text x="250" y="226">Comprimento de onda (nm)</text>
+              </g>
+            </svg>
+            <figcaption data-light-caption>Emissão calculada · Hβ, [O III] e Hα.</figcaption>
+          </figure>
+        </div>
+        <div class="light-mode" data-light-mode hidden role="group" aria-label="Tipo de linha espectral">
+          <button type="button" data-light-kind-button="emission" aria-pressed="true">Emissão</button>
+          <button type="button" data-light-kind-button="absorption" aria-pressed="false">Absorção</button>
+        </div>
+        <div class="light-control" data-light-control hidden>
+          <label for="light-redshift">Redshift <var>z</var> <output data-light-value for="light-redshift">0,35</output></label>
+          <input type="range" id="light-redshift" aria-label="Redshift" min="0" max="0.6" step="0.01" value="0.35" />
+          <p>Linha Hα recebida em <strong data-light-readout>886,0 nm</strong> · fator de escala na emissão <strong data-light-scale>0,74</strong></p>
+        </div>
+        <nav class="light-steps-nav" aria-label="Cenas do prólogo" data-light-nav hidden>
+          {steps.map((step, i) => <button type="button" data-light-go={i} aria-pressed={i === 0}><span aria-hidden="true">0{i + 1}</span> {step.tab}</button>)}
+        </nav>
+      </div>
+    </div>
+    <ol class="light-steps">
+      {steps.map((step, i) => <li data-light-step={i} data-light-label={step.kind} data-active={i === 0} id={`luz-cena-${i + 1}`}>
+        <span class="exhibit-label"><span>0{i + 1}</span> {step.kind}</span>
+        <h3>{step.title}</h3>
+        <p>{step.text}</p>
+        <small>{step.detail}</small>
+        <a class="textlink light-manual-link" href="#light-instrument" data-light-choose={i} hidden>Ver no instrumento <span aria-hidden="true">↑</span></a>
+        {i === 1 && <details class="bench-method niriss-case">
+          <summary>Examinar dois espectros observados pelo Webb</summary>
+          <figure>
+            <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-niriss-emission-spectra/" target="_blank" rel="noopener noreferrer">
+              <Image src={niriss} alt="Gráfico da NASA com dois espectros NIRISS de arcos de SMACS 0723. As linhas de hidrogênio e oxigênio aparecem em posições coincidentes." width={800} widths={[480, 800]} sizes="(max-width: 720px) 88vw, 34vw" format="webp" quality={83} loading="lazy" />
+            </a>
+            <figcaption>Observação · NIRISS. Os padrões coincidentes ajudaram a identificar duas imagens da mesma galáxia produzidas por uma lente gravitacional. NASA, ESA, CSA, STScI. <a href="https://science.nasa.gov/asset/webb/webbs-first-deep-field-niriss-emission-spectra/" target="_blank" rel="noopener noreferrer">Fonte e gráfico em resolução integral</a>.</figcaption>
+          </figure>
+        </details>}
+        {i === 2 && <div class="light-redshift-presets bench-presets" role="group" data-light-presets hidden aria-label="Exemplos de redshift">
+            <button type="button" data-light-preset="0">Sem deslocamento</button>
+            <button type="button" data-light-preset="0.35">Restaurar exemplo</button>
+          </div>}
+        {i === 2 && <details class="bench-method">
+          <summary>Relação entre redshift e expansão</summary>
+          <p><span class="bench-formula">1 + z = λ<sub>obs</sub>/λ<sub>em</sub> = 1/a<sub>em</sub></span>, adotando <span class="bench-formula">a<sub>hoje</sub> = 1</span>. Aqui o redshift é puramente cosmológico. Movimentos locais e efeitos gravitacionais também podem deslocar linhas em medições reais.</p>
+        </details>}
+        {i === 2 && <a class="textlink" href={`${chapterUrl('origem-do-universo')}#origem-do-universo-expansao`}>Investigar a expansão <span aria-hidden="true">↗</span></a>}
+      </li>)}
+    </ol>
+  </div>
+</section>

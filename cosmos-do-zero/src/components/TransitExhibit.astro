@@ -1,0 +1,94 @@
+---
+import {
+  TRANSIT_KIND_LABELS, TRANSIT_PHASE_LIMIT, TRANSIT_PRESETS, TRANSIT_VIEW,
+  transitPercent, transitPlot, transitPlotPoint,
+} from '../lib/transit';
+import '../styles/transit-exhibit.css';
+
+interface Props { heading?: 'h2' | 'h3'; }
+const Title = Astro.props.heading ?? 'h2';
+const model = TRANSIT_PRESETS.giant;
+const { center, scale, track, curve } = transitPlot(model);
+const { x, y, solarRadius } = TRANSIT_VIEW.geometry;
+const { left, right, top, bottom } = TRANSIT_VIEW.chart;
+const [markX, markY] = transitPlotPoint(0, center.loss, scale);
+const radius = center.radius * solarRadius;
+const presets = [
+  ['giant', 'Gigante central'],
+  ['earth', 'Porte terrestre'],
+  ['grazing', 'Rasante'],
+  ['miss', 'Sem trânsito'],
+] as const;
+---
+<section class="transit-exhibit" id="transito" data-transit-exhibit aria-labelledby="transit-title">
+  <header class="transit-heading">
+    <p class="exhibit-label"><span>03</span> Bancada · Fotometria</p>
+    <Title id="transit-title">Um planeta passa.<br /><em>A estrela perde brilho.</em></Title>
+    <p>Mude os raios e a inclinação da órbita. A curva mede quanto da luz desaparece enquanto o planeta cobre parte da estrela.</p>
+  </header>
+  <div class="transit-console">
+    <figure class="transit-view">
+      <div class="transit-plate-bar"><span>Projeção no céu</span><span>Modelo simulado</span></div>
+      <svg viewBox="0 0 440 248" role="img" data-transit-sky aria-label="Planeta projetado no centro do disco estelar. O traçado pontilhado marca o caminho do planeta.">
+        <defs>
+          <pattern id="transit-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M20 0H0V20" fill="none" stroke="#253247" stroke-width="1" />
+          </pattern>
+        </defs>
+        <rect width="440" height="248" fill="url(#transit-grid)" />
+        <path d={`M27 ${y}H413 M${x} 12V236`} class="transit-crosshair" />
+        <circle cx={x} cy={y} r={model.star * solarRadius} class="transit-star" data-transit-star />
+        <path d={track} class="transit-track" data-transit-track />
+        <circle cx={x} cy={y} r={radius} class="transit-planet" data-transit-planet />
+        <circle cx={x} cy={y} r={Math.max(5.5, radius + 4)} class="transit-ring" data-transit-ring />
+      </svg>
+      <div class="transit-plate-bar transit-plot-bar"><span>Fluxo relativo</span><span>Escala vertical automática</span></div>
+      <svg viewBox="0 0 440 160" role="img" data-transit-chart aria-label={`Curva de luz simulada com queda máxima de ${transitPercent(center.loss)}. O eixo horizontal vai de menos três a mais três por cento do período orbital.`}>
+        {[0, 0.5, 1].map((fraction, index) => {
+          const tickY = top + (bottom - top) * fraction;
+          return <g><line x1={left} x2={right} y1={tickY} y2={tickY} class="transit-grid-line" /><text x={left - 8} y={tickY} dy=".32em" text-anchor="end" data-transit-tick={index}>{transitPercent(1 - scale * fraction)}</text></g>;
+        })}
+        <path d={`M${left} ${top}V${bottom}H${right}`} class="transit-axis" />
+        <path d={curve} class="transit-curve" data-transit-curve />
+        <line x1={markX} x2={markX} y1={top} y2={bottom} class="transit-cursor" data-transit-cursor />
+        <circle cx={markX} cy={markY} r="4.5" class="transit-dot" data-transit-dot />
+        <text x={left} y="147" text-anchor="start">−3%</text>
+        <text x={(left + right) / 2} y="147" text-anchor="middle">0%</text>
+        <text x={right} y="147" text-anchor="end">+3%</text>
+      </svg>
+      <figcaption>Os discos estão na mesma escala. O anel indica a posição do planeta. O eixo horizontal mostra o tempo em % do período, com 0% na passagem mais próxima do centro da estrela.</figcaption>
+    </figure>
+    <div class="transit-controls">
+      <p class="transit-result" data-transit-kind>{TRANSIT_KIND_LABELS[center.kind]}</p>
+      <dl class="transit-readout">
+        <div><dt>Queda máxima</dt><dd data-transit-depth>{transitPercent(center.loss)}</dd></div>
+        <div><dt>Fluxo na fase</dt><dd data-transit-flux>{transitPercent(center.flux)}</dd></div>
+        <div><dt>Parâmetro de impacto <var>b</var></dt><dd data-transit-impact>0,000</dd></div>
+      </dl>
+      <div data-transit-controls hidden>
+        <div class="transit-presets" role="group" aria-label="Cenários simulados">
+          {presets.map(([key, label]) => <button type="button" data-transit-preset={key} aria-pressed={key === 'giant'}>{label}</button>)}
+        </div>
+        <div class="transit-fields">
+          <div class="transit-field-heading"><label for="transit-planet-input">Raio do planeta</label><output for="transit-planet-input" data-transit-value="planet" aria-live="off">10 R⊕</output></div>
+          <input id="transit-planet-input" data-transit-input="planet" type="range" min="1" max="18" step="0.5" value={model.planet} />
+          <div class="transit-field-heading"><label for="transit-star-input">Raio da estrela</label><output for="transit-star-input" data-transit-value="star" aria-live="off">1,00 R☉</output></div>
+          <input id="transit-star-input" data-transit-input="star" type="range" min="0.65" max="1.5" step="0.05" value={model.star} />
+          <div class="transit-field-heading"><label for="transit-inclination-input">Inclinação orbital</label><output for="transit-inclination-input" data-transit-value="inclination" aria-live="off">90,0°</output></div>
+          <input id="transit-inclination-input" data-transit-input="inclination" type="range" min="80" max="90" step="0.1" value={model.inclination} />
+          <div class="transit-field-heading"><label for="transit-phase-input">Fase orbital</label><output for="transit-phase-input" data-transit-value="phase" aria-live="off">0,00%</output></div>
+          <input id="transit-phase-input" data-transit-input="phase" type="range" min={-TRANSIT_PHASE_LIMIT} max={TRANSIT_PHASE_LIMIT} step="0.01" value="0" />
+        </div>
+        <button class="transit-reset" type="button" data-transit-reset>Reiniciar bancada</button>
+      </div>
+      <p class="transit-status" role="status" data-transit-status></p>
+    </div>
+  </div>
+  <details class="transit-model">
+    <summary>Equações e limites do modelo</summary>
+    <p><var>F</var>/<var>F</var><sub>0</sub> = 1 − <var>A</var><sub>∩</sub>/(π<var>R</var><sub>⋆</sub><sup>2</sup>). A área de sobreposição <var>A</var><sub>∩</sub> é calculada com dois discos. Quando o disco do planeta cabe inteiro sobre a estrela, a queda vale (<var>R</var><sub>p</sub>/<var>R</var><sub>⋆</sub>)<sup>2</sup>.</p>
+    <p>A órbita circular tem raio fixo <var>a</var> = 10 R☉. A projeção no céu é <var>x</var> = <var>a</var> sen&nbsp;<var>φ</var> e <var>y</var> = <var>a</var> cos&nbsp;<var>i</var> cos&nbsp;<var>φ</var>, com <var>φ</var> = 2π Δ<var>t</var>/<var>P</var>. O parâmetro <var>b</var> = (<var>a</var>/<var>R</var><sub>⋆</sub>) cos&nbsp;<var>i</var> mede a menor separação entre os centros em raios estelares. A 90°, o planeta cruza o centro. Usamos 1 R⊕ ≈ 0,00916 R☉.</p>
+    <p>O modelo assume uma estrela de brilho uniforme e um planeta opaco. Escurecimento de bordo, manchas, atmosfera planetária, excentricidade orbital e ruído do detector ficam fora do cálculo. Os cenários são sintéticos.</p>
+  </details>
+  <p class="transit-sources"><a href="https://exoplanetarchive.ipac.caltech.edu/docs/transit.html">Curvas de luz observadas · NASA Exoplanet Archive</a><a href="https://arxiv.org/abs/astro-ph/0210099">Escurecimento de bordo · Mandel e Agol (2002)</a></p>
+</section>

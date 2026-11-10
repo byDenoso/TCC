@@ -1,4 +1,4 @@
-// Valida o build público para GitHub Pages sem depender de navegador ou rede.
+// Valida builds públicos do Cosmos sem depender de navegador ou rede.
 // Executar após npm run build, com SITE_URL/SITE_BASE/SITE_PUBLIC do workflow.
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
@@ -9,7 +9,7 @@ const origin = (process.env.SITE_URL ?? '').replace(/\/$/, '');
 const base = (process.env.SITE_BASE ?? '').replace(/^\/+|\/+$/g, '');
 const prefix = base ? `/${base}` : '';
 assert.ok((origin === 'https://bydenoso.github.io' && prefix === '/TCC/cosmos-do-zero') ||
-  (origin === 'https://cosmos.denerpereira.com.br' && prefix === ''), 'Destino/base não autorizado');
+  (['https://cosmos.denerpereira.com.br', 'https://cosmos-do-zero.vercel.app'].includes(origin) && prefix === ''), 'Destino/base não autorizado');
 assert.equal(process.env.SITE_PUBLIC, 'true', 'Build público precisa ter SITE_PUBLIC=true');
 assert.ok(existsSync(join(dist, 'index.html')), 'dist/index.html ausente');
 const expectedRoot = `${origin}${prefix}/`;
@@ -125,4 +125,4 @@ function checkCss(directory) {
   }
 }
 checkCss(dist);
-console.log(`GitHub Pages: ${html.length} páginas, um h1 por página, ${fragments} fragmentos, SEO/sitemap, ${checks} URLs e assets verificados no base ${prefix}/.`);
+console.log(`Cosmos público: ${html.length} páginas, um h1 por página, ${fragments} fragmentos, SEO/sitemap, ${checks} URLs e assets verificados no base ${prefix}/.`);

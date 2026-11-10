@@ -1,0 +1,120 @@
+---
+import {
+  formatHR, formatHRTemperature, hrDomain, hrModels, hrPlot, luminosityInSuns, projectHR,
+} from '../lib/hr';
+import { chapterUrl } from '../lib/url';
+
+interface Props { heading?: 'h2' | 'h3'; }
+const Title = Astro.props.heading ?? 'h2';
+const initial = hrModels[0];
+const initialPoint = projectHR(initial.temperature, 1);
+const temperatures = [30000, 15000, 7500, 4000, 2500];
+const powers = [{ n: 6, label: '10⁶' }, { n: 4, label: '10⁴' }, { n: 2, label: '10²' }, { n: 0, label: '1' }, { n: -2, label: '10⁻²' }, { n: -4, label: '10⁻⁴' }, { n: -6, label: '10⁻⁶' }];
+---
+<section class="hr-exhibit" id="diagrama-hr" data-hr-exhibit aria-labelledby="hr-title">
+  <header class="hr-heading">
+    <p class="exhibit-label"><span>03</span> Bancada · Astrofísica estelar</p>
+    <Title id="hr-title">Toda estrela quente<br /><em>é luminosa?</em></Title>
+    <p>No diagrama de Hertzsprung–Russell (H–R), a temperatura e a luminosidade colocam cada estrela em um ponto. Compare uma gigante vermelha e uma anã branca para descobrir o que o raio muda.</p>
+  </header>
+  <div class="hr-console">
+    <figure class="hr-chart">
+      <div class="light-plate-bar"><span>Diagrama H–R</span><span>Modelos didáticos</span></div>
+      <svg viewBox="0 0 484 337" role="img" aria-labelledby="hr-chart-title hr-chart-description">
+        <title id="hr-chart-title">Diagrama de Hertzsprung–Russell</title>
+        <desc id="hr-chart-description">As temperaturas diminuem para a direita e a luminosidade aumenta para cima. Uma gigante vermelha aparece acima e à direita do Sol. Uma anã branca aparece abaixo e à esquerda do Sol.</desc>
+        <rect x={hrPlot.left} y={hrPlot.top} width={hrPlot.right - hrPlot.left} height={hrPlot.bottom - hrPlot.top} class="hr-bounds" />
+        <text x={hrPlot.left} y="24" class="hr-axis-label">Luminosidade (L☉)</text>
+        {powers.map(({ n, label }) => {
+          const { y } = projectHR(hrDomain.maxTemperature, 10 ** n);
+          return <g><line x1={hrPlot.left} x2={hrPlot.right} y1={y} y2={y} class="hr-grid" /><text x={hrPlot.left - 8} y={y + 5} text-anchor="end">{label}</text></g>;
+        })}
+        {temperatures.map((temperature) => {
+          const { x } = projectHR(temperature, 1);
+          return <g><line x1={x} x2={x} y1={hrPlot.top} y2={hrPlot.bottom} class="hr-grid" /><text x={x} y={hrPlot.bottom + 23} text-anchor="middle">{formatHRTemperature.format(temperature)}</text></g>;
+        })}
+        <text x={(hrPlot.left + hrPlot.right) / 2} y="329" text-anchor="middle" class="hr-axis-label">Temperatura efetiva (K) · menor →</text>
+        {[0.01, 1, 100].map((radius) => {
+          const a = projectHR(hrDomain.maxTemperature, luminosityInSuns(hrDomain.maxTemperature, radius));
+          const b = projectHR(hrDomain.minTemperature, luminosityInSuns(hrDomain.minTemperature, radius));
+          return <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} class="hr-isoradius" />;
+        })}
+        <path d={`M${hrPlot.left} ${initialPoint.y}H${initialPoint.x}V${hrPlot.bottom}`} class="hr-crosshair" data-hr-crosshair />
+        {hrModels.map((model) => {
+          const point = projectHR(model.temperature, luminosityInSuns(model.temperature, 10 ** model.logRadius));
+          return <g class="hr-model">
+            <circle cx={point.x} cy={point.y} r="4" fill={model.color} />
+            <text x={point.x + model.dx} y={point.y + model.dy} text-anchor={model.dx < 0 ? 'end' : 'start'}>{model.label}</text>
+          </g>;
+        })}
+        <g transform={`translate(${initialPoint.x} ${initialPoint.y})`} data-hr-marker class="hr-marker">
+          <circle r="9" /><circle r="2.2" />
+        </g>
+      </svg>
+      <figcaption>Os dois eixos são logarítmicos. Os tracejados indicam raios fixos de 0,01, 1 e 100 raios solares.</figcaption>
+    </figure>
+    <div class="hr-controls">
+      <dl class="hr-readout">
+        <div><dt>Temperatura</dt><dd data-hr-reading="temperature">{formatHRTemperature.format(initial.temperature)} K</dd></div>
+        <div><dt>Raio</dt><dd data-hr-reading="radius">1 R☉</dd></div>
+        <div><dt>Luminosidade</dt><dd data-hr-reading="luminosity">{formatHR.format(1)} L☉</dd></div>
+      </dl>
+      <div class="hr-fields" data-hr-fields hidden>
+        <div class="hr-presets" role="group" aria-label="Modelos de estrelas">
+          {hrModels.map((model) => <button type="button" data-hr-preset={model.id} aria-pressed={model.id === initial.id}>{model.id === initial.id ? 'Sol · restaurar' : model.label}</button>)}
+        </div>
+        <label for="hr-temperature">Temperatura efetiva</label>
+        <input id="hr-temperature" data-hr-input="temperature" type="range" min={hrDomain.minTemperature} max={hrDomain.maxTemperature} step="1" value={initial.temperature} />
+        <label for="hr-radius">Raio <small>Escala logarítmica</small></label>
+        <input id="hr-radius" data-hr-input="radius" type="range" min={hrDomain.minLogRadius} max={hrDomain.maxLogRadius} step="0.01" value={initial.logRadius} />
+        <p class="visually-hidden" role="status" data-hr-status></p>
+      </div>
+      <p class="hr-insight" data-hr-insight>{initial.insight}</p>
+    </div>
+  </div>
+  <p class="hr-note">Pela lei de Stefan–Boltzmann, a luminosidade total obedece a <strong>L/L☉ = (R/R☉)<sup>2</sup> × (T/5.772 K)<sup>4</sup></strong>. R☉ e L☉ são o raio e a luminosidade solares. Os quatro exemplos ao redor do Sol foram calculados com raios e temperaturas ilustrativos.</p>
+  <p class="hr-sources"><a href="https://www.iau.org/common/Uploaded%20files/IAUGA2015-Resolution-B3-recommended-nominal-conversion.pdf" target="_blank" rel="noopener noreferrer">Referência solar · IAU ↗</a><a href="https://www.esa.int/ESA_Multimedia/Images/2018/04/Gaia_s_Hertzsprung-Russell_diagram" target="_blank" rel="noopener noreferrer">Diagrama observado · Gaia/ESA ↗</a></p>
+  {Astro.props.heading !== 'h3' && <a class="textlink hr-lesson" href={`${chapterUrl('vida-das-estrelas')}#diagrama-hr`}>Abrir a aula da vida das estrelas <span aria-hidden="true">↗</span></a>}
+</section>
+
+<style>
+  .hr-exhibit { min-width: 0; border: 1px solid var(--exhibit-line); border-radius: 9px; padding: clamp(17px, 4.5vw, 64px); scroll-margin-top: 85px; background: var(--exhibit-night); color: var(--exhibit-ink); }
+  .hr-exhibit :focus-visible { outline-color: var(--exhibit-blue); outline-offset: 3px; }
+  .hr-heading .exhibit-label, .hr-heading em { color: var(--exhibit-accent); }
+  .hr-heading :is(h2, h3) { color: var(--exhibit-ink); font: 740 clamp(38px, 6vw, 86px)/.98 var(--sans); letter-spacing: -.058em; margin: 20px 0 15px; }
+  .hr-heading p:not(.exhibit-label), .hr-exhibit .hr-note { color: var(--exhibit-muted); max-width: 65ch; line-height: 1.65; }
+  .hr-console { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(245px, 1fr); gap: clamp(16px, 3vw, 35px); margin-top: 24px; }
+  .hr-chart { margin: 0; min-width: 0; align-self: start; border: 1px solid var(--exhibit-line); border-radius: 7px; overflow: clip; background: #0c1422; }
+  .hr-chart svg { display: block; width: 100%; height: auto; margin: 4px 0; }
+  .hr-chart svg text { fill: var(--exhibit-muted); font: 600 16px var(--body); }
+  .hr-chart svg .hr-axis-label { fill: var(--exhibit-ink); font-weight: 720; }
+  .hr-chart .hr-model text { fill: var(--exhibit-ink); font-size: 17px; stroke: #0c1422; stroke-width: 3; paint-order: stroke; }
+  .hr-bounds, .hr-grid, .hr-isoradius, .hr-crosshair { fill: none; stroke: var(--exhibit-line); }
+  .hr-isoradius { stroke: #79859b; stroke-dasharray: 5 5; }
+  .hr-crosshair { stroke: var(--exhibit-accent); stroke-dasharray: 2 4; opacity: .77; }
+  .hr-marker circle { fill: none; stroke: var(--exhibit-accent); stroke-width: 2; }
+  .hr-marker circle + circle { fill: var(--exhibit-accent); stroke: none; }
+  .hr-chart figcaption { padding: 10px 13px; border-top: 1px solid var(--exhibit-line); font-size: 12px; color: var(--exhibit-muted); line-height: 1.55; }
+  .hr-controls { min-width: 0; }
+  .hr-readout { display: flex; flex-wrap: wrap; gap: 10px 15px; margin: 0 0 15px; padding: 12px 0; border-block: 1px solid var(--exhibit-line); }
+  .hr-readout div { flex: 1 0 auto; }
+  .hr-readout dt { color: var(--exhibit-muted); font-size: 12px; }
+  .hr-readout dd { margin: 5px 0 0; color: var(--exhibit-ink); font: 720 18px/1.15 var(--sans); font-variant-numeric: tabular-nums; }
+  .hr-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 13px; }
+  .hr-presets button { min-height: 44px; padding: 6px 10px; border: 1px solid var(--exhibit-line); border-radius: 5px; background: var(--exhibit-panel); color: var(--exhibit-ink); font: 680 12px var(--body); }
+  .hr-presets button:is(:hover, [aria-pressed="true"]) { border-color: var(--exhibit-accent); color: var(--exhibit-accent); }
+  .hr-presets button[aria-pressed="true"] { background: #362838; }
+  .hr-fields label { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 13px; font-weight: 680; }
+  .hr-fields small { color: var(--exhibit-muted); font-weight: 500; }
+  .hr-fields input { display: block; width: 100%; min-height: 28px; margin: 2px 0 7px; accent-color: var(--exhibit-accent); }
+  .hr-exhibit .hr-insight { color: var(--exhibit-ink); font-size: 14px; line-height: 1.6; margin: 12px 0 0; }
+  .hr-exhibit .hr-note { font-size: 13px; margin: 17px 0 0; }
+  .hr-note strong { color: var(--exhibit-ink); }
+  .hr-sources { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 8px 0 0; font-size: 13px; }
+  .hr-exhibit .hr-sources a { color: var(--exhibit-blue); text-decoration: underline; text-underline-offset: 3px; }
+  .hr-exhibit .hr-lesson { min-height: 44px; color: var(--exhibit-accent); }
+  :global(.reader-content) .hr-exhibit { margin-block: 28px; padding: clamp(15px, 3vw, 35px); }
+  :global(.reader-content) .hr-heading h3 { font-size: clamp(32px, 5vw, 65px); }
+  :global(.reader-content) .hr-console { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 900px) { .hr-console { grid-template-columns: minmax(0, 1fr); } }
+</style>

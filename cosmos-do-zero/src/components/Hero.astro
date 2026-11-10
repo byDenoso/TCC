@@ -1,4 +1,6 @@
 ---
+import { Image } from 'astro:assets';
+import webb from '../assets/photos/webb-deep-field.webp';
 import Header from './Header.astro';
 import PhotoBand from './PhotoBand.astro';
 import { u } from '../lib/url';
@@ -10,19 +12,36 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
 <div class="hero-root" id="topo">
   <Header />
   <div class="hero-shell">
-  <div class="starfield" aria-hidden="true">
-    {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
+  <div class="premiere">
+  <div class="premiere-visual">
+    <Image src={webb} alt="" width={1200} widths={[520, 800, 1200]} sizes="(max-width: 720px) 100vw, 72vw" format="webp" quality={80} loading="eager" fetchpriority="high" />
   </div>
-  <section class="hero-main page-width hero" aria-labelledby="hero-title">
+  <section class="premiere-layout page-width" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <p class="hero-overline"><span class="dash" aria-hidden="true"></span>Sua escola interativa de cosmologia</p>
+      <p class="hero-overline"><span class="dash" aria-hidden="true"></span>Planetário digital · exposição permanente</p>
       <h1 id="hero-title">O Universo,<br /><span class="serif">em movimento.</span></h1>
-      <p class="hero-introduction">Por que as estrelas brilham? Como o espaço cresce? Veja as ideias acontecerem, mude uma coisa e descubra o que isso explica.</p>
+      <p class="hero-introduction">O céu é um arquivo do tempo. Entre nas imagens, mude as condições dos experimentos e descubra como a luz revela a história do Universo.</p>
       <div class="hero-actions">
         <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/#galaxias-e-nebulosas-via-lactea')}>Começar a primeira aula <span class="arrow" aria-hidden="true">→</span></a>
         <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> <span aria-hidden="true">→</span></a>
-        <a class="textlink" href="#capitulos">Conhecer as aulas <span aria-hidden="true">↓</span></a>
+        <a class="textlink" href="#prologo">Entrar na exposição <span aria-hidden="true">↓</span></a>
       </div>
+    </div>
+    <a class="premiere-credit" href="https://esawebb.org/images/weic2209a/" target="_blank" rel="noopener noreferrer">
+      <span>01 / ACERVO OBSERVACIONAL</span>
+      <strong>Primeiro campo profundo do Webb <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 13 13 3M5 3h8v8" fill="none" stroke="currentColor" stroke-width="1.4" /></svg></strong>
+      <small>NIRCam · SMACS 0723 · NASA, ESA, CSA, STScI</small>
+    </a>
+  </section>
+  </div>
+  <div class="starfield" aria-hidden="true">
+    {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
+  </div>
+  <section class="hero-main page-width hero" aria-labelledby="hero-instrument-title">
+    <div class="hero-instrument-copy">
+      <p class="section-id">Instrumento de abertura · 01</p>
+      <h2 class="display" id="hero-instrument-title">A primeira luz<br /><em>que ainda vemos.</em></h2>
+      <p>A radiação cósmica de fundo nos chega de todas as direções. Explore uma representação das pequenas diferenças de temperatura que ela carrega.</p>
       <nav class="hero-routes" aria-label="Formas de explorar">
         <a href="#capitulos"><span>06</span><strong>aulas visuais</strong><i aria-hidden="true">↗</i></a>
         <a href="#capitulos"><span>36</span><strong>ideias para explorar</strong><i aria-hidden="true">↗</i></a>

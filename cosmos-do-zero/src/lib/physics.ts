@@ -18,11 +18,11 @@ export function einsteinAngle(massKg: number, dLensM: number, dSourceM: number, 
   return Math.sqrt(4*G_SI*massKg/C_SI**2*dLensSourceM/(dLensM*dSourceM));
 }
 /** Coordenadas em unidades do raio angular de Einstein; lente na origem. */
-export function lensSource(thetaX: number, thetaY: number): [number,number] {
+export function lensSource(thetaX: number, thetaY: number, massRatio = 1): [number,number] {
   const r2=thetaX**2+thetaY**2;
   if(r2<1e-12)return [Infinity,Infinity];
-  return [thetaX*(1-1/r2),thetaY*(1-1/r2)];
+  return [thetaX*(1-massRatio/r2),thetaY*(1-massRatio/r2)];
 }
-export function pointImages(beta: number): [number,number] {
-  const q=Math.sqrt(beta*beta+4); return [(beta+q)/2,(beta-q)/2];
+export function pointImages(beta: number, massRatio = 1): [number,number] {
+  const q=Math.sqrt(beta*beta+4*massRatio); return [(beta+q)/2,(beta-q)/2];
 }
