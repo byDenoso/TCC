@@ -12,6 +12,11 @@ import { initReader } from './reader';
 import { initScenes } from './scenes';
 
 const instruments: [string, () => Promise<void>][] = [
+  ['[data-light-exhibit]', async () => (await import('./light-exhibit')).initLightExhibit()],
+  ['[data-orbit-exhibit]', async () => (await import('./orbit-exhibit')).initOrbitExhibit()],
+  ['[data-expansion-exhibit]', async () => (await import('./expansion-exhibit')).initExpansionExhibit()],
+  ['[data-transit-exhibit]', async () => (await import('./transit-exhibit')).initTransitExhibit()],
+  ['[data-hr-exhibit]', async () => (await import('./hr-exhibit')).initHRExhibit()],
   ['[data-lens]', async () => (await import('./visual/lensing')).initLensing()],
   ['[data-solar-studio]', async () => (await import('./visual/solar-studio')).initSolarStudio()],
   ['[data-cmb]', async () => (await import('./cmb')).initCmb()],
@@ -27,7 +32,7 @@ const instruments: [string, () => Promise<void>][] = [
   ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()],
   ['[data-journey]', async () => (await import('./journey')).initJourney()],
   ['[data-px]', async () => (await import('./photo-explorer')).initPhotoExplorer()],
-  ['[data-story],[data-story-preview]', async () => (await import('./story')).initStories()]
+  ['[data-story]', async () => (await import('./story')).initStories()]
 ];
 
 /** Carrega apenas os instrumentos presentes; o leitor prepara os passos antes das cenas. */

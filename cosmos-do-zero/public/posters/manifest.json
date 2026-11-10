@@ -1,5 +1,5 @@
 {
-  "method": "Real captures of interactive scenes plus explicitly synthetic full-sky map",
+  "method": "Interactive scene captures, a synthetic full-sky map, and schematic early-universe diagrams",
   "source": "assets/source/build_posters.py",
   "assets": [
     {
@@ -161,6 +161,42 @@
           "file": "cmb-small.webp",
           "bytes": 22758,
           "sha256": "513267cd60262f242d433692f2bd8d2d0b11ef096773f0a7849aab89360a5ee9"
+        }
+      ]
+    },
+    {
+      "name": "dark-ages",
+      "origin": "Original schematic from buildJourney in src/lib/journey.ts (520 points; gas seed 39); SVG rasterized with Sharp. Educational concept: NASA Webb Early Universe. No observational data.",
+      "license": "CC0-1.0 original artwork",
+      "caption": "Idade das Trevas cósmica · distribuição ilustrativa de gás neutro",
+      "files": [
+        {
+          "file": "dark-ages.webp",
+          "bytes": 11930,
+          "sha256": "411fc36e1de48f353f237a89380198e21b3486823418af0b3172e8b5976c45f9"
+        },
+        {
+          "file": "dark-ages-small.webp",
+          "bytes": 4620,
+          "sha256": "c1ad703e39135c6035dbe7e3f57b27a98ade70c400167782f74e54d0d16e6eba"
+        }
+      ]
+    },
+    {
+      "name": "reionization",
+      "origin": "Original schematic from buildJourney in src/lib/journey.ts (520 points; gas seed 39); SVG rasterized with Sharp. Educational concept: NASA Webb Early Universe. No observational data.",
+      "license": "CC0-1.0 original artwork",
+      "caption": "Reionização · regiões ilustrativas de gás ionizado em torno de fontes de ultravioleta",
+      "files": [
+        {
+          "file": "reionization.webp",
+          "bytes": 23478,
+          "sha256": "297b35bce12e0150a60f1573275942e6b1062ad0df4b1d848a00ea5d52c7a099"
+        },
+        {
+          "file": "reionization-small.webp",
+          "bytes": 8812,
+          "sha256": "48aea689cb9b66c997b16c1f4443b82aa76d600d9468b39764b9588149f7f254"
         }
       ]
     }

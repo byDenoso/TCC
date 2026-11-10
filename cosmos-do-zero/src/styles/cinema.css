@@ -19,8 +19,6 @@ html:root .obs-expansion-grid .expansion-stage { background:var(--surface-2)!imp
 html:root .school-catalog-tools { display:flex;gap:16px;align-items:center;justify-content:space-between;margin:0 0 18px;color:var(--muted);font-size:13px; }
 .school-catalog-tools button { min-height:44px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);cursor:pointer;font:600 12px var(--sans); }
 .school-catalog-tools [hidden] { display:none; }
-.school-course-image [data-story-preview],.school-course-image svg { display:block;width:100%;height:100%; }
-.school-course-image .story-graphic text { display:none; }
 html:root .school-course-image { background:var(--surface-2); }
 html:root .school-course-body>p { font-size:14px;line-height:1.65; }
 

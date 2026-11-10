@@ -24,20 +24,40 @@
   "title": "A luz atravessa o Universo",
   "short": "Cerca de 380 mil anos depois",
   "time": "Cerca de 380 mil anos após a fase quente",
-  "text": "Elétrons se ligaram a núcleos e a luz passou a viajar por distâncias maiores. Os fótons que então se libertaram são observados hoje como radiação cósmica de fundo, alongada e resfriada pela expansão.",
+  "text": "Na recombinação, elétrons se ligaram a núcleos e a luz passou a viajar por distâncias maiores. Observamos esses fótons hoje como radiação cósmica de fundo, alongada e resfriada pela expansão.",
   "chapter": "origem-do-universo",
   "visual": "cosmic",
   "evidence": "Radiação observada; época inferida"
  },
  {
+  "id": "dark-ages",
+  "title": "Idade das Trevas cósmica",
+  "short": "Antes das primeiras estrelas",
+  "time": "Da recombinação, cerca de 380 mil anos após a fase quente, até as primeiras estrelas",
+  "text": "O gás era composto sobretudo de hidrogênio e hélio neutros. A radiação cósmica de fundo já viajava pelo espaço. A gravidade foi concentrando gás em regiões que mais tarde formariam estrelas.",
+  "chapter": "origem-do-universo",
+  "visual": "cosmic",
+  "evidence": "Período reconstruído a partir da radiação de fundo e de modelos de formação de estruturas"
+ },
+ {
   "id": "first-stars",
   "title": "Formam-se as primeiras estrelas",
-  "short": "Centenas de milhões de anos depois",
-  "time": "Depois da CMB, em uma época estimada e ainda refinada por observações",
+  "short": "Nos primeiros 300 milhões de anos",
+  "time": "Após a recombinação e antes das galáxias mais antigas observadas; data ainda incerta",
   "text": "A gravidade concentrou gás em regiões densas, onde nasceram estrelas. A cronologia exata das primeiras estrelas continua em estudo; as observações de galáxias muito antigas ajudam a restringi-la.",
   "chapter": "origem-do-universo",
   "visual": "star",
   "evidence": "Reconstrução observacional; data incerta"
+ },
+ {
+  "id": "reionization",
+  "title": "Reionização do hidrogênio",
+  "short": "Até cerca de 1 bilhão de anos",
+  "time": "Das primeiras fontes de luz até aproximadamente 1 bilhão de anos após a fase quente",
+  "text": "A luz ultravioleta de estrelas jovens arrancou elétrons do hidrogênio neutro. Regiões de gás ionizado cresceram e se uniram enquanto as primeiras galáxias evoluíam.",
+  "chapter": "origem-do-universo",
+  "visual": "cosmic",
+  "evidence": "História inferida por espectros de quasares distantes e pela radiação de fundo"
  },
  {
   "id": "galaxies",

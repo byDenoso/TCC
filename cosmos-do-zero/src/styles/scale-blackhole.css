@@ -1,0 +1,244 @@
+.cosmic-exhibit {
+  color: var(--exhibit-ink);
+  background: var(--exhibit-night);
+}
+
+.scale-exhibit {
+  padding-block: clamp(56px, 8vw, 112px);
+  border-block: 1px solid var(--exhibit-line);
+}
+
+.black-hole-exhibit {
+  container-type: inline-size;
+  margin-block: 32px;
+  padding: clamp(14px, 3vw, 36px);
+  border: 1px solid var(--exhibit-line);
+  border-radius: 9px;
+}
+
+.cosmic-exhibit .exhibit-label, .cosmic-exhibit-heading em { color: var(--exhibit-accent); }
+.cosmic-exhibit :focus-visible { outline-color: var(--exhibit-blue); }
+
+html:root .cosmic-exhibit :is(h2, h3, h4) { color: var(--exhibit-ink); }
+
+.cosmic-exhibit-heading :is(h2, h3) {
+  margin-block: .25em .36em;
+  font: 480 clamp(40px, 7vw, 101px)/1.02 var(--serif);
+  letter-spacing: -.055em;
+}
+
+.black-hole-exhibit .cosmic-exhibit-heading :is(h2, h3) { font-size: clamp(31px, 5vw, 58px); }
+
+.cosmic-exhibit .cosmic-exhibit-heading > p, .cosmic-exhibit .cosmic-exhibit-copy > p {
+  margin: 0;
+  color: var(--exhibit-muted);
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.68;
+}
+
+.cosmic-exhibit-heading > p { max-width: 60ch; }
+
+.cosmic-exhibit-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  margin-block: clamp(24px, 4vw, 48px) 6px;
+  padding-block: 7px;
+  background: var(--exhibit-night);
+}
+
+.cosmic-exhibit-nav > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 5px 11px;
+  border: 1px solid var(--exhibit-line);
+  border-radius: 4px;
+  color: var(--exhibit-ink);
+  font: 650 13px/1.3 var(--body);
+}
+
+.cosmic-exhibit-nav > a:hover { background: var(--exhibit-panel); border-color: var(--exhibit-blue); }
+.cosmic-exhibit-nav > a > span { color: var(--exhibit-blue); font-size: 11px; }
+
+.cosmic-exhibit-stages { list-style: none; margin: 0; padding: 0; }
+
+.cosmic-exhibit-stage {
+  display: grid;
+  align-items: center;
+  gap: clamp(14px, 3vw, 46px);
+  min-width: 0;
+  padding-block: clamp(24px, 4.5vw, 66px);
+  border-top: 1px solid var(--exhibit-line);
+  scroll-margin-top: 12px;
+}
+
+.cosmic-exhibit-stage:target { border-top-color: var(--exhibit-accent); }
+
+.cosmic-exhibit-copy { min-width: 0; }
+
+.cosmic-exhibit-copy :is(h3, h4) {
+  margin-block: .28em .4em;
+  font: 530 clamp(32px, 4vw, 62px)/1.04 var(--serif);
+  letter-spacing: -.045em;
+}
+
+.black-hole-exhibit .cosmic-exhibit-copy :is(h3, h4) { font-size: clamp(25px, 3vw, 38px); }
+.black-hole-exhibit .cosmic-exhibit-stage { padding-block: clamp(20px, 3vw, 34px); }
+
+.cosmic-exhibit-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  margin-top: 4px;
+  color: var(--exhibit-blue);
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cosmic-exhibit-source:hover, .cosmic-exhibit-plate a:hover { color: var(--exhibit-accent); }
+.scale-exhibit-next { color: var(--exhibit-accent); }
+
+.cosmic-exhibit-plate {
+  min-width: 0;
+  margin: 0;
+  overflow: clip;
+  border: 1px solid var(--exhibit-line);
+  border-radius: 7px;
+  background: var(--exhibit-panel);
+}
+
+.cosmic-exhibit-plate figcaption {
+  padding: 10px 14px;
+  border-top: 1px solid var(--exhibit-line);
+  color: var(--exhibit-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.cosmic-exhibit-plate a { color: var(--exhibit-blue); text-decoration: underline; text-underline-offset: 3px; }
+
+.cosmic-exhibit .cosmic-exhibit-copy > .scale-exhibit-extent {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 15px;
+  padding-inline-start: 12px;
+  border-inline-start: 2px solid var(--exhibit-accent);
+}
+
+.scale-exhibit-extent strong {
+  color: var(--exhibit-accent);
+  font: 690 clamp(20px, 2.2vw, 33px)/1.18 var(--sans);
+  font-variant-numeric: tabular-nums;
+}
+
+.scale-exhibit-extent small { font-size: 13px; }
+
+.scale-exhibit-image {
+  aspect-ratio: 16 / 9;
+  overflow: clip;
+  background: var(--exhibit-night);
+}
+
+.scale-exhibit-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+.scale-exhibit-ruler {
+  display: grid;
+  gap: 6px;
+  padding: 9px clamp(24px, 4vw, 44px) 10px;
+  font: 640 11px/1.3 var(--body);
+  font-variant-numeric: tabular-nums;
+  color: var(--exhibit-muted);
+}
+
+.scale-exhibit-unit { grid-row: 1; text-align: end; }
+
+.scale-exhibit-track {
+  position: relative;
+  height: 2px;
+  margin-block: 2px;
+  background: var(--exhibit-muted);
+}
+
+.scale-exhibit-track > span {
+  position: absolute;
+  left: var(--scale-position);
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--exhibit-panel);
+  border-radius: 50%;
+  background: var(--exhibit-accent);
+  transform: translate(-50%, -50%);
+}
+
+.scale-exhibit-ticks { display: flex; justify-content: space-between; }
+.scale-exhibit-ticks span { display: flex; justify-content: center; width: 0; }
+.scale-exhibit-ticks sup { font-size: 8px; line-height: 1.2; }
+
+.black-hole-plate-label {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 10px 14px;
+  color: var(--exhibit-muted);
+  font: 680 11px/1.4 var(--body);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.black-hole-plate-label > span:last-child { color: var(--exhibit-blue); }
+
+.black-hole-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--exhibit-night);
+}
+
+.black-hole-diagram text { fill: var(--exhibit-ink); font: 660 19px var(--body); }
+.black-hole-orbit { fill: none; stroke: var(--exhibit-blue); stroke-width: 2.5; }
+.black-hole-guide { fill: none; stroke: var(--exhibit-muted); stroke-width: 1.5; }
+.black-hole-body { fill: #05070d; stroke: var(--exhibit-muted); stroke-width: 1.5; }
+.black-hole-star { fill: var(--exhibit-accent); }
+.black-hole-star-glow { fill: var(--exhibit-accent); opacity: .2; }
+.black-hole-disk { fill: #543522; stroke: var(--exhibit-accent); stroke-width: 2; }
+.black-hole-disk-rim { fill: #543522; stroke: var(--exhibit-accent); stroke-width: 2; }
+.black-hole-ray { fill: none; stroke: var(--exhibit-blue); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.black-hole-horizon { fill: #05070d; stroke: var(--exhibit-accent); stroke-width: 2.5; stroke-dasharray: 7 6; }
+
+.black-hole-observation {
+  display: block;
+  width: 100%;
+  max-height: 370px;
+  height: auto;
+  object-fit: contain;
+  background: #000;
+}
+
+@media (min-width: 761px) {
+  .scale-exhibit .cosmic-exhibit-stage { grid-template-columns: minmax(0, .76fr) minmax(0, 1.24fr); }
+  .scale-exhibit .cosmic-exhibit-nav { position: sticky; top: var(--header-clearance, 86px); z-index: 2; }
+  .scale-exhibit .cosmic-exhibit-stage { scroll-margin-top: 64px; }
+}
+
+@container (min-width: 590px) {
+  .black-hole-exhibit .cosmic-exhibit-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html:not([data-motion='reduced'], [data-motion='gentle']) .scale-exhibit-image img {
+      animation: cosmic-exhibit-reframe linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 40%;
+    }
+  }
+}
+
+@keyframes cosmic-exhibit-reframe { from { transform: scale(1.18); } to { transform: scale(1); } }

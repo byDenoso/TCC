@@ -1,0 +1,102 @@
+---
+import { u } from '../lib/url';
+import '../styles/scale-blackhole.css';
+
+interface Props { heading?: 'h2' | 'h3'; }
+const Title = Astro.props.heading ?? 'h3';
+const StageTitle = Title === 'h3' ? 'h4' : 'h3';
+const stages = [
+  {
+    id: 'orbitas', label: 'Órbitas', title: 'As estrelas revelam a massa.',
+    text: 'A estrela S2 leva cerca de 16 anos para dar uma volta em torno de Sagittarius A*, no centro da Via Láctea. Acompanhar o movimento de estrelas como S2 revelou uma massa de cerca de quatro milhões de sóis concentrada numa região pequena.',
+    caption: 'Órbita ilustrativa em torno de Sgr A*. As proporções são esquemáticas.',
+    source: 'https://www.eso.org/public/news/eso2006/', sourceLabel: 'ESO · Órbita de S2'
+  },
+  {
+    id: 'acrecao', label: 'Acreção', title: 'O gás brilha. A luz muda de rumo.',
+    text: 'Gás quente em órbita pode emitir luz enquanto se aproxima do buraco negro. A curvatura do espaço-tempo desvia essa luz. Dependendo de onde observamos, parte da luz do lado distante do disco chega por cima da região escura.',
+    caption: 'Esquema de um disco de acreção e de uma trajetória desviada pela gravidade.',
+    source: 'https://science.nasa.gov/universe/black-holes/anatomy/', sourceLabel: 'NASA · Disco de acreção'
+  },
+  {
+    id: 'horizonte', label: 'Horizonte', title: 'Há um limite para o retorno.',
+    text: 'O horizonte de eventos é a fronteira a partir da qual nenhum sinal pode escapar para o exterior. A luz emitida do lado de fora pode chegar até nós, dependendo da trajetória.',
+    caption: 'Esquema da fronteira. As setas indicam dois destinos possíveis para a luz emitida do lado de fora.',
+    source: 'https://science.nasa.gov/universe/black-holes/anatomy/', sourceLabel: 'NASA · Horizonte de eventos'
+  },
+  {
+    id: 'eht', label: 'Observação', title: 'O EHT reconstrói o anel.',
+    text: 'O Event Horizon Telescope combinou observações em rádio feitas em 2017 e publicou esta imagem de Sagittarius A* em 2022. O anel marca emissão do gás ao redor do buraco negro. A região central escura é a sombra aparente produzida pelo desvio e pela captura da luz, maior que o horizonte de eventos.',
+    source: 'https://eventhorizontelescope.org/blog/astronomers-reveal-first-image-black-hole-heart-our-galaxy', sourceLabel: 'EHT · Como a imagem foi obtida'
+  }
+];
+---
+<section class="cosmic-exhibit black-hole-exhibit" id="buracos-negros" aria-labelledby="black-hole-exhibit-title">
+  <header class="cosmic-exhibit-heading">
+    <div class="exhibit-label">Exposição · Centro da Via Láctea</div>
+    <Title id="black-hole-exhibit-title">Como vemos <em>um buraco negro?</em></Title>
+    <p>Siga as pistas em Sagittarius A*. Primeiro as estrelas em órbita, depois o caminho da luz até o telescópio.</p>
+  </header>
+
+  <nav class="cosmic-exhibit-nav" aria-label="Etapas da exposição sobre buracos negros">
+    {stages.map((stage, i) => <a href={`#buraco-negro-${stage.id}`}><span aria-hidden="true">0{i + 1}</span>{stage.label}</a>)}
+  </nav>
+
+  <ol class="cosmic-exhibit-stages" role="list">
+    {stages.map((stage, i) => (
+      <li class="cosmic-exhibit-stage" id={`buraco-negro-${stage.id}`} tabindex="-1">
+        <div class="cosmic-exhibit-copy">
+          <div class="exhibit-label"><span>0{i + 1}</span> {stage.label}</div>
+          <StageTitle>{stage.title}</StageTitle>
+          <p>{stage.text}</p>
+          <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
+        </div>
+
+        <figure class="cosmic-exhibit-plate">
+          <div class="black-hole-plate-label"><span>Sagittarius A*</span><span>{stage.id === 'eht' ? 'Imagem de observação' : 'Diagrama conceitual'}</span></div>
+          {stage.id === 'orbitas' && (
+            <svg class="black-hole-diagram" viewBox="0 0 560 310" role="img" aria-label="A estrela S2 aparece sobre uma órbita elíptica. Sagittarius A* é marcado perto da extremidade direita da elipse, em um de seus focos.">
+              <ellipse cx="265" cy="154" rx="178" ry="105" class="black-hole-orbit" />
+              <path d="M108 104l-4 15-10-12M330 252l16-4-9 13" class="black-hole-orbit" />
+              <path d="M409 153H459M420 205h61l13 20" class="black-hole-guide" />
+              <circle cx="409" cy="154" r="13" class="black-hole-body" />
+              <circle cx="418" cy="208" r="11" class="black-hole-star-glow" />
+              <circle cx="418" cy="208" r="6" class="black-hole-star" />
+              <text x="466" y="160">Sgr A*</text>
+              <text x="492" y="248">S2</text>
+            </svg>
+          )}
+          {stage.id === 'acrecao' && (
+            <svg class="black-hole-diagram" viewBox="0 0 560 310" role="img" aria-label="Vista de lado de um disco de gás. Uma trajetória esquemática leva luz do lado distante do disco por cima da região escura em direção ao observador.">
+              <ellipse cx="267" cy="174" rx="152" ry="30" class="black-hole-disk" />
+              <circle cx="267" cy="155" r="44" class="black-hole-body" />
+              <path d="M115 174c0 17 68 30 152 30s152-13 152-30" class="black-hole-disk-rim" />
+              <path d="M213 146c-16-48 21-86 62-87h173m-13-8 13 8-13 8" class="black-hole-ray" />
+              <circle cx="213" cy="146" r="4" class="black-hole-star" />
+              <path d="M98 228h53l31-32" class="black-hole-guide" />
+              <text x="56" y="254">Gás quente</text>
+              <text x="276" y="42">Luz desviada</text>
+              <text x="373" y="88">Para o observador</text>
+            </svg>
+          )}
+          {stage.id === 'horizonte' && (
+            <svg class="black-hole-diagram" viewBox="0 0 560 310" role="img" aria-label="O horizonte é representado por uma fronteira circular tracejada. Uma seta da luz cruza essa fronteira para dentro. Outra aponta para longe do buraco negro e fica do lado de fora.">
+              <circle cx="270" cy="163" r="74" class="black-hole-horizon" />
+              <path d="M80 170h151m-13-8 13 8-13 8M372 156h115m-13-8 13 8-13 8" class="black-hole-ray" />
+              <path d="M270 89V63" class="black-hole-guide" />
+              <text x="270" y="49" text-anchor="middle">Horizonte</text>
+              <text x="63" y="206">Luz capturada</text>
+              <text x="366" y="192">Luz que escapa</text>
+            </svg>
+          )}
+          {stage.id === 'eht' ? (
+            <>
+              <img class="black-hole-observation" src={u('/media/eht-sagittarius-a.webp')} width="640" height="640" alt="Imagem de rádio reconstruída de Sagittarius A*. Um anel difuso laranja e amarelo envolve uma região central mais escura." loading="lazy" decoding="async" />
+              <figcaption>Intensidade em cores atribuídas. <a href="https://www.eso.org/public/images/eso2208-eht-mwa/">EHT Collaboration</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · imagem redimensionada.</figcaption>
+            </>
+          ) : <figcaption>{stage.caption}</figcaption>}
+        </figure>
+      </li>
+    ))}
+  </ol>
+</section>

@@ -143,17 +143,17 @@ section('Linha do tempo');
   const p = await page(1280);
   await p.goto(BASE + '/laboratorio/#tempo', { waitUntil: 'networkidle' });
   const n = await p.locator('[data-era-index]').count();
-  ok('10 marcos', n === 10, String(n));
+  ok('12 marcos', n === 12, String(n));
   await p.locator('[data-era-index="2"]').click();
   await p.locator('[data-era-index="0"]').click();
   const t0 = await p.locator('[data-era-title]').innerText();
-  await p.locator('[data-era-index="4"]').click();
+  await p.locator('[data-era-index="6"]').click();
   ok('marco atualiza imagem renderizada', /galaxies\.webp$/.test(await p.locator('[data-era-render]').getAttribute('src')));
   ok('marco muda o título', (await p.locator('[data-era-title]').innerText()) !== t0);
   ok('?marco= na URL', /marco=/.test(p.url()));
-  await p.locator('[data-era-index="4"]').focus();
+  await p.locator('[data-era-index="6"]').focus();
   await p.keyboard.press('End');
-  ok('End vai ao último', (await p.locator('[data-era-index="9"]').getAttribute('aria-pressed')) === 'true');
+  ok('End vai ao último', (await p.locator('[data-era-index="11"]').getAttribute('aria-pressed')) === 'true');
   await p.keyboard.press('Home');
   ok('Home vai ao primeiro', (await p.locator('[data-era-index="0"]').getAttribute('aria-pressed')) === 'true');
   await p.context().close();
@@ -577,7 +577,7 @@ section('Tema claro e escuro');
   const p=await page(1280,{colorScheme:'dark'});
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   ok('escola começa no tema claro papel', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(241, 233, 214)');
-  ok('título em tinta e ação terracota mantêm contraste', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(27, 35, 48)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(181, 61, 23)'));
+  ok('abertura fotográfica mantém título marfim e ação âmbar', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(252, 241, 223)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(255, 192, 134)'));
   const bgLight=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
   await p.locator('[data-theme-toggle]').click();
   ok('botão troca para o papel noturno', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark' && bgLight!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor) && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(18, 23, 31)');
@@ -834,6 +834,61 @@ for(const width of [390,1440]){
  const m=p.locator('[data-hubble-lesson]');await m.locator('.hubble-values summary').click();await m.locator('.hubble-solution summary').click();
  ok('Hubble sem JS: explicação, gráfico, tabela e resolução disponíveis',await m.locator('svg').isVisible()&&await m.locator('tbody tr').count()===5&&await m.locator('.hubble-solution p').isVisible());
  await p.context().close();
+}
+
+section('Planetário: cenas da luz e órbita kepleriana');
+for (const width of [390, 1440]) {
+  const p = await page(width, { reducedMotion: 'reduce' });
+  await p.goto(BASE + '/#luz-cena-1', { waitUntil: 'networkidle' });
+  const exhibit = p.locator('[data-light-exhibit]');
+  await exhibit.locator('[data-light-go="2"]').click();
+  await p.waitForFunction(() => document.querySelector('[data-light-exhibit]')?.dataset.lightScene === '2');
+  await p.getByRole('slider', { name: 'Redshift', exact: true }).press('End');
+  ok(`Luz ${width}: comprimento de onda e fator de escala seguem o redshift`,
+    await exhibit.locator('[data-light-readout]').innerText() === '1.050,1 nm' &&
+    await exhibit.locator('[data-light-scale]').innerText() === '0,63');
+  ok(`Luz ${width}: sem overflow`, await overflow(p) <= 0);
+
+  await p.goto(BASE + '/laboratorio/#orbitas', { waitUntil: 'networkidle' });
+  const orbit = p.locator('[data-orbit-exhibit]');
+  await p.getByRole('slider', { name: 'Excentricidade', exact: true }).press('Home');
+  ok(`Órbita ${width}: círculo tem velocidade de 29,8 km/s a 1 UA`, await orbit.locator('[data-orbit-speed]').innerText() === '29,8 km/s');
+  await p.getByRole('slider', { name: 'Semieixo maior', exact: true }).press('End');
+  ok(`Órbita ${width}: período aumenta para 739 dias a 1,6 UA`, await orbit.locator('[data-orbit-period]').innerText() === '739 dias');
+  await orbit.getByRole('button', { name: 'Avançar ⅛ de volta' }).click();
+  ok(`Órbita ${width}: controle por etapas no modo reduzido`, await orbit.locator('[data-orbit-value="phase"]').innerText() === '13%');
+  await orbit.getByRole('button', { name: 'Reiniciar' }).click();
+  ok(`Órbita ${width}: reinício recupera os parâmetros iniciais`, await orbit.locator('[data-orbit-distance]').innerText() === '0,45 UA');
+  ok(`Órbita ${width}: sem overflow`, await overflow(p) <= 0);
+  const expansion = p.locator('[data-expansion-exhibit]');
+  const activeH = expansion.locator('[data-expansion-reading="h"]');
+  const referenceH = expansion.locator('[data-expansion-reference="h"]');
+  await expansion.locator('[data-expansion-preset="dynamic"]').click();
+  ok(`Expansão ${width}: CPL altera H(z)`, await activeH.innerText() !== await referenceH.innerText());
+  await expansion.locator('[data-expansion-reset]').click();
+  ok(`Expansão ${width}: restauração volta à referência`, await activeH.innerText() === await referenceH.innerText());
+
+  const transit = p.locator('[data-transit-exhibit]');
+  const originalCurve = await transit.locator('[data-transit-curve]').getAttribute('d');
+  await transit.locator('[data-transit-preset="miss"]').click();
+  ok(`Trânsito ${width}: desalinhamento elimina queda e muda a curva`,
+    /^0(?:[, ]|%)/.test(await transit.locator('[data-transit-depth]').innerText()) &&
+    await transit.locator('[data-transit-curve]').getAttribute('d') !== originalCurve);
+  await transit.locator('[data-transit-reset]').click();
+  ok(`Trânsito ${width}: restauração recupera a curva`, await transit.locator('[data-transit-curve]').getAttribute('d') === originalCurve);
+
+  const hr = p.locator('[data-hr-exhibit]');
+  const radius = hr.locator('[data-hr-input="radius"]');
+  const sun = await hr.locator('[data-hr-reading="luminosity"]').innerText();
+  await radius.press('ArrowRight');
+  ok(`Estrelas ${width}: mudar raio altera luminosidade`, await hr.locator('[data-hr-reading="luminosity"]').innerText() !== sun);
+
+  const lens = p.locator('#lente-gravitacional');
+  await lens.locator('[data-lens-mass]').press('End');
+  ok(`Lente ${width}: duplicar massa amplia o raio por raiz de dois`, /1,41/.test(await lens.locator('[data-lens-caption]').innerText()));
+  ok(`Bancadas ${width}: sem overflow`, await overflow(p) <= 0);
+
+  await p.context().close();
 }
 
 await browser.close();

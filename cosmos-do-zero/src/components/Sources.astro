@@ -1,7 +1,9 @@
 ---
+import webb from '../assets/photos/webb-deep-field.webp';
 import { Image } from 'astro:assets';
 import { imageCredits, referenceIndex } from '../data';
 import { photos } from '../lib/images';
+import { additionalCoverCredits } from '../lib/course-covers';
 import SolarCredits from './SolarCredits.astro';
 const keys = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
 interface Props { headingLevel?: 'h1' | 'h2' }
@@ -9,6 +11,7 @@ const Title = Astro.props.headingLevel ?? 'h2';
 ---
 <section class="sources-section dark" id="fontes" aria-labelledby="sources-title">
   <div class="page-width">
+    <p class="exhibit-label"><span>04</span> Acervo · Fontes e créditos</p>
     <Title class="display" id="sources-title">A beleza vem com<br /><em>uma legenda.</em></Title>
     <p class="source-intro">As explicações têm fontes que você pode consultar. Aqui também mostramos de onde vêm as imagens e o que suas cores representam.</p>
     <div class="evidence-key">
@@ -17,6 +20,16 @@ const Title = Astro.props.headingLevel ?? 'h2';
       <div><strong>Ainda não sabemos</strong><p>São perguntas que as observações ainda não resolveram. Novas pistas podem mudar as explicações.</p></div>
     </div>
     <div class="image-credits">
+      <figure>
+        <Image src={webb} alt="O campo profundo do Webb, com arcos de galáxias ao redor de SMACS 0723." width={640} height={400} widths={[320, 640]} sizes="(max-width: 760px) 100vw, 320px" format="webp" quality={80} loading="lazy" fit="cover" />
+        <figcaption>
+          <span class="meta">Observação · infravermelho próximo</span>
+          <h3>Primeiro campo profundo do Webb</h3>
+          <p>Composição NIRCam do aglomerado SMACS 0723. As cores traduzem bandas do infravermelho para o visível. O recorte editorial foi redimensionado.</p>
+          <p class="credit-line">NASA, ESA, CSA, STScI.</p>
+          <a href="https://esawebb.org/images/weic2209a/" target="_blank" rel="noopener noreferrer">Imagem e legenda originais ↗</a>
+        </figcaption>
+      </figure>
       {imageCredits.map((c, i) => (
         <figure>
           <Image src={photos[keys[i]]} alt={c.alt} width={640} height={400} widths={[320, 640]} sizes="(max-width: 760px) 100vw, 320px" format="webp" quality={80} loading="lazy" fit="cover" position="center" />
@@ -30,6 +43,13 @@ const Title = Astro.props.headingLevel ?? 'h2';
         </figure>
       ))}
     </div>
+    <section class="reference-index" id="creditos-das-capas" aria-labelledby="creditos-capas-titulo">
+      <h3 id="creditos-capas-titulo">Imagens das capas das aulas</h3>
+      <p>As capas usam imagens observacionais. As três imagens da galeria acima e as três referências abaixo foram recortadas ou redimensionadas para o catálogo.</p>
+      <ul>{additionalCoverCredits.map((cover) => <li>
+        <a href={cover.href} target="_blank" rel="noopener noreferrer">{cover.title}</a>. {cover.detail} {cover.credit}
+      </li>)}</ul>
+    </section>
     <details class="reference-index">
       <summary>Sobre as ilustrações e os experimentos</summary>
       <p>A escola combina mapas de origem observacional, materiais artísticos originais e cálculos educativos. A Terra usa uma composição MODIS mensal; a Lua, um mosaico LROC e relevo LOLA; Júpiter, um mapa Hubble/OPAL de 2015; Marte, um mosaico Viking. As fontes e as modificações de cada material aparecem abaixo. A geometria, a iluminação e as escalas visuais são ilustrativas.</p>

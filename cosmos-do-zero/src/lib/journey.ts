@@ -5,7 +5,7 @@
  * Cores: 0 = matéria (tinta), 1 = destaque quente (terracota), 2 = luz ou atmosfera (azul).
  */
 export const JOURNEY_ERAS = [
-  'primordial', 'nucleosynthesis', 'cmb', 'first-stars', 'galaxies',
+  'primordial', 'nucleosynthesis', 'cmb', 'dark-ages', 'first-stars', 'reionization', 'galaxies',
   'acceleration', 'solar-system', 'earth', 'oxygen', 'present'
 ] as const;
 export type JourneyEra = typeof JOURNEY_ERAS[number];
@@ -44,6 +44,26 @@ function blank(id: JourneyEra, n: number, fill: boolean, jitter: number): Journe
 
 const TAU = Math.PI * 2;
 const gauss = (rnd: () => number): number => Math.sqrt(-2 * Math.log(1 - rnd() * 0.999999)) * Math.cos(TAU * rnd());
+const FIRST_STAR_CENTERS = [[-0.6, 0.5], [0.42, 0.62], [0.08, 0.05], [-0.5, -0.4], [0.62, -0.3], [-0.05, -0.74], [0.1, 0.9], [-0.9, 0.02]];
+
+/** Gás difuso com regiões mais densas antes do surgimento de estrelas. */
+function earlyGas(id: 'dark-ages' | 'reionization', n: number): JourneyLayout {
+  const rnd = seeded(39);
+  const L = blank(id, n, false, 0.002);
+  for (let i = 0; i < n; i++) {
+    if (i % 3 === 0) {
+      const [x, y] = FIRST_STAR_CENTERS[(i / 3) % FIRST_STAR_CENTERS.length];
+      L.gx[i] = x + 0.14 * gauss(rnd);
+      L.gy[i] = y + 0.14 * gauss(rnd);
+    } else {
+      L.gx[i] = 2.3 * rnd() - 1.15;
+      L.gy[i] = 1.8 * rnd() - 0.9;
+    }
+    L.s[i] = 1 + 0.7 * rnd();
+    L.a[i] = 0.17 + 0.21 * rnd();
+  }
+  return L;
+}
 
 /** Galáxias em disco vistas com inclinações diferentes; a mesma lista serve para "crescem" e "afastam-se". */
 function galaxies(id: JourneyEra, n: number, spread: number, size: number): JourneyLayout {
@@ -115,9 +135,12 @@ export function buildJourney(n: number): JourneyLayout[] {
     for (let i = 0; i < n; i++) { L.gx[i] = rnd() * 2 - 1; L.gy[i] = rnd() * 2 - 1; L.c[i] = 0; L.s[i] = 1.5; L.a[i] = 0.42; }
     out.push(L); }
 
-  // 4. Primeiras estrelas: a gravidade junta o gás em regiões densas.
+  // Idade das Trevas: o gás neutro se concentra, antes das primeiras fontes de luz.
+  out.push(earlyGas('dark-ages', n));
+
+  // Primeiras estrelas: a gravidade junta o gás em regiões densas.
   { const rnd = seeded(41), L = blank('first-stars', n, false, 0.004);
-    const centers = [[-0.6, 0.5], [0.42, 0.62], [0.08, 0.05], [-0.5, -0.4], [0.62, -0.3], [-0.05, -0.74], [0.1, 0.9], [-0.9, 0.02]];
+    const centers = FIRST_STAR_CENTERS;
     for (let i = 0; i < n; i++) {
       if (i % 5 === 0) { L.gx[i] = rnd() * 2.2 - 1.1; L.gy[i] = rnd() * 2.2 - 1.1; L.a[i] = 0.25; L.s[i] = 1.4; continue; }
       const c = centers[i % centers.length], d = Math.abs(gauss(rnd)) * 0.075;
@@ -127,11 +150,26 @@ export function buildJourney(n: number): JourneyLayout[] {
     centers.slice(0, 6).forEach(c => L.marks.push({ x: c[0], y: c[1], r: 0.11 }));
     out.push(L); }
 
-  // 5 e 6. Galáxias crescem; depois, o espaço entre elas aumenta mais depressa.
+  // Reionização: regiões ilustrativas de gás ionizado em torno de fontes de ultravioleta.
+  { const L = earlyGas('reionization', n);
+    const bubbles = [{ source: 0, radius: 0.38 }, { source: 2, radius: 0.5 }, { source: 4, radius: 0.34 }];
+    for (const { source, radius } of bubbles) {
+      const [x, y] = FIRST_STAR_CENTERS[source];
+      L.marks.push({ x, y, r: radius });
+    }
+    for (let i = 0; i < n; i++) {
+      if (L.marks.some(({ x, y, r }) => Math.hypot(L.gx[i] - x, L.gy[i] - y) < r)) {
+        L.c[i] = 2;
+        L.a[i] = 0.82;
+      }
+    }
+    out.push(L); }
+
+  // Galáxias crescem; depois, o espaço entre elas aumenta mais depressa.
   out.push(galaxies('galaxies', n, 1, 1));
   out.push(galaxies('acceleration', n, 1.42, 0.78));
 
-  // 7. Sistema Solar: disco de gás e poeira, com órbitas mais rápidas perto do Sol.
+  // Sistema Solar: disco de gás e poeira, com órbitas mais rápidas perto do Sol.
   { const rnd = seeded(59), L = blank('solar-system', n, false, 0.002);
     const orbits = [0.16, 0.25, 0.35, 0.47, 0.66, 0.86];
     for (let i = 0; i < n; i++) {
@@ -147,11 +185,11 @@ export function buildJourney(n: number): JourneyLayout[] {
     orbits.forEach(o => L.marks.push({ x: 0, y: 0, r: o }));
     out.push(L); }
 
-  // 8 e 9. A Terra se forma; depois, o oxigênio se acumula na atmosfera.
+  // A Terra se forma; depois, o oxigênio se acumula na atmosfera.
   out.push(earth('earth', n, false));
   out.push(earth('oxygen', n, true));
 
-  // 10. O Universo observado hoje: galáxias organizadas em nós e filamentos.
+  // O Universo observado hoje: galáxias organizadas em nós e filamentos.
   { const rnd = seeded(71), L = blank('present', n, true, 0.002);
     const nodes: number[][] = [];
     for (let gy = 0; gy < 5; gy++) for (let gx = 0; gx < 6; gx++) nodes.push([-0.92 + gx * 0.37 + 0.16 * (rnd() - 0.5), -0.88 + gy * 0.44 + 0.2 * (rnd() - 0.5)]);

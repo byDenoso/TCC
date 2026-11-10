@@ -139,8 +139,22 @@ try{
  await story.locator('[data-story-phase]').first().click();
  ok(await story.locator('[data-story-caption]').innerText().then(t=>t.includes('400')),'movimento reduzido: etapas manuais disponíveis');
  await page.goto(base+'/',{waitUntil:'networkidle'});
- ok(await page.locator('[data-story-preview] svg').count()===6,'seis capas vetoriais');
- ok(await page.locator('#movimento').evaluate(e=>e.getBoundingClientRect().top+scrollY<2200),'demonstração próxima da entrada');
+ const entry=page.locator('.hero-actions a[href="#prologo"]');
+ ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso ao prólogo na primeira tela móvel');
+ await entry.click();
+ ok(new URL(page.url()).hash==='#prologo','abertura leva ao prólogo');
+ await page.locator('[data-light-go="2"]').click();
+ const redshift=page.locator('#light-redshift');
+ await redshift.waitFor({state:'visible'});
+ await redshift.press('End');
+ ok((await page.locator('[data-light-readout]').innerText())==='1.050,1 nm','a demonstração do prólogo responde ao controle de redshift');
+ const covers=page.locator('img[data-course-cover]');
+ ok(await covers.count()===6,'seis capas observacionais');
+ for(const cover of await covers.all()){
+  await cover.scrollIntoViewIfNeeded();
+  await cover.evaluate(image=>image.decode());
+  ok(await cover.evaluate(image=>image.naturalWidth>0),'capa observacional carregada');
+ }
  await page.close();
  const transport=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'no-preference'});
  // A entrega do observador pode atrasar em uma página ocupada. O pedido de Play deve sobreviver.
