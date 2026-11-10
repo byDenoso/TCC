@@ -7,7 +7,7 @@ import { photoStories } from '../data/photo-explorer';
 import { pad2 } from '../lib/format';
 /**
  * Leia a imagem: três imagens reais com pontos explicativos, zoom e arraste.
- * Sem JavaScript, as três aparecem em sequência, com os pontos numerados e a lista de explicações.
+ * Sem JavaScript, as três aparecem em sequência, com os traços, os pontos numerados e as explicações.
  * O movimento da imagem só acontece por ação da pessoa; a rolagem da página é preservada.
  */
 const ext = ' (abre em outra aba)';
@@ -17,7 +17,7 @@ const ext = ' (abre em outra aba)';
     <header class="px-head">
       <p class="section-id">O céu de verdade</p>
       <h2 class="display" id="px-title">Imagens reais,<br /><em>lidas de perto.</em></h2>
-      <p class="px-lede">Escolha uma imagem e toque nos pontos numerados. Cada um mostra o que os astrônomos enxergam ali.</p>
+      <p class="px-lede">Escolha uma imagem e toque nos pontos numerados. Os traços destacam as regiões explicadas em cada passo.</p>
     </header>
     <div class="px-tabs" role="group" aria-label="Escolha a imagem" data-px-tabs hidden>
       {photoStories.map((story, i) => (
@@ -36,8 +36,11 @@ const ext = ' (abre em outra aba)';
             <div class="px-view" data-px-view tabindex="-1">
               <div class="px-canvas" data-px-canvas style={`aspect-ratio:${photo.width}/${photo.height}`}>
                 <Image src={photo} alt={credit.alt} widths={[800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />
+                <svg class="px-annotations" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                  {story.spots.map((spot, k) => <path data-px-annotation={k} d={spot.trace} pathLength="1" vector-effect="non-scaling-stroke" />)}
+                </svg>
                 {story.spots.map((spot, k) => (
-                  <button type="button" class="px-spot" data-px-spot={k} style={`left:${spot.x}%;top:${spot.y}%`} aria-label={`Ponto ${k + 1}: ${spot.title}`} aria-pressed="false"><span aria-hidden="true">{k + 1}</span></button>
+                  <button type="button" class="px-spot" data-px-spot={k} style={`left:${spot.x}%;top:${spot.y}%`} aria-label={`Ponto ${k + 1}: ${spot.title}`} aria-pressed="false" disabled><span aria-hidden="true">{k + 1}</span></button>
                 ))}
               </div>
             </div>
@@ -68,7 +71,7 @@ const ext = ' (abre em outra aba)';
             <ol class="px-list" data-px-list>
               {story.spots.map((spot) => <li data-general={spot.general ? 'true' : undefined}><strong>{spot.title}.</strong> {spot.text}</li>)}
             </ol>
-            <p class="px-source">As explicações seguem a legenda da NASA para esta imagem{story.spots.some((spot) => spot.general) ? '; os pontos sobre óptica e órbita são conhecimento geral de astronomia' : ''}.</p>
+            <p class="px-source">As explicações seguem a legenda da NASA para esta imagem.{story.spots.some((spot) => spot.general) && ' Os pontos sobre óptica e órbita são conhecimento geral de astronomia.'}</p>
           </div>
         </article>
       );
