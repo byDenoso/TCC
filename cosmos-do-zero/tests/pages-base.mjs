@@ -64,6 +64,10 @@ for (const file of html) {
   const navigationUrl = slug === '404.html' ? `${expectedRoot}404.html` : pageUrl;
   assert.equal((text.match(/<h1(?=\s|>)/g) ?? []).length, 1, `Título principal h1 ausente ou repetido: ${slug}`);
   idsIn(file);
+  if (slug === 'index.html') {
+    const covers = [...text.matchAll(/<img\b[^>]*\bdata-course-cover="([^"]+)"/g)];
+    assert.equal(new Set(covers.map((cover) => cover[1])).size, 6, 'As seis aulas precisam de capas observacionais distintas');
+  }
   assert.ok(text.includes(`<link rel="canonical" href="${pageUrl}"`), `Canônica incorreta: ${slug}`);
   assert.ok(text.includes(`property="og:url" content="${pageUrl}"`), `og:url incorreto: ${slug}`);
   assert.ok(text.includes(`property="og:image" content="${expectedRoot}social-card.png"`), `og:image incorreto: ${slug}`);

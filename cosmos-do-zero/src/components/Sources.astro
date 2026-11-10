@@ -3,6 +3,7 @@ import webb from '../assets/photos/webb-deep-field.webp';
 import { Image } from 'astro:assets';
 import { imageCredits, referenceIndex } from '../data';
 import { photos } from '../lib/images';
+import { additionalCoverCredits } from '../lib/course-covers';
 import SolarCredits from './SolarCredits.astro';
 const keys = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
 interface Props { headingLevel?: 'h1' | 'h2' }
@@ -42,6 +43,13 @@ const Title = Astro.props.headingLevel ?? 'h2';
         </figure>
       ))}
     </div>
+    <section class="reference-index" id="creditos-das-capas" aria-labelledby="creditos-capas-titulo">
+      <h3 id="creditos-capas-titulo">Imagens das capas das aulas</h3>
+      <p>As capas usam imagens observacionais. As três imagens da galeria acima e as três referências abaixo foram recortadas ou redimensionadas para o catálogo.</p>
+      <ul>{additionalCoverCredits.map((cover) => <li>
+        <a href={cover.href} target="_blank" rel="noopener noreferrer">{cover.title}</a>. {cover.detail} {cover.credit}
+      </li>)}</ul>
+    </section>
     <details class="reference-index">
       <summary>Sobre as ilustrações e os experimentos</summary>
       <p>A escola combina mapas de origem observacional, materiais artísticos originais e cálculos educativos. A Terra usa uma composição MODIS mensal; a Lua, um mosaico LROC e relevo LOLA; Júpiter, um mapa Hubble/OPAL de 2015; Marte, um mosaico Viking. As fontes e as modificações de cada material aparecem abaixo. A geometria, a iluminação e as escalas visuais são ilustrativas.</p>

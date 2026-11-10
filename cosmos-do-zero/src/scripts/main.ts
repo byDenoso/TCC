@@ -32,7 +32,7 @@ const instruments: [string, () => Promise<void>][] = [
   ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()],
   ['[data-journey]', async () => (await import('./journey')).initJourney()],
   ['[data-px]', async () => (await import('./photo-explorer')).initPhotoExplorer()],
-  ['[data-story],[data-story-preview]', async () => (await import('./story')).initStories()]
+  ['[data-story]', async () => (await import('./story')).initStories()]
 ];
 
 /** Carrega apenas os instrumentos presentes; o leitor prepara os passos antes das cenas. */

@@ -1,11 +1,13 @@
 ---
+import { Image } from 'astro:assets';
+import { courseCovers } from '../lib/course-covers';
 import { primaryRows, chapters, PRIMARY_CHAPTER_IDS } from '../data';
-import { chapterUrl } from '../lib/url';
+import { chapterUrl, u } from '../lib/url';
 import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
-import { STORIES, renderStory } from '../lib/story-scenes';
+import { STORIES } from '../lib/story-scenes';
 const visuals: Record<string, { label: string; icon: string }> = {
   'galaxias-e-nebulosas': { label: 'Escalas e galáxias', icon: '◎' },
   'origem-do-universo': { label: 'A história do Universo', icon: '✧' },
@@ -33,13 +35,19 @@ const visuals: Record<string, { label: string; icon: string }> = {
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
-    <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><button type="button" data-preview-toggle aria-pressed="true" hidden>Pausar as capas</button></div>
+    <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
       {chapters.map((ch, i) => {
         const visual = visuals[ch.id];
+        const cover = courseCovers[ch.id];
         const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
         return <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
-          <div class="school-course-image"><div data-story-preview={ch.id} data-story-uid={`preview-${i}`} aria-hidden="true" set:html={renderStory(ch.id,1,`preview-${i}`)} /><span class="school-course-number">{pad2(i + 1)}</span><span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span></div>
+          <div class="school-course-image">
+            <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 650px) 90vw, (max-width: 1050px) 44vw, 420px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
+            <span class="school-course-number">{pad2(i + 1)}</span>
+            <span class="school-course-photo-caption">{cover.caption}</span>
+            <span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span>
+          </div>
           <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
         </a>;
       })}

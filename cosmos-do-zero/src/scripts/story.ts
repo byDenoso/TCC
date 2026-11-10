@@ -63,21 +63,4 @@ export function initStories():void {
   window.addEventListener('pagehide',event=>{stop();film.pause();if(event.persisted)return;automatic.dispose();motionPreference.removeEventListener('change',preference);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pageshow',restore);});
   paint();root.dataset.storyReady='true';
  }
- initPreviews();
-}
-
-/** Só uma capa se move por vez; as demais mantêm um quadro vetorial nítido. */
-function initPreviews():void {
- const previews=[...document.querySelectorAll<HTMLElement>('[data-story-preview]')];if(!previews.length)return;
- const shown=new Set<HTMLElement>();let active:HTMLElement|null=null,raf=0,last=0,time=0,enabled=true;
- const toggle=document.querySelector<HTMLButtonElement>('[data-preview-toggle]');if(toggle)toggle.hidden=false;
- const stop=()=>{cancelAnimationFrame(raf);raf=0;last=0;};
- const tick=(now:number)=>{if(!active||!enabled||motionPreference.matches||document.hidden){stop();return;}if(now-last>=83){time=(time+(last?now-last:16)/1000)%20;last=now;active.innerHTML=renderStory(active.dataset.storyPreview!,storyProgress(time),active.dataset.storyUid!);}raf=requestAnimationFrame(tick);};
- const refresh=()=>{stop();active=shown.has(active!)?active:previews.find(p=>shown.has(p))??null;if(active&&enabled&&!motionPreference.matches&&!document.hidden)raf=requestAnimationFrame(tick);};
- const observer=new IntersectionObserver(entries=>{for(const e of entries){const p=e.target as HTMLElement;if(e.isIntersecting)shown.add(p);else shown.delete(p);}refresh();},{threshold:.3});
- previews.forEach(p=>{observer.observe(p);p.closest('a')?.addEventListener('pointerenter',()=>{if(shown.has(p)){active=p;refresh();}});p.closest('a')?.addEventListener('focusin',()=>{if(shown.has(p)){active=p;refresh();}});});
- toggle?.addEventListener('click',()=>{enabled=!enabled;toggle.setAttribute('aria-pressed',String(enabled));toggle.textContent=enabled?'Pausar as capas':'Animar as capas';refresh();});
- motionPreference.addEventListener('change',refresh);document.addEventListener('visibilitychange',refresh);
- const restore=(event:PageTransitionEvent)=>{if(event.persisted)refresh();};window.addEventListener('pageshow',restore);
- window.addEventListener('pagehide',event=>{stop();if(event.persisted)return;observer.disconnect();motionPreference.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('pageshow',restore);});
 }
