@@ -20,7 +20,7 @@ async function go(page, i) {
   return page.evaluate(async (i) => {
     const st = [...document.querySelectorAll('[data-journey-step]')];
     const r = st[i].getBoundingClientRect();
-    window.scrollTo(0, scrollY + r.top + r.height / 2 - innerHeight * 0.58);
+    window.scrollTo({ top: scrollY + r.top + r.height / 2 - innerHeight * 0.58, behavior: 'instant' });
     await new Promise(r => setTimeout(r, 700));
     return { active: st.findIndex(s => s.classList.contains('is-active')), when: document.querySelector('[data-journey-when]').textContent, overflow: document.documentElement.scrollWidth - innerWidth };
   }, i);

@@ -46,9 +46,9 @@ html:not([data-motion='reduced']) .journey[data-journey-ready] .journey-step:not
   .journey-rail { right: 8px; top: 30%; gap: 7px; }
   .journey-rail i { height: 12px; }
   .journey-rail i.is-active { height: 26px; }
-  .journey-note { left: var(--gutter); right: auto; bottom: auto; top: 58%; text-align: left; font-size: 11px; max-width: 60vw; }
-  .journey[data-journey-ready] .journey-step { align-items: flex-end; padding-bottom: 4vh; min-height: 112vh; min-height: 112svh; }
-  .journey[data-journey-ready] .journey-step:first-child { min-height: 126vh; min-height: 126svh; }
+  .journey-note { left: var(--gutter); right: var(--gutter); bottom: 6px; top: auto; text-align: left; font-size: 11px; max-width: none; }
+  .journey[data-journey-ready] .journey-step { align-items: flex-end; padding-bottom: 18vh; padding-bottom: 18svh; min-height: 112vh; min-height: 112svh; }
+  .journey[data-journey-ready] .journey-step:first-child { min-height: 126vh; min-height: 126svh; padding-bottom: 25vh; padding-bottom: 25svh; }
   .journey[data-journey-ready] .journey-step article { width: 100%; max-height: 40vh; max-height: 40svh; overflow: auto; gap: 7px; padding: 16px 18px; }
   .journey-step h3 { font-size: 22px; }
   .journey-step-text { font-size: 14px; line-height: 1.55; }

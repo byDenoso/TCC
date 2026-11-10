@@ -46,14 +46,16 @@ export function initJourney(): void {
   /** Quadro central: à direita no desktop (o texto ocupa a esquerda), no alto no celular. */
   const frame = () => {
     const wide = !small.matches;
-    return { cx: W * (wide ? 0.66 : 0.5), cy: H * (wide ? 0.46 : 0.31), k: Math.min(W * (wide ? 0.27 : 0.44), H * (wide ? 0.34 : 0.24)) };
+    return { cx: W * (wide ? 0.66 : 0.5), cy: H * (wide ? 0.46 : 0.36), k: Math.min(W * (wide ? 0.27 : 0.42), H * (wide ? 0.34 : 0.17)) };
   };
 
   const measure = () => {
     const anchor = window.innerHeight * 0.58;
     const centers = steps.map(s => { const r = s.getBoundingClientRect(); return r.top + r.height / 2; });
     const p = journeyProgress(centers, anchor);
-    const next = motionPreference.matches ? Math.round(p) : p;
+    // Cada marco tem uma zona de repouso: a cena só se transforma no trecho central entre dois passos.
+    const base = Math.floor(p), settle = base + smooth((p - base - 0.18) / 0.64);
+    const next = motionPreference.matches ? Math.round(p) : settle;
     if (next !== progress) { progress = next; dirty = true; }
     const index = Math.round(p);
     if (index !== active) {
@@ -99,7 +101,7 @@ export function initJourney(): void {
         for (let x = 0; x <= W; x += 6) { const y = y0 + 9 * Math.sin((x * dir) / 26 + phase) + (x - W / 2) * 0.06 * (ray - 3); if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
         ctx.stroke();
       }
-      label('luz livre para viajar', f.cx, H * 0.182, w, colors.light);
+      label('luz livre para viajar', f.cx, H * (small.matches ? 0.56 : 0.182), w, colors.light);
     }
     w = weight(3);
     if (w > 0) layouts[3].marks.forEach((_, m) => { const [x, y, r] = at(layouts[3], m); glow(x, y, r * (1.5 + 0.12 * Math.sin(t * 1.3 + m)), colors.hot, 0.5 * w); });
