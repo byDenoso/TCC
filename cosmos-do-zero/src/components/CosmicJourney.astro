@@ -1,0 +1,47 @@
+---
+import '../styles/journey.css';
+import { eras } from '../data';
+import { chapterUrl } from '../lib/url';
+import { pad2 } from '../lib/format';
+import { JOURNEY_ERAS } from '../lib/journey';
+/**
+ * Viagem pelo tempo: scrollytelling da home. O texto vem de eras.json (mesmos marcos da linha do tempo);
+ * a cena de partículas é montada por src/scripts/journey.ts. Sem JavaScript, os marcos formam uma lista comum.
+ */
+const marks = JOURNEY_ERAS.map((id) => eras.find((era) => era.id === id)).filter((era) => era !== undefined);
+const total = pad2(marks.length);
+---
+<section class="journey" id="viagem" aria-labelledby="journey-title" data-journey>
+  <div class="journey-intro page-width">
+    <p class="section-id">A história em uma rolagem</p>
+    <h2 class="display" id="journey-title">13,8 bilhões de anos,<br /><em>um marco por vez.</em></h2>
+    <p class="journey-lede">Role a página e acompanhe dez marcos, da fase quente e densa ao Universo observado hoje. A cada marco, os pontos da cena se reorganizam.</p>
+    <a class="textlink" href="#capitulos">Pular para as aulas <span aria-hidden="true">↓</span></a>
+  </div>
+  <div class="journey-body">
+    <div class="journey-stage" aria-hidden="true">
+      <canvas data-journey-canvas></canvas>
+      <div class="journey-hud">
+        <span class="journey-when" data-journey-when>{marks[0].short}</span>
+      </div>
+      <div class="journey-rail">
+        {marks.map((_, i) => <i class:list={[i === 0 && 'is-active']} data-journey-tick></i>)}
+      </div>
+      <p class="journey-note">Ilustração esquemática, fora de escala. Datas aproximadas.</p>
+    </div>
+    <ol class="journey-steps">
+      {marks.map((era, i) => (
+        <li class:list={['journey-step', i === 0 && 'is-active']} data-journey-step={i} data-journey-short={era.short}>
+          <article>
+            <p class="journey-step-count">{pad2(i + 1)} / {total}</p>
+            <p class="journey-step-time">{era.short}</p>
+            <h3>{era.title}</h3>
+            <p class="journey-step-text">{era.text}</p>
+            <p class="journey-step-evidence"><b>Como sabemos</b> {era.evidence}</p>
+            <a class="textlink" href={chapterUrl(era.chapter)}>Entrar nesta aula <span aria-hidden="true">↗</span></a>
+          </article>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
