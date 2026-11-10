@@ -64,7 +64,19 @@ html:root .mx-transport button { padding-inline:12px;font-size:13px; }
 .story-phases button>span { flex:none;display:grid;place-items:center;border:1px solid var(--line-strong);border-radius:50%;width:18px;height:18px;font-size:10px; }
 .story-phases [aria-current='step'] { color:var(--ink);border-color:var(--accent);background:var(--accent-soft); }
 .story-viewport { min-width:0;position:relative;aspect-ratio:16/9;background:#06038d;border-radius:12px;overflow:hidden; }
-.story-stage,.story-stage>svg,.story-viewport video { display:block;width:100%;height:100%; }
+.story-stage,.story-viewport video { width:100%;height:100%; }
+.story-stage { display:grid;place-items:center;container-type:size; }
+.story-frame { position:relative;width:min(100%,calc(100cqh * 16 / 9));aspect-ratio:16 / 9; }
+.story-webgl,.story-overlay { position:absolute;inset:0; }
+.story-overlay { pointer-events:none; }
+.story-webgl img,.story-overlay svg { display:block;width:100%;height:100%; }
+.story-webgl.cosmos-volume-ready img { visibility:hidden; }
+[data-story="origem-do-universo"] .story-webgl { background:#070c18; }
+[data-story="origem-do-universo"] [data-story-poster],.story-webgl.cosmos-volume-ready ~ .story-overlay .story-wave-fallback { visibility:hidden; }
+.story-frame .cosmos-view-options { display:none; }
+.story-reference { display:none; }
+[data-story-reference][data-story-mode-active="scene"] .story-reference { display:block; }
+.story-viewport video { display:block; }
 .story-viewport video { object-fit:contain; }
 .story-viewport video::cue { color:#eef6ff;background:#06038d;font-family:Arial,Helvetica,sans-serif;font-size:clamp(12px,1.05vw,16px); }
 .story-viewport [hidden] { display:none!important; }
@@ -94,7 +106,6 @@ html:root .experience-dialog .story-lesson { display:flex;flex-direction:column;
 .experience-dialog .story-phases,.experience-dialog .story-modes { margin:0;flex:none; }
 .experience-dialog .story-mode-note { display:none; }
 .experience-dialog .story-viewport { flex:1;min-height:110px;aspect-ratio:auto; }
-.experience-dialog .story-stage svg { width:100%;height:100%; }
 .experience-dialog .story-transport { flex:none;margin:0; }
 html:root .experience-dialog .story-caption { flex:none;margin:0;min-height:0;max-height:4.5em;overflow:auto;padding:9px 12px; }
 html:root .experience-dialog .story-limit { flex:none;font-size:11px;max-height:3.2em;overflow:auto;margin:0; }

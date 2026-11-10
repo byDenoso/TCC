@@ -15,7 +15,14 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     {story.phases.map((phase,i)=><li><button type="button" data-story-phase={i} aria-current={i===0?'step':'false'}><span aria-hidden="true">{i+1}</span>{phase.label}</button></li>)}
   </ol>
   <div class="story-viewport" data-story-viewport>
-    <div class="story-stage" data-story-stage set:html={renderStory(id,0,prefix)} />
+    <div class="story-stage" data-story-stage>
+      <div class="story-frame">
+        <div class="story-webgl" data-story-world aria-hidden="true">
+          <img data-story-poster src={u(`/media/stories/${id}.webp`)} width="960" height="540" alt="" decoding="async" />
+        </div>
+        <div class="story-overlay" data-story-graphic set:html={renderStory(id,0,prefix,true)} />
+      </div>
+    </div>
     <video data-story-film controls playsinline preload="none" poster={u(`/media/stories/${id}.webp`)} aria-label={`Vídeo: ${story.title}`} hidden>
       <source src={u(`/media/stories/${id}.mp4`)} type="video/mp4" />
       <track kind="captions" src={u(`/media/stories/${id}.vtt`)} srclang="pt-BR" label="Português" default />
@@ -29,6 +36,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <output for={`${prefix}-time`} data-story-clock>0:00 / 0:20</output>
   </div>
   <p class="story-caption" data-story-caption>{story.phases[0].say}</p>
+  <p class="story-limit story-reference">{id === 'origem-do-universo' ? 'Diagrama interativo da onda. O vídeo mostra a versão em 3D.' : 'Quadros de referência em 3D. O vídeo acompanha a cena inteira.'}</p>
   <p class="story-limit">{story.limit}</p>
   <details class="story-transcript"><summary>Ler a explicação</summary><ol>{story.phases.map(phase=><li><strong>{phase.label}.</strong> {phase.say}</li>)}</ol><p>Vídeo ilustrativo, sem narração. Você escolhe o ritmo pelos controles.</p><a href={u(`/media/stories/${id}.mp4`)}>Abrir o vídeo de 20 segundos ↗</a></details>
   <noscript><p>A cena acima mostra o primeiro momento. Leia as três etapas em “Ler a explicação” ou abra o vídeo.</p></noscript>

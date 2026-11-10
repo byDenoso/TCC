@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { selectLessonStep } from './lib/reader-navigation.mjs';
 const base=(process.env.BASE_URL||'http://127.0.0.1:4321').replace(/\/$/,'');
 const ids=['galaxias-e-nebulosas','origem-do-universo','misterios-do-cosmos','vida-das-estrelas','sistema-solar','terra-e-atmosfera'];
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache'],args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 let checks=0;const ok=(x,message)=>{assert.ok(x,message);checks++;};
 try{
  const cold=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
@@ -31,12 +31,15 @@ try{
    const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
    ok(await root.count()===1,`${id}/${width}: abertura narrativa presente`);
    await stage.scrollIntoViewIfNeeded();
+   const world=root.locator('[data-story-world][data-renderer="webgl2"] canvas');
+   await world.waitFor({timeout:15000});
+   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco Three.js renderizado`);
    await page.waitForFunction(id=>document.querySelector(`[data-story="${id}"] [data-story-play]`)?.getAttribute('aria-pressed')==='true',id);
    ok(await root.locator('[data-story-phase]').count()===3,`${id}/${width}: três momentos nomeados`);
    await root.locator('[data-story-phase]').last().click();
    ok(await root.locator('[data-story-play]').getAttribute('aria-pressed')==='false',`${id}/${width}: etapa escolhida fica pausada`);
-   const svg=await root.locator('[data-story-stage]').innerHTML();await page.waitForTimeout(100);
-   ok(await root.locator('[data-story-stage]').innerHTML()===svg,`${id}/${width}: escolha manual não é sobrescrita`);
+   const graphic=root.locator('[data-story-graphic]'),svg=await graphic.innerHTML();await page.waitForTimeout(100);
+   ok(await graphic.innerHTML()===svg,`${id}/${width}: escolha manual não é sobrescrita`);
    const sceneTime=Number(await root.locator('[data-story-time]').inputValue());
    await root.locator('[data-story-mode="film"]').click();
    const video=root.locator('[data-story-film]');await video.waitFor({state:'visible'});
@@ -57,7 +60,7 @@ try{
    await root.locator('[data-story-mode="film"]').click();
    ok(await video.evaluate(v=>v.currentTime===20&&v.paused),`${id}/${width}: conclusão é preservada na troca para vídeo`);
    await root.locator('[data-story-mode="scene"]').click();
-   ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: conclusão é preservada na volta ao SVG`);
+   ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: conclusão é preservada na volta à cena`);
    await root.locator('[data-experience-expand]').click();
    ok(await root.getAttribute('data-expanded')==='true',`${id}/${width}: cinema aberto`);
    const fit=await root.evaluate(r=>{const stage=r.querySelector('[data-story-viewport]').getBoundingClientRect(),controls=r.querySelector('.story-transport').getBoundingClientRect();return stage.top>=0&&stage.bottom<=innerHeight&&controls.top>=0&&controls.bottom<=innerHeight;});
@@ -177,5 +180,24 @@ try{
  ok(Number(await quiet.locator('[data-mx-range]').inputValue())>before,'Avançar muda o valor com movimento reduzido');
  const quietSvg=await quiet.locator('[data-mx-svg]').innerHTML();await still.waitForTimeout(180);
  ok(await quiet.locator('[data-mx-play]').getAttribute('aria-pressed')==='false'&&await quiet.locator('[data-mx-svg]').innerHTML()===quietSvg,'movimento reduzido conserva o novo quadro estático');await still.close();
+ const fallback=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
+ await fallback.addInitScript(()=>{
+  const getContext=HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext=function(type,...args){
+   return type.startsWith('webgl')?null:getContext.call(this,type,...args);
+  };
+ });
+ await fallback.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'domcontentloaded'});
+ const diagram=fallback.locator('[data-story-graphic]');
+ await diagram.scrollIntoViewIfNeeded();
+ await fallback.locator('[data-story-reference] .story-reference').waitFor({state:'visible'});
+ const wave=diagram.locator('.story-wave-fallback path').last();
+ const infrared=await wave.getAttribute('d');
+ await fallback.locator('[data-story-time]').press('Home');
+ ok(await wave.isVisible()&&await wave.getAttribute('d')!==infrared,'sem WebGL: o espaçamento das cristas acompanha o controle');
+ ok(await diagram.innerText().then(text=>text.includes('400 nm')),'sem WebGL: a régua informa o comprimento de onda inicial');
+ await fallback.locator('[data-story-time]').press('End');
+ ok(await wave.getAttribute('d')===infrared&&await diagram.innerText().then(text=>text.includes('800 nm')),'sem WebGL: onda e régua chegam juntas a 800 nm');
+ await fallback.close();
  console.log(`Cinema: ${checks} verificações aprovadas`);
 }finally{await browser.close();}

@@ -1,6 +1,6 @@
 import {structuresScene} from './origin-scenes';
 import {diskScene,giantScene,cometScene} from './solar-processes';
-import {distantStar} from './stellar-materials';
+import {distantStar,stellarFactory} from './stellar-materials';
 import {styleEarth} from './world-view';
 import {emissionReady,emissionSize,prepareStarsOnly,starsOnlyMap,starsOnlyReady} from './galaxy-emission';
 import {earthLayersScene,atmosphereScene,magnetosphereScene} from './earth-scenes';
@@ -39,9 +39,33 @@ function galaxyLayers(initialSize:import('./galaxy-emission').EmissionSize=1536)
 function nebula():Exhibit{return nebulaScene();}
 
 function lightJourney():Exhibit{
- const group=new THREE.Group(),make=createWorldFactory(),earth=make('terra'),star=distantStar,photon=sphere(.055,0x90badd,true);styleEarth(earth);earth.position.x=1.65;earth.scale.setScalar(.5);group.add(earth,photon);
- const sources=[make('lua'),star(0xfff3df),star(0xff8268)];sources.forEach(s=>{s.position.x=-1.65;group.add(s);});sources[0].scale.setScalar(.34);sources[1].scale.setScalar(1.45);sources[2].scale.setScalar(1.05);
- const label={text:'Lua · 1,3 segundo',position:sources[0].position};return {group,lighting:{neutral:true,ambient:.35,key:3.3,fill:.15,exposure:1.1},labels:[label,{text:'Terra',position:earth.position}],camera:[0,1.1,5.6],quality(mode,width){make.quality(mode==='low'?512:width<600?1024:2048);},update({value,phase}){const v=Math.min(2,Math.round(value));sources.forEach((s,i)=>s.visible=i===v);label.text=['Lua · 1,3 segundo','Sol · 8 min 20 s','Proxima Centauri · 4,2 anos'][v];photon.position.x=-1.25+phase*2.5;}};
+ const group=new THREE.Group(),make=createWorldFactory(),earth=make('terra');
+ const marker=distantStar(0xb6e3ff),sun=stellarFactory()(0xffe5cb);
+ const sources=[make('lua'),sun,distantStar(0xffa181)];
+ const sourceLabels=['Lua · 1,3 segundo','Sol · 8 min 20 s','Proxima Centauri · 4,2 anos'];
+ styleEarth(earth);
+ earth.position.x=1.65;
+ earth.scale.setScalar(.5);
+ marker.scale.setScalar(.36);
+ marker.position.y=.06;
+ group.add(earth,marker);
+ sources.forEach((source,i)=>{
+  source.position.x=-1.65;
+  source.scale.setScalar([.34,.32,1.05][i]);
+  group.add(source);
+ });
+ const label={text:sourceLabels[0],position:new THREE.Vector3(-1.65,-.41,0)};
+ return {
+  group,lighting:{neutral:true,ambient:.35,key:3.3,fill:.15,exposure:1.1},
+  labels:[label,{text:'Terra',position:new THREE.Vector3(1.65,-.55,0)}],
+  camera:[0,1.1,5.6],quality(mode,width){make.quality(mode==='low'?512:width<600?1024:2048);},
+  update({value,phase}){
+   const step=Math.min(2,Math.round(value));
+   sources.forEach((source,i)=>source.visible=i===step);
+   label.text=sourceLabels[step];
+   marker.position.x=-1.28+phase*2.43;
+  }
+ };
 }
 function atoms():Exhibit{
   const group=new THREE.Group(),parts=Array.from({length:28},(_,i)=>{const p=sphere(i<4?.09:.07,i<4?0x8f99ad:0xc5684f);group.add(p);return p;});
@@ -85,7 +109,7 @@ export const visualCatalog:Record<string,{make:(stage:HTMLElement)=>Exhibit;asse
  'galaxias-e-nebulosas-tipos':{make:stage=>{const size=galaxyStageSize(stage);return galaxyLayers(starsOnlyReady(size)?size:Number(stage.dataset.galaxySeedSize) as import('./galaxy-emission').EmissionSize);},galaxies:true,galaxyStars:true},
  'galaxias-e-nebulosas-teia-cosmica':{make:stage=>web(galaxyStageSize(stage)),galaxies:true},
  'galaxias-e-nebulosas-nebulosas':{make:nebula,stellar:'nebula'},
- 'galaxias-e-nebulosas-gas-e-estrelas':{make:lightJourney,assets:true},
+ 'galaxias-e-nebulosas-gas-e-estrelas':{make:lightJourney,assets:true,stellar:'surface',legend:'Mapas observacionais na Terra e na Lua. A superfície do Sol é ilustrativa. O brilho em movimento marca o percurso da luz, com distâncias e tamanhos fora de escala.'},
  'galaxias-e-nebulosas-centros-galacticos':{make:stage=>horizon(galaxyStageSize(stage)),galaxies:true,preserveSvg:true},
  'origem-do-universo-o-universo':{make:stage=>expansion(()=>0,()=>false,galaxyStageSize(stage)),galaxies:true,preserveSvg:true},
  'origem-do-universo-fase-quente':{make:atoms,preserveSvg:true,legend:'Laranja: prótons. Cinza: nêutrons. Azul: elétrons, livres nas primeiras etapas e ligados simbolicamente no final. Quantidades e tamanhos esquemáticos; sem órbitas planetárias de elétrons.'},
@@ -94,9 +118,9 @@ export const visualCatalog:Record<string,{make:(stage:HTMLElement)=>Exhibit;asse
  'vida-das-estrelas-sol':{make:sunLayers,stellar:'surface'},
  'vida-das-estrelas-pequenas-e-medias':{make:stellarPair,stellar:'cloud'},
  'vida-das-estrelas-massivas':{make:massive,stellar:'cloud',legend:'Estrela de nêutrons OU buraco negro: destinos possíveis de caminhos distintos, não um sistema duplo. O gás ilustrado pertence ao caminho da estrela de nêutrons.'},
- 'sistema-solar-disco':{make:solarDisk,assets:true,stellar:'cloud'},
- 'sistema-solar-gigantes':{make:giant,assets:true,preserveSvg:true},
- 'sistema-solar-pequenos-corpos':{make:comet,legend:'Azul: cauda de gás ionizado. Âmbar: cauda de poeira, mais curva. Comprimentos e larguras ampliados para leitura; ambas são empurradas para longe do Sol.'},
+ 'sistema-solar-disco':{make:solarDisk,assets:true,stellar:'cloud',legend:'O volume e a poeira do disco ilustram etapas da formação planetária. As cores, as dimensões e a posição da linha do gelo são ilustrativas.'},
+ 'sistema-solar-gigantes':{make:giant,assets:true,preserveSvg:true,legend:'Nuvens de Júpiter a partir de um mapa do Hubble. As cores do corte interno e a profundidade da régua ilustram o modelo de composição.'},
+ 'sistema-solar-pequenos-corpos':{make:comet,legend:'Núcleo ilustrativo inspirado nas imagens da missão Rosetta. Azul: cauda de gás ionizado. Âmbar: cauda de poeira, mais curva. As dimensões e a atividade são ampliadas para leitura.'},
  'sistema-solar-orbitas':{make:orbit,assets:true,legend:'Seta azul: direção do movimento. Âmbar: direção da gravidade. Os comprimentos são ilustrativos; não comparam intensidade. O marcador claro mostra a posição do corpo, ampliada para leitura. O círculo central marca o limite ilustrativo de queda; a câmera enquadra a trajetória.'},
  'terra-e-atmosfera-formacao-da-terra':{make:earthLayers,assets:true},
  'terra-e-atmosfera-camadas':{make:atmosphere,assets:true,preserveSvg:true},

@@ -359,7 +359,7 @@ function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer,
     stopCalibration('disposed');ro.disconnect(); document.removeEventListener('visibilitychange', hide);motionPreference.removeEventListener('change',motionChanged);
     canvas.removeEventListener('webglcontextlost', lost); controls.dispose();
     // A preserved scientific chart lives below this stage; retain a lightweight preview here.
-    if(backend==='webgl2'&&!stage.querySelector('svg')&&!(renderer as THREE.WebGLRenderer).getContext().isContextLost()){try{renderer.render(scene,camera);const image=document.createElement('img');image.className='cosmos-preview';image.alt='Prévia da experiência no último estado; os controles e o esquema permanecem disponíveis.';image.src=canvas.toDataURL('image/webp',.82);stage.querySelector('.cosmos-preview')?.remove();stage.prepend(image);}catch{/* The functional2D chart remains available if a snapshot is unavailable. */}}
+    if(backend==='webgl2'&&!stage.querySelector('svg,[data-story-poster]')&&!(renderer as THREE.WebGLRenderer).getContext().isContextLost()){try{renderer.render(scene,camera);const image=document.createElement('img');image.className='cosmos-preview';image.alt='Prévia da experiência no último estado; os controles e o esquema permanecem disponíveis.';image.src=canvas.toDataURL('image/webp',.82);stage.querySelector('.cosmos-preview')?.remove();stage.prepend(image);}catch{/* The functional2D chart remains available if a snapshot is unavailable. */}}
     cinematicRevision++;cinematic?.dispose();cinematic=null;worldMaterials?.restore();exhibit.dispose?.();diagnostics.dispose();disposeObjects(scene);
     if ('isWebGPURenderer' in renderer) {
       gpuDisposal=gpuDisposal.then(()=>renderer.dispose());
