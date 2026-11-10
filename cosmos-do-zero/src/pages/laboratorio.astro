@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
+import PhotoBand from '../components/PhotoBand.astro';
 import Timeline from '../components/Timeline.astro';
 import PlanetCatalog from '../components/PlanetCatalog.astro';
 import Lab from '../components/Lab.astro';
@@ -11,6 +12,7 @@ import '../styles/ux-refinements.css';
 ---
 <Base title="Mais experimentos · Cosmos do Zero" description="Linha do tempo do Universo, os oito planetas lado a lado e a vida das estrelas: experimentos para continuar explorando depois das aulas.">
   <div id="topo"><Header variant="solid" /></div>
+  <PhotoBand photo="iss-sunrise" focus="50% 55%" />
   <main id="principal" class="subpage">
     <header class="subpage-head page-width">
       <h1 class="display">Continue<br /><em>por onde quiser.</em></h1>

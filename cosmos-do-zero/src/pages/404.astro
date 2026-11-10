@@ -1,11 +1,13 @@
 ---
 import Base from '../layouts/Base.astro';
 import Header from '../components/Header.astro';
+import PhotoBand from '../components/PhotoBand.astro';
 import { u } from '../lib/url';
 import '../styles/ux-refinements.css';
 ---
 <Base title="Página não encontrada · Cosmos do Zero" description="A página procurada não existe neste observatório." noindex>
   <div id="topo"><Header variant="solid" /></div>
+  <PhotoBand photo="andromeda-wise" focus="50% 50%" />
   <main id="principal" class="paper" style="padding:110px 0 130px">
     <div class="page-width" style="max-width:760px">
       <div class="section-id">Erro 404</div>

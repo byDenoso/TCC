@@ -1,0 +1,77 @@
+---
+import '../styles/photo-explorer.css';
+import { Image } from 'astro:assets';
+import { imageCredits } from '../data';
+import { photos } from '../lib/images';
+import { photoStories } from '../data/photo-explorer';
+import { pad2 } from '../lib/format';
+/**
+ * Leia a imagem: três imagens reais com pontos explicativos, zoom e arraste.
+ * Sem JavaScript, as três aparecem em sequência, com os pontos numerados e a lista de explicações.
+ * O movimento da imagem só acontece por ação da pessoa; a rolagem da página é preservada.
+ */
+const ext = ' (abre em outra aba)';
+---
+<section class="px" id="imagens" aria-labelledby="px-title" data-px>
+  <div class="page-width">
+    <header class="px-head">
+      <p class="section-id">O céu de verdade</p>
+      <h2 class="display" id="px-title">Imagens reais,<br /><em>lidas de perto.</em></h2>
+      <p class="px-lede">Escolha uma imagem e toque nos pontos numerados. Cada um mostra o que os astrônomos enxergam ali.</p>
+    </header>
+    <div class="px-tabs" role="group" aria-label="Escolha a imagem" data-px-tabs hidden>
+      {photoStories.map((story, i) => (
+        <button type="button" class="px-tab" data-px-tab={story.key} aria-pressed={i === 0 ? 'true' : 'false'}>
+          <Image src={photos[story.key]} alt="" width={120} height={80} fit="cover" format="webp" quality={60} loading="lazy" />
+          <span><small>{pad2(i + 1)}</small>{story.tab}</span>
+        </button>
+      ))}
+    </div>
+    {photoStories.map((story, i) => {
+      const credit = imageCredits[story.credit];
+      const photo = photos[story.key];
+      return (
+        <article class="px-panel" data-px-panel={story.key} data-px-ratio={(photo.width / photo.height).toFixed(4)} aria-labelledby={`px-${story.key}-title`}>
+          <div class="px-stage">
+            <div class="px-view" data-px-view tabindex="-1">
+              <div class="px-canvas" data-px-canvas style={`aspect-ratio:${photo.width}/${photo.height}`}>
+                <Image src={photo} alt={credit.alt} widths={[800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />
+                {story.spots.map((spot, k) => (
+                  <button type="button" class="px-spot" data-px-spot={k} style={`left:${spot.x}%;top:${spot.y}%`} aria-label={`Ponto ${k + 1}: ${spot.title}`} aria-pressed="false"><span aria-hidden="true">{k + 1}</span></button>
+                ))}
+              </div>
+            </div>
+            <div class="px-tools" data-px-tools hidden>
+              <button type="button" data-px-zoom="in" aria-label="Aproximar a imagem">+</button>
+              <button type="button" data-px-zoom="out" aria-label="Afastar a imagem">−</button>
+              <button type="button" data-px-zoom="reset">Ver inteira</button>
+              <span class="px-hint">Arraste para mover</span>
+            </div>
+            <p class="px-credit"><strong>{credit.title}</strong> · {credit.kind} · {credit.credit}. <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a></p>
+          </div>
+          <div class="px-side">
+            <p class="px-count">{pad2(i + 1)} / {pad2(photoStories.length)}</p>
+            <h3 id={`px-${story.key}-title`}>{story.title}</h3>
+            <p class="px-story">{story.lede}</p>
+            <dl class="px-facts">
+              {story.facts.map((fact) => <div><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}
+            </dl>
+            <div class="px-reading" data-px-reading aria-live="polite" hidden>
+              <p class="px-reading-count" data-px-reading-count></p>
+              <h4 data-px-reading-title></h4>
+              <p data-px-reading-text></p>
+              <div class="px-reading-nav">
+                <button type="button" data-px-step="-1">← Ponto anterior</button>
+                <button type="button" data-px-step="1">Próximo ponto →</button>
+              </div>
+            </div>
+            <ol class="px-list" data-px-list>
+              {story.spots.map((spot) => <li data-general={spot.general ? 'true' : undefined}><strong>{spot.title}.</strong> {spot.text}</li>)}
+            </ol>
+            <p class="px-source">As explicações seguem a legenda da NASA para esta imagem{story.spots.some((spot) => spot.general) ? '; os pontos sobre óptica e órbita são conhecimento geral de astronomia' : ''}.</p>
+          </div>
+        </article>
+      );
+    })}
+  </div>
+</section>

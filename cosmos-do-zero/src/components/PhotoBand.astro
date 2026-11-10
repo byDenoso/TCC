@@ -1,0 +1,32 @@
+---
+import { Image } from 'astro:assets';
+import { imageCredits } from '../data';
+import { photos } from '../lib/images';
+/**
+ * Faixa fotográfica de página inteira, com legenda e crédito. Só imagens reais já creditadas em site.json.
+ * `focus` é o ponto da imagem que deve ficar visível (object-position).
+ */
+interface Props {
+  photo: 'andromeda-wise' | 'carina-cosmic-cliffs' | 'iss-sunrise';
+  variant?: 'hero' | 'page';
+  focus?: string;
+  /** Link opcional para a leitura da imagem na home. */
+  readHref?: string;
+}
+const { photo, variant = 'page', focus = '50% 50%', readHref } = Astro.props;
+const order = ['andromeda-wise', 'carina-cosmic-cliffs', 'iss-sunrise'] as const;
+const credit = imageCredits[order.indexOf(photo)];
+const ext = ' (abre em outra aba)';
+---
+<figure class:list={['plate', `plate--${variant}`]}>
+  <div class="plate-frame">
+    <Image src={photos[photo]} alt={credit.alt} widths={[800, 1400, 2000]} sizes="100vw" width={2000} height={variant === 'hero' ? 693 : 520} fit="cover" position="center" format="webp" quality={80} loading="lazy" style={`object-position:${focus}`} />
+  </div>
+  <figcaption class="plate-caption page-width">
+    <span><strong>{credit.title}</strong> · {credit.kind} · {credit.credit}</span>
+    <span class="plate-links">
+      {readHref && <a href={readHref}>Ler esta imagem <span aria-hidden="true">↓</span></a>}
+      <a href={credit.href} target="_blank" rel="noopener noreferrer">Original na NASA <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a>
+    </span>
+  </figcaption>
+</figure>

@@ -1,5 +1,6 @@
 ---
 import Header from './Header.astro';
+import PhotoBand from './PhotoBand.astro';
 import { u } from '../lib/url';
 // Estrelas determinísticas (sem JS): mesma semente = mesma abertura em todo build.
 let seed = 235711;
@@ -65,5 +66,6 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
     <a class="down" href="#capitulos">Escolha sua aula <span aria-hidden="true">↓</span></a>
   </div>
 </div>
+<PhotoBand photo="carina-cosmic-cliffs" variant="hero" focus="50% 40%" readHref="#imagens" />
 </div>
 

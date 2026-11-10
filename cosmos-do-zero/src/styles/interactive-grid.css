@@ -1,0 +1,42 @@
+/* Vitrine de interativos: cartões com imagem grande, rótulo do tipo de imagem e uma ação clara. */
+.igrid { background: var(--bg); color: var(--ink); border-top: 1px solid var(--line); padding-block: clamp(64px, 9vw, 128px); scroll-margin-top: 24px; }
+.igrid-head { display: grid; gap: 20px; justify-items: start; margin-bottom: clamp(28px, 4vw, 52px); }
+.igrid-head .section-id { color: var(--accent-ink); }
+.igrid-head h2 { font-size: clamp(38px, 6.4vw, 92px); letter-spacing: -0.04em; line-height: 0.97; }
+.igrid-head h2 em { color: var(--accent-ink); }
+.igrid-head p { margin: 0; max-width: 46ch; font-size: clamp(16px, 1.5vw, 20px); line-height: 1.6; color: var(--ink-2); }
+
+.igrid-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(16px, 2vw, 28px); }
+.igrid-cards li { min-width: 0; display: grid; }
+.igrid-card { position: relative; display: grid; grid-template-rows: auto 1fr; min-width: 0; color: var(--ink); text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease); }
+.igrid-media { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #0b0f16; border-bottom: 2px solid var(--accent); }
+.igrid-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
+.igrid-media--planet { display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 60%, #1a2233 0%, #0b0f16 70%); }
+.igrid-media--planet img { width: 82%; height: auto; object-fit: contain; }
+/* Os pôsteres trazem uma legenda gravada no rodapé; o tipo de imagem já aparece no rótulo do cartão. */
+.igrid-media--poster img { height: 126%; object-position: 50% 0; }
+.igrid-body .igrid-kind { position: absolute; left: 12px; top: 12px; padding: 6px 10px; font: 750 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: #1b2330; background: #fbf6e9; border-radius: 100px; }
+.igrid-body { display: grid; gap: 8px; align-content: start; padding: clamp(18px, 2vw, 26px); }
+.igrid-body strong { font-size: clamp(20px, 1.9vw, 26px); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; text-wrap: balance; }
+.igrid-body > span:not(.igrid-kind) { font-size: 15px; line-height: 1.6; color: var(--ink-2); }
+.igrid-body .igrid-action { margin-top: 6px; font-weight: 750; font-size: 14px; color: var(--accent-ink); }
+.igrid-action i { display: inline-block; font-style: normal; transition: transform 0.3s var(--ease); }
+.igrid-card:hover, .igrid-card:focus-visible { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 22px 48px color-mix(in srgb, var(--shadow) 90%, transparent); }
+.igrid-card:hover .igrid-media img, .igrid-card:focus-visible .igrid-media img { transform: scale(1.05); }
+.igrid-card:hover .igrid-action i { transform: translateX(5px); }
+.igrid-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+@media (max-width: 1100px) { .igrid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px) {
+  .igrid-cards { grid-template-columns: 1fr; }
+  .igrid-card { grid-template-rows: none; grid-template-columns: 116px minmax(0, 1fr); }
+  .igrid-media { aspect-ratio: auto; height: 100%; min-height: 132px; border-bottom: 0; border-right: 2px solid var(--accent); }
+  .igrid-body .igrid-kind { position: static; padding: 0; background: none; color: var(--muted); font-size: 11px; line-height: 1.3; }
+  .igrid-body { padding: 14px 16px; gap: 5px; }
+  .igrid-body > span:not(.igrid-action):not(.igrid-kind) { font-size: 14px; line-height: 1.5; }
+}
+@media (prefers-reduced-motion: reduce) { .igrid-card, .igrid-media img, .igrid-action i { transition: none; } .igrid-card:hover, .igrid-card:hover .igrid-media img { transform: none; } }
+html[data-motion='reduced'] :is(.igrid-card, .igrid-media img, .igrid-action i) { transition: none; }
+html[data-motion='reduced'] .igrid-card:hover, html[data-motion='reduced'] .igrid-card:hover .igrid-media img { transform: none; }
+@media (forced-colors: active) { .igrid-card { border: 2px solid CanvasText; } }
+@media print { .igrid-media { display: none; } }
