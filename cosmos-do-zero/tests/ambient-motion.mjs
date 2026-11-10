@@ -57,6 +57,6 @@ try {
   await noJs.goto(`${base}/ceu/`, { waitUntil: 'load' });
   assert.equal(await noJs.locator('html').getAttribute('data-theme'), 'light');
   assert.equal(await noJs.getByRole('button', { name: /céu animado/i }).count(), 0);
-  assert.equal(await noJs.getByRole('heading', { name: /A primeira luz/i }).count(), 1);
+  assert.equal(await noJs.getByRole('heading', { name: /A radiação de fundo/i }).count(), 1);
   console.log('Controle de efeitos: teclado, pausa, retomada, preferência ao vivo, saída da tela e ausência de JavaScript OK.');
 } finally { await browser.close(); }

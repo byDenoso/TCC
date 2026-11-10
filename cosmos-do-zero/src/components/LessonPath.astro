@@ -7,7 +7,7 @@ const { prev } = adjacentChapters(id);
 const track = trackChapterIds(id);
 ---
 <nav class="lesson-path" aria-label="Trilha de aprendizagem">
-  <p class="lesson-path-label">{chapterTrack(id) === 'primary' ? 'Sua trilha · três grandes perguntas' : 'Leituras complementares'}</p>
+  <p class="lesson-path-label">{chapterTrack(id) === 'primary' ? 'Trilha principal de cosmologia' : 'Leituras complementares'}</p>
   <ol>{track.map((chapterId, index) => <li><a href={chapterUrl(chapterId)} aria-current={chapterId === id ? 'step' : undefined}><span class="lesson-path-number" aria-hidden="true">{index + 1}</span><span>{chapterTitleShort[chapterId]}{chapterId === id && <small>Você está aqui</small>}</span></a></li>)}</ol>
   <p class="lesson-path-before">{prev ? <a href={chapterUrl(prev.id)}>Antes desta aula: {chapterTitleShort[prev.id]} <span aria-hidden="true">↗</span></a> : <span>Comece aqui · sem pré-requisitos</span>}</p>
 </nav>

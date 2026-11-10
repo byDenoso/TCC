@@ -3,7 +3,7 @@ interface Props { id?:string }
 const {id='lente'}=Astro.props;
 ---
 <section class="lens-experiment" data-lens aria-labelledby={`${id}-title`}>
- <span class="meta">Outra pista da gravidade</span><h3 id={`${id}-title`}>A luz muda de caminho.</h3>
+ <span class="meta">Gravidade e observação</span><h3 id={`${id}-title`}>Lentes gravitacionais</h3>
  <p>Uma massa entre a fonte e você pode produzir arcos ou um anel. Mova a fonte, ajuste a massa e observe a imagem calculada.</p>
  <div class="lens-dashboard">
   <figure class="lens-image"><canvas width="240" height="240" data-lens-image hidden role="img" aria-label="Imagem calculada de lente fina: anel no alinhamento, arcos quando a fonte se desloca."></canvas><svg class="lens-static" data-lens-image-fallback viewBox="0 0 240 240" role="img" aria-label="Diagrama da lente fina. O alinhamento produz um anel; fora dele, o esquema marca duas imagens de uma fonte pontual."><rect width="240" height="240" fill="#0a101b" /><circle cx="120" cy="120" r="48" fill="none" stroke="#ffc086" stroke-width="4" data-lens-ring /><circle cx="120" cy="120" r="6" fill="#8ba6cf" /><circle cx="120" cy="120" r="5" fill="#ffc086" data-lens-image-point visibility="hidden" /><circle cx="120" cy="120" r="5" fill="#ffc086" data-lens-image-point visibility="hidden" /></svg><figcaption><strong>O que o observador veria neste modelo</strong><p data-lens-caption role="status">Para uma fonte atrás da lente, o modelo prevê um anel com raio angular de Einstein.</p></figcaption></figure>

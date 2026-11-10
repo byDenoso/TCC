@@ -21,13 +21,13 @@ const visuals: Record<string, { label: string; icon: string }> = {
   <div class="page-width">
     <p class="exhibit-label"><span>03</span> Salas de aula · Trilha de cosmologia</p>
     <div class="intro-head">
-      <h2 class="display" id="chapters-title">Do primeiro olhar<br /><em>às grandes perguntas.</em></h2>
-      <p>Escolha uma pergunta. Veja a ideia em movimento, mude os controles e descubra o que acontece.</p>
+      <h2 class="display" id="chapters-title">O programa<br /><em>das aulas</em></h2>
+      <p>A trilha principal começa pela Via Láctea e chega às evidências da expansão. As aulas de estrelas, Sistema Solar e Terra são complementares.</p>
     </div>
     <div class="school-method" aria-label="Como você aprende">
-      <div><span aria-hidden="true">01</span><p><strong>Observe acontecer.</strong>A cena começa sozinha. A legenda mostra o que está mudando.</p></div>
-      <div><span aria-hidden="true">02</span><p><strong>Experimente uma ideia.</strong>Pause, altere um controle e compare o resultado.</p></div>
-      <div><span aria-hidden="true">03</span><p><strong>Conecte as descobertas.</strong>Entenda o fenômeno e teste o que aprendeu.</p></div>
+      <div><span aria-hidden="true">01</span><p><strong>Demonstração</strong>A legenda explica o que muda durante a reprodução da cena.</p></div>
+      <div><span aria-hidden="true">02</span><p><strong>Controle manual</strong>Pause a cena e ajuste um parâmetro para comparar dois estados.</p></div>
+      <div><span aria-hidden="true">03</span><p><strong>Perguntas de revisão</strong>As respostas comentadas retomam as ideias da aula.</p></div>
     </div>
     <a class="resume-card" href={chapterUrl(primaryRows[0].id)} data-resume data-titles={JSON.stringify(Object.fromEntries(chapters.map((c) => [c.id, c.title])))} hidden>
       <span class="meta">Continuar de onde parou</span>
@@ -35,7 +35,7 @@ const visuals: Record<string, { label: string; icon: string }> = {
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
-    <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
+    <div class="school-catalog-tools"><span>Três aulas na trilha principal e três complementares.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
       {chapters.map((ch) => {
         const visual = visuals[ch.id];
@@ -45,13 +45,13 @@ const visuals: Record<string, { label: string; icon: string }> = {
           <div class="school-course-image">
             <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 650px) 90vw, (max-width: 1050px) 44vw, 420px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
             <span class="school-course-photo-caption">{cover.caption}</span>
-            <span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span>
+            <span class="school-course-type">{primary ? 'Trilha principal' : 'Aula complementar'}</span>
           </div>
           <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
         </a><figcaption class="school-cover-source"><a href={cover.source.href}>{cover.source.credit}</a></figcaption></figure>;
       })}
     </div>
-    <div class="school-path-heading"><h3>Sua trilha de cosmologia</h3><p>Três grandes perguntas que se conectam.</p></div>
+    <div class="school-path-heading"><h3>Trilha principal</h3><p>Siga a ordem das três aulas e responda ao desafio ao final.</p></div>
     <CourseMap />
     <div class="journey-status">
       <span data-progress-label>{progressLabel(0)}</span>
@@ -72,7 +72,7 @@ const visuals: Record<string, { label: string; icon: string }> = {
             <div class="chapter-body">
               <div class="chapter-body-main">
                 <p>{row.summary}</p>
-                {ch.learningGoal && <p class="chapter-learning"><strong>Você vai conseguir:</strong> {ch.learningGoal}</p>}
+                {ch.learningGoal && <p class="chapter-learning"><strong>Objetivo da aula.</strong> {ch.learningGoal}</p>}
                 <a class="textlink" href={chapterUrl(row.id)}>Entrar na aula · {ch.minutes} min <span aria-hidden="true">↗</span></a>
               </div>
               <div class="chapter-body-side">

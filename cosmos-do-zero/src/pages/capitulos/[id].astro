@@ -71,7 +71,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           <a class="cta" href={`#${ch.sections[0].id}`}>Começar a aula <span aria-hidden="true">↓</span></a>
           {labStations && <a class="textlink" href={`#${ch.experience === 'expansion' ? 'exploracao' : 'observatorio'}`}>Instrumentos extras <span aria-hidden="true">↓</span></a>}
         </nav>
-        <details class="reader-overview"><summary>O que você vai descobrir</summary><div class="reader-idea"><p>{ch.intro}</p>{ch.learningGoal && <p class="reader-goal"><strong>Ao final, você consegue:</strong> {ch.learningGoal}</p>}<p>{ch.idea}</p></div></details>
+        <details class="reader-overview"><summary>Conteúdo da aula</summary><div class="reader-idea"><p>{ch.intro}</p>{ch.learningGoal && <p class="reader-goal"><strong>Objetivo da aula.</strong> {ch.learningGoal}</p>}<p>{ch.idea}</p></div></details>
         </div>
         <StoryLesson id={ch.id}/>
         <div class="reader-path-row"><LessonPath id={ch.id}/></div>
@@ -106,7 +106,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               {s.id === 'misterios-do-cosmos-exoplanetas' && <TransitExhibit heading="h3" />}
               {s.id === 'vida-das-estrelas-fusao' && <HRExhibit heading="h3" />}
               {s.id === 'galaxias-e-nebulosas-centros-galacticos' && <BlackHoleExhibit heading="h3" />}
-              <aside class="lesson-connection"><span>A ideia por trás da cena</span><p>{LESSON_GUIDES[s.id].connect}</p></aside>
+              <aside class="lesson-connection"><span>Interpretação da cena</span><p>{LESSON_GUIDES[s.id].connect}</p></aside>
               <p class="lesson-try"><strong>Agora experimente. </strong>{LESSON_GUIDES[s.id].try}</p>
               <p>{bodies[i].map((seg, k) => 'term' in seg ? (
                 <><button type="button" class="term" popovertarget={`termo-${i}-${k}`}>{seg.text}</button><span popover id={`termo-${i}-${k}`} class="term-pop" role="note"><strong>{seg.term.term}</strong> {seg.term.definition} <em>Exemplo: {seg.term.example}</em><a href={u(`/glossario/?q=${encodeURIComponent(seg.term.term)}#termo-${seg.index}`)}>Ver no dicionário →</a></span></>
@@ -129,7 +129,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
             </section>
           ))}
           <section class="chapter-check" aria-labelledby="check-title">
-            <div class="section-id">Pare um instante. O que ficou?</div>
+            <div class="section-id">Revisão da aula</div>
             <h2 id="check-title">{checkA}<br /><em>{checkB}</em></h2>
             <QuizCard chapter={ch.id} />
           </section>
@@ -140,7 +140,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
           </section>
         </div>
       </div>
-      <details class="school-extra page-width" open><summary><span><strong>Continue investigando</strong><small>Imagens, instrumentos e explorações desta aula</small></span><span aria-hidden="true">+</span></summary><div class="school-extra-content">
+      <details class="school-extra page-width" open><summary><span><strong>Material complementar</strong><small>Imagens e experimentos desta aula</small></span><span aria-hidden="true">+</span></summary><div class="school-extra-content">
       {photoKey && credit ? (
         <figure class="chapter-photo">
           <Image src={photos[photoKey]} alt={credit.alt} widths={[640, 1000, 1600]} sizes="100vw" width={1600} height={480} fit="cover" position="center" format="webp" quality={80} loading="lazy" />
@@ -161,9 +161,9 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
         {prev ? <a class="textlink" href={chapterUrl(prev.id)}>← Anterior: {chapterTitleShort[prev.id]}</a> : <a class="textlink" href={u('/#capitulos')}>← Início da trilha</a>}
         <a class="next-lesson-card" href={next ? chapterUrl(next.id) : u(isPrimary ? '/desafio/#desafio' : '/laboratorio/')}>
           <span class="next-lesson-copy">
-            <span class="meta">{next ? `A seguir · ${next.minutes} min` : isPrimary ? 'Sua próxima descoberta' : 'Continue explorando'}</span>
-            <strong>{next ? chapterTitleShort[next.id] : isPrimary ? 'Conecte as três ideias' : 'Volte ao laboratório'}</strong>
-            <span>{next ? (next.learningGoal ?? next.intro) : isPrimary ? 'Revisite o que aprendeu no desafio da jornada. As explicações ajudam a escolher o que explorar de novo.' : 'Escolha outro experimento e continue investigando as suas perguntas.'}</span>
+            <span class="meta">{next ? `A seguir · ${next.minutes} min` : isPrimary ? 'Revisão da trilha' : 'Experimentos complementares'}</span>
+            <strong>{next ? chapterTitleShort[next.id] : isPrimary ? 'Desafio das aulas principais' : 'Laboratório'}</strong>
+            <span>{next ? (next.learningGoal ?? next.intro) : isPrimary ? 'Responda às perguntas sobre galáxias e expansão. Cada questão tem uma explicação e um link para revisão.' : 'Compare planetas ou simule a evolução de uma estrela.'}</span>
           </span>
           <span class="next-lesson-arrow" aria-hidden="true">→</span>
         </a>

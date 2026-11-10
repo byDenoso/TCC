@@ -3,8 +3,8 @@
   "id": "galaxias-e-nebulosas",
   "minutes": 7,
   "title": "Onde estamos no Universo?",
-  "intro": "Você está na Terra, que gira em torno do Sol. O Sol faz parte da Via Láctea, uma entre muitas galáxias. Vamos descobrir como essas peças se encaixam e por que olhar para longe também é olhar para o passado.",
-  "idea": "Nosso endereço cósmico vai da Terra ao Sistema Solar, à Via Láctea e ao Universo observável. A luz distante mostra épocas antigas.",
+  "intro": "A Terra orbita o Sol dentro da Via Láctea. A aula compara a escala do Sistema Solar com a das galáxias e explica por que a luz distante mostra épocas anteriores.",
+  "idea": "O Sistema Solar faz parte da Via Láctea, uma das galáxias do Universo observável. A luz distante mostra épocas antigas.",
   "learningGoal": "Distinguir Sistema Solar, galáxia e Universo, e explicar por que a luz distante revela o passado.",
   "experience": "scale",
   "concept": "cosmic",
@@ -12,7 +12,7 @@
    {
     "id": "galaxias-e-nebulosas-via-lactea",
     "evidence": "Observação",
-    "title": "Nosso endereço cósmico",
+    "title": "O Sistema Solar na Via Láctea",
     "body": "A Terra orbita o Sol. O Sol e os corpos que giram ao redor dele formam o Sistema Solar. Esse sistema fica dentro da Via Láctea, a galáxia onde vivemos.",
     "more": "A Via Láctea é uma galáxia espiral. Nosso Sol está no disco, longe do centro. A faixa leitosa que vemos no céu é o disco observado por dentro, com muitas estrelas alinhadas na mesma direção.",
     "deep": "Desenhos da Via Láctea vista de fora são reconstruções feitas a partir de medições, ou ilustrações. Não temos uma fotografia tirada de fora da galáxia.",
@@ -31,7 +31,7 @@
     "id": "galaxias-e-nebulosas-tipos",
     "evidence": "Observação",
     "title": "O que é uma galáxia?",
-    "body": "Uma galáxia reúne estrelas, gás e poeira, ligados pela gravidade. Ela também contém matéria escura: não a vemos diretamente, mas percebemos seus efeitos sobre o movimento e a luz. A Via Láctea é a galáxia onde vivemos.",
+    "body": "Uma galáxia reúne estrelas, gás e poeira, ligados pela gravidade. Inferimos a presença de matéria escura por seus efeitos gravitacionais sobre o movimento e a luz. A Via Láctea é a galáxia onde vivemos.",
     "more": "Galáxias podem ter forma espiral, elíptica ou irregular. A aparência ajuda a descrevê-las, mas não conta sozinha toda a história de como se formaram.",
     "deep": "A Via Láctea pertence ao Grupo Local, um conjunto de galáxias que inclui Andrômeda. Grupos e aglomerados são estruturas maiores que uma galáxia.",
     "sources": [
@@ -50,7 +50,7 @@
     "evidence": "Observação",
     "title": "Galáxias formam uma teia cósmica",
     "body": "Quando olhamos regiões muito grandes, vemos galáxias reunidas em grupos e conjuntos maiores, chamados aglomerados. Elas também se distribuem em longos fios, separados por regiões quase vazias. Esse desenho recebe o nome de teia cósmica.",
-    "more": "A gravidade ajuda a reunir matéria em estruturas. Os vazios não são paredes vazias: são regiões com menos galáxias do que os filamentos e aglomerados ao redor.",
+    "more": "A gravidade ajuda a reunir matéria em estruturas. Os vazios cósmicos são regiões com menos galáxias do que os filamentos e aglomerados ao redor.",
     "deep": "Levantamentos do céu medem posições e espectros de galáxias. Simulações ajudam a comparar essas medidas com modelos; uma visualização de teia cósmica pode ser uma simulação, não uma fotografia direta dos filamentos.",
     "sources": [
      {
@@ -164,7 +164,7 @@
   "id": "origem-do-universo",
   "minutes": 11,
   "title": "Como o Universo evoluiu?",
-  "intro": "O Universo já foi muito mais quente e denso. A luz que chega até nós guarda pistas dessa história. Vamos acompanhar como o espaço cresceu, como surgiram os primeiros elementos e por que ainda recebemos luz daquela época.",
+  "intro": "O Universo já foi muito mais quente e denso. A aula explica como a expansão alterou a luz, quando se formaram os primeiros núcleos leves e por que a radiação de fundo ainda nos alcança.",
   "idea": "O modelo do Big Bang quente descreve como o Universo se expandiu e esfriou. Ele não estabelece uma causa confirmada para o início.",
   "learningGoal": "Explicar o que descreve o modelo do Big Bang quente, citar evidências importantes e reconhecer o que ainda não sabemos sobre a causa inicial.",
   "experience": "expansion",
@@ -277,7 +277,7 @@
     "id": "origem-do-universo-nossa-epoca",
     "evidence": "Questão aberta",
     "title": "O que ainda não sabemos sobre o começo?",
-    "body": "O modelo descreve uma longa evolução a partir de um estado quente e denso, mas não confirma a causa inicial. A inflação cósmica é uma proposta de expansão muito rápida numa etapa primordial; o mecanismo físico que a produziria permanece desconhecido.",
+    "body": "O modelo descreve a evolução a partir de um estado quente e denso. A causa inicial segue sem confirmação. A inflação cósmica é uma proposta de expansão muito rápida numa etapa primordial. O mecanismo físico que a produziria permanece desconhecido.",
     "more": "As observações da CMB são compatíveis com algumas previsões da inflação, mas ainda não revelaram o processo físico que a teria impulsionado. Também não temos uma resposta confirmada sobre o que veio antes da fase quente, se essa pergunta se aplica.",
     "deep": "Extrapolar equações para condições além do domínio testado não demonstra por si só uma singularidade física nem uma causa da origem. Modelos do Universo primordial continuam sendo comparados com observações.",
     "sources": [
@@ -329,9 +329,9 @@
  {
   "id": "misterios-do-cosmos",
   "minutes": 8,
-  "title": "Como sabemos disso?",
-  "intro": "Como podemos saber tanto sobre lugares que nunca visitamos? A luz e o movimento de objetos distantes dão pistas. Vamos ver como os cientistas usam essas pistas para testar explicações e reconhecer o que ainda falta entender.",
-  "idea": "Uma medida dá uma pista. Um modelo reúne várias pistas numa explicação que podemos testar. Algumas dessas explicações ainda têm peças desconhecidas.",
+  "title": "Evidências em cosmologia",
+  "intro": "A aula examina como o brilho, o espectro e o movimento de objetos distantes sustentam inferências sobre matéria escura e expansão acelerada.",
+  "idea": "Um modelo relaciona medidas e produz previsões que podem ser testadas. A natureza de componentes como a matéria escura continua em aberto.",
   "learningGoal": "Distinguir observação, inferência e questão aberta ao examinar expansão, CMB, matéria escura e expansão acelerada.",
   "experience": "evidence",
   "concept": "mystery",
@@ -375,10 +375,10 @@
    {
     "id": "misterios-do-cosmos-vida",
     "evidence": "Observação",
-    "title": "A CMB preserva pistas do Universo jovem",
+    "title": "O que a radiação de fundo revela",
     "body": "A radiação cósmica de fundo, ou CMB, é luz que viaja quase livremente desde quando o Universo tinha cerca de 380 mil anos. Ela chega de todas as direções, com pequenas diferenças de temperatura. Esse padrão ajuda a testar explicações para a história do Universo.",
     "more": "Satélites como WMAP e Planck mapearam essas diferenças minúsculas. As cores dos mapas ajudam a mostrar os dados e não são a aparência visível de manchas no espaço.",
-    "deep": "A interpretação combina estatística dos mapas, remoção de sinais da Via Láctea e modelos físicos. O resultado testa a história do Universo, mas não é uma imagem direta de galáxias que ainda não existiam.",
+    "deep": "A interpretação combina estatística dos mapas, remoção de sinais da Via Láctea e modelos físicos. O mapa registra variações de temperatura anteriores à formação das galáxias e permite testar modelos do Universo jovem.",
     "sources": [
      {
       "title": "NASA · O que a imagem infantil do Universo pode revelar",
@@ -399,7 +399,7 @@
     "evidence": "Observação",
     "title": "Matéria escura: gravidade sem luz",
     "body": "O movimento de estrelas e galáxias indica mais gravidade do que a matéria visível consegue explicar. A luz de objetos ao fundo também muda de caminho ao passar perto de grandes massas: é o efeito de lente gravitacional. Essas pistas apontam para matéria adicional, chamada matéria escura.",
-    "more": "A evidência gravitacional é forte em diferentes escalas, mas a natureza da matéria escura segue desconhecida. Nenhuma partícula candidata foi confirmada como sua composição.",
+    "more": "Há evidências gravitacionais da matéria escura em diferentes escalas. Sua natureza segue desconhecida. Nenhuma partícula candidata foi confirmada como sua composição.",
     "deep": "Em ajustes cosmológicos padrão, matéria comum e matéria escura têm papéis distintos na densidade do Universo. As proporções dependem do modelo e dos dados usados; não são uma pesagem direta de amostras no laboratório.",
     "sources": [
      {
@@ -667,7 +667,7 @@
   "id": "sistema-solar",
   "minutes": 8,
   "title": "O Sistema Solar",
-  "intro": "Os planetas nasceram do mesmo disco de gás e poeira, mas seguiram caminhos diferentes. Vamos entender por que alguns têm chão rochoso, outros têm atmosferas profundas e nenhum é uma cópia da Terra.",
+  "intro": "Os planetas se formaram no mesmo disco de gás e poeira. A aula examina por que alguns têm superfícies rochosas e outros possuem atmosferas profundas.",
   "idea": "Compare sempre a mesma grandeza e a mesma definição. Um planeta gigante não tem uma superfície como a Terra.",
   "concept": "solar",
   "sections": [
@@ -860,7 +860,7 @@
     "evidence": "Modelo físico",
     "title": "Um planeta quente se diferencia",
     "body": "A Terra cresceu à medida que pedaços de material se juntavam no Sistema Solar jovem. Colisões e processos internos aqueceram o planeta. Materiais mais densos, ricos em ferro, se concentraram no núcleo. As rochas formaram o manto e a crosta, as camadas externas.",
-    "more": "A crosta é a camada externa; o manto ocupa grande parte do volume. O núcleo externo é líquido e o interno é sólido. O manto é principalmente sólido, mas pode fluir lentamente em escalas geológicas.",
+    "more": "A crosta é a camada externa. O manto ocupa grande parte do volume. O núcleo externo é líquido e o interno é sólido. O manto é principalmente sólido e flui lentamente em escalas geológicas.",
     "deep": "As camadas internas são inferidas por ondas sísmicas, gravidade, magnetismo e experimentos. A pressão modifica o comportamento dos materiais: uma temperatura elevada não implica automaticamente que uma região esteja líquida.",
     "sources": [
      {

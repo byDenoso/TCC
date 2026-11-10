@@ -5,7 +5,7 @@ interface Props { id:string }
 const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
 ---
 <section class="story-lesson" data-story={id} data-story-mode-active="scene" role="group" aria-labelledby={`${prefix}-title`}>
-  <header class="story-heading"><span class="meta">Uma ideia em 20 segundos</span><h2 id={`${prefix}-title`}>{story.title}</h2></header>
+  <header class="story-heading"><span class="meta">Resumo animado · 20 segundos</span><h2 id={`${prefix}-title`}>{story.title}</h2></header>
   <div class="story-modes" role="group" aria-label="Como você quer ver esta ideia">
     <button type="button" data-story-mode="scene" aria-pressed="true">Explorar a cena</button>
     <button type="button" data-story-mode="film" aria-pressed="false">Ver em vídeo <span aria-hidden="true">▶</span></button>

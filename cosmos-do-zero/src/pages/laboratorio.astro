@@ -24,21 +24,21 @@ const stations = [
   { href: `${chapterUrl('galaxias-e-nebulosas')}#galaxias-e-nebulosas-teia-cosmica`, topic: 'Estrutura cósmica', title: 'Filamentos, halos e vazios', question: 'Em que escalas aparecem agrupamentos, filamentos e vazios?' }
 ];
 ---
-<Base title="Mais experimentos · Cosmos do Zero" bodyClass="lab-page" description="Linha do tempo do Universo, os oito planetas lado a lado e a vida das estrelas: experimentos para continuar explorando depois das aulas.">
+<Base title="Laboratório de cosmologia · Cosmos do Zero" bodyClass="lab-page" description="Experimentos de órbitas, expansão e trânsitos de exoplanetas. Compare planetas ou simule a evolução de uma estrela.">
   <div id="topo"><Header variant="solid" /></div>
   <PhotoBand photo="iss-sunrise" focus="50% 55%" />
   <main id="principal" class="subpage">
     <header class="subpage-head page-width">
-      <p class="exhibit-label"><span>02</span> Laboratório · Bancadas de investigação</p>
-      <h1 class="display">Mude uma condição.<br /><em>Veja o que acontece.</em></h1>
-      <p>Mude a forma de uma órbita, compare planetas ou volte a uma época do Universo. Cada bancada isola uma pergunta.</p>
+      <p class="exhibit-label"><span>02</span> Laboratório · Modelos e medidas</p>
+      <h1 class="display">Laboratório<br /><em>de cosmologia</em></h1>
+      <p>Ajuste a forma de uma órbita ou compare como diferentes modelos descrevem a expansão.</p>
       <nav class="subpage-jump" aria-label="Nesta página">
         <a href="#bancadas">Bancadas</a><a href="#tempo">Linha do tempo</a><a href="#planetas">Os oito planetas</a><a href="#laboratorio">Comparar mundos e estrelas</a><a href="#leituras">Leituras extras</a>
       </nav>
     </header>
     <section class="page-width lab-index" id="bancadas" aria-labelledby="lab-index-title">
-      <p class="exhibit-label"><span>07</span> Instrumentos de investigação</p>
-      <h2 id="lab-index-title">Escolha uma bancada.</h2>
+      <p class="exhibit-label"><span>07</span> Bancadas</p>
+      <h2 id="lab-index-title">Experimentos do laboratório</h2>
       <ol>{stations.map((station, i) => <li><a href={station.href}><span class="lab-index-number">0{i + 1}</span><span><small>{station.topic}</small><strong>{station.title}</strong><span>{station.question}</span></span><span aria-hidden="true">→</span></a></li>)}</ol>
     </section>
     <div class="page-width lab-feature"><OrbitExhibit /><ExpansionExhibit /><TransitExhibit /><HRExhibit /></div>

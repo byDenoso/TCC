@@ -4,10 +4,11 @@ import Hero from '../components/Hero.astro';
 import MotionLab from '../components/MotionLab.astro';
 import CosmicJourney from '../components/CosmicJourney.astro';
 import ChapterList from '../components/ChapterList.astro';
+import { MICRO } from '../data/micro';
 import '../styles/home.css';
 import '../styles/ux-refinements.css';
 ---
-<Base title="Cosmos do Zero · Escola interativa de cosmologia" description="Aprenda cosmologia em seis aulas visuais, com 36 experiências, demonstrações automáticas e explicações passo a passo. Das estrelas à origem do Universo, no seu ritmo." bodyClass="school-home" websiteSchema>
+<Base title="Cosmos do Zero · Escola interativa de cosmologia" description={`Seis aulas de cosmologia com ${Object.keys(MICRO).length} experiências. A trilha principal vai da Via Láctea às medidas da expansão do Universo.`} bodyClass="school-home" websiteSchema>
   <Hero />
   <main id="principal">
     <MotionLab />

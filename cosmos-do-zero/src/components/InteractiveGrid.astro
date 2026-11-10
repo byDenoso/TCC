@@ -13,11 +13,11 @@ type Card = { href: string; kind: string; title: string; text: string; action: s
   | { planet: keyof typeof planetArt }
 );
 const cards: Card[] = [
-  { href: u('/escalas/'), kind: 'Simulação 3D', title: 'Do seu quintal à teia cósmica', text: 'Gire a Terra, afaste a câmera e veja onde a Via Láctea fica entre as outras galáxias.', action: 'Abrir o Universo em 3D', poster: 'earth' },
-  { href: u('/imagens/'), kind: 'Fotos reais · NASA', title: 'Imagens de telescópio, lidas de perto', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
-  { href: `${u('/laboratorio/')}#planetas`, kind: 'Ilustração artística', title: 'Oito mundos, nenhum igual', text: 'Escolha um planeta e compare composição, atmosfera e os números que dão forma a cada um.', action: 'Conhecer os planetas', planet: 'saturno' },
-  { href: u('/#viagem'), kind: 'Animação guiada', title: '13,8 bilhões de anos em uma rolagem', text: 'Do plasma quente às galáxias de hoje: role a página e o Universo muda na sua frente.', action: 'Fazer a viagem', poster: 'galaxies' },
-  { href: u('/observatorio/?lab=tempo#observatorio'), kind: 'Mapa simulado', title: 'A luz mais antiga que existe', text: 'Na máquina do tempo, descubra de que época vem a luz que chega até nós.', action: 'Ligar a máquina do tempo', poster: 'cmb' },
+  { href: u('/escalas/'), kind: 'Simulação 3D', title: 'Da Terra à teia cósmica', text: 'Role a página para afastar a câmera da Terra até a teia cósmica.', action: 'Abrir a exposição de escalas', poster: 'earth' },
+  { href: u('/imagens/'), kind: 'Fotos reais · NASA', title: 'Fotos do Webb, WISE e da estação espacial', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
+  { href: `${u('/laboratorio/')}#planetas`, kind: 'Ilustração artística', title: 'Os oito planetas do Sistema Solar', text: 'Compare composição, atmosfera e tamanho dos planetas.', action: 'Conhecer os planetas', planet: 'saturno' },
+  { href: u('/#viagem'), kind: 'Animação guiada', title: 'Marcos da história do Universo', text: 'Role a página para avançar da fase de plasma quente até as galáxias de hoje.', action: 'Abrir a linha do tempo', poster: 'galaxies' },
+  { href: u('/observatorio/?lab=tempo#observatorio'), kind: 'Mapa simulado', title: 'A radiação cósmica de fundo', text: 'Ajuste o redshift e veja quando essa radiação passou a viajar livremente.', action: 'Abrir a máquina do tempo', poster: 'cmb' },
   { href: `${u('/laboratorio/')}#estrelas`, kind: 'Foto real · Webb', title: 'A vida de uma estrela', text: 'Estrelas nascem em nuvens como esta. Escolha a massa inicial e acompanhe o caminho da evolução.', action: 'Seguir uma estrela', photo: 'carina-cosmic-cliffs', focus: '30% 40%' }
 ];
 ---
@@ -25,8 +25,8 @@ const cards: Card[] = [
   <div class="page-width">
     <header class="igrid-head">
       <div class="section-id">Interativos</div>
-      <h2 class="display" id="igrid-title">Escolha uma<br /><em>porta de entrada.</em></h2>
-      <p>Seis experiências que funcionam sozinhas. Abra a que der mais curiosidade e mexa à vontade.</p>
+      <h2 class="display" id="igrid-title">Experiências<br /><em>interativas</em></h2>
+      <p>Compare escalas em 3D ou examine as imagens com anotações sobre cada objeto.</p>
     </header>
     <ul class="igrid-cards">
       {cards.map((c) => (

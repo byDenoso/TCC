@@ -18,14 +18,14 @@ const ext = ' (abre em outra aba)';
 <section class:list={['observatory', `is-${variant}`]} id={id} data-observatory aria-labelledby={`${id}-title`}>
   <div class="page-width">
     {variant === 'home' ? (
-      <p class="section-id">Aprender fazendo</p>
+      <p class="section-id">Observatório</p>
       <header class="obs-head">
-        <h2 class="display" id={`${id}-title`}>Mexa nos botões<br /><em>do Universo.</em></h2>
-        <p>Investigue uma pergunta com controles e medidas. Faça um palpite, mexa e veja o que acontece. Os experimentos mostram, de forma simplificada, como os cientistas conectam as pistas do Universo.</p>
+        <h2 class="display" id={`${id}-title`}>Modelos<br /><em>da expansão</em></h2>
+        <p>Compare a expansão vista de duas galáxias ou estime a constante de Hubble com dados simulados.</p>
       </header>
     ) : (
       <header class="obs-head compact">
-        <h2 id={`${id}-title`}>{stations.length === 1 ? meta[stations[0]].title : 'Mexa e descubra'}</h2>
+        <h2 id={`${id}-title`}>{stations.length === 1 ? meta[stations[0]].title : 'Experimentos da aula'}</h2>
       </header>
     )}
 
@@ -58,7 +58,7 @@ const ext = ' (abre em outra aba)';
             </figure>
             <div class="obs-panel">
               <h3>Máquina do tempo</h3>
-              <p class="obs-lede">A luz demora para viajar. Por isso, <strong>olhar para longe é olhar para o passado</strong>. Arraste e veja como era o Universo quando a luz saiu de lá.</p>
+              <p class="obs-lede">Vemos uma galáxia como ela era quando emitiu a luz que chega hoje. Ajuste a barra para comparar épocas de emissão.</p>
               <label class="obs-slider" for={`${id}-t-range`}>Olhar mais longe <output aria-live="off" data-t-z for={`${id}-t-range`}>agora</output></label>
               <input id={`${id}-t-range`} type="range" min="0" max="1000" step="1" value="0" data-t-range />
               <div class="obs-chips" role="group" aria-label="Pontos de parada">
@@ -87,7 +87,7 @@ const ext = ' (abre em outra aba)';
           <details class="obs-tech">
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
-              <li>"Quão longe" os astrônomos chamam de <strong>redshift</strong>: o quanto a luz foi esticada no caminho.</li>
+              <li>O <strong>redshift</strong> indica quanto o comprimento de onda aumentou. O modelo usa esse valor para estimar a distância e a época da emissão.</li>
               <li>A luz mais antiga se chama <strong>radiação cósmica de fundo</strong>.</li>
               <li>Os números vêm do <strong>modelo cosmológico padrão</strong>, com as medidas do satélite <a href="https://arxiv.org/abs/1807.06209" target="_blank" rel="noopener noreferrer">Planck<span class="visually-hidden">{ext}</span> ↗</a>.</li>
             </ul>
@@ -178,7 +178,7 @@ const ext = ' (abre em outra aba)';
               <figcaption>Cada ponto é uma galáxia que você mediu. A linha contínua é a reta que melhor passa pelos pontos.</figcaption>
             </figure>
             <div class="obs-panel">
-              <h4 class="obs-h4">O que você descobriu</h4>
+              <h4 class="obs-h4">Estimativa da constante de Hubble</h4>
               <div class="obs-result" data-h-result>Nenhuma medida ainda.</div>
               <button type="button" class="obs-btn ghost" data-h-reveal hidden>Mostrar o valor certo do jogo</button>
             </div>
@@ -187,7 +187,7 @@ const ext = ' (abre em outra aba)';
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
               <li>O ritmo de expansão se chama <strong>constante de Hubble</strong>.</li>
-              <li>As supernovas usadas como régua são as <strong>do tipo Ia</strong>: não são idênticas, mas seu brilho pode ser calibrado. Hubble não tinha essa régua: em 1929 ele usou estrelas Cefeidas em galáxias bem mais próximas. Este jogo imita o método de hoje. Hubble publicou a descoberta em 1929 (<a href="https://doi.org/10.1073/pnas.15.3.168" target="_blank" rel="noopener noreferrer">artigo original<span class="visually-hidden">{ext}</span> ↗</a>); Georges Lemaître chegou à mesma ideia em 1927.</li>
+              <li>As supernovas usadas como régua são as <strong>do tipo Ia</strong>: seu brilho pode ser calibrado para estimar distâncias. O experimento simula esse método. No estudo de 1929, Hubble estimou distâncias com estrelas Cefeidas em galáxias mais próximas (<a href="https://doi.org/10.1073/pnas.15.3.168" target="_blank" rel="noopener noreferrer">artigo original<span class="visually-hidden">{ext}</span> ↗</a>); Georges Lemaître chegou à mesma ideia em 1927.</li>
             </ul>
           </details>
           <p class="obs-live visually-hidden" role="status" data-h-live></p>
@@ -200,16 +200,16 @@ const ext = ' (abre em outra aba)';
             <p class="obs-guess-q"><span class="meta">Antes de mexer · faça um palpite</span>Imagine um Universo só de matéria, sem energia escura, com a quantidade exata de matéria que deixa o espaço plano (a receita "Só matéria"). A expansão…</p>
             <div class="obs-guess-opts"><button type="button" data-opt="a">aceleraria</button><button type="button" data-opt="b">ia freando, sem nunca parar</button><button type="button" data-opt="c">pararia e tudo voltaria a encolher</button></div>
             <button type="button" class="obs-skip" data-guess-skip>Pular o palpite e mexer direto</button>
-            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com essa quantidade exata, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Atenção: com matéria <em>demais</em> a resposta seria outra, e a expansão pararia e voltaria a encolher (teste a receita "Matéria demais"). Com matéria de menos, também nunca para. Mas o que vemos é outra coisa: hoje a expansão está acelerando. Por isso existe a ideia de energia escura.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
+            <div data-guess-result hidden><p><strong data-guess-verdict></strong>Com essa quantidade exata, ela vai freando para sempre, cada vez mais devagar, sem nunca parar. Atenção: com matéria <em>demais</em> a resposta seria outra, e a expansão pararia e voltaria a encolher (teste a receita "Matéria demais"). Com matéria de menos, também nunca para. As observações indicam que a expansão acelera hoje. A energia escura é um componente usado para explicar essa aceleração no modelo.</p><button type="button" class="obs-go" data-r-go="materia">Ver "só matéria"</button></div>
           </div>
           <div class="obs-grid">
             <figure class="obs-viz" data-r-chartwrap>
               <svg data-r-chart viewBox="0 0 640 400" role="img" aria-label="Gráfico de como as distâncias entre galáxias mudam com o tempo no modelo escolhido. O tamanho das galáxias não muda com essa expansão. Os resultados aparecem ao lado."></svg>
-              <p class="obs-warn" data-r-warn hidden role="status">Com essa receita o Universo nunca teria começado pequeno e quente. Não é o nosso caso. Ponha mais matéria ou menos energia escura.</p>
+              <p class="obs-warn" data-r-warn hidden role="status">Essa combinação é incompatível com a fase inicial quente e densa do Universo observado. Aumente a matéria ou reduza a energia escura.</p>
             </figure>
             <div class="obs-panel">
               <h3>Do que o Universo é feito</h3>
-              <p class="obs-lede">O que existe no Universo decide o que acontece com ele. A <strong>matéria</strong> puxa tudo para junto e freia a expansão. A <strong>energia escura</strong>, algo que ainda não entendemos, faz a expansão acelerar. Mude a receita e veja o futuro mudar.</p>
+              <p class="obs-lede">No modelo, a gravidade da <strong>matéria</strong> freia a expansão. A <strong>energia escura</strong> explica a aceleração, e sua natureza continua desconhecida. Ajuste as quantidades e compare as curvas.</p>
               <div class="obs-chips" role="group" aria-label="Receitas prontas">
                 <button type="button" data-r-scenario="nosso" aria-pressed="true">O nosso Universo</button>
                 <button type="button" data-r-scenario="materia" aria-pressed="false">Só matéria</button>
@@ -236,13 +236,13 @@ const ext = ' (abre em outra aba)';
             </div>
           </div>
           <aside class="obs-tension" data-r-tension>
-            <div><span class="obs-tag" data-kind="aberto">Ainda não sabemos</span><h4>Duas réguas, dois números</h4>
-              <p>Medindo o ritmo da expansão pela <strong>luz mais antiga do Universo</strong>, os cientistas chegam a cerca de <strong>67</strong>. Medindo por <strong>estrelas de galáxias próximas</strong>, chegam a cerca de <strong>73</strong>. Nos estudos citados abaixo, a diferença é maior do que as incertezas estimadas. Ela pode indicar efeitos ainda não considerados nas medidas ou nas hipóteses dos modelos. Essa discordância é conhecida como tensão de Hubble e, sozinha, não estabelece uma física nova.</p></div>
+            <div><span class="obs-tag" data-kind="aberto">Ainda não sabemos</span><h4>Tensão de Hubble</h4>
+              <p>O ajuste do modelo aos dados da <strong>radiação cósmica de fundo</strong> dá cerca de <strong>67 km/s/Mpc</strong>. A calibração com <strong>estrelas de galáxias próximas</strong> leva a cerca de <strong>73 km/s/Mpc</strong>. Nos estudos citados abaixo, a diferença é maior do que as incertezas estimadas. Ela pode indicar efeitos ainda não considerados nas medidas ou nas hipóteses dos modelos. Essa discordância é conhecida como tensão de Hubble e, sozinha, não estabelece uma física nova.</p></div>
             <div class="obs-tension-cmp">
               <p class="obs-small">Os dois botões mudam só o ritmo de hoje. A matéria e a energia escura ficam como estão na receita.</p>
-              <button type="button" class="obs-btn ghost" data-r-h0set="67.4" aria-pressed="false">Usar 67 (luz mais antiga)</button>
+              <button type="button" class="obs-btn ghost" data-r-h0set="67.4" aria-pressed="false">67 km/s/Mpc · Planck</button>
               <p>Idade com esta receita: <strong data-r-t-cmb>—</strong></p>
-              <button type="button" class="obs-btn ghost" data-r-h0set="73.04" aria-pressed="false">Usar 73 (estrelas próximas)</button>
+              <button type="button" class="obs-btn ghost" data-r-h0set="73.04" aria-pressed="false">73 km/s/Mpc · SH0ES</button>
               <p>Idade com esta receita: <strong data-r-t-local>—</strong></p>
             </div>
           </aside>
@@ -250,7 +250,7 @@ const ext = ' (abre em outra aba)';
             <summary>Para quem quer os nomes técnicos</summary>
             <ul>
               <li>As contas por trás do gráfico são as <strong>equações de Friedmann</strong>, as mesmas que os cosmólogos usam.</li>
-              <li>A diferença entre 67 e 73 se chama <strong>tensão de Hubble</strong>. Medidas: <a href="https://arxiv.org/abs/1807.06209" target="_blank" rel="noopener noreferrer">satélite Planck<span class="visually-hidden">{ext}</span> ↗</a> e <a href="https://arxiv.org/abs/2112.04510" target="_blank" rel="noopener noreferrer">equipe SH0ES<span class="visually-hidden">{ext}</span> ↗</a>.</li>
+              <li>Referências para a <strong>tensão de Hubble</strong>: <a href="https://arxiv.org/abs/1807.06209" target="_blank" rel="noopener noreferrer">satélite Planck<span class="visually-hidden">{ext}</span> ↗</a> e <a href="https://arxiv.org/abs/2112.04510" target="_blank" rel="noopener noreferrer">equipe SH0ES<span class="visually-hidden">{ext}</span> ↗</a>.</li>
             </ul>
           </details>
           <p class="obs-live visually-hidden" role="status" data-r-live></p>

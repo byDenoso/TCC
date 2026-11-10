@@ -125,7 +125,7 @@ export const MICRO: Record<string, MicroSpec> = {
     check: { q: '"Os núcleos leves se formaram nos primeiros minutos" é…', options: ['apoiado por medidas da quantidade de hélio e deutério', 'hipótese sem evidência', 'opinião'], right: 0, why: 'As quantidades medidas batem com o cálculo.' }
   },
 
-  // ── C. Como sabemos disso? ──
+  // ── C. Evidências em cosmologia ──
   'misterios-do-cosmos-horizonte': {
     ask: 'Como uma luz fraca vira uma conclusão científica?',
     guess: { q: '"A expansão está acelerando" é…', options: ['uma medida direta', 'uma conclusão tirada de muitas medidas com um modelo', 'uma opinião'], right: 1, why: 'Medimos brilho e cor; o modelo transforma isso em conclusão.' },

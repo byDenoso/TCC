@@ -11,22 +11,22 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
   </div>
   <section class="hero-main page-width hero" aria-labelledby="hero-instrument-title">
     <div class="hero-instrument-copy">
-      <p class="section-id">Instrumento de abertura · 01</p>
-      <h1 class="display" id="hero-instrument-title">A primeira luz<br /><em>que ainda vemos.</em></h1>
+      <p class="section-id">Mapa de temperatura</p>
+      <h1 class="display" id="hero-instrument-title">A radiação<br /><em>de fundo</em></h1>
       <p>A radiação cósmica de fundo nos chega de todas as direções. Explore uma representação das pequenas diferenças de temperatura que ela carrega.</p>
       <nav class="hero-routes" aria-label="Formas de explorar">
-        <a href={u('/#capitulos')}><span>06</span><strong>aulas visuais</strong><i aria-hidden="true">↗</i></a>
-        <a href={u('/#capitulos')}><span>36</span><strong>ideias para explorar</strong><i aria-hidden="true">↗</i></a>
-        <a href={u('/#movimento')}><span>NO SEU RITMO</span><strong>observe e experimente</strong><i aria-hidden="true">↗</i></a>
+        <a href={u('/#capitulos')}><span>Aulas</span><strong>Trilha de cosmologia</strong><i aria-hidden="true">↗</i></a>
+        <a href={u('/observatorio/?lab=tempo#observatorio')}><span>Observatório</span><strong>Épocas do Universo</strong><i aria-hidden="true">↗</i></a>
+        <a href={u('/#movimento')}><span>Animações</span><strong>Expansão e luz</strong><i aria-hidden="true">↗</i></a>
       </nav>
       <a class="hero-explore" href={u('/escalas/')}>
         <span class="hero-explore-orbit" aria-hidden="true">✦</span>
-        <span><strong>Explore o Universo em 3D</strong><small>Da Terra à teia cósmica · gire e mude de escala</small></span>
+        <span><strong>Escalas do Universo</strong><small>Da Terra à teia cósmica pela rolagem</small></span>
         <span aria-hidden="true">↗</span>
       </a>
     </div>
     <figure class="cmb-hero" data-cmb>
-      <div class="cmb-instrument-label"><span class="meta"><i class="school-live-dot" aria-hidden="true"></i> Uma janela para o começo</span><span class="cmb-interaction-hint">Explore com o toque ou as setas</span></div>
+      <div class="cmb-instrument-label"><span class="meta"><i class="school-live-dot" aria-hidden="true"></i> Radiação cósmica de fundo · simulação</span><span class="cmb-interaction-hint">Explore com o toque ou as setas</span></div>
       <div class="cmb-observation">
         <svg class="sky-orbits" viewBox="0 0 600 300" aria-hidden="true" focusable="false">
           <g class="sky-orbit sky-orbit--outer"><ellipse cx="300" cy="150" rx="287" ry="132"/><circle cx="80" cy="66" r="3.2"/><circle cx="523" cy="218" r="2"/></g>
@@ -43,7 +43,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
         <p class="cmb-read" data-cmb-read aria-live="polite">O Universo já foi uma névoa quente. Esta luz começou a viajar livre quando ele tinha cerca de 380 mil anos. Explore as diferenças de temperatura.</p>
         <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
         <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck.</p>
-        <a class="cmb-go" href={u('/observatorio/?lab=tempo&z=1090#observatorio')}>De onde vem essa luz? Viaje até ela →</a>
+        <a class="cmb-go" href={u('/observatorio/?lab=tempo&z=1090#observatorio')}>Abrir a época da recombinação →</a>
         <button class="ambient-toggle" type="button" data-ambient-toggle hidden>Pausar o céu animado</button>
         <button class="ambient-toggle" type="button" data-hero-gl-enable hidden>Ativar nebulosa 3D</button>
       </figcaption>

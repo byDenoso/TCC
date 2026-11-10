@@ -3,7 +3,7 @@
   {
    "id": "galaxias-e-nebulosas",
    "title": "Onde estamos no Universo?",
-   "teaser": "Da Terra à Via Láctea, à teia cósmica e à luz do passado.",
+   "teaser": "A posição do Sistema Solar na Via Láctea e o tempo que a luz leva para chegar.",
    "summary": "A Terra está no Sistema Solar, dentro da Via Láctea. Galáxias formam estruturas em escalas ainda maiores, e a luz distante nos conta como o cosmos era quando partiu.",
    "aside": "A luz leva tempo para chegar: observar longe é estudar outra época."
   },
@@ -16,7 +16,7 @@
   },
   {
    "id": "misterios-do-cosmos",
-   "title": "Como sabemos disso?",
+   "title": "Evidências em cosmologia",
    "teaser": "As pistas da luz e da gravidade, e as perguntas que continuam abertas.",
    "summary": "Compare o que os instrumentos medem, o que os modelos inferem e o que permanece desconhecido. A expansão, a CMB e a gravidade das estruturas oferecem pistas diferentes.",
    "aside": "Evidências podem apoiar um modelo sem revelar a natureza de todos os seus componentes."
@@ -24,7 +24,7 @@
   {
    "id": "vida-das-estrelas",
    "title": "Por que uma estrela brilha?",
-   "teaser": "Da nuvem à fusão, da massa ao destino.",
+   "teaser": "Como a fusão sustenta uma estrela e como sua massa afeta a evolução.",
    "summary": "Estrelas transformam matéria e irradiam energia. A massa inicial é uma das chaves de sua história: ela muda o ritmo de consumo do combustível, o brilho e os caminhos possíveis depois da fase principal.",
    "aside": "Uma estrela vive pelo equilíbrio entre gravidade e pressão. Seu destino depende da massa e de sua história."
   },
@@ -32,13 +32,13 @@
    "id": "sistema-solar",
    "title": "Como surgiram mundos tão diferentes?",
    "teaser": "Uma estrela, oito planetas e muitos outros corpos.",
-   "summary": "O Sistema Solar compartilha uma origem, mas não um único tipo de mundo. Distância ao Sol, composição, massa e história produzem uma diversidade que vai de superfícies rochosas a atmosferas profundas.",
+   "summary": "Os planetas se formaram no mesmo disco de gás e poeira. A distância ao Sol, a massa, a composição e a história de formação ajudam a explicar superfícies rochosas e atmosferas profundas.",
    "aside": "Compare sempre a mesma grandeza e a mesma definição. Um planeta gigante não tem uma superfície como a Terra."
   },
   {
    "id": "terra-e-atmosfera",
    "title": "Como a Terra se tornou nossa casa?",
-   "teaser": "Rocha, água, ar e uma longa transformação.",
+   "teaser": "Como a geologia e a vida alteraram a atmosfera da Terra.",
    "summary": "A Terra habitável de hoje resulta de uma história geológica e biológica. Seu interior, sua atmosfera e seus oceanos trocaram matéria e energia por bilhões de anos. A composição do ar que respiramos é parte dessa história.",
    "aside": "Habitabilidade depende de vários processos conectados. A presença de água ou uma boa distância da estrela, sozinhas, não garantem vida."
   }

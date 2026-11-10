@@ -664,7 +664,7 @@ section('Reauditoria: laboratório, títulos e procedência');
 {
   const p = await page(390);
   await p.goto(`${BASE}/laboratorio/?massa=30`, { waitUntil: 'networkidle' });
-  const challenge = p.getByRole('link', { name: '03 Testar suas ideias ↓', exact: true });
+  const challenge = p.getByRole('link', { name: '03 Revisar as aulas ↓', exact: true });
   await challenge.focus();
   await Promise.all([p.waitForURL(url => url.pathname === new URL(BASE + '/desafio/').pathname && url.hash === '#desafio'), p.keyboard.press('Enter')]);
   await p.locator('#desafio').waitFor({state:'visible'});
@@ -678,7 +678,7 @@ section('Reauditoria: laboratório, títulos e procedência');
   await p.locator('[data-cmb-frame]').focus(); await p.keyboard.press('ArrowRight');
   ok('CMB teclado informa que o valor é simulado', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()));
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('idade do Universo na viagem', /13,8 bilhões/.test(await p.locator('#journey-title').innerText()));
+  ok('idade do Universo na viagem', /13,8 bilhões/.test(await p.locator('.journey-lede').innerText()));
   ok('ajustes secundários sem erros', p.errors.length === 0, p.errors.join(' | '));
   await p.context().close();
 }
