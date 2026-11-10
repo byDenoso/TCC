@@ -33,8 +33,8 @@ export class FrameBudget {
   record(interval: number): void {
     if (Number.isFinite(interval) && interval > 0 && this.values.length < 120) this.values.push(interval);
   }
-  decide(minimum = 90): 'low' | 'standard' | null {
+  decide(minimum = 90, maximumInterval = 30): 'low' | 'standard' | null {
     if (this.values.length < minimum) return null;
-    return this.p90! > 30 ? 'low' : 'standard';
+    return this.p90! > maximumInterval ? 'low' : 'standard';
   }
 }

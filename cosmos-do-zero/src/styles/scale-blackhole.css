@@ -230,15 +230,3 @@ html:root .cosmic-exhibit :is(h2, h3, h4) { color: var(--exhibit-ink); }
 @container (min-width: 590px) {
   .black-hole-exhibit .cosmic-exhibit-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); }
 }
-
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    html:not([data-motion='reduced'], [data-motion='gentle']) .scale-exhibit-image img {
-      animation: cosmic-exhibit-reframe linear both;
-      animation-timeline: view();
-      animation-range: entry 0% cover 40%;
-    }
-  }
-}
-
-@keyframes cosmic-exhibit-reframe { from { transform: scale(1.18); } to { transform: scale(1); } }
