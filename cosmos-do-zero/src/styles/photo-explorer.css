@@ -24,6 +24,12 @@
 .px-view:focus-visible { outline: 3px solid var(--focus); outline-offset: 6px; }
 .px-canvas { position: relative; width: 100%; }
 .px-canvas img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.px-annotations {
+  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  fill: none; stroke: #fff5df; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px #070d17);
+}
+.px-annotations path { stroke-dasharray: 1; stroke-dashoffset: 0; }
 .px-spot { position: absolute; width: 44px; height: 44px; margin: -22px 0 0 -22px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; transform: scale(calc(1 / var(--px-z, 1))); }
 .px-spot span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--action); color: var(--on-action); border: 2px solid #fbf6e9; font: 800 14px/1 var(--sans); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5); transition: transform 0.25s var(--ease), background 0.25s var(--ease); }
 .px-spot:hover span { transform: scale(1.12); }
@@ -64,8 +70,16 @@
 /* Com JavaScript: janela de proporção fixa, imagem maior que a janela, arraste e zoom. */
 .px[data-px-ready] .px-view { aspect-ratio: 3 / 2; cursor: grab; touch-action: pan-y; }
 .px[data-px-ready] .px-view.is-dragging { cursor: grabbing; }
-.px[data-px-ready] .px-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; aspect-ratio: auto !important; }
-.px[data-px-ready] .px-canvas.is-gliding { transition: transform 0.7s var(--ease); }
+.px[data-px-ready] .px-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; aspect-ratio: auto !important; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion="reduced"]) .px-view[data-px-in-view] .px-canvas.is-gliding {
+    transition: transform var(--nx-motion-enter, 560ms) var(--nx-motion-ease, cubic-bezier(.22, 1, .36, 1));
+  }
+  html:not([data-motion="reduced"]) .px-view[data-px-in-view] [data-px-draw] {
+    animation: px-draw var(--nx-motion-data, 900ms) var(--nx-motion-ease, cubic-bezier(.22, 1, .36, 1)) both;
+  }
+}
+@keyframes px-draw { from { stroke-dashoffset: 1; } }
 
 @media (max-width: 860px) {
   .px-tabs { grid-template-columns: 1fr; gap: 8px; }
@@ -84,9 +98,12 @@
 }
 @media (forced-colors: active) {
   .px-spot span, .px-tab[aria-pressed='true'] { border: 2px solid Highlight; }
+  .px-annotations { forced-color-adjust: none; }
 }
+@media (prefers-reduced-motion: reduce) { .px-tab, .px-spot span, .px-tools button, .px-reading-nav button { transition: none; } }
+html[data-motion="reduced"] .px :is(.px-tab, .px-spot span, .px-tools button, .px-reading-nav button) { transition: none; }
 @media print {
   .px-tabs, .px-tools, .px-reading { display: none !important; }
-  .px-panel[hidden] { display: grid; }
-  .px-list[hidden] { display: grid; }
+  .px-panel[hidden], .px-list[hidden] { display: grid !important; }
+  .px-annotations path[hidden] { display: inline !important; }
 }
