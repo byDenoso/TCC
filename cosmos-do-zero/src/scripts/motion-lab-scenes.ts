@@ -9,7 +9,7 @@ import {
   lightTemperatureK, peakNm, planckShape, rotationSpeed, seenFrom, slopeThroughOrigin, stretchNm, visibleGlow, wavelengthRgb, KELVIN_TO_C
 } from '../lib/motion-lab';
 
-export interface SciContext { reduced: boolean; redraw(): void }
+export interface SciContext { canAnimate(): boolean; redraw(): void }
 export interface SciFrame {
   /** Texto de leitura (parágrafo abaixo da figura). */
   read: string;
@@ -113,15 +113,15 @@ function expansaoScene(): SciScene {
   const field = galaxyField(COLS, ROWS);
   const observers = [38, 13, 63, 20, 56];
   let obsIdx = 0, from = { x: field[observers[0]].x, y: field[observers[0]].y }, to = from, cur = { ...from }, anim = 0;
-  let grid!: SVGPathElement, ring!: SVGCircleElement, svgRef!: SVGSVGElement, ctxRef!: SciContext, onTap!: (e: MouseEvent) => void;
+  let grid!: SVGPathElement, svgRef!: SVGSVGElement, ctxRef!: SciContext, onTap!: (e: MouseEvent) => void;
   const dots: SVGEllipseElement[] = [], arrows: SVGPathElement[] = [];
   const goTo = (target: { x: number; y: number }): void => {
     cancelAnimationFrame(anim);
     from = { ...cur }; to = { x: target.x, y: target.y };
-    if (ctxRef.reduced) { cur = { ...to }; ctxRef.redraw(); return; }
+    if (!ctxRef.canAnimate()) { cur = { ...to }; ctxRef.redraw(); return; }
     const t0 = performance.now();
     const step = (now: number): void => {
-      const k = ease(clamp((now - t0) / 700));
+      const k = ctxRef.canAnimate() ? ease(clamp((now - t0) / 700)) : 1;
       cur = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k };
       ctxRef.redraw();
       if (k < 1) anim = requestAnimationFrame(step);
@@ -133,6 +133,7 @@ function expansaoScene(): SciScene {
     action: { label: 'Ver de outra galáxia', run: () => { obsIdx = (obsIdx + 1) % observers.length; goTo(field[observers[obsIdx]]); } },
     mount(svg, ctx) {
       svgRef = svg; ctxRef = ctx;
+      svg.querySelector('[data-sci-static-expansion]')?.remove();
       grid = el('path', { fill: 'none', stroke: C.line, 'stroke-width': 1.2, opacity: 0.7 }, svg);
       const arrowLayer = g(svg), dotLayer = g(svg);
       for (const gl of field) {
@@ -140,7 +141,7 @@ function expansaoScene(): SciScene {
         const rx = 4.4 + gl.size * 3;
         dots.push(el('ellipse', { rx, ry: rx * 0.5, fill: C.ink2, opacity: 0.92 }, dotLayer));
       }
-      ring = el('circle', { cx: CX, cy: CY, r: 12, fill: 'none', stroke: C.accentInk, 'stroke-width': 3 }, svg);
+      el('circle', { cx: CX, cy: CY, r: 12, fill: 'none', stroke: C.accentInk, 'stroke-width': 3 }, svg);
       label(svg, CX + 17, CY - 14, 'nós', 'strong halo');
       onTap = (e: MouseEvent) => {
         const m = svg.getScreenCTM(); if (!m) return;
@@ -164,11 +165,9 @@ function expansaoScene(): SciScene {
       for (let i = 0; i < COLS; i++) { const dx = seenFrom({ x: i - (COLS - 1) / 2, y: 0 }, cur, s, COLS, ROWS)[0]; const x = CX + dx * K; if (x > -2 && x < 482) d += `M${x.toFixed(1)} 0V300`; }
       for (let j = 0; j < ROWS; j++) { const dy = seenFrom({ x: 0, y: j - (ROWS - 1) / 2 }, cur, s, COLS, ROWS)[1]; const y = CY + dy * K; if (y > -2 && y < 302) d += `M0 ${y.toFixed(1)}H480`; }
       set(grid, { d });
-      const pulse = 12 + 2.5 * Math.sin(performance.now() / 380);
-      set(ring, { r: pulse });
       const x = fmt(s, 1);
       const read = s < 1.03
-        ? 'Aqui o espaço ainda não cresceu. Aperte "Reproduzir" e veja o que acontece com as distâncias. Dica: toque numa galáxia para ver o Universo dali.'
+        ? 'Aqui o espaço ainda não cresceu. Role a página ou use os controles para mudar as distâncias. Toque numa galáxia para ver o Universo dali.'
         : `O espaço cresceu ${x}×. As setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Toque em outra galáxia (ou no botão) e veja que, neste desenho, o padrão é o mesmo de qualquer ponto.`;
       return { read, value: `${x}×`, aria: `Espaço ${x} vezes maior. Galáxias mais distantes se afastam mais depressa, de qualquer galáxia observadora.` };
     },

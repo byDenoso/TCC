@@ -76,7 +76,8 @@ html:root :is(.light-exhibit, .orbit-exhibit) :is(h2, h3) { color: var(--exhibit
 .light-heading > p:last-child { max-width: 47ch; color: var(--exhibit-muted); font-size: clamp(16px, 1.7vw, 21px); line-height: 1.65; }
 .light-exhibit .exhibit-label, .orbit-exhibit .exhibit-label { color: var(--exhibit-accent); }
 .light-grid { display: grid; grid-template-columns: minmax(0, 1.52fr) minmax(0, 1fr); align-items: start; gap: clamp(28px, 6vw, 100px); }
-.light-sticky { position: sticky; top: 92px; min-width: 0; z-index: 2; }
+.light-sticky { min-width: 0; }
+[data-light-ready] .light-sticky { position: sticky; top: 92px; z-index: 2; }
 .light-instrument { background: var(--exhibit-panel); border: 1px solid var(--exhibit-line); border-radius: 8px; overflow: clip; }
 .light-plate-bar {
   display: flex; justify-content: space-between; gap: 12px; padding: 12px 16px; color: var(--exhibit-muted);
@@ -93,10 +94,6 @@ html:root :is(.light-exhibit, .orbit-exhibit) :is(h2, h3) { color: var(--exhibit
 }
 .light-photo figcaption a, .orbit-note a { text-decoration: underline; text-underline-offset: 3px; }
 .light-spectrum { padding: 12px 14px 9px; }
-@media (prefers-reduced-motion: no-preference) {
-  html:not([data-motion="reduced"]) .light-view > :not([hidden]) { animation: light-in .32s ease-out both; }
-}
-@keyframes light-in { from { opacity: .48; } }
 .light-spectrum svg { display: block; width: min(100%, 610px); height: auto; margin-inline: auto; overflow: visible; }
 .light-spectrum svg text { fill: var(--exhibit-muted); font: 600 17px var(--body); }
 .light-spectrum svg .light-ticks text { font-size: 16px; }
@@ -106,6 +103,7 @@ html:root :is(.light-exhibit, .orbit-exhibit) :is(h2, h3) { color: var(--exhibit
 .light-rest, .light-shifts { fill: none; stroke: white; stroke-width: 2; }
 .light-shifts { stroke: var(--exhibit-accent); stroke-width: 3; }
 .light-spectrum figcaption { font-size: 12px; color: var(--exhibit-muted); line-height: 1.5; text-align: center; }
+.light-spectrum [data-light-sample] { margin-inline-start: .65em; color: var(--exhibit-accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .light-control { padding: 10px 16px 13px; border-top: 1px solid var(--exhibit-line); }
 .light-control label, .orbit-fields label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 3px 12px; font-size: 13px; font-weight: 680; }
 .light-control label var { margin-inline-end: auto; }
@@ -116,7 +114,7 @@ html:root :is(.light-exhibit, .orbit-exhibit) :is(h2, h3) { color: var(--exhibit
 .light-steps-nav button {
   min-height: 44px; padding: 6px; border: 0; border-top: 1px solid var(--exhibit-line);
   background: transparent; color: var(--exhibit-muted); font-size: 13px; font-weight: 680;
-  transition: color .2s, background .2s;
+  transition: color var(--nx-motion-quick, 180ms), background var(--nx-motion-quick, 180ms);
 }
 .light-steps-nav button + button { border-left: 1px solid var(--exhibit-line); }
 .light-steps-nav button:is(:hover, [aria-pressed="true"]) { background: #273346; color: var(--exhibit-ink); }
@@ -213,7 +211,7 @@ html:root .reader-page .reader-opening h1 { line-height: .97; letter-spacing: -.
   html:root .premiere .hero-copy .hero-overline { letter-spacing: .09em; }
   .premiere-credit { justify-self: start; padding-top: 2px; }
   .light-grid { display: block; }
-  .light-sticky { top: 67px; }
+  [data-light-ready] .light-sticky { top: 67px; }
   .light-view img { max-height: 24svh; }
   .light-spectrum svg { max-height: 22svh; }
   .light-steps li { min-height: clamp(330px, 50svh, 500px); scroll-margin-top: 110px; }
@@ -223,7 +221,6 @@ html:root .reader-page .reader-opening h1 { line-height: .97; letter-spacing: -.
       linear-gradient(0deg, var(--bg) 0%, transparent 55%);
   }
 }
-@media (max-height: 520px) { .light-sticky { position: relative; top: auto; } }
 @media (prefers-reduced-motion: reduce) { .light-steps-nav button { transition: none; } }
 html[data-motion="reduced"] .light-steps-nav button { transition: none; }
 @media (forced-colors: active) {
@@ -246,8 +243,9 @@ html[data-motion="reduced"] .light-steps-nav button { transition: none; }
 .light-spectrum[data-line-mode="emission"] .light-continuum { opacity: .1; }
 .light-spectrum[data-line-mode="absorption"] .light-rest, .light-spectrum[data-line-mode="absorption"] .light-shifts { stroke: #080e19; stroke-width: 4; }
 .light-spectrum[data-line-mode="absorption"] .light-track { fill: #7a668e; }
-.niriss-case figure { margin: 6px 0 0; }
-.niriss-case img { width: 100%; height: auto; display: block; }
+.niriss-case { width: 100%; margin: 24px 0 0; }
+.light-steps .niriss-case .exhibit-label { margin-bottom: 8px; }
+.niriss-case img { width: 100%; height: auto; display: block; border: 1px solid var(--exhibit-line); border-radius: 4px; }
 .niriss-case figcaption { font-size: 13px; color: var(--exhibit-muted); margin-block: 8px 12px; line-height: 1.65; }
 .niriss-case figcaption a { text-decoration: underline; }
 @media (max-width: 720px) {
@@ -256,8 +254,9 @@ html[data-motion="reduced"] .light-steps-nav button { transition: none; }
   .light-mode { padding-block: 0; }
 }
 @media (max-height: 650px) {
-  .light-sticky { position: relative; top: auto; }
+  [data-light-ready] .light-sticky { position: relative; top: auto; }
 }
+.light-exhibit:not([data-light-ready]) .light-steps li { min-height: 0; }
 
 .lab-index { margin-block: 28px clamp(44px, 7vw, 88px); }
 .lab-index h2 { font: 760 clamp(32px, 5vw, 64px)/1.05 var(--sans); letter-spacing: -.045em; margin: 16px 0 22px; }

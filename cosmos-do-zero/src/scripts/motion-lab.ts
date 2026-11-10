@@ -6,7 +6,7 @@ import { motionPreference, motionFactor } from './motion-preference';
  * nenhum WebGL, então não disputa o contexto único das cenas em 3D.
  */
 import { SCI_SCENES, type SciFrame, type SciScene } from './motion-lab-scenes';
-import { ease } from './micro/draw';
+import { clamp, ease } from './micro/draw';
 
 const reducedQuery = motionPreference;
 
@@ -25,6 +25,7 @@ class SciPanel {
   private active = false;
   private visible = false;
   private autoStarted = false;
+  private manual = false;
   private readonly stage: HTMLElement;
   private readonly svg: SVGSVGElement;
   private readonly read: HTMLElement;
@@ -67,7 +68,10 @@ class SciPanel {
   private ensure(): SciScene {
     if (this.scene) return this.scene;
     const scene = this.make();
-    scene.mount(this.svg, { reduced: reducedQuery.matches, redraw: () => this.draw(false) });
+    scene.mount(this.svg, {
+      canAnimate: () => this.active && this.visible && !document.hidden && !reducedQuery.matches,
+      redraw: () => this.draw(false)
+    });
     this.scene = scene;
     this.p = this.initial(scene);
     this.range.value = String(this.p);
@@ -82,12 +86,14 @@ class SciPanel {
 
   private bind(): void {
     this.range.addEventListener('input', () => {
+      this.manual = true;
       const scene = this.ensure();
       this.p = Number(this.range.value); this.sweeping = false;
       if (!scene.ambient) this.setPlaying(false);
       this.draw(true);
     });
     this.play.addEventListener('click', () => {
+      this.manual = true;
       const scene = this.ensure();
       if (reducedQuery.matches) { this.advance(scene); return; }
       if (this.playing) { this.setPlaying(false); this.draw(true); return; }
@@ -95,6 +101,7 @@ class SciPanel {
       this.setPlaying(true);
     });
     this.reset.addEventListener('click', () => {
+      this.manual = true;
       const scene = this.ensure();
       this.setPlaying(false); this.time = 0; this.sweepT = 0; this.p = this.initial(scene); this.sweeping = true;
       this.range.value = String(this.p); this.draw(true);
@@ -156,6 +163,18 @@ class SciPanel {
     if (announce) this.announce(f.aria);
   }
 
+  /** A mesma escala comóvel do controle manual acompanha a passagem da figura pela tela. */
+  readScroll(): void {
+    if (this.id !== 'expansao' || this.manual || !this.active || !this.visible || document.hidden || reducedQuery.matches) return;
+    const { top, bottom } = this.stage.getBoundingClientRect();
+    if (bottom <= 0 || top >= innerHeight) return;
+    const next = clamp((0.85 - top / innerHeight) / 0.6);
+    if (next === this.p) return;
+    this.p = next;
+    this.range.value = String(next);
+    this.draw(false);
+  }
+
   private announce(msg: string): void {
     clearTimeout(this.liveTimer);
     this.liveTimer = window.setTimeout(() => { this.live.textContent = msg; }, 400);
@@ -171,16 +190,19 @@ class SciPanel {
       this.draw(false);
     }
     this.sync();
+    this.readScroll();
   }
 
   setVisible(on: boolean): void {
     this.visible = on;
     if (on && this.active && !this.autoStarted && !reducedQuery.matches) this.autoStart(this.ensure());
     this.sync();
+    this.readScroll();
   }
 
   private autoStart(scene: SciScene): void {
     this.autoStarted = true;
+    if (this.id === 'expansao') return;
     if (scene.sweep || scene.ambient) this.setPlaying(true);
   }
 
@@ -228,7 +250,29 @@ function setup(root: HTMLElement): void {
   addEventListener('hashchange', goHash);
 
   if ('IntersectionObserver' in window) {
-    new IntersectionObserver(([entry]) => panels.forEach((p) => p.setVisible(entry.isIntersecting)), { threshold: 0.2 }).observe(root.querySelector('[data-sci-body]') ?? root);
+    const expansion = panels.find((panel) => panel.id === 'expansao');
+    const others = panels.filter((panel) => panel !== expansion);
+    new IntersectionObserver(([entry]) => others.forEach((panel) => panel.setVisible(entry.isIntersecting)), { threshold: 0.2 }).observe(root.querySelector('[data-sci-body]') ?? root);
+    const expansionStage = expansion?.root.querySelector('[data-sci-stage]');
+    if (expansion && expansionStage) {
+      let frame = 0;
+      const syncScroll = () => {
+        if (frame || expansion.root.hidden) return;
+        frame = requestAnimationFrame(() => { frame = 0; expansion.readScroll(); });
+      };
+      new IntersectionObserver(([entry]) => {
+        expansion.setVisible(entry.isIntersecting);
+        if (entry.isIntersecting) {
+          addEventListener('scroll', syncScroll, { passive: true });
+          addEventListener('resize', syncScroll);
+        } else {
+          removeEventListener('scroll', syncScroll);
+          removeEventListener('resize', syncScroll);
+          cancelAnimationFrame(frame);
+          frame = 0;
+        }
+      }).observe(expansionStage);
+    }
   } else panels.forEach((p) => p.setVisible(true));
   root.classList.add('is-ready');
   document.addEventListener('visibilitychange', () => panels.forEach((p) => p.sync()));
