@@ -68,6 +68,10 @@ for (const file of html) {
     const covers = [...text.matchAll(/<img\b[^>]*\bdata-course-cover="([^"]+)"/g)];
     assert.equal(new Set(covers.map((cover) => cover[1])).size, 6, 'As seis aulas precisam de capas observacionais distintas');
   }
+  if (slug.startsWith('capitulos/')) {
+    assert.ok(text.includes('data-story-world') && text.includes('data-story-graphic'), `Abertura 3D e diagrama acessível ausentes: ${slug}`);
+    assert.match(text, /<img\b[^>]*data-story-poster/, `Quadro de referência sem WebGL ausente: ${slug}`);
+  }
   assert.ok(text.includes(`<link rel="canonical" href="${pageUrl}"`), `Canônica incorreta: ${slug}`);
   assert.ok(text.includes(`property="og:url" content="${pageUrl}"`), `og:url incorreto: ${slug}`);
   assert.ok(text.includes(`property="og:image" content="${expectedRoot}social-card.png"`), `og:image incorreto: ${slug}`);

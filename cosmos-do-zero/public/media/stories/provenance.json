@@ -1,14 +1,21 @@
 {
-  "source": "src/lib/story-scenes.ts",
+  "sources": [
+    "src/scripts/visual/story-exhibit.ts",
+    "src/lib/story-scenes.ts"
+  ],
   "duration": 20,
-  "fps": 24,
   "dimensions": [
     1280,
     720
   ],
-  "captions": "Arquivos VTT em português, sem texto duplicado gravado no vídeo",
-  "models": "Ilustrações educativas; limites descritos em cada cena",
+  "posterDimensions": [
+    960,
+    540
+  ],
+  "captions": "Arquivos VTT em português. As réguas e unidades são compostas sobre o quadro 3D.",
+  "models": "Texturas observacionais quando disponíveis, modelos educativos e escalas descritas em cada cena.",
   "references": [
+    "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/",
     "https://nssdc.gsfc.nasa.gov/planetary/factsheet/mercuryfact.html",
     "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
     "https://science.nasa.gov/asset/webb/what-is-cosmological-redshift/"
@@ -20,5 +27,177 @@
     "vida-das-estrelas",
     "sistema-solar",
     "terra-e-atmosfera"
-  ]
+  ],
+  "media": {
+    "terra-e-atmosfera": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "terra-e-atmosfera.mp4",
+          "bytes": 436187,
+          "sha256": "90d10f1193a2559d7aaca8220f161399fa9163c96e7c061aa350198a7943ad5c"
+        },
+        {
+          "file": "terra-e-atmosfera.vtt",
+          "bytes": 377,
+          "sha256": "258c0e7de067625f4ada37fe21ec22a90ca4897317dd29e1138a86ae826f9767"
+        },
+        {
+          "file": "terra-e-atmosfera.webp",
+          "bytes": 16560,
+          "sha256": "b17df2d4eded618a741a19d070a8f4723bed57f7f2f7003cdfc3f9d663741c50"
+        },
+        {
+          "file": "terra-e-atmosfera-2.webp",
+          "bytes": 16478,
+          "sha256": "2d0f2cdf74e8b1c51f809b1cead71f7538f11fdfe9bcbce0e3a477ca9fbc61a0"
+        },
+        {
+          "file": "terra-e-atmosfera-3.webp",
+          "bytes": 16418,
+          "sha256": "12389ac1e5f160c993777385b6e056f5a48be01bf2775bb3f75d8af3291ea4e9"
+        }
+      ]
+    },
+    "galaxias-e-nebulosas": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "galaxias-e-nebulosas.mp4",
+          "bytes": 760858,
+          "sha256": "4fe739e0db01aacb25818bb06de40a5421e517e726d386059737703421cd2d1a"
+        },
+        {
+          "file": "galaxias-e-nebulosas.vtt",
+          "bytes": 327,
+          "sha256": "9c1ef08700e517c97737b89bea2d57ee8eccc861dee3b3baeba19c4b1f4465a3"
+        },
+        {
+          "file": "galaxias-e-nebulosas.webp",
+          "bytes": 19242,
+          "sha256": "1f989f6d3e09c447d6f29ef66617a6061083ab96e526315ab926d806ab1285d4"
+        },
+        {
+          "file": "galaxias-e-nebulosas-2.webp",
+          "bytes": 29090,
+          "sha256": "1e1801e574671116866debaeeb6baf3a0b12150b4b6bd25fc2f7668bd62131cc"
+        },
+        {
+          "file": "galaxias-e-nebulosas-3.webp",
+          "bytes": 19418,
+          "sha256": "70c55a98efdabbf60c00178a48977ee1d4787bcf9e45f67879065ac2e51b30b7"
+        }
+      ]
+    },
+    "origem-do-universo": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "origem-do-universo.mp4",
+          "bytes": 413088,
+          "sha256": "63d3ec5f5e506c9f01dd49aeea70294200c6d2c9731aa2cf36c69c0fec10ead9"
+        },
+        {
+          "file": "origem-do-universo.vtt",
+          "bytes": 363,
+          "sha256": "880db5c4c77a249cf2c91fcd6ca2883075aa4dc5dc309aab229ef78f7b9a44ce"
+        },
+        {
+          "file": "origem-do-universo.webp",
+          "bytes": 13538,
+          "sha256": "f2ea34298d7161a16d9942de32dec1f94dcf1f67dc72411ea8f71e740741ce6f"
+        }
+      ]
+    },
+    "misterios-do-cosmos": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "misterios-do-cosmos.mp4",
+          "bytes": 211948,
+          "sha256": "7cd1ff9191480c0523ac0791991d370a299a0db01d9b8f2a607df0d2c35a84cf"
+        },
+        {
+          "file": "misterios-do-cosmos.vtt",
+          "bytes": 391,
+          "sha256": "e43aa84264d67aa2d314c65b01cf9a459e1da8ef8500059d1b55b91b200e10a2"
+        },
+        {
+          "file": "misterios-do-cosmos.webp",
+          "bytes": 19062,
+          "sha256": "f1c86835c4360b7df44592caa6c9535c5dd0a2d4a3f637acc670b03f4e70d72b"
+        },
+        {
+          "file": "misterios-do-cosmos-2.webp",
+          "bytes": 19106,
+          "sha256": "0ae36e7b9a30d800b0ff1f0171616e1ff19174620877607bd05b41a70b388da0"
+        },
+        {
+          "file": "misterios-do-cosmos-3.webp",
+          "bytes": 19026,
+          "sha256": "81ccab45f997fe4def7d2132fe4ea0fcba987d97a694427ba5b68b22da3ab965"
+        }
+      ]
+    },
+    "vida-das-estrelas": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "vida-das-estrelas.mp4",
+          "bytes": 207384,
+          "sha256": "f34e481290cf853480a59b9628fbea2b505a8424418834377a57976af6b55615"
+        },
+        {
+          "file": "vida-das-estrelas.vtt",
+          "bytes": 381,
+          "sha256": "5ed5718ac0f32e0cee3710b008d79345c28e8ab84125b2b5d78e79954ede18eb"
+        },
+        {
+          "file": "vida-das-estrelas.webp",
+          "bytes": 6696,
+          "sha256": "b770db32db59ee7c0ab3a58ee526f4deb6697033a6959f4bc05c421ea9ddaace"
+        },
+        {
+          "file": "vida-das-estrelas-2.webp",
+          "bytes": 7046,
+          "sha256": "a0f3d83a93667e34a6a16007a6998ffcfd7afe68c697df3fccc063f83c080140"
+        },
+        {
+          "file": "vida-das-estrelas-3.webp",
+          "bytes": 5056,
+          "sha256": "29fd256b3287b71872e26c086653852f63f0749bd035476c347ffc3242008b5f"
+        }
+      ]
+    },
+    "sistema-solar": {
+      "fps": 24,
+      "files": [
+        {
+          "file": "sistema-solar.mp4",
+          "bytes": 308514,
+          "sha256": "bb58b4520c46521b954050635333ee3c2145f9c0b7faaf4fc50f26926c67cec3"
+        },
+        {
+          "file": "sistema-solar.vtt",
+          "bytes": 343,
+          "sha256": "905abe4214394b681f5b1003765a629b55bd881fe07cd165419e81bc25907a15"
+        },
+        {
+          "file": "sistema-solar.webp",
+          "bytes": 10802,
+          "sha256": "98d01f6c873a37b9d41aead2b8f6e7186681e2f5211d4a006b22cea0c1bfd869"
+        },
+        {
+          "file": "sistema-solar-2.webp",
+          "bytes": 10700,
+          "sha256": "c584b5b2ef7aad149a7803ba95d3e81d1f2d4f658e30021d444f7fa967873ae4"
+        },
+        {
+          "file": "sistema-solar-3.webp",
+          "bytes": 10892,
+          "sha256": "6b9db41cd6989f1bf06ddf1f7f34cf2607850cab211669595f42930953a4d1fe"
+        }
+      ]
+    }
+  }
 }
