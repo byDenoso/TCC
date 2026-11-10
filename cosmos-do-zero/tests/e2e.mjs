@@ -773,6 +773,8 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
         await p.waitForTimeout(80);
         ok(`${id}: movimento reduzido avança sem animar`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === still);
       } else {
+        // O clique pode rolar até o botão e retirar o palco da tela. O pedido toca quando o palco volta à vista.
+        await root.locator('[data-mx-visuals]').evaluate(stage => stage.scrollIntoView({ block: 'center', behavior: 'instant' }));
         const active = await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"] [data-mx-play]`)?.getAttribute('aria-pressed') === 'true', id, { timeout: 3000 }).then(() => true, () => false);
         ok(`${id}: iniciar explicita estado ativo`, active);
         await play.click();
