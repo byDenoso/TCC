@@ -1,6 +1,7 @@
 ---
 import { chapterUrl, u } from '../lib/url';
 import '../styles/scale-blackhole.css';
+import '../styles/scale-journey.css';
 
 const auKm = 149_597_870.7;
 const lightYearKm = 9.4607e12;
@@ -10,7 +11,7 @@ const stages = [
     id: 'terra', name: 'Terra', image: 'earth', extent: '12.756 km', km: 12_756,
     dimension: 'Diâmetro equatorial',
     text: 'Comece pelo planeta onde vivemos. A luz atravessaria uma distância igual a seu diâmetro em cerca de 0,04 segundo.',
-    alt: 'Globo terrestre iluminado, com a África voltada para o observador.',
+    alt: 'Globo terrestre iluminado, com oceanos, continentes e nuvens.',
     caption: 'Render com mapa terrestre MODIS da NASA. Nuvens, oceanos e iluminação ilustrativos.',
     source: 'https://science.nasa.gov/earth/facts/', sourceLabel: 'NASA · Terra'
   },
@@ -49,43 +50,66 @@ const stages = [
 ];
 const position = (km: number) => 100 * (Math.log10(km) - ticks[0]) / (ticks.at(-1)! - ticks[0]);
 ---
-<section class="cosmic-exhibit scale-exhibit" id="escala-cosmica" aria-labelledby="scale-exhibit-title">
+<section class="cosmic-exhibit scale-exhibit" id="escala-cosmica" aria-labelledby="scale-exhibit-title" data-scale-journey>
   <div class="page-width">
     <header class="cosmic-exhibit-heading">
       <div class="exhibit-label"><span>02</span> Exposição · Escalas do Universo</div>
       <h2 class="display" id="scale-exhibit-title">Da Terra à <em>teia cósmica.</em></h2>
-      <p>Afaste-se em cinco passos. Cada intervalo da régua logarítmica multiplica a distância por um milhão. As ilustrações mostram o contexto de cada medida.</p>
+      <p>Percorra cinco escalas do Universo. Cada intervalo da régua logarítmica multiplica a distância por um milhão. O percurso visual combina modelos em escalas ilustrativas.</p>
+      <p class="scale-journey-instruction">Role a página para afastar a câmera.</p>
     </header>
 
     <nav class="cosmic-exhibit-nav" aria-label="Escalas da exposição">
       {stages.map((stage, i) => <a href={`#escala-${stage.id}`}><span aria-hidden="true">0{i + 1}</span>{stage.name}</a>)}
     </nav>
-
-    <ol class="cosmic-exhibit-stages" role="list">
+  </div>
+  <div class="scale-journey-lane" data-scale-lane>
+    <div class="scale-journey-visual" data-scale-visual-stage aria-hidden="true">
+      <div class="scale-journey-canvas" data-scale-canvas data-cosmos-quality="standard">
+        <div class="scale-journey-posters" data-story-poster>
+          {stages.map(stage => <img src={u(`/posters/${stage.image}-small.webp`)} width="600" height="400" alt="" loading="lazy" decoding="async" />)}
+        </div>
+        <video class="scale-journey-video" data-scale-video={u('/media/scale-journey.mp4')} preload="none" muted playsinline></video>
+      </div>
+    </div>
+    <div class="scale-journey-progress" aria-hidden="true">
+      <span data-scale-count>01 / 05</span>
+      <span data-scale-name>{stages[0].name}</span>
+      <span class="scale-journey-progress-track"></span>
+    </div>
+    <ol class="cosmic-exhibit-stages page-width" role="list">
       {stages.map((stage, i) => (
-        <li class="cosmic-exhibit-stage" id={`escala-${stage.id}`} tabindex="-1">
-          <div class="cosmic-exhibit-copy">
-            <div class="exhibit-label"><span>0{i + 1}</span> Escala de referência</div>
-            <h3>{stage.name}</h3>
-            <p class="scale-exhibit-extent"><strong>{stage.extent}</strong><small>{stage.dimension}</small></p>
-            <p>{stage.text}</p>
-            <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
+        <li class="cosmic-exhibit-stage" id={`escala-${stage.id}`} tabindex="-1" data-scale-station={stage.name}>
+          <div class="scale-journey-card">
+            <div class="cosmic-exhibit-copy">
+              <div class="exhibit-label"><span>0{i + 1}</span> Escala de referência</div>
+              <h3>{stage.name}</h3>
+              <p class="scale-exhibit-extent"><strong>{stage.extent}</strong><small>{stage.dimension}</small></p>
+              <p>{stage.text}</p>
+              <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
+            </div>
+            <figure class="cosmic-exhibit-plate">
+              <div class="scale-exhibit-image">
+                <img src={u(`/posters/${stage.image}-small.webp`)} srcset={`${u(`/posters/${stage.image}-small.webp`)} 600w, ${u(`/posters/${stage.image}.webp`)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
+              </div>
+              <div class="scale-exhibit-ruler" aria-hidden="true">
+                <div class="scale-exhibit-track"><span style={`--scale-position: ${position(stage.km)}%`}></span></div>
+                <div class="scale-exhibit-ticks">{ticks.map((tick) => <span>10<sup>{tick}</sup></span>)}</div>
+                <span class="scale-exhibit-unit">km</span>
+              </div>
+              <figcaption>{stage.caption}</figcaption>
+            </figure>
           </div>
-          <figure class="cosmic-exhibit-plate">
-            <div class="scale-exhibit-image">
-              <img src={u(`/posters/${stage.image}-small.webp`)} srcset={`${u(`/posters/${stage.image}-small.webp`)} 600w, ${u(`/posters/${stage.image}.webp`)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
-            </div>
-            <div class="scale-exhibit-ruler" aria-hidden="true">
-              <div class="scale-exhibit-track"><span style={`--scale-position: ${position(stage.km)}%`}></span></div>
-              <div class="scale-exhibit-ticks">{ticks.map((tick) => <span>10<sup>{tick}</sup></span>)}</div>
-              <span class="scale-exhibit-unit">km</span>
-            </div>
-            <figcaption>{stage.caption}</figcaption>
-          </figure>
         </li>
       ))}
     </ol>
-
+  </div>
+  <div class="page-width scale-journey-end">
+    <a class="cosmic-exhibit-source" href={u('/fontes/#cenas-3d')}>Créditos das cenas e mapas <span aria-hidden="true">↗</span></a>
     <a class="cosmic-exhibit-source scale-exhibit-next" href={`${chapterUrl('galaxias-e-nebulosas')}#galaxias-e-nebulosas-teia-cosmica`}>Investigue como se forma a teia cósmica <span aria-hidden="true">→</span></a>
   </div>
 </section>
+<script>
+  import { initScaleJourneys } from '../scripts/scale-journey';
+  initScaleJourneys();
+</script>
