@@ -17,9 +17,9 @@ const visuals: Record<string, { label: string; icon: string }> = {
   'terra-e-atmosfera': { label: 'O nosso planeta', icon: '⊕' }
 };
 ---
-<section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
+<section class="paper intro-section" id="capitulos" data-home-section="03" aria-labelledby="chapters-title">
   <div class="page-width">
-    <p class="exhibit-label"><span>06</span> Salas de aula · Trilha de cosmologia</p>
+    <p class="exhibit-label"><span>03</span> Salas de aula · Trilha de cosmologia</p>
     <div class="intro-head">
       <h2 class="display" id="chapters-title">Do primeiro olhar<br /><em>às grandes perguntas.</em></h2>
       <p>Escolha uma pergunta. Veja a ideia em movimento, mude os controles e descubra o que acontece.</p>
@@ -37,19 +37,18 @@ const visuals: Record<string, { label: string; icon: string }> = {
     </a>
     <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
-      {chapters.map((ch, i) => {
+      {chapters.map((ch) => {
         const visual = visuals[ch.id];
         const cover = courseCovers[ch.id];
         const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
-        return <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
+        return <figure class="school-course-plate"><a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
           <div class="school-course-image">
             <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 650px) 90vw, (max-width: 1050px) 44vw, 420px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
-            <span class="school-course-number">{pad2(i + 1)}</span>
             <span class="school-course-photo-caption">{cover.caption}</span>
             <span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span>
           </div>
           <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
-        </a>;
+        </a><figcaption class="school-cover-source"><a href={cover.source.href}>{cover.source.credit}</a></figcaption></figure>;
       })}
     </div>
     <div class="school-path-heading"><h3>Sua trilha de cosmologia</h3><p>Três grandes perguntas que se conectam.</p></div>

@@ -1,0 +1,16 @@
+---
+import Base from './Base.astro';
+import Header from '../components/Header.astro';
+import '../styles/home.css';
+import '../styles/ux-refinements.css';
+
+interface Props { title: string; description: string; heading?: string; bodyClass?: string }
+const { title, description, heading, bodyClass } = Astro.props;
+---
+<Base title={`${title} · Cosmos do Zero`} description={description} bodyClass={bodyClass}>
+  <div id="topo"><Header variant="solid" /></div>
+  <main id="principal">
+    {heading && <h1 class="visually-hidden">{heading}</h1>}
+    <slot />
+  </main>
+</Base>

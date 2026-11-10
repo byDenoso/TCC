@@ -1,0 +1,52 @@
+---
+import { u } from '../lib/url';
+// Estrelas determinísticas (sem JS): mesma semente = mesma abertura em todo build.
+let seed = 235711;
+const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand() * 88, o: 0.12 + rand() * 0.38, big: rand() > 0.9 }));
+---
+<div class="hero-shell" id="ceu">
+  <div class="starfield" aria-hidden="true">
+    {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
+  </div>
+  <section class="hero-main page-width hero" aria-labelledby="hero-instrument-title">
+    <div class="hero-instrument-copy">
+      <p class="section-id">Instrumento de abertura · 01</p>
+      <h1 class="display" id="hero-instrument-title">A primeira luz<br /><em>que ainda vemos.</em></h1>
+      <p>A radiação cósmica de fundo nos chega de todas as direções. Explore uma representação das pequenas diferenças de temperatura que ela carrega.</p>
+      <nav class="hero-routes" aria-label="Formas de explorar">
+        <a href={u('/#capitulos')}><span>06</span><strong>aulas visuais</strong><i aria-hidden="true">↗</i></a>
+        <a href={u('/#capitulos')}><span>36</span><strong>ideias para explorar</strong><i aria-hidden="true">↗</i></a>
+        <a href={u('/#movimento')}><span>NO SEU RITMO</span><strong>observe e experimente</strong><i aria-hidden="true">↗</i></a>
+      </nav>
+      <a class="hero-explore" href={u('/escalas/')}>
+        <span class="hero-explore-orbit" aria-hidden="true">✦</span>
+        <span><strong>Explore o Universo em 3D</strong><small>Da Terra à teia cósmica · gire e mude de escala</small></span>
+        <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+    <figure class="cmb-hero" data-cmb>
+      <div class="cmb-instrument-label"><span class="meta"><i class="school-live-dot" aria-hidden="true"></i> Uma janela para o começo</span><span class="cmb-interaction-hint">Explore com o toque ou as setas</span></div>
+      <div class="cmb-observation">
+        <svg class="sky-orbits" viewBox="0 0 600 300" aria-hidden="true" focusable="false">
+          <g class="sky-orbit sky-orbit--outer"><ellipse cx="300" cy="150" rx="287" ry="132"/><circle cx="80" cy="66" r="3.2"/><circle cx="523" cy="218" r="2"/></g>
+          <g class="sky-orbit sky-orbit--inner"><ellipse cx="300" cy="150" rx="270" ry="117"/><circle cx="485" cy="64" r="3"/></g>
+          <path class="sky-crosshair" d="M300 12v16 M300 272v16 M12 150h16 M572 150h16" />
+        </svg>
+      <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
+        <canvas data-cmb-canvas width="480" height="240"></canvas>
+        <noscript><img src={u('/posters/cmb-small.webp')} width="600" height="400" alt="Mapa sintético com manchas de temperatura em cores atribuídas." /></noscript>
+        <span class="cmb-probe" data-cmb-probe hidden></span>
+      </div>
+      </div>
+      <figcaption>
+        <p class="cmb-read" data-cmb-read aria-live="polite">O Universo já foi uma névoa quente. Esta luz começou a viajar livre quando ele tinha cerca de 380 mil anos. Explore as diferenças de temperatura.</p>
+        <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
+        <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck.</p>
+        <a class="cmb-go" href={u('/observatorio/?lab=tempo&z=1090#observatorio')}>De onde vem essa luz? Viaje até ela →</a>
+        <button class="ambient-toggle" type="button" data-ambient-toggle hidden>Pausar o céu animado</button>
+        <button class="ambient-toggle" type="button" data-hero-gl-enable hidden>Ativar nebulosa 3D</button>
+      </figcaption>
+    </figure>
+  </section>
+</div>

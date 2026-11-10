@@ -6,7 +6,7 @@ let checks=0; const ok=(v,m)=>{assert.ok(v,m);checks++;};
 try {
  for(const width of [390,1280]){
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'no-preference'});
-  await page.goto(`${base}/?lab=expansao#observatorio`);
+  await page.goto(`${base}/observatorio/?lab=expansao#observatorio`);
   const panel=page.locator('[data-station="expansao"]');
   await page.waitForFunction(()=>document.querySelector('[data-station="expansao"]')?.dataset.stationReady==='true');
   const preference=page.locator('[data-motion-select]');

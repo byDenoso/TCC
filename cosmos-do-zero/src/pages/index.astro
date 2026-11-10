@@ -1,32 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
-import Observatorio from '../components/Observatorio.astro';
 import MotionLab from '../components/MotionLab.astro';
-import ScaleExhibit from '../components/ScaleExhibit.astro';
-import LightExhibit from '../components/LightExhibit.astro';
 import CosmicJourney from '../components/CosmicJourney.astro';
-import PhotoExplorer from '../components/PhotoExplorer.astro';
-import InteractiveGrid from '../components/InteractiveGrid.astro';
 import ChapterList from '../components/ChapterList.astro';
-import QuizSection from '../components/QuizSection.astro';
-import ContinueStrip from '../components/ContinueStrip.astro';
 import '../styles/home.css';
 import '../styles/ux-refinements.css';
 ---
 <Base title="Cosmos do Zero · Escola interativa de cosmologia" description="Aprenda cosmologia em seis aulas visuais, com 36 experiências, demonstrações automáticas e explicações passo a passo. Das estrelas à origem do Universo, no seu ritmo." bodyClass="school-home" websiteSchema>
   <Hero />
   <main id="principal">
-    <LightExhibit />
-    <ChapterList />
-    <ScaleExhibit />
-    <InteractiveGrid />
-    <CosmicJourney />
     <MotionLab />
-    <PhotoExplorer />
-    <Observatorio />
-    <QuizSection />
-    <ContinueStrip />
+    <ChapterList />
+    <CosmicJourney />
     <noscript><p class="noscript-note page-width">A leitura, as tabelas, o glossário e as fontes estão disponíveis sem JavaScript. Para usar os instrumentos do observatório, mudar as experiências e responder aos quizzes, ative JavaScript.</p></noscript>
   </main>
 </Base>

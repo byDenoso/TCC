@@ -12,7 +12,7 @@ const pressed = locator => locator.getAttribute('aria-pressed');
 try {
   for (const width of [390, 1280]) {
     const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: 'no-preference' });
-    await page.goto(`${base}/?lab=expansao`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${base}/observatorio/?lab=expansao`, { waitUntil: 'domcontentloaded' });
     const panel = page.locator('[data-station="expansao"]');
     const stage = panel.locator('[data-e-volume]');
     const play = panel.locator('[data-e-play]');
@@ -42,7 +42,7 @@ try {
   }
 
   const reduced = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
-  await reduced.goto(`${base}/?lab=expansao`, { waitUntil: 'domcontentloaded' });
+  await reduced.goto(`${base}/observatorio/?lab=expansao`, { waitUntil: 'domcontentloaded' });
   const reducedStage = reduced.locator('[data-e-volume]'); await reducedStage.scrollIntoViewIfNeeded();
   await reduced.waitForFunction(() => document.querySelector('[data-station="expansao"]')?.dataset.stationReady === 'true');
   await reduced.waitForTimeout(350);

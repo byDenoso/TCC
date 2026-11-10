@@ -40,7 +40,7 @@ const overflow = (p) => p.evaluate(() => document.documentElement.scrollWidth - 
 section('Larguras × páginas');
 for (const w of WIDTHS) {
   const p = await page(w);
-  for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/laboratorio/', '/glossario/', '/fontes/', '/404.html']) {
+  for (const path of ['/', ...CHAPTERS.map((c) => `/capitulos/${c}/`), '/laboratorio/', '/glossario/', '/fontes/', '/luz/', '/escalas/', '/imagens/', '/observatorio/', '/desafio/', '/explorar/', '/ceu/', '/404.html']) {
     await p.goto(BASE + path, { waitUntil: 'networkidle' });
     ok(`sem rolagem horizontal ${w}px ${path}`, (await overflow(p)) <= 0, `(+${await overflow(p)}px)`);
     if (await overflow(p) > 0) {
@@ -61,6 +61,29 @@ for (const w of WIDTHS) {
     }
   }
   await p.context().close();
+}
+
+section('Saguão');
+{
+  const p = await page(390, { colorScheme: 'dark', reducedMotion: 'reduce' });
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('quatro rótulos sequenciais', (await p.locator('[data-home-section]').evaluateAll(nodes => nodes.map(node => node.dataset.homeSection))).join(',') === '01,02,03,04');
+  const y = await p.locator('#movimento').evaluate(node => node.getBoundingClientRect().top + scrollY);
+  ok('Ciência em movimento antes de 2.200 px', y < 2200, String(y));
+  ok('tema inicial claro sob esquema escuro', await p.locator('html').getAttribute('data-theme') === 'light');
+  const vocabulary = await p.evaluate(() => ['quick', 'enter', 'data', 'ease'].map(name => getComputedStyle(document.documentElement).getPropertyValue(`--nx-motion-${name}`).trim()));
+  const durations = vocabulary.slice(0, 3).map(value => Math.round(parseFloat(value) * (value.endsWith('ms') ? 1 : 1000)));
+  const curve = vocabulary[3].match(/-?(?:\d+\.?\d*|\.\d+)/g)?.map(Number);
+  ok('durações e curva compartilhadas', durations.join(',') === '180,560,900' && curve?.join(',') === '0.22,1,0.36,1', JSON.stringify(vocabulary));
+  ok('título com opacidade completa e sem animação reduzida', await p.locator('h1').evaluate(node => getComputedStyle(node).opacity === '1' && getComputedStyle(node).animationName === 'none'));
+  await p.goto(BASE + '/?lab=tempo&z=0.5#observatorio', { waitUntil: 'commit' });
+  await p.waitForURL(url => url.pathname.endsWith('/observatorio/') && url.searchParams.get('z') === '0.5');
+  ok('âncora antiga preserva redshift', await p.locator('#observatorio').isVisible());
+  await p.context().close();
+  const n = await page(390, { javaScriptEnabled: false });
+  await n.goto(BASE + '/');
+  ok('saguão e destinos visíveis sem JavaScript', await n.locator('#movimento h2').isVisible() && await n.locator('a[data-school-course]').count() === 6 && await n.locator('#viagem h2').isVisible());
+  await n.context().close();
 }
 
 // 2 — menu móvel
@@ -274,7 +297,8 @@ section('Microexperiências e continuidade');
 }
 {
   const p = await page(1280);
-  await p.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'commit' });
+  await p.waitForURL(url => url.pathname.endsWith('/observatorio/'), { waitUntil: 'networkidle' });
   await p.locator('.main-nav a[data-spy="observatorio"]').click();
   await p.waitForTimeout(400);
   ok('link do menu preserva o experimento', /om=2/.test(p.url()) && /lab=receita/.test(p.url()), p.url());
@@ -286,7 +310,7 @@ section('Microexperiências e continuidade');
   await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
   await p.locator('[data-resume-go]').click();
   ok('retomar abre o passo salvo', !(await p.locator('#origem-do-universo-fase-quente').isHidden()));
-  await p.goto(BASE + '/?assunto=terra-e-atmosfera#desafio', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/desafio/?assunto=terra-e-atmosfera#desafio', { waitUntil: 'networkidle' });
   const quiz = p.locator('[data-quiz]').first();
   await quiz.locator('[data-answer]').nth(0).click();
   ok('revisão do quiz leva ao trecho exato', /#terra-e-atmosfera-/.test(await quiz.locator('.quiz-review-link').getAttribute('href')));
@@ -299,7 +323,7 @@ section('Microexperiências e continuidade');
 section('Quiz');
 {
   const p = await page(1280);
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/desafio/', { waitUntil: 'networkidle' });
   const quiz = p.locator('[data-quiz]');
   let rights = 0;
   for (let i = 0; i < 9; i++) {
@@ -345,7 +369,7 @@ section('Glossário');
 section('Imagens, créditos e links');
 {
   const p = await page(1280);
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/ceu/', { waitUntil: 'networkidle' });
   await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); } });
   await p.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   ok('abertura desenha o mapa da luz mais antiga', await p.locator('[data-cmb-canvas]').evaluate((c) => { const d = c.getContext('2d').getImageData(c.width / 2, c.height / 2, 1, 1).data; return d[3] === 255; }));
@@ -357,6 +381,7 @@ section('Imagens, créditos e links');
   ok('mapa responde ao ponteiro com temperatura ilustrativa', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()) && /milionésimos de kelvin|na média/.test(await p.locator('[data-cmb-read]').innerText()), await p.locator('[data-cmb-read]').innerText());
   await frame.focus(); await p.keyboard.press('ArrowRight');
   ok('mapa explorável pelo teclado', !(await p.locator('[data-cmb-probe]').isHidden()));
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   ok('home sem renders fotorrealistas de IA', await p.locator('img[src*="/renders/"]').count() === 0);
   ok('home sem esferas procedurais', await p.locator('.stellar-orb,.era-orb,.solar-disc,.solar-rim,.eclipse-glow').count() === 0);
   const broken = await p.evaluate(() => [...document.images].filter((i) => i.loading !== 'lazy' || i.getBoundingClientRect().top < innerHeight * 3).filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.src));
@@ -503,7 +528,7 @@ section('Cenas sem movimento e sem JavaScript');
     ok(`cena ${kind} tem conteúdo declarativo`, (await n.locator('[data-scene]').innerText()).length>500 && await n.locator('[data-scene] img, [data-scene] svg').count()>0);
     if(kind==='evidence') ok('quatro evidências legíveis sem JS', await n.locator('[data-evidence-panel]:visible').count()===4);
   }
-  await n.goto(BASE + '/');
+  await n.goto(BASE + '/observatorio/');
   ok('sem JS: observatório avisa que precisa de JavaScript', /precisam de JavaScript/.test(await n.locator('#observatorio').innerText()));
   await n.context().close();
 }
@@ -511,7 +536,7 @@ section('Cenas sem movimento e sem JavaScript');
 section('Observatório');
 {
   const p=await page(1280);
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/observatorio/', { waitUntil: 'networkidle' });
   const tabs=p.locator('[data-obs-tab]');
   ok('4 experimentos', await tabs.count()===4);
   // máquina do tempo
@@ -565,7 +590,7 @@ section('Observatório');
   ok('observatório sem erros', p.errors.length===0, p.errors.join(' | '));
   // deep link
   const d=await page(390);
-  await d.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
+  await d.goto(BASE + '/observatorio/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
   ok('link direto abre a receita com valores', await d.locator('[data-station="receita"]').isVisible() && /colapsa/.test(await d.locator('[data-r-out="fate"]').innerText()));
   await d.context().close();
   await p.context().close();
@@ -641,18 +666,19 @@ section('Reauditoria: laboratório, títulos e procedência');
   await p.goto(`${BASE}/laboratorio/?massa=30`, { waitUntil: 'networkidle' });
   const challenge = p.getByRole('link', { name: '03 Testar suas ideias ↓', exact: true });
   await challenge.focus();
-  await Promise.all([p.waitForURL(url => url.pathname === new URL(BASE + '/').pathname && url.hash === '#desafio'), p.keyboard.press('Enter')]);
+  await Promise.all([p.waitForURL(url => url.pathname === new URL(BASE + '/desafio/').pathname && url.hash === '#desafio'), p.keyboard.press('Enter')]);
   await p.locator('#desafio').waitFor({state:'visible'});
-  ok('laboratório: link por teclado chega ao desafio da home', new URL(p.url()).pathname === new URL(BASE + '/').pathname && new URL(p.url()).hash === '#desafio' && await p.locator('#desafio').isVisible());
+  ok('laboratório: link por teclado chega ao desafio', new URL(p.url()).pathname === new URL(BASE + '/desafio/').pathname && new URL(p.url()).hash === '#desafio' && await p.locator('#desafio').isVisible());
   for (const route of ['glossario', 'fontes']) {
     await p.goto(`${BASE}/${route}/`, { waitUntil: 'networkidle' });
     ok(`${route}: título principal único h1`, await p.locator('main h1').count() === 1);
   }
-  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/ceu/', { waitUntil: 'networkidle' });
   ok('CMB tem procedência simulada visível', /Mapa simulado/.test(await p.locator('#cmb-provenance').innerText()) && /não são medidas/.test(await p.locator('#cmb-provenance').innerText()));
   await p.locator('[data-cmb-frame]').focus(); await p.keyboard.press('ArrowRight');
   ok('CMB teclado informa que o valor é simulado', /mapa simulado/.test(await p.locator('[data-cmb-read]').innerText()));
-  ok('idade permanece no valor científico', await p.locator('.hero-foot-center .number').first().innerText() === '13,8');
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  ok('idade do Universo na viagem', /13,8 bilhões/.test(await p.locator('#journey-title').innerText()));
   ok('ajustes secundários sem erros', p.errors.length === 0, p.errors.join(' | '));
   await p.context().close();
 }
@@ -660,7 +686,7 @@ section('Reauditoria: laboratório, títulos e procedência');
 section('Cabeçalho acima das cenas após rolar');
 for (const width of [390, 1440]) {
   const p = await page(width, { reducedMotion: 'reduce' });
-  await p.goto(`${BASE}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
+  await p.goto(`${BASE}/observatorio/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
   await p.locator('[data-t-preset="0.5"]').click();
   const control = p.locator(width < 700 ? '.mobile-menu summary' : '.main-nav a[href$="/laboratorio/"]');
   ok(`cabeçalho ${width}: uma única navegação`, await p.locator('.header-shell').count() === 1);
@@ -675,14 +701,14 @@ for (const width of [390, 1440]) {
 section('Épocas coerentes e retorno ao desafio');
 for (const width of [390, 1440]) {
   const p = await page(width, { reducedMotion: 'reduce' });
-  await p.goto(`${BASE}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
+  await p.goto(`${BASE}/observatorio/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
   const age = await p.locator('[data-t-out="age"]').innerText();
   ok(`época ${width}: texto usa a idade do painel`, (await p.locator('[data-t-epoch-text]').innerText()).includes(age));
   ok(`época ${width}: z=0,5 já passou pelo auge`, /já passou/.test(await p.locator('[data-t-epoch-text]').innerText()) && !/época de mais estrelas/i.test(await p.locator('[data-t-epoch-title]').innerText()));
-  await p.goto(`${BASE}/?lab=tempo&z=2#observatorio`, { waitUntil: 'networkidle' });
+  await p.goto(`${BASE}/observatorio/?lab=tempo&z=2#observatorio`, { waitUntil: 'networkidle' });
   ok(`época ${width}: z=2 perto do auge`, /auge/.test(await p.locator('[data-t-epoch-title]').innerText()));
   for (const chapterQuiz of [false, true]) {
-    await p.goto(BASE + (chapterQuiz ? '/capitulos/galaxias-e-nebulosas/' : '/#desafio'), { waitUntil: 'networkidle' });
+    await p.goto(BASE + (chapterQuiz ? '/capitulos/galaxias-e-nebulosas/' : '/desafio/#desafio'), { waitUntil: 'networkidle' });
     if (chapterQuiz) await toLessonEnd(p);
     const quiz = p.locator('[data-quiz]');
     await quiz.locator('[data-answer]').nth(1).click();
@@ -747,6 +773,8 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
         await p.waitForTimeout(80);
         ok(`${id}: movimento reduzido avança sem animar`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === still);
       } else {
+        // O clique pode rolar até o botão e retirar o palco da tela. O pedido toca quando o palco volta à vista.
+        await root.locator('[data-mx-visuals]').evaluate(stage => stage.scrollIntoView({ block: 'center', behavior: 'instant' }));
         const active = await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"] [data-mx-play]`)?.getAttribute('aria-pressed') === 'true', id, { timeout: 3000 }).then(() => true, () => false);
         ok(`${id}: iniciar explicita estado ativo`, active);
         await play.click();
@@ -839,7 +867,7 @@ for(const width of [390,1440]){
 section('Planetário: cenas da luz e órbita kepleriana');
 for (const width of [390, 1440]) {
   const p = await page(width, { reducedMotion: 'reduce' });
-  await p.goto(BASE + '/#luz-cena-1', { waitUntil: 'networkidle' });
+  await p.goto(BASE + '/luz/#luz-cena-1', { waitUntil: 'networkidle' });
   const exhibit = p.locator('[data-light-exhibit]');
   await exhibit.locator('[data-light-go="2"]').click();
   await p.waitForFunction(() => document.querySelector('[data-light-exhibit]')?.dataset.lightScene === '2');

@@ -129,5 +129,3 @@ html:root .hero-shell.has-gl::before, .hero-shell.has-gl .starfield { opacity: 0
 .gs-unit { display: inline-block; will-change: transform; }
 html[data-motion='reduced'] .hero-shell > .hero-gl { opacity: .9; }
 /* Com GSAP no comando, as entradas em CSS da abertura saem do caminho (sem animação dupla). */
-html.gsap-on .hero-copy > *, html.gsap-on .hero-main .cmb-hero, html.gsap-on .cmb-frame canvas { animation: none !important; }
-html.gsap-on .hero-routes a { transition: background .25s; }

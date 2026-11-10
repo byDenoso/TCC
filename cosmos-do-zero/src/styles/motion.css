@@ -1,7 +1,14 @@
-/* ───────────── Sistema de movimento ─────────────
-   Durações: --t-fast 180ms (respostas de toque), --t-mid 420ms (estado), --t-slow 600ms (entradas).
-   Uma curva para tudo: --ease. Quem prefere menos movimento recebe estados estáticos. */
-:root { --t-fast: 160ms; --t-mid: 440ms; --t-slow: 640ms; --ease-out-back: cubic-bezier(.16, 1, .3, 1); }
+/* Vocabulário de movimento compartilhado com o NEXO Research. */
+:root {
+  --nx-motion-quick: 180ms;
+  --nx-motion-enter: 560ms;
+  --nx-motion-data: 900ms;
+  --nx-motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --t-fast: var(--nx-motion-quick);
+  --t-mid: var(--nx-motion-quick);
+  --t-slow: var(--nx-motion-enter);
+  --ease-out-back: var(--nx-motion-ease);
+}
 
 /* Estrelas da abertura: visíveis nos dois temas */
 .star { background: var(--ink) !important; }
@@ -14,8 +21,8 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
 
   /* Transição entre páginas (navegadores com View Transitions) */
   @view-transition { navigation: auto; }
-  ::view-transition-old(root) { animation: vt-out .14s var(--ease) both; }
-  ::view-transition-new(root) { animation: vt-in .22s var(--ease) .1s both; }
+  ::view-transition-old(root) { animation: none; }
+  ::view-transition-new(root) { animation: vt-in var(--nx-motion-quick) var(--ease) both; }
   .header-shell { view-transition-name: site-header; }
 
   /* Entrada da abertura */
@@ -23,8 +30,8 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   .hero-copy > :nth-child(2) { animation-delay: .08s; }
   .hero-copy > :nth-child(3) { animation-delay: .18s; }
   .hero-copy > :nth-child(4) { animation-delay: .28s; }
-  .cmb-hero { animation: rise-soft 1.2s var(--ease) .15s both; }
-  .cmb-frame canvas { animation: develop 1.8s var(--ease) .25s both; }
+  .cmb-hero { animation: rise-soft var(--nx-motion-enter) var(--ease) both; }
+  .cmb-frame canvas { animation: develop var(--nx-motion-data) var(--ease) both; }
   .hero-foot { animation: rise var(--t-slow) var(--ease) .45s both; }
   .star { animation: twinkle 4.5s ease-in-out infinite alternate; }
   .star:nth-child(3n) { animation-duration: 6.2s; animation-delay: -2s; }
@@ -33,10 +40,8 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   .starfield { transition: transform 1.2s var(--ease); }
 
   /* Revelação ao rolar (classe aplicada pelo script; sem JS tudo aparece) */
-  .rv { opacity: 0; transform: translateY(28px); transition: opacity var(--t-slow) var(--ease), transform var(--t-slow) var(--ease); transition-delay: var(--rv-delay, 0s); }
-  .rv.is-in { opacity: 1; transform: none; }
-  .rv.rv-scale { transform: translateY(18px) scale(.97); }
-  .rv.rv-scale.is-in { transform: none; }
+  .rv.is-in { animation: rise var(--nx-motion-enter) var(--ease) var(--rv-delay, 0s) both; }
+  .rv.rv-scale.is-in { animation-name: rise-soft; }
 
   /* Painéis do observatório trocam com um deslize */
   .obs-station[role='tabpanel']:not([hidden]) { animation: rise var(--t-mid) var(--ease) both; }
@@ -51,7 +56,7 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
 
   /* Gráficos: pontos surgem, retas e curvas se desenham */
   .h-pt.is-new { transform-box: fill-box; transform-origin: center; animation: pop .6s var(--ease-out-back) both; }
-  .h-fit.is-draw, .r-curve.is-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 1.1s var(--ease) forwards; }
+  .h-fit.is-draw, .r-curve.is-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw var(--nx-motion-data) var(--ease) forwards; }
   .h-gal:hover .h-body, .h-gal:focus-visible .h-body { transform-box: fill-box; transform-origin: center; transform: scale(1.25); transition: transform var(--t-mid) var(--ease-out-back); }
 
   /* Acordeões: abrem deslizando onde o navegador permite */
@@ -64,12 +69,11 @@ button, .cta, .textlink, .obs-btn, .continue-card, .chapter-button { -webkit-tap
   .chapter-row .chapter-button:hover { transform: translateX(6px); }
 }
 
-@keyframes rise { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-@keyframes rise-soft { from { opacity: 0; scale: .94; } to { opacity: 1; scale: 1; } }
+@keyframes rise { from { transform: translateY(16px); } to { transform: none; } }
+@keyframes rise-soft { from { scale: .98; } to { scale: 1; } }
 @keyframes develop { from { clip-path: inset(0 100% 0 0); filter: saturate(0) brightness(1.4); } 60% { filter: saturate(.6) brightness(1.1); } to { clip-path: inset(0 0 0 0); filter: none; } }
 @keyframes twinkle { from { opacity: .08; } to { opacity: .55; } }
-@keyframes vt-out { to { opacity: 0; transform: translateY(-12px); } }
-@keyframes vt-in { from { opacity: 0; transform: translateY(16px); } }
+@keyframes vt-in { from { clip-path: inset(0 0 1.2%); } to { clip-path: inset(0); } }
 @keyframes pop { from { opacity: .65; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
 @keyframes draw-dash { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
 @keyframes shake { 0%, 100% { transform: none; } 25% { transform: translateX(-2px); } 65% { transform: translateX(2px); } }

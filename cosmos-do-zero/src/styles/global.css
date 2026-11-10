@@ -48,7 +48,7 @@
   --space-section: clamp(80px, 9vw, 136px);
   --gutter: clamp(17px, 5.4vw, 56px);
   --page: min(1332px, calc(100% - 2 * var(--gutter)));
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease: var(--nx-motion-ease);
 }
 /* Tema escuro: céu noturno + creme + laranja */
 @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #070b18; --bg-alt: #0b1124; --surface: #10182f; --surface-2: #18223f; --ink: #fff8e7; --ink-2: #e6ddc8; --muted: #a7b0c6; --line: #222c48; --line-strong: #46527b; --accent: #f08a4b; --accent-strong: #f7a169; --accent-ink: #f7a169; --accent-soft: #3a1f12; --on-accent: #1a0d05; --accent-2: #8db3e8; --shadow: rgba(0, 0, 0, 0.55); --focus: #f7a169; --c-rad: #f5dfa6; --c-mat: #6e9be0; --c-ob: #b9d1f5; --c-dm: #3a62ae; --c-de: #f08a4b; --c-k: #6b7391; --glow-core: #fff8e7; --glow-mid: #f08a4b; color-scheme: dark; } }

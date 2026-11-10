@@ -29,7 +29,7 @@ try {
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('console', m => { if (m.type() === 'warning') warnings.push(m.text()); });
     page.on('requestfailed', request => failedResources.push({ url: request.url(), error: request.failure()?.errorText }));
-    await page.goto(`${base}/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
+    await page.goto(`${base}/observatorio/?lab=tempo&z=0.5#observatorio`, { waitUntil: 'networkidle' });
     const tempo = page.locator('[data-t-3d]');
     const canvas = tempo.locator('canvas');
     await page.locator('[data-station="tempo"] .obs-viz').scrollIntoViewIfNeeded();

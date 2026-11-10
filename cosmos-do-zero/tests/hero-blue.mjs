@@ -11,7 +11,7 @@ try{
   const pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
   // Preserva o buffer apenas para ler os pixels; a geometria e o shader são os de produção.
   await page.addInitScript(()=>{localStorage.setItem('cosmos-theme','dark');const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return original.call(this,type,/webgl/.test(type)&&this.classList.contains('hero-gl')?{...options,preserveDrawingBuffer:true}:options);};});
-  await page.goto(base+'/?gl',{waitUntil:'networkidle'});
+  await page.goto(base+'/ceu/?gl',{waitUntil:'networkidle'});
   assert.equal(await page.locator('.hero-shell.has-gl>.hero-gl').count(),0,'nebulosa aguarda ativação');
   await page.getByRole('button',{name:'Ativar nebulosa 3D'}).click();
   const sky=page.locator('.hero-shell.has-gl>.hero-gl');await sky.waitFor();
@@ -33,7 +33,7 @@ try{
  }
  const fallback=await browser.newPage({viewport:{width:390,height:900},colorScheme:'dark'});
  await fallback.addInitScript(()=>{localStorage.setItem('cosmos-theme','dark');const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,options){return this.classList.contains('hero-gl')&&/^webgl/.test(type)?null:original.call(this,type,options);};});
- await fallback.goto(base+'/?gl',{waitUntil:'networkidle'});
+ await fallback.goto(base+'/ceu/?gl',{waitUntil:'networkidle'});
  await fallback.getByRole('button',{name:'Ativar nebulosa 3D'}).click();
  await fallback.getByRole('button',{name:/Nebulosa 3D indisponível/}).waitFor();
  assert.equal(await fallback.locator('.hero-shell.has-gl>.hero-gl').count(),0,'céu em CSS continua disponível quando o contexto 3D falha');checks++;
