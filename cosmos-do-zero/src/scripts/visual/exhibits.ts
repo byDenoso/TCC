@@ -15,6 +15,7 @@ import { horizon } from './horizon';
 import { createWorldFactory } from './assets';
 import { expansion } from './expansion';
 import { trajectory,trajectoryAt } from '../micro/sistema';
+import planets from '../../data/planets.json';
 
 const colors=[0xf6bb78,0x88b1e8,0xc97079,0x96cbbc];
 const sphere=(r:number,col:number,emissive=false)=>new THREE.Mesh(new THREE.SphereGeometry(r,32,20),new THREE.MeshStandardMaterial({color:col,roughness:.85,emissive:emissive?col:0,emissiveIntensity:emissive?.4:0}));
@@ -24,14 +25,36 @@ export function address(initialSize:import('./galaxy-emission').EmissionSize=153
   const makeWorld=createWorldFactory(),makeEarth=continuous?createWorldFactory():makeWorld;
   const group=new THREE.Group(),steps=Array.from({length:5},()=>new THREE.Group());steps.forEach(s=>group.add(s));
   const homeEarth=makeEarth('terra');styleEarth(homeEarth);homeEarth.scale.setScalar(1.3);steps[0].add(homeEarth);
-  const sun=distantStar(0xffd6a1);sun.scale.setScalar(.38);steps[1].add(sun);
-  ['mercurio','venus','terra','marte','jupiter','saturno','urano','netuno'].forEach((name,i)=>{const w=makeWorld(name);const a=i*1.7,r=.8+i*.26;w.scale.setScalar(i<4?.08:.15);w.position.set(Math.cos(a)*r,0,Math.sin(a)*r);steps[1].add(w);});
+  const sun = new THREE.Mesh(
+    new THREE.SphereGeometry(.23, 32, 20),
+    new THREE.MeshBasicMaterial({ color: 0xffd68c, toneMapped: false })
+  );
+  steps[1].add(sun);
+  const orbitGeometry = new THREE.BufferGeometry().setFromPoints(
+    Array.from({length: 128}, (_, i) => {
+      const angle = i / 128 * Math.PI * 2;
+      return new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle));
+    })
+  );
+  const orbitMaterial = new THREE.LineBasicMaterial({color: 0x526887, toneMapped: false});
+  const earthOrbitMaterial = new THREE.LineBasicMaterial({color: 0x73afc6, toneMapped: false});
+  const earthAddress = new THREE.Vector3();
+  planets.forEach((planet, index) => {
+    const world = makeWorld(planet.id);
+    const angle = index * 1.7;
+    const radius = .58 + .47 * Math.log1p(planet.distance * 2);
+    const orbit = new THREE.LineLoop(orbitGeometry, planet.id === 'terra' ? earthOrbitMaterial : orbitMaterial);
+    orbit.scale.setScalar(radius);
+    world.scale.setScalar(index < 4 ? .08 : .15);
+    world.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+    if (planet.id === 'terra') earthAddress.copy(world.position);
+    steps[1].add(orbit, world);
+  });
   const milkyWay=galaxy(55),solarAddress=new THREE.Object3D();solarAddress.position.set(.36,.20,.06);milkyWay.add(solarAddress);const marker=new THREE.Line(new THREE.BufferGeometry().setFromPoints(Array.from({length:33},(_,i)=>new THREE.Vector3(.36+.045*Math.cos((i%32)/32*Math.PI*2),.20+.045*Math.sin((i%32)/32*Math.PI*2),.06))),new THREE.LineBasicMaterial({color:0xe6ba73}));milkyWay.add(marker);steps[2].add(milkyWay);steps[2].scale.setScalar(3.5);
   const localPositions=[[-1.1,.18,.2],[1.15,-.12,.0],[-1.9,.85,-1.8],[.2,.9,-2.4],[1.8,.6,-1.5],[-.2,-.6,-1.3]],localGalaxies=localPositions.map((p,i)=>{const g=galaxy(i===0?55:27+i,i>1&&i%3===0?'elliptical':'spiral');g.scale.setScalar(i<2?1.05:.3);g.position.set(p[0],p[1],p[2]);steps[3].add(g);return g;});
   const network=web(initialSize,galaxy);steps[4].add(network.group);steps[4].scale.setScalar(.6);network.update({value:1,phase:1,elapsed:0});
-  const exhibit:Exhibit={group,labels:[...localGalaxies.slice(0,2).map((g,i)=>({text:i===0?'Via Láctea':'Andrômeda',position:g.position,visible:()=>steps[3].visible})),{text:'Sistema Solar',object:solarAddress,position:solarAddress.position,visible:()=>steps[2].visible,pixelOffset:[65,-18]}],lighting:{neutral:true,ambient:1.4,key:3,fill:.3,exposure:1},quality:async(mode,width)=>{await galaxy.quality(mode,width);const textureSize=mode==='low'?512:width<600?1024:2048;makeWorld.quality(textureSize);if(continuous)makeEarth.quality(textureSize);group.userData.textureQuality=galaxy.size();},dispose:galaxy.dispose,camera:[0,.6,4.5],cameraForValue:(value,aspect)=>{const views:[number,number,number][]=[[0,.6,4.5],[0,4.7,5.8],[0,4.2,5.2],[0,3.2,5.7],[0,2.2,4.5]];const c=views[Math.max(0,Math.min(4,Math.round(value)))];return [c[0],c[1],c[2]*(aspect<1.2?1.12:1)];},update({value}){steps.forEach((s,i)=>s.visible=i===Math.round(value));}};
+  const exhibit:Exhibit={group,labels:[...localGalaxies.slice(0,2).map((g,i)=>({text:i===0?'Via Láctea':'Andrômeda',position:g.position,visible:()=>steps[3].visible})),{text:'Sistema Solar',object:solarAddress,position:solarAddress.position,visible:()=>steps[2].visible,pixelOffset:[65,-18]}],lighting:{neutral:true,ambient:1.4,key:3,fill:.3,exposure:1},quality:async(mode,width)=>{await galaxy.quality(mode,width);const textureSize=mode==='low'?512:width<600?1024:2048;makeWorld.quality(textureSize);if(continuous)makeEarth.quality(textureSize);group.userData.textureQuality=galaxy.size();},dispose:galaxy.dispose,camera:[0,.6,4.5],cameraForValue:(value,aspect)=>{const views:[number,number,number][]=[[0,.6,4.5],[0,4.7,5.8],[0,4.2,5.2],[0,3.2,5.7],[0,2.2,4.5]];const step=Math.max(0,Math.min(4,Math.round(value)));const c=views[step];const fit=continuous&&step===1&&aspect<.8?1.13:1;return [c[0],c[1]*fit,c[2]*fit*(aspect<1.2?1.12:1)];},update({value}){steps.forEach((s,i)=>s.visible=i===Math.round(value));}};
   if(!continuous)return exhibit;
-  const earthAddress=steps[1].children[3].position.clone();
   const galaxyAddress=solarAddress.getWorldPosition(new THREE.Vector3());
   return scaleFlight(exhibit,steps,[new THREE.Vector3(),earthAddress,galaxyAddress,localGalaxies[0].position,new THREE.Vector3(.3,.15,-.25)]);
 }
