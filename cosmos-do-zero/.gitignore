@@ -33,3 +33,5 @@ pages-root/
 # Blender local recovery backups; primary .blend source remains versioned.
 assets/source/*.blend1
 tests/_journey/
+tests/_audit/
+tests/_px/

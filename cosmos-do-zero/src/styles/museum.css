@@ -1,0 +1,54 @@
+/*
+ * Camada de direção de arte "museu": faixas fotográficas, transições entre páginas e hierarquia de leitura.
+ * Importada por último no layout. Usa só os tokens do tema; não muda cores que codificam valores físicos.
+ */
+
+/* Faixa fotográfica de página inteira */
+.plate { margin: 0; position: relative; background: var(--bg); }
+.plate-frame { position: relative; overflow: hidden; height: clamp(150px, 21vw, 320px); background: #0b0f16; border-block: 2px solid var(--accent); }
+.plate--hero .plate-frame { height: clamp(180px, 30vw, 460px); }
+.plate-frame img { display: block; width: 100%; height: 118%; object-fit: cover; }
+.plate-frame::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, #fbf6e9 22%, transparent), inset 0 -60px 80px -40px rgba(0, 0, 0, 0.45); }
+.plate-caption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; padding-block: 12px 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+.plate-caption strong { color: var(--ink-2); font-weight: 700; }
+.plate-links { display: inline-flex; flex-wrap: wrap; gap: 6px 20px; }
+.plate-caption a { color: var(--accent-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.plate-caption a:hover { color: var(--ink); }
+.plate--hero { padding-bottom: clamp(20px, 3vw, 36px); }
+.plate--page { padding-bottom: clamp(8px, 1.4vw, 18px); }
+
+/* Deslocamento suave da foto enquanto a faixa atravessa a tela (só onde o navegador suporta e o movimento é bem-vindo). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html:not([data-motion='reduced']) .plate-frame img { animation: plate-drift linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  }
+}
+@keyframes plate-drift { from { transform: translateY(-13%); } to { transform: translateY(0); } }
+
+/* Transição entre páginas: um esmaecer curto, sem JavaScript. */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root) { animation: 0.18s ease-out both museum-out; }
+  ::view-transition-new(root) { animation: 0.28s ease-out both museum-in; }
+}
+html[data-motion='reduced']::view-transition-old(root), html[data-motion='reduced']::view-transition-new(root) { animation: none; }
+@keyframes museum-out { to { opacity: 0; } }
+@keyframes museum-in { from { opacity: 0; } }
+
+/* Cabeçalhos das páginas internas: mais ar e título maior, no mesmo desenho da home. */
+.subpage-head h1.display { font-size: clamp(44px, 7vw, 100px); letter-spacing: -0.04em; line-height: 0.97; }
+.subpage-head h1.display em { color: var(--accent-ink); }
+
+/* Cartões "continue explorando" com foto no topo. */
+html:root .continue-card { padding: 28px 26px 30px; overflow: hidden; }
+.continue-media { display: block; margin: -28px -26px 8px; aspect-ratio: 2 / 1; overflow: hidden; background: #0b0f16; border-bottom: 2px solid var(--accent); }
+.continue-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
+.continue-card:hover .continue-media img { transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce) { .continue-media img { transition: none; } .continue-card:hover .continue-media img { transform: none; } }
+html[data-motion='reduced'] .continue-media img { transition: none; }
+html[data-motion='reduced'] .continue-card:hover .continue-media img { transform: none; }
+
+@media (max-width: 700px) { .plate-caption { font-size: 12px; } }
+
+@media (forced-colors: active) { .plate-frame { border-block: 2px solid CanvasText; } }
+@media print { .plate-frame { height: 160px; } }

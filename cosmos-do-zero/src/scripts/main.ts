@@ -26,6 +26,7 @@ const instruments: [string, () => Promise<void>][] = [
   ['[data-cmbj]', async () => (await import('./cmb-journey')).initCmbJourney()],
   ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()],
   ['[data-journey]', async () => (await import('./journey')).initJourney()],
+  ['[data-px]', async () => (await import('./photo-explorer')).initPhotoExplorer()],
   ['[data-story],[data-story-preview]', async () => (await import('./story')).initStories()]
 ];
 
