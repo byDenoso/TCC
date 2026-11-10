@@ -9,6 +9,7 @@
 }
 
 .scale-journey-end { display: flex; flex-wrap: wrap; gap: 0 26px; }
+.scale-journey-lane > .cosmic-exhibit-stages { margin-inline: auto; }
 .scale-journey-card { display: contents; }
 .scale-journey-visual, .scale-journey-progress, .scale-journey-instruction { display: none; }
 
@@ -118,7 +119,6 @@
 
   .scale-exhibit[data-scale-enhanced] .cosmic-exhibit-stages {
     z-index: 1;
-    margin-inline: auto;
     pointer-events: none;
   }
 

@@ -56,7 +56,8 @@ try {
     frames.push(frame);
     if (captures && [0, .4, 4].includes(progress)) await desktop.screenshot({ path: join(captures, `desktop-${progress}.png`) });
   }
-  await desktop.evaluate(() => scrollTo(0, 0));
+  await desktop.setViewportSize({ width: 1280, height: 300 });
+  await desktop.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
   await desktop.locator(canvas).waitFor({ state: 'detached' });
   await desktop.close();
 
@@ -65,6 +66,8 @@ try {
   assert.equal(await ssr.locator('[data-scale-station] img[alt]').count(), 5);
   assert.equal(await ssr.locator('[data-scale-station] a[href^="https://"]').count(), 5);
   assert.equal(await ssr.locator(visual).isVisible(), false);
+  const staticList = await ssr.locator('.cosmic-exhibit-stages').boundingBox();
+  assert.ok(staticList.x > 0 && Math.abs(staticList.x * 2 + staticList.width - 390) < 2);
   await ssr.close();
 
   const reduced = await open({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
