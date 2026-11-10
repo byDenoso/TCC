@@ -25,6 +25,7 @@ const instruments: [string, () => Promise<void>][] = [
   ['[data-mx]', async () => (await import('./micro/engine')).initMicro()],
   ['[data-cmbj]', async () => (await import('./cmb-journey')).initCmbJourney()],
   ['[data-sci-lab]', async () => (await import('./motion-lab')).initSciLab()],
+  ['[data-journey]', async () => (await import('./journey')).initJourney()],
   ['[data-story],[data-story-preview]', async () => (await import('./story')).initStories()]
 ];
 
