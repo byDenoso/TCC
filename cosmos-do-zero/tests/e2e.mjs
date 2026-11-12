@@ -767,6 +767,9 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
       ok(`${id} ${width}px: manipulação muda a representação`, await svg.innerHTML() !== initial);
       ok(`${id} ${width}px: resultado textual e geometria finita`, (await root.locator('[data-mx-caption]').innerText()).length > 20 && !/NaN|Infinity|undefined/.test(await svg.innerHTML()));
       await root.locator('[data-mx-reset]').click();
+      // A animação mais curta dura menos de 1 s: o estado ativo é registrado na própria página,
+      // porque uma leitura feita depois pode chegar com a animação já terminada.
+      await play.evaluate(node => { window.__mxActive = false; new MutationObserver(() => { if (node.getAttribute('aria-pressed') === 'true') window.__mxActive = true; }).observe(node, { attributes: true, attributeFilter: ['aria-pressed'] }); });
       await play.click();
       if (reduced) {
         const still = await svg.innerHTML();
@@ -775,11 +778,12 @@ for (const [width, reduced] of [[390, false], [1280, true]]) {
       } else {
         // O clique pode rolar até o botão e retirar o palco da tela. O pedido toca quando o palco volta à vista.
         await root.locator('[data-mx-visuals]').evaluate(stage => stage.scrollIntoView({ block: 'center', behavior: 'instant' }));
-        const active = await p.waitForFunction(id => document.querySelector(`[data-mx="${id}"] [data-mx-play]`)?.getAttribute('aria-pressed') === 'true', id, { timeout: 3000 }).then(() => true, () => false);
+        const active = await p.waitForFunction(() => window.__mxActive === true, null, { timeout: 3000 }).then(() => true, () => false);
         ok(`${id}: iniciar explicita estado ativo`, active);
-        await play.click();
+        // Retoma (se a animação já terminou) e pausa no mesmo quadro, sem intervalo para ela acabar sozinha.
+        const pause = await play.evaluate(node => { if (node.getAttribute('aria-pressed') !== 'true') node.click(); const running = node.getAttribute('aria-pressed') === 'true'; node.click(); return { running, pressed: node.getAttribute('aria-pressed') }; });
         const paused = await svg.innerHTML(); await p.waitForTimeout(80);
-        ok(`${id}: pausar interrompe o desenho`, await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === paused);
+        ok(`${id}: pausar interrompe o desenho`, pause.running && pause.pressed === 'false' && await play.getAttribute('aria-pressed') === 'false' && await svg.innerHTML() === paused, JSON.stringify(pause));
       }
       await root.locator('[data-mx-reset]').click();
       ok(`${id} ${width}px: reiniciar recupera estado inicial`, await svg.innerHTML() === initial);

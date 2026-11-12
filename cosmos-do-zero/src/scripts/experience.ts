@@ -34,7 +34,7 @@ export function initExperience(): void {
   root.addEventListener('focusin',event=>{if((event.target as Element).closest('input,select,[data-e-target]'))stage.dataset.focusDiagram='true';});
   root.addEventListener('focusout',()=>{delete stage.dataset.focusDiagram;});
   new MutationObserver(update).observe(root,{subtree:true,attributes:true,attributeFilter:['aria-pressed','disabled','data-mx-load']});
-  new IntersectionObserver(([e])=>{visible=e.isIntersecting;update();},{threshold:.15}).observe(stage);
+  new IntersectionObserver(es=>{visible=es[es.length-1].isIntersecting;update();},{threshold:.15}).observe(stage);
   document.addEventListener('cosmos:motionchange',update);
   const openExperience=(opener:HTMLElement)=>{
    const position=window.scrollY,placeholder=document.createComment('posição da experiência');

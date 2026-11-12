@@ -120,6 +120,6 @@ export function animator(host: Element, step: (dt: number) => boolean): { start(
   const hidden=()=>{if(document.hidden)pause();};
   const preference=()=>{if(motionPreference.matches)pause();};motionPreference.addEventListener('change',preference);document.addEventListener('visibilitychange',hidden);window.addEventListener('pagehide',pause);
   let io:IntersectionObserver|null=null;
-  if ('IntersectionObserver' in window){io=new IntersectionObserver(([e])=>{visible=e.isIntersecting;if(!visible)pause();});io.observe(host);}
+  if ('IntersectionObserver' in window){io=new IntersectionObserver(es=>{visible=es[es.length-1].isIntersecting;if(!visible)pause();});io.observe(host);}
   return { start() { const rect=host.getBoundingClientRect();visible=rect.width>0&&rect.height>0&&rect.bottom>0&&rect.top<innerHeight&&rect.right>0&&rect.left<innerWidth&&!host.closest('[hidden]');if (on || !visible || document.hidden) return; on = true; frame = requestAnimationFrame(loop); }, stop, running: () => on,dispose(){stop();io?.disconnect();motionPreference.removeEventListener('change',preference);document.removeEventListener('visibilitychange',hidden);window.removeEventListener('pagehide',pause);} };
 }

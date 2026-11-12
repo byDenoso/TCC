@@ -26,8 +26,9 @@ export function visibleMotion(stage: Element, controls: {
     suspended = !manual;
     controls.stop();
   };
-  const observer = 'IntersectionObserver' in window ? new IntersectionObserver(([entry]) => {
-    visible = entry.isIntersecting;
+  const observer = 'IntersectionObserver' in window ? new IntersectionObserver(entries => {
+    // Com a página ocupada, várias leituras chegam juntas; vale a mais recente.
+    visible = entries[entries.length - 1].isIntersecting;
     controls.visibility?.(visible);
     if (visible) start(); else suspend();
   }, { threshold: 0.15 }) : null;
