@@ -6,7 +6,8 @@ const SELECTORS = [
   '.lesson-section', '.reader-opening > *', '.chapter-photo', '.chapter-concept', '.chapter-check', '.reader-finish',
   '.time-nav', '.timeline-detail', '.planet-tabs', '.planet-stage', '.planet-info', '.experience-heading', '.compare-controls',
   '.glossary-search', '.glossary-chips', '.evidence-key > div', '.image-credits figure', '.extra-reading-links a', '.cosmos-scene',
-  '.observatory.is-chapter .obs-head', '.lesson-step'
+  '.observatory.is-chapter .obs-head', '.lesson-step',
+  '.school-course-plate', '.sci-head > *', '.journey-intro > *', '.school-path-heading'
 ];
 
 export function initMotion(): void {
@@ -35,6 +36,17 @@ export function initMotion(): void {
   motionPreference.addEventListener('change', () => {
     if (motionPreference.matches) { nodes.forEach((n) => n.classList.remove('is-in')); io.disconnect(); }
   });
+
+  // Cartões das aulas: o realce acompanha o ponteiro.
+  if (matchMedia('(pointer: fine)').matches) {
+    for (const card of document.querySelectorAll<HTMLElement>('.school-course')) {
+      card.addEventListener('pointermove', (e) => {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', `${(((e.clientX - r.left) / r.width) * 100).toFixed(1)}%`);
+        card.style.setProperty('--my', `${(((e.clientY - r.top) / r.height) * 100).toFixed(1)}%`);
+      }, { passive: true });
+    }
+  }
 
   // Estrelas acompanham o ponteiro (profundidade)
   const field = document.querySelector<HTMLElement>('.starfield');

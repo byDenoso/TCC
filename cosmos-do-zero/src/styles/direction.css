@@ -1,0 +1,283 @@
+/*
+ * Direção visual: uma só voz tipográfica, formas retas e destaque na cor de acento da identidade.
+ * Esta folha é a última da cascata. Os seletores começam por html:root:root para
+ * vencer as camadas anteriores sem !important.
+ */
+
+/* A paleta é a identidade "papel" dos vídeos (creme, tinta, terracota e azul), definida em
+   cosmic-theme.css. Esta folha não altera cores do tema: só forma, tipografia e movimento. */
+html:root:root {
+  --mark: var(--accent); --on-mark: var(--on-accent);
+  --radius: 8px;
+  --sans: 'Archivo Variable', 'Archivo', 'Inter Tight Variable', Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  --serif: var(--sans);
+}
+
+/* ───────────── Tipografia: uma só voz ───────────── */
+html:root:root :is(h1, h2, h3, h4) { font-family: var(--sans); font-stretch: 104%; font-weight: 650; letter-spacing: -.018em; }
+html:root:root :is(h1, h2, h3, h4) :is(em, .serif), html:root:root :is(em.serif, .serif-i) {
+  font-family: inherit; font-style: normal; font-weight: inherit; font-variation-settings: normal; color: inherit; letter-spacing: inherit;
+}
+html:root:root .display { font-weight: 680; letter-spacing: -.022em; word-spacing: 0; line-height: 1.02; text-wrap: balance; }
+
+/* Rótulos de seção: frase comum, sem numeração nem caixa alta espaçada. */
+html:root:root :is(.section-id, .exhibit-label, .meta, .detail-kicker, .lesson-path-label) {
+  text-transform: none; letter-spacing: 0; font: 600 14px/1.4 var(--body); color: var(--muted); gap: 0;
+}
+html:root:root .section-id::before { display: none; }
+html:root:root .exhibit-label > span { display: none; }
+html:root:root :is(.light-exhibit, .orbit-exhibit, .premiere) :is(.section-id, .exhibit-label) { color: var(--exhibit-muted); }
+
+/* ───────────── Botões e links ───────────── */
+html:root:root .cta {
+  border-radius: var(--radius); min-height: 52px; padding: 14px 20px 14px 22px; gap: 14px;
+  font: 650 15px/1.2 var(--body); letter-spacing: 0; box-shadow: none;
+  background: var(--action); border-color: var(--action); color: var(--on-action);
+  transition: background .2s, border-color .2s, color .2s, transform .25s var(--ease);
+}
+html:root:root .cta:hover { background: var(--action-hover); border-color: var(--action-hover); transform: translateY(-2px); }
+html:root:root .cta .arrow { transition: transform .25s var(--ease); }
+html:root:root .cta:hover .arrow { transform: translateX(5px); }
+html:root:root .textlink { font: 600 15px/1.4 var(--body); letter-spacing: 0; border-bottom: 0; padding: 8px 0; gap: 8px; background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat; transition: background-size .3s var(--ease), gap .25s var(--ease); }
+html:root:root .textlink:hover { background-size: 100% 2px; gap: 12px; }
+
+/* ───────────── Cabeçalho ───────────── */
+html:root:root .header-shell { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) { background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--exhibit-ink); }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) :is(.header, .identity-mark, .identity-mark::before) { border-color: rgba(252, 241, 223, .22); }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) :is(.main-nav a, .identity-name small, .motion-settings summary) { color: rgba(252, 241, 223, .78); }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) .main-nav a:is(:hover, [aria-current]) { color: #fff; }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) .theme-toggle { color: var(--exhibit-ink); border-color: rgba(252, 241, 223, .3); background: transparent; }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) .header-cta { background: transparent; color: var(--exhibit-ink); border-color: rgba(252, 241, 223, .45); }
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) .header-cta:hover { background: var(--exhibit-accent); border-color: var(--exhibit-accent); color: #241b1a; }
+html:root:root .header { height: 76px; border-bottom-color: var(--line); transition: height .3s var(--ease); }
+html:root:root .header-shell.is-stuck .header { height: 60px; }
+html:root:root .identity-name { font-family: var(--sans); font-stretch: 112%; font-weight: 700; letter-spacing: .04em; }
+html:root:root .identity-name small { letter-spacing: .04em; font-weight: 500; }
+html:root:root .identity-mark::after { background: var(--mark); box-shadow: none; }
+html:root:root .main-nav { gap: 26px; }
+html:root:root .main-nav a { text-transform: none; letter-spacing: 0; font: 550 15px/1.2 var(--body); color: var(--ink-2); }
+html:root:root .main-nav a::after { background: currentColor; height: 2px; bottom: 2px; }
+html:root:root :is(.header-cta, .theme-toggle) { border-radius: var(--radius); text-transform: none; letter-spacing: 0; font: 600 14px/1.2 var(--body); }
+html:root:root .header-cta { background: var(--action); border-color: var(--action); color: var(--on-action); padding: 11px 14px; gap: 10px; }
+html:root:root .header-cta:hover { background: var(--action-hover); border-color: var(--action-hover); }
+html:root:root .theme-label { text-transform: none; letter-spacing: 0; }
+html:root:root .motion-settings summary { text-transform: none; letter-spacing: 0; font: 550 14px/1.2 var(--body); }
+html:root:root .header-progress { background: var(--mark); }
+
+/* ───────────── Capa ───────────── */
+html:root:root .premiere { background: #080e19; border-bottom: 0; }
+html:root:root .premiere-visual { inset: 0; }
+html:root:root .premiere-visual img { object-position: 60% 50%; }
+html:root:root .premiere::after {
+  background: linear-gradient(90deg, rgba(8, 14, 25, .92) 0%, rgba(8, 14, 25, .78) 34%, rgba(8, 14, 25, .18) 72%, transparent 100%),
+    linear-gradient(0deg, rgba(8, 14, 25, .85), transparent 30%);
+}
+html:root:root .premiere-layout { min-height: clamp(600px, 88svh, 900px); padding-block: clamp(130px, 18svh, 210px) clamp(36px, 6svh, 72px); align-items: end; }
+html:root:root .premiere .hero-copy { align-self: end; max-width: 860px; }
+html:root:root .premiere .hero-copy h1 {
+  color: var(--exhibit-ink); font-size: clamp(46px, 7.6vw, 118px); font-stretch: 100%; font-weight: 700;
+  line-height: .98; letter-spacing: -.028em; margin: 0 0 24px; max-width: 11ch; text-wrap: balance;
+}
+html:root:root .premiere .hero-introduction { color: var(--exhibit-muted); max-width: 520px; font-size: clamp(17px, 1.4vw, 20px); line-height: 1.6; margin: 0; }
+html:root:root .premiere .hero-actions { margin-top: 30px; gap: 14px 28px; align-items: center; }
+html:root:root .premiere .hero-actions .cta { background: var(--exhibit-accent); border-color: var(--exhibit-accent); color: #241b1a; }
+html:root:root .premiere .hero-actions .cta:hover { background: #ffdbb5; border-color: #ffdbb5; color: #241b1a; }
+html:root:root .premiere .hero-actions .textlink { color: var(--exhibit-ink); }
+html:root:root .hero-facts {
+  list-style: none; display: flex; flex-wrap: wrap; gap: 0; margin: clamp(34px, 6svh, 60px) 0 0; padding: 18px 0 0;
+  border-top: 1px solid rgba(252, 241, 223, .2); color: var(--exhibit-muted);
+}
+html:root:root .hero-facts li { display: grid; gap: 2px; padding-right: clamp(20px, 3vw, 44px); margin-right: clamp(20px, 3vw, 44px); border-right: 1px solid rgba(252, 241, 223, .2); }
+html:root:root .hero-facts li:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
+html:root:root .hero-facts strong { font: 650 clamp(26px, 2.6vw, 36px)/1 var(--sans); font-stretch: 100%; color: var(--exhibit-ink); font-variant-numeric: tabular-nums; }
+html:root:root .hero-facts span { font-size: 14px; line-height: 1.4; }
+html:root:root .premiere-credit { border-left: 0; padding: 0; gap: 2px; text-align: right; color: var(--exhibit-muted); }
+html:root:root .premiere-credit > span { text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--exhibit-muted); }
+html:root:root .premiere-credit strong { font: 600 14px/1.4 var(--body); color: var(--exhibit-ink); }
+html:root:root .premiere-credit small { font-size: 12px; color: var(--exhibit-muted); }
+html:root:root .premiere-credit:hover strong { color: var(--exhibit-accent); }
+html:root:root .premiere :focus-visible { outline-color: var(--exhibit-blue); }
+
+/* ───────────── Seções da página inicial ───────────── */
+html:root:root :is(.sci-lab, .intro-section, .journey) { background: var(--bg); background-image: none; }
+html:root:root .sci-lab { background: var(--bg-alt); }
+html:root:root .sci-lab::before, html:root:root .intro-section::before { display: none; }
+html:root:root .sci-head h2, html:root:root .intro-head h2, html:root:root .journey-intro h2 {
+  font-size: clamp(34px, 4.6vw, 64px); line-height: 1.04; letter-spacing: -.022em; margin: 0 0 16px; max-width: 18ch;
+}
+html:root:root .intro-head { grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0 0 clamp(28px, 4vw, 44px); }
+html:root:root .intro-head p, html:root:root .sci-head p, html:root:root .journey-lede { max-width: 58ch; font-size: 17px; line-height: 1.6; color: var(--ink-2); margin: 0; }
+html:root:root .intro-section { padding: clamp(64px, 8vw, 112px) 0; }
+
+/* Abas das animações: sublinhado no lugar de pílulas. */
+html:root:root .sci-tabs { gap: 4px 26px; border-bottom: 1px solid var(--line); margin-bottom: clamp(22px, 3vw, 34px); }
+html:root:root .sci-tabs button {
+  background: none; border: 0; border-bottom: 3px solid transparent; border-radius: 0; margin-bottom: -1px;
+  padding: 12px 0; min-height: 48px; color: var(--muted); font: 600 15px/1.2 var(--body); letter-spacing: 0;
+  display: inline-flex; flex-direction: row; align-items: center; gap: 10px; box-shadow: none; transform: none;
+  transition: color .2s, border-color .2s;
+}
+html:root:root .sci-tabs button:hover { background: none; color: var(--ink); border-bottom-color: var(--line-strong); }
+html:root:root .sci-tabs button[aria-selected='true'] { background: none; color: var(--ink); border-bottom-color: var(--mark); }
+html:root:root .sci-tabs .topic-preview { width: 34px; height: 21px; }
+html:root:root .sci-badge { background: none; padding: 0; border-radius: 0; color: var(--muted); font: 600 14px/1.4 var(--body); letter-spacing: 0; text-transform: none; }
+html:root:root .sci-side h3 { font-family: var(--sans); font-style: normal; font-weight: 650; }
+html:root:root :is(.sci-fig, .sci-stage, .sci-read) { border-radius: var(--radius); box-shadow: none; }
+html:root:root .sci-buttons button { border-radius: var(--radius); }
+
+/* Cartões das aulas. */
+html:root:root .school-catalog { gap: clamp(18px, 2vw, 28px); }
+html:root:root .school-course {
+  position: relative; border-radius: var(--radius); background: var(--surface); border-color: var(--line); box-shadow: none;
+  transition: border-color .25s, transform .35s var(--ease), box-shadow .35s var(--ease);
+}
+html:root:root .school-course::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: radial-gradient(340px circle at var(--mx, 50%) var(--my, 0%), color-mix(in srgb, var(--mark) 22%, transparent), transparent 62%);
+}
+html:root:root .school-course:hover { border-color: var(--ink); transform: translateY(-6px); box-shadow: 0 22px 44px var(--shadow); }
+html:root:root .school-course:hover::before { opacity: 1; }
+html:root:root .school-course-image { aspect-ratio: 1.6; }
+html:root:root .school-course-image img { transition: transform .9s var(--ease); }
+html:root:root .school-course:hover .school-course-image img { transform: scale(1.07); }
+html:root:root .school-course-photo-caption { border: 0; border-radius: 4px; background: rgba(8, 14, 25, .72); font-size: 12px; }
+html:root:root .school-course-type { text-transform: none; letter-spacing: 0; font: 600 13px/1.3 var(--body); color: var(--exhibit-ink); left: 18px; bottom: 14px; }
+html:root:root .school-course-label { color: var(--muted); font: 500 14px/1.4 var(--body); letter-spacing: 0; }
+html:root:root .school-course h3 { font: 650 clamp(22px, 2vw, 27px)/1.15 var(--sans); font-stretch: 104%; letter-spacing: -.015em; margin: 8px 0 10px; }
+html:root:root .school-course-body > p { font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+html:root:root .school-course-foot { font-size: 14px; }
+html:root:root .school-course-foot strong { font-size: 14px; font-weight: 650; color: var(--accent-ink); display: inline-flex; gap: 6px; }
+html:root:root .school-course-foot strong span { transition: transform .25s var(--ease); }
+html:root:root .school-course:hover .school-course-foot strong span { transform: translateX(5px); }
+/* A primeira aula da trilha é o ponto de entrada: recebe a marca amarela. */
+html:root:root .school-course-plate:first-child .school-course-type { background: var(--mark); color: var(--on-mark); padding: 4px 8px; border-radius: 4px; }
+html:root:root .school-cover-source { font-size: 12px; }
+html:root:root .school-catalog-tools { font-size: 14px; color: var(--muted); }
+html:root:root .resume-card { border-radius: var(--radius); background: var(--surface); box-shadow: none; border: 1px solid var(--line); border-left: 4px solid var(--mark); }
+
+/* Trilha, selos e programa. */
+html:root:root .course-map { border-radius: var(--radius); background: var(--surface); background-image: none; border-color: var(--line); }
+html:root:root .course-label small { text-transform: none; letter-spacing: 0; font: 600 13px/1.3 var(--body); color: var(--muted); }
+html:root:root .course-label em { font-family: var(--body); font-style: normal; }
+html:root:root .school-path-heading h3 { font-size: clamp(22px, 2vw, 28px); }
+html:root:root .badges { border-radius: var(--radius); background: var(--surface); box-shadow: none; border: 1px solid var(--line); }
+html:root:root .badges li { border-radius: var(--radius); background: var(--bg); }
+html:root:root .badges li[data-earned='true'] { background: color-mix(in srgb, var(--mark) 26%, var(--surface)); }
+html:root:root .chapter-title { font-stretch: 104%; font-weight: 650; }
+html:root:root .chapter-index, html:root:root .chapter-toc a span { letter-spacing: 0; }
+
+/* Linha do tempo. */
+html:root:root .journey { border-top: 1px solid var(--line); }
+html:root:root :is(.journey-step-time, .journey-when) { font-family: var(--sans); font-style: normal; font-weight: 600; font-variation-settings: normal; letter-spacing: -.015em; color: var(--ink); }
+html:root:root .journey-step article { border-radius: var(--radius); box-shadow: none; border: 1px solid var(--line); border-left: 4px solid var(--line-strong); background: color-mix(in srgb, var(--surface) 96%, transparent); transition: border-color .4s var(--ease), opacity .4s var(--ease), transform .5s var(--ease); }
+html:root:root .journey[data-journey-ready] .journey-step.is-active article { border-color: var(--line); border-left-color: var(--mark); box-shadow: 0 18px 40px var(--shadow); }
+html:root:root .journey[data-journey-ready] .journey-step:not(.is-active) article { opacity: .55; }
+html:root:root .journey-step-count { letter-spacing: 0; font: 600 13px/1.3 var(--body); }
+html:root:root .journey-step h3 { font-weight: 650; letter-spacing: -.018em; }
+html:root:root .journey-step-evidence b { text-transform: none; letter-spacing: 0; font-size: 13px; }
+html:root:root .journey-rail i.is-active { background: var(--mark); }
+
+/* Rodapé e blocos comuns. */
+html:root:root :is(.card, .quiz-card, .continue-card, .lesson-path, .cmb-hero) { border-radius: var(--radius); box-shadow: none; }
+html:root:root ::selection { background: var(--mark); color: var(--on-mark); }
+
+/* ───────────── Movimento ───────────── */
+@media (prefers-reduced-motion: no-preference) {
+  html:root:root:not([data-motion='reduced']) .premiere-visual img { animation: dir-drift 48s ease-in-out infinite alternate; transform-origin: 62% 48%; }
+  html:root:root:not([data-motion='reduced']) .premiere .hero-copy h1 { animation: dir-rise .9s var(--ease) both; }
+  html:root:root:not([data-motion='reduced']) .premiere .hero-introduction { animation: dir-rise .9s var(--ease) .12s both; }
+  html:root:root:not([data-motion='reduced']) .premiere .hero-actions { animation: dir-rise .9s var(--ease) .22s both; }
+  html:root:root:not([data-motion='reduced']) .hero-facts li { animation: dir-rise .8s var(--ease) both; }
+  html:root:root:not([data-motion='reduced']) .hero-facts li:nth-child(1) { animation-delay: .34s; }
+  html:root:root:not([data-motion='reduced']) .hero-facts li:nth-child(2) { animation-delay: .42s; }
+  html:root:root:not([data-motion='reduced']) .hero-facts li:nth-child(3) { animation-delay: .5s; }
+  html:root:root:not([data-motion='reduced']) .premiere-credit { animation: dir-fade 1.2s ease .7s both; }
+  html:root:root:not([data-motion='reduced']) .premiere .hero-actions .cta { position: relative; }
+  html:root:root:not([data-motion='reduced']) .premiere .hero-actions .cta::after {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit; border: 2px solid var(--exhibit-accent); pointer-events: none;
+    animation: dir-pulse 2.6s ease-out 1.4s 3;
+    opacity: 0;
+  }
+}
+@keyframes dir-drift { from { transform: scale(1.02); } to { transform: scale(1.1) translate(-1.2%, .8%); } }
+@keyframes dir-rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes dir-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dir-pulse { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.18, 1.5); } }
+html:root:root[data-motion='gentle'] .premiere-visual img { animation-duration: 90s; }
+
+@media (max-width: 760px) {
+  html:root:root .header { height: 64px; }
+  html:root:root .premiere-layout { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-block: 112px 28px; gap: 22px; }
+  html:root:root .premiere::after { background: linear-gradient(0deg, rgba(8, 14, 25, .94) 0%, rgba(8, 14, 25, .7) 55%, rgba(8, 14, 25, .35) 100%); }
+  html:root:root .premiere .hero-copy h1 { font-size: clamp(42px, 13vw, 64px); }
+  html:root:root .premiere-credit { text-align: left; justify-self: start; }
+  html:root:root .hero-facts li { padding-right: 16px; margin-right: 16px; }
+  html:root:root .hero-facts strong { font-size: 24px; }
+  html:root:root .hero-facts span { font-size: 13px; }
+  html:root:root .sci-tabs { gap: 0 20px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  html:root:root .sci-tabs button { flex: none; }
+  html:root:root .sci-tabs .topic-preview { display: none; }
+}
+@media (forced-colors: active) {
+  html:root:root .school-course::before { display: none; }
+  html:root:root .sci-tabs button[aria-selected='true'] { border-bottom-color: Highlight; }
+}
+
+/* Trilha principal como sequência reta de passos. */
+html:root:root .course-map { height: auto; padding: clamp(16px, 2vw, 24px); margin-block: 16px 12px; }
+html:root:root .course-lines { display: none; }
+html:root:root .course-map ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; counter-reset: passo; }
+html:root:root .course-map li { position: relative; left: auto; top: auto; transform: none; padding-right: 18px; }
+html:root:root .course-map li::before { content: ''; position: absolute; top: 10px; left: 22px; right: 0; height: 2px; background: var(--line); }
+html:root:root .course-map li:last-child::before { display: none; }
+html:root:root .course-map li[data-state='done']::before { background: var(--accent); }
+html:root:root .course-map li a { justify-items: start; text-align: left; width: auto; max-width: none; gap: 12px; }
+html:root:root .course-star { position: relative; z-index: 1; box-shadow: 0 0 0 5px var(--surface); }
+html:root:root .course-map li[data-state='next'] .course-star { background: var(--mark); border-color: var(--mark); }
+html:root:root .course-map li[data-state='done'] .course-star { box-shadow: 0 0 0 5px var(--surface); }
+html:root:root .course-map li.is-final .course-star, html:root:root .course-map li.is-final a:hover .course-star { border-radius: 4px; transform: none; }
+html:root:root .course-label strong { font: 650 clamp(16px, 1.4vw, 19px)/1.2 var(--sans); letter-spacing: -.01em; }
+html:root:root .course-map li[data-state='next'] .course-label em { color: var(--accent-ink); }
+html:root:root .course-map li a:hover .course-label strong { text-decoration: underline; text-underline-offset: 4px; }
+html:root:root .journey-status { font-size: 14px; }
+
+/* Selos: lista discreta, sem grade de fichas. */
+html:root:root .badges { padding: 18px 20px; }
+html:root:root .badges ul { gap: 6px 22px; }
+html:root:root .badges li { background: none; padding: 6px 0; border-radius: 0; }
+html:root:root .badges li[data-earned='true'] { background: none; }
+html:root:root .badges li[data-earned='true'] .badge-icon { background: var(--mark); color: var(--on-mark); }
+html:root:root .badges li small { font-size: 13px; }
+
+/* Linha do tempo sem JavaScript ou com movimento reduzido: duas colunas alinhadas à página. */
+html:root:root .journey:not([data-journey-ready]) .journey-steps { width: var(--page); max-width: none; padding-inline: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+/* Títulos: a mesma métrica em todas as páginas. */
+html:root:root:root :is(h1, h2, h3, h4) { font-family: var(--sans); font-stretch: 104%; letter-spacing: -.018em; }
+html:root:root:root :is(h1, h2) { font-weight: 660; }
+html:root:root:root .premiere .hero-copy h1 { font-stretch: 100%; letter-spacing: -.028em; font-weight: 700; }
+html:root:root .sci-head h2, html:root:root .intro-head h2, html:root:root .journey-intro h2 { max-width: 24ch; }
+
+@media (max-width: 760px) {
+  html:root:root .course-map ol { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  html:root:root .course-map li { padding-right: 0; }
+  html:root:root .course-map li::before { top: 22px; bottom: -18px; left: 10px; right: auto; width: 2px; height: auto; }
+  html:root:root .course-map li a { grid-template-columns: 22px minmax(0, 1fr); align-items: start; }
+  html:root:root .journey:not([data-journey-ready]) .journey-steps { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  html:root:root .hero-facts { display: grid; grid-template-columns: auto auto minmax(0, 1fr); }
+  html:root:root .hero-facts li { padding-right: 14px; margin-right: 14px; }
+}
+html:root:root .school-home .hero-root .header-shell:not(.is-stuck) .mobile-menu:not([open]) > summary { color: var(--exhibit-ink); border-color: rgba(252, 241, 223, .45); }
+html:root:root .mobile-menu > summary { border-radius: var(--radius); text-transform: none; letter-spacing: 0; font: 600 14px/1.2 var(--body); }
+html:root:root .mobile-menu nav a { text-transform: none; letter-spacing: 0; }
+@media (max-width: 420px) {
+  html:root:root .header { gap: 10px; }
+  html:root:root .header-tools { gap: 8px; }
+  html:root:root .motion-settings summary { font-size: 13px; }
+  html:root:root .mobile-menu > summary { font-size: 13px; padding-inline: 8px; }
+  html:root:root .identity { margin-left: 0; gap: 9px; }
+}
+@media (max-width: 350px) { html:root:root .identity-mark { display: none; } }

@@ -38,6 +38,8 @@ try {
   await page.reload();
   ok(await preference.inputValue()==='reduced',`${width}: preferência persistida`);
   await page.locator('.motion-settings summary').click();await preference.selectOption('full');await page.locator('.motion-settings summary').click();
+  // Ciência em movimento fica na página inicial.
+  await page.goto(`${base}/#movimento`);
   const motion=page.locator('[data-sci-panel="luz"]');await motion.locator('[data-sci-stage]').scrollIntoViewIfNeeded();
   const boxes=await motion.evaluate(root=>{const a=root.querySelector('.sci-fig').getBoundingClientRect(),b=root.querySelector('.sci-side').getBoundingClientRect();return {ay:a.y,by:b.y};});
   if(width>1000)ok(Math.abs(boxes.ay-boxes.by)<10,'desktop: ilustração e comandos lado a lado');
