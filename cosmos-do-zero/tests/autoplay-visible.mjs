@@ -31,7 +31,11 @@ try {
     const stopped = await range.inputValue(); await page.waitForTimeout(250);
     expect(await range.inputValue() === stopped, `${width}: expansão pausa fora da tela`);
     await stage.scrollIntoViewIfNeeded();
+    // Em 390 px o botão fica abaixo da dobra: o clique rolaria a página, a cena sairia
+    // de vista e a pausa automática disputaria com o clique. Cena e botão ficam juntos na tela.
+    await page.evaluate(() => window.scrollBy({ top: document.querySelector('[data-e-volume]').getBoundingClientRect().top - 16, behavior: 'instant' }));
     await page.waitForFunction(() => document.querySelector('[data-e-play]')?.getAttribute('aria-pressed') === 'true');
+    expect(await play.evaluate(node => { const box = node.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight; }), `${width}: cena e botão de pausa cabem juntos na tela`);
     await play.click();
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     await stage.scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
