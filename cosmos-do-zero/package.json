@@ -44,9 +44,10 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "playwright": "^1.50.0",
-    "rolldown": "~1.2.13",
+    "rolldown": "~1.2.18",
     "sharp": "0.35.5",
     "typescript": "^5.6.0",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "vite": "^8.3.7"
   }
 }
