@@ -28,6 +28,7 @@ try{
   await page.waitForTimeout(1500);
   assert.equal(await page.locator(`[data-scale-step="${i}"]`).getAttribute('aria-pressed'),'true');
   assert.equal(await stage.getAttribute('data-renderer'),'webgl2');
+  if(i===1) assert.match(await page.locator('[data-scale-panel="1"]').innerText(),/anel azul indica a órbita da Terra/);
   const image=await stage.locator('canvas.cosmos-volume').screenshot();
   const path=join(folder,`scale-${i}.png`);
   if(update)await writeFile(path,image);
