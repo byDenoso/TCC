@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
+import { selectLessonStep } from '../tests/lib/reader-navigation.mjs';
 const base = (process.env.BASE_URL ?? '').replace(/\/$/, '');
 if (!['https://bydenoso.github.io/TCC/cosmos-do-zero', 'https://cosmos.denerpereira.com.br'].includes(base)) {
   throw new Error('Capture precisa apontar para a URL publica real do Cosmos do Zero.');
@@ -16,7 +17,7 @@ try {
     console.log(`Captura: ${label} ${response.url()}`);
     await page.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
     await page.screenshot({path:`docs/screenshots/render-trilha-${label}.png`});
-    await page.getByRole('link', { name: '02 Como a luz indica a expansão?', exact: true }).click();
+    await selectLessonStep(page, 1);
     const lesson=page.locator('[data-hubble-lesson]');
     await lesson.scrollIntoViewIfNeeded();
     await lesson.screenshot({path:`docs/screenshots/render-hubble-${label}.png`});
