@@ -74,8 +74,10 @@ for (const mode of requested??defaultModes) {
       assert.deepEqual(errors,[]);
     };
     await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);await activateMicro3D(page,'origem-do-universo-fase-quente');
-    const stage=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
-    await stage.scrollIntoViewIfNeeded();
+    const module=page.locator('[data-mx="origem-do-universo-fase-quente"]');
+    const stage=module.locator('.mx-volume-stage');
+    // Failed 3D is deliberately hidden; scroll the experiment that holds its diagram.
+    await module.scrollIntoViewIfNeeded();
     if(mode==='no3d'||mode==='software-no3d'){
       await page.waitForFunction(()=>document.querySelector('[data-mx="origem-do-universo-fase-quente"] [data-visual-fallback="true"]'));
       assert.equal(await stage.locator('.cosmos-volume').count(),0);

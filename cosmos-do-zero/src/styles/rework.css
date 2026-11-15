@@ -69,7 +69,7 @@ html:root .planetarium-rework .lesson-meta>.meta {font-size:11px;padding:0;borde
 html:root .planetarium-rework .mx {margin:15px 0 24px;padding:22px;border:1px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:none;gap:14px}
 html:root .planetarium-rework .mx-head h3 {font:500 clamp(21px,2.5vw,29px)/1.2 var(--serif);letter-spacing:-.02em}
 .planetarium-rework .mx-head .meta {font-size:10px;letter-spacing:.09em}
-html:root .planetarium-rework .mx-stage {border-radius:3px;min-height:0;aspect-ratio:16/9;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
+html:root .planetarium-rework .mx .mx-stage {border-radius:3px;min-height:0;aspect-ratio:16/9;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
 .planetarium-rework .mx-stage[hidden] {display:none!important}
 html:root .planetarium-rework .mx-visuals {display:block}
 html:root .planetarium-rework .mx-lab {gap:14px;display:grid;grid-template-columns:minmax(0,1fr)}
@@ -147,7 +147,7 @@ html:root .planetarium-rework .lesson-stepper {border-radius:4px;background:var(
   html:root .planetarium-rework .lesson-section>h2 {font-size:20px;margin:12px 0 4px}
   html:root .planetarium-rework .mx {margin:12px 0 23px;padding:14px;gap:12px}
   html:root .planetarium-rework .mx-head h3 {font-size:23px}
-  html:root .planetarium-rework .mx-stage {aspect-ratio:16/10}
+  html:root .planetarium-rework .mx .mx-stage {aspect-ratio:16/10}
   html:root .planetarium-rework .mx-seg {gap:6px;display:flex;flex-wrap:wrap}
   html:root .planetarium-rework .mx-seg button {flex:1 1 auto;font-size:12px;padding:8px;min-height:44px}
   html:root .planetarium-rework .mx-transport button {font-size:11px;padding:8px;min-height:44px}
@@ -177,7 +177,7 @@ html:root .planetarium-rework .lesson-stepper {position:static;inset:auto;transf
  html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab {grid-template-columns:1fr}
  html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls {grid-column:1;grid-row:2}
  html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls .mx-seg {grid-template-columns:repeat(4,minmax(0,1fr))}
- html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-stage {max-height:310px;aspect-ratio:auto}
+ html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx .mx-stage {max-height:310px;aspect-ratio:auto}
 }
 html:root .planetarium-rework .mx-head>h3,html:root .planetarium-rework .mx-head>.meta {display:block}
 html:root .planetarium-rework .mx>.experience-toolbar {min-height:34px;padding:0 0 8px;margin:0}

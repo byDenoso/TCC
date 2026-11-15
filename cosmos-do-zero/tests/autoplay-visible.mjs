@@ -66,7 +66,6 @@ try {
   await lesson.waitForTimeout(450);
   expect((await micro.locator('[data-mx-live]').textContent()).trim() === '', 'pausa automática não anuncia conteúdo fora da tela');
   await micro.locator('.mx-stage').first().scrollIntoViewIfNeeded();
-  await micro.locator('[data-mx-play]').click();
   await lesson.waitForFunction(() => document.querySelector('[data-mx="origem-do-universo-o-universo"] [data-mx-play]')?.getAttribute('aria-pressed') === 'true');
   await micro.locator('[data-mx-play]').click();
   await lesson.locator('footer').scrollIntoViewIfNeeded();
@@ -79,6 +78,7 @@ try {
 
   const sky = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
   await sky.goto(`${base}/capitulos/origem-do-universo/#origem-do-universo-primeira-luz`, { waitUntil: 'domcontentloaded' });
+  await openExtraExperiments(sky);
   await sky.locator('[data-cmbj-stage]').scrollIntoViewIfNeeded();
   await sky.waitForFunction(() => document.querySelector('[data-cmbj-play]')?.getAttribute('aria-pressed') === 'true');
   expect(await pressed(sky.locator('[data-cmbj-play]')) === 'true', 'luz antiga começa quando a cena aparece');

@@ -193,7 +193,7 @@ function setup(root: HTMLElement, scene: Scene): void {
     root.classList.toggle('is-playing', on);
     scene.setPlaying?.(on);
   };
-  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(interacted); };
+  const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(interacted && visible && !document.hidden); };
   let automatic: ReturnType<typeof visibleMotion> | null = null;
   const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } setPlaying(playing); };
   const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
@@ -331,7 +331,10 @@ function setup(root: HTMLElement, scene: Scene): void {
   root.classList.add('is-ready');
   setPlaying(false);
   render(false);
-  automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
+  automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => {
+    visible = on;
+    if (!on) { clearTimeout(liveTimer); live.textContent = ''; }
+  } });
   automatic.manual();
   guided = false; root.dataset.guide = 'manual';
   // Os controles só aceitam ações depois do SVG e de todos os listeners estarem prontos.
