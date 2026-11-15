@@ -14,6 +14,13 @@ export async function lastLessonStep(page) {
 export async function openExtraExperiments(page) {
   const extra = page.locator('.school-extra');
   if (await extra.count() && !await extra.evaluate(node => node.open)) await extra.locator(':scope > summary').click();
+  if (await extra.count()) {
+    await extra.locator('.school-extra-content').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => {
+      const content = document.querySelector('.school-extra-content');
+      return content && content.getClientRects().length > 0 && content.innerText.trim().length > 0;
+    });
+  }
 }
 
 /** Abre o resumo complementar pelo mesmo caminho que o aluno. */

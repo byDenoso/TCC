@@ -458,7 +458,9 @@ section('Três jornadas e explorações');
   ok('primeira jornada leva à expansão', /origem-do-universo/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
   ok('cinco escalas disponíveis', await p.locator('[data-scale-step]').count() === 5);
   ok('cinco escalas usam ilustrações vetoriais da identidade', await p.locator('svg [data-scale-visual]').count() === 5);
-  ok('galeria começa com uma única ilustração visível', await p.locator('[data-scale-visual]:visible').count() === 1);
+  await p.locator('[data-scale-stage]').scrollIntoViewIfNeeded();
+  ok('galeria começa com um único palco visível, em 3D ou SVG', await p.locator('[data-scale-stage] canvas:visible, [data-scale-visual]:visible').count() === 1);
+  ok('galeria começa na escala da Terra', await p.locator('[data-scale-step="0"]').getAttribute('aria-pressed') === 'true');
   ok('capítulo sem esfera procedural', await p.locator('.concept-orb,.era-orb,.solar-disc,.solar-rim').count() === 0);
   await p.locator('[data-scale-step="4"]').click(); await p.waitForTimeout(1400);
   ok('galeria mantém um palco ativo ou uma alternativa SVG', await p.locator('[data-scale-stage] canvas:visible').count()===1 || await p.locator('[data-scale-visual]:visible').count()===1);
@@ -501,7 +503,7 @@ section('Três jornadas e explorações');
   }
   await p.goto(BASE + '/capitulos/misterios-do-cosmos/');
   await openExtraExperiments(p);
-  ok('terceira jornada fecha no quiz', /#desafio/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
+  ok('terceira aula continua para a vida das estrelas', /vida-das-estrelas/.test(await p.locator('.chapter-pagination a').last().getAttribute('href')));
   for(let i=0;i<4;i++) {
     await p.locator(`[data-evidence-select="${i}"]`).click();
     ok(`evidência ${i+1} usa imagem raster`, await p.locator(`[data-evidence-panel="${i}"] img`).count() === 1);
@@ -846,6 +848,7 @@ for(const width of [390,1440]){
  const p=await page(width,{reducedMotion:'reduce'});
  await p.goto(BASE+'/capitulos/origem-do-universo/#origem-do-universo-expansao',{waitUntil:'networkidle'});
  const module=p.locator('[data-hubble-lesson]');
+ await openExtraExperiments(p);
  ok(`Trilha ${width}: três aulas na ordem canônica`,await p.locator('.lesson-path ol a').count()===3);
  ok(`Trilha ${width}: aula atual identificada`,await p.locator('.lesson-path [aria-current=step]').count()===1&&/Universo evoluiu/.test(await p.locator('.lesson-path [aria-current=step]').innerText()));
  ok(`Trilha ${width}: próxima aula disponível`,(await p.locator('.lesson-path ol a').nth(2).getAttribute('href')).endsWith('/capitulos/misterios-do-cosmos/'));
