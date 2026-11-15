@@ -107,8 +107,8 @@ try {
     await page.waitForFunction(() => !document.querySelector('[data-mx="galaxias-e-nebulosas-teia-cosmica"] .mx-stage').classList.contains('mx-stage--gl'));
     assert.ok(await root.locator('.mx-flat circle').first().isVisible()); checked++;
     assert.ok(await root.locator('[data-mx-enable-3d]').isDisabled(), 'a vista perdida não pode esconder novamente o diagrama disponível'); checked++;
-    await root.locator('[data-mx-range]').fill('1.4');
-    assert.equal(await root.locator('[data-mx-range]').inputValue(), '1.4', 'o controle continua disponível após a perda de 3D'); checked++;
+    await root.locator('[data-mx-range]').fill('0.4');
+    assert.equal(await root.locator('[data-mx-range]').inputValue(), '0.4', 'o controle continua disponível após a perda de 3D'); checked++;
     assert.deepEqual(errors, [], `sem erros de shader ${width}`); checked++;
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1,'máximo1WebGL real incluindo todos os caminhos');checked++;
     for (const [route, step, id] of [['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]) {
