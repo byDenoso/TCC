@@ -85,6 +85,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     await page.locator('.lesson-stepper').waitFor({ state: 'attached' });
     await openExtraExperiments(page);
     const exp = page.locator('[data-station="expansao"]');
+    await exp.locator('.obs-viz').scrollIntoViewIfNeeded();
     const skip = exp.locator('[data-guess-skip]');
     if (await skip.isVisible()) await skip.click();
     await page.waitForFunction(() => document.querySelector('[data-station="expansao"]')?.dataset.stationReady === 'true');
