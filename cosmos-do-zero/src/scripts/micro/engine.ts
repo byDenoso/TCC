@@ -106,12 +106,15 @@ function setup(root: HTMLElement, scene: Scene): void {
   let volume: import('../visual/runtime').MountedScene | null = null;
   let visualStage = svg.parentElement!;
   const visualNotice = root.querySelector<HTMLElement>('[data-mx-visual-state]')!;
+  const threeButton = root.querySelector<HTMLButtonElement>('[data-mx-enable-3d]');
+  let visualUnavailable = false;
   const showVisualFallback = () => {
+    visualUnavailable = true;
+    if (threeButton) { threeButton.disabled = true; threeButton.textContent = '3D indisponível · diagrama ativo'; }
     visualNotice.textContent = 'Cena 3D indisponível neste navegador. O diagrama e os controles do experimento continuam disponíveis.';
     visualNotice.hidden = false;
   };
   let alive = true;
-  const threeButton = root.querySelector<HTMLButtonElement>('[data-mx-enable-3d]');
   // Spatial geometry helps these scenes; charts and process diagrams stay in 2D.
   const spatial = new Set(['galaxias-e-nebulosas-via-lactea', 'galaxias-e-nebulosas-tipos', 'origem-do-universo-o-universo', 'terra-e-atmosfera-formacao-da-terra', 'terra-e-atmosfera-campo-magnetico', 'sistema-solar-orbitas', 'galaxias-e-nebulosas-teia-cosmica', 'vida-das-estrelas-sol', 'sistema-solar-gigantes', 'origem-do-universo-fase-quente']);
   const diagramOnly = new URLSearchParams(location.search).get('visual') === 'diagram';
@@ -167,7 +170,7 @@ function setup(root: HTMLElement, scene: Scene): void {
         threeButton.setAttribute('aria-pressed', 'false');
         threeButton.textContent = 'Explorar em 3D';
         if (alive) showVisualFallback();
-      } finally { threeButton.disabled = false; }
+      } finally { threeButton.disabled = visualUnavailable; }
     });
   }
 

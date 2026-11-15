@@ -134,9 +134,14 @@ try{
  ok(await swapVideo.evaluate((v,t)=>v.paused&&Math.abs(v.currentTime-t)<.5,runningScene),'trocar uma cena em reprodução conserva o instante e pausa o vídeo');
  await swap.locator('[data-story-play]').click();
  await switching.waitForFunction(()=>{const v=document.querySelector('[data-story] video');return v&&!v.paused&&v.currentTime>13;});
- const runningFilm=await swapVideo.evaluate(v=>v.currentTime);
- await swap.locator('[data-story-mode="scene"]').click();
- ok(Math.abs(Number(await swap.locator('[data-story-time]').inputValue())-runningFilm)<.5&&await swap.locator('[data-story-play]').getAttribute('aria-pressed')==='false','trocar um vídeo em reprodução conserva o instante e pausa o SVG');
+ const returnToScene=swap.locator('[data-story-mode="scene"]');
+ // Record the playing video's time at the actual click, excluding runner latency.
+ await returnToScene.evaluate(button=>button.addEventListener('click',()=>{
+   button.dataset.switchTime=String(button.closest('[data-story]').querySelector('video').currentTime);
+ },{capture:true,once:true}));
+ await returnToScene.click();
+ const runningFilm=Number(await returnToScene.getAttribute('data-switch-time'));
+ ok(Math.abs(Number(await swap.locator('[data-story-time]').inputValue())-runningFilm)<.08&&await swap.locator('[data-story-play]').getAttribute('aria-pressed')==='false','trocar um vídeo em reprodução conserva o instante do clique e pausa o SVG');
  await switching.close();
  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await page.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
