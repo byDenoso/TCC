@@ -33,7 +33,7 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
       return {path:location.pathname,readyState:document.readyState,pressed:button?.getAttribute('aria-pressed') ?? null,
         done:button?.getAttribute('data-done') ?? null,label:button?.textContent?.trim() ?? null,
         status:status?.textContent?.trim() ?? null,stored,stepper:!!document.querySelector('.lesson-stepper'),
-        storageProbe:window.__cosmosStorageProbe ?? null};
+        progressText:document.querySelector('[data-progress-label]')?.textContent,progressVisible:document.querySelector('[data-progress-label]')?.innerText,storageProbe:window.__cosmosStorageProbe ?? null};
     });
     diagnostics.states.push({stage,...state});
   };

@@ -35,4 +35,11 @@ export async function activateMicro3D(page, id) {
 export async function openJourneyProgress(page) {
   const panel = page.locator('.journey-details');
   if (!await panel.evaluate(node => node.open)) await panel.locator(':scope > summary').click();
+  const label = panel.locator('[data-progress-label]');
+  await label.scrollIntoViewIfNeeded();
+  // details-content remains hidden during its opening transition in Firefox/WebKit.
+  await page.waitForFunction(() => {
+    const label = document.querySelector('.journey-details [data-progress-label]');
+    return label && label.getClientRects().length > 0 && label.innerText.trim().length > 0;
+  });
 }
