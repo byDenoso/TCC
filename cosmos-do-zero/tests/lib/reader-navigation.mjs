@@ -30,3 +30,9 @@ export async function activateMicro3D(page, id) {
   await root.locator('[data-mx-enable-3d]').click();
   await root.locator('.mx-volume-stage').waitFor({state: 'attached'});
 }
+
+/** Progresso fica no painel de percurso, sem competir com a primeira descoberta. */
+export async function openJourneyProgress(page) {
+  const panel = page.locator('.journey-details');
+  if (!await panel.evaluate(node => node.open)) await panel.locator(':scope > summary').click();
+}

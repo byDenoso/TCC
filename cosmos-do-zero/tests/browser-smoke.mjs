@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
-import {lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
+import {lastLessonStep,openExtraExperiments,openJourneyProgress} from './lib/reader-navigation.mjs';
 import { firefox, webkit } from 'playwright';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/+$/, '');
@@ -76,8 +76,10 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     const restoredHome = await page.goto(home, { waitUntil: 'networkidle' });
     // A cached document may be revalidated by the server instead of returned again.
     check(`${name}: retorno à home responde HTTP 200 ou 304 (recebido ${restoredHome?.status() ?? 'sem navegação de documento'})`, [200, 304].includes(restoredHome?.status()));
+    await openJourneyProgress(page);
     check(`${name}: progresso após navegar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.reload({ waitUntil: 'networkidle' });
+    await openJourneyProgress(page);
     check(`${name}: progresso após recarregar`, /1 de 3/.test(await page.locator('[data-progress-label]').first().innerText()));
     await page.goto(base + second, { waitUntil: 'networkidle' });
     await page.locator('.lesson-stepper').waitFor({ state: 'attached' });

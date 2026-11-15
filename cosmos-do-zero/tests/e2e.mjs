@@ -1,7 +1,7 @@
 // E2E (Playwright/Chromium) contra o build servido em BASE_URL (padrão http://localhost:4321).
 // Uso: npm run build && npm run preview &  →  npm run test:e2e   (SHOTS=1 salva capturas em docs/screenshots)
 import { chromium } from 'playwright';
-import {selectLessonStep,lastLessonStep,openExtraExperiments} from './lib/reader-navigation.mjs';
+import {selectLessonStep,lastLessonStep,openExtraExperiments,openJourneyProgress} from './lib/reader-navigation.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL ?? 'http://localhost:4321').replace(/\/$/, '');
@@ -126,6 +126,7 @@ section('Leitor e progresso');
   await toLessonEnd(p);
   await p.locator('[data-complete]').click();
   await p.goto(BASE + '/');
+  await openJourneyProgress(p);
   ok('extra não avança as três jornadas', /0 de 3/.test(await p.locator('[data-progress-label]').first().innerText()));
   await p.goto(BASE + '/capitulos/galaxias-e-nebulosas/');
   // concluir jornada principal → progresso na home
@@ -134,11 +135,12 @@ section('Leitor e progresso');
   ok('capítulo marcado como concluído', (await p.locator('[data-complete]').getAttribute('aria-pressed')) === 'true');
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   ok('CTA retoma a segunda jornada', /origem-do-universo/.test(await p.locator('[data-start-journey]').first().getAttribute('href')));
+  await openJourneyProgress(p);
   const label = await p.locator('[data-progress-label]').first().innerText();
   ok('home reflete 1 de 3', /1 de 3/.test(label), label);
   await p.reload();
+  await openJourneyProgress(p);
   ok('progresso persiste', /1 de 3/.test(await p.locator('[data-progress-label]').first().innerText()));
-  await p.locator('.journey-details > summary').click();
   await p.locator('[data-reset-progress]').click();
   ok('reiniciar volta a 0', /0 de 3/.test(await p.locator('[data-progress-label]').first().innerText()));
   await p.context().close();
@@ -307,7 +309,7 @@ section('Microexperiências e continuidade');
   await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
   await p.locator('[data-step-next]').click(); await p.locator('[data-step-next]').click();
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('home oferece retomar a aula', await p.locator('[data-resume]').isVisible() && /#origem-do-universo-fase-quente/.test(await p.locator('[data-resume]').getAttribute('href')));
+  ok('home oferece retomar a aula', await p.locator('[data-home-continue]').isVisible() && /#origem-do-universo-fase-quente/.test(await p.locator('[data-home-continue]').getAttribute('href')));
   await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
   await p.locator('[data-resume-go]').click();
   ok('retomar abre o passo salvo', !(await p.locator('#origem-do-universo-fase-quente').isHidden()));
