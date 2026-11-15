@@ -7,7 +7,7 @@ import {mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import { installGpuProbe } from './lib/gpu-probe.mjs';
 import { installGpuLifecycleObserver } from './lib/gpu-lifecycle-observer.mjs';
-import { selectLessonStep } from './lib/reader-navigation.mjs';
+import { selectLessonStep, activateMicro3D } from './lib/reader-navigation.mjs';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
 const screenshots=process.env.SCREENSHOTS_DIR;
@@ -73,7 +73,7 @@ for (const mode of requested??defaultModes) {
       if(errors.length)console.error(`WEBGPU_FAILURE_STATE ${mode}: ${JSON.stringify(await page.evaluate(()=>({contexts:document.documentElement.dataset.cosmosContexts,stages:[...document.querySelectorAll('[data-renderer]')].map(s=>({backend:s.dataset.renderer,cinematic:s.dataset.cinematic})),lifecycle:window.__TEST_GPU_LIFECYCLE})))}`);
       assert.deepEqual(errors,[]);
     };
-    await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
+    await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);await activateMicro3D(page,'origem-do-universo-fase-quente');
     const stage=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
     await stage.scrollIntoViewIfNeeded();
     if(mode==='no3d'||mode==='software-no3d'){
@@ -169,7 +169,7 @@ for (const mode of requested??defaultModes) {
           row.destroyAtInjectedLoss=await page.evaluate(()=>window.__TEST_GPU_LIFECYCLE.filter(e=>e.event==='destroy-device').map(e=>({deviceId:e.deviceId,pending:e.pending})));
           assert.ok(row.destroyAtInjectedLoss.length>0,'lost GPU device was destroyed');
         } else row.injectedDeviceLoss='not-available';
-        await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
+        await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);await activateMicro3D(page,'origem-do-universo-fase-quente');
         const changed=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
         await changed.scrollIntoViewIfNeeded();await changed.locator('.cosmos-volume').waitFor({timeout:30000});
         assert.equal(await changed.getAttribute('data-renderer'),'webgpu');
@@ -184,7 +184,7 @@ for (const mode of requested??defaultModes) {
         await page.waitForFunction(()=>document.querySelector('[data-mx="origem-do-universo-fase-quente"] .mx-stage[data-renderer="webgl2"]'),null,{timeout:30000});
         row.mutationFallback='webgl2';
       }
-      await page.goto(`${base}/capitulos/vida-das-estrelas/`);await selectLessonStep(page,2);
+      await page.goto(`${base}/capitulos/vida-das-estrelas/`);await selectLessonStep(page,2);await activateMicro3D(page,'vida-das-estrelas-sol');
       const legacy=page.locator('[data-mx="vida-das-estrelas-sol"] .mx-stage').first();
       await legacy.scrollIntoViewIfNeeded();await legacy.locator('.cosmos-volume').waitFor({timeout:30000});
       row.legacyScene='vida-das-estrelas-sol';row.legacyBackend=await legacy.getAttribute('data-renderer');
@@ -195,13 +195,13 @@ for (const mode of requested??defaultModes) {
       await assertNoErrors();
       if(screenshots){
         await page.setViewportSize({width:1440,height:900});
-        await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);
+        await page.goto(`${base}/capitulos/origem-do-universo/`);await selectLessonStep(page,2);await activateMicro3D(page,'origem-do-universo-fase-quente');
         const desktop=page.locator('[data-mx="origem-do-universo-fase-quente"] .mx-stage').first();
         await desktop.scrollIntoViewIfNeeded();await desktop.locator('.cosmos-volume').waitFor({timeout:30000});
         row.desktopBackend=await desktop.getAttribute('data-renderer');
         await desktop.screenshot({path:join(screenshots,'fase-quente-desktop.png')});
       }
-      await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-orbitas`);
+      await page.goto(`${base}/capitulos/sistema-solar/#sistema-solar-orbitas`);await activateMicro3D(page,'sistema-solar-orbitas');
       const orbit=page.locator('[data-mx="sistema-solar-orbitas"] .mx-stage').first();
       await orbit.scrollIntoViewIfNeeded();await orbit.locator('.cosmos-volume').waitFor({timeout:30000});
       row.orbitScene='sistema-solar-orbitas';row.orbitBackend=await orbit.getAttribute('data-renderer');

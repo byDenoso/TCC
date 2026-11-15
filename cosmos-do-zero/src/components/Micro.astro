@@ -7,7 +7,7 @@ const letters = 'ABCDE';
 ---
 <fieldset class="mx" disabled aria-busy="true" data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
   <div class="mx-head">
-    <span class="meta">Demonstração visual</span>
+    <span class="meta">Experimente · diagrama ilustrativo</span>
     <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
     <p class="mx-hint" data-mx-history hidden></p>
   </div>
@@ -18,6 +18,7 @@ const letters = 'ABCDE';
       <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
     </div></div>
     <div class="mx-controls">
+      <p class="mx-action-label">{c.kind === 'range' ? 'Mova para comparar' : 'Escolha e compare'}</p>
       {c.kind === 'range' ? (
         <div class="mx-range">
           <label for={`${id}-mx-range`}>{c.label} <output aria-live="off" data-mx-out for={`${id}-mx-range`}></output></label>
@@ -46,6 +47,7 @@ const letters = 'ABCDE';
     {id === 'terra-e-atmosfera-campo-magnetico' && <p class="mx-detail-note">Comparação ilustrativa, sem prever quanto ar se perde. Gravidade, radiação, composição e campos induzidos também importam: <a href="https://science.nasa.gov/venus/venus-facts/">Vênus mantém uma atmosfera densa e tem um campo induzido na ionosfera</a>, embora não tenha dínamo interno como a Terra.</p>}
     {id === 'terra-e-atmosfera-camadas' && <p class="mx-detail-note">O controle vai de 0 a 120 km. Ele cruza troposfera, estratosfera e mesosfera e chega à termosfera. O marcador usa altitude em proporção ao raio terrestre. A borda luminosa é ilustrativa e o gráfico mostra o perfil térmico.</p>}
     <p class="visually-hidden" role="status" data-mx-live></p>
+    <div class="mx-view-choice"><span>O diagrama mostra o essencial.</span><button type="button" data-mx-enable-3d aria-pressed="false" hidden>Explorar em 3D</button></div>
     <p class="mx-limit"><strong>Sobre o desenho.</strong> {spec.limit}</p>
   </div>
 

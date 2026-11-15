@@ -1,6 +1,6 @@
 // Exercita os shaders de produção em WebGL (ANGLE/SwiftShader), incluindo emulação de viewport390; não é celular físico.
 import assert from 'node:assert/strict';
-import {openExtraExperiments, selectLessonStep} from './lib/reader-navigation.mjs';
+import {openExtraExperiments, selectLessonStep, activateMicro3D} from './lib/reader-navigation.mjs';
 import { mkdirSync } from 'node:fs';
 import {installSceneQa,captureState,captureFramebuffer,saveMismatch,assertPausedScene,useStandardQuality} from './lib/scene-capture.mjs';
 import { chromium } from 'playwright';
@@ -65,6 +65,7 @@ try {
     // Seleciona o passo que contém a teia a partir da estrutura da própria aula.
     const dot = await root.evaluate(r => [...document.querySelectorAll('.lesson-section')].indexOf(r.closest('.lesson-section')));
     await selectLessonStep(page,dot);
+    await activateMicro3D(page, 'galaxias-e-nebulosas-teia-cosmica');
     await root.locator('.mx-stage').first().scrollIntoViewIfNeeded();
     const web = root.locator('.mx-gl');
     try { await web.waitFor({ state: 'visible' }); }
@@ -101,7 +102,7 @@ try {
     }
     assert.ok(clipped / (info.width * info.height) < 0.01, 'aglomerados preservam textura sem áreas brancas estouradas'); checked++;
     assert.ok(colored > 100, 'cores dos filamentos e aglomerados permanecem visíveis'); checked++;
-    await root.locator('.mx-stage').screenshot({ path: `docs/screenshots/render-teia-${width}.png` });
+    await root.locator('.mx-volume-stage').screenshot({ path: `docs/screenshots/render-teia-${width}.png` });
     await web.evaluate(c => c.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
     await page.waitForFunction(() => !document.querySelector('[data-mx="galaxias-e-nebulosas-teia-cosmica"] .mx-stage').classList.contains('mx-stage--gl'));
     assert.ok(await root.locator('.mx-flat circle').first().isVisible()); checked++;
@@ -109,6 +110,7 @@ try {
     assert.equal(await page.evaluate(()=>__GPU_PROBE.maxActive()),1,'máximo1WebGL real incluindo todos os caminhos');checked++;
     for (const [route, step, id] of [['vida-das-estrelas',2,'vida-das-estrelas-sol'],['terra-e-atmosfera',0,'terra-e-atmosfera-formacao-da-terra'],['sistema-solar',2,'sistema-solar-gigantes'],['origem-do-universo',2,'origem-do-universo-fase-quente']]) {
       await page.goto(`${base}/capitulos/${route}/`); await selectLessonStep(page, step);
+      await activateMicro3D(page, id);
       const module = page.locator(`[data-mx="${id}"]`), stage = module.locator('.mx-stage').first();
       await stage.scrollIntoViewIfNeeded();
       try { await stage.locator('.cosmos-volume').waitFor(); }

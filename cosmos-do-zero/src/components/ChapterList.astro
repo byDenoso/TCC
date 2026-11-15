@@ -7,7 +7,7 @@ import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
-import { STORIES } from '../lib/story-scenes';
+const firstActions: Record<string,string> = { 'galaxias-e-nebulosas':'Afaste o olhar: da Terra à teia cósmica.', 'origem-do-universo':'Faça o espaço crescer e compare as distâncias.', 'misterios-do-cosmos':'Siga o caminho da luz até uma conclusão.', 'vida-das-estrelas':'Acompanhe uma nuvem se transformar em estrela.', 'sistema-solar':'Monte um sistema a partir de uma nuvem girando.', 'terra-e-atmosfera':'Veja o ferro afundar e formar o núcleo da Terra.' };
 const visuals: Record<string, { label: string; icon: string }> = {
   'galaxias-e-nebulosas': { label: 'Escalas e galáxias', icon: '◎' },
   'origem-do-universo': { label: 'A história do Universo', icon: '✧' },
@@ -17,11 +17,11 @@ const visuals: Record<string, { label: string; icon: string }> = {
   'terra-e-atmosfera': { label: 'O nosso planeta', icon: '⊕' }
 };
 ---
-<section class="paper intro-section" id="capitulos" data-home-section="03" aria-labelledby="chapters-title">
+<section class="paper intro-section" id="capitulos" data-home-section="02" aria-labelledby="chapters-title">
   <div class="page-width">
     <div class="intro-head">
-      <h2 class="display" id="chapters-title">As seis aulas</h2>
-      <p>A trilha principal começa pela Via Láctea e chega às evidências da expansão. As aulas de estrelas, Sistema Solar e Terra são complementares.</p>
+      <h2 class="display" id="chapters-title">Escolha uma pergunta.<br /><em>Entre para descobrir.</em></h2>
+      <p>Cada aula começa com algo para experimentar. Depois vêm a explicação, os limites do modelo e as fontes.</p>
     </div>
     <a class="resume-card" href={chapterUrl(primaryRows[0].id)} data-resume data-titles={JSON.stringify(Object.fromEntries(chapters.map((c) => [c.id, c.title])))} hidden>
       <span class="meta">Continuar de onde parou</span>
@@ -29,23 +29,23 @@ const visuals: Record<string, { label: string; icon: string }> = {
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
-    <div class="school-catalog-tools"><span>Três aulas na trilha principal e três complementares.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
+    <div class="school-catalog-tools"><span>Seis perguntas para explorar, uma ideia de cada vez.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
-      {chapters.map((ch) => {
+      {chapters.map((ch, i) => {
         const visual = visuals[ch.id];
         const cover = courseCovers[ch.id];
         const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
         return <figure class="school-course-plate"><a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
           <div class="school-course-image">
             <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 650px) 90vw, (max-width: 1050px) 44vw, 420px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
-            <span class="school-course-photo-caption">{cover.caption}</span>
-            <span class="school-course-type">{primary ? `Trilha principal · aula ${(PRIMARY_CHAPTER_IDS as readonly string[]).indexOf(ch.id) + 1}` : 'Aula complementar'}</span>
+            <span class="school-course-number">{pad2(i + 1)}</span><span class="school-course-photo-caption">{cover.caption}</span>
+            <span class="school-course-type">{primary ? 'A trilha começa aqui' : 'Outras escalas, novas perguntas'}</span>
           </div>
-          <div class="school-course-body"><span class="school-course-label">{visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">→</span></strong></div></div>
+          <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{firstActions[ch.id]}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
         </a><figcaption class="school-cover-source"><a href={cover.source.href}>{cover.source.credit}</a></figcaption></figure>;
       })}
     </div>
-    <div class="school-path-heading"><h3>Trilha principal</h3><p>Siga a ordem das três aulas e responda ao desafio ao final.</p></div>
+    <details class="journey-details"><summary>Seu percurso e suas descobertas</summary><div class="school-path-heading"><h3>Sua trilha de cosmologia</h3><p>Três grandes perguntas que se conectam.</p></div>
     <CourseMap />
     <div class="journey-status">
       <span data-progress-label>{progressLabel(0)}</span>
@@ -83,6 +83,7 @@ const visuals: Record<string, { label: string; icon: string }> = {
       })}
     </div></details>
     <Badges />
+    </details>
   </div>
 </section>
 

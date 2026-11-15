@@ -46,10 +46,10 @@ for (const [name, engine] of Object.entries({ firefox, webkit }).filter(([name])
     page.on('pageerror', (error) => errors.push(error.message));
     const initialHome = await page.goto(home, { waitUntil: 'networkidle' });
     check(`${name}: home responde HTTP 200`, initialHome?.status() === 200);
-    check(`${name}: primeira etapa`, (await page.locator('.hero-actions .cta').getAttribute('href')).includes(first));
+    check(`${name}: primeira etapa`, (await page.locator('.arrival-copy .cta').getAttribute('href')).includes(first));
     check(`${name}: três etapas principais`, await page.locator('#capitulos [data-journey]').count() === 3);
     check(`${name}: sem rolagem horizontal no celular`, await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
-    await page.locator('.hero-actions .cta').click();
+    await page.locator('.arrival-copy .cta').click();
     // The no-JS HTML starts with the disclosure open. Wait for the reader's
     // generated stepper, which is inserted after it initializes the disclosure.
     await page.locator('.lesson-stepper').waitFor({ state: 'attached' });

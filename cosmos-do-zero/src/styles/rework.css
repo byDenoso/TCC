@@ -1,0 +1,201 @@
+/* A quiet entrance, then one concrete experiment. Existing instruments keep their own geometry. */
+html:root .planetarium-rework {--serif:"Fraunces Variable",Georgia,serif;--action:var(--accent);--action-hover:#1c4d4e;--on-action:var(--on-accent);--bg:#f5f0e6;--paper:#f5f0e6;--bg-alt:#eee8db;--surface:#fcfaf5;--surface-2:#e7e0d2;--ink:#202c32;--ink-2:#45575e;--muted:#59696e;--accent:#275f60;--accent-ink:#275f60;--on-accent:#fff9ec;--line:#d7d4c8;--line-strong:#b9c1b9;--gutter:clamp(20px,4.5vw,76px)}
+html[data-theme='dark'] .planetarium-rework {--bg:#101d26;--paper:#101d26;--bg-alt:#162630;--surface:#1b2d37;--surface-2:#263c46;--ink:#f3eee4;--ink-2:#c7d6d9;--muted:#a5b9c0;--accent:#8bc7bc;--accent-ink:#8bc7bc;--on-accent:#10252a;--line:#344a52;--line-strong:#4c686e}
+.planetarium-rework .header-shell.solid {position:relative;background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line)}
+.planetarium-rework .header {height:82px;min-height:0}
+.planetarium-rework .header-cta {display:none}
+.planetarium-rework .main-nav {gap:25px}
+.planetarium-rework .identity-mark {border-color:var(--accent-ink)}
+.planetarium-rework .cta {border-radius:3px;box-shadow:none;background:var(--accent);color:var(--on-accent);font-size:14px;min-height:52px;padding:15px 22px}
+.planetarium-rework :focus-visible {outline:3px solid var(--accent-ink);outline-offset:4px}
+.arrival {background:var(--paper);color:var(--ink)}
+.arrival-grid {display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,1fr);gap:6%;align-items:center;padding-block:64px 45px}
+.arrival-eyebrow {font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--accent-ink);font-weight:700}
+.arrival h1 {font:500 clamp(44px,5.7vw,82px)/1.05 var(--serif);letter-spacing:-.045em;margin:23px 0}
+.arrival h1 em {font-weight:400;color:var(--accent-ink)}
+.arrival-copy>p:not(.arrival-eyebrow) {font:400 17px/1.75 var(--body);max-width:42ch;color:var(--ink-2);margin-bottom:27px}
+.arrival-invitation {display:block;max-width:42ch;font-size:12px;color:var(--muted);line-height:1.7;margin-top:13px}
+.arrival-window {position:relative;aspect-ratio:1.07;margin:0;background:#071421;border-radius:48% 48% 4px 4px;overflow:hidden;color:#fff6e5}
+.arrival-window img {height:100%;width:100%;object-fit:cover;display:block;opacity:.9}
+.arrival-window figcaption {position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,#071421 65%);padding:80px 30px 26px;display:grid;gap:11px}
+.arrival-window figcaption>span {font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#bbd2da}
+.arrival-window figcaption strong {font:400 clamp(22px,2.8vw,37px)/1.12 var(--serif)}
+.arrival-window figcaption a {font-size:11px;line-height:1.5;text-decoration:underline;text-underline-offset:3px;color:#cfdae1}
+.arrival-orientation {border-block:1px solid var(--line);display:flex;justify-content:space-between;padding-block:18px;gap:24px;font-size:13px;color:var(--muted)}
+.arrival-orientation a {color:var(--accent-ink);font-weight:700;display:flex;gap:18px}
+html:root .planetarium-rework .intro-section {padding-block:70px;background:var(--paper)}
+.planetarium-rework .intro-head {margin:24px 0 35px;align-items:end}
+.planetarium-rework .intro-head .display {font:500 clamp(35px,4.2vw,60px)/1.1 var(--serif);letter-spacing:-.035em}
+.planetarium-rework .intro-head>p {font:400 16px/1.7 var(--body);max-width:43ch}
+.planetarium-rework .school-catalog {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:30px 23px}
+.planetarium-rework .school-course {border:1px solid var(--line);background:var(--surface);border-radius:5px;box-shadow:none;overflow:hidden;transition:transform .18s,border-color .18s}
+.planetarium-rework .school-course:hover {transform:translateY(-3px);border-color:var(--accent-ink)}
+.planetarium-rework .school-course-image {aspect-ratio:1.65;min-height:0}
+.planetarium-rework .school-course-image img {aspect-ratio:1.65}
+.planetarium-rework .school-course-type {display:none}
+.planetarium-rework .school-course-number {background:#071421d9;color:#fff;box-shadow:none;border:1px solid #ffffff70;border-radius:50%;font-size:12px;width:35px;height:35px;left:14px;top:14px}
+.planetarium-rework .school-course-body {padding:23px;gap:14px}
+.planetarium-rework .school-course-body h3 {font:500 clamp(24px,2.3vw,32px)/1.15 var(--serif);letter-spacing:-.025em}
+.planetarium-rework .school-course-body p {font-size:14px;line-height:1.65}
+.planetarium-rework .school-course-label {font-size:10px;color:var(--accent-ink);letter-spacing:.06em}
+.planetarium-rework .school-course-foot {font-size:11px;gap:8px;flex-wrap:wrap;margin-top:4px}
+.planetarium-rework .school-course-foot strong {font-size:12px}
+.journey-details {margin-top:35px;border-block:1px solid var(--line);padding:8px 0}
+.journey-details>summary {cursor:pointer;padding:16px 0;color:var(--accent-ink);font-size:14px}
+html:root .planetarium-rework .hero-main {padding-block:70px;min-height:0}
+/* Lesson: compact orientation → current scene → explanation → next step. */
+html:root .planetarium-rework .reader-opening {padding-block:26px 22px;min-height:0;display:block;background:none;border:0}
+.lesson-breadcrumb {display:flex;gap:20px;align-items:center;flex-wrap:wrap;font:500 12px/1.5 var(--body);color:var(--muted)}
+html:root .planetarium-rework .back-link {padding:0;margin:0;border:0;color:var(--accent-ink);min-height:24px}
+.lesson-breadcrumb>[data-lesson-position] {margin-left:auto;font-variant-numeric:tabular-nums}
+html:root .planetarium-rework .reader-opening h1 {font:500 clamp(27px,3.7vw,49px)/1.12 var(--serif);letter-spacing:-.03em;margin:18px 0 10px;max-width:none;text-wrap:pretty}
+html:root .planetarium-rework .first-invitation {color:var(--accent-ink);font:500 14px/1.6 var(--body);margin:0;max-width:68ch}
+html:root .planetarium-rework .reader-grid {grid-template-columns:210px minmax(0,1fr);gap:42px;padding-block:16px 36px;align-items:start}
+html:root .planetarium-rework .reader-aside {position:sticky;top:20px;margin:0;padding:0;background:none;border:0;max-height:calc(100vh - 40px);overflow:auto}
+.lesson-map>summary {font:650 13px/1.4 var(--body);display:flex;justify-content:space-between;gap:18px;cursor:pointer;min-height:46px;border-block:1px solid var(--line);align-items:center}
+.lesson-map-intro {font-size:12px;line-height:1.7;color:var(--muted);margin:18px 0}
+.planetarium-rework .reader-aside nav {margin:10px 0 23px}
+.planetarium-rework .reader-aside nav a {font-size:12px;padding-block:9px}
+.planetarium-rework .depth-controls {gap:4px}
+.planetarium-rework .depth-controls button {border-radius:3px;padding:8px 10px;font-size:12px;min-height:36px}
+.planetarium-rework .glossary-link {margin-top:15px;display:block;font-size:12px}
+.planetarium-rework .step-toggle {font-size:12px;margin:15px 0 0}
+html:root .planetarium-rework .reader-content {max-width:none;width:100%}
+html:root .planetarium-rework .lesson-section {margin:0;padding:0 0 30px;border:0;scroll-margin-top:24px}
+html:root .planetarium-rework .lesson-section>h2 {font:600 clamp(21px,2.3vw,29px)/1.25 var(--sans);margin:14px 0 4px;letter-spacing:-.025em}
+.planetarium-rework .lesson-meta {gap:10px}
+html:root .planetarium-rework .lesson-meta>.meta {font-size:11px;padding:0;border:0}
+.planetarium-rework .evidence-label {font-size:10px;padding:5px 8px;border-radius:2px}
+html:root .planetarium-rework .mx {margin:15px 0 24px;padding:22px;border:1px solid var(--line);border-radius:6px;background:var(--surface);box-shadow:none;gap:14px}
+html:root .planetarium-rework .mx-head h3 {font:500 clamp(21px,2.5vw,29px)/1.2 var(--serif);letter-spacing:-.02em}
+.planetarium-rework .mx-head .meta {font-size:10px;letter-spacing:.09em}
+html:root .planetarium-rework .mx-stage {border-radius:3px;min-height:0;aspect-ratio:16/9;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
+.planetarium-rework .mx-stage[hidden] {display:none!important}
+html:root .planetarium-rework .mx-visuals {display:block}
+html:root .planetarium-rework .mx-lab {gap:14px;display:grid;grid-template-columns:minmax(0,1fr)}
+html:root .planetarium-rework .mx-action-label {font:650 11px/1.5 var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--accent-ink);margin:0}
+.planetarium-rework .mx-controls {gap:8px}
+html:root .planetarium-rework .mx-seg button {border-radius:3px;min-height:44px;padding:8px 11px;font-size:12px;gap:6px}
+html:root .planetarium-rework .mx-seg button[aria-pressed='true'] {background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.planetarium-rework .mx-seg button>span[aria-hidden] {display:none}
+html:root .planetarium-rework .mx-transport {display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+html:root .planetarium-rework .mx-transport button {border-radius:3px;min-height:38px;font-size:12px;padding:8px 10px}
+html:root .planetarium-rework .mx-caption {border-radius:3px;border-left:3px solid var(--accent);padding:14px 17px;background:var(--paper);font-size:15px;line-height:1.65;color:var(--ink);max-width:none;min-height:0}
+html:root .planetarium-rework :is(.mx-limit,.mx-detail-note) {font:400 12px/1.65 var(--body);max-width:none;color:var(--muted)}
+.mx-view-choice {display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted)}
+.mx-view-choice button {border:1px solid var(--line-strong);border-radius:3px;background:transparent;color:var(--accent-ink);padding:9px 12px;min-height:44px;cursor:pointer;font-weight:650}
+html:root .planetarium-rework .mx-opts button {font-size:13px;border-radius:4px;line-height:1.5}
+html:root .planetarium-rework .mx-check {padding-top:18px;border-top:1px solid var(--line)}
+html:root .planetarium-rework .mx-check .mx-label {font-size:15px;line-height:1.5}
+.planetarium-rework .lesson-observe {margin-block:20px;background:transparent;border:0;padding:0}
+html:root .planetarium-rework .lesson-observe p {font-size:14px;line-height:1.7;margin:0}
+html:root .planetarium-rework .lesson-connection {border-radius:3px;background:var(--surface);padding:20px;border:1px solid var(--line)}
+.planetarium-rework .lesson-connection p {font-size:17px;line-height:1.7}
+.planetarium-rework .lesson-section>p {font-size:16px;line-height:1.8;max-width:70ch}
+.planetarium-rework .lesson-section>p.lesson-try {font-size:14px;color:var(--accent-ink);margin-block:24px}
+html:root .planetarium-rework .lesson-stepper {border-radius:4px;background:var(--surface);border:1px solid var(--line);box-shadow:none;padding:16px;gap:12px;margin:0 0 35px}
+.planetarium-rework .step-next {background:var(--accent);color:var(--on-accent);border-radius:3px;min-height:46px}
+.planetarium-rework .reader-references {margin-top:24px}
+.planetarium-rework .school-extra {border:1px solid var(--line);border-radius:4px;margin-block:30px}
+.lesson-film {padding:24px}
+.lesson-film>summary {font-size:15px;cursor:pointer;min-height:44px}
+.planetarium-rework .chapter-pagination .next-lesson-card {border-radius:5px;background:var(--accent);color:var(--on-accent);padding:28px}
+.planetarium-rework .next-lesson-card :is(.meta,.next-lesson-copy>span:last-child,.next-lesson-arrow) {color:var(--on-accent)}
+.planetarium-rework .next-lesson-card:hover {background:var(--ink)}
+@media(min-width:1100px) {
+  /* Processes read in sequence; spatial comparisons get a wider drawing. */
+  .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-seg {display:grid;grid-template-columns:repeat(4,1fr)}
+  .planetarium-rework [data-reader='terra-e-atmosfera'] .mx-lab {grid-template-columns:minmax(0,1.5fr) minmax(170px,1fr);align-items:start}
+  .planetarium-rework [data-reader='terra-e-atmosfera'] .mx-lab>.mx-visuals {grid-column:1}
+  .planetarium-rework [data-reader='terra-e-atmosfera'] .mx-lab>.mx-controls {grid-column:2;grid-row:1}
+  .planetarium-rework [data-reader='terra-e-atmosfera'] .mx-lab>.mx-controls .mx-seg {display:grid}
+  .planetarium-rework [data-reader='terra-e-atmosfera'] .mx-lab>:not(.mx-controls):not(.mx-visuals) {grid-column:1/-1}
+}
+@media(max-width:999px) {
+  html:root .planetarium-rework .reader-grid {grid-template-columns:minmax(0,1fr);gap:18px;padding-top:0}
+  html:root .planetarium-rework .reader-aside {position:static;max-height:none;overflow:visible}
+  .planetarium-rework .reader-aside nav {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+  .planetarium-rework .depth-controls {flex-direction:row;flex-wrap:wrap}
+  .planetarium-rework .lesson-map .glossary-link {display:inline-block;margin-right:20px}
+  .planetarium-rework .main-nav {gap:16px}
+  .planetarium-rework .school-catalog {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px) {
+  .planetarium-rework .header {height:66px}
+  .planetarium-rework .identity-name {font-size:18px}
+  .arrival-grid {grid-template-columns:1fr;gap:30px;padding-block:34px}
+  .arrival h1 {font-size:clamp(43px,11.8vw,70px);margin:18px 0}
+  .arrival-eyebrow {font-size:10px;max-width:27ch;line-height:1.8}
+  .arrival-copy>p:not(.arrival-eyebrow) {font-size:16px;line-height:1.7}
+  .arrival .cta {font-size:13px;display:flex;justify-content:space-between}
+  .arrival-window {aspect-ratio:1.25;border-radius:42% 42% 4px 4px}
+  .arrival-window figcaption {padding:60px 24px 20px}
+  .arrival-window figcaption strong {font-size:30px}
+  .arrival-orientation {align-items:center;font-size:12px}
+  html:root .planetarium-rework .intro-section {padding-block:45px}
+  .planetarium-rework .school-catalog {grid-template-columns:minmax(0,1fr);gap:24px}
+  .planetarium-rework .school-course-body h3 {font-size:29px}
+  .planetarium-rework .school-course-body {padding:24px}
+  .planetarium-rework .intro-head {gap:18px}
+  html:root .planetarium-rework .reader-opening {padding:18px 0}
+  .lesson-breadcrumb {font-size:11px;gap:10px}
+  .lesson-breadcrumb>[data-lesson-position] {margin-left:0}
+  html:root .planetarium-rework .reader-opening h1 {font-size:28px;margin:14px 0 9px}
+  html:root .planetarium-rework .first-invitation {font-size:13px;line-height:1.55}
+  html:root .planetarium-rework .reader-grid {gap:16px}
+  .lesson-map>summary {min-height:42px;font-size:12px}
+  html:root .planetarium-rework .lesson-section>h2 {font-size:20px;margin:12px 0 4px}
+  html:root .planetarium-rework .mx {margin:12px 0 23px;padding:14px;gap:12px}
+  html:root .planetarium-rework .mx-head h3 {font-size:23px}
+  html:root .planetarium-rework .mx-stage {aspect-ratio:16/10}
+  html:root .planetarium-rework .mx-seg {gap:6px;display:flex;flex-wrap:wrap}
+  html:root .planetarium-rework .mx-seg button {flex:1 1 auto;font-size:12px;padding:8px;min-height:44px}
+  html:root .planetarium-rework .mx-transport button {font-size:11px;padding:8px;min-height:44px}
+  html:root .planetarium-rework .mx-caption {font-size:14px;padding:12px;line-height:1.65}
+  .mx-view-choice {align-items:start;flex-direction:column}
+  .planetarium-rework .step-dots {display:none}
+  .planetarium-rework .step-select {width:100%;max-width:100%}
+  html:root .planetarium-rework .lesson-stepper {gap:10px;padding:12px}
+  .planetarium-rework .chapter-pagination {gap:20px}
+  .planetarium-rework .chapter-pagination .next-lesson-card {padding:24px 20px}
+  .planetarium-rework .school-extra {margin-block:24px}
+  .lesson-film {padding:12px}
+}
+@media(prefers-reduced-motion:reduce){.planetarium-rework .school-course{transition:none}}
+/* Keep the question visible; the older presentation hid it behind the film. */
+html:root .planetarium-rework .mx-head {display:grid}
+html:root .planetarium-rework .experience-toolbar {padding:0 0 8px;margin:0;min-height:34px}
+html:root .planetarium-rework .experience-toolbar button {min-height:34px;padding:6px 10px;font-size:11px}
+html:root .planetarium-rework .lesson-stepper {position:static;inset:auto;transform:none;width:100%}
+.planetarium-rework .cta {border-color:var(--accent)}
+@media(min-width:1100px){
+ html:root .planetarium-rework .mx-lab {grid-template-columns:minmax(0,1.6fr) minmax(180px,1fr);align-items:start;gap:18px}
+ html:root .planetarium-rework .mx-lab>.mx-visuals {grid-column:1;grid-row:1}
+ html:root .planetarium-rework .mx-lab>.mx-controls {grid-column:2;grid-row:1}
+ html:root .planetarium-rework .mx-lab>.mx-controls .mx-seg {display:grid;grid-template-columns:1fr}
+ html:root .planetarium-rework .mx-lab>:not(.mx-controls):not(.mx-visuals) {grid-column:1/-1}
+ html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab {grid-template-columns:1fr}
+ html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls {grid-column:1;grid-row:2}
+ html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls .mx-seg {grid-template-columns:repeat(4,minmax(0,1fr))}
+ html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-stage {max-height:310px;aspect-ratio:auto}
+}
+html:root .planetarium-rework .mx-head>h3,html:root .planetarium-rework .mx-head>.meta {display:block}
+html:root .planetarium-rework .mx>.experience-toolbar {min-height:34px;padding:0 0 8px;margin:0}
+/* The first experiment must never wait for a scroll-reveal animation. */
+html:root .planetarium-rework .lesson-section.rv {opacity:1!important;transform:none!important;visibility:visible!important}
+@media(max-width:600px){
+ html:root .planetarium-rework .header {gap:8px}
+ .planetarium-rework .identity {gap:8px}
+ .planetarium-rework .identity-name {font-size:16px}
+ .planetarium-rework .mobile-menu>summary {font-size:11px;padding-inline:5px}
+ .planetarium-rework .header-tools {gap:2px}
+}
+@media(max-width:360px){.planetarium-rework .identity-mark{display:none}}
+
+.planetarium-rework :is([data-step-prev],[data-step-next],[data-step-select]) {min-height:48px}
+
+/* Preserve the reviewed editorial typography over the production direction layer. */
+html:root:root:root .planetarium-rework :is(.arrival h1,.arrival-window strong,.intro-head .display,.school-course-body h3,.reader-opening h1,.mx-head h3) {font-family:var(--serif);font-stretch:normal;font-weight:500;letter-spacing:-.035em}
+html:root:root:root .planetarium-rework .arrival h1 em {font-family:var(--serif);font-style:italic;font-weight:400;color:var(--accent-ink)}
+html:root:root:root .planetarium-rework .cta {background:var(--accent);border-color:var(--accent);color:var(--on-accent);border-radius:3px;box-shadow:none}
+html:root:root:root .planetarium-rework .cta:hover {background:var(--action-hover);border-color:var(--action-hover);color:#fff9ec}

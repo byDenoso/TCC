@@ -47,6 +47,9 @@ export function initReader(): void {
   const open = () => { const t = location.hash && document.getElementById(location.hash.slice(1)); const d = t && t.closest('details'); if (d) d.open = true; };
   open(); addEventListener('hashchange', open);
 
+  const map = root.querySelector<HTMLDetailsElement>('.lesson-map');
+  if (map && matchMedia('(min-width: 1000px)').matches) map.open = true;
+  root.querySelectorAll('[data-toc] a').forEach(a => a.addEventListener('click', () => { if (map && matchMedia('(max-width: 999px)').matches) map.open = false; }));
   initSteps(root, links);
 }
 
@@ -56,7 +59,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   const content = $('.reader-content', root);
   const sections = $$<HTMLElement>('.lesson-section', root);
   if (!content || sections.length < 2) return;
-  const after = $$<HTMLElement>('.chapter-check, .reader-references, .reader-finish', root);
+  const after = $$<HTMLElement>('.chapter-check, .reader-finish', root);
   const chapter = root.dataset.reader ?? '';
   const reduced = () => motionPreference.matches;
 
@@ -71,7 +74,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   sections[sections.length - 1].after(bar);
   const toggle = document.createElement('button');
   toggle.type = 'button'; toggle.className = 'step-toggle'; toggle.dataset.stepToggle = '';
-  $('.reader-aside', root)?.append(toggle);
+  $('[data-whole-toggle-slot]', root)?.append(toggle);
 
   const jump = document.createElement('select');
   jump.className = 'step-select'; jump.dataset.stepSelect = ''; jump.setAttribute('aria-label', 'Passo da aula');
@@ -101,6 +104,10 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     bar.hidden = whole;
     dots.forEach((d, k) => { d.setAttribute('aria-current', String(k === current)); d.dataset.done = String(k < current || (reachedEnd && k <= current)); });
     count.textContent = `Passo ${current + 1} de ${sections.length}`;
+    const position = root.querySelector('[data-lesson-position]');
+    if (position) position.textContent = count.textContent;
+    const invitation = root.querySelector<HTMLElement>('.first-invitation');
+    if (invitation) invitation.hidden = current !== 0;
     jump.value = String(current);
     prev.disabled = current === 0;
     const nextTitle = sections[current + 1]?.querySelector('h2')?.textContent?.trim();

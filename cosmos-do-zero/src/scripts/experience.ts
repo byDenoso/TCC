@@ -12,7 +12,7 @@ export function initExperience(): void {
   const status=document.createElement('span');status.className='experience-status';status.textContent='Explore no seu ritmo';
   const expand=document.createElement('button');expand.type='button';expand.dataset.experienceExpand='';expand.textContent='Ampliar experiência ↗';
   toolbar.append(status,expand);
-  const anchor=root.querySelector('.obs-grid,.sci-fig,.mx-lab,.solar-close-note')??stage;
+  const anchor=(root.matches('[data-mx]') ? root.querySelector('.mx-view-choice') : root.querySelector('.obs-grid,.sci-fig,.solar-close-note'))??stage;
   anchor.before(toolbar);
   let manual=false,visible=false;
   const update=()=>{

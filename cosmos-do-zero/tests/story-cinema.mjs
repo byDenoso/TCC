@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
-import { selectLessonStep } from './lib/reader-navigation.mjs';
+import { selectLessonStep, openLessonStory } from './lib/reader-navigation.mjs';
 const base=(process.env.BASE_URL||'http://127.0.0.1:4321').replace(/\/$/,'');
 const ids=['galaxias-e-nebulosas','origem-do-universo','misterios-do-cosmos','vida-das-estrelas','sistema-solar','terra-e-atmosfera'];
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache'],args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -28,7 +28,8 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   for(const id of ids){
    await page.goto(`${base}/capitulos/${id}/`,{waitUntil:'networkidle'});
-   const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
+   await openLessonStory(page);
+ const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
    ok(await root.count()===1,`${id}/${width}: abertura narrativa presente`);
    await stage.scrollIntoViewIfNeeded();
    const world=root.locator('[data-story-world][data-renderer="webgl2"] canvas');
@@ -91,7 +92,8 @@ try{
  const landscape=await browser.newPage({viewport:{width:667,height:375}});
  for(const id of ids){
   await landscape.goto(`${base}/capitulos/${id}/`,{waitUntil:'networkidle'});
-  const root=landscape.locator('[data-story]');await root.locator('[data-experience-expand]').click();
+  await openLessonStory(landscape);
+ const root=landscape.locator('[data-story]');await root.locator('[data-experience-expand]').click();
   await root.locator('[data-story-play]').scrollIntoViewIfNeeded();
   ok(await root.locator('[data-story-play]').evaluate(b=>{const r=b.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),`${id}: comandos alcançáveis no celular deitado`);
   ok(await landscape.locator('.experience-close').evaluate(b=>{const r=b.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),`${id}: Fechar sempre visível no celular deitado`);
@@ -102,6 +104,7 @@ try{
  await history.addInitScript(()=>window.addEventListener('pageshow',e=>{document.documentElement.dataset.historyCache=String(e.persisted);}));
  await history.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
  await history.goto(`${base}/glossario/`,{waitUntil:'networkidle'});await history.goBack({waitUntil:'load'});
+ await openLessonStory(history);
  const restored=history.locator('[data-story]');await restored.locator('[data-story-play]').scrollIntoViewIfNeeded();
  await history.waitForFunction(()=>document.querySelector('[data-story-play]')?.getAttribute('aria-pressed')==='true');
  await history.locator('footer').scrollIntoViewIfNeeded();
@@ -113,6 +116,7 @@ try{
  let releaseMedia;const mediaGate=new Promise(resolve=>{releaseMedia=resolve;});
  await switching.route('**/media/stories/origem-do-universo.mp4',async route=>{await mediaGate;await route.continue();});
  await switching.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
+ await openLessonStory(switching);
  const swap=switching.locator('[data-story]'),swapVideo=swap.locator('video');
  await swap.locator('[data-story-phase="1"]').click();
  await swap.locator('[data-story-mode="film"]').click();
@@ -136,16 +140,17 @@ try{
  await switching.close();
  const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'});
  await page.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
+ await openLessonStory(page);
  const story=page.locator('[data-story]');await story.locator('[data-story-viewport]').scrollIntoViewIfNeeded();
  ok(await story.locator('[data-story-play]').getAttribute('aria-pressed')==='false','movimento reduzido: cena estática');
  ok(await story.locator('[data-story-caption]').innerText().then(t=>t.includes('800 nm')),'movimento reduzido: conclusão legível');
  await story.locator('[data-story-phase]').first().click();
  ok(await story.locator('[data-story-caption]').innerText().then(t=>t.includes('400')),'movimento reduzido: etapas manuais disponíveis');
  await page.goto(base+'/',{waitUntil:'networkidle'});
- const entry=page.locator('.hero-actions a[href="#movimento"]');
- ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso a Ciência em movimento na primeira tela móvel');
+ const entry=page.locator('.arrival-copy .cta');
+ ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'entrada da primeira aula na primeira tela móvel');
  await entry.click();
- ok(new URL(page.url()).hash==='#movimento','abertura leva a Ciência em movimento');
+ ok(new URL(page.url()).pathname.endsWith('/capitulos/galaxias-e-nebulosas/'),'abertura leva à primeira descoberta');
  await page.goto(base+'/luz/',{waitUntil:'networkidle'});
  await page.locator('[data-light-go="2"]').click();
  const redshift=page.locator('#light-redshift');
@@ -190,6 +195,7 @@ try{
   };
  });
  await fallback.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'domcontentloaded'});
+ await openLessonStory(fallback);
  const diagram=fallback.locator('[data-story-graphic]');
  await diagram.scrollIntoViewIfNeeded();
  await fallback.locator('[data-story-reference] .story-reference').waitFor({state:'visible'});

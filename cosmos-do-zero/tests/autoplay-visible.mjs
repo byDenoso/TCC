@@ -57,6 +57,8 @@ try {
   await lesson.goto(`${base}/capitulos/origem-do-universo/#origem-do-universo-o-universo`, { waitUntil: 'domcontentloaded' });
   const micro = lesson.locator('[data-mx="origem-do-universo-o-universo"]');
   await micro.locator('.mx-stage').first().scrollIntoViewIfNeeded();
+  expect(await pressed(micro.locator('[data-mx-play]')) === 'false', 'primeira interação aguarda o aluno');
+  await micro.locator('[data-mx-play]').click();
   await lesson.waitForFunction(() => document.querySelector('[data-mx="origem-do-universo-o-universo"] [data-mx-play]')?.getAttribute('aria-pressed') === 'true');
   expect(await micro.locator('[data-mx-verdict]').isHidden(), 'animação automática não responde ao palpite');
   await lesson.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
@@ -64,6 +66,7 @@ try {
   await lesson.waitForTimeout(450);
   expect((await micro.locator('[data-mx-live]').textContent()).trim() === '', 'pausa automática não anuncia conteúdo fora da tela');
   await micro.locator('.mx-stage').first().scrollIntoViewIfNeeded();
+  await micro.locator('[data-mx-play]').click();
   await lesson.waitForFunction(() => document.querySelector('[data-mx="origem-do-universo-o-universo"] [data-mx-play]')?.getAttribute('aria-pressed') === 'true');
   await micro.locator('[data-mx-play]').click();
   await lesson.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));

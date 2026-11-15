@@ -107,30 +107,70 @@ function setup(root: HTMLElement, scene: Scene): void {
   let visualStage = svg.parentElement!;
   const visualNotice = root.querySelector<HTMLElement>('[data-mx-visual-state]')!;
   const showVisualFallback = () => {
-    visualNotice.textContent = 'Cena 3D indisponível neste navegador. Continue usando o diagrama e os controles abaixo.';
+    visualNotice.textContent = 'Cena 3D indisponível neste navegador. O diagrama e os controles do experimento continuam disponíveis.';
     visualNotice.hidden = false;
   };
   let alive = true;
-  import('../visual/exhibits').then(async ({ visualCatalog }) => {
-    const spec = visualCatalog[id]; if (!spec || !alive) return;
-    if(spec.legend&&!root.querySelector('[data-visual-legend]')){const note=document.createElement('p');note.dataset.visualLegend='true';note.className='mx-caption';note.textContent=spec.legend;root.querySelector('.mx-caption')!.before(note);}
-    if (spec.assets) await (await import('../visual/assets')).prepareWorlds();
-    if(spec.galaxies){const {prepareEmissionGalaxies,prepareStarsOnly,emissionSize}=await import('../visual/galaxy-emission');const size=emissionSize(visualStage.clientWidth,visualStage.dataset.cosmosQuality==='low'?'low':'auto');await Promise.all([prepareEmissionGalaxies(size),...(spec.galaxyStars?[prepareStarsOnly(size)]:[])]);visualStage.dataset.galaxySeedSize=String(size);}
-    if(spec.stellar)await(await import('../visual/stellar-materials')).prepareStellarMaterials(spec.stellar);
-    if (!alive) return;
-    if (spec.preserveSvg) {
-      const preparedStage = visualStage;
-      visualStage = document.createElement('div'); visualStage.className = 'mx-stage mx-volume-stage';
-      if(preparedStage.dataset.galaxySeedSize)visualStage.dataset.galaxySeedSize=preparedStage.dataset.galaxySeedSize;
-      if(preparedStage.dataset.cosmosQuality)visualStage.dataset.cosmosQuality=preparedStage.dataset.cosmosQuality;
-      svg.parentElement!.before(visualStage);
-      const useFlat=()=>{visualStage.hidden=true;visualStage.style.display='none';};visualStage.addEventListener('cosmos:contextlost',useFlat);visualStage.addEventListener('cosmos:unavailable',useFlat);
-    }
-    visualStage.addEventListener('cosmos:unavailable', showVisualFallback);
-    visualStage.addEventListener('cosmos:contextlost', showVisualFallback);
-    const { observeScene } = await import('../visual/runtime');
-    volume = observeScene(visualStage, ()=>spec.make(visualStage)); volume.play(playing); volume.state({ value:v, phase:t });
-  }).catch(() => { root.dataset.visualFallback='true'; if (alive) showVisualFallback(); });
+  const threeButton = root.querySelector<HTMLButtonElement>('[data-mx-enable-3d]');
+  // Spatial geometry helps these scenes; charts and process diagrams stay in 2D.
+  const spatial = new Set(['galaxias-e-nebulosas-via-lactea', 'galaxias-e-nebulosas-tipos', 'origem-do-universo-o-universo', 'terra-e-atmosfera-formacao-da-terra', 'terra-e-atmosfera-campo-magnetico', 'sistema-solar-orbitas', 'galaxias-e-nebulosas-teia-cosmica', 'vida-das-estrelas-sol', 'sistema-solar-gigantes', 'origem-do-universo-fase-quente']);
+  const diagramOnly = new URLSearchParams(location.search).get('visual') === 'diagram';
+  if (threeButton && spatial.has(id) && !diagramOnly) {
+    threeButton.hidden = false;
+    threeButton.addEventListener('click', async () => {
+      if (volume) {
+        const on = threeButton.getAttribute('aria-pressed') !== 'true';
+        visualStage.hidden = !on;
+        svg.parentElement!.hidden = on;
+        threeButton.setAttribute('aria-pressed', String(on));
+        threeButton.textContent = on ? 'Voltar ao diagrama' : 'Explorar em 3D';
+        visualNotice.hidden = !on;
+        volume.play(on && playing);
+        return;
+      }
+      threeButton.disabled = true;
+      threeButton.textContent = 'Preparando a vista…';
+      try {
+        const { visualCatalog } = await import('../visual/exhibits');
+        const spec = visualCatalog[id]; if (!spec || !alive) return;
+        visualNotice.textContent = 'Vista 3D ilustrativa. ' + (spec.legend ?? 'Tamanhos, cores e posições servem à explicação; confira os limites abaixo.');
+        visualNotice.hidden = false;
+        // The complete SVG remains intact, including on WebGL context loss.
+        visualStage = document.createElement('div');
+        visualStage.className = 'mx-stage mx-volume-stage';
+        svg.parentElement!.before(visualStage);
+        const restoreDiagram = () => {
+          visualStage.hidden = true; svg.parentElement!.hidden = false;
+          threeButton.setAttribute('aria-pressed', 'false');
+          threeButton.textContent = 'Explorar em 3D';
+          showVisualFallback();
+        };
+        visualStage.addEventListener('cosmos:unavailable', restoreDiagram);
+        visualStage.addEventListener('cosmos:contextlost', restoreDiagram);
+        if (spec.assets) await (await import('../visual/assets')).prepareWorlds();
+        if (spec.galaxies) {
+          const { prepareEmissionGalaxies, prepareStarsOnly, emissionSize } = await import('../visual/galaxy-emission');
+          const size = emissionSize(visualStage.clientWidth, 'auto');
+          await Promise.all([prepareEmissionGalaxies(size), ...(spec.galaxyStars ? [prepareStarsOnly(size)] : [])]);
+          visualStage.dataset.galaxySeedSize = String(size);
+        }
+        if (spec.stellar) await (await import('../visual/stellar-materials')).prepareStellarMaterials(spec.stellar);
+        if (!alive) return;
+        const { observeScene } = await import('../visual/runtime');
+        svg.parentElement!.hidden = true;
+        threeButton.setAttribute('aria-pressed', 'true');
+        threeButton.textContent = 'Voltar ao diagrama';
+        volume = observeScene(visualStage, () => spec.make(visualStage));
+        volume.play(playing); volume.state({ value:v, phase:t });
+      } catch {
+        visualStage.hidden = true; svg.parentElement!.hidden = false;
+        threeButton.setAttribute('aria-pressed', 'false');
+        threeButton.textContent = 'Explorar em 3D';
+        if (alive) showVisualFallback();
+      } finally { threeButton.disabled = false; }
+    });
+  }
+
 
   let liveTimer = 0;
   const render = (announce = true) => {
@@ -289,6 +329,8 @@ function setup(root: HTMLElement, scene: Scene): void {
   setPlaying(false);
   render(false);
   automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => { visible = on; } });
+  automatic.manual();
+  guided = false; root.dataset.guide = 'manual';
   // Os controles só aceitam ações depois do SVG e de todos os listeners estarem prontos.
   root.dataset.mxLoad = 'ready';
   root.setAttribute('aria-busy', 'false');
