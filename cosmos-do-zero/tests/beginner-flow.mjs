@@ -8,6 +8,7 @@ try {
     const page = await browser.newPage({ viewport: { width, height: 850 }, reducedMotion: 'reduce' });
     await page.goto(`${base}/capitulos/galaxias-e-nebulosas/#galaxias-e-nebulosas-via-lactea`, { waitUntil: 'load' });
     const module = page.locator('[data-mx="galaxias-e-nebulosas-via-lactea"]');
+    await module.locator('[data-mx-guess-box] summary').click();
     await module.locator('[data-mx-guess="0"]').click();
     const next = module.locator('[data-mx-opt="1"]');
     await next.waitFor({ state: 'visible' });

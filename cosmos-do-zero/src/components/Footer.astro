@@ -1,25 +1,28 @@
 ---
 import { u } from '../lib/url';
 ---
-<footer class="footer">
+<footer class="footer site-footer">
   <div class="page-width">
     <div class="footer-top">
-      <div><p class="footer-claim">Cosmos do Zero</p><p class="school-footer-copy">Planetário digital para observar, experimentar e entender o Universo.</p></div>
       <div>
-        <a class="textlink" href={u('/fontes/')}>Fontes e imagens <span aria-hidden="true">↗</span></a>
-        <nav class="footer-nav" aria-label="Rodapé">
-          <a href={u('/#prologo')}>Exposição</a>
-          <a href={u('/#capitulos')}>Aulas</a>
-          <a href={u('/laboratorio/')}>Mais experimentos</a>
-          <a href={u('/#desafio')}>Desafio</a>
-          <a href={u('/glossario/')}>Dicionário</a>
-        </nav>
+        <a class="identity" href={u('/')} aria-label="Cosmos do Zero, início">
+          <span class="identity-mark" aria-hidden="true"></span>
+          <span class="identity-name">COSMOS<small>DO ZERO</small></span>
+        </a>
+        <p class="school-footer-copy">Escola interativa de cosmologia.</p>
       </div>
+      <nav class="footer-nav" aria-label="Rodapé">
+        <a href={u('/#capitulos')}>Aulas</a>
+        <a href={u('/#planetario')}>Planetário</a>
+        <a href={u('/#observatorio')}>Observatório</a>
+        <a href={u('/laboratorio/')}>Laboratório</a>
+        <a href={u('/glossario/')}>Dicionário</a>
+        <a href={u('/#desafio')}>Desafio</a>
+        <a href={u('/fontes/')}>Fontes e imagens</a>
+      </nav>
     </div>
     <div class="footer-end">
-      <span>COSMOS DO ZERO</span>
-      <a href="#topo">VOLTAR AO TOPO ↑</a>
+      <a href="#topo">Voltar ao topo <span aria-hidden="true">↑</span></a>
     </div>
   </div>
 </footer>
-

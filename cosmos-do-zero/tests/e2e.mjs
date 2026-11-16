@@ -275,9 +275,12 @@ section('Microexperiências e continuidade');
 {
   const p = await page(1280);
   await p.goto(BASE + '/?lab=receita&om=2&ol=0', { waitUntil: 'networkidle' });
-  await p.locator('.main-nav a[data-spy="observatorio"]').click();
-  await p.waitForTimeout(400);
-  ok('link do menu preserva o experimento', /om=2/.test(p.url()) && /lab=receita/.test(p.url()), p.url());
+  await p.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Planetário', exact: true }).click();
+  await p.locator('#planetario').getByRole('link', { name: /Observatório/ }).click();
+  const observatoryUrl = new URL(p.url());
+  ok('Planetário → Observatório preserva o experimento', observatoryUrl.hash === '#observatorio' &&
+    observatoryUrl.searchParams.get('lab') === 'receita' && observatoryUrl.searchParams.get('om') === '2' &&
+    observatoryUrl.searchParams.get('ol') === '0', p.url());
   ok('receita continua com matéria demais', /colapsa/.test(await p.locator('[data-r-out="fate"]').innerText()));
   await p.goto(BASE + '/capitulos/origem-do-universo/', { waitUntil: 'networkidle' });
   await p.locator('[data-step-next]').click(); await p.locator('[data-step-next]').click();
@@ -577,10 +580,23 @@ section('Tema claro e escuro');
   const p=await page(1280,{colorScheme:'dark'});
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   ok('escola começa no tema claro papel', await p.evaluate(()=>document.documentElement.dataset.theme)==='light' && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(241, 233, 214)');
-  ok('abertura fotográfica mantém título marfim e ação âmbar', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(252, 241, 223)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(255, 192, 134)'));
+  ok('abertura fotográfica mantém título marfim e ação azul', await p.evaluate(()=>getComputedStyle(document.querySelector('h1')).color==='rgb(252, 241, 223)' && getComputedStyle(document.querySelector('.hero-actions .cta')).backgroundColor==='rgb(40, 73, 215)'));
+  const launchContrast = () => p.locator('#planetario-title').evaluate(heading => {
+    const luminance = (color) => {
+      const channels = color.match(/[\d.]+/g).slice(0, 3).map(Number).map(value => value / 255);
+      const [r, g, b] = channels.map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+      return .2126 * r + .7152 * g + .0722 * b;
+    };
+    const foreground = luminance(getComputedStyle(heading).color);
+    const background = luminance(getComputedStyle(heading.closest('#planetario')).backgroundColor);
+    return (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05);
+  });
+  ok('título do planetário tem contraste no tema claro', (await launchContrast()) >= 4.5);
+  ok('atalhos usam setas de texto', (await p.locator('#planetario .hero-routes i').allTextContents()).every(arrow => arrow === '→'));
   const bgLight=await p.evaluate(()=>getComputedStyle(document.body).backgroundColor);
   await p.locator('[data-theme-toggle]').click();
   ok('botão troca para o papel noturno', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark' && bgLight!==await p.evaluate(()=>getComputedStyle(document.body).backgroundColor) && await p.evaluate(()=>getComputedStyle(document.body).backgroundColor)==='rgb(18, 23, 31)');
+  ok('título do planetário tem contraste no tema escuro', (await launchContrast()) >= 4.5);
   await p.reload({ waitUntil: 'networkidle' });
   ok('escolha escura explícita persiste ao recarregar', await p.evaluate(()=>document.documentElement.dataset.theme)==='dark');
   ok('botão anuncia a próxima ação', /claro/i.test(await p.locator('[data-theme-toggle]').getAttribute('aria-label')));
@@ -639,7 +655,7 @@ section('Reauditoria: laboratório, títulos e procedência');
 {
   const p = await page(390);
   await p.goto(`${BASE}/laboratorio/?massa=30`, { waitUntil: 'networkidle' });
-  const challenge = p.getByRole('link', { name: '03 Testar suas ideias ↓', exact: true });
+  const challenge = p.getByRole('link', { name: 'Testar suas ideias', exact: true });
   await challenge.focus();
   await Promise.all([p.waitForURL(url => url.pathname === new URL(BASE + '/').pathname && url.hash === '#desafio'), p.keyboard.press('Enter')]);
   await p.locator('#desafio').waitFor({state:'visible'});

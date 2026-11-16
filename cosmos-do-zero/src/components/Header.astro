@@ -1,48 +1,59 @@
 ---
 import { u } from '../lib/url';
-interface Props { variant?: 'hero' | 'solid'; }
-const { variant = 'hero' } = Astro.props;
+
 const nav = [
-  { href: '/#capitulos', label: 'As aulas', mobile: 'As seis aulas da escola', spy: 'capitulos' },
-  { href: '/#movimento', label: 'Em movimento', mobile: 'Ciência em movimento: cinco animações', spy: 'movimento' },
-  { href: '/#observatorio', label: 'Observatório', mobile: 'Observatório: quatro experimentos', spy: 'observatorio' },
-  { href: '/laboratorio/', label: 'Laboratório', mobile: 'Laboratório e explorações', spy: 'laboratorio' },
-  { href: '/glossario/', label: 'Dicionário', mobile: 'Dicionário do cosmos', spy: 'glossario' }
+  { href: '/#capitulos', label: 'Aulas', spy: 'capitulos' },
+  { href: '/#planetario', label: 'Planetário', spy: 'planetario' },
+  { href: '/laboratorio/', label: 'Laboratório', spy: 'laboratorio' },
+  { href: '/glossario/', label: 'Dicionário', spy: 'glossario' }
 ];
 const more = [
-  { href: '/#prologo', label: 'Prólogo: a luz guarda o passado' },
-  { href: '/#escala-cosmica', label: 'Exposição: Escalas do Universo' },
-  { href: '/laboratorio/#bancadas', label: 'Bancadas de investigação' },
-  { href: '/laboratorio/#tempo', label: 'Linha do tempo' },
-  { href: '/laboratorio/#planetas', label: 'Os oito planetas' },
+  { href: '/#observatorio', label: 'Observatório' },
+  { href: '/#movimento', label: 'Ciência em movimento' },
+  { href: '/#imagens', label: 'Imagens do céu' },
   { href: '/#desafio', label: 'Desafio' },
   { href: '/fontes/', label: 'Fontes e imagens' }
 ];
+const current = (href: string) => {
+  const path = Astro.url.pathname.replace(/\/$/, '');
+  const matches = href === '/#capitulos' ? path.includes('/capitulos/') : path === u(href).replace(/\/$/, '');
+  return matches ? 'page' : undefined;
+};
 ---
-<header class:list={['header-shell', variant === 'solid' && 'solid']}>
+<header class="header-shell site-header">
   <div class="header page-width">
     <a class="identity" href={u('/')} aria-label="Cosmos do Zero, início">
       <span class="identity-mark" aria-hidden="true"></span>
       <span class="identity-name">COSMOS<small>DO ZERO</small></span>
     </a>
     <nav class="main-nav" aria-label="Navegação principal">
-      {nav.map((n) => <a href={u(n.href)} data-spy={n.spy} aria-current={(Astro.url.pathname.replace(/\/$/, '').endsWith('/' + n.spy) || (n.spy === 'capitulos' && Astro.url.pathname.includes('/capitulos/')) ? 'page' : undefined)}>{n.label}</a>)}
+      {nav.map(({ href, label, spy }) => <a href={u(href)} data-spy={spy} aria-current={current(href)}>{label}</a>)}
     </nav>
     <div class="header-tools">
-      <details class="motion-settings"><summary aria-label="Preferência de movimento">Movimento</summary><div><label for="cosmos-motion-select">Animações do site</label><select id="cosmos-motion-select" data-motion-select><option value="full">Completo</option><option value="gentle">Suave</option><option value="reduced">Reduzido</option></select><p>A preferência de movimento reduzido do seu aparelho é sempre respeitada.</p></div></details>
-      <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="true" aria-label="Usar tema claro">
+      <details class="motion-settings" data-motion-menu>
+        <summary aria-label="Preferência de movimento">
+          <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M3 12h4l3-6 4 12 3-6h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Movimento</span>
+        </summary>
+        <div>
+          <label for="cosmos-motion-select">Animações do site</label>
+          <select id="cosmos-motion-select" data-motion-select>
+            <option value="full">Completo</option><option value="gentle">Suave</option><option value="reduced">Reduzido</option>
+          </select>
+          <p>A preferência de movimento reduzido do seu aparelho é sempre respeitada.</p>
+        </div>
+      </details>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-pressed="false" aria-label="Usar tema escuro">
         <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" /></svg>
         <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" /><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" /></svg>
-        <span class="theme-label" data-theme-label>Claro</span>
+        <span class="visually-hidden" data-theme-label>Escuro</span>
       </button>
       <a class="header-cta" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey><span data-start-label>Começar a aula</span> <span aria-hidden="true">→</span></a>
     </div>
     <details class="mobile-menu" data-mobile-menu>
-      <summary aria-label="Abrir ou fechar a navegação">Menu <span aria-hidden="true">+</span></summary>
+      <summary aria-label="Menu de navegação">Menu <i aria-hidden="true"></i></summary>
       <nav aria-label="Navegação móvel">
-        {[...nav.map((n) => ({ href: n.href, label: n.mobile })), ...more].map((n, i) => (
-          <a href={u(n.href)}><span>{String(i + 1).padStart(2, '0')}</span>{n.label}</a>
-        ))}
+        {[...nav, ...more].map(({ href, label }) => <a href={u(href)} aria-current={current(href)}>{label}<span aria-hidden="true">→</span></a>)}
       </nav>
     </details>
   </div>

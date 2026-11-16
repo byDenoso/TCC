@@ -1,14 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
-import Header from '../components/Header.astro';
 import PhotoBand from '../components/PhotoBand.astro';
 import { u } from '../lib/url';
 import '../styles/ux-refinements.css';
 ---
 <Base title="Página não encontrada · Cosmos do Zero" description="A página procurada não existe neste observatório." bodyClass="missing-page" noindex>
-  <div id="topo"><Header variant="solid" /></div>
   <PhotoBand photo="andromeda-wise" focus="50% 50%" />
-  <main id="principal" class="paper" style="padding:110px 0 130px">
+  <main id="principal" tabindex="-1" class="paper" style="padding:110px 0 130px">
     <div class="page-width" style="max-width:760px">
       <div class="exhibit-label"><span>404</span> Fora da rota</div>
       <h1 class="display" style="font-size:clamp(46px,8vw,92px);margin:32px 0 24px">Essa região do céu<br /><em>ainda não foi mapeada.</em></h1>

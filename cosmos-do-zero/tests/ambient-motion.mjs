@@ -55,8 +55,8 @@ try {
   assert.equal(await reduced.locator('.sky-orbit--outer').evaluate(el => getComputedStyle(el).animationName), 'none');
   const noJs = await browser.newPage({ javaScriptEnabled: false });
   await noJs.goto(`${base}/`, { waitUntil: 'load' });
-  assert.equal(await noJs.locator('html').getAttribute('data-theme'), 'dark');
+  assert.equal(await noJs.locator('html').getAttribute('data-theme'), 'light');
   assert.equal(await noJs.getByRole('button', { name: /céu animado/i }).count(), 0);
-  assert.equal(await noJs.getByRole('heading', { name: /Cosmos do Zero/i }).count(), 1);
+  assert.equal(await noJs.getByRole('heading', { name: /O Universo,\s*em movimento/i, level: 1 }).count(), 1);
   console.log('Controle de efeitos: teclado, pausa, retomada, preferência ao vivo, saída da tela e ausência de JavaScript OK.');
 } finally { await browser.close(); }

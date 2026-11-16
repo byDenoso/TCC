@@ -49,28 +49,57 @@ export function initNav(): void {
     if (url.hash === location.hash) revealHash();
   });
   addEventListener('popstate', () => { if (location.hash) revealHash(); });
-  const menu = $<HTMLDetailsElement>('[data-mobile-menu]');
-  if (menu) {
-    const close = (returnFocus = false) => { if (menu.open) { menu.open = false; if (returnFocus) $('summary', menu)?.focus(); } };
-    $$('a', menu).forEach((a) => a.addEventListener('click', () => close()));
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(true); });
-    document.addEventListener('click', (e) => { if (menu.open && !menu.contains(e.target as Node)) close(); });
-    menu.addEventListener('focusout', (e) => { if (menu.open && e.relatedTarget instanceof Node && !menu.contains(e.relatedTarget)) close(); });
-    matchMedia('(min-width: 761px)').addEventListener('change', (e) => e.matches && close());
+  const mobileMenu = $<HTMLDetailsElement>('[data-mobile-menu]');
+  const headerMenus = $$<HTMLDetailsElement>('[data-mobile-menu], [data-motion-menu]');
+  const close = (menu: HTMLDetailsElement, returnFocus = false) => {
+    if (!menu.open) return;
+    menu.open = false;
+    if (returnFocus) $('summary', menu)?.focus();
+  };
+  if (mobileMenu) {
+    $$('a', mobileMenu).forEach((link) => link.addEventListener('click', () => close(mobileMenu)));
+    matchMedia('(min-width: 961px)').addEventListener('change', (e) => {
+      if (e.matches) close(mobileMenu);
+    });
   }
-  // Destaque da seção atual no menu principal
-  const links = new Map($$<HTMLAnchorElement>('.main-nav a[data-spy]').map((a) => [a.dataset.spy!, a]));
-  if (!links.size) return;
-  const targets = ['observatorio', 'movimento', 'capitulos'].map((id) => document.getElementById(id)).filter((n): n is HTMLElement => !!n);
-  if (!targets.length || !('IntersectionObserver' in window)) return;
+  for (const menu of headerMenus) {
+    menu.addEventListener('toggle', () => {
+      if (menu.open) headerMenus.filter((other) => other !== menu).forEach((other) => close(other));
+    });
+    menu.addEventListener('focusout', (event) => {
+      if (event.relatedTarget instanceof Node && !menu.contains(event.relatedTarget)) close(menu);
+    });
+  }
+  document.addEventListener('click', (event) => {
+    for (const menu of headerMenus) {
+      if (event.target instanceof Node && !menu.contains(event.target)) close(menu);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.defaultPrevented) return;
+    for (const menu of headerMenus) close(menu, menu.contains(document.activeElement));
+  });
+
+  if (!isHome || !('IntersectionObserver' in window)) return;
+  const links = $$<HTMLAnchorElement>('.main-nav a[data-spy]');
+  const targets = ['capitulos', 'planetario', 'interativos', 'observatorio', 'prologo', 'imagens', 'escala-cosmica', 'viagem', 'movimento'];
+  const mark = (id?: string) => {
+    for (const link of links) {
+      if (link.dataset.spy === id) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    }
+  };
   const io = new IntersectionObserver((entries) => {
-    for (const e of entries) {
-      if (!e.isIntersecting) continue;
-      links.forEach((a, id) => (id === e.target.id ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
+    for (const entry of entries) {
+      if (entry.isIntersecting) mark(entry.target.id === 'capitulos' ? 'capitulos' : 'planetario');
     }
   }, { rootMargin: '-40% 0px -55% 0px' });
-  targets.forEach((t) => io.observe(t));
-  const hero = $('.hero-shell');
-  if (hero) new IntersectionObserver(([e]) => e.isIntersecting && links.forEach((a) => a.removeAttribute('aria-current')), { rootMargin: '-60% 0px 0px 0px' }).observe(hero);
+  for (const id of targets) {
+    const target = document.getElementById(id);
+    if (target) io.observe(target);
+  }
+  const cover = $('.editorial-cover--home');
+  if (cover) new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) mark();
+  }, { rootMargin: '-40% 0px -55% 0px' }).observe(cover);
 }
-

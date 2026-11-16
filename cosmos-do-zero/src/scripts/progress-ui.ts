@@ -59,7 +59,13 @@ export function refreshProgress(): void {
     const next = nextUnfinished(done);
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
     cta.href = resumeAt ? `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}` : chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
-    if(resumeAt){cta.title=`${resumeAt.title} · passo ${resumeAt.step+1} de ${resumeAt.total}`;cta.setAttribute('aria-label',`Continuar a aula: ${resumeAt.title}, passo ${resumeAt.step+1} de ${resumeAt.total}`);}
+    if (resumeAt) {
+      cta.title = `${resumeAt.title} · passo ${resumeAt.step + 1} de ${resumeAt.total}`;
+      cta.setAttribute('aria-label', `Continuar a aula: ${resumeAt.title}, passo ${resumeAt.step + 1} de ${resumeAt.total}`);
+    } else {
+      cta.removeAttribute('title');
+      cta.removeAttribute('aria-label');
+    }
     const inHeader = !!cta.closest('.header');
     const reader = $('[data-reader]');
     const samePage = inHeader && new URL(cta.href).pathname === location.pathname;

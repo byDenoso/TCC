@@ -139,10 +139,11 @@ try{
  await story.locator('[data-story-phase]').first().click();
  ok(await story.locator('[data-story-caption]').innerText().then(t=>t.includes('400')),'movimento reduzido: etapas manuais disponíveis');
  await page.goto(base+'/',{waitUntil:'networkidle'});
- const entry=page.locator('.hero-actions a[href="#prologo"]');
- ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso ao prólogo na primeira tela móvel');
+ const entry=page.locator('.hero-actions a[href="#planetario"]');
+ ok(await entry.evaluate(link=>{const r=link.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),'acesso ao planetário na primeira tela móvel');
  await entry.click();
- ok(new URL(page.url()).hash==='#prologo','abertura leva ao prólogo');
+ ok(new URL(page.url()).hash==='#planetario','abertura leva ao planetário');
+ await page.goto(base+'/#prologo');
  await page.locator('[data-light-go="2"]').click();
  const redshift=page.locator('#light-redshift');
  await redshift.waitFor({state:'visible'});

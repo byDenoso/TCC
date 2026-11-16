@@ -1,0 +1,35 @@
+---
+import { Image, getImage } from 'astro:assets';
+
+interface Props {
+  variant: 'home' | 'lesson' | 'lab';
+  titleId: string;
+  image: ImageMetadata;
+  alt: string;
+  caption: string;
+  credit: string;
+  href: string;
+  position?: string;
+}
+const { variant, titleId, image, alt, caption, credit, href, position = 'center' } = Astro.props;
+const widths = [480, 800, 1200, 1600].filter((width) => width < image.width).concat(image.width);
+const portrait = variant === 'home' ? await getImage({
+  src: image, width: 480, height: 690, fit: 'cover', position: 'center', format: 'webp', quality: 84
+}) : undefined;
+---
+<section class:list={['editorial-cover', `editorial-cover--${variant}`]} aria-labelledby={titleId}>
+  <div class="editorial-cover-inner page-width">
+    <div class="editorial-cover-copy"><slot /></div>
+    <a class="editorial-cover-credit" href={href} target="_blank" rel="noopener noreferrer">
+      <strong>{caption} <span aria-hidden="true">→</span></strong>
+      <small>{credit}</small>
+      <span class="visually-hidden"> (abre em outra aba)</span>
+    </a>
+  </div>
+  <div class="editorial-cover-media" style={`--cover-position:${position}`}>
+    <picture>
+      {portrait && <source media="(max-width: 720px)" srcset={portrait.src} />}
+      <Image src={image} {alt} width={image.width} {widths} sizes="100vw" format="webp" quality={84} loading="eager" fetchpriority="high" />
+    </picture>
+  </div>
+</section>

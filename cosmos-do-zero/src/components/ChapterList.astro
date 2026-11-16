@@ -8,51 +8,44 @@ import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
 import { STORIES } from '../lib/story-scenes';
-const visuals: Record<string, { label: string; icon: string }> = {
-  'galaxias-e-nebulosas': { label: 'Escalas e galáxias', icon: '◎' },
-  'origem-do-universo': { label: 'A história do Universo', icon: '✧' },
-  'misterios-do-cosmos': { label: 'Luz, gravidade e evidências', icon: '⌁' },
-  'vida-das-estrelas': { label: 'Nascimento e evolução estelar', icon: '✺' },
-  'sistema-solar': { label: 'Planetas e órbitas', icon: '◌' },
-  'terra-e-atmosfera': { label: 'O nosso planeta', icon: '⊕' }
-};
 ---
-<section class="paper intro-section" id="capitulos" aria-labelledby="chapters-title">
+<section class="paper intro-section editorial-catalogue" id="capitulos" aria-labelledby="chapters-title" tabindex="-1">
   <div class="page-width">
-    <p class="exhibit-label"><span>06</span> Salas de aula · Trilha de cosmologia</p>
-    <div class="intro-head">
-      <h2 class="display" id="chapters-title">Do primeiro olhar<br /><em>às grandes perguntas.</em></h2>
-      <p>Escolha uma pergunta. Veja a ideia em movimento, mude os controles e descubra o que acontece.</p>
-    </div>
-    <div class="school-method" aria-label="Como você aprende">
-      <div><span aria-hidden="true">01</span><p><strong>Observe acontecer.</strong>A cena começa sozinha. A legenda mostra o que está mudando.</p></div>
-      <div><span aria-hidden="true">02</span><p><strong>Experimente uma ideia.</strong>Pause, altere um controle e compare o resultado.</p></div>
-      <div><span aria-hidden="true">03</span><p><strong>Conecte as descobertas.</strong>Entenda o fenômeno e teste o que aprendeu.</p></div>
-    </div>
+    <header class="catalogue-heading">
+      <div>
+        <p class="section-id">Trilha de aprendizagem</p>
+        <h2 class="display" id="chapters-title">Aulas de cosmologia</h2>
+        <p>Comece pelo nosso lugar no cosmos e siga as pistas que revelam como o Universo evoluiu.</p>
+      </div>
+      <a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens <span aria-hidden="true">→</span></a>
+    </header>
     <a class="resume-card" href={chapterUrl(primaryRows[0].id)} data-resume data-titles={JSON.stringify(Object.fromEntries(chapters.map((c) => [c.id, c.title])))} hidden>
       <span class="meta">Continuar de onde parou</span>
       <strong data-resume-title></strong>
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
-    <div class="school-catalog-tools"><span>Seis aulas para explorar, uma ideia por vez.</span><a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens</a></div>
     <div class="school-catalog" aria-label="As seis aulas da escola">
       {chapters.map((ch, i) => {
-        const visual = visuals[ch.id];
         const cover = courseCovers[ch.id];
         const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
-        return <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id}>
-          <div class="school-course-image">
-            <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 650px) 90vw, (max-width: 1050px) 44vw, 420px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
-            <span class="school-course-number">{pad2(i + 1)}</span>
-            <span class="school-course-photo-caption">{cover.caption}</span>
-            <span class="school-course-type">{primary ? 'Trilha de cosmologia' : 'Continue descobrindo'}</span>
-          </div>
-          <div class="school-course-body"><span class="school-course-label"><span aria-hidden="true">{visual.icon}</span> {visual.label}</span><h3>{ch.title}</h3><p>{STORIES[ch.id].lede}</p><div class="school-course-foot"><span>{ch.minutes} min · 6 experiências</span><strong>Entrar na aula <span aria-hidden="true">↗</span></strong></div></div>
-        </a>;
+        return (
+          <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id} data-track={primary ? 'primary' : 'extra'}>
+            <div class="school-course-image">
+              <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 620px) 90vw, (max-width: 960px) 44vw, 430px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
+              <span class="school-course-photo-caption">{cover.caption}</span>
+            </div>
+            <div class="school-course-body">
+              <div class="school-course-meta"><span>Aula {i + 1} · {ch.minutes} min</span><span class="school-course-type">{primary ? 'Trilha principal' : 'Complementar'}</span></div>
+              <h3>{ch.title}</h3>
+              <p>{STORIES[ch.id].lede}</p>
+              <div class="school-course-foot"><span>{ch.sections.length} experiências</span><strong>Entrar na aula <span aria-hidden="true">→</span></strong></div>
+            </div>
+          </a>
+        );
       })}
     </div>
-    <div class="school-path-heading"><h3>Sua trilha de cosmologia</h3><p>Três grandes perguntas que se conectam.</p></div>
+    <div class="school-path-heading"><h3>Seu progresso na trilha</h3></div>
     <CourseMap />
     <div class="journey-status">
       <span data-progress-label>{progressLabel(0)}</span>
@@ -74,7 +67,7 @@ const visuals: Record<string, { label: string; icon: string }> = {
               <div class="chapter-body-main">
                 <p>{row.summary}</p>
                 {ch.learningGoal && <p class="chapter-learning"><strong>Você vai conseguir:</strong> {ch.learningGoal}</p>}
-                <a class="textlink" href={chapterUrl(row.id)}>Entrar na aula · {ch.minutes} min <span aria-hidden="true">↗</span></a>
+                <a class="textlink" href={chapterUrl(row.id)}>Entrar na aula · {ch.minutes} min <span aria-hidden="true">→</span></a>
               </div>
               <div class="chapter-body-side">
                 <aside>{row.aside}</aside>
@@ -89,6 +82,14 @@ const visuals: Record<string, { label: string; icon: string }> = {
         );
       })}
     </div></details>
+    <details class="school-syllabus school-how">
+      <summary>Como usar as aulas <span aria-hidden="true">+</span></summary>
+      <div class="school-method">
+        <div><p><strong>Observe acontecer.</strong>A cena começa sozinha. A legenda mostra o que está mudando.</p></div>
+        <div><p><strong>Experimente uma ideia.</strong>Pause, altere um controle e compare o resultado.</p></div>
+        <div><p><strong>Conecte as descobertas.</strong>Entenda o fenômeno e teste o que aprendeu.</p></div>
+      </div>
+    </details>
     <Badges />
   </div>
 </section>

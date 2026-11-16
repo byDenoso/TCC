@@ -92,7 +92,7 @@ for (const vp of [{ name: '390', width: 390, height: 844 }, { name: '768', width
       await page.evaluate(() => window.scrollTo(0, 0)); await sleep(400);
       const e = await snap(page, 'luz'); await sleep(500); const f = await snap(page, 'luz');
       ok(`${label}: para de animar fora da tela`, e === f);
-      await page.evaluate(() => document.querySelector('#movimento').scrollIntoView({ block: 'start' })); await sleep(500);
+      await page.locator('[data-sci-panel="luz"] [data-sci-svg]').scrollIntoViewIfNeeded(); await sleep(500);
       const g1 = await snap(page, 'luz'); await sleep(500); const g2 = await snap(page, 'luz');
       ok(`${label}: volta a animar ao reaparecer`, g1 !== g2);
     } else {
