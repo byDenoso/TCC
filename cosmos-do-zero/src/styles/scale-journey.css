@@ -13,10 +13,14 @@
 .scale-exhibit .cosmic-exhibit-heading > h2 { max-width: 19ch; font-size: clamp(42px, 6.6vw, 88px); }
 .scale-journey-end { display: flex; flex-wrap: wrap; gap: 0 26px; }
 .scale-journey-lane > .cosmic-exhibit-stages { margin-inline: auto; }
-.scale-journey-visual { display: none; }
+.scale-exhibit :is(.scale-journey-visual, .scale-hint-interactive) { display: none; }
+.scale-exhibit .scale-exhibit-ticks { position: relative; min-height: 13px; }
+.scale-exhibit .scale-exhibit-ticks > span { position: absolute; left: var(--tick); }
 .scale-exhibit .cosmic-exhibit-copy > .scale-model-note { font-size: 13px; margin-top: 8px; }
 
 @media (prefers-reduced-motion: no-preference) {
+  .scale-exhibit[data-scale-enhanced] .scale-hint-interactive { display: block; }
+  .scale-exhibit[data-scale-enhanced] .scale-hint-static { display: none; }
   .scale-exhibit[data-scale-enhanced] .cosmic-exhibit-nav { position: static; margin-block-end: 14px; }
   .scale-exhibit[data-scale-enhanced] .cosmic-exhibit-nav a[aria-current='step'] {
     background: var(--accent-soft);

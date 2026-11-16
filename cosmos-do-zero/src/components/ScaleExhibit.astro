@@ -16,7 +16,8 @@ const poster = (name: string, small = false) => u(`/posters/${name}${small ? '-s
     <header class="cosmic-exhibit-heading">
       <div class="exhibit-label">Escala contínua</div>
       <h2 class="display" id="scale-exhibit-title">Do próton ao <em>universo observável.</em></h2>
-      <p>Role a página ou arraste a régua para mudar a escala. Cada divisão maior da régua multiplica a distância por dez bilhões.</p>
+      <p class="scale-hint-interactive">Role a página ou arraste a régua para mudar a escala. Cada divisão maior da régua multiplica a distância por dez bilhões.</p>
+      <p class="scale-hint-static">Escolha uma parada para comparar os tamanhos e entender a física em cada escala.</p>
     </header>
     <nav class="cosmic-exhibit-nav" aria-label="Escalas da exposição">
       {scaleStations.map((stage, i) => <a href={`#escala-${stage.id}`}><span aria-hidden="true">{number(i)}</span>{stage.name}</a>)}
@@ -70,7 +71,7 @@ const poster = (name: string, small = false) => u(`/posters/${name}${small ? '-s
             </div>
             <div class="scale-exhibit-ruler" aria-hidden="true">
               <div class="scale-exhibit-track"><span style={`--scale-position:${position(scaleLogs[i])}%`}></span></div>
-              <div class="scale-exhibit-ticks">{ticks.map(tick => <span>10<sup>{tick}</sup></span>)}</div>
+              <div class="scale-exhibit-ticks">{ticks.map(tick => <span style={`--tick:${position(tick)}%`}>10<sup>{tick}</sup></span>)}</div>
               <span class="scale-exhibit-unit">m</span>
             </div>
           </figure>
