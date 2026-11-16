@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { journeyLayers, journeyPosition, journeyVideoTime } from '../../src/lib/scale-journey';
+import { journeyLayers, journeyLog, journeyPosition, journeyVideoTime } from '../../src/lib/scale-journey';
+import { scaleLogs, scaleStations } from '../../src/data/scale-stations';
 import { FrameBudget } from '../../src/scripts/visual/render-policy';
 
 describe('exposição de escalas', () => {
@@ -24,6 +25,21 @@ describe('exposição de escalas', () => {
   it('maps the same scroll keyframes onto the video in both directions', () => {
     expect([0, 1, 2, 3, 4, 3, 2, 1, 0].map(value => journeyVideoTime(value, 4.02))).toEqual([0, 1, 2, 3, 4, 3, 2, 1, 0]);
     expect(journeyVideoTime(4, 3.97)).toBeLessThan(3.97);
+  });
+
+  it('maps the whole journey onto a strictly increasing logarithmic ruler', () => {
+    const end = scaleStations.length - 1;
+    expect(scaleStations[0].id).toBe('proton');
+    expect(scaleStations[end].id).toBe('universo-observavel');
+    expect(journeyLayers(end, end)).toEqual({ from: end - 1, to: end, blend: 1 });
+    scaleLogs.forEach((size, i) => {
+      expect(journeyLog(i, scaleLogs)).toBeCloseTo(size, 9);
+      expect(journeyPosition(size, scaleLogs)).toBe(i);
+      if (i > 0) {
+        expect(size).toBeGreaterThan(scaleLogs[i - 1]);
+        expect(journeyPosition(journeyLog(i - .4, scaleLogs), scaleLogs)).toBeCloseTo(i - .4, 9);
+      }
+    });
   });
 
   it('switches mobile to video only after measured frames miss the 50 fps budget', () => {

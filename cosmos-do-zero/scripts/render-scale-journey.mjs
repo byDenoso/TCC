@@ -1,4 +1,4 @@
-// Rebuild the mobile fallback from the WebGL exhibit. Run against a built preview.
+// Rebuild the mobile video for the original Terra → teia cósmica span.
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { chromium } from 'playwright';
@@ -26,7 +26,7 @@ try {
   await page.waitForSelector('[data-scale-enhanced]');
   await page.evaluate(() => {
     document.documentElement.style.scrollBehavior = 'auto';
-    const first = document.querySelector('[data-scale-station]');
+    const first = document.querySelector('#escala-terra');
     window.scrollBy(0, first.getBoundingClientRect().top);
   });
   await page.waitForSelector('[data-scale-visual-stage][data-media="webgl"] canvas', { timeout: 30000 });
@@ -44,13 +44,16 @@ try {
     const value = i / fps;
     await page.evaluate(progress => {
       const stations = [...document.querySelectorAll('[data-scale-station]')];
-      const step = Math.min(stations.length - 2, Math.floor(progress));
+      const position = stations.findIndex(station => station.id === 'escala-terra') + progress;
+      const step = Math.min(stations.length - 2, Math.floor(position));
       const a = stations[step].getBoundingClientRect().top;
       const b = stations[step + 1].getBoundingClientRect().top;
-      window.scrollBy(0, a + (b - a) * (progress - step));
+      window.scrollBy(0, a + (b - a) * (position - step));
     }, value);
-    await page.waitForFunction(progress =>
-      Math.abs(Number(document.querySelector('[data-scale-visual-stage]').dataset.scalePosition) - progress) < .002, value);
+    await page.waitForFunction(progress => {
+      const first = [...document.querySelectorAll('[data-scale-station]')].findIndex(station => station.id === 'escala-terra');
+      return Math.abs(Number(document.querySelector('[data-scale-visual-stage]').dataset.scalePosition) - first - progress) < .002;
+    }, value);
     const png = await canvas.evaluate(element => element.toDataURL('image/png').split(',')[1]);
     if (!encoder.stdin.write(Buffer.from(png, 'base64'))) await once(encoder.stdin, 'drain');
   }

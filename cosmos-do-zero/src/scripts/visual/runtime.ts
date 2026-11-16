@@ -39,6 +39,7 @@ export function claimContext(release: () => void): () => void {
 export interface VisualState { value: number; phase: number; elapsed: number }
 export interface Exhibit {
   group: THREE.Group;
+  background?: number;
   update(state: VisualState): void;
   camera?: [number, number, number];
   cameraForValue?: (value:number,aspect:number)=>[number,number,number];
@@ -151,7 +152,7 @@ function mount(stage: HTMLElement, exhibit: Exhibit, prepared: PreparedRenderer,
   active?.();
   stage.querySelector('.cosmos-preview')?.remove();
   stage.dataset.renderer = backend;
-  renderer.setClearColor(0x070c18); renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.setClearColor(exhibit.background??0x070c18); renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const exposure=exhibit.lighting?.exposure??0.9;
   renderer.toneMappingExposure=exhibit.photography?photographicExposure(exhibit.photography.camera).normalization*exhibit.photography.artisticLuminanceScale*exposure:exposure;

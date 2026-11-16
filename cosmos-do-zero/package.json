@@ -18,6 +18,7 @@
     "test:browsers": "node tests/browser-smoke.mjs",
     "test:webgpu": "node tests/verify-lifecycle-unhandled.mjs && node tests/webgpu-fallback.mjs",
     "test:renders": "node tests/renders.mjs && node tests/scale-visual.mjs",
+    "test:scales": "node tests/scale-journey.mjs",
     "test:pages": "node tests/pages-base.mjs",
     "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",
     "test:hero": "node tests/hero-blue.mjs",

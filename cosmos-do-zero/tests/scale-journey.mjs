@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { chromium, devices } from 'playwright';
 import sharp from 'sharp';
 
-const url = process.env.SCALE_URL ?? 'http://127.0.0.1:4321/escalas/';
+const url = process.env.SCALE_URL ?? `${(process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '')}/escalas/`;
 const captures = process.env.SCALE_CAPTURES;
 if (captures) await mkdir(captures, { recursive: true });
 const browser = await chromium.launch({
@@ -13,11 +13,13 @@ const browser = await chromium.launch({
 });
 const visual = '[data-scale-visual-stage]';
 const canvas = '[data-scale-canvas] canvas';
-const stationNames = ['Terra', 'Sistema Solar', 'Via Láctea', 'Grupo Local', 'Teia cósmica'];
+const stationNames = ['Próton', 'Átomo de hidrogênio', 'Hemácia', 'Um metro', 'Terra', 'Sistema Solar', 'Via Láctea', 'Grupo Local', 'Teia cósmica', 'Universo observável'];
+const activeName = '[data-scale-active] [data-scale-name]';
 const errors = [];
 
 async function open(options) {
   const page = await browser.newPage(options);
+  await page.addInitScript(() => Object.defineProperty(navigator, 'gpu', { value: undefined }));
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', entry => { if (entry.type() === 'error') errors.push(entry.text()); });
   await page.goto(url, { waitUntil: 'networkidle' });
@@ -43,19 +45,47 @@ try {
   await goToScale(desktop, 0);
   await desktop.waitForSelector(`${visual}[data-media="webgl"]`);
   const rect = await desktop.locator(visual).boundingBox();
-  assert.deepEqual([rect.x, rect.width, rect.height], [0, 1280, 800]);
+  assert.ok(rect.width > 960 && rect.width <= 1280 && rect.height === 800);
   assert.ok(Math.abs(rect.y) < 1);
   const frames = [];
-  for (const progress of [0, .4, 1, 2, 3, 4, 2.6]) {
+  for (const progress of [0, .4, 1, 2, 3, 4, 5, 6, 7, 8, 9, 7.6]) {
     await goToScale(desktop, progress);
-    assert.equal(await desktop.locator('[data-scale-name]').textContent(), stationNames[Math.round(progress)]);
-    assert.equal(await desktop.locator('.cosmic-exhibit-nav [aria-current="step"]').textContent(), `0${Math.round(progress) + 1}${stationNames[Math.round(progress)]}`);
+    assert.equal(await desktop.locator(activeName).textContent(), stationNames[Math.round(progress)]);
+    assert.equal(await desktop.locator('.cosmic-exhibit-nav [aria-current="step"]').textContent(), `${String(Math.round(progress) + 1).padStart(2, '0')}${stationNames[Math.round(progress)]}`);
     const image = await desktop.locator(canvas).screenshot();
     const frame = await sharp(image).resize(64, 48).removeAlpha().raw().toBuffer();
     if (frames.length) assert.ok(!frame.equals(frames.at(-1)), `changed WebGL pixels at scale ${progress}`);
     frames.push(frame);
-    if (captures && [0, .4, 4].includes(progress)) await desktop.screenshot({ path: join(captures, `desktop-${progress}.png`) });
+    if (captures && [0, .4, 6, 9].includes(progress)) await desktop.screenshot({ path: join(captures, `desktop-${progress}.png`) });
   }
+  const slider = desktop.getByRole('slider');
+  await slider.press('End');
+  await desktop.waitForFunction(selector => document.querySelector(selector).textContent === 'Universo observável', activeName);
+  await slider.press('Home');
+  await desktop.waitForFunction(selector => document.querySelector(selector).textContent === 'Próton', activeName);
+  const scaleSelect = desktop.getByRole('combobox', { name: 'Ir para uma escala' });
+  await scaleSelect.selectOption('6');
+  await desktop.waitForFunction(selector => document.querySelector(selector).textContent === 'Via Láctea', activeName);
+  assert.match(desktop.url(), /#escala-via-lactea$/);
+  const view = desktop.locator('.scale-scene-window .cosmos-view-options');
+  await view.locator('summary').click();
+  await view.getByRole('button', { name: 'Girar a cena' }).click();
+  const bounds = await desktop.locator(canvas).boundingBox();
+  const before = await desktop.locator(canvas).screenshot();
+  await desktop.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await desktop.mouse.down();
+  await desktop.mouse.move(bounds.x + bounds.width / 2 + 68, bounds.y + bounds.height / 2 + 47, { steps: 8 });
+  await desktop.mouse.up();
+  assert.ok(!(await desktop.locator(canvas).screenshot()).equals(before), 'gesto muda a perspectiva');
+  await view.getByRole('button', { name: 'Liberar a rolagem' }).click();
+  const light = desktop.getByRole('button', { name: 'Modo leve' });
+  await light.click();
+  await desktop.locator(canvas).waitFor({ state: 'detached' });
+  await slider.press('End');
+  await desktop.waitForFunction(selector => document.querySelector(selector).textContent === 'Universo observável', activeName);
+  await desktop.waitForFunction(() => [...document.querySelectorAll('.scale-journey-posters img')].at(-1).naturalWidth > 0);
+  await light.click();
+  await desktop.waitForSelector(`${visual}[data-media="webgl"]`);
   await desktop.setViewportSize({ width: 1280, height: 300 });
   await desktop.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
   await desktop.locator(canvas).waitFor({ state: 'detached' });
@@ -63,8 +93,8 @@ try {
 
   const ssr = await open({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   assert.deepEqual(await ssr.locator('[data-scale-station] h3').allTextContents(), stationNames);
-  assert.equal(await ssr.locator('[data-scale-station] img[alt]').count(), 5);
-  assert.equal(await ssr.locator('[data-scale-station] a[href^="https://"]').count(), 5);
+  assert.equal(await ssr.locator('[data-scale-station] img[alt]').count(), stationNames.length);
+  assert.equal(await ssr.locator('[data-scale-station] a[href^="https://"]').count(), stationNames.length);
   assert.equal(await ssr.locator(visual).isVisible(), false);
   const staticList = await ssr.locator('.cosmic-exhibit-stages').boundingBox();
   assert.ok(staticList.x > 0 && Math.abs(staticList.x * 2 + staticList.width - 390) < 2);
@@ -84,13 +114,21 @@ try {
   await goToScale(phone, 0);
   await phone.waitForSelector(`${visual}[data-media="webgl"]`);
   assert.equal(await phone.locator('[data-scale-video]').getAttribute('src'), null);
+  await phone.locator('[data-theme-toggle]').first().click();
+  assert.equal(await phone.locator('html').getAttribute('data-theme'), 'dark');
+  const mobileSlider = await phone.getByRole('slider').boundingBox();
+  await phone.touchscreen.tap(mobileSlider.x + mobileSlider.width - 4, mobileSlider.y + mobileSlider.height / 2);
+  await phone.waitForFunction(selector => document.querySelector(selector).textContent === 'Universo observável', activeName);
+  assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth - innerWidth), 0);
+  if (captures) await phone.screenshot({ path: join(captures, 'mobile-dark-9.png') });
+  await goToScale(phone, 4);
   // Deliberately miss a frame under live scroll without claiming a hardware benchmark.
   await phone.evaluate(() => new Promise(resolve => {
     const travel = document.querySelector('[data-scale-lane]');
-    const start = travel.getBoundingClientRect().top + scrollY;
+    const start = scrollY;
     let step = 0;
     const move = () => {
-      scrollTo(0, start + ++step * 12);
+      scrollTo({ top: start + ++step * 12, behavior: 'instant' });
       const deadline = performance.now() + 25;
       while (performance.now() < deadline) { /* intentional CPU load */ }
       if (step < 98 && !travel.querySelector('[data-scale-video]').hasAttribute('src')) requestAnimationFrame(move);
@@ -102,11 +140,11 @@ try {
   const p90 = Number(await phone.locator(visual).getAttribute('data-scale-p90'));
   assert.ok(p90 > 20, `expected p90 over 20 ms, received ${p90}`);
   assert.equal(await phone.locator(canvas).count(), 0);
-  for (const progress of [3, 1, 4]) {
+  for (const progress of [7, 5, 8]) {
     await goToScale(phone, progress);
     await phone.waitForFunction(value => {
       const video = document.querySelector('[data-scale-video]');
-      return !video.seeking && video.paused && Math.abs(video.currentTime - value) < .025;
+      return !video.seeking && video.paused && Math.abs(video.currentTime - (value - 4)) < .025;
     }, progress);
   }
   if (captures) await phone.screenshot({ path: join(captures, 'mobile-video.png') });
@@ -114,7 +152,7 @@ try {
   await phone.locator('[data-scale-enhanced]').waitFor({ state: 'detached' });
   assert.equal(await phone.locator(visual).isVisible(), false);
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ desktop: 'five WebGL views plus intermediate frames', ssr: true, reducedMotion: true, mobile: { mode: 'Pixel 7 emulated, SwiftShader, 25 ms injected CPU load', p90Ms: p90, videoSeek: 'forward, backward, final' } }));
+  console.log(JSON.stringify({ desktop: 'ten WebGL views with intermediate frames and camera gesture', ssr: true, reducedMotion: true, mobile: { mode: 'Pixel 7 emulated, SwiftShader, 25 ms injected CPU load', p90Ms: p90, videoSeek: 'forward, backward, end of the original animation' } }));
 } finally {
   await browser.close();
 }

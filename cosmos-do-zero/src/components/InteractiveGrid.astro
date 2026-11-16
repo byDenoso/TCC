@@ -13,7 +13,7 @@ type Card = { href: string; kind: string; title: string; text: string; action: s
   | { planet: keyof typeof planetArt }
 );
 const cards: Card[] = [
-  { href: u('/escalas/'), kind: 'Simulação 3D', title: 'Da Terra à teia cósmica', text: 'Role a página para afastar a câmera da Terra até a teia cósmica.', action: 'Abrir a exposição de escalas', poster: 'earth' },
+  { href: u('/escalas/'), kind: 'Exploração 3D', title: 'Do próton ao universo observável', text: 'Arraste a régua ou role para viajar entre partículas, planetas e galáxias.', action: 'Explorar as escalas', poster: 'earth' },
   { href: u('/imagens/'), kind: 'Fotos reais · NASA', title: 'Fotos do Webb, WISE e da estação espacial', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
   { href: `${u('/laboratorio/')}#planetas`, kind: 'Ilustração artística', title: 'Os oito planetas do Sistema Solar', text: 'Compare composição, atmosfera e tamanho dos planetas.', action: 'Conhecer os planetas', planet: 'saturno' },
   { href: u('/#viagem'), kind: 'Animação guiada', title: 'Marcos da história do Universo', text: 'Role a página para avançar da fase de plasma quente até as galáxias de hoje.', action: 'Abrir a linha do tempo', poster: 'galaxies' },
