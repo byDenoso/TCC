@@ -9,11 +9,18 @@ export function journeyPosition(scroll: number, stations: readonly number[]): nu
   return next - 1 + (scroll - stations[next - 1]) / (stations[next] - stations[next - 1]);
 }
 
-export function journeyLayers(value: number) {
-  const position = clamp(value, lastStage);
-  const from = Math.min(lastStage - 1, Math.floor(position));
+export function journeyLayers(value: number, end = lastStage) {
+  const position = clamp(value, end);
+  const from = Math.min(end - 1, Math.floor(position));
   const phase = position - from;
   return { from, to: from + 1, blend: phase * phase * (3 - 2 * phase) };
+}
+
+/** Monotonic interpolation from equal-spaced stops to powers of ten in metres. */
+export function journeyLog(position: number, stops: readonly number[]): number {
+  const bounded = clamp(position, stops.length - 1);
+  const start = Math.min(stops.length - 2, Math.floor(bounded));
+  return stops[start] + (stops[start + 1] - stops[start]) * (bounded - start);
 }
 
 /** One second per transition. The final keyframe has an encoded frame of its own. */

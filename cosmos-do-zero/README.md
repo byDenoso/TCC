@@ -18,6 +18,12 @@ Qualidade ajustada à largura/DPR: mapas galácticos 1536 no desktop e 768 no mo
 
 ## Materiais e proveniência
 
+### Escala contínua
+
+Em `/escalas/`, a rolagem e a régua logarítmica percorrem dez escalas, do raio de carga do próton ao diâmetro do universo observável. Os comprimentos e as fontes aparecem junto a cada etapa. A régua usa metros e a escala das cenas tem finalidade ilustrativa. Nos modelos sobrepostos, a câmera interpola a posição e os objetos mantêm uma âncora local quando há uma relação espacial, como a Terra no Sistema Solar.
+
+A cena usa um único contexto 3D com os materiais de Three.js. A montagem acontece perto da área visível, e o mapa MODIS da Terra só é carregado ao chegar às escalas planetárias. `Modo leve` usa ilustrações. Em celulares com movimento habilitado e desempenho insuficiente, o trecho Terra → teia também pode usar o vídeo de referência que já estava no site. As paradas, legendas e fontes das imagens novas ficam em `src/data/scale-stations.ts`. O teste `npm run test:scales` usa `BASE_URL` do preview.
+
 Terra: composição MODIS/Blue Marble de julho2004. Lua: mosaico LROC 2025, com tratamento de cor declarado pela fonte, e relevo LOLA. Júpiter: Hubble/OPAL 2015. Marte: mosaico Viking/USGS. Mercúrio: MESSENGER em cores realçadas. Mapas de Saturno/Netuno da coleção NASA são ilustrativos; Vênus/Urano usam authoring original de nuvens. Geometria, iluminação, espessura de atmosfera, anéis e relevos visuais são aproximações explícitas.
 
 As seis morfologias galácticas são assets originais com emissão/poeira/estrelas sintetizadas; não correspondem a mapas observacionais de galáxias específicas. A nebulosa combina densidade original e detalhe Hubble/Orion creditado; a profundidade e as cores são artísticas. Estrelas usam granulação original. BH ilustra horizonte/disco, sem calcular sombra ou ray tracing relativístico. Lente calcula imagem 2D pelo modelo de lente fina, com geometria 3D coerente e limites declarados.

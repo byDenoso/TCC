@@ -3,7 +3,7 @@ import { journeyLayers } from '../../lib/scale-journey';
 import type { Exhibit } from './runtime';
 
 /** Adjacent models meet at the smaller scene's address in the wider one. */
-export function scaleFlight(exhibit: Exhibit, steps: THREE.Group[], anchors: THREE.Vector3[]): Exhibit {
+export function scaleFlight(exhibit: Exhibit, steps: THREE.Group[], anchors: THREE.Vector3[], dolly = false): Exhibit {
   const stages = steps.map(group => {
     const initialScale = group.scale.x;
     const materials = new Map<THREE.Material, { opacity: number; depthWrite: boolean; fade?: { value: number } }>();
@@ -29,15 +29,15 @@ export function scaleFlight(exhibit: Exhibit, steps: THREE.Group[], anchors: THR
     ...exhibit,
     labels: undefined,
     cameraForValue(value, aspect) {
-      const { from, to, blend } = journeyLayers(value);
+      const { from, to, blend } = journeyLayers(value, steps.length - 1);
       const a = exhibit.cameraForValue!(from, aspect), b = exhibit.cameraForValue!(to, aspect);
-      const fit = Math.max(1, .8 / aspect);
+      const fit = Math.max(1, (dolly ? .95 : .8) / aspect) * (dolly ? 1 + .14 * Math.sin(Math.PI * blend) : 1);
       return [(a[0] + (b[0] - a[0]) * blend) * fit,
         (a[1] + (b[1] - a[1]) * blend) * fit,
         (a[2] + (b[2] - a[2]) * blend) * fit];
     },
     update({ value }) {
-      const { from, to, blend } = journeyLayers(value);
+      const { from, to, blend } = journeyLayers(value, steps.length - 1);
       const anchor = anchors[to];
       address.copy(anchor).multiplyScalar(blend);
       stages.forEach(({ group, initialScale, materials }, i) => {

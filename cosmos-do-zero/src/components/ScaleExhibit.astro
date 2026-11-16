@@ -1,105 +1,79 @@
 ---
 import { chapterUrl, u } from '../lib/url';
+import { scaleLogs, scaleStations } from '../data/scale-stations';
 import '../styles/scale-blackhole.css';
 import '../styles/scale-journey.css';
 
-const auKm = 149_597_870.7;
-const lightYearKm = 9.4607e12;
-const ticks = [4, 10, 16, 22];
-const stages = [
-  {
-    id: 'terra', name: 'Terra', image: 'earth', extent: '12.756 km', km: 12_756,
-    dimension: 'Diâmetro equatorial',
-    text: 'Comece pelo planeta onde vivemos. A luz atravessaria uma distância igual a seu diâmetro em cerca de 0,04 segundo.',
-    alt: 'Globo terrestre iluminado, com oceanos, continentes e nuvens.',
-    caption: 'Render com mapa terrestre MODIS da NASA. Nuvens, oceanos e iluminação ilustrativos.',
-    source: 'https://science.nasa.gov/earth/facts/', sourceLabel: 'NASA · Terra'
-  },
-  {
-    id: 'sistema-solar', name: 'Sistema Solar', image: 'solar-system', extent: '≈ 60 UA', km: 60 * auKm,
-    dimension: 'Diâmetro de referência até a órbita de Netuno',
-    text: 'Uma unidade astronômica (UA) equivale a cerca de 150 milhões de km. Netuno fica a cerca de 30 UA do Sol. Dobrar essa distância dá a largura da região planetária. Há corpos além dela.',
-    alt: 'Oito planetas representados por esferas em torno do Sol, com tamanhos ampliados.',
-    caption: 'Ilustração. Tamanhos e separações dos planetas fora de escala.',
-    source: 'https://science.nasa.gov/neptune/neptune-facts/', sourceLabel: 'NASA · Distância de Netuno'
-  },
-  {
-    id: 'via-lactea', name: 'Via Láctea', image: 'galaxies', extent: '≈ 100 mil anos-luz', km: 100_000 * lightYearKm,
-    dimension: 'Diâmetro do disco estelar',
-    text: 'O Sistema Solar ocupa uma região minúscula do disco da nossa galáxia, longe do centro. Um ano-luz é a distância que a luz percorre em um ano.',
-    alt: 'Galáxia espiral vista em perspectiva, com braços ao redor de um núcleo luminoso.',
-    caption: 'Ilustração de uma galáxia espiral representando a Via Láctea.',
-    source: 'https://science.nasa.gov/universe/exoplanets/our-milky-way-galaxy-how-big-is-space/', sourceLabel: 'NASA · Via Láctea'
-  },
-  {
-    id: 'grupo-local', name: 'Grupo Local', image: 'group-local', extent: '≈ 10 milhões de anos-luz', km: 10_000_000 * lightYearKm,
-    dimension: 'Extensão aproximada do grupo',
-    text: 'A Via Láctea e Andrômeda são duas das maiores galáxias do Grupo Local. Dezenas de galáxias menores também fazem parte dessa vizinhança ligada pela gravidade.',
-    alt: 'Conjunto ilustrado de galáxias, com duas espirais mais brilhantes próximas ao centro.',
-    caption: 'Ilustração. Posições e tamanhos aparentes estilizados.',
-    source: 'https://science.nasa.gov/wp-content/uploads/2024/08/7page43.pdf', sourceLabel: 'NASA · Extensão do Grupo Local (PDF)'
-  },
-  {
-    id: 'teia-cosmica', name: 'Teia cósmica', image: 'cosmic-web', extent: '≈ 500 milhões de anos-luz', km: 500_000_000 * lightYearKm,
-    dimension: 'Comprimento da Muralha de Coma, um exemplo',
-    text: 'Galáxias, grupos e aglomerados formam filamentos e paredes separados por vazios. A Muralha de Coma dá uma medida de referência para uma das estruturas dessa rede.',
-    alt: 'Rede ilustrada de nós brilhantes conectados por filamentos, com vazios entre eles.',
-    caption: 'Ilustração da teia em geral. A medida se refere à Muralha de Coma.',
-    source: 'https://science.nasa.gov/universe/galaxies/large-scale-structures/', sourceLabel: 'NASA · Estruturas em grande escala'
-  }
-];
-const position = (km: number) => 100 * (Math.log10(km) - ticks[0]) / (ticks.at(-1)! - ticks[0]);
+const ticks = [-15, -5, 5, 15, 25];
+const minLog = scaleLogs[0];
+const logSpan = scaleLogs.at(-1)! - minLog;
+const position = (log: number) => 100 * (log - minLog) / logSpan;
+const number = (i: number) => String(i + 1).padStart(2, '0');
+const poster = (name: string, small = false) => u(`/posters/${name}${small ? '-small' : ''}.webp`);
 ---
 <section class="cosmic-exhibit scale-exhibit" id="escala-cosmica" aria-labelledby="scale-exhibit-title" data-scale-journey>
   <div class="page-width">
     <header class="cosmic-exhibit-heading">
-      <div class="exhibit-label"><span>02</span> Exposição · Escalas do Universo</div>
-      <h2 class="display" id="scale-exhibit-title">Da Terra à <em>teia cósmica.</em></h2>
-      <p>Percorra cinco escalas do Universo. Cada intervalo da régua logarítmica multiplica a distância por um milhão. O percurso visual combina modelos em escalas ilustrativas.</p>
-      <p class="scale-journey-instruction">Role a página para afastar a câmera.</p>
+      <div class="exhibit-label">Escala contínua</div>
+      <h2 class="display" id="scale-exhibit-title">Do próton ao <em>universo observável.</em></h2>
+      <p>Role a página ou arraste a régua para mudar a escala. Cada divisão maior da régua multiplica a distância por dez bilhões.</p>
     </header>
-
     <nav class="cosmic-exhibit-nav" aria-label="Escalas da exposição">
-      {stages.map((stage, i) => <a href={`#escala-${stage.id}`}><span aria-hidden="true">0{i + 1}</span>{stage.name}</a>)}
+      {scaleStations.map((stage, i) => <a href={`#escala-${stage.id}`}><span aria-hidden="true">{number(i)}</span>{stage.name}</a>)}
     </nav>
   </div>
+
   <div class="scale-journey-lane" data-scale-lane>
-    <div class="scale-journey-visual" data-scale-visual-stage aria-hidden="true">
-      <div class="scale-journey-canvas" data-scale-canvas data-cosmos-quality="standard">
-        <div class="scale-journey-posters" data-story-poster>
-          {stages.map(stage => <img src={u(`/posters/${stage.image}-small.webp`)} width="600" height="400" alt="" loading="lazy" decoding="async" />)}
+    <div class="scale-journey-visual" data-scale-visual-stage data-media="posters">
+      <div class="scale-console">
+        <div class="scale-console-tools">
+          <span class="scale-count" data-scale-count aria-hidden="true">01 / {scaleStations.length}</span>
+          <label class="visually-hidden" for="scale-jump">Ir para uma escala</label>
+          <select id="scale-jump" data-scale-jump>
+            {scaleStations.map((stage, i) => <option value={i}>{stage.name}</option>)}
+          </select>
+          <button type="button" data-scale-light aria-pressed="false">Modo leve</button>
         </div>
-        <video class="scale-journey-video" data-scale-video={u('/media/scale-journey.mp4')} preload="none" muted playsinline></video>
+        <div class="scale-slider">
+          <label class="visually-hidden" for="scale-slider">Régua logarítmica de tamanho em metros</label>
+          <input id="scale-slider" data-scale-input type="range" min="0" max="10000" step="10" value="0" />
+          <span class="scale-slider-ticks" aria-hidden="true">
+            {ticks.map(tick => <span style={`--tick:${position(tick)}%`}>10<sup>{tick}</sup></span>)}
+            <span class="scale-slider-unit">m</span>
+          </span>
+        </div>
       </div>
-    </div>
-    <div class="scale-journey-progress" aria-hidden="true">
-      <span data-scale-count>01 / 05</span>
-      <span data-scale-name>{stages[0].name}</span>
-      <span class="scale-journey-progress-track"></span>
-    </div>
-    <ol class="cosmic-exhibit-stages page-width" role="list">
-      {stages.map((stage, i) => (
-        <li class="cosmic-exhibit-stage" id={`escala-${stage.id}`} tabindex="-1" data-scale-station={stage.name}>
-          <div class="scale-journey-card">
-            <div class="cosmic-exhibit-copy">
-              <div class="exhibit-label"><span>0{i + 1}</span> Escala de referência</div>
-              <h3>{stage.name}</h3>
-              <p class="scale-exhibit-extent"><strong>{stage.extent}</strong><small>{stage.dimension}</small></p>
-              <p>{stage.text}</p>
-              <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
-            </div>
-            <figure class="cosmic-exhibit-plate">
-              <div class="scale-exhibit-image">
-                <img src={u(`/posters/${stage.image}-small.webp`)} srcset={`${u(`/posters/${stage.image}-small.webp`)} 600w, ${u(`/posters/${stage.image}.webp`)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
-              </div>
-              <div class="scale-exhibit-ruler" aria-hidden="true">
-                <div class="scale-exhibit-track"><span style={`--scale-position: ${position(stage.km)}%`}></span></div>
-                <div class="scale-exhibit-ticks">{ticks.map((tick) => <span>10<sup>{tick}</sup></span>)}</div>
-                <span class="scale-exhibit-unit">km</span>
-              </div>
-              <figcaption>{stage.caption}</figcaption>
-            </figure>
+      <div class="scale-scene-window">
+        <div class="scale-journey-canvas" data-scale-canvas data-cosmos-quality="standard">
+          <div class="scale-journey-posters" data-story-poster aria-hidden="true">
+            {scaleStations.map((stage, i) => <img src={i === 0 ? poster(stage.image, true) : undefined} data-src={poster(stage.image, true)} width="600" height="400" alt="" decoding="async" />)}
           </div>
+          <video class="scale-journey-video" data-scale-video={u('/media/scale-journey.mp4')} preload="none" muted playsinline></video>
+        </div>
+      </div>
+      <aside class="scale-active" aria-label="Nesta escala" data-scale-active></aside>
+    </div>
+
+    <ol class="cosmic-exhibit-stages page-width" role="list">
+      {scaleStations.map((stage, i) => (
+        <li class="cosmic-exhibit-stage" id={`escala-${stage.id}`} tabindex="-1" data-scale-station={stage.name}>
+          <div class="cosmic-exhibit-copy">
+            <h3 data-scale-name>{stage.name}</h3>
+            <p class="scale-exhibit-extent"><strong>{stage.extent}</strong><small>{stage.dimension}</small></p>
+            <p>{stage.text}</p>
+            <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
+            <p class="scale-model-note">{stage.caption}</p>
+          </div>
+          <figure class="cosmic-exhibit-plate">
+            <div class="scale-exhibit-image">
+              <img src={poster(stage.image, true)} srcset={`${poster(stage.image, true)} 600w, ${poster(stage.image)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
+            </div>
+            <div class="scale-exhibit-ruler" aria-hidden="true">
+              <div class="scale-exhibit-track"><span style={`--scale-position:${position(scaleLogs[i])}%`}></span></div>
+              <div class="scale-exhibit-ticks">{ticks.map(tick => <span>10<sup>{tick}</sup></span>)}</div>
+              <span class="scale-exhibit-unit">m</span>
+            </div>
+          </figure>
         </li>
       ))}
     </ol>
