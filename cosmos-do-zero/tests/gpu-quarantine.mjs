@@ -80,14 +80,20 @@ try {
           window.__GPU_PENDING.add('second');
           window.__GPU_PENDING.add('third');
         });
-        await frame('third').waitFor({timeout:30000});
-        assert.equal(await stage('third').getAttribute('data-renderer-engine'), 'playcanvas');
-        assert.deepEqual(await page.evaluate(() => window.__GPU_PENDING.events.map(event => event.name)), ['first','second','third']);
-        for (const name of ['first','second']) {
+        await page.waitForFunction(() => window.__GPU_PENDING.events.length === 3);
+        const events = await page.evaluate(() => window.__GPU_PENDING.events);
+        assert.deepEqual(events.map(event => event.type), Array(3).fill('cosmos:ready'));
+        const [first, previous, current] = events.map(event => event.name);
+        assert.equal(first, 'first');
+        // Different IntersectionObservers can enter together in either order.
+        assert.deepEqual([previous,current].sort(), ['second','third']);
+        await frame(current).waitFor();
+        assert.equal(await stage(current).getAttribute('data-renderer-engine'), 'playcanvas');
+        for (const name of [first,previous]) {
           assert.equal(await frame(name).count(), 0);
           assert.ok(await stage(name).locator('svg').isVisible());
         }
-        await page.evaluate(() => window.__GPU_PENDING.dispose('third'));
+        await page.evaluate(name => window.__GPU_PENDING.dispose(name), current);
       }
       await page.waitForFunction(() => window.__GPU_PROBE.active() === 0);
     }
