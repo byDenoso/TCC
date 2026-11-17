@@ -21,18 +21,32 @@ export async function openInstrument(canvas: HTMLCanvasElement, url: string) {
     app.renderNextFrame = true;
   }
   view(false);
-  for (const [position, color, strength] of [
-    [new Vec3(-3, 7, 3), new Color(1, .88, .72), 1.75],
-    [new Vec3(1, 4, -5), new Color(.52, .79, 1), 1.25],
-    [new Vec3(5, 2, 1), new Color(.96, .87, .76), .52]
+  for (const [position, color, strength, key] of [
+    [new Vec3(-3, 7, 3), new Color(1, .88, .72), 1.75, true],
+    [new Vec3(1, 4, -5), new Color(.52, .79, 1), 1.25, false],
+    [new Vec3(5, 2, 1), new Color(.96, .87, .76), .52, false]
   ] as const) {
     const lamp = new Entity('Luz de estúdio');
-    lamp.addComponent('light', { type: 'directional', color, intensity: strength });
+    lamp.addComponent('light', {
+      type: 'directional', color, intensity: strength, castShadows: key,
+      shadowDistance: 18, shadowResolution: 1024, shadowIntensity: .72,
+      shadowBias: .08, normalOffsetBias: .025
+    });
     lamp.setPosition(position);
     lamp.lookAt(aim);
     lamp.rotateLocal(90, 0, 0);
     app.root.addChild(lamp);
   }
+  const tableMaterial = new StandardMaterial();
+  tableMaterial.diffuse = new Color(.079, .13, .145);
+  tableMaterial.specular = new Color(.14, .16, .17);
+  tableMaterial.gloss = .28;
+  tableMaterial.update();
+  const table = new Entity('Mesa de exposição');
+  table.addComponent('render', { type: 'plane', material: tableMaterial, castShadows: false });
+  table.setLocalScale(48, 1, 48);
+  table.setPosition(0, -.19, 0);
+  app.root.addChild(table);
   const lines = [-1.5, 1.5].map((x, index) => {
     const mat = new StandardMaterial();
     mat.diffuse = index ? new Color(.27, .77, .94) : new Color(1, .50, .22);
@@ -54,6 +68,7 @@ export async function openInstrument(canvas: HTMLCanvasElement, url: string) {
   observer.observe(canvas);
   const dispose = () => {
     observer.disconnect();
+    tableMaterial.destroy();
     for (const { mat } of lines) mat.destroy();
     app.destroy();
   };
