@@ -19,23 +19,23 @@ const stages = [
     dimension: 'Diâmetro de referência até a órbita de Netuno',
     text: 'Uma unidade astronômica (UA) equivale a cerca de 150 milhões de km. Netuno fica a cerca de 30 UA do Sol. Dobrar essa distância dá a largura da região planetária. Há corpos além dela.',
     alt: 'Oito planetas representados por esferas em torno do Sol, com tamanhos ampliados.',
-    caption: 'Ilustração. Tamanhos e separações dos planetas fora de escala.',
+    caption: 'Composição artística digital. Tamanhos e separações dos planetas fora de escala.',
     source: 'https://science.nasa.gov/neptune/neptune-facts/', sourceLabel: 'NASA · Distância de Netuno'
   },
   {
-    id: 'via-lactea', name: 'Via Láctea', image: 'galaxies', extent: '≈ 100 mil anos-luz', km: 100_000 * lightYearKm,
+    id: 'via-lactea', name: 'Via Láctea', image: 'milky-way', extent: '≈ 100 mil anos-luz', km: 100_000 * lightYearKm,
     dimension: 'Diâmetro do disco estelar',
     text: 'O Sistema Solar ocupa uma região minúscula do disco da nossa galáxia, longe do centro. Um ano-luz é a distância que a luz percorre em um ano.',
     alt: 'Galáxia espiral vista em perspectiva, com braços ao redor de um núcleo luminoso.',
-    caption: 'Ilustração de uma galáxia espiral representando a Via Láctea.',
+    caption: 'Composição artística digital de uma galáxia espiral representando a Via Láctea.',
     source: 'https://science.nasa.gov/universe/exoplanets/our-milky-way-galaxy-how-big-is-space/', sourceLabel: 'NASA · Via Láctea'
   },
   {
-    id: 'grupo-local', name: 'Grupo Local', image: 'group-local', extent: '≈ 10 milhões de anos-luz', km: 10_000_000 * lightYearKm,
+    id: 'grupo-local', name: 'Grupo Local', image: 'galaxies', extent: '≈ 10 milhões de anos-luz', km: 10_000_000 * lightYearKm,
     dimension: 'Extensão aproximada do grupo',
     text: 'A Via Láctea e Andrômeda são duas das maiores galáxias do Grupo Local. Dezenas de galáxias menores também fazem parte dessa vizinhança ligada pela gravidade.',
     alt: 'Conjunto ilustrado de galáxias, com duas espirais mais brilhantes próximas ao centro.',
-    caption: 'Ilustração. Posições e tamanhos aparentes estilizados.',
+    caption: 'Composição artística digital. Posições e tamanhos aparentes estilizados.',
     source: 'https://science.nasa.gov/wp-content/uploads/2024/08/7page43.pdf', sourceLabel: 'NASA · Extensão do Grupo Local (PDF)'
   },
   {
@@ -43,10 +43,11 @@ const stages = [
     dimension: 'Comprimento da Muralha de Coma, um exemplo',
     text: 'Galáxias, grupos e aglomerados formam filamentos e paredes separados por vazios. A Muralha de Coma dá uma medida de referência para uma das estruturas dessa rede.',
     alt: 'Rede ilustrada de nós brilhantes conectados por filamentos, com vazios entre eles.',
-    caption: 'Ilustração da teia em geral. A medida se refere à Muralha de Coma.',
+    caption: 'Composição artística digital da teia em geral. A medida se refere à Muralha de Coma.',
     source: 'https://science.nasa.gov/universe/galaxies/large-scale-structures/', sourceLabel: 'NASA · Estruturas em grande escala'
   }
 ];
+const directory = (id: string) => id === 'terra' ? 'posters' : 'renders';
 const position = (km: number) => 100 * (Math.log10(km) - ticks[0]) / (ticks.at(-1)! - ticks[0]);
 ---
 <section class="cosmic-exhibit scale-exhibit" id="escala-cosmica" aria-labelledby="scale-exhibit-title">
@@ -73,7 +74,7 @@ const position = (km: number) => 100 * (Math.log10(km) - ticks[0]) / (ticks.at(-
           </div>
           <figure class="cosmic-exhibit-plate">
             <div class="scale-exhibit-image">
-              <img src={u(`/posters/${stage.image}-small.webp`)} srcset={`${u(`/posters/${stage.image}-small.webp`)} 600w, ${u(`/posters/${stage.image}.webp`)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
+              <img src={u(`/${directory(stage.id)}/${stage.image}-small.webp`)} srcset={`${u(`/${directory(stage.id)}/${stage.image}-small.webp`)} 600w, ${u(`/${directory(stage.id)}/${stage.image}.webp`)} 1200w`} sizes="(max-width: 760px) 92vw, (max-width: 1230px) 54vw, 665px" width="1200" height="800" alt={stage.alt} loading="lazy" decoding="async" />
             </div>
             <div class="scale-exhibit-ruler" aria-hidden="true">
               <div class="scale-exhibit-track"><span style={`--scale-position: ${position(stage.km)}%`}></span></div>

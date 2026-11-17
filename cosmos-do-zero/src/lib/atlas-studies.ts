@@ -23,13 +23,13 @@ export const studies: Partial<Record<ChapterId, Study>> = {
   'vida-das-estrelas': {
     key:'star',title:'Quanto irradia uma estrela maior?',prediction:'Se o raio dobrar e a temperatura for mantida, quantas luminosidades solares você espera?',
     input:'Raio estelar',min:.5,max:2.5,step:.05,initial:1,unit:'R☉',reading:'Luminosidade total',outUnit:'L☉',
-    rule:'L / L☉ = (R / R☉)²',limit:'Estrela esférica com temperatura efetiva solar fixa. O diâmetro do modelo varia com o raio. A escala numérica mostra a luminosidade total.',
+    rule:'L / L☉ = (R / R☉)²',limit:'Estrela esférica com temperatura efetiva solar fixa. O diâmetro varia com o raio, enquanto o brilho por unidade de área se mantém. A granulação e a cor da fotosfera são ilustrativas.',
     result:'Com duas vezes o raio solar, a superfície emissora quadruplica. A estrela emite 4 L☉.',reference:'Sol',sample:'Estrela do modelo'
   },
   'sistema-solar': {
     key:'orbit',title:'Quanto dura uma volta?',prediction:'Uma órbita com o dobro do raio da terrestre leva dois anos para completar uma volta?',
     input:'Raio orbital',min:.5,max:2,step:.05,initial:1,unit:'UA',reading:'Período orbital',outUnit:'anos',
-    rule:'P (anos) ≈ [a (UA)]³ᐟ²',limit:'Órbita circular em torno de uma massa solar e planeta de massa desprezível. As pistas compartilham a escala de distância. Os corpos estão ampliados.',
+    rule:'P (anos) ≈ [a (UA)]³ᐟ²',limit:'Órbita circular em torno de uma massa solar e planeta de massa desprezível. As pistas compartilham a escala de distância. O planeta-modelo usa a textura da Terra e os corpos estão ampliados.',
     result:'A 2 UA, o planeta leva aproximadamente 2,83 anos. O período cresce mais rápido que o raio orbital.',reference:'Órbita de 1 UA',sample:'Órbita do modelo'
   },
   'terra-e-atmosfera': {

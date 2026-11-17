@@ -33,18 +33,18 @@ def material(name, color, metal=0, rough=.45, emission=0):
     return mat
 
 
-brass = material("Laiton satiné", (.52, .30, .112), .64, .34)
-ink = material("Antracite", (.036, .069, .084), .38, .38)
-lacquer = material("Esmalte oceano", (.046, .163, .182), .28, .39)
+brass = material("Latão acetinado", (.57, .31, .103), .80, .27)
+ink = material("Antracite", (.015, .020, .025), .60, .34)
+lacquer = material("Esmalte oceano", (.014, .069, .073), .43, .36)
 ivory = material("Marfim", (.92, .78, .53), .15, .43, .15)
 copper = material("Linha A · cobre", (1, .45, .16), .05, .45, .82)
 blue = material("Linha B · gelo", (.28, .80, .95), .05, .40, .94)
-star = material("Alvo · porcelana", (.78, .94, 1), .14, .26, 1.4)
-earth = material("Terra · NASA BMNG", (.4, .4, .4), .04, .51)
+star = material("Alvo · porcelana", (.74, .90, .95), .05, .21, .38)
+earth = material("Terra · NASA BMNG", (.4, .4, .4), 0, .80)
 nodes = earth.node_tree.nodes
 texture = nodes.new("ShaderNodeTexImage")
 tex = bpy.data.images.load(str(root / "assets/source/observed/earth-bmng-200407.jpg"))
-tex.scale(512, 256)
+tex.scale(896, 448)
 tex.filepath_raw = str(Path(tempfile.gettempdir()) / "cosmos_atlas_parallax_earth.jpg")
 tex.file_format = "JPEG"
 tex.save()
@@ -77,8 +77,8 @@ def rod(name, start, end, radius, mat, sides=10):
     return obj
 
 
-def sphere(name, at, radius, mat):
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=16, radius=radius, location=at)
+def sphere(name, at, radius, mat, segments=32):
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=segments, ring_count=segments//2, radius=radius, location=at)
     return assign(bpy.context.object, name, mat, True)
 
 
@@ -105,6 +105,14 @@ oy = -1.16
 cylinder("Pé circular", (0, oy, -.10), 2.30, .16, ink, 96)
 cylinder("Rebordo", (0, oy, .007), 2.29, .09, brass, 96)
 cylinder("Mesa azimutal", (0, oy, .116), 2.25, .15, lacquer, 96)
+# Turned edges catch the softboxes at a grazing angle, including at phone size.
+for elevation, radius in ((-.076, 2.300), (.012, 2.292), (.054, 2.275), (.171, 2.243)):
+    ring("Aresta torneada", (0, oy, elevation), radius, .021, brass)
+for degree in (45, 135, 225, 315):
+    angle = math.radians(degree)
+    x, y = 1.83*math.cos(angle), oy+1.83*math.sin(angle)
+    cylinder("Parafuso de fixação", (x, y, .202), .052, .024, brass, 20)
+    rod("Fenda", (x-.030,y-.018,.216), (x+.030,y+.018,.216), .0065, ink)
 for radius in (2.03, 2.18, 1.53, 1.47):
     ring("Círculo graduado", (0, oy, .2), radius, .009, brass)
 for degree in range(0, 360, 3):
@@ -119,9 +127,9 @@ letter("2  U A", 0, oy-.95, .17)
 for x, color, name in [(-1.5, copper, "A"), (1.5, blue, "B")]:
     cylinder("Pé da Terra "+name, (x, oy, .24), .19, .085, brass)
     rod("Eixo "+name, (x,oy,.26), (x,oy,.66), .042, brass)
-    globe = sphere("Terra "+name, (x,oy,.87), .24, earth)
-    globe.rotation_euler = (.14,.24,.8)
-    ring("Moldura "+name, (x,oy,.87), .295, .016, color, math.radians(73))
+    globe = sphere("Terra "+name, (x,oy,.87), .285, earth, 48)
+    globe.rotation_euler = (.14,.24,-1.43)
+    ring("Moldura "+name, (x,oy,.87), .335, .014, color, math.radians(73))
 sphere("Sol", (0,oy,.69), .235, ivory)
 cylinder("Eixo do Sol",(0,oy,.38),.055,.36,brass)
 rod("Base A–B",(-1.49,oy,.34),(1.49,oy,.34),.022,brass)
@@ -171,13 +179,13 @@ bpy.ops.export_scene.gltf(filepath=str(out/"instrument.glb"), export_format="GLB
 for x, mat in [(-1.5,copper),(1.5,blue)]:
     rod("Linha de visada",(x,oy,.87),(0,y0,1.18),.013,mat)
 bpy.ops.mesh.primitive_plane_add(size=200,location=(0,0,-.19))
-assign(bpy.context.object,"Mesa de exposição",material("Fundo",(.012,.026,.034),.16,.60))
+assign(bpy.context.object,"Mesa de exposição",material("Fundo",(.006,.009,.012),.08,.57))
 def aim(obj, point):
     obj.rotation_euler = (Vector(point) - obj.location).to_track_quat("-Z","Y").to_euler()
 for name, pos, energy, tint, size in [
-    ("Janela",(-3,-3,7),1400,(1,.85,.65),5.5),
-    ("Recorte",(1,5,4),1700,(.38,.69,1),4.0),
-    ("Rebatedor",(5,-1,2),550,(.95,.80,.62),3.5)]:
+    ("Janela",(-3,-3,7),810,(1,.90,.76),4.7),
+    ("Recorte",(1,5,4),780,(.50,.72,.90),3.3),
+    ("Rebatedor",(5,-1,2),125,(.95,.84,.70),3.6)]:
     bpy.ops.object.light_add(type="AREA",location=pos)
     obj=bpy.context.object
     obj.name=name
@@ -188,11 +196,11 @@ for name, pos, energy, tint, size in [
     aim(obj,(0,0,0))
 bpy.ops.object.camera_add(location=(3.55,-7.75,6.65))
 scene.camera=bpy.context.object
-aim(scene.camera,(0,.25,.53))
+aim(scene.camera,(0,-.05,.50))
 scene.camera.data.type="ORTHO"
-scene.camera.data.ortho_scale=8.7
+scene.camera.data.ortho_scale=9.05
 scene.render.engine="CYCLES"
-scene.cycles.samples=28
+scene.cycles.samples=144
 scene.cycles.use_denoising=False
 scene.render.resolution_x=1080
 scene.render.resolution_y=672

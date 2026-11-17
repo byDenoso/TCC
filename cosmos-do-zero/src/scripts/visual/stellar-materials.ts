@@ -12,9 +12,35 @@ export async function prepareStellarMaterials(kind:'surface'|'cloud'|'nebula'='c
 export function stellarFactory(){
  const map=grain.clone(),geometry=new THREE.SphereGeometry(1,64,32);
  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d')!,g=ctx.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'#fff0');g.addColorStop(.70,'#fff0');g.addColorStop(.77,'#ffffff50');g.addColorStop(.85,'#ffffff15');g.addColorStop(1,'#fff0');ctx.fillStyle=g;ctx.fillRect(0,0,128,128);const haloMap=new THREE.CanvasTexture(canvas);
- return (color:THREE.ColorRepresentation=0xffffff)=>{const mesh=new THREE.Mesh(geometry,new THREE.ShaderMaterial({uniforms:{uGrain:{value:map},uColor:{value:new THREE.Color(color)},uIntensity:{value:1}},
- vertexShader:'varying vec2 vUv;varying vec3 n;varying vec3 p;void main(){vUv=uv;vec4 v=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);p=v.xyz;gl_Position=projectionMatrix*v;}',
- fragmentShader:'uniform sampler2D uGrain;uniform vec3 uColor;uniform float uIntensity;varying vec2 vUv;varying vec3 n;varying vec3 p;void main(){float mu=max(0.,dot(normalize(n),normalize(-p)));float grain=texture2D(uGrain,vUv).r;float light=(.15+.85*pow(mu,.58))*pow(grain,2.1);gl_FragColor=vec4(uColor*light*1.04*uIntensity,1.);\n#include <colorspace_fragment>\n}'
+ return (color:THREE.ColorRepresentation=0xffffff)=>{const mesh=new THREE.Mesh(geometry,new THREE.ShaderMaterial({uniforms:{uGrain:{value:map},uColor:{value:new THREE.Color(color)},uIntensity:{value:1},uPhotosphere:{value:1}},
+ vertexShader:'varying vec2 vUv;varying vec3 n;varying vec3 p;varying vec3 vLocal;void main(){vUv=uv;vLocal=normalize(position);vec4 v=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);p=v.xyz;gl_Position=projectionMatrix*v;}',
+ fragmentShader:`uniform sampler2D uGrain;
+ uniform vec3 uColor;
+ uniform float uIntensity,uPhotosphere;
+ varying vec2 vUv;
+ varying vec3 n,p,vLocal;
+ float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+ float noise3(vec3 p){
+   vec3 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
+   return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+              mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y), f.z);
+ }
+
+ void main() {
+   float mu = max(0.,dot(normalize(n),normalize(-p)));
+   float granule = texture2D(uGrain,vUv).r;
+   float cells = texture2D(uGrain,vec2(fract(vUv.x*2.+.37),vUv.y)).r;
+   vec3 pos=normalize(vLocal);
+   float convection=noise3(pos*12.)*.6+noise3(pos*31.)*.4;
+   float spot=(1.-smoothstep(.12,.28,length(pos-normalize(vec3(.28,.15,.94)))+.06*convection));
+   float surface=.20+.40*smoothstep(.72,.98,granule)+.10*cells+.23*convection;
+   surface=mix(.76,surface*(1.-.65*spot),uPhotosphere);
+   float limb = .27 + .73 * pow(mu,.72);
+   vec3 cool = uColor * vec3(1.,.79,.66);
+   vec3 hot = mix(uColor,vec3(1.),.16);
+   gl_FragColor = vec4(mix(cool,hot,smoothstep(.48,.95,granule))*surface*limb*uIntensity,1.);
+   #include <colorspace_fragment>
+ }`
  }));const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:haloMap,color,transparent:true,opacity:.12,depthWrite:false,blending:THREE.AdditiveBlending}));halo.scale.set(2.62,2.62,1);mesh.add(halo);return mesh;};
 }
 export function cloudFactory(observedDetail=false){const data=density.clone(),detail=observedDetail?orion.clone():null;return ()=>{

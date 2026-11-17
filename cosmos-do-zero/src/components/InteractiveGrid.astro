@@ -1,4 +1,5 @@
 ---
+import { scenePlate } from '../lib/scene-plate';
 import '../styles/interactive-grid.css';
 import { Image } from 'astro:assets';
 import { photos, planetArt } from '../lib/images';
@@ -33,7 +34,7 @@ const cards: Card[] = [
           <a class="igrid-card" href={c.href}>
             <span class:list={['igrid-media', 'planet' in c && 'igrid-media--planet', 'poster' in c && 'igrid-media--poster']}>
               {'photo' in c && <Image src={photos[c.photo]} alt="" width={720} height={540} widths={[360, 720]} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 400px" fit="cover" position="center" format="webp" quality={78} loading="lazy" style={`object-position:${c.focus ?? '50% 50%'}`} />}
-              {'poster' in c && <img src={u(`/posters/${c.poster}-small.webp`)} srcset={`${u(`/posters/${c.poster}-small.webp`)} 600w, ${u(`/posters/${c.poster}.webp`)} 1200w`} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 400px" alt="" width="1200" height="800" loading="lazy" decoding="async" />}
+              {'poster' in c && <img src={scenePlate(c.poster,true)} srcset={`${scenePlate(c.poster,true)} 600w, ${scenePlate(c.poster)} 1200w`} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 400px" alt="" width="1200" height="800" loading="lazy" decoding="async" />}
               {'planet' in c && <Image src={planetArt[c.planet]} alt="" width={640} widths={[320, 640]} sizes="(max-width: 700px) 80vw, 320px" format="webp" quality={82} loading="lazy" />}
             </span>
             <span class="igrid-body">

@@ -6,6 +6,7 @@ export function bindParallax(root: HTMLElement) {
   const slider = get<HTMLInputElement>('input[type=range]');
   const button = get<HTMLButtonElement>('[data-open]');
   const top = get<HTMLButtonElement>('[data-top]');
+  const detail = get<HTMLButtonElement>('[data-detail]');
   const canvas = get<HTMLCanvasElement>('canvas');
   const status = get('[data-status]');
   let scene: Scene | undefined;
@@ -35,8 +36,9 @@ export function bindParallax(root: HTMLElement) {
   button.addEventListener('click', async () => {
     if (scene) {
       scene.dispose(); scene = undefined;
-      canvas.hidden = top.hidden = true;
+      canvas.hidden = top.hidden = detail.hidden = true;
       top.setAttribute('aria-pressed', 'false');
+      detail.setAttribute('aria-pressed', 'false');
       button.setAttribute('aria-pressed','false');
       button.textContent = 'Explorar a maquete em 3D';
       status.textContent = '';
@@ -51,7 +53,7 @@ export function bindParallax(root: HTMLElement) {
       scene = await openInstrument(canvas, root.dataset.model!);
       if (dead) { scene.dispose(); scene = undefined; return; }
       scene.setDistance(Number(slider.value));
-      top.hidden = false;
+      top.hidden = detail.hidden = false;
       button.textContent = 'Fechar 3D';
       button.setAttribute('aria-pressed', 'true');
       status.textContent = 'Maquete pronta. Mova a régua para comparar as visadas.';
@@ -60,11 +62,16 @@ export function bindParallax(root: HTMLElement) {
       status.textContent = 'O 3D está indisponível neste dispositivo. A régua angular continua ativa.';
     } finally { button.disabled = false; }
   });
-  top.addEventListener('click', () => {
-    const active = top.getAttribute('aria-pressed') !== 'true';
-    top.setAttribute('aria-pressed', String(active));
-    scene?.view(active);
-  });
+  for (const [control, preset] of [[top, 'superior'], [detail, 'terra']] as const) {
+    control.addEventListener('click', () => {
+      const selected = control.getAttribute('aria-pressed') !== 'true';
+      for (const item of [top, detail]) item.setAttribute('aria-pressed', String(item === control && selected));
+      scene?.view(selected ? preset : 'mesa');
+      status.textContent = selected && preset === 'terra'
+        ? 'Primeira observação. A visada de cobre sai da posição A da Terra.'
+        : 'Mova a régua para comparar as duas visadas.';
+    });
+  }
   window.addEventListener('pagehide', (event) => {
     if (event.persisted) return;
     dead = true;

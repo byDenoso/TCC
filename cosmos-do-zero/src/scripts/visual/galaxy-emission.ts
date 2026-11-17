@@ -14,12 +14,25 @@ export function emissionPalette(size:EmissionSize=1536):THREE.Texture[]{const so
 export function emissionGalaxy(index:number,palette:THREE.Texture[],discGeometry:THREE.PlaneGeometry,detailed=true):THREE.Group{
  const g=new THREE.Group();
  const map=palette[index%names.length];if(!map)throw new Error('Galaxy emission map unavailable');
- const mat=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,opacity:.78,toneMapped:false});
+ const mat=new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,opacity:detailed?.94:.88,toneMapped:false});
  const disc=new THREE.Mesh(discGeometry,mat);g.add(disc);
- for(const z of detailed?[-.045,.045]:[]){const sheet=new THREE.Mesh(discGeometry,mat.clone());sheet.material.opacity=.018;sheet.position.z=z;sheet.scale.setScalar(.97);g.add(sheet);}
- if(detailed&&index<3){const bulge=new THREE.Mesh(new THREE.SphereGeometry(.11,24,16),new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,toneMapped:false,
- vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
- fragmentShader:'varying vec3 n;void main(){float a=pow(max(n.z,0.),3.)*.045;gl_FragColor=vec4(.9,.72,.46,a);}' }));g.add(bulge);}
+ if(detailed){
+  // Project the emission map through a tapered stellar envelope. It keeps a
+  // line-of-sight thickness when the observer turns the disc edge-on.
+  const body = new THREE.SphereGeometry(1,56,32);
+  const pos=body.getAttribute('position'), uv=body.getAttribute('uv');
+  const elliptical=index===4;
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i), y=pos.getY(i), radius=Math.hypot(x,y);
+    uv.setXY(i,.5+x*.5,.5+y*.5);
+    const height=elliptical?.52:.035+.18*Math.exp(-radius*8.);
+    pos.setZ(i,pos.getZ(i)*height);
+  }
+  const envelopeMaterial=mat.clone();
+  envelopeMaterial.side=THREE.FrontSide;
+  envelopeMaterial.opacity=elliptical?.40:.25;
+  g.add(new THREE.Mesh(body,envelopeMaterial));
+ }
  return g;
 }
 

@@ -67,6 +67,14 @@ try {
     assert(await fits(), 'Leitura e checagem cabem na janela');
     assert.deepEqual(errors, [], 'Erros de execução');
     console.log(JSON.stringify({viewport, primeiraAula:firstUrl, retorno:savedSection, retomada:nextStep, erros:errors.length}));
+    // The default return link must also work before the lab's deferred module runs.
+    await page.route('**/AtlasBenchLinks.*.js', route => route.abort());
+    await page.goto(firstUrl.split('#')[0]+savedSection);
+    await page.locator('[data-step-select]').waitFor({state:'attached'});
+    await page.locator('.atlas-fieldnote a').click();
+    await links.getByRole('link',{name:'Voltar à leitura'}).click();
+    await page.locator('[data-step-select]').waitFor({state:'attached'});
+    assert(await page.locator(savedSection).isVisible(), 'Retoma o trecho mesmo sem inicializar o script do laboratório');
     await context.close();
   }
 } finally {

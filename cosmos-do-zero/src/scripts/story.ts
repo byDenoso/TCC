@@ -1,4 +1,4 @@
-import { STORIES, renderStory, sampleStory, storyProgress } from '../lib/story-scenes';
+import { STORIES, renderStory, sampleStory, storyComposition, storyProgress } from '../lib/story-scenes';
 import { visibleMotion } from './visible-motion';
 import { motionPreference } from './motion-preference';
 
@@ -11,9 +11,35 @@ export function initStories():void {
   const range=root.querySelector<HTMLInputElement>('[data-story-time]')!,clock=root.querySelector<HTMLOutputElement>('[data-story-clock]')!,caption=root.querySelector<HTMLElement>('[data-story-caption]')!;
   const phases=[...root.querySelectorAll<HTMLButtonElement>('[data-story-phase]')],modes=[...root.querySelectorAll<HTMLButtonElement>('[data-story-mode]')];
   let seconds=motionPreference.matches?20:0,running=false,raf=0,last=0,lastPaint=0,lastProgress=-1,visible=false,mode='scene',sceneAutomatic=true,pendingFilmTime:number|null=null;
+  const resolve=(src:string)=>(root.dataset.storyBase ?? '/').replace(/\/$/,'')+src;
+  let renderedPhase=-1;
+  const paintScience=(p:number,phase:number)=>{
+   if(root.dataset.storyPhase!==String(phase))root.dataset.storyPhase=String(phase);
+   if(root.dataset.storyProgress!==String(p))root.dataset.storyProgress=String(p);
+   if(phase!==renderedPhase){
+    stage.innerHTML=renderStory(id,p,`story-${id}`,resolve);
+    renderedPhase=phase;
+    return;
+   }
+   const {planes,overlay}=storyComposition(id,p);
+   const images=stage.querySelectorAll<SVGImageElement>('[data-story-planes] image');
+   const attr=(el:Element,name:string,value:string)=>{if(el.getAttribute(name)!==value)el.setAttribute(name,value);};
+   images.forEach((image,i)=>{
+    const plane=planes[i],src=resolve(plane.src);
+    if(image.getAttribute('href')!==src){
+      image.setAttribute('href',src);image.setAttributeNS('http://www.w3.org/1999/xlink','href',src);
+    }
+    attr(image,'x',plane.x.toFixed(2));attr(image,'y',plane.y.toFixed(2));
+    attr(image,'width',plane.w.toFixed(2));attr(image,'height',plane.h.toFixed(2));
+    attr(image,'opacity',plane.opacity.toFixed(2));
+   });
+   if(id==='origem-do-universo'||id==='misterios-do-cosmos'||id==='terra-e-atmosfera'){
+    stage.querySelector('[data-story-overlay]')!.innerHTML=overlay;
+   }
+  };
   const paint=()=>{
    const t=mode==='film'?(pendingFilmTime??film.currentTime):seconds,p=storyProgress(t),state=sampleStory(id,p);
-   if(mode==='scene'&&p!==lastProgress){stage.innerHTML=renderStory(id,p,`story-${id}`);lastProgress=p;}
+   if(mode==='scene'&&p!==lastProgress){paintScience(p,state.phase);lastProgress=p;}
    const value=t.toFixed(2);if(range.value!==value)range.value=value;
    range.setAttribute('aria-valuetext',`${t.toFixed(1).replace('.',',')} segundos; ${story.phases[state.phase].label}`);
    const display=`0:${String(Math.floor(t)).padStart(2,'0')} / 0:20`;if(clock.textContent!==display)clock.textContent=display;

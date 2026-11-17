@@ -41,6 +41,12 @@ try {
   assert.notDeepEqual(await pixels(),first);
   await bench.getByRole('button',{name:'Vista superior'}).click();
   assert.equal(await bench.locator('[data-top]').getAttribute('aria-pressed'),'true');
+  const above = await pixels();
+  const detail = bench.getByRole('button',{name:'Detalhe da Terra A'});
+  await detail.click();
+  assert.equal(await detail.getAttribute('aria-pressed'), 'true');
+  assert.equal(await bench.locator('[data-top]').getAttribute('aria-pressed'),'false');
+  assert.notDeepEqual(await pixels(), above);
   await bench.getByRole('button',{name:'Fechar 3D'}).click();
   assert.ok(await canvas.isHidden());
   await page.setViewportSize({width:390,height:844});
@@ -48,7 +54,7 @@ try {
   assert.equal(await total.innerText(),'0,20″');
   assert.ok(await bench.evaluate(el=>el.getBoundingClientRect().right<=window.innerWidth+1));
   assert.deepEqual(errors,[]);
-  console.log('Paralaxe: régua 1/4/8/10 pc, 2D sem GLB, 3D com geometria e atualização, câmera superior, teclado e largura 390 px.');
+  console.log('Paralaxe: régua 1/4/8/10 pc, 2D sem GLB, 3D com geometria e atualização, vista superior e detalhe da Terra A, teclado e largura 390 px.');
 } finally {
   await browser.close();
 }

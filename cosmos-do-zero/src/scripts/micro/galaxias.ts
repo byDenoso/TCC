@@ -1,16 +1,6 @@
 import type { Scene, SceneMap } from './engine';
 import { C, H, W, arrow, clamp, clear, ease, el, g, lerp, rng, star, text } from './draw';
 
-/** Pontos de uma espiral de dois braços (forma de galáxia), determinísticos. */
-function spiral(seed: number, n: number, cx: number, cy: number, r: number, tilt = 0.55): [number, number, number][] {
-  const rnd = rng(seed), pts: [number, number, number][] = [];
-  for (let i = 0; i < n; i++) {
-    const arm = i % 2, k = rnd(), ang = arm * Math.PI + k * 3.6 + (rnd() - 0.5) * 0.5, rr = r * (0.12 + k * 0.88) + (rnd() - 0.5) * 8;
-    pts.push([cx + Math.cos(ang) * rr, cy + Math.sin(ang) * rr * tilt, 0.6 + rnd() * 1.4]);
-  }
-  return pts;
-}
-
 const viaLactea = (): Scene => {
   // Cada degrau é um poster das cenas atuais (1200×800), recortado para480×270; o ponto marcado no degrau seguinte
   // é onde o degrau anterior "cabe". Afastar a câmera = a imagem anterior encolhe até esse ponto.
@@ -18,8 +8,8 @@ const viaLactea = (): Scene => {
   const levels = [
     { img: 'earth', at: [240, 135], mark: null as null | [number, number], label: '', ruler: 'Diâmetro: 12.700 km · a luz cruza em 0,04 s', cap: 'Terra: o planeta onde você está. Tudo o que vem a seguir a contém.' },
     { img: 'solar-system', at: [145, 130], mark: null, label: 'Terra', ruler: 'Até Netuno: 4,5 bilhões de km · a luz leva 4 horas', cap: 'Sistema Solar: o Sol e tudo o que gira em volta dele. Os planetas aparecem ampliados para leitura. Tamanhos e distâncias fora de escala.' },
-    { img: 'galaxies', at: [330, 185], mark: null, label: 'Sol', ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: a circunferência marca uma posição ilustrativa para o Sistema Solar. Centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
-    { img: 'group-local', at: [240,135], mark: null, label: 'Via Láctea', ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
+    { img: 'milky-way', at: [330, 185], mark: null, label: 'Sol', ruler: 'Diâmetro: uns 100 mil anos-luz', cap: 'Via Láctea: a circunferência marca uma posição ilustrativa para o Sistema Solar. Centenas de bilhões de estrelas. O Sol fica num braço, a uns 26 mil anos-luz do centro, não no meio.' },
+    { img: 'galaxies', at: [240,135], mark: null, label: 'Via Láctea', ruler: 'Uns 10 milhões de anos-luz', cap: 'Grupo Local: a Via Láctea, Andrômeda e dezenas de galáxias pequenas, presas pela gravidade.' },
     { img: 'cosmic-web', at: [123, 115], mark: null, label: 'Grupo Local', ruler: 'Filamentos com milhões de anos-luz', cap: 'Teia cósmica: grupos e aglomerados de galáxias ao longo de filamentos. O Grupo Local é um ponto num desses fios.' }
   ];
   let imgs: SVGImageElement[] = [], over: SVGGElement, ruler: SVGTextElement, prev = 0, from = 0;
@@ -34,7 +24,7 @@ const viaLactea = (): Scene => {
     init(svg) {
       const root = g(svg);
       el('rect', { x: 0, y: 0, width: W, height: H, fill: '#04060b' }, root);
-      imgs = levels.map((l) => el('image', { href: `${base}/posters/${l.img}.webp`, x: 0, y: -25, width: W, height: 320, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, root));
+      imgs = levels.map((l) => el('image', { href: `${base}/renders/${l.img}.webp`, x: 0, y: -25, width: W, height: 320, preserveAspectRatio: 'xMidYMid slice', 'aria-hidden': 'true' }, root));
       over = g(svg);
       el('rect', { x: 0, y: H - 30, width: W, height: 30, fill: 'rgba(4,6,11,.72)' }, svg);
       ruler = text(svg, W / 2, H - 11, '', { class: 'mx-t', 'text-anchor': 'middle', fill: '#f3f1ea', style: 'fill:#f3f1ea' });
@@ -73,7 +63,9 @@ const viaLactea = (): Scene => {
 };
 
 const tipos = (): Scene => {
-  let layer: SVGGElement;
+  let disc: SVGImageElement, halo: SVGEllipseElement, annotation: SVGTextElement;
+  const field = import.meta.env.BASE_URL.replace(/\/$/, '') + '/models/galaxies-v4/768/';
+  const maps = ['stars-only','grand-spiral','grand-spiral','elliptical'];
   const caps = [
     'Estrelas: centenas de bilhões, num disco com braços espirais.',
     'Gás e poeira ficam no disco; é deles que nascem novas estrelas. As faixas escuras são poeira.',
@@ -87,53 +79,53 @@ const tipos = (): Scene => {
       const rg = el('radialGradient', { id: 'mx-halo' }, defs);
       el('stop', { offset: 0, 'stop-color': C.dm, 'stop-opacity': 0.35 }, rg);
       el('stop', { offset: 1, 'stop-color': C.dm, 'stop-opacity': 0 }, rg);
-      layer = g(svg);
+      el('rect',{width:W,height:H,fill:'#070b12'},svg);
+      halo = el('ellipse',{cx:240,cy:135,rx:190,ry:120,fill:'url(#mx-halo)'},svg);
+      disc = el('image',{x:50,y:-46,width:380,height:350,preserveAspectRatio:'none'},svg);
+      annotation = text(svg,16,28,'',{class:'mx-t small',style:'fill:#eee6d8;paint-order:stroke;stroke:#070b12;stroke-width:3px'});
     },
     draw(v, t) {
-      clear(layer);
-      const k = ease(t);
-      if (v === 3) {
-        for (let i = 0; i < 380; i++) { const r = rng(i + 3); const a = r() * Math.PI * 2, d = Math.pow(r(), 1.6) * 110; el('circle', { cx: W / 2 + Math.cos(a) * d * 1.4, cy: 128 + Math.sin(a) * d * 0.85, r: 1, fill: C.gold, opacity: 0.75 * k + 0.1 }, layer); }
-        el('ellipse', { cx: W / 2, cy: 128, rx: 40, ry: 26, fill: C.gold, opacity: 0.35 }, layer);
-        return caps[3];
-      }
-      if (v >= 2) el('ellipse', { cx: W / 2, cy: 128, rx: 230, ry: 125, fill: 'url(#mx-halo)', opacity: v === 2 ? k : 1 }, layer);
-      el('ellipse', { cx: W / 2, cy: 128, rx: 22, ry: 11, fill: C.gold, opacity: 0.7 }, layer);
-      for (const [x, y, r] of spiral(4, 600, W / 2, 128, 170, 0.45)) el('circle', { cx: x, cy: y, r: r * 0.8, fill: C.ink2, opacity: 0.6 }, layer);
-      if (v >= 1) for (const [x, y] of spiral(8, 120, W / 2, 128, 160, 0.45)) el('circle', { cx: x + 4, cy: y + 2, r: 4, fill: C.accent, opacity: 0.25 * (v === 1 ? k : 1) }, layer);
-      if (v >= 2) text(layer, W / 2 + 150, 30, 'halo inferido', { class: 'mx-t small' });
-      if (v >= 1) text(layer, 20, 30, 'gás e poeira', { class: 'mx-t small warm' });
+      disc.setAttribute('href',field+maps[v]+'.webp');
+      disc.setAttribute('transform',v===3?'rotate(-12 240 130)':'rotate(-17 240 130) translate(0 33) scale(1 .74)');
+      halo.setAttribute('opacity',v===2?String(ease(t)): '0');
+      annotation.textContent = ['Estrelas do disco','Gás, poeira e estrelas','Halo inferido · extensão ilustrativa','Galáxia elíptica'][v];
       return caps[v];
     }
   };
 };
 
 const teia = (): Scene => {
-  let layer: SVGGElement;
+  let plate: SVGImageElement, traces: SVGPathElement, legends: SVGGElement;
+  let last = -1;
   const rnd = rng(42);
-  const nodes: [number, number][] = [[70, 60], [200, 40], [330, 80], [430, 50], [110, 190], [250, 150], [390, 200], [180, 240], [460, 140]];
-  const links = [[0, 1], [1, 2], [2, 3], [0, 4], [1, 5], [2, 5], [5, 6], [4, 5], [4, 7], [5, 7], [6, 8], [3, 8], [2, 8]];
-  const pts = Array.from({ length: 340 }, () => {
-    const start: [number, number] = [rnd() * W, rnd() * (H - 30)];
-    let end: [number, number];
-    if (rnd() < 0.3) { const n = nodes[Math.floor(rnd() * nodes.length)]; end = [n[0] + (rnd() - 0.5) * 18, n[1] + (rnd() - 0.5) * 18]; }
-    else { const [a, b] = links[Math.floor(rnd() * links.length)]; const f = rnd(); end = [lerp(nodes[a][0], nodes[b][0], f) + (rnd() - 0.5) * 10, lerp(nodes[a][1], nodes[b][1], f) + (rnd() - 0.5) * 10]; }
-    return { start, end };
+  const nodes = [[35,75],[174,35],[281,84],[446,42],[129,162],[335,106],[392,211],[230,208]];
+  const links = [[0,1],[1,2],[2,3],[0,4],[2,4],[2,5],[5,6],[4,7],[6,7]];
+  const samples = Array.from({length:950}, () => {
+    const [a,b] = links[Math.floor(rnd()*links.length)], f = rnd();
+    return [rnd()*W, rnd()*H, lerp(nodes[a][0],nodes[b][0],f)+(rnd()-.5)*10, lerp(nodes[a][1],nodes[b][1],f)+(rnd()-.5)*12];
   });
   return {
-    init(svg) { layer = g(svg, { class: 'mx-flat' }); },
-    value: (v) => (v < 0.05 ? 'quase liso' : v < 0.95 ? `${Math.round(v * 100)}%` : 'teia formada'),
-    draw(v) {
-      clear(layer);
-
-      const k = 1 - (1 - v) ** 2;
-      for (const p of pts) el('circle', { cx: lerp(p.start[0], p.end[0], k), cy: lerp(p.start[1], p.end[1], k), r: 1.7, fill: C.ink2, opacity: 0.75 }, layer);
-      if (v > 0.9) {
-        text(layer, 300, 250, 'vazio', { class: 'mx-t strong warm' });
-        text(layer, nodes[5][0] + 12, nodes[5][1] - 10, 'aglomerado', { class: 'mx-t strong warm' });
-        text(layer, 120, 118, 'filamento', { class: 'mx-t strong warm', transform: 'rotate(68 120 118)' });
+    init(svg) {
+      const layer = g(svg,{class:'mx-flat'});
+      el('rect',{width:W,height:H,fill:'#050b11'},layer);
+      plate = el('image',{width:W,height:H,preserveAspectRatio:'none',href:import.meta.env.BASE_URL+'renders/cosmic-web-small.webp'},layer);
+      traces = el('path',{fill:'none',stroke:'#cfdbdf','stroke-width':1.3,'stroke-linecap':'round'},layer);
+      legends = g(layer,{style:'fill:#f7f0de;stroke:#050b11;stroke-width:3px;paint-order:stroke'});
+      for (const [title,x,y] of [['Vazio',160,109],['Aglomerado',282,76],['Filamento',62,136]] as const) {
+        text(legends,x,y,title,{class:'mx-t small',style:'fill:#f7f0de'});
       }
-      text(layer, 8, H - 8, 'simulação esquemática', { class: 'mx-t small' });
+    },
+    value: v => v < .05 ? 'quase liso' : v < .95 ? Math.round(v*100)+'%' : 'teia formada',
+    draw(v) {
+      if (v !== last) {
+        last = v;
+        const k = 1 - (1-v)**2;
+        plate.setAttribute('opacity', String(k*k));
+        traces.setAttribute('opacity', String(.5*(1-k)));
+        traces.setAttribute('d',k < .995 ? samples.map(([x,y,tx,ty]) =>
+          'M'+lerp(x,tx,k).toFixed(1)+' '+lerp(y,ty,k).toFixed(1)+'h.1').join('') : '');
+        legends.setAttribute('opacity',String(clamp((v-.88)/.12)));
+      }
       return v < 0.1 ? 'No começo, a matéria estava quase uniforme, com diferenças minúsculas.'
         : v < 0.9 ? 'Regiões um pouco mais densas puxam mais matéria. As diferenças crescem e aparecem fios e nós.'
         : 'Pronto: aglomerados (nós), filamentos (fios) e vazios (regiões com poucas galáxias). É o padrão que os mapas de galáxias mostram.';

@@ -1,24 +1,67 @@
 ---
+import { Image } from 'astro:assets';
+import atmosphere from '../assets/photos/iss-sunrise.webp';
+import { imageCredits } from '../data';
 import { studies, measurement, number, wave } from '../lib/atlas-studies';
 import { u } from '../lib/url';
 import type { ChapterId } from '../types';
 interface Props { id: ChapterId }
 const { id }=Astro.props;
 const s=studies[id];
+const art=(name:string)=>u('/models/atlas-studies/plates/'+name+'.webp');
+const divisions=Array.from({length:21},(_,i)=>i);
 ---
 {s && <section class="atlas-study" data-study={s.key} data-model={u('/models/atlas-studies/'+s.key+'.glb')} aria-labelledby={'study-'+s.key} id="prancha">
   <header><p>Experimento de capítulo</p><h2 id={'study-'+s.key}>{s.title}</h2><p>{s.prediction}</p></header>
   <div class="study-console">
     <figure>
-      <svg viewBox="0 0 360 160" role="img" aria-label={'Comparação entre '+s.reference+' e '+s.sample+'. O resultado numérico acompanha o controle.'}>
-        <defs><pattern id={'grid-'+s.key} width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#284145" stroke-width=".7"/></pattern></defs>
-        <rect width="360" height="160" fill={'url(#grid-'+s.key+')'}/>
-        {s.key==='redshift' && <><polyline class="ref" points={wave(50)} transform="translate(0 48)"/><polyline data-measure class="sample" points={wave(50)} transform="translate(0 112)"/></>}
-        {(s.key==='lens'||s.key==='orbit') && <><circle class="ref" cx="180" cy="80" r="32"/><circle class="sample" data-measure cx="180" cy="80" r="32"/><circle cx="180" cy="80" r="5" fill="#ecddbd"/>{s.key==='orbit' && <circle data-planet cx="212" cy="80" r="4.5" fill="#ffc99b"/>}</>}
-        {s.key==='star' && <><circle cx="104" cy="80" r="27" class="ref solid"/><circle cx="245" cy="80" r="27" data-measure class="sample solid"/></>}
-        {s.key==='air' && <><path d="M50 136H310" stroke="#a5b9b7"/><rect x="85" y="30" width="42" height="106" class="ref solid"/><rect x="235" y="30" width="42" height="106" data-measure class="sample solid"/></>}
-      </svg>
-      <canvas data-study-canvas hidden aria-label={'Representação tridimensional de '+s.title} role="img"></canvas>
+      <div class="study-viewport" style={s.key==='air' ? undefined : {backgroundImage:`url(${art('sky')})`}}>
+        {s.key==='air' && <Image class="study-horizon" src={atmosphere} alt="" width={800} loading="lazy"/>}
+        <svg viewBox="0 0 360 180" role="img" aria-label={'Comparação entre '+s.reference+' e '+s.sample+'. O resultado numérico acompanha o controle.'}>
+          <defs>
+            <linearGradient id="sample-column"><stop stop-color="#7b3e24"/><stop offset=".35" stop-color="#ec9f61"/><stop offset=".64" stop-color="#fad0a1"/><stop offset="1" stop-color="#925435"/></linearGradient>
+            <linearGradient id="ref-column"><stop stop-color="#2b5866"/><stop offset=".38" stop-color="#76b9c7"/><stop offset=".64" stop-color="#c4e3e5"/><stop offset="1" stop-color="#4f8794"/></linearGradient>
+          </defs>
+          {s.key==='redshift' && <>
+            {[{y:55,tag:'Emissão'},{y:128,tag:'Observação'}].map(({y,tag})=><g>
+              <text class="measure-label" x="18" y={y-25}>{tag}</text>
+              <path d={`M18 ${y}H344`} class="rail"/>
+              <path d={`M18 ${y+21}H344`} class="rule"/>
+              {divisions.map(i=><path d={`M${18+i*16} ${y+21}v${i%5===0?7:3}`} class="rule"/>)}
+            </g>)}
+            <polyline class="ref" points={wave(52)} transform="translate(0 55)"/>
+            <polyline data-measure class="sample" points={wave(52)} transform="translate(0 128)"/>
+            <path data-bracket d="M18 144V140M18 142H70M70 140V144" class="sample-bracket"/>
+          </>}
+          {s.key==='lens' && <>
+            <image href={art('lens-galaxy')} x="109" y="19" width="142" height="142"/>
+            <image data-measure href={art('einstein')} x="129.6" y="39.6" width="100.8" height="100.8"/>
+            <circle class="ref ring" cx="180" cy="90" r="36"/>
+            <path d="M22 90H63M297 90H338M180 8V15M180 165V172" class="rule"/>
+          </>}
+          {s.key==='star' && <>
+            <image href={art('photosphere')} x="48.4" y="50.4" width="81.2" height="81.2"/>
+            <image data-measure href={art('photosphere')} x="201.4" y="50.4" width="81.2" height="81.2"/>
+            <path d="M60 161H118M60 158V164M118 158V164" class="ref-rule"/>
+            <path data-bracket d="M213 161H271M213 158V164M271 158V164" class="sample-bracket"/>
+          </>}
+          {s.key==='orbit' && <>
+            <ellipse class="sample ring" data-measure cx="179" cy="91" rx="55" ry="28"/>
+            <ellipse class="ref ring" cx="179" cy="91" rx="55" ry="28"/>
+            <image href={art('photosphere')} x="149" y="61" width="60" height="60"/>
+            <image data-planet href={u('/models/portraits/terra.webp')} x="224" y="81" width="20" height="20"/>
+          </>}
+          {s.key==='air' && <>
+            {[{x:99,bar:'ref-column'},{x:229,bar:'sample-column'}].map(({x,bar},i)=><g>
+              <rect x={x-8} y="23" width="55" height="136" rx="3" fill="#061323" fill-opacity=".76" stroke="#9badaf" stroke-width=".5"/>
+              <rect x={x} y="31" width="26" height="119" rx="2" fill={'url(#'+bar+')'} data-measure={i===1?'':undefined}/>
+              {divisions.filter(j=>j%2===0).map(j=><path d={`M${x+30} ${31+j*5.95}h${j%10===0?9:5}`} stroke="#b5c4c3" stroke-width=".8"/>)}
+            </g>)}
+            <text class="measure-label" x="49" y="34">100%</text><text class="measure-label" x="55" y="94">50%</text><text class="measure-label" x="61" y="150">0%</text>
+          </>}
+        </svg>
+        <canvas data-study-canvas hidden aria-label={'Representação tridimensional de '+s.title} role="img"></canvas>
+      </div>
       <figcaption><span>{s.reference}</span><span>{s.sample}</span></figcaption>
     </figure>
     <div class="study-input">
@@ -28,7 +71,7 @@ const s=studies[id];
       <p>{s.rule}</p><button type="button" data-study-toggle aria-pressed="false">Abrir modelo 3D</button><small data-study-status role="status"></small>
     </div>
   </div>
-  <p class="study-limit">{s.limit}</p><details><summary>Conferir a previsão</summary><p>{s.result}</p></details>
+  <p class="study-limit">{s.limit} {s.key==='air' && <a href={imageCredits[2].href} target="_blank" rel="noopener noreferrer">Fotografia da Expedição 70 · NASA/JSC ↗</a>}{s.key==='orbit' && <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/" target="_blank" rel="noopener noreferrer">Textura terrestre · NASA/MODIS ↗</a>}</p><details><summary>Conferir a previsão</summary><p>{s.result}</p></details>
 </section>}
 <script>
   import { measurement, number, wave, type StudyKey } from '../lib/atlas-studies';
@@ -48,16 +91,24 @@ const s=studies[id];
       current.value=number(v)+' '+range.dataset.unit;
       range.setAttribute('aria-valuetext',current.value);
       out.value=number(y)+' '+out.dataset.unit;
-      if(key==='redshift') shape.setAttribute('points',wave(50*(1+v)));
-      if(key==='lens'||key==='star'||key==='orbit') {
-        const size=key==='lens'?32*y:key==='orbit'?32*v:27*v;
-        shape.setAttribute('r',String(size));
-        svg.querySelector('[data-planet]')?.setAttribute('cx',String(180+size));
+      if(key==='redshift'){
+        const length=52*(1+v);
+        shape.setAttribute('points',wave(length));
+        svg.querySelector('[data-bracket]')!.setAttribute('d',`M18 150v-4m0 2h${length}m0 -2v4`);
       }
-      if(key==='air') {
-        const height=106*y/100;
-        shape.setAttribute('height',String(height));
-        shape.setAttribute('y',String(136-height));
+      if(key==='lens'||key==='star'){
+        const cx=key==='lens'?180:242, cy=key==='lens'?90:91;
+        const r=key==='lens'?36*y:29*v, size=2.8*r;
+        for(const [attr,value] of Object.entries({width:size,height:size,x:cx-size/2,y:cy-size/2})) shape.setAttribute(attr,String(value));
+        svg.querySelector('[data-bracket]')?.setAttribute('d',`M${cx-r} 158v6m0 -3h${2*r}m0 -3v6`);
+      }
+      if(key==='orbit'){
+        shape.setAttribute('rx',String(55*v)); shape.setAttribute('ry',String(28*v));
+        svg.querySelector('[data-planet]')!.setAttribute('x',String(179+55*v-10));
+      }
+      if(key==='air'){
+        const height=119*y/100;
+        shape.setAttribute('height',String(height));shape.setAttribute('y',String(150-height));
       }
       scene?.update(v);
     };
@@ -85,11 +136,17 @@ const s=studies[id];
 .atlas-study h2{font:500 clamp(28px,3.7vw,56px)/1.08 Georgia,serif;letter-spacing:-.035em;margin:7px 0 12px;color:inherit}
 .atlas-study p{line-height:1.55}.atlas-study header>p{margin:0}
 .study-console{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);margin-block:18px;align-items:stretch;gap:clamp(14px,2vw,30px)}
-.study-console figure{margin:0;background:#13272b;color:#f6edda;display:flex;flex-direction:column;justify-content:center;min-width:0}
-.study-console svg,.study-console canvas{display:block;width:100%;aspect-ratio:2.25;height:auto}.study-console [hidden]{display:none}
-.study-console figcaption{padding:9px 12px;display:flex;gap:8px 18px;flex-wrap:wrap;font:600 .74rem/1.4 var(--atlas-mono,monospace)}
-figcaption span:before{content:'';display:inline-block;width:16px;border-bottom:2px dashed #91d2db;margin-right:5px;vertical-align:middle}figcaption span+span:before{border-bottom:3px solid #f0a66d}
-.ref,.sample{stroke:#91d2db;stroke-width:2;stroke-dasharray:4 3;fill:none}.sample{stroke:#f0a66d;stroke-width:3;stroke-dasharray:none}.ref.solid{fill:#69999e}.sample.solid{fill:#b8703e}
+.study-console figure{margin:0;background:#060b12;color:#e6e9e9;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.study-viewport{position:relative;isolation:isolate;aspect-ratio:2/1;width:100%;background:#060b12 center/cover}
+.study-horizon{position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 43%;opacity:.73;z-index:-1}
+.study-console svg,.study-console canvas{display:block;width:100%;height:100%;position:absolute;inset:0}.study-console [hidden]{display:none}
+.study-console figcaption{padding:10px 13px;background:#0b151f;border-top:1px solid #273444;display:flex;gap:8px 18px;flex-wrap:wrap;font:500 .74rem/1.4 var(--atlas-mono,monospace)}
+figcaption span:before{content:'';display:inline-block;width:16px;border-bottom:2px dashed #91d2db;margin-right:5px;vertical-align:middle}figcaption span+span:before{border-bottom:2px solid #f0a66d}
+[data-study=lens] figcaption span:before{border-color:#ce9971}[data-study=lens] figcaption span+span:before{border-color:#d0def9}
+.ref,.sample{stroke:#9ecddb;stroke-width:1.6;fill:none}.sample{stroke:#f7b981;stroke-width:2.1}.ref.ring{stroke-width:.8;stroke-dasharray:2.4 3}.sample.ring{stroke-width:1.3}
+[data-study=lens] .ref.ring{stroke:#d7a16d}
+.rule,.rail,.ref-rule,.sample-bracket{fill:none;stroke:#889cab;stroke-width:.65}.rail{stroke:#354653}.ref-rule{stroke:#9bc8d3}.sample-bracket{stroke:#edb183}
+.measure-label{font:8.2px var(--atlas-mono,monospace);fill:#d7e1e8;letter-spacing:.035em}
 .study-input{display:grid;align-content:center;gap:5px}.study-input label{display:flex;justify-content:space-between;gap:8px;font-weight:650}
 .study-input input{width:100%;min-height:40px;accent-color:#b05229}.study-answer{font:500 clamp(27px,3.4vw,48px)/1.1 Georgia,serif}.study-input p,.study-limit{font-size:.87rem;margin:4px 0}
 .study-input button{color:inherit;background:transparent;border:1px solid currentColor;justify-self:start;padding:8px 11px;min-height:44px;cursor:pointer}.study-input small{font-size:.8rem}.atlas-study details{margin-top:12px}.atlas-study summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px}

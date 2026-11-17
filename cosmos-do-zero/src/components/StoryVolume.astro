@@ -1,0 +1,28 @@
+---
+import { STORIES } from '../lib/story-scenes';
+interface Props { id:string }
+const {id}=Astro.props;
+---
+<div class="story-volume" data-story-volume={id}>
+  <canvas hidden tabindex="0" aria-label={`Mudar o ponto de vista em ${STORIES[id].title}. Use as setas ou arraste.`}></canvas>
+  <div class="volume-controls">
+    <button type="button" data-volume-turn hidden>Girar vista ↻</button>
+  </div>
+  <span class="volume-caption" data-volume-caption hidden></span>
+  <span data-volume-status role="status" class="volume-status"></span>
+</div>
+<script>
+  import { initStoryVolumes } from '../scripts/story-volume';
+  initStoryVolumes();
+</script>
+<style>
+  .story-volume{position:absolute;inset:0;pointer-events:none;color:#f7f4ed;z-index:2}
+  .story-volume canvas{width:100%;height:100%;display:block;touch-action:pan-y;pointer-events:auto;cursor:grab}
+  .story-volume canvas:active{cursor:grabbing}
+  .volume-controls{position:absolute;right:.65rem;top:.6rem;display:flex;gap:.35rem;pointer-events:auto}
+  .volume-controls button{background:#0c1922e8;color:#fff9ed;border:1px solid #f0dcc585;min-height:40px;padding:.35rem .65rem;font:600 .75rem/1.15 var(--sans);border-radius:3px}
+  .volume-controls button:focus-visible,.story-volume canvas:focus-visible{outline:3px solid #ffd28d;outline-offset:-3px}
+  .volume-caption,.volume-status:not(:empty){position:absolute;left:0;bottom:0;right:0;padding:1.25rem .85rem .55rem;background:linear-gradient(transparent,#060a10e8);font:500 clamp(.78rem,2vw,1rem)/1.25 var(--sans);text-shadow:0 1px 4px #000}
+  :global([data-story-mode-active='film']) .story-volume{display:none}
+  @media(max-width:520px){.volume-controls{right:.35rem;top:.35rem}.volume-controls button{min-height:40px;font-size:.7rem}}
+</style>

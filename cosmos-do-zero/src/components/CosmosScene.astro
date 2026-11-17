@@ -17,7 +17,7 @@ const evidence = [
   { name: 'Matéria escura', key: 'matter', observation: 'Movimentos de estrelas e galáxias, lentes gravitacionais e padrões do fundo cósmico indicam gravidade além da matéria luminosa.', explanation: 'O modelo cosmológico usa matéria que exerce gravidade e interage pouco com a luz para reunir essas evidências.', uncertainty: 'A identidade microscópica dessa matéria ainda é desconhecida. Não houve identificação confirmada de sua partícula.' },
   { name: 'Expansão acelerada', key: 'acceleration', observation: 'Distâncias de supernovas do tipo Ia, combinadas com outras observações, sustentam uma expansão acelerada recente.', explanation: 'A constante cosmológica é a descrição mais simples da energia escura no modelo padrão.', uncertainty: 'Sua natureza física permanece aberta. Estudar possíveis variações exige combinar dados, erros e hipóteses do modelo.' }
 ];
-const evidenceRenders = ['galaxies', 'cmb', 'galaxies', 'cosmic-web'];
+const evidenceRenders = ['/renders/galaxies', '/posters/cmb', '/renders/dark-matter', '/renders/cosmic-web'];
 const grid = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 - 2) * 58, y: (Math.floor(i / 5) - 2) * 48, id: i }));
 ---
 <section class="cosmos-scene page-width" id="exploracao" data-scene={experience} aria-labelledby="scene-title">
@@ -41,7 +41,7 @@ const grid = Array.from({ length: 25 }, (_, i) => ({ x: (i % 5 - 2) * 58, y: (Ma
   {experience === 'evidence' && <>
     <div class="scene-controls evidence-controls" role="group" aria-label="Escolher evidência">{evidence.map((e,i) => <button type="button" data-evidence-select={i} aria-pressed={i === 0 ? 'true' : 'false'}><span>{String(i+1).padStart(2,'0')}</span>{e.name}</button>)}</div>
     {evidence.map((e,i) => <article class="evidence-panel" data-evidence-panel={i}>
-      <figure class="evidence-visual"><img class="scene-render" src={u(`/posters/${evidenceRenders[i]}.webp`)} srcset={`${u(`/posters/${evidenceRenders[i]}-small.webp`)} 600w, ${u(`/posters/${evidenceRenders[i]}.webp`)} 1200w`} sizes="(max-width: 850px) calc(100vw - 90px), 40vw" alt={i === 1 ? 'Mapa ilustrativo do céu na CMB: contraste ampliado, sem dados observacionais.' : `Ilustração para a ideia de ${e.name.toLowerCase()}; não mostra matéria invisível nem contém dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /></figure>
+      <figure class="evidence-visual"><img class="scene-render" src={u(`${evidenceRenders[i]}.webp`)} srcset={`${u(`${evidenceRenders[i]}-small.webp`)} 600w, ${u(`${evidenceRenders[i]}.webp`)} 1200w`} sizes="(max-width: 850px) calc(100vw - 90px), 40vw" alt={i === 1 ? 'Mapa ilustrativo do céu na CMB: contraste ampliado, sem dados observacionais.' : `Ilustração para a ideia de ${e.name.toLowerCase()}; não mostra matéria invisível nem contém dados observacionais.`} width="1200" height="800" loading="lazy" decoding="async" /></figure>
       <div class="evidence-explanation"><h3>{e.name}</h3><dl><dt>O que observamos</dt><dd>{e.observation}</dd><dt>Como explicamos</dt><dd>{e.explanation}</dd><dt>O que segue aberto</dt><dd>{e.uncertainty}</dd></dl></div>
     </article>)}
   </>}

@@ -4,7 +4,7 @@ export const STORIES:Record<string,Story>={
  'galaxias-e-nebulosas':{
   title:'Uma casa dentro de outra',short:'Nosso endereço cósmico',lede:'Afaste o olhar: o que parecia enorme passa a fazer parte de algo maior.',
   phases:[{at:0,label:'Nossa casa',say:'A Terra orbita o Sol. O Sistema Solar é só uma pequena parte da nossa galáxia.'},{at:.34,label:'Nossa galáxia',say:'A Via Láctea reúne estrelas, gás e poeira. O Sol fica longe do centro.'},{at:.7,label:'A grande teia',say:'Galáxias se agrupam em fios e conjuntos maiores, separados por regiões menos povoadas.'}],
-  limit:'Saltos de escala ilustrativos. O desenho não representa um zoom contínuo nem um mapa observado.'
+  limit:'Saltos de escala ilustrativos. A Terra, a galáxia e os filamentos são ilustrações em três escalas independentes.'
  },
  'origem-do-universo':{
   title:'A luz traz uma pista',short:'O espaço cresce, a onda se alonga',lede:'Compare uma onda quando foi emitida e depois de atravessar um espaço em expansão.',
@@ -29,7 +29,7 @@ export const STORIES:Record<string,Story>={
  'terra-e-atmosfera':{
   title:'O ar muda conforme você sobe',short:'Uma atmosfera, várias camadas',lede:'Suba do solo até 120 km e acompanhe onde ficam as camadas do ar.',
   phases:[{at:0,label:'Perto do chão',say:'A troposfera reúne a maior parte do ar e quase todo o tempo que sentimos: nuvens, chuva e ventos.'},{at:.1,label:'Mais acima',say:'Na estratosfera, o ozônio absorve parte da radiação ultravioleta que vem do Sol.'},{at:.42,label:'Ar cada vez mais rarefeito',say:'Acima vêm a mesosfera e a termosfera. O ar continua ficando menos denso; as camadas não têm bordas rígidas.'}],
-  limit:'Limites aproximados e desenho ampliado. A régua vai até 120 km; a atmosfera continua muito acima dessa altura.'
+  limit:'Limites aproximados; o perfil de altitude está ampliado. A régua vai até 120 km; a atmosfera continua muito acima dessa altura.'
  }
 };
 
@@ -41,98 +41,110 @@ export function sampleStory(id:string,progress:number){
  const axes=[.387,1,1.524],periods=axes.map(a=>a**1.5);
  return {progress:p,phase:story.phases.reduce((at,s,i)=>p>=s.at?i:at,0),scale:1+p,wavelength:400*(1+p),redshift:p,galaxyRadius:9,axes,periods,altitude:120*p};
 }
-const C={bg:'#031226',surface:'#08233d',line:'#254661',ink:'#eef6ff',muted:'#aec7db',cyan:'#74dceb',blue:'#83b6ff',gold:'#f3ce83'};
-const esc=(s:string)=>s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
-const num=(v:number,n=1)=>v.toFixed(n).replace('.',',');
-const text=(x:number,y:number,s:string,size=20,color:string=C.ink,extra='')=>`<text x="${x}" y="${y}" font-size="${size}" fill="${color}" ${extra}>${esc(s)}</text>`;
-const circle=(x:number,y:number,r:number,fill:string,extra='')=>`<circle cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="${r}" fill="${fill}" ${extra}/>`;
-const path=(d:string,stroke:string,width=2,extra='')=>`<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${width}" ${extra}/>`;
-const line=(x:number,y:number,x2:number,y2:number,stroke:string,extra='')=>`<line x1="${x}" y1="${y}" x2="${x2}" y2="${y2}" stroke="${stroke}" ${extra}/>`;
-const starfield=()=>Array.from({length:45},(_,i)=>circle(35+(i*173)%890,105+(i*89)%365,i%9===0?1.7:1,C.ink,`opacity="${.12+(i%5)*.07}"`)).join('');
+const ivory='#fff6e9', copper='#ffc996', ice='#a5d6ef', muted='#c7d0d4';
+const esc=(value:string)=>value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;');
+const n=(value:number,d=1)=>value.toFixed(d).replace('.',',');
+const pt=(x:number)=>x.toFixed(2);
 
-function galaxies(p:number){
- const phase=p<.34?0:p<.7?1:2;
- let body='';
- if(phase===0){
-  body=circle(480,278,88,'#126c94')+`<ellipse cx="480" cy="278" rx="90" ry="25" fill="none" stroke="${C.cyan}" opacity=".6"/>`;
-  body+=path('M430 218Q475 201 500 235L480 265L520 278L496 318L460 294L437 270Z','#6ed8b6',18,'stroke-linejoin="round"');
-  body+=text(480,424,'Terra',28,C.ink,'text-anchor="middle" font-weight="700"')+text(480,456,'Nosso ponto de partida',20,C.muted,'text-anchor="middle"');
-  body+=circle(745,185,18,C.gold)+path('M600 270Q675 190 724 187',C.line,2,'stroke-dasharray="6 7"')+text(745,226,'Sol',20,C.gold,'text-anchor="middle"');
- }else if(phase===1){
-  body+=`<ellipse cx="480" cy="277" rx="275" ry="95" fill="#123d61" opacity=".45"/>`;
-  for(let i=0;i<360;i++){const a=i*.23,r=12+(i%90)*2.8,arm=i%4*Math.PI/2;body+=circle(480+Math.cos(a*.2+arm)*r,277+Math.sin(a*.2+arm)*r*.39,.9+(i%3)*.35,i%9===0?C.gold:C.blue,`opacity="${.35+(i%5)*.1}"`);}
-  body+=circle(480,277,18,C.gold)+circle(640,300,6,C.cyan)+line(640,312,665,368,C.cyan)+text(668,392,'Sistema Solar',19,C.cyan)+text(480,464,'Via Láctea',28,C.ink,'text-anchor="middle" font-weight="700"');
- }else{
-  const nodes=[[110,185],[275,125],[460,235],[660,150],[838,230],[720,389],[480,418],[240,346]];
-  const links=[[0,1],[0,7],[1,2],[1,3],[2,3],[2,6],[3,4],[4,5],[5,6],[6,7],[2,7]];
-  for(const [a,b]of links){const A=nodes[a],B=nodes[b];body+=line(A[0],A[1],B[0],B[1],'#285976','stroke-width="13" opacity=".2"');for(let j=0;j<18;j++){const q=j/17,off=Math.sin(j*7.1+a)*11;body+=circle(A[0]+(B[0]-A[0])*q+off,A[1]+(B[1]-A[1])*q+off*.6,1.8,C.blue,'opacity=".6"');}}
-  for(const n of nodes)body+=circle(n[0],n[1],10,C.gold)+circle(n[0]+8,n[1]-6,4,C.cyan)+circle(n[0]-11,n[1]+7,3,C.blue);
-  body+=text(480,490,'Galáxias também se agrupam',24,C.ink,'text-anchor="middle"');
+type ResolveImage=(path:string)=>string;
+interface Plane {src:string;x:number;y:number;w:number;h:number;opacity:number;fit:'slice'|'meet'}
+const plate=(src:string,x=0,y=0,w=960,h=540,opacity=1,fit:Plane['fit']='slice'):Plane=>({src,x,y,w,h,opacity,fit});
+const render=(name:string)=>'/renders/'+name+'.webp';
+const planet=(name:string)=>'/models/portraits/'+name+'.webp';
+const matte='/media/stories/solar-disc.webp';
+const type=(x:number,y:number,label:string,size:number,fill=ivory,extra='')=>`<text x="${x}" y="${y}" font-size="${size}" fill="${fill}" ${extra}>${esc(label)}</text>`;
+const stroke=(d:string,color:string,width=2,extra='')=>`<path d="${d}" fill="none" stroke="${color}" stroke-width="${width}" ${extra}/>`;
+const label=(x:number,y:number,s:string,size=28,fill=ivory)=>type(x,y,s,size,fill,'font-weight="600"');
+const hero=(title:string,detail:string)=>label(44,439,title,60)+type(46,490,detail,28,muted);
+function closer(src:string,zoom:number):Plane {const w=960*zoom,h=540*zoom;return plate(src,(960-w)*.54,(540-h)*.42,w,h);}
+
+export function storyComposition(id:string,progress:number){
+ const state=sampleStory(id,progress),p=state.progress,k=state.phase,planes:Plane[]=[];
+ let overlay='',shade:'foot'|'left'|'split'|'none'='foot';
+ if(id==='galaxias-e-nebulosas'){
+  if(k===0){
+   const size=526-110*p;
+   planes.push(plate('/media/stories/studio-field.webp'),plate(planet('terra'),552-size*.32,245-size*.51,size,size,1,'meet'));
+   overlay=hero('Terra','Um planeta do Sistema Solar');
+  }else if(k===1){
+   planes.push(closer(render('milky-way'),1.13-(p-.34)*.25));
+   overlay=hero('Via Láctea','O Sol fica no disco galáctico');
+  }else{
+   planes.push(closer(render('cosmic-web'),1.19-(p-.7)*.58));
+   overlay=hero('Teia cósmica','Filamentos, aglomerados e vazios');
+  }
+ }else if(id==='origem-do-universo'){
+  planes.push(plate(render('galaxies'),400,-6,610,550,.85));
+  shade='left';
+  const wave=(baseline:number,period:number)=>Array.from({length:130},(_,i)=>{
+   const x=i*4;return (i?'L':'M')+pt(48+x)+','+pt(baseline-20*Math.sin(x*Math.PI*2/period));
+  }).join('');
+  const width=62*(1+p);
+  overlay=label(44,96,'Luz em expansão',44)+type(46,155,'Na emissão',25,muted)+label(46,200,'400 nm',38,ice)
+    +stroke(wave(251,62),ice,3)+type(46,322,'No trajeto',25,muted)+label(46,367,n(state.wavelength,0)+' nm',38,copper)
+    +stroke(wave(420,width),copper,3)+stroke(`M${pt(48+width/4)} 453v10m0 -5h${pt(width)}m0 -5v10`,copper,2)
+    +type(46,503,'Fator de escala  '+n(state.scale,2)+' ×',26,ivory);
+ }else if(id==='misterios-do-cosmos'){
+  shade='split';
+  planes.push(plate(render('milky-way'),-142,15,680,510,.94),plate(render('dark-matter'),-142,15,680,510,p*.76));
+  const curve=(withHalo:boolean)=>Array.from({length:70},(_,i)=>{
+   const r=.012+i*.988/69,stars=r<.3?r/.3:Math.sqrt(.3/r),halo=.95*(1-Math.exp(-r/.22));
+   return (i?'L':'M')+pt(486+r*417)+','+pt(363-Math.hypot(stars,withHalo?Math.sqrt(p)*halo:0)*143);
+  }).join('');
+  overlay=label(474,84,'Curva de rotação',39)+type(477,135,'Velocidade relativa',25,muted)
+    +stroke('M486 160V364H908','#87939a',1.5)+stroke(curve(false),ice,4,'stroke-dasharray="10 7"')+stroke(curve(true),copper,4)
+    +type(895,400,'Raio galáctico →',23,muted,'text-anchor="end"')
+    +stroke('M484 450h38',ice,3,'stroke-dasharray="6 4"')+type(539,459,'Matéria visível',24)
+    +stroke('M484 491h38',copper,4)+type(539,500,'Modelo com halo',24);
+ }else if(id==='vida-das-estrelas'){
+  if(k===0){
+   planes.push(closer('/models/stellar/orion-detail.webp',1+p*.55));
+   overlay=hero('Berçário estelar','Nebulosa de Órion · Hubble');
+  }else if(k===1){
+   planes.push(closer(render('star'),1.02+(p-.3)*.22));
+   overlay=hero('Fusão nuclear','A estrela transforma seu combustível');
+  }else{
+   planes.push(closer('/media/stories/stellar-remnants.webp',1.01+(p-.72)*.08));
+   overlay=hero('Remanescentes','Anã branca · estrela de nêutrons · buraco negro');
+  }
+ }else if(id==='sistema-solar'){
+  shade='none';
+  const cx=530,cy=281,radii=[95,191,299],flatten=.51,names=['Mercúrio','Terra','Marte'],bodies=['mercurio','terra','marte'];
+  // Render order follows the projected depth, including occultations by the Sun.
+  const bodiesInDepth:{depth:number;plane:Plane}[]=[];
+  for(let i=0;i<3;i++){
+   const a=.40+i*1.8+p*Math.PI*2/state.periods[i],r=radii[i],x=cx+r*Math.cos(a),y=cy+r*flatten*Math.sin(a),sz=[32,46,36][i];
+   bodiesInDepth.push({depth:Math.sin(a),plane:plate(planet(bodies[i]),x-sz/2,y-sz/2,sz,sz,1,'meet')});
+  }
+  bodiesInDepth.push({depth:0,plane:plate(matte,cx-47,cy-47,94,94,1,'meet')});
+  planes.push(...bodiesInDepth.sort((a,b)=>a.depth-b.depth).map(v=>v.plane));
+  overlay=label(44,76,'Períodos orbitais',46);
+  for(let i=0;i<3;i++){
+   const x=46+314*i;
+   overlay+=type(x,452,names[i],29,ivory)+type(x,493,n(state.periods[i],2)+' ano'+(state.periods[i]>1?'s':''),26,muted);
+  }
+ }else if(id==='terra-e-atmosfera'){
+  planes.push(plate('/media/stories/limbo-terrestre.webp',-110,-50+p*14,1080,650));
+  shade='split';
+  const stages=['Troposfera','Estratosfera','Mesosfera','Termosfera'],edges=[0,12,50,85,120],h=state.altitude,at=(v:number)=>427-2.56*v;
+  overlay=label(444,72,'Perfil da atmosfera',38);
+  for(let i=0;i<4;i++){
+   const y=at(edges[i]),t=at(edges[i+1]);
+   overlay+=stroke(`M530 ${pt(y)}H907`,'#586d78',1)+type(567,(y+t)/2+8,stages[i],25,ivory);
+  }
+  for(const h of edges)overlay+=type(511,at(h)+7,String(h),21,muted,'text-anchor="end"');
+  overlay+=stroke('M530 119.8V427','#8e9da3',2)+stroke(`M525 ${pt(at(h))}H913`,copper,3)
+    +label(446,498,'Altitude   '+n(h,0)+' km',33,copper);
  }
- return body+text(40,88,['1 · Uma casa','2 · Uma galáxia','3 · Uma teia'][phase],17,C.cyan,'font-weight="700"');
+ const grid=id==='sistema-solar'?[95,191,299].map(r=>`<ellipse cx="530" cy="281" rx="${r}" ry="${pt(r*.51)}" fill="none" stroke="#788995" stroke-width="1.5" opacity=".62"/>`).join(''):'';
+ return {state,planes,overlay,shade,grid};
 }
 
-function redshift(p:number){
- const a=1+p,period=72;
- const wave=(cy:number,k:number)=>Array.from({length:421},(_,i)=>{const x=i*2;return`${i?'L':'M'}${60+x},${(cy-25*Math.sin(2*Math.PI*x/(period*k))).toFixed(2)}`;}).join(' ');
- const box=(y:number)=>`<rect x="36" y="${y}" width="888" height="128" rx="14" fill="${C.surface}"/>`;
- let body=box(96)+box(250)+text(60,126,'NA EMISSÃO',16,C.blue,'font-weight="700"')+text(898,126,'400 nm',22,C.blue,'text-anchor="end"');
- body+=path(wave(173,1),C.blue,3)+path('M78 209v7 M78 213H150 M150 209v7',C.blue,2);
- body+=text(60,280,'DURANTE A EXPANSÃO',16,C.cyan,'font-weight="700"')+text(898,280,`${num(400*a,0)} nm`,22,C.cyan,'text-anchor="end"')+path(wave(327,a),C.cyan,3);
- body+=path(`M${60+18*a} 361v7 M${60+18*a} 365H${60+90*a} M${60+90*a} 361v7`,C.cyan,2);
- body+=text(60,421,'Espaço',16,C.muted)+text(60,457,`${num(a,2)} ×`,30,C.cyan,'font-weight="700"');
- body+=text(365,421,'Comprimento de onda',16,C.muted)+text(365,457,`${num(400*a,0)} nm`,30,C.ink,'font-weight="700"');
- body+=text(700,421,'Desvio para o vermelho',16,C.muted)+text(700,457,`z = ${num(p,2)}`,30,C.ink,'font-weight="700"');
- return body+text(480,503,p>.75?'A onda fica maior na mesma proporção que o espaço.':'Compare a distância entre duas cristas.',19,C.muted,'text-anchor="middle"');
-}
-
-function rotation(p:number){
- const k=p,points=Array.from({length:60},(_,i)=>{const r=.025+i/59*.975,visible=r<.3?r/.3:Math.sqrt(.3/r),halo=.95*(1-Math.exp(-r/.22));return {r,visible,model:Math.sqrt(visible**2+k*halo**2)};});
- const curve=(key:'visible'|'model')=>points.map((q,i)=>`${i?'L':'M'}${480+q.r*390},${(420-q[key]*190).toFixed(2)}`).join(' ');
- let body=starfield()+`<ellipse cx="240" cy="275" rx="160" ry="95" fill="#15466d" opacity=".28"/>`;
- for(let i=0;i<120;i++){const r=24+(i%30)*4.4,a=i*2.399+p*(2.3/(1+r/55));body+=circle(240+Math.cos(a)*r,275+Math.sin(a)*r*.62,1.7,i%7?C.blue:C.gold,'opacity=".75"');}
- body+=circle(240,275,18,C.gold)+`<ellipse cx="240" cy="275" rx="190" ry="124" fill="none" stroke="${C.cyan}" stroke-width="2" opacity="${k*.7}" stroke-dasharray="5 7"/>`;
- body+=path('M480 150V420H890',C.line,2)+path(curve('visible'),C.blue,3,'stroke-dasharray="6 7"')+path(curve('model'),C.cyan,4);
- body+=text(480,118,'Rapidez de giro',18,C.muted)+text(880,453,'Distância ao centro',17,C.muted,'text-anchor="end"');
- body+=line(90,480,125,480,C.blue,'stroke-width="3" stroke-dasharray="5 5"')+text(135,486,'Só matéria visível',17,C.blue);
- body+=line(480,480,515,480,C.cyan,'stroke-width="4"')+text(525,486,'Modelo com halo',17,C.cyan);
- return body;
-}
-
-function stars(p:number){
- const born=p<.3,bloom=Math.min(1,p/.3),late=Math.max(0,(p-.55)/.45);
- let body=starfield()+path('M480 220V275M480 275L235 340M480 275L725 340',C.line,3);
- if(born){for(let i=0;i<70;i++){const a=i*2.4,r=(15+(i%18)*5)*(1-bloom*.55);body+=circle(480+Math.cos(a)*r,215+Math.sin(a)*r*.55,4+i%4,C.blue,'opacity=".18"');}}
- body+=circle(480,215,20+bloom*16,C.gold)+text(480,136,born?'Uma nuvem se concentra':'Uma estrela começa a brilhar',24,C.ink,'text-anchor="middle"');
- body+=circle(235,350,24+late*28,'#ecba6b')+circle(725,350,34+late*23,'#9acbff');
- body+=text(235,430,'Como o Sol',23,C.ink,'text-anchor="middle"')+text(725,430,'Muito mais massiva',23,C.ink,'text-anchor="middle"');
- if(p>.7){body+=path('M235 446V459 M725 446V459',C.line,2)+circle(235,480,9,'#e5f6ff')+circle(695,480,8,C.cyan)+circle(755,480,11,'#010813',`stroke="${C.blue}" stroke-width="3"`);body+=text(235,520,'Anã branca',17,C.muted,'text-anchor="middle"')+text(725,520,'Nêutrons ou buraco negro',17,C.muted,'text-anchor="middle"');}
- return body;
-}
-
-function solar(p:number){
- const {axes,periods}=sampleStory('sistema-solar',p),radii=[76,135,195],names=['Mercúrio','Terra','Marte'],colors=[C.gold,C.cyan,'#e4a187'];
- let body=starfield()+circle(480,275,25,C.gold);
- axes.forEach((_a,i)=>{const period=periods[i],angle=-Math.PI/2+p*4*Math.PI*2/period;body+=`<ellipse cx="480" cy="275" rx="${radii[i]}" ry="${radii[i]*.7}" fill="none" stroke="${C.line}" stroke-width="2"/>`;body+=circle(480+Math.cos(angle)*radii[i],275+Math.sin(angle)*radii[i]*.7,[6,9,7][i],colors[i]);body+=circle(220+i*265,455,5,colors[i])+text(235+i*265,462,names[i],19,C.ink)+text(235+i*265,490,`${num(period,2)} ano`,17,C.muted);});
- return body+text(480,104,'O mesmo tempo passa para todos',24,C.ink,'text-anchor="middle"');
-}
-
-function atmosphere(p:number){
- const h=120*p,y=448-h/120*300;
- const layers=[{a:0,b:12,name:'Troposfera',fill:'#276d91'},{a:12,b:50,name:'Estratosfera',fill:'#205578'},{a:50,b:85,name:'Mesosfera',fill:'#173d61'},{a:85,b:120,name:'Termosfera',fill:'#102e50'}];
- let body=circle(260,350,105,'#0d7292')+`<ellipse cx="260" cy="350" rx="118" ry="118" fill="none" stroke="${C.cyan}" stroke-width="14" opacity=".16"/>`;
- body+=path('M212 286L255 278L277 315L248 338L274 373L247 412L207 370Z','#6cc7ae',16,'stroke-linejoin="round"');
- for(const layer of layers){const top=448-layer.b/120*300,height=(layer.b-layer.a)/120*300;body+=`<rect x="490" y="${top}" width="320" height="${height}" fill="${layer.fill}" opacity=".7"/>`;body+=text(820,top+height/2+5,layer.name,16,C.muted);}
- body+=line(490,148,490,448,C.line,'stroke-width="2"');
- for(const height of [0,12,50,85,120]){const at=448-height/120*300;body+=line(482,at,490,at,C.muted)+text(468,at+5,`${height}`,16,C.muted,'text-anchor="end"');}
- body+=line(490,y,807,y,C.cyan,'stroke-width="2"')+circle(520,y,7,C.ink)+text(650,107,`${num(h,0)} km`,32,C.cyan,'font-weight="700" text-anchor="middle"');
- body+=text(260,490,'Terra',24,C.ink,'text-anchor="middle"')+text(650,490,'Altitude acima do solo',18,C.muted,'text-anchor="middle"');
- return body;
-}
-
-/** SVG server-rendered e quadros de filme usam exatamente a mesma geometria. */
-export function renderStory(id:string,progress:number,uid:string):string {
- const state=sampleStory(id,progress),story=STORIES[id],key=esc(`${uid}-${id}`);
- const scenes:Record<string,(p:number)=>string>={'galaxias-e-nebulosas':galaxies,'origem-do-universo':redshift,'misterios-do-cosmos':rotation,'vida-das-estrelas':stars,'sistema-solar':solar,'terra-e-atmosfera':atmosphere};
- return `<svg class="story-graphic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-labelledby="${key}-title ${key}-desc"><title id="${key}-title">${esc(story.short)}</title><desc id="${key}-desc">${esc(story.phases[state.phase].say)}</desc><defs><radialGradient id="${key}-bg" cx=".65" cy=".25" r=".9"><stop stop-color="#0b304d"/><stop offset="1" stop-color="${C.bg}"/></radialGradient></defs><style>.story-graphic text{font-family:Arial,Helvetica,sans-serif}</style><rect width="960" height="540" fill="url(#${key}-bg)"/>${text(38,45,story.short.toLocaleUpperCase('pt-BR'),15,C.cyan,'letter-spacing="1.4" font-weight="700"')}${scenes[id](state.progress)}</svg>`;
+export function renderStory(id:string,progress:number,uid:string,resolve:ResolveImage=p=>p):string {
+ const {state,planes,overlay,shade,grid}=storyComposition(id,progress),key=esc(uid+'-'+id),story=STORIES[id];
+ const stops=(pairs:[string,number][])=>pairs.map(([offset,opacity])=>`<stop offset="${offset}" stop-color="#03060a" stop-opacity="${opacity}"/>`).join('');
+ const gradients=`<defs><linearGradient id="${key}-foot" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">${stops([['0',.06],['.46',0],['.75',.3],['1',.84]])}</linearGradient><linearGradient id="${key}-left">${stops([['0',1],['.43',.95],['.61',.54],['1',.06]])}</linearGradient><linearGradient id="${key}-split">${stops([['0',.02],['.36',.08],['.53',.94],['1',.99]])}</linearGradient></defs>`;
+ const field=id==='sistema-solar' ? `<image width="960" height="540" href="${esc(resolve('/media/stories/studio-field.webp'))}" xlink:href="${esc(resolve('/media/stories/studio-field.webp'))}"/>` : '';
+ const imgs=planes.map(layer=>`<image x="${pt(layer.x)}" y="${pt(layer.y)}" width="${pt(layer.w)}" height="${pt(layer.h)}" opacity="${pt(layer.opacity)}" preserveAspectRatio="xMidYMid ${layer.fit}" href="${esc(resolve(layer.src))}" xlink:href="${esc(resolve(layer.src))}"/>`).join('');
+ return `<svg class="story-graphic" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 960 540" role="img" aria-labelledby="${key}-title ${key}-desc"><title id="${key}-title">${esc(story.short)}</title><desc id="${key}-desc">${esc(story.phases[state.phase].say)}</desc>${gradients}<rect width="960" height="540" fill="#06090e"/>${field}${grid}<g data-story-planes="">${imgs}</g><rect width="960" height="540" fill="${shade==='none'?'none':'url(#'+key+'-'+shade+')'}"/><g data-story-overlay="" font-family="Arial, Helvetica, sans-serif">${overlay}</g></svg>`;
 }

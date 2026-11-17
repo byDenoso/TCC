@@ -1,18 +1,20 @@
 {
   "source": "src/lib/story-scenes.ts",
+  "artwork": "scripts/prepare-story-plates.py",
   "duration": 20,
   "fps": 24,
   "dimensions": [
     1280,
     720
   ],
-  "captions": "Arquivos VTT em português, sem texto duplicado gravado no vídeo",
-  "models": "Ilustrações educativas; limites descritos em cada cena",
-  "references": [
-    "https://nssdc.gsfc.nasa.gov/planetary/factsheet/mercuryfact.html",
-    "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
-    "https://science.nasa.gov/asset/webb/what-is-cosmological-redshift/"
-  ],
+  "captions": "VTT em português",
+  "credits": {
+    "earth": "Retrato planetário do estúdio do Cosmos do Zero; mapas e créditos em assets/source/solar-materials.",
+    "galaxies": "Ilustrações de Via Láctea, teia, disco e halo do acervo public/renders. O render conceitual não mede posições de galáxias.",
+    "orion": "NASA, ESA, M. Robberto (STScI/ESA) and the Hubble Space Telescope Orion Treasury Project Team, CC BY 4.0; detalhe recortado. https://esahubble.org/images/heic0601a/",
+    "atmosphere": "Atmosfera: fotografia da NASA, Estação Espacial Internacional. Fonte na página de créditos.",
+    "remnants": "Ilustração procedural original; remanescentes em escalas independentes."
+  },
   "ids": [
     "galaxias-e-nebulosas",
     "origem-do-universo",

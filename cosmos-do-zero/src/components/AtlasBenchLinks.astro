@@ -1,16 +1,15 @@
 ---
-import { chapters, chapterOrder } from '../data';
+import { chapterOrder } from '../data';
 import { folios } from '../data/atlas';
 import { chapterUrl, u } from '../lib/url';
 import type { ChapterId } from '../types';
 interface Props { chapter: ChapterId }
 const {chapter}=Astro.props;
-const current=chapters.find(ch=>ch.id===chapter)!;
 const next=chapterOrder[chapterOrder.indexOf(chapter)+1];
 ---
 <nav class="atlas-bench-links" aria-label={`Após o experimento de ${folios[chapter].bench}`}>
   <span>{folios[chapter].bench}</span>
-  <a data-bench-return={chapter} href={`${chapterUrl(chapter)}#${current.sections[0].id}`}>← Voltar à leitura</a>
+  <a data-bench-return={chapter} href={chapterUrl(chapter)}>← Voltar à leitura</a>
   <a href={`${chapterUrl(chapter)}#checagem`}>Checar entendimento</a>
   <a href={next ? chapterUrl(next) : u('/#desafio')}>{next ? 'Próxima aula →' : 'Desafio final →'}</a>
 </nav>
