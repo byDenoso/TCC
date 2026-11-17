@@ -6,10 +6,12 @@ import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 const root = resolve(process.env.DIST ?? 'dist');
 const port = Number(process.argv[2] ?? process.env.PORT ?? 4321);
+const host = process.env.COSMOS_PREVIEW_HOST ?? '127.0.0.1';
 const types = {
   '.avif': 'image/avif',
   '.css': 'text/css; charset=utf-8',
   '.gif': 'image/gif',
+  '.glb': 'model/gltf-binary',
   '.html': 'text/html; charset=utf-8',
   '.ico': 'image/x-icon',
   '.jpeg': 'image/jpeg',
@@ -125,8 +127,8 @@ const server = createServer((req, res) => {
   });
 });
 
-server.listen(port, '127.0.0.1', () => {
+server.listen(port, host, () => {
   const address = server.address();
   const listeningPort = typeof address === 'object' && address ? address.port : port;
-  console.log(`Cosmos do Zero em http://127.0.0.1:${listeningPort}/`);
+  console.log(`Cosmos do Zero em http://${host}:${listeningPort}/`);
 });

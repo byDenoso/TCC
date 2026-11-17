@@ -32,9 +32,9 @@ try{
  const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
    ok(await root.count()===1,`${id}/${width}: abertura narrativa presente`);
    await stage.scrollIntoViewIfNeeded();
-   const world=root.locator('[data-story-world][data-renderer="webgl2"] canvas');
+   const world=root.locator('[data-story-world][data-renderer="webgl2"][data-renderer-engine="playcanvas"] canvas.cosmos-volume');
    await world.waitFor({timeout:15000});
-   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco Three.js renderizado`);
+   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco PlayCanvas renderizado`);
    await page.waitForFunction(id=>document.querySelector(`[data-story="${id}"] [data-story-play]`)?.getAttribute('aria-pressed')==='true',id);
    ok(await root.locator('[data-story-phase]').count()===3,`${id}/${width}: três momentos nomeados`);
    await root.locator('[data-story-phase]').last().click();
@@ -103,7 +103,11 @@ try{
  const history=await browser.newPage({viewport:{width:1280,height:900}});
  await history.addInitScript(()=>window.addEventListener('pageshow',e=>{document.documentElement.dataset.historyCache=String(e.persisted);}));
  await history.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
- await history.goto(`${base}/glossario/`,{waitUntil:'networkidle'});await history.goBack({waitUntil:'load'});
+ await history.goto(`${base}/glossario/`,{waitUntil:'networkidle'});
+ // A página restaurada do cache emite pageshow sem carregar os recursos de novo.
+ await history.goBack({waitUntil:'commit'});
+ await history.waitForURL(`${base}/capitulos/origem-do-universo/`,{waitUntil:'commit'});
+ await history.waitForFunction(()=>document.documentElement.dataset.historyCache!==undefined);
  await openLessonStory(history);
  const restored=history.locator('[data-story]');await restored.locator('[data-story-play]').scrollIntoViewIfNeeded();
  await history.waitForFunction(()=>document.querySelector('[data-story-play]')?.getAttribute('aria-pressed')==='true');

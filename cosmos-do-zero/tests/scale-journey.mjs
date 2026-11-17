@@ -44,6 +44,7 @@ try {
   assert.equal(await desktop.locator('html').getAttribute('data-theme'), 'light');
   await goToScale(desktop, 0);
   await desktop.waitForSelector(`${visual}[data-media="webgl"]`);
+  assert.equal(await desktop.locator('[data-scale-canvas]').getAttribute('data-renderer-engine'), 'playcanvas');
   const rect = await desktop.locator(visual).boundingBox();
   assert.ok(rect.width > 960 && rect.width <= 1280 && rect.height === 800);
   assert.ok(Math.abs(rect.y) < 1);

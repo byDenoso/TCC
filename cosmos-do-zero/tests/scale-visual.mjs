@@ -1,4 +1,4 @@
-// Five existing scale views; deterministic WebGL2 software renderer and reduced motion.
+// Five PlayCanvas scale views in WebGL2 with SwiftShader and reduced motion.
 import assert from 'node:assert/strict';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
@@ -19,7 +19,7 @@ try{
  const stage=page.locator('[data-scale-stage]');await stage.scrollIntoViewIfNeeded();await stage.locator('canvas.cosmos-volume').waitFor({timeout:30000});
  assert.equal(await stage.getAttribute('data-renderer'),'webgl2');
  const scene=page.locator('[data-scene="scale"]');await scene.locator('.cosmos-view-options summary').click();await scene.getByRole('combobox',{name:'Qualidade da cena'}).selectOption('standard');
- const samples=[],references=[];
+ const samples=[],references=[],regressions=[];
  const mean=(a,b)=>{let total=0;for(let n=0;n<a.length;n++)total+=Math.abs(a[n]-b[n]);return total/a.length;};
  if(update)await mkdir(folder,{recursive:true});
  for(let i=0;i<5;i++){
@@ -28,6 +28,7 @@ try{
   await page.waitForTimeout(1500);
   assert.equal(await page.locator(`[data-scale-step="${i}"]`).getAttribute('aria-pressed'),'true');
   assert.equal(await stage.getAttribute('data-renderer'),'webgl2');
+  assert.equal(await stage.getAttribute('data-renderer-engine'),'playcanvas');
   const image=await stage.locator('canvas.cosmos-volume').screenshot();
   const path=join(folder,`scale-${i}.png`);
   if(update)await writeFile(path,image);
@@ -40,8 +41,8 @@ try{
    await writeFile(join(failures,`scale-${i}-actual.png`),image);
    const difference=Buffer.from(actual.map((value,n)=>Math.abs(value-expected[n])));
    await sharp(difference,{raw:{width:96,height:64,channels:3}}).png().toFile(join(failures,`scale-${i}-diff.png`));
+   regressions.push({scale:i,delta});
   }
-  assert.ok(delta<2,`scale ${i}: mean pixel error ${delta} >= 2/255`);
   assert.ok(black>=2,`scale ${i}: a black frame must fail the comparison`);
   references.push(expected);
   samples.push({scale:i,delta,blackFrameDelta:black});
@@ -49,6 +50,7 @@ try{
  let closestPair=Infinity;
  for(let i=0;i<references.length;i++)for(let j=i+1;j<references.length;j++)closestPair=Math.min(closestPair,mean(references[i],references[j]));
  assert.ok(closestPair>=2,`the wrong scale must fail comparison: closest pair ${closestPair}`);
+ assert.deepEqual(regressions,[],`mean pixel error >= 2/255: ${JSON.stringify(regressions)}`);
  assert.deepEqual(errors,[]);
  console.log(JSON.stringify({method:'five existing views; Chromium WebGL2 SwiftShader; reduced motion; standard quality; 96x64 RGB mean absolute error < 2/255',update,closestPair,samples}));
 }finally{await browser.close();}

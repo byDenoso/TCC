@@ -48,24 +48,38 @@ async function boot(): Promise<void> {
   // A abertura em WebGL só é carregada quando solicitada.
   const hero3d = document.querySelector<HTMLButtonElement>('[data-hero-gl-enable]');
   if (hero3d) {
+    let renderer: typeof import('./hero-gl') | undefined;
+    let pending = false;
+    const updateButton = (active: boolean, failed = false) => {
+      hero3d.removeAttribute('aria-busy');
+      hero3d.setAttribute('aria-pressed', String(active));
+      hero3d.textContent = active ? 'Desativar nebulosa 3D' :
+        failed ? 'Nebulosa 3D indisponível · tentar novamente' : 'Ativar nebulosa 3D';
+    };
     hero3d.hidden = false;
-    hero3d.closest('.hero-shell')?.addEventListener('cosmos:hero3dlost', () => {
-      hero3d.hidden = false;
-      hero3d.disabled = false;
-      hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
+    updateButton(false);
+    hero3d.closest('.hero-shell')?.addEventListener('cosmos:hero3dlost', event => {
+      updateButton(false, event instanceof CustomEvent && event.detail?.failed === true);
     });
-    hero3d.addEventListener('click', () => {
-      hero3d.disabled = true;
+    hero3d.addEventListener('click', async () => {
+      if (pending) return;
+      if (hero3d.getAttribute('aria-pressed') === 'true') {
+        renderer?.stopHeroGl();
+        return;
+      }
+      pending = true;
+      hero3d.setAttribute('aria-busy', 'true');
       hero3d.textContent = 'Preparando nebulosa 3D…';
-      void import('./hero-gl').then((m) => m.initHeroGl()).then((ready) => {
-        if (ready) { hero3d.hidden = true; return; }
-        hero3d.disabled = false;
-        hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
-      }).catch((err) => {
-        console.warn('[cosmos] nebulosa 3D indisponível', err);
-        hero3d.disabled = false;
-        hero3d.textContent = 'Nebulosa 3D indisponível · tentar novamente';
-      });
+      try {
+        renderer ??= await import('./hero-gl');
+        const ready = await renderer.initHeroGl();
+        updateButton(ready, !ready);
+      } catch (error) {
+        console.warn('[cosmos] nebulosa 3D indisponível', error);
+        updateButton(false, true);
+      } finally {
+        pending = false;
+      }
     });
   }
   if (document.querySelector('[data-scene]')) {

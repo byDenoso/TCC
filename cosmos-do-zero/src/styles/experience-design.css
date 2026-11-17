@@ -123,8 +123,6 @@ html:root .hero-shell .star { background:#f5f0ff !important; }
 /* ── WebGL, shaders e motion graphics (Three.js, GLSL, GSAP) ── */
 .hero-shell > .hero-gl { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; display: block; }
 html:root .hero-shell.has-gl::before, .hero-shell.has-gl .starfield { opacity: 0; }
-.cmb-frame .cmb-gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-.cmb-frame.has-gl > canvas:not(.cmb-gl) { visibility: hidden; }
 .gs-mask { display: inline-block; overflow: hidden; vertical-align: bottom; padding: 0 .02em .1em; margin: 0 -.02em -.1em; }
 .gs-unit { display: inline-block; will-change: transform; }
 html[data-motion='reduced'] .hero-shell > .hero-gl { opacity: .9; }

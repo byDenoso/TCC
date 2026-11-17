@@ -15,6 +15,15 @@ export default defineConfig({
   devToolbar: { enabled: false },
   vite: {
     server: { allowedHosts: ['terminal.local'] },
+    optimizeDeps: {
+      include: [
+        'playcanvas',
+        'three',
+        'three/examples/jsm/controls/OrbitControls.js',
+        'three/examples/jsm/loaders/GLTFLoader.js',
+        'three/examples/jsm/exporters/GLTFExporter.js'
+      ]
+    },
     define: {
       'import.meta.env.PUBLIC_SITE_INDEXING': JSON.stringify(
         process.env.VERCEL_ENV === 'production' || process.env.SITE_PUBLIC === 'true' ? 'true' : 'false'

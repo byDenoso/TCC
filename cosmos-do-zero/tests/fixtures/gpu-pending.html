@@ -3,22 +3,26 @@
 <body><div id="stages"></div><script type="module">
 import * as THREE from 'three';
 import {observeScene} from '/src/scripts/visual/runtime.ts';
-const scenario=new URL(location.href).searchParams.get('scenario');
-if(scenario==='dispose-pending'){
- const {WebGPURenderer}=await import('three/webgpu');
- const original=WebGPURenderer.prototype.dispose;
- WebGPURenderer.prototype.dispose=function(){return new Promise((resolve,reject)=>{window.__RELEASE_DISPOSAL=()=>original.call(this).then(resolve,reject);});};
+if(new URL(location.href).searchParams.has('teardown')){
+ const {PlayCanvasRenderer}=await import('/src/scripts/visual/playcanvas-adapter.ts');
+ const original=PlayCanvasRenderer.prototype.dispose;
+ PlayCanvasRenderer.prototype.dispose=function(){
+  if(this.canvas.dataset.rejectTeardown==='true')throw new Error('fixture-teardown-sentinel');
+  return original.call(this);
+ };
 }
 const views=new Map();
+const events=[];
 function add(name){
  const root=document.createElement('section');root.className='mx-lab';
  const stage=document.createElement('div');stage.className='mx-stage';stage.dataset.fixture=name;
  stage.innerHTML='<svg viewBox="0 0 200 150" aria-label="alternativa 2D"></svg>';
  const caption=document.createElement('p');caption.className='mx-caption';caption.textContent=name;
  root.append(stage,caption);document.querySelector('#stages').append(root);
+ for(const type of ['cosmos:ready','cosmos:unavailable']) stage.addEventListener(type,()=>events.push({name,type}));
  const view=observeScene(stage,()=>{const group=new THREE.Group();group.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial({color:0x3388cc})));return {group,camera:[0,0,4],update(){}};});
  views.set(name,view);return stage;
 }
-window.__GPU_PENDING={add,dispose(name){views.get(name)?.dispose();},hide(name){document.querySelector(`[data-fixture="${name}"]`).hidden=true;}};
+window.__GPU_PENDING={add,events,dispose(name){views.get(name)?.dispose();}};
 add('first');
 </script></body></html>

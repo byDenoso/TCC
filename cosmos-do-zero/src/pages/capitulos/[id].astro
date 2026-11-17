@@ -15,6 +15,7 @@ import HRExhibit from '../../components/HRExhibit.astro';
 import BlackHoleExhibit from '../../components/BlackHoleExhibit.astro';
 import OrbitExhibit from '../../components/OrbitExhibit.astro';
 import SolarStudio from '../../components/SolarStudio.astro';
+import SaturnExhibit from '../../components/SaturnExhibit.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
 import StoryLesson from '../../components/StoryLesson.astro';
 import { MICRO } from '../../data/micro';
@@ -92,7 +93,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               <h2>{s.title}</h2>
               {s.id === 'origem-do-universo-primeira-luz' && MICRO[s.id] ? <CmbJourney spec={MICRO[s.id]} id={s.id} /> : MICRO[s.id] && <Micro spec={MICRO[s.id]} id={s.id} chapter={ch.id} />}
               {s.id === 'misterios-do-cosmos-materia-escura' && <Lensing id={s.id} />}
-              {s.id === 'sistema-solar-sol-e-planetas' && <><SolarStudio id={s.id} /><OrbitExhibit heading="h3" /></>}
+              {s.id === 'sistema-solar-sol-e-planetas' && <><SaturnExhibit /><SolarStudio id={s.id} /><OrbitExhibit heading="h3" /></>}
               {s.id === 'origem-do-universo-expansao' && <><HubbleLesson/><ExpansionExhibit heading="h3" /></>}
               {s.id === 'misterios-do-cosmos-exoplanetas' && <TransitExhibit heading="h3" />}
               {s.id === 'vida-das-estrelas-fusao' && <HRExhibit heading="h3" />}

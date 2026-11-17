@@ -7,15 +7,13 @@ import {observeScene} from '/src/scripts/visual/runtime.ts';
 import {moveWorldPosition,relativePositionMeters,worldPositionMeters} from '/src/scripts/visual/world-frame.ts';
 const stage=document.querySelector('.mx-stage');
 const params=new URL(location.href).searchParams;
-if(params.get('backend')==='webgl2')stage.dataset.forceWebgl='true';
 const distance=10n**27n, anchor=worldPositionMeters(distance,0n,0n);
 const originalCamera=moveWorldPosition(anchor,[0,0,3]), originalTarget=anchor;
 const closeWorld=moveWorldPosition(anchor,[0,0,1]);
 const farWorld=worldPositionMeters(distance,0n,-distance);
-let cameraWorld=originalCamera,targetWorld=originalTarget,badFrame=false,updates=0;
+let cameraWorld=originalCamera,targetWorld=originalTarget,badFrame=false,updates=0,dynamic=null;
 const group=new THREE.Group();
 const close=new THREE.Mesh(new THREE.PlaneGeometry(.8,.8),new THREE.MeshBasicMaterial({color:0xff2222}));
-if(params.has('custom'))close.material.onBeforeCompile=()=>{};
 const far=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({color:0x2222ff}));
 far.scale.setScalar(1.5e27);close.renderOrder=0;far.renderOrder=1;group.add(close,far);
 if(params.has('normalized-ortho')){close.position.z=1;far.position.z=-1;far.scale.setScalar(5);}
@@ -30,19 +28,28 @@ const view=observeScene(stage,()=>({
     camera:()=>cameraWorld,target:()=>targetWorld,
     setView:(camera,target)=>{cameraWorld=camera;targetWorld=target;},
     resetView:()=>{cameraWorld=originalCamera;targetWorld=originalTarget;},
-    anchors:()=>[{object:close,position:badFrame?moveWorldPosition(anchor,[NaN,0,0]):closeWorld},{object:far,position:farWorld}]
+    anchors:()=>[
+      {object:close,position:badFrame?moveWorldPosition(anchor,[NaN,0,0]):closeWorld},
+      {object:far,position:farWorld},
+      ...(dynamic?[{object:dynamic,position:moveWorldPosition(anchor,[0,0,1.5])}]:[])
+    ]
   }}:{}),
   update(){updates++;}
 }));
-let dynamic=null;
 window.__WORLD_FRAME_FIXTURE={
   rebase(value){view.state({value});},
   nearVisible(on){close.visible=on;view.state({phase:on ? .2 : .1});},
   farVisible(on){far.visible=on;view.state({phase:on ? .4 : .3});},
   foregroundColor(color){close.material.color.setHex(color);view.state({phase:.5});},
-  addStandard(){dynamic=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial());dynamic.visible=false;group.add(dynamic);view.state({phase:.6});return dynamic.material.onBeforeCompile!==THREE.Material.prototype.onBeforeCompile;},
-  removeStandard(){group.remove(dynamic);view.state({phase:.7});return dynamic.material.onBeforeCompile===THREE.Material.prototype.onBeforeCompile;},
-  addUnsupported(){group.add(new THREE.Mesh(new THREE.BoxGeometry(),new THREE.ShaderMaterial()));view.state({phase:.8});},
+  addForeground(model){
+    const material=model==='standard' ? new THREE.MeshStandardMaterial({color:0x000000,emissive:0xffff22}) : new THREE.ShaderMaterial({
+      vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+      fragmentShader:'void main(){gl_FragColor=vec4(1.0,1.0,.132,1.0);}',
+    });
+    dynamic=new THREE.Mesh(new THREE.PlaneGeometry(.3,.3),material);
+    group.add(dynamic);view.state({phase:.6});
+  },
+  removeForeground(){group.remove(dynamic);dynamic.geometry.dispose();dynamic.material.dispose();dynamic=null;view.state({phase:.7});},
   cameraDelta(){return relativePositionMeters(cameraWorld,originalCamera);},
   cameraDistance(){return Math.hypot(...relativePositionMeters(cameraWorld,targetWorld));},
   targetDelta(){return relativePositionMeters(targetWorld,originalTarget);},

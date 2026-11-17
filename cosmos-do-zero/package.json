@@ -19,6 +19,7 @@
     "test:webgpu": "node tests/verify-lifecycle-unhandled.mjs && node tests/webgpu-fallback.mjs",
     "test:renders": "node tests/renders.mjs && node tests/scale-visual.mjs",
     "test:scales": "node tests/scale-journey.mjs",
+    "test:saturn": "node tests/saturn.mjs",
     "test:pages": "node tests/pages-base.mjs",
     "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",
     "test:hero": "node tests/hero-blue.mjs",
@@ -41,6 +42,7 @@
     "@types/three": "0.187.0",
     "astro": "^7.3.8",
     "gsap": "3.13.0",
+    "playcanvas": "2.24.1",
     "three": "0.187.0"
   },
   "devDependencies": {

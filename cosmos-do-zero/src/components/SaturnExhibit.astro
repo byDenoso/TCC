@@ -1,0 +1,72 @@
+---
+import settings from '../../public/models/saturn/scene.json';
+import '../styles/saturn-exhibit.css';
+
+const width = 960;
+const unit = width / settings.camera.frameWidth;
+const radians = settings.camera.openAngle * Math.PI / 180;
+const opening = Math.sin(radians);
+const globeHeight = unit * Math.hypot(settings.geometry.polarRadius * Math.cos(radians), opening);
+const bands = [
+  { radius: 1.38, width: .30, color: '#977d62', alpha: .55 },
+  { radius: 1.74, width: .42, color: '#dbbc92', alpha: .82 },
+  { radius: 2.145, width: .25, color: '#b69b78', alpha: .74 },
+  { radius: 2.31, width: .02, color: '#d9b78b', alpha: .55 }
+];
+---
+<section id="saturno-aneis" class="saturn-exhibit" data-saturn aria-labelledby="saturn-title">
+  <h3 id="saturn-title">Por que os anéis quase desaparecem quando vistos de perfil?</h3>
+  <div class="saturn-controls" data-saturn-controls>
+    <div class="saturn-control-label">
+      <label for="saturn-angle">Ângulo de visão</label>
+      <output for="saturn-angle" data-saturn-angle aria-live="off">{settings.camera.openAngle}°</output>
+    </div>
+    <input id="saturn-angle" type="range" min="0" max="90" step="1" value={settings.camera.openAngle}
+      aria-describedby="saturn-explanation" data-saturn-slider disabled />
+    <div class="saturn-presets" role="group" aria-label="Posições da câmera">
+      <button type="button" data-saturn-preset={settings.camera.openAngle} aria-pressed="true" disabled>Vista aberta</button>
+      <button type="button" data-saturn-preset={settings.camera.edgeAngle} aria-pressed="false" disabled>De perfil</button>
+    </div>
+  </div>
+  <div class="saturn-stage" data-saturn-stage aria-hidden="true">
+    <svg data-saturn-diagram viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs>
+        <radialGradient id="saturn-disc" cx="37%" cy="35%" r="67%">
+          <stop stop-color="#f0dab4" /><stop offset=".67" stop-color="#baa17d" /><stop offset="1" stop-color="#514439" />
+        </radialGradient>
+        <clipPath id="saturn-rings-front"><path d="M0 270H960V540H0Z" /></clipPath>
+        <clipPath id="saturn-disc-clip"><ellipse cx="480" cy="270" rx={unit} ry={globeHeight} data-saturn-globe /></clipPath>
+      </defs>
+      <g transform="translate(480 270)">
+        <g data-saturn-rings transform={`scale(1 ${opening})`}>
+          {bands.map(({ radius, width, color, alpha }) => <circle r={radius * unit} fill="none" stroke={color} stroke-width={width * unit} opacity={alpha} />)}
+        </g>
+      </g>
+      <ellipse cx="480" cy="270" rx={unit} ry={globeHeight} fill="url(#saturn-disc)" stroke="#e5c798" stroke-opacity=".6" stroke-width="2" data-saturn-globe />
+      <g clip-path="url(#saturn-disc-clip)" fill="none">
+        <path d="M270 175Q480 252 690 175M270 230Q480 305 690 230M270 328Q480 390 690 328" stroke="#7c6146" stroke-width="10" opacity=".21" />
+        <path d="M270 220Q480 295 690 220M270 285Q480 355 690 285" stroke="#ffe0a7" stroke-width="8" opacity=".27" />
+      </g>
+      <g clip-path="url(#saturn-rings-front)">
+        <g transform="translate(480 270)">
+          <g data-saturn-rings transform={`scale(1 ${opening})`}>
+            {bands.map(({ radius, width, color, alpha }) => <circle r={radius * unit} fill="none" stroke={color} stroke-width={width * unit} opacity={alpha} />)}
+          </g>
+        </g>
+      </g>
+      <path data-saturn-edge d="M63 270H301M659 270H897" stroke="#bc9a73" stroke-width="1.4" visibility="hidden" />
+    </svg>
+  </div>
+  <noscript><style>.saturn-exhibit .saturn-controls { display: none; }</style></noscript>
+  <p id="saturn-explanation">Quando a câmera chega ao plano dos anéis, vemos só sua borda. Os anéis são muito finos em relação à largura, então quase desaparecem. A posição do Sol fica fixa.</p>
+  <details class="depth-detail saturn-credits">
+    <summary>Créditos e limites da ilustração</summary>
+    <p>Mapa ilustrativo de JPL/Caltech, disponibilizado pela NASA. Faixas e transparência dos anéis foram modeladas pelo Cosmos do Zero. Cores, brilho e largura aparente da atmosfera têm ajuste artístico. No diagrama de perfil, a borda dos anéis é ampliada para ficar legível.</p>
+    <p><a href="https://science.nasa.gov/3d-resources/saturn/">Mapa para modelos 3D · NASA</a> · <a href="https://science.nasa.gov/missions/hubble/hubble-views-saturn-ring-plane-crossing/">Anéis vistos de perfil · Hubble/NASA</a></p>
+  </details>
+</section>
+
+<script>
+  import { initSaturn } from '../scripts/saturn-exhibit';
+  initSaturn();
+</script>
