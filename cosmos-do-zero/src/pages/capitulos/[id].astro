@@ -1,7 +1,10 @@
 ---
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import EditorialCover from '../../components/EditorialCover.astro';
+import AtlasParallax from '../../components/AtlasParallax.astro';
+import AtlasStudy from '../../components/AtlasStudy.astro';
+import AtlasFolio from '../../components/AtlasFolio.astro';
+import { folios } from '../../data/atlas';
 import HubbleLesson from '../../components/HubbleLesson.astro';
 import LessonPath from '../../components/LessonPath.astro';
 import QuizCard from '../../components/QuizCard.astro';
@@ -17,13 +20,11 @@ import OrbitExhibit from '../../components/OrbitExhibit.astro';
 import SolarStudio from '../../components/SolarStudio.astro';
 import CmbJourney from '../../components/CmbJourney.astro';
 import StoryLesson from '../../components/StoryLesson.astro';
-import { STORIES } from '../../lib/story-scenes';
 import { MICRO } from '../../data/micro';
 import { LESSON_GUIDES } from '../../data/lesson-guides';
 import { adjacentChapters, chapterOrder, chapterPhotoKey, chapters, chapterTitleShort, chapterTrack, imageCredits, terms } from '../../data';
 import { linkTerms } from '../../lib/terms';
 import { photos } from '../../lib/images';
-import { courseCovers } from '../../lib/course-covers';
 import { chapterUrl, u } from '../../lib/url';
 import { pad2 } from '../../lib/format';
 import '../../styles/reader.css';
@@ -36,7 +37,6 @@ export function getStaticPaths() {
 }
 const { id } = Astro.props;
 const ch = chapters.find((c) => c.id === id)!;
-const n = chapterOrder.indexOf(ch.id)+1;
 const isPrimary = chapterTrack(ch.id) === 'primary';
 const { prev, next } = adjacentChapters(ch.id);
 const photoKey = chapterPhotoKey[ch.id];
@@ -45,22 +45,25 @@ const [checkA, checkB] = ch.checkTitle.split('|');
 const ext = ' (abre em outra aba)';
 const usedTerms = new Set<string>();
 const bodies = ch.sections.map((s) => linkTerms(s.body, terms, usedTerms));
-const cover = courseCovers[ch.id];
+const folio = folios[ch.id];
+const nextFolio = chapterOrder[chapterOrder.indexOf(ch.id) + 1];
 const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': ['expansao', 'receita'], 'misterios-do-cosmos': ['hubble', 'receita'] } as Record<string, ('tempo' | 'expansao' | 'hubble' | 'receita')[]>)[ch.id];
 ---
 <Base title={`${ch.title} · Cosmos do Zero`} description={ch.intro} bodyClass="reader-page" learningResource>
   <main id="principal" tabindex="-1">
     <article class="chapter-reader" data-reader={ch.id}>
-      <EditorialCover variant="lesson" titleId="lesson-title" image={cover.image} alt={cover.alt} caption={cover.caption} credit={cover.source.credit} href={cover.source.href} position={cover.position}>
-        <a class="back-link" href={u('/#capitulos')}>← Todas as aulas</a>
-        <p class="cover-kicker">{isPrimary ? 'Trilha principal' : 'Aula complementar'} · Aula {n} · {ch.minutes} min</p>
-        <h1 id="lesson-title">{ch.title}</h1>
-        <p class="reader-intro">{STORIES[ch.id].lede}</p>
-        <nav class="reader-entry" aria-label="Por onde começar esta aula">
-          <a class="cta" href={`#${ch.sections[0].id}`}>Começar a aula <span aria-hidden="true">↓</span></a>
-          <a class="textlink" href="#resumo">Resumo em cena e vídeo <span aria-hidden="true">↓</span></a>
+      <AtlasFolio id={ch.id} />
+      <aside class="atlas-fieldnote page-width">
+        <div><p class="atlas-eyebrow">Antes do experimento</p><p>{folio.prediction}</p></div>
+        <a class="atlas-underline" href={u(`/laboratorio/#${folio.station}`)}>Laboratório · {folio.bench} ↗</a>
+      </aside>
+      <div class="page-width atlas-inline-bench" id="experimento">
+        {ch.id === 'galaxias-e-nebulosas' ? <AtlasParallax /> : <AtlasStudy id={ch.id} />}
+        <nav class="atlas-bench-links" aria-label="Depois da experiência">
+          <a href={`#${ch.sections[0].id}`}>Continuar a leitura ↓</a><a href="#checagem">Checar entendimento</a>
+          <a href={nextFolio ? chapterUrl(nextFolio) : u('/#desafio')}>{nextFolio ? 'Próxima aula →' : 'Desafio final →'}</a>
         </nav>
-      </EditorialCover>
+      </div>
       <div class="reader-opening page-width">
         <StoryLesson id={ch.id} />
         <div class="reader-path-row">
@@ -128,7 +131,7 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               )}
             </section>
           ))}
-          <section class="chapter-check" aria-labelledby="check-title">
+          <section id="checagem" class="chapter-check" aria-labelledby="check-title">
             <div class="section-id">Pare um instante. O que ficou?</div>
             <h2 id="check-title">{checkA}<br /><em>{checkB}</em></h2>
             <QuizCard chapter={ch.id} />

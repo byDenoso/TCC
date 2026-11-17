@@ -1,0 +1,75 @@
+---
+import { u } from '../lib/url';
+const ticks = [-1, -.75, -.5, -.25, 0, .25, .5, .75, 1];
+---
+<section id="paralaxe" aria-labelledby="paralaxe-titulo" class="parallax-bench" data-parallax data-model={u('/models/parallax/instrument.glb')}>
+  <header>
+    <p class="folio">ASTROMETRIA &nbsp;/&nbsp; BANCADA DE PARALAXE</p>
+    <h2 id="paralaxe-titulo">Como medir a distância de uma estrela?</h2>
+    <p>Fotografe a mesma estrela de dois lados da órbita da Terra. Contra um fundo distante, sua posição aparente muda. Essa pequena diferença entrega a distância.</p>
+  </header>
+  <div class="instrument">
+    <figure>
+      <div class="stage">
+        <img src={u('/models/parallax/instrument.webp')} width="1080" height="672" loading="lazy" decoding="async" alt="Maquete de uma órbita graduada com dois globos da Terra e duas linhas de visada até a estrela."/>
+        <canvas hidden role="img" aria-label="Maquete de paralaxe em três dimensões. Compare as duas linhas de visada à estrela ao ajustar a distância."></canvas>
+      </div>
+      <div class="scene-bar">
+        <button type="button" data-open aria-pressed="false">Explorar a maquete em 3D</button>
+        <button type="button" data-top aria-pressed="false" hidden>Vista superior</button>
+        <span role="status" class="scene-status" data-status></span>
+      </div>
+      <figcaption>Maquete didática em Blender. A vista inicial ilustra 4 pc. Mapa terrestre de julho de 2004, NASA Earth Observatory / MODIS. <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/">Crédito da textura</a></figcaption>
+    </figure>
+    <div class="controls">
+      <p class="folio">PREVISÃO</p>
+      <fieldset><legend>Ao afastar a estrela de 4 para 8 pc, o deslocamento aparente entre as duas observações…</legend>
+      {['Cai à metade', 'Dobra', 'Fica igual'].map((label,i)=><label class="guess"><input type="radio" name="atlas-palpite" value={i}/>{label}</label>)}</fieldset>
+      <label class="range-label" for="parallax-distance">Distância da estrela <output for="parallax-distance" data-distance>4 pc</output></label>
+      <input id="parallax-distance" type="range" min="1" max="10" step=".5" value="4" aria-valuetext="4 parsecs"/>
+      <div class="limits"><span>1 pc</span><span>10 pc</span></div>
+      <p class="feedback" data-feedback aria-live="polite">Escolha um palpite e mova a régua até 8 pc para conferir.</p>
+    </div>
+  </div>
+  <figure class="chart">
+    <div class="chart-head"><h3>Posição aparente no céu</h3><span>Segundos de arco (″)</span></div>
+    <svg viewBox="0 0 590 124" role="img" aria-labelledby="paralaxe-grafico">
+      <title id="paralaxe-grafico">Posições da estrela nas duas datas sobre uma régua angular fixa</title>
+      <line x1="58" x2="532" y1="84" y2="84" stroke="#a2abae" />
+      {ticks.map((tick,i)=><g transform={`translate(${295+230*tick} 84)`}><line y1="0" y2={i%2 ? '5':'9'} stroke="#a2abae"/>{i%2===0 && <text y="30" text-anchor="middle">{tick.toLocaleString('pt-BR')}</text>}</g>)}
+      <path d="M295 18V83" stroke="#9aaab1" stroke-dasharray="3 5"/>
+      <g data-trace-a transform="translate(352.5 0)"><path d="M0 34V83" stroke="#ffac67"/><circle cy="39" r="7" fill="#ffac67"/><text x="11" y="34">A</text></g>
+      <g data-trace-b transform="translate(237.5 0)"><path d="M0 42V83" stroke="#8dd7ea" stroke-dasharray="3 3"/><path d="m0 42 8 8-8 8-8-8z" fill="#8dd7ea"/><text x="-12" y="45" text-anchor="end">B</text></g>
+    </svg>
+    <div class="readings"><p>Paralaxe anual <strong data-p>0,25″</strong></p><p>Separação A–B <strong data-total>0,50″</strong></p></div>
+    <figcaption>A e B são observações separadas por seis meses, a −1 e +1 unidade astronômica do Sol. A paralaxe anual é metade da separação máxima. A régua mede o ângulo em relação à posição central.</figcaption>
+  </figure>
+  <details><summary>Escala, hipótese e fonte</summary>
+    <p>O modelo coloca a direção da estrela perpendicular à base A–B. Usa órbita circular, referências de fundo suficientemente distantes e movimento próprio nulo. Para distância <i>d</i> em parsecs, a paralaxe anual em segundos de arco é <i>p</i> = 1/<i>d</i>. Na maquete, tamanhos, distâncias e ângulos foram ampliados ou comprimidos para caber na mesa. A régua angular usa os valores calculados.</p>
+    <a href="https://www.esa.int/Science_Exploration/Space_Science/Gaia/Parallax">ESA · A geometria da paralaxe</a>
+  </details>
+</section>
+<script>
+  import { bindParallax } from '../scripts/atlas-parallax';
+  document.querySelectorAll<HTMLElement>('[data-parallax]').forEach(bindParallax);
+</script>
+<style>
+.parallax-bench{max-width:76rem;margin:clamp(3rem,8vw,8rem) auto;padding:0 clamp(1rem,4vw,4rem);scroll-margin-top:6rem;font-family:inherit;color:inherit}
+.parallax-bench header{max-width:53rem;margin-bottom:1.8rem}.parallax-bench .folio{font:600 .72rem/1.5 ui-monospace,monospace;letter-spacing:.14em;margin:0 0 .8rem}
+.parallax-bench h2{font:normal clamp(2.5rem,5.4vw,5.4rem)/1.02 var(--font-display,Georgia,serif);letter-spacing:-.055em;margin:.25rem 0 1rem}
+.parallax-bench header>p:last-child,.parallax-bench details p{max-width:64ch;line-height:1.55}
+.instrument{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(15rem,1fr);gap:clamp(1rem,3vw,3rem);align-items:start}
+.parallax-bench figure{margin:0}.stage{background:#122227;position:relative;aspect-ratio:1080/672;overflow:hidden}.stage img,.stage canvas{display:block;width:100%;height:100%;object-fit:cover}.stage canvas{position:absolute;inset:0}.parallax-bench [hidden]{display:none!important}
+.parallax-bench button{appearance:none;color:inherit;background:none;border:1px solid currentColor;border-radius:0;min-height:44px;font:inherit;padding:.5em .8em;cursor:pointer}
+.parallax-bench :is(button,input,summary,a):focus-visible{outline:3px solid #ce772a;outline-offset:3px}
+.scene-bar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}.scene-status{font-size:.85rem}
+.parallax-bench figcaption{font-size:.85rem;line-height:1.5;margin-top:.65rem;max-width:82ch}
+.parallax-bench a{color:inherit;text-underline-offset:.16em}.controls{border-top:1px solid currentColor;padding:1rem 0}.controls fieldset{padding:0;margin:0;border:none}.controls legend{font-weight:600;line-height:1.45;margin-bottom:.5rem}
+.guess{display:flex;gap:.6rem;align-items:center;min-height:44px;cursor:pointer}.guess input{accent-color:#347080}
+.range-label{display:flex;justify-content:space-between;margin:1rem 0 .3rem;font-weight:650}.range-label output,.limits,.readings strong{font-variant-numeric:tabular-nums}
+#parallax-distance{width:100%;accent-color:#347080;min-height:32px;cursor:pointer}.limits,.chart-head,.readings{display:flex;justify-content:space-between;gap:.6rem}.limits{font:normal .8rem ui-monospace,monospace}.feedback{font-size:.9rem;line-height:1.5;min-height:3em}
+.parallax-bench .chart{background:#102329;color:#f4f2e8;padding:clamp(1rem,3vw,2.5rem);margin:1.5rem 0}.chart-head{align-items:baseline;flex-wrap:wrap}.chart-head h3{font:normal clamp(1.5rem,3vw,2.6rem)/1.1 Georgia,serif;margin:0}.chart-head span{font:normal .77rem ui-monospace,monospace}.chart svg{display:block;width:100%;max-height:15rem}.chart svg text{fill:#f1f3ed;font:16px ui-monospace,monospace}
+.readings{justify-content:start;gap:clamp(1rem,6vw,5rem);border-top:1px solid #648084;padding-top:.8rem}.readings p{margin:0;font-size:.83rem}.readings strong{display:block;font:normal clamp(1.5rem,3.2vw,2.7rem)/1.35 Georgia,serif;color:#fff}.chart figcaption{color:#dae2df}
+.parallax-bench summary{cursor:pointer;min-height:44px;padding:.65em 0;font-weight:600}.parallax-bench details{border-bottom:1px solid currentColor;padding-bottom:.4rem}
+@media(max-width:720px){.instrument{grid-template-columns:1fr}.chart svg{min-height:6rem}.chart svg text{font-size:22px}.parallax-bench header{margin-bottom:1rem}.parallax-bench h2{font-size:clamp(2.25rem,10vw,3.1rem)}}
+</style>

@@ -1,4 +1,5 @@
 ---
+import AtlasPrediction from './AtlasPrediction.astro';
 import {
   formatHR, formatHRTemperature, hrDomain, hrModels, hrPlot, luminosityInSuns, projectHR,
 } from '../lib/hr';
@@ -17,6 +18,7 @@ const powers = [{ n: 6, label: '10⁶' }, { n: 4, label: '10⁴' }, { n: 2, labe
     <Title id="hr-title">Toda estrela quente<br /><em>é luminosa?</em></Title>
     <p>No diagrama de Hertzsprung–Russell (H–R), a temperatura e a luminosidade colocam cada estrela em um ponto. Compare uma gigante vermelha e uma anã branca para descobrir o que o raio muda.</p>
   </header>
+  <AtlasPrediction question="Mantendo a temperatura, dobrar o raio de uma estrela multiplica a luminosidade por quanto?" choices={["Duas vezes", "Quatro vezes", "Oito vezes"]} result="A luminosidade cresce com a área da superfície. Com o dobro do raio, a área e a luminosidade quadruplicam." />
   <div class="hr-console">
     <figure class="hr-chart">
       <div class="light-plate-bar"><span>Diagrama H–R</span><span>Modelos didáticos</span></div>

@@ -7,15 +7,15 @@ import { pad2 } from '../lib/format';
 import { progressLabel } from '../lib/progress';
 import Badges from './Badges.astro';
 import CourseMap from './CourseMap.astro';
-import { STORIES } from '../lib/story-scenes';
+import { folios } from '../data/atlas';
 ---
 <section class="paper intro-section editorial-catalogue" id="capitulos" aria-labelledby="chapters-title" tabindex="-1">
   <div class="page-width">
     <header class="catalogue-heading">
       <div>
-        <p class="section-id">Trilha de aprendizagem</p>
-        <h2 class="display" id="chapters-title">Aulas de cosmologia</h2>
-        <p>Comece pelo nosso lugar no cosmos e siga as pistas que revelam como o Universo evoluiu.</p>
+        <p class="section-id">Programa de estudos</p>
+        <h2 class="display" id="chapters-title">Índice do atlas</h2>
+        <p>Três aulas principais e três percursos complementares. Escolha uma pergunta para começar.</p>
       </div>
       <a class="school-cover-credits" href={u('/fontes/#creditos-das-capas')}>Créditos das imagens <span aria-hidden="true">→</span></a>
     </header>
@@ -25,26 +25,17 @@ import { STORIES } from '../lib/story-scenes';
       <span data-resume-step></span>
       <span class="resume-arrow" aria-hidden="true">→</span>
     </a>
-    <div class="school-catalog" aria-label="As seis aulas da escola">
-      {chapters.map((ch, i) => {
-        const cover = courseCovers[ch.id];
-        const primary = (PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id);
-        return (
-          <a class="school-course" href={chapterUrl(ch.id)} data-school-course={ch.id} data-track={primary ? 'primary' : 'extra'}>
-            <div class="school-course-image">
-              <Image src={cover.image} alt={cover.alt} width={800} widths={[360, 560, 800]} sizes="(max-width: 620px) 90vw, (max-width: 960px) 44vw, 430px" format="webp" quality={84} loading="lazy" decoding="async" data-course-cover={ch.id} style={cover.position ? `object-position:${cover.position}` : undefined} />
-              <span class="school-course-photo-caption">{cover.caption}</span>
-            </div>
-            <div class="school-course-body">
-              <div class="school-course-meta"><span>Aula {i + 1} · {ch.minutes} min</span><span class="school-course-type">{primary ? 'Trilha principal' : 'Complementar'}</span></div>
-              <h3>{ch.title}</h3>
-              <p>{STORIES[ch.id].lede}</p>
-              <div class="school-course-foot"><span>{ch.sections.length} experiências</span><strong>Entrar na aula <span aria-hidden="true">→</span></strong></div>
-            </div>
-          </a>
-        );
-      })}
-    </div>
+    <ol class="atlas-index" aria-label="As seis aulas da escola">
+      {chapters.map((ch, i) => { const cover=courseCovers[ch.id]; return <li>
+        <a href={chapterUrl(ch.id)} data-school-course={ch.id}>
+          <span class="atlas-index-num">{pad2(i+1)}</span>
+          <Image src={cover.image} alt="" width={160} height={100} fit="cover" loading="lazy" data-course-cover={ch.id} />
+          <span class="atlas-index-title"><small>{folios[ch.id].subject}</small><strong>{folios[ch.id].question}</strong></span>
+          <span class="school-course-type">{(PRIMARY_CHAPTER_IDS as readonly string[]).includes(ch.id)?'Principal':'Complementar'}</span>
+          <span class="atlas-duration">{ch.minutes} min</span><span class="atlas-index-arrow" aria-hidden="true">↗</span>
+        </a>
+      </li>})}
+    </ol>
     <div class="school-path-heading"><h3>Seu progresso na trilha</h3></div>
     <CourseMap />
     <div class="journey-status">
@@ -90,7 +81,7 @@ import { STORIES } from '../lib/story-scenes';
         <div><p><strong>Conecte as descobertas.</strong>Entenda o fenômeno e teste o que aprendeu.</p></div>
       </div>
     </details>
-    <Badges />
+    <details class="school-syllabus"><summary>Selos conquistados <span aria-hidden="true">+</span></summary><Badges /></details>
   </div>
 </section>
 

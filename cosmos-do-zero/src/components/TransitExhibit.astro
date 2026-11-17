@@ -1,4 +1,5 @@
 ---
+import AtlasPrediction from './AtlasPrediction.astro';
 import {
   TRANSIT_KIND_LABELS, TRANSIT_PHASE_LIMIT, TRANSIT_PRESETS, TRANSIT_VIEW,
   transitPercent, transitPlot, transitPlotPoint,
@@ -26,6 +27,8 @@ const presets = [
     <Title id="transit-title">Um planeta passa.<br /><em>A estrela perde brilho.</em></Title>
     <p>Mude os raios e a inclinação da órbita. A curva mede quanto da luz desaparece enquanto o planeta cobre parte da estrela.</p>
   </header>
+  <AtlasPrediction question="Para um trânsito central, o que acontece com a queda de brilho quando o raio do planeta aumenta?" choices={["Aumenta", "Diminui", "Fica igual"]} result="Mantenha o trânsito central e varie o raio. Um disco maior cobre uma fração maior da estrela." />
+
   <div class="transit-console">
     <figure class="transit-view">
       <div class="transit-plate-bar"><span>Projeção no céu</span><span>Modelo simulado</span></div>

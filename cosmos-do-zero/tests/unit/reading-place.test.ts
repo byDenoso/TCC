@@ -21,8 +21,8 @@ describe('retomar a leitura sem depender de armazenamento válido', () => {
     expect(latestUnfinishedPlace(places, [])).toEqual(recent);
     expect(latestUnfinishedPlace(places, [place.chapter,recent.chapter])).toBeNull();
   });
-  it('não oferece retomar uma aula que continua no primeiro passo', () => {
-    expect(latestUnfinishedPlace({[place.chapter]:{...place,step:0}}, [])).toBeNull();
+  it('retoma também a aula iniciada no primeiro passo', () => {
+    expect(latestUnfinishedPlace({[place.chapter]:{...place,step:0}}, [])?.step).toBe(0);
   });
 });
 

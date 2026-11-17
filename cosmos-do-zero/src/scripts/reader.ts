@@ -38,6 +38,14 @@ export function initReader(): void {
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
         if (!e.isIntersecting) continue;
+        if (root.dataset.whole === 'true') {
+          const section = e.target;
+          rememberPlace({
+            chapter: root.dataset.reader ?? '', step: sections.indexOf(section as HTMLElement),
+            total: sections.length, section: section.id,
+            title: section.querySelector('h2')?.textContent?.trim() ?? '', at: Date.now()
+          });
+        }
         links.forEach((a, id) => (id === e.target.id ? a.setAttribute('aria-current', 'location') : a.removeAttribute('aria-current')));
       }
     }, { rootMargin: '-25% 0px -65% 0px' });
@@ -56,7 +64,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   const content = $('.reader-content', root);
   const sections = $$<HTMLElement>('.lesson-section', root);
   if (!content || sections.length < 2) return;
-  const after = $$<HTMLElement>('.chapter-check, .reader-references, .reader-finish', root);
+  const after = $$<HTMLElement>('.reader-references, .reader-finish', root);
   const chapter = root.dataset.reader ?? '';
   const reduced = () => motionPreference.matches;
 
@@ -80,7 +88,7 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
 
   const prev = $<HTMLButtonElement>('[data-step-prev]', bar)!, next = $<HTMLButtonElement>('[data-step-next]', bar)!;
   const dots = $$<HTMLButtonElement>('[data-step-dot]', bar), count = $('[data-step-count]', bar)!;
-  let whole = false, current = 0, reachedEnd = false, initializing = true;
+  let whole = false, current = 0, reachedEnd = false;
   try { whole = localStorage.getItem(WHOLE_KEY) === '1'; } catch { /* ignora */ }
 
   const show = (i: number, focus = false, syncUrl = false) => {
@@ -105,10 +113,11 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     prev.disabled = current === 0;
     const nextTitle = sections[current + 1]?.querySelector('h2')?.textContent?.trim();
     next.replaceChildren(...(current === sections.length - 1 ? ['Ir para o desafio da aula ↓'] : ['Próximo', Object.assign(document.createElement('span'), { className: 'step-next-title', textContent: `: ${nextTitle ?? 'passo seguinte'}` }), ' →']));
-    if (!initializing) rememberPlace({ chapter, step: current, total: sections.length, section: sections[current].id, title: sections[current].querySelector('h2')?.textContent?.trim() ?? '', at: Date.now() });
+    rememberPlace({ chapter, step: current, total: sections.length, section: sections[current].id, title: sections[current].querySelector('h2')?.textContent?.trim() ?? '', at: Date.now() });
     links.forEach((a, id) => (id === sections[current].id ? a.setAttribute('aria-current', 'step') : a.removeAttribute('aria-current')));
     toggle.textContent = whole ? 'Ver em passos' : 'Ver a aula inteira';
     root.classList.toggle('is-stepped', !whole);
+    root.dataset.whole = String(whole);
     toggle.setAttribute('aria-pressed', String(whole));
     if (focus && !whole) {
       const h = sections[current].querySelector<HTMLElement>('h2');
@@ -148,14 +157,14 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
   // Links internos (ex.: "rever o trecho" do desafio) abrem o passo certo
   addEventListener('hashchange', () => { const k = stepFor(location.hash); if (k >= 0 && k !== current) show(k, true); });
   const fromHash = stepFor(location.hash);
+  const saved = readPlace(chapter);
   if (fromHash >= 0) show(fromHash);
   else {
-    show(0);
-    const saved = readPlace(chapter);
-    // Uma âncora compartilhada tem prioridade sobre a posição de outra visita.
-    if (!location.hash && !whole && saved && saved.step > 0 && saved.step < sections.length) offerResume(root, bar, saved, (k) => show(k, true, true));
+    show(saved && saved.step < sections.length ? saved.step : 0);
+    if (!location.hash && !whole && saved && saved.step > 0 && saved.step < sections.length) {
+      offerResume(root, bar, saved, (step) => show(step, true, true));
+    }
   }
-  initializing = false;
   document.addEventListener('keydown', (e) => {
     if (whole || (e.target as Element).closest('input, textarea, select, [contenteditable]')) return;
     // Alt + setas fica reservado ao histórico nativo do navegador.
@@ -164,7 +173,6 @@ function initSteps(root: HTMLElement, links: Map<string, HTMLAnchorElement>): vo
     if (e.key === 'ArrowLeft') { e.preventDefault(); show(current - 1, true, true); }
   });
 }
-
 function offerResume(root: HTMLElement, bar: HTMLElement, place: Place, go: (k: number) => void): void {
   const box = document.createElement('div');
   box.className = 'lesson-resume';

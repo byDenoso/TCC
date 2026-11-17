@@ -1,4 +1,6 @@
 ---
+import AtlasParallax from '../components/AtlasParallax.astro';
+import AtlasBenchLinks from '../components/AtlasBenchLinks.astro';
 import Base from '../layouts/Base.astro';
 import EditorialCover from '../components/EditorialCover.astro';
 import Timeline from '../components/Timeline.astro';
@@ -16,6 +18,7 @@ import '../styles/home.css';
 import '../styles/ux-refinements.css';
 const cover = imageCredits[2];
 const stations = [
+  { href: '#paralaxe', topic: 'Distâncias estelares', title: 'Paralaxe estelar', question: 'Como medir distâncias mudando o ponto de observação?' },
   { href: '#orbitas', topic: 'Gravidade', title: 'Órbitas de Kepler', question: 'Como posição, massa e velocidade mudam uma órbita?' },
   { href: '#expansao-modelos', topic: 'Cosmologia', title: 'História da expansão', question: 'O que muda em H(z), tempo e distância quando ajustamos o modelo?' },
   { href: '#transito', topic: 'Exoplanetas', title: 'Trânsito de exoplanetas', question: 'Qual geometria produz uma queda de brilho?' },
@@ -40,8 +43,13 @@ const stations = [
       <h2 class="display" id="lab-index-title">Instrumentos</h2>
       <ol>{stations.map((station) => <li><a href={station.href}><span><small>{station.topic}</small><strong>{station.title}</strong><span>{station.question}</span></span><span aria-hidden="true">→</span></a></li>)}</ol>
     </section>
-    <div class="page-width lab-feature"><OrbitExhibit /><ExpansionExhibit /><TransitExhibit /><HRExhibit /></div>
-    <div class="page-width lab-feature" id="lente-gravitacional"><Lensing id="laboratorio-lente" /></div>
+    <div class="page-width lab-feature">
+      <AtlasParallax /><AtlasBenchLinks chapter="galaxias-e-nebulosas"/>
+      <OrbitExhibit /><AtlasBenchLinks chapter="sistema-solar"/>
+      <ExpansionExhibit /><AtlasBenchLinks chapter="origem-do-universo"/>
+      <TransitExhibit /><HRExhibit /><AtlasBenchLinks chapter="vida-das-estrelas"/>
+    </div>
+    <div class="page-width lab-feature" id="lente-gravitacional"><Lensing id="laboratorio-lente" /><AtlasBenchLinks chapter="misterios-do-cosmos"/></div>
     <Timeline />
     <PlanetCatalog />
     <Lab />

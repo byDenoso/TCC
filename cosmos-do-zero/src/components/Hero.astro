@@ -1,10 +1,6 @@
 ---
-import EditorialCover from './EditorialCover.astro';
-import carina from '../assets/photos/carina-cosmic-cliffs.webp';
-import { imageCredits } from '../data';
 import { chapterUrl, u } from '../lib/url';
 
-const credit = imageCredits[1];
 const paths = [
   { href: `${chapterUrl('galaxias-e-nebulosas')}#exploracao`, title: 'Universo em 3D', description: 'Da Terra à teia cósmica' },
   { href: '#observatorio', title: 'Observatório', description: 'Meça a expansão do espaço' },
@@ -17,18 +13,6 @@ const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 429
 const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand() * 88, o: 0.12 + rand() * 0.38, big: rand() > 0.9 }));
 ---
 <div class="hero-shell">
-  <EditorialCover variant="home" titleId="hero-title" image={carina} alt="Nuvens de gás e poeira da Nebulosa de Carina fotografadas em infravermelho pelo Webb." caption="Penhascos Cósmicos · Webb" credit={credit.credit} href={credit.href} position="65% center">
-    <div class="hero-copy">
-      <p class="cover-kicker">Escola interativa de cosmologia</p>
-      <h1 id="hero-title">O Universo,<br /><span class="serif">em movimento.</span></h1>
-      <p class="hero-introduction">Siga a luz das galáxias, teste suas ideias em simulações e descubra como reconstruímos a história do Universo.</p>
-      <div class="hero-actions">
-        <a class="cta" href={`${chapterUrl('galaxias-e-nebulosas')}#galaxias-e-nebulosas-via-lactea`}>Começar a primeira aula <span aria-hidden="true">→</span></a>
-        <a class="textlink" href="#planetario">Explorar o planetário <span aria-hidden="true">↓</span></a>
-        <a class="textlink" href={chapterUrl('galaxias-e-nebulosas')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> <span aria-hidden="true">→</span></a>
-      </div>
-    </div>
-  </EditorialCover>
   <section class="journey-launch" id="planetario" aria-labelledby="planetario-title" tabindex="-1">
     <div class="page-width journey-launch-inner">
       <h2 id="planetario-title">Planetário digital</h2>

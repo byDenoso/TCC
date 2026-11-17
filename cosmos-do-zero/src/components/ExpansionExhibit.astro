@@ -1,4 +1,5 @@
 ---
+import AtlasPrediction from './AtlasPrediction.astro';
 import {
   EXPANSION_CHARTS, EXPANSION_DEFAULT_Z, EXPANSION_FIELDS, EXPANSION_MAX_Z, EXPANSION_PLOT,
   EXPANSION_PRESETS, EXPANSION_READINGS, expansionHistory, expansionNumber, expansionPlotPath,
@@ -23,6 +24,7 @@ const { width, height, left, right, top, bottom } = EXPANSION_PLOT;
     <p>Compare a expansão de um universo de referência com a de um universo que você configura. A mesma luz pode ter viajado por tempos e distâncias diferentes em cada modelo.</p>
   </header>
 
+  <AtlasPrediction question="No modelo de referência, ao aumentar o redshift, a luz foi emitida mais cedo ou mais tarde?" choices={["Mais cedo", "Mais tarde"]} result="Aumente z e leia o tempo de viagem. A luz que viajou por mais tempo saiu mais cedo." />
   <div class="expansion-controls" data-expansion-controls hidden>
     <div class="expansion-presets" role="group" aria-label="Modelos predefinidos">
       <button type="button" data-expansion-preset="planck" aria-pressed="true">ΛCDM de referência</button>

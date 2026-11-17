@@ -39,6 +39,7 @@
     "@types/three": "0.187.0",
     "astro": "^7.3.8",
     "gsap": "3.13.0",
+    "playcanvas": "2.24.1",
     "three": "0.187.0"
   },
   "devDependencies": {

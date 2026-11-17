@@ -55,13 +55,12 @@ export function refreshProgress(): void {
     setText($('[data-resume-step]', card), `Passo ${resumeAt.step + 1} de ${resumeAt.total}: ${resumeAt.title}`);
   }
   for (const cta of $$<HTMLAnchorElement>('[data-start-journey]')) {
-    if(cta.hasAttribute('data-home-continue'))cta.hidden=mainCount===0&&!resumeAt;
     const next = nextUnfinished(done);
     const completed = mainCount === PRIMARY_CHAPTER_IDS.length;
     cta.href = resumeAt ? `${chapterUrl(resumeAt.chapter)}#${resumeAt.section}` : chapterUrl(next ?? PRIMARY_CHAPTER_IDS[0]);
     if (resumeAt) {
       cta.title = `${resumeAt.title} · passo ${resumeAt.step + 1} de ${resumeAt.total}`;
-      cta.setAttribute('aria-label', `Continuar a aula: ${resumeAt.title}, passo ${resumeAt.step + 1} de ${resumeAt.total}`);
+      cta.setAttribute('aria-label', `Retomar aula: ${resumeAt.title}, passo ${resumeAt.step + 1} de ${resumeAt.total}`);
     } else {
       cta.removeAttribute('title');
       cta.removeAttribute('aria-label');
@@ -73,7 +72,8 @@ export function refreshProgress(): void {
       const section = resumeAt?.section ?? $('.lesson-section', reader)?.id;
       if (section) cta.hash = section;
     }
-    setText($('[data-start-label]', cta), samePage ? 'Ir para a leitura' : completed ? (inHeader ? 'Revisar aulas' : 'Revisar a jornada principal') : mainCount > 0 || resumeAt ? (inHeader ? 'Continuar a aula' : 'Continuar a jornada') : (inHeader ? 'Começar a aula' : 'Começar a jornada'));
+    const label = samePage ? 'Ir para a leitura' : resumeAt ? 'Retomar aula' : completed ? 'Revisar aulas' : mainCount > 0 ? 'Continuar a jornada' : inHeader ? 'Começar a aula' : 'Começar a primeira aula';
+    setText($('[data-start-label]', cta), label);
   }
 }
 
@@ -101,6 +101,7 @@ export function initProgress(): void {
     }
   });
   window.addEventListener('storage', refreshProgress);
+  window.addEventListener('pageshow', refreshProgress);
   // Terminar o desafio da aula conclui a aula automaticamente
   document.addEventListener('cosmos:quiz-done', (e) => {
     const id = (e as CustomEvent<{ chapter: ChapterId | '' }>).detail.chapter;

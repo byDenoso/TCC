@@ -1,4 +1,6 @@
 ---
+import AtlasPrediction from './AtlasPrediction.astro';
+import AtlasBenchLinks from './AtlasBenchLinks.astro';
 import { planets } from '../data';
 import SolarCredits from './SolarCredits.astro';
 import { planetGlobe } from '../lib/images';
@@ -31,6 +33,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         <h3 id="compare-title">Dois mundos. A mesma régua.</h3>
         <p>Escolha os planetas e veja o que muda quando tamanho, massa e gravidade deixam de ser a mesma coisa.</p>
       </div>
+  <AtlasPrediction question="Troque Júpiter por Marte e mantenha a Terra à esquerda. Qual corpo passará a ter o maior diâmetro?" choices={["Terra", "Marte"]} result="Marte tem pouco mais da metade do diâmetro da Terra. Confira os diâmetros equatoriais e as duas imagens na mesma escala." />
       <div class="compare-selectors">
         <label for="compare-a">Planeta 1
           <select id="compare-a" data-compare-a>{options('terra').map((o) => <option value={o.id} selected={o.selected}>{o.name}</option>)}</select>
@@ -64,6 +67,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
       <p class="experience-note">Discos em escala de raio equatorial entre os dois selecionados, a partir de ilustrações artísticas. Anéis ficam fora da medida. Temperaturas de superfície e de atmosfera a 1 bar têm definições distintas, indicadas na tabela.</p>
     </section>
 
+    <AtlasBenchLinks chapter="terra-e-atmosfera"/>
     <section id="estrelas" class="stellar-section" aria-labelledby="stellar-title" data-island="stars">
       <div class="experience-heading">
         <span class="meta">EXPERIÊNCIA / 02</span>

@@ -1,4 +1,5 @@
 ---
+import AtlasPrediction from './AtlasPrediction.astro';
 import { orbitSectorPath } from '../lib/kepler';
 import { chapterUrl } from '../lib/url';
 interface Props { heading?: 'h2' | 'h3'; }
@@ -10,6 +11,7 @@ const Title = Astro.props.heading ?? 'h2';
     <Title id="orbit-title">Por que um planeta<br /><em>muda de velocidade?</em></Title>
     <p>Deforme a órbita e compare duas fatias de igual duração. Em uma órbita alongada, o planeta percorre um arco maior perto da estrela, no mesmo intervalo.</p>
   </header>
+  <AtlasPrediction question="Com a massa total fixa, o período aumenta ou diminui quando você amplia o semieixo maior?" choices={["Aumenta", "Diminui", "Fica igual"]} result="Aumente o semieixo e acompanhe o período em dias. Pela terceira lei de Kepler, o período varia com o semieixo elevado a 3/2." />
   <div class="orbit-console">
     <figure class="orbit-view">
       <div class="light-plate-bar"><span>Kepler / 02</span><span>Simulação física</span></div>

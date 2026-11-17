@@ -28,7 +28,7 @@ export function readPlace(chapter?: string): Place | null {
 }
 /** A completed recent visit must not hide an older unfinished lesson. */
 export function latestUnfinishedPlace(places: Record<string, Place>, completed: readonly string[]): Place | null {
-  return Object.values(places).filter(place=>place.step>0 && !completed.includes(place.chapter)).sort((a,b)=>b.at-a.at)[0] ?? null;
+  return Object.values(places).filter(place=>!completed.includes(place.chapter)).sort((a,b)=>b.at-a.at)[0] ?? null;
 }
 export function readUnfinishedPlace(completed: readonly string[]): Place | null {
   return latestUnfinishedPlace(readAll(), completed);

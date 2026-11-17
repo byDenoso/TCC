@@ -1,0 +1,31 @@
+---
+import { Image } from 'astro:assets';
+import { chapterOrder, getChapter } from '../data';
+import { folios } from '../data/atlas';
+import { courseCovers } from '../lib/course-covers';
+import { u } from '../lib/url';
+import type { ChapterId } from '../types';
+interface Props { id: ChapterId }
+const {id}=Astro.props;
+const folio=folios[id], ch=getChapter(id)!, cover=courseCovers[id];
+const n=String(chapterOrder.indexOf(id)+1).padStart(2,'0');
+---
+<header class="atlas-folio" data-edition={id}>
+  <div class="page-width">
+    <div class="atlas-running"><a href={u('/#capitulos')}>← Índice do atlas</a><span>Capítulo {n} / 06 · {ch.minutes} min</span></div>
+    <div class="atlas-spread">
+      <div class="atlas-folio-copy"><p class="atlas-eyebrow">{folio.subject}</p><h1 id="lesson-title">{folio.question}</h1>
+        <p>{ch.intro}</p>
+        <div class="atlas-actions"><a class="atlas-action" href={`#${ch.sections[0].id}`}>Iniciar leitura <span aria-hidden="true">↓</span></a><a class="atlas-underline" href="#experimento">Abrir experimento ↓</a></div>
+      </div>
+      <figure class="atlas-observation">
+        <Image src={cover.image} alt={cover.alt} width={1000} widths={[480,800,1200]} sizes="(max-width:740px) 100vw, 48vw" fetchpriority="high" loading="eager" style={`object-position:${cover.position??'center'}`}/>
+        <figcaption><b>{cover.caption}</b><span>{folio.observation}</span><a href={cover.source.href} target="_blank" rel="noopener noreferrer">{cover.source.credit} ↗</a></figcaption>
+      </figure>
+    </div>
+    <details class="atlas-contents"><summary>Sumário do capítulo <span>{ch.sections.length} seções</span></summary>
+      <ol>{ch.sections.map(s=><li><a href={`#${s.id}`}>{s.title}</a></li>)}</ol>
+      <a href="#resumo">Resumo em cena e vídeo</a> · <a href="#checagem">Checagem da aula</a>
+    </details>
+  </div>
+</header>

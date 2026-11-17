@@ -1,0 +1,18 @@
+---
+interface Props { question: string; choices: string[]; result: string }
+const { question, choices, result }=Astro.props;
+---
+<fieldset class="atlas-prediction" data-atlas-prediction>
+  <legend>Faça uma previsão</legend>
+  <p>{question}</p>
+  <div>{choices.map(choice=><button type="button" aria-pressed="false">{choice}</button>)}</div>
+  <details><summary>Conferir a relação</summary><p>{result}</p></details>
+</fieldset>
+<script>
+  for(const panel of document.querySelectorAll('[data-atlas-prediction]')) {
+    const options = panel.querySelectorAll('button');
+    for(const button of options) button.addEventListener('click', () => {
+      options.forEach(option=>option.setAttribute('aria-pressed',String(option === button)));
+    });
+  }
+</script>

@@ -1,0 +1,97 @@
+---
+import { studies, measurement, number, wave } from '../lib/atlas-studies';
+import { u } from '../lib/url';
+import type { ChapterId } from '../types';
+interface Props { id: ChapterId }
+const { id }=Astro.props;
+const s=studies[id];
+---
+{s && <section class="atlas-study" data-study={s.key} data-model={u('/models/atlas-studies/'+s.key+'.glb')} aria-labelledby={'study-'+s.key} id="prancha">
+  <header><p>Experimento de capítulo</p><h2 id={'study-'+s.key}>{s.title}</h2><p>{s.prediction}</p></header>
+  <div class="study-console">
+    <figure>
+      <svg viewBox="0 0 360 160" role="img" aria-label={'Comparação entre '+s.reference+' e '+s.sample+'. O resultado numérico acompanha o controle.'}>
+        <defs><pattern id={'grid-'+s.key} width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#284145" stroke-width=".7"/></pattern></defs>
+        <rect width="360" height="160" fill={'url(#grid-'+s.key+')'}/>
+        {s.key==='redshift' && <><polyline class="ref" points={wave(50)} transform="translate(0 48)"/><polyline data-measure class="sample" points={wave(50)} transform="translate(0 112)"/></>}
+        {(s.key==='lens'||s.key==='orbit') && <><circle class="ref" cx="180" cy="80" r="32"/><circle class="sample" data-measure cx="180" cy="80" r="32"/><circle cx="180" cy="80" r="5" fill="#ecddbd"/>{s.key==='orbit' && <circle data-planet cx="212" cy="80" r="4.5" fill="#ffc99b"/>}</>}
+        {s.key==='star' && <><circle cx="104" cy="80" r="27" class="ref solid"/><circle cx="245" cy="80" r="27" data-measure class="sample solid"/></>}
+        {s.key==='air' && <><path d="M50 136H310" stroke="#a5b9b7"/><rect x="85" y="30" width="42" height="106" class="ref solid"/><rect x="235" y="30" width="42" height="106" data-measure class="sample solid"/></>}
+      </svg>
+      <canvas data-study-canvas hidden aria-label={'Representação tridimensional de '+s.title} role="img"></canvas>
+      <figcaption><span>{s.reference}</span><span>{s.sample}</span></figcaption>
+    </figure>
+    <div class="study-input">
+      <label for={'control-'+s.key}>{s.input} <output data-study-in>{number(s.initial)} {s.unit}</output></label>
+      <input id={'control-'+s.key} data-unit={s.unit} type="range" min={s.min} max={s.max} step={s.step} value={s.initial}/>
+      <span>{s.reading}</span><output class="study-answer" for={'control-'+s.key} data-study-out data-unit={s.outUnit}>{number(measurement(s.key,s.initial))} {s.outUnit}</output>
+      <p>{s.rule}</p><button type="button" data-study-toggle aria-pressed="false">Abrir modelo 3D</button><small data-study-status role="status"></small>
+    </div>
+  </div>
+  <p class="study-limit">{s.limit}</p><details><summary>Conferir a previsão</summary><p>{s.result}</p></details>
+</section>}
+<script>
+  import { measurement, number, wave, type StudyKey } from '../lib/atlas-studies';
+  for(const section of document.querySelectorAll<HTMLElement>('[data-study]')) {
+    const key=section.dataset.study as StudyKey;
+    const svg=section.querySelector('svg')!;
+    const canvas=section.querySelector('canvas')!;
+    const range=section.querySelector('input')!;
+    const out=section.querySelector<HTMLOutputElement>('[data-study-out]')!;
+    const current=section.querySelector<HTMLOutputElement>('[data-study-in]')!;
+    const toggle=section.querySelector('button')!;
+    const status=section.querySelector<HTMLElement>('[data-study-status]')!;
+    const shape=svg.querySelector('[data-measure]')!;
+    let scene:Awaited<ReturnType<typeof import('../scripts/atlas-study-scene').openStudy>>|undefined;
+    const update=()=>{
+      const v=Number(range.value), y=measurement(key,v);
+      current.value=number(v)+' '+range.dataset.unit;
+      range.setAttribute('aria-valuetext',current.value);
+      out.value=number(y)+' '+out.dataset.unit;
+      if(key==='redshift') shape.setAttribute('points',wave(50*(1+v)));
+      if(key==='lens'||key==='star'||key==='orbit') {
+        const size=key==='lens'?32*y:key==='orbit'?32*v:27*v;
+        shape.setAttribute('r',String(size));
+        svg.querySelector('[data-planet]')?.setAttribute('cx',String(180+size));
+      }
+      if(key==='air') {
+        const height=106*y/100;
+        shape.setAttribute('height',String(height));
+        shape.setAttribute('y',String(136-height));
+      }
+      scene?.update(v);
+    };
+    const close=()=>{scene?.close();scene=undefined;canvas.hidden=true;svg.removeAttribute('hidden');toggle.textContent='Abrir modelo 3D';toggle.setAttribute('aria-pressed','false');};
+    range.addEventListener('input',update); update();
+    toggle.addEventListener('click',async()=>{
+      if(scene){close();status.textContent='Diagrama 2D ativo.';return;}
+      toggle.disabled=true;status.textContent='Carregando o modelo…';
+      try{
+        const {openStudy}=await import('../scripts/atlas-study-scene');
+        canvas.hidden=false;
+        scene=await openStudy(canvas,key,section.dataset.model!);
+        update();svg.setAttribute('hidden','');
+        toggle.textContent='Voltar ao diagrama 2D';toggle.setAttribute('aria-pressed','true');status.textContent='Modelo 3D ativo.';
+      }catch(error){console.warn('[cosmos] Prancha 3D',key,String(error));close();status.textContent='O 3D está indisponível. Use a régua no diagrama 2D.';}
+      finally{toggle.disabled=false;}
+    });
+    canvas.addEventListener('webglcontextlost',()=>{close();status.textContent='Diagrama 2D ativo.';});
+    addEventListener('pagehide',close);
+  }
+</script>
+<style>
+.atlas-study{background:var(--atlas-paper,#f4f1e8);color:var(--atlas-ink,#192327);border-block:1px solid var(--atlas-rule,#b4b8ac);padding:clamp(16px,3vw,42px);margin-block:38px;scroll-margin-top:80px}
+.atlas-study header>p:first-child,.study-input>span{font:600 .7rem/1.4 var(--atlas-mono,monospace);text-transform:uppercase;letter-spacing:.08em}
+.atlas-study h2{font:500 clamp(28px,3.7vw,56px)/1.08 Georgia,serif;letter-spacing:-.035em;margin:7px 0 12px;color:inherit}
+.atlas-study p{line-height:1.55}.atlas-study header>p{margin:0}
+.study-console{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);margin-block:18px;align-items:stretch;gap:clamp(14px,2vw,30px)}
+.study-console figure{margin:0;background:#13272b;color:#f6edda;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.study-console svg,.study-console canvas{display:block;width:100%;aspect-ratio:2.25;height:auto}.study-console [hidden]{display:none}
+.study-console figcaption{padding:9px 12px;display:flex;gap:8px 18px;flex-wrap:wrap;font:600 .74rem/1.4 var(--atlas-mono,monospace)}
+figcaption span:before{content:'';display:inline-block;width:16px;border-bottom:2px dashed #91d2db;margin-right:5px;vertical-align:middle}figcaption span+span:before{border-bottom:3px solid #f0a66d}
+.ref,.sample{stroke:#91d2db;stroke-width:2;stroke-dasharray:4 3;fill:none}.sample{stroke:#f0a66d;stroke-width:3;stroke-dasharray:none}.ref.solid{fill:#69999e}.sample.solid{fill:#b8703e}
+.study-input{display:grid;align-content:center;gap:5px}.study-input label{display:flex;justify-content:space-between;gap:8px;font-weight:650}
+.study-input input{width:100%;min-height:40px;accent-color:#b05229}.study-answer{font:500 clamp(27px,3.4vw,48px)/1.1 Georgia,serif}.study-input p,.study-limit{font-size:.87rem;margin:4px 0}
+.study-input button{color:inherit;background:transparent;border:1px solid currentColor;justify-self:start;padding:8px 11px;min-height:44px;cursor:pointer}.study-input small{font-size:.8rem}.atlas-study details{margin-top:12px}.atlas-study summary{cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:44px}
+@media(max-width:700px){.study-console{grid-template-columns:1fr}.atlas-study{padding:16px}.study-input{gap:3px}}
+</style>

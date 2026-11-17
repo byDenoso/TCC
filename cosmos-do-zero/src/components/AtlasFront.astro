@@ -1,0 +1,40 @@
+---
+import { Image } from 'astro:assets';
+import { chapters } from '../data';
+import { courseCovers } from '../lib/course-covers';
+import { chapterUrl } from '../lib/url';
+const plates = ['vida-das-estrelas','galaxias-e-nebulosas','sistema-solar'] as const;
+const notes = [
+  ['NGC 3324','Penhascos Cósmicos','Gás e poeira na borda de um berçário estelar.','Webb · NIRCam + MIRI'],
+  ['M 31','Galáxia de Andrômeda','Os anéis de poeira aparecem em luz infravermelha.','WISE · infravermelho'],
+  ['Saturno','O plano dos anéis','Os anéis contornam o equador e projetam sombra no planeta.','Hubble · luz visível']
+];
+---
+<section class="atlas-front" aria-labelledby="hero-title">
+  <div class="atlas-front-grid page-width">
+    <div class="atlas-front-copy">
+      <p class="atlas-eyebrow"><span class="atlas-sight" aria-hidden="true">✳</span> Atlas de cosmologia</p>
+      <h1 id="hero-title">Cosmos<br/><em>do Zero.</em></h1>
+      <p class="atlas-deck">Aprenda a ler o céu. Das estrelas vizinhas à luz mais antiga do Universo, cada aula começa com uma observação.</p>
+      <div class="atlas-actions"><a class="atlas-action" data-start-journey href={chapterUrl(chapters[0].id)}><span data-start-label>Começar a primeira aula</span><span aria-hidden="true">↗</span></a><a class="atlas-underline" href="#capitulos">Ver as seis aulas ↓</a></div>
+    </div>
+    <div class="atlas-viewer" aria-label="Pranchas de observação">
+      {plates.map((id,i) => { const c=courseCovers[id]; return <figure class="atlas-plate" hidden={i!==0} data-plate={i}>
+        <div class="atlas-film"><Image src={c.image} alt={c.alt} widths={[480,800,1280]} sizes="(max-width:740px) 100vw, 58vw" width={1280} loading={i===0?'eager':'lazy'} fetchpriority={i===0?'high':'auto'} />
+          <span class="atlas-coordinate">{notes[i][0]}</span>
+          {i===0 && <a class="atlas-position" href="https://esawebb.org/images/weic2205b/" aria-label="Coordenadas do centro do campo original, ESA/Webb" target="_blank" rel="noopener noreferrer">α 10ʰ36ᵐ54ˢ · δ −58°37′18″ ↗</a>}<span class="atlas-fiducial f1" aria-hidden="true"></span><span class="atlas-fiducial f2" aria-hidden="true"></span>
+        </div>
+        <figcaption><div><span class="atlas-eyebrow">{notes[i][3]}</span><strong>{notes[i][1]}</strong><span>{notes[i][2]}</span></div><a href={c.source.href} target="_blank" rel="noopener noreferrer">{c.source.credit} ↗</a></figcaption>
+      </figure>})}
+      <div class="atlas-plate-controls"><span>Pranchas de observação</span><div>{plates.map((_,i)=><button type="button" data-pick-plate={i} aria-label={`Mostrar ${notes[i][1]}`} aria-pressed={i===0}>0{i+1}</button>)}</div></div>
+    </div>
+  </div>
+</section>
+<script>
+  const plates = document.querySelectorAll<HTMLElement>('[data-plate]');
+  const switches = document.querySelectorAll<HTMLButtonElement>('[data-pick-plate]');
+  switches.forEach((button, index) => button.addEventListener('click', () => {
+    plates.forEach((plate, i) => { plate.hidden = i !== index; });
+    switches.forEach((pick, i) => pick.setAttribute('aria-pressed', String(i === index)));
+  }));
+</script>
