@@ -34,15 +34,18 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
           <path class="sky-crosshair" d="M300 12v16 M300 272v16 M12 150h16 M572 150h16" />
         </svg>
       <div class="cmb-frame" data-cmb-frame tabindex="0" role="img" aria-roledescription="mapa interativo" aria-label="Mapa simulado da radiação cósmica de fundo. Use as setas do teclado para explorar variações ilustrativas de temperatura." aria-describedby="cmb-provenance">
-        <canvas data-cmb-canvas width="480" height="240"></canvas>
-        <noscript><img src={u('/posters/cmb-small.webp')} width="600" height="400" alt="Mapa sintético com manchas de temperatura em cores atribuídas." /></noscript>
+        <img class="cmb-poster" data-cmb-poster src={u('/posters/cmb-field.webp')} width="480" height="240"
+             alt="Mapa simulado com manchas quentes em laranja e frias em azul." />
+        <canvas data-cmb-canvas width="480" height="240" hidden></canvas>
         <span class="cmb-probe" data-cmb-probe hidden></span>
       </div>
       </div>
       <figcaption>
         <p class="cmb-read" data-cmb-read aria-live="polite">O Universo já foi uma névoa quente. Esta luz começou a viajar livre quando ele tinha cerca de 380 mil anos. Explore as diferenças de temperatura.</p>
-        <div class="cmb-scale" aria-hidden="true"><span>mais frio</span><i></i><span>mais quente</span></div>
-        <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck.</p>
+        <div class="cmb-scale" aria-label="Legenda do mapa">
+          <span>Mais fria</span><i aria-hidden="true"></i><span>Mais quente</span>
+        </div>
+        <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck. Um µK equivale a um milionésimo de kelvin.</p>
         <a class="cmb-go" href={u('/observatorio/?lab=tempo&z=1090#observatorio')}>Abrir a época da recombinação →</a>
         <button class="ambient-toggle" type="button" data-ambient-toggle hidden>Pausar o céu animado</button>
         <button class="ambient-toggle" type="button" data-hero-gl-enable hidden>Ativar nebulosa 3D</button>

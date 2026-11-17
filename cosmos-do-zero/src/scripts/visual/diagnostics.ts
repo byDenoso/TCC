@@ -1,7 +1,8 @@
 import type * as THREE from 'three';
 import type {Exhibit} from './runtime';
+import type { PlayCanvasRenderer } from './playcanvas-adapter';
 /** Opt-in measurement seam. It exists only when the QA harness provides the registry. */
-export function registerDiagnostics(stage:HTMLElement,renderer:THREE.WebGLRenderer | import('three/webgpu').WebGPURenderer,exhibit:Exhibit){
+export function registerDiagnostics(stage:HTMLElement,renderer:PlayCanvasRenderer,exhibit:Exhibit){
  const qa=(window as unknown as {__COSMOS_QA?:{scenes:Map<number,()=>unknown>;objects?:Map<number,THREE.Object3D>;history:unknown[];sequence:number}}).__COSMOS_QA;
  if(!qa)return {enabled:false,frame(_ms:number,_updateMs?:number){},dispose(){}};
  const id=++qa.sequence, times:number[]=[],updateTimes:number[]=[];let frames=0;

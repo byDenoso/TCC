@@ -1,0 +1,103 @@
+/* Shared framing for the course diagrams and observational instruments. */
+:root {
+  --figure-rule: color-mix(in srgb, var(--line-strong) 80%, var(--accent) 20%);
+  --figure-surface: color-mix(in srgb, var(--surface) 90%, var(--accent) 10%);
+}
+
+html:root .planetarium-rework [data-mx] .mx-stage:not(.cosmos-volume-ready) {
+  border-radius: 8px;
+  background: linear-gradient(150deg, var(--figure-surface), var(--surface) 78%);
+  box-shadow: inset 0 0 0 1px var(--figure-rule);
+}
+
+html:root .planetarium-rework [data-mx] .mx-stage:not(.cosmos-volume-ready) svg .mx-t {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+html:root :is(.orbit-view, .transit-view, .hr-chart, .expansion-plot, .light-instrument, .cosmic-exhibit-plate) {
+  border-radius: 8px;
+  border-color: color-mix(in srgb, var(--exhibit-line) 74%, var(--exhibit-blue) 26%);
+}
+
+html:root :is(.orbit-view, .transit-view, .hr-chart, .expansion-plot) figcaption {
+  padding: 12px clamp(10px, 2vw, 18px);
+  line-height: 1.55;
+}
+
+html:root :is(.obs-plot, .sci-fig, .cmbj-stage, .px-view) {
+  border-color: var(--figure-rule);
+}
+
+html:root :is(.obs-readouts, .cmbj-readouts, .orbit-readout, .transit-readout, .hr-readout) {
+  font-variant-numeric: tabular-nums;
+}
+
+html:root :is(.obs-plot, .sci-fig) figcaption {
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+html:root .arrival-window {
+  border-color: var(--figure-rule);
+}
+
+html:root .cmb-observation .cmb-frame {
+  background: #0e192b;
+  box-shadow: 0 0 0 1px var(--figure-rule);
+}
+
+html:root .cmb-frame :is(.cmb-poster, [data-cmb-canvas]) {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+html:root .cmb-frame :is(.cmb-poster, [data-cmb-canvas])[hidden] {
+  display: none;
+}
+
+html:root .cmb-frame:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+
+html:root .cmb-probe {
+  width: 16px;
+  height: 16px;
+  outline: 1px solid #fff;
+  box-shadow: 0 0 0 3px #121923dd;
+}
+
+html:root .cmb-read {
+  min-block-size: 3lh;
+  font-variant-numeric: tabular-nums;
+}
+
+html:root .cmb-scale i {
+  background: linear-gradient(90deg, #102a5c 0%, #5b93d6 33%, #fff4dc 50%, #f39a55 67%, #8f1f10 100%);
+  border: 1px solid var(--figure-rule);
+}
+
+html:root .planetarium-rework .experience-toolbar [data-experience-expand] {
+  min-height: 44px;
+}
+
+@media (max-width: 600px) {
+  html:root :is(.mx-caption, .cmb-note, .cmb-read, .orbit-view figcaption, .transit-view figcaption,
+                 .expansion-plot figcaption > span, .obs-viz figcaption, .sci-fig figcaption) {
+    font-size: max(13px, .8125rem);
+  }
+
+  html:root .cmb-scale {
+    gap: 8px;
+  }
+}
+
+@media (forced-colors: active) {
+  html:root .cmb-frame:focus-visible {
+    outline-color: Highlight;
+  }
+}

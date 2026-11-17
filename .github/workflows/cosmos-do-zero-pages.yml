@@ -128,7 +128,7 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           # Collect every independent suite result; any failure still blocks publication.
           failed=0
-          for suite in browsers budget world-frame quality-calibration gpu-quarantine graphics webgpu e2e renders; do
+          for suite in browsers budget world-frame quality-calibration gpu-quarantine graphics webgpu e2e renders saturn scales; do
             if ! npm run "test:$suite"; then failed=1; fi
           done
           test "$failed" -eq 0
@@ -143,6 +143,8 @@ jobs:
             cosmos-do-zero/test-results/graphics/*.json
             cosmos-do-zero/test-results/browser-smoke/*.png
             cosmos-do-zero/test-results/browser-smoke/*.json
+            cosmos-do-zero/test-results/saturn/*.png
+            cosmos-do-zero/test-results/saturn/*.json
           if-no-files-found: ignore
           retention-days: 14
       - name: Empacotar destino selecionado
@@ -239,6 +241,8 @@ jobs:
           npm run test:e2e
           npm run test:graphics
           npm run test:renders
+          npm run test:saturn
+          npm run test:scales
       - name: Capturas da URL real (desktop e mobile)
         run: node scripts/capture-public.mjs
       - name: Salvar capturas reais do Pages
@@ -249,4 +253,6 @@ jobs:
             cosmos-do-zero/docs/screenshots/publicado-desktop.png
             cosmos-do-zero/docs/screenshots/publicado-mobile.png
             cosmos-do-zero/docs/screenshots/render-*.png
+            cosmos-do-zero/test-results/saturn/blender-playcanvas.png
+            cosmos-do-zero/test-results/saturn/saturn-results.json
           retention-days: 30

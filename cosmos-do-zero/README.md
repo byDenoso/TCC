@@ -1,6 +1,6 @@
 # Cosmos do Zero
 
-Escola estática de cosmologia em português: três jornadas principais e três aulas complementares, Laboratório, Dicionário, Fontes e404. Astro 7, TypeScript eThree.js. Conteúdo e cálculos executam no navegador; não há banco de dados ou serviço pago. Mapas, fontes e modelos são arquivos do próprio site.
+Escola estática de cosmologia em português com seis aulas e instrumentos interativos. Astro 7 e TypeScript organizam a interface e PlayCanvas renderiza as cenas 3D. Os dados, mapas, fontes e modelos são servidos pelo próprio site.
 
 ## Executar
 
@@ -12,7 +12,7 @@ Links, modelos e posters passam por `u()` para funcionar na raiz e em `/TCC/cosm
 
 As 36 subseções preservam IDs, âncoras, quizzes e retomada:20 palcos 3D com alternativaSVG,15 microexperiências 2D e1 CmbJourney 2D. Gráficos de composição, Hubble, espectros, rotação, supernovas, ajuste e atmosfera permanecem2D onde favorecem a comparação.
 
-Um runtime compartilhado controla montagem, estado, pausa, câmera, resize, qualidade e descarte. As cenas compatíveis podem usar WebGPU; materiais GLSL personalizados permanecem em WebGL2. A montagem é serializada e a indisponibilidade dos dois backends preserva a alternativa em 2D/poster. Assets são carregados perto do palco/na seleção. Ao sair da tela, o desenho para; controles abertos ou focados continuam utilizáveis. A câmera requer ação explícita; toque comum preserva a rolagem. Botões/teclado permitem girar, aproximar e restaurar visão. Consulte [o registro da migração e suas limitações](docs/RENDERER_FASE_1.md).
+Um runtime compartilhado controla montagem, estado, pausa, câmera, tamanho e qualidade. O acesso WebGL2 é serializado e sua indisponibilidade devolve o palco ao diagrama ou à ilustração. Assets são carregados perto do palco ou na seleção. A câmera requer ação explícita, e o toque comum preserva a rolagem. Consulte [o rework PlayCanvas, as cenas e suas fontes](docs/REWORK_PLAYCANVAS.md).
 
 Qualidade ajustada à largura/DPR: mapas galácticos 1536 no desktop e 768 no mobile; modo Econômico 512. Os mundos selecionados usam mapas até 2048/1024/512 e restauram a fonte original após trocas. A preferência por palco é preservada ao remontar. Essas resoluções não são uma promessa de FPS em qualquer dispositivo.
 
@@ -22,7 +22,7 @@ Qualidade ajustada à largura/DPR: mapas galácticos 1536 no desktop e 768 no mo
 
 Em `/escalas/`, a rolagem e a régua logarítmica percorrem dez escalas, do raio de carga do próton ao diâmetro do universo observável. Os comprimentos e as fontes aparecem junto a cada etapa. A régua usa metros e a escala das cenas tem finalidade ilustrativa. Nos modelos sobrepostos, a câmera interpola a posição e os objetos mantêm uma âncora local quando há uma relação espacial, como a Terra no Sistema Solar.
 
-A cena usa um único contexto 3D com os materiais de Three.js. A montagem acontece perto da área visível, e o mapa MODIS da Terra só é carregado ao chegar às escalas planetárias. `Modo leve` usa ilustrações. Em celulares com movimento habilitado e desempenho insuficiente, o trecho Terra → teia também pode usar o vídeo de referência que já estava no site. As paradas, legendas e fontes das imagens novas ficam em `src/data/scale-stations.ts`. O teste `npm run test:scales` usa `BASE_URL` do preview.
+A cena usa um contexto PlayCanvas compartilhado entre as dez paradas. A montagem acontece perto da área visível, e o mapa MODIS da Terra só é carregado ao chegar às escalas planetárias. `Modo leve` usa ilustrações. Em celulares com movimento habilitado e desempenho insuficiente, o trecho Terra → teia também pode usar o vídeo de referência que já estava no site. As paradas, legendas e fontes ficam em `src/data/scale-stations.ts`. O teste `npm run test:scales` usa `BASE_URL` do preview.
 
 Terra: composição MODIS/Blue Marble de julho2004. Lua: mosaico LROC 2025, com tratamento de cor declarado pela fonte, e relevo LOLA. Júpiter: Hubble/OPAL 2015. Marte: mosaico Viking/USGS. Mercúrio: MESSENGER em cores realçadas. Mapas de Saturno/Netuno da coleção NASA são ilustrativos; Vênus/Urano usam authoring original de nuvens. Geometria, iluminação, espessura de atmosfera, anéis e relevos visuais são aproximações explícitas.
 

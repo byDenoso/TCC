@@ -1,0 +1,23 @@
+{
+  "id": "saturno-aneis",
+  "model": "saturn.glb",
+  "globeNode": "SaturnGlobe",
+  "ringsNode": "SaturnRings",
+  "atmosphereNode": "SaturnAtmosphere",
+  "camera": {
+    "distance": 8,
+    "frameWidth": 5.36,
+    "openAngle": 30,
+    "edgeAngle": 0,
+    "aspect": 1.7777777778
+  },
+  "sunDirection": [-0.53, 0.32, 0.79],
+  "geometry": {
+    "equatorRadius": 1,
+    "polarRadius": 0.904,
+    "ringInnerRadius": 1.11,
+    "ringOuterRadius": 2.32,
+    "atmosphereRadius": 1.018
+  },
+  "background": "#10131c"
+}

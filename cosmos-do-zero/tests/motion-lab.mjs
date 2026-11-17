@@ -61,8 +61,11 @@ for (const vp of [{ name: '390', width: 390, height: 844 }, { name: '768', width
       ok(`${label}/${id}: botões e barra com ≥ 44 px de altura`, info.small.length === 0, info.small.join(', '));
       ok(`${label}/${id}: texto de leitura e valor preenchidos`, info.read > 30 && info.value.length > 0, info.value);
 
-      // barra de rolagem muda o desenho e o valor
-      const before = await snap(page, id), valBefore = info.value;
+      // Fix the starting position with the same input event used by the control.
+      // Auto-play can otherwise have already reached the target readout.
+      await page.evaluate((id) => { const r = document.querySelector(`[data-sci-panel="${id}"] [data-sci-range]`); r.value = '0'; r.dispatchEvent(new Event('input', { bubbles: true })); }, id);
+      const before = await snap(page, id);
+      const valBefore = await panel.locator('[data-sci-value]').textContent();
       await page.evaluate((id) => { const r = document.querySelector(`[data-sci-panel="${id}"] [data-sci-range]`); r.value = '0.6'; r.dispatchEvent(new Event('input', { bubbles: true })); }, id);
       await page.waitForTimeout(120);
       const mid = await snap(page, id);

@@ -97,7 +97,7 @@ export function initTempo(root: HTMLElement): void {
     wave.style.stroke = color;
   };
 
-  // cena 3D (Three.js) quando há WebGL e sem movimento reduzido; o SVG das janelas fica como alternativa
+  // O SVG das janelas permanece disponível no modo leve e com movimento reduzido.
   const host3d = root.querySelector<HTMLElement>('[data-t-3d]');
   const note3d = root.querySelector<HTMLElement>('[data-t-3d-note]');
   let view3d: Tempo3D | null = null;

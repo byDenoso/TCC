@@ -32,9 +32,9 @@ try{
  const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
    ok(await root.count()===1,`${id}/${width}: abertura narrativa presente`);
    await stage.scrollIntoViewIfNeeded();
-   const world=root.locator('[data-story-world][data-renderer="webgl2"] canvas');
+   const world=root.locator('[data-story-world][data-renderer="webgl2"][data-renderer-engine="playcanvas"] canvas.cosmos-volume');
    await world.waitFor({timeout:15000});
-   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco Three.js renderizado`);
+   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco PlayCanvas renderizado`);
    await page.waitForFunction(id=>document.querySelector(`[data-story="${id}"] [data-story-play]`)?.getAttribute('aria-pressed')==='true',id);
    ok(await root.locator('[data-story-phase]').count()===3,`${id}/${width}: três momentos nomeados`);
    await root.locator('[data-story-phase]').last().click();
@@ -58,8 +58,16 @@ try{
    ok(await root.locator('[data-story-play]').getAttribute('aria-pressed')==='false',`${id}/${width}: voltar do filme preserva a pausa manual`);
    ok(Math.abs(Number(await root.locator('[data-story-time]').inputValue())-filmTime)<.08,`${id}/${width}: cena continua no momento em que o vídeo parou`);
    await root.locator('[data-story-time]').press('End');
+   ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: tecla End seleciona a conclusão na cena`);
    await root.locator('[data-story-mode="film"]').click();
-   ok(await video.evaluate(v=>v.currentTime===20&&v.paused),`${id}/${width}: conclusão é preservada na troca para vídeo`);
+   // A posição do vídeo pode oscilar enquanto o navegador termina a busca.
+   try{
+    await page.waitForFunction(id=>{const v=document.querySelector(`[data-story="${id}"] video`);return v&&!v.seeking&&v.currentTime===20&&v.paused;},id,{timeout:10000});
+   }catch(error){
+    const state=await video.evaluate(v=>({time:v.currentTime,duration:v.duration,seeking:v.seeking,paused:v.paused}));
+    throw new Error(`${id}/${width}: conclusão é preservada na troca para vídeo ${JSON.stringify(state)}`,{cause:error});
+   }
+   ok(true,`${id}/${width}: conclusão é preservada na troca para vídeo`);
    await root.locator('[data-story-mode="scene"]').click();
    ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: conclusão é preservada na volta à cena`);
    await root.locator('[data-experience-expand]').click();
@@ -103,7 +111,11 @@ try{
  const history=await browser.newPage({viewport:{width:1280,height:900}});
  await history.addInitScript(()=>window.addEventListener('pageshow',e=>{document.documentElement.dataset.historyCache=String(e.persisted);}));
  await history.goto(`${base}/capitulos/origem-do-universo/`,{waitUntil:'networkidle'});
- await history.goto(`${base}/glossario/`,{waitUntil:'networkidle'});await history.goBack({waitUntil:'load'});
+ await history.goto(`${base}/glossario/`,{waitUntil:'networkidle'});
+ // A página restaurada do cache emite pageshow sem carregar os recursos de novo.
+ await history.goBack({waitUntil:'commit'});
+ await history.waitForURL(`${base}/capitulos/origem-do-universo/`,{waitUntil:'commit'});
+ await history.waitForFunction(()=>document.documentElement.dataset.historyCache!==undefined);
  await openLessonStory(history);
  const restored=history.locator('[data-story]');await restored.locator('[data-story-play]').scrollIntoViewIfNeeded();
  await history.waitForFunction(()=>document.querySelector('[data-story-play]')?.getAttribute('aria-pressed')==='true');
