@@ -58,8 +58,16 @@ try{
    ok(await root.locator('[data-story-play]').getAttribute('aria-pressed')==='false',`${id}/${width}: voltar do filme preserva a pausa manual`);
    ok(Math.abs(Number(await root.locator('[data-story-time]').inputValue())-filmTime)<.08,`${id}/${width}: cena continua no momento em que o vídeo parou`);
    await root.locator('[data-story-time]').press('End');
+   ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: tecla End seleciona a conclusão na cena`);
    await root.locator('[data-story-mode="film"]').click();
-   ok(await video.evaluate(v=>v.currentTime===20&&v.paused),`${id}/${width}: conclusão é preservada na troca para vídeo`);
+   // A posição do vídeo pode oscilar enquanto o navegador termina a busca.
+   try{
+    await page.waitForFunction(id=>{const v=document.querySelector(`[data-story="${id}"] video`);return v&&!v.seeking&&v.currentTime===20&&v.paused;},id,{timeout:10000});
+   }catch(error){
+    const state=await video.evaluate(v=>({time:v.currentTime,duration:v.duration,seeking:v.seeking,paused:v.paused}));
+    throw new Error(`${id}/${width}: conclusão é preservada na troca para vídeo ${JSON.stringify(state)}`,{cause:error});
+   }
+   ok(true,`${id}/${width}: conclusão é preservada na troca para vídeo`);
    await root.locator('[data-story-mode="scene"]').click();
    ok(await root.locator('[data-story-time]').inputValue()==='20',`${id}/${width}: conclusão é preservada na volta à cena`);
    await root.locator('[data-experience-expand]').click();
