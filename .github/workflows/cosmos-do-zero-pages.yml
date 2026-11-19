@@ -215,7 +215,7 @@ jobs:
       - name: Dependencias do site e do Playwright
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium webkit
       - name: Definir URL de verificaÃ§Ã£o
         run: echo "BASE_URL=${SITE_URL}${SITE_BASE%/}" >> "$GITHUB_ENV"
       - name: URL publica e recursos
