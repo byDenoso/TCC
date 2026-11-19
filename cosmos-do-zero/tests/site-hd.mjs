@@ -176,8 +176,15 @@ async function checkRoute(route) {
   } else if (route === 'explorar/') {
     const cards = page.locator('.igrid-card');
     assert.equal(await cards.count(), 6);
-    for (const [i, card] of (await cards.all()).entries())
+    for (const [i, card] of (await cards.all()).entries()) {
+      const photo = card.locator('.igrid-media img');
+      await photo.scrollIntoViewIfNeeded();
+      // With a cold CDN cache, currentSrc can still be empty on the first layout.
+      // Wait for the visible cover's actual pixels before recording its source.
+      await photo.evaluate(img => img.decode());
+      assert.ok(await photo.evaluate(img => img.naturalWidth > 0), 'cover-' + i + ' did not decode');
       await capture('cover-' + i, card.locator('.igrid-media'));
+    }
     const credited = await page.locator('a.igrid-credit[href^="https://"]').count();
     if (regions.some((r) => !r.raster.length)) report.problems.push('explorar: observational image missing');
     if (credited !== 6) report.problems.push('explorar: ' + credited + '/6 credited observation covers');
