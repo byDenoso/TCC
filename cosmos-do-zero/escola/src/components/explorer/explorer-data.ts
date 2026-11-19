@@ -115,7 +115,7 @@ export const stations: Station[] = [
     guide:
       'Siga um filamento até a junção com outros. Um nó nesta escala pode abrigar aglomerados inteiros, como o da parada anterior.',
     convention:
-      'Rede sintética de nós e filamentos. O lado corresponde ao da caixa TNG100. A cena usa uma distribuição própria e identifica uma extensão espacial, sem uma distância observacional à Terra.',
+      'Rede sintética de nós e filamentos, com a mesma escala nos três eixos. O lado do cubo corresponde ao da caixa TNG100. A cena usa uma distribuição própria e identifica uma extensão espacial, sem uma distância observacional à Terra.',
     source: 'Nelson et al. · dimensões das caixas IllustrisTNG',
     url: 'https://doi.org/10.1093/mnras/stx3040',
   },
@@ -225,6 +225,19 @@ export const initialCamera: CameraView = { azimuth: 16, tilt: 32, zoom: 1 };
 export const rad = Math.PI / 180;
 export function orbitRadius(a: number, max: number, linear: boolean) {
   return 2.92 * (linear ? a / max : Math.log1p((200 * a) / max) / Math.log(201));
+}
+// Os glifos crescem só até caber entre as órbitas representadas.
+export function orbitalSymbols(orbits: Orbit[], linear: boolean) {
+  if (!orbits.length) return { star: 0, bodies: [] as number[] };
+  const outer = orbits[orbits.length - 1].a;
+  const tracks = orbits.map((orbit) => orbitRadius(orbit.a, outer, linear));
+  const star = Math.min(0.105, tracks[0] * 0.3);
+  const bodies = orbits.map(({ symbolSize }, i) => {
+    const inside = tracks[i] - (tracks[i - 1] ?? 0);
+    const outside = i + 1 < tracks.length ? tracks[i + 1] - tracks[i] : inside;
+    return Math.min(symbolSize, Math.min(inside, outside) * 0.3);
+  });
+  return { star, bodies };
 }
 export function orbitPoint(orbit: Orbit, max: number, linear: boolean, day: number): Vec {
   const radius = orbitRadius(orbit.a, max, linear);

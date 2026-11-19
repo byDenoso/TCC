@@ -136,17 +136,19 @@
     monospace;
   color: #f4f7fd;
 }
-@media (max-width: 900px) and (min-width: 641px) {
+@media (max-width: 900px) and (min-width: 681px) {
   .cosmos-sky__world {
     width: var(--cosmos-planet-width, 79%);
     right: var(--cosmos-planet-right, -13%);
   }
 }
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .cosmos-sky__world {
-    width: var(--cosmos-planet-width, 110%);
-    right: var(--cosmos-planet-right, -14%);
-    top: var(--cosmos-planet-top, 71%);
+    width: var(--cosmos-planet-width, min(110vw, 570px));
+    right: var(--cosmos-planet-right, max(-14%, -62px));
+    top: var(--cosmos-planet-top, auto);
+    bottom: 4.9rem;
+    transform: none;
   }
   .cosmos-sky__instrument {
     bottom: var(--cosmos-hero-control-bottom, 1rem);

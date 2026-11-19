@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { NEXO, ORIGIN } from '../lib/school';
@@ -41,11 +41,11 @@ const nav = [
   ['/explorador/', 'Explorador'],
 ];
 export function Frame({ children }: { children: React.ReactNode }) {
-  const router = useRouter(),
-    [open, setOpen] = useState(false);
+  const router = useRouter();
+  const disclosure = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     document.documentElement.dataset.ready = 'true';
-    setOpen(false);
+    if (disclosure.current) disclosure.current.open = false;
   }, [router.asPath]);
   return (
     <>
@@ -70,26 +70,36 @@ export function Frame({ children }: { children: React.ReactNode }) {
               <AccountIcon />
               <span>Meu espaço</span>
             </a>
-            <button
-              aria-label={open ? 'Fechar menu' : 'Abrir menu'}
-              aria-expanded={open}
-              aria-controls="mobile-menu"
-              className="menu-button"
-              onClick={() => setOpen(!open)}
+            <details
+              className="mobile-disclosure"
+              ref={disclosure}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && disclosure.current?.open) {
+                  disclosure.current.open = false;
+                  disclosure.current.querySelector('summary')?.focus();
+                }
+              }}
             >
-              {open ? '×' : '☰'}
-            </button>
+              <summary className="menu-button" role="button" aria-controls="mobile-menu">
+                <span className="menu-collapsed">
+                  <span aria-hidden="true">☰</span>
+                  <span className="screen-reader-only">Abrir menu</span>
+                </span>
+                <span className="menu-expanded">
+                  <span aria-hidden="true">×</span>
+                  <span className="screen-reader-only">Fechar menu</span>
+                </span>
+              </summary>
+              <nav id="mobile-menu" aria-label="Menu celular">
+                {nav.map(([u, n]) => (
+                  <a key={u} href={u} aria-current={router.asPath.startsWith(u) ? 'page' : undefined}>
+                    {n}
+                  </a>
+                ))}
+              </nav>
+            </details>
           </div>
         </div>
-        {open && (
-          <nav id="mobile-menu" aria-label="Menu celular">
-            {nav.map(([u, n]) => (
-              <a key={u} href={u}>
-                {n}
-              </a>
-            ))}
-          </nav>
-        )}
       </header>
       <main id="conteudo" tabIndex={-1}>
         {children}

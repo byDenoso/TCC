@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { labs, simulate, threeBodyDiagnostics } from '../src/lib/model.ts';
+import { labs, simulate, orbitUnitsPerAU, threeBodyDiagnostics } from '../src/lib/model.ts';
 
 function close(got: number, expected: number, tolerance = 1e-8) {
   assert.ok(
@@ -49,7 +49,11 @@ for (const lab of labs)
         for (let i = 1; i < r.points.length; i++) assert.ok(r.points[i][0] > r.points[i - 1][0], lab.id);
         for (const a of [...r.dots, ...r.segments])
           assert.ok(
-            a.every((v) => Number.isFinite(v) && Math.abs(v) < 2.6),
+            a.every((v, axis) => {
+              const center =
+                lab.id === 'orbitas' && axis % 3 === 0 ? orbitUnitsPerAU * values[0] * values[1] : 0;
+              return Number.isFinite(v) && Math.abs(v + center) < 2.6;
+            }),
             lab.id + ' camera extent ' + a
           );
       }
@@ -70,6 +74,10 @@ test('Kepler: solar year, P∝a^(3/2), perihelion, aphelion and equal-area motio
   close(atTwo.metric.value / atEarth.metric.value, Math.sqrt(8));
   close(atEarth.points[0][1], 0.5);
   close(atEarth.points[48][1], 1.5);
+  close(atTwo.dots[1][0] / atEarth.dots[1][0], 2);
+  const nextFrame = simulate('orbitas', [2, 0.5], 0.1);
+  assert.equal(nextFrame.points, atTwo.points);
+  assert.notDeepEqual(nextFrame.dots, atTwo.dots);
   const period = atEarth.metric.value / 30;
   const start = atEarth.dots[1],
     after = simulate('orbitas', [1, 0.5], 1e-4).dots[1];
@@ -132,8 +140,7 @@ test('Curvature: proper distance agrees with quadrature of radial metric and sca
     upper = Math.sqrt(2);
   // Integrate after r/rs = 1+s², removing the endpoint square-root singularity.
   let integral = 0;
-  for (let j = 0; j < n; j++)
-    integral += (2 * Math.sqrt(1 + (((j + 0.5) * upper) / n) ** 2) * upper) / n;
+  for (let j = 0; j < n; j++) integral += (2 * Math.sqrt(1 + (((j + 0.5) * upper) / n) ** 2) * upper) / n;
   close(value('curvatura', [5, 3]), rs * integral, 0.0002);
   close(value('curvatura', [10, 3]), 2 * value('curvatura', [5, 3]));
   close(simulate('curvatura', [5, 3]).points[0][1], 0);

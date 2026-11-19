@@ -4,7 +4,7 @@ import { evaluate } from '@mdx-js/mdx';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import * as runtime from 'react/jsx-runtime';
-import { createElement } from 'react';
+import { createElement, type ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { rank, type Lesson, type Card } from './school';
 let loaded: { meta: Lesson; body: string }[] | undefined;
@@ -40,5 +40,17 @@ export async function renderBody(body: string) {
     rehypePlugins: [[rehypeKatex, { throwOnError: true, strict: 'ignore', trust: false }]],
     development: false,
   });
-  return renderToStaticMarkup(createElement(mod.default));
+  return renderToStaticMarkup(
+    createElement(mod.default, {
+      components: {
+        span: (props: ComponentProps<'span'>) =>
+          createElement(
+            'span',
+            props.className === 'katex-display'
+              ? { ...props, tabIndex: 0, role: 'group', 'aria-label': 'Equação' }
+              : props
+          ),
+      },
+    })
+  );
 }

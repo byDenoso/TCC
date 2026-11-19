@@ -116,8 +116,9 @@ export function grade(q: Question, input: unknown) {
     Math.abs(n - q.answer) <= q.tolerance + Number.EPSILON * Math.max(1, Math.abs(q.answer)) * 4
   );
 }
+const numberFormat = new Intl.NumberFormat('pt-BR', { maximumSignificantDigits: 4 });
 export function compact(n: number) {
-  return new Intl.NumberFormat('pt-BR', { maximumSignificantDigits: 4 }).format(n);
+  return numberFormat.format(n);
 }
 export function canon(s: string) {
   return s

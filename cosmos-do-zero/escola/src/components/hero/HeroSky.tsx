@@ -15,7 +15,7 @@ export default function HeroSky({
   const panel = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const drawing = useRef<SaturnPaint | null>(null);
-  const requestedGpu = useRef(false);
+  const mode = useRef<'idle' | 'pending' | 'static' | 'live'>('idle');
   const mounted = useRef(false);
   const target = useRef(initialAngle);
   const displayed = useRef(initialAngle);
@@ -26,6 +26,7 @@ export default function HeroSky({
   const [degrees, setDegrees] = useState(initialAngle);
   const [ready, setReady] = useState(false);
   const [live, setLive] = useState(false);
+  const [posterDegrees, setPosterDegrees] = useState(initialAngle);
 
   useEffect(() => {
     mounted.current = true;
@@ -70,23 +71,46 @@ export default function HeroSky({
         render();
         return;
       }
-      if (requestedGpu.current || reduced.matches || navigator.hardwareConcurrency <= 2) return;
-      requestedGpu.current = true;
+      if (mode.current === 'pending') return;
+      const usePosters = () => {
+        mode.current = 'static';
+        setLive(false);
+        setPosterDegrees(target.current);
+      };
+      if (mode.current === 'static' || reduced.matches || navigator.hardwareConcurrency <= 2) {
+        usePosters();
+        return;
+      }
+      const gl = surface.getContext('webgl', {
+        alpha: true,
+        antialias: false,
+        premultipliedAlpha: false,
+        powerPreference: 'low-power',
+      });
+      if (!gl) {
+        usePosters();
+        return;
+      }
+      mode.current = 'pending';
       import('./saturn-gl')
         .then(async ({ mountSaturn }) => {
-          const scene = await mountSaturn(surface, `${assetRoot}/saturno-mapa.webp`);
-          if (!mounted.current) {
+          const scene = await mountSaturn(surface, gl, `${assetRoot}/saturno-mapa.webp`);
+          if (!mounted.current || mode.current !== 'pending') {
             scene?.dispose();
             return;
           }
-          if (!scene) return;
+          if (!scene) {
+            usePosters();
+            return;
+          }
           drawing.current = scene;
           displayed.current = target.current;
           size();
+          mode.current = 'live';
           setLive(true);
         })
         .catch(() => {
-          /* Pre-rendered viewpoints remain interactive. */
+          if (mounted.current) usePosters();
         });
     };
     const observer = new ResizeObserver(size);
@@ -95,6 +119,8 @@ export default function HeroSky({
       cancelAnimationFrame(frame.current);
       frame.current = 0;
       drawing.current = null;
+      mode.current = 'static';
+      setPosterDegrees(target.current);
       setLive(false);
     };
     surface.addEventListener('webglcontextlost', lost);
@@ -105,7 +131,7 @@ export default function HeroSky({
       cancelAnimationFrame(frame.current);
       drawing.current?.dispose();
       drawing.current = null;
-      requestedGpu.current = false;
+      mode.current = 'idle';
       updateView.current = () => {};
     };
   }, [assetRoot]);
@@ -140,7 +166,7 @@ export default function HeroSky({
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
-  const poster = `${assetRoot}/saturno-${live ? initialAngle : degrees}.webp`;
+  const poster = `${assetRoot}/saturno-${posterDegrees}.webp`;
   return (
     <div ref={panel} className="cosmos-sky" data-view={degrees}>
       <div
@@ -164,7 +190,7 @@ export default function HeroSky({
         }}
       >
         <picture>
-          {(live || degrees === initialAngle) && (
+          {posterDegrees === initialAngle && (
             <source media="(max-width: 700px)" srcSet={`${assetRoot}/saturno-24-small.webp`} />
           )}
           <img

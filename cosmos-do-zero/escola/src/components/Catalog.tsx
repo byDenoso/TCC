@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CourseImage } from './CourseImage';
 import { canon, levels, type Card } from '../lib/school';
 import { usePublished } from '../lib/student';
 export function LevelCard({ i }: { i: number }) {
@@ -6,9 +7,9 @@ export function LevelCard({ i }: { i: number }) {
   return (
     <a className="level-card" href={'/niveis/' + (i + 1) + '/'}>
       <div className="card-art">
-        <img
-          loading="lazy"
-          src={'/imagens/' + l.image}
+        <CourseImage
+          file={l.image}
+          sizes="(max-width: 680px) calc(100vw - 36px), (max-width: 900px) 45vw, (max-width: 1300px) 30vw, 390px"
           alt={
             i === 2
               ? 'Fotografia de M51 e sua companheira, Hubble'

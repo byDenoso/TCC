@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { simulate, type Lab } from '../lib/model';
 import { compact } from '../lib/school';
 import { record } from '../lib/student';
-export default function LabChallenge({
+export default memo(function LabChallenge({
   lab,
   values,
   onMeasure,
@@ -16,7 +16,7 @@ export default function LabChallenge({
     [busy, setBusy] = useState(false);
   const target =
     lab.presets.find((p) => p.values.some((v, i) => v !== lab.parameters[i].initial)) ?? lab.presets[1];
-  const meter = simulate(lab.id, target.values, 0).metric;
+  const meter = useMemo(() => simulate(lab.id, target.values, 0).metric, [lab, target]);
   return (
     <section className="challenge">
       <p className="kicker">Experimento avaliativo</p>
@@ -87,4 +87,4 @@ export default function LabChallenge({
       <p role="status">{message}</p>
     </section>
   );
-}
+});

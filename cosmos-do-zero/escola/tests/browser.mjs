@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { verifyHero } from './hero-checks.mjs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -58,9 +59,7 @@ try {
   checks.push('Início, primeira aula e KaTeX');
   await p.getByRole('button', { name: 'Favoritar' }).click();
   await p.getByText('Minhas anotações', { exact: true }).click();
-  await p
-    .getByRole('textbox', { name: 'Anotação sobre a aula' })
-    .fill('A luz fornece uma régua de tempo.');
+  await p.getByRole('textbox', { name: 'Anotação sobre a aula' }).fill('A luz fornece uma régua de tempo.');
   await p.getByRole('button', { name: 'Salvar anotação' }).click();
   await p.locator('.answer-label input').fill(String(bank[slug].exercise.answer));
   await p.getByRole('button', { name: 'Verificar resposta' }).click();
@@ -103,9 +102,7 @@ try {
     await select.selectOption('1');
     await lab.locator('.baseline').waitFor({ state: 'attached' });
     assert.equal(
-      await lab
-        .locator('.baseline')
-        .evaluate((path) => getComputedStyle(path).strokeDasharray !== 'none'),
+      await lab.locator('.baseline').evaluate((path) => getComputedStyle(path).strokeDasharray !== 'none'),
       true
     );
     await lab.getByRole('button', { name: 'Reiniciar' }).click();
@@ -124,6 +121,59 @@ try {
     await lab.locator('canvas').waitFor({ timeout: 15000 });
     await p.waitForTimeout(250);
     assert(await lab.locator('canvas').evaluate((c) => c.width > 0 && c.height > 0));
+    if (labId === 'orbitas') {
+      const canvas = lab.locator('canvas');
+      const bodySeparation = async () => {
+        const data = (await canvas.screenshot()).toString('base64');
+        return p.evaluate(async (encoded) => {
+          const image = new Image();
+          image.src = 'data:image/png;base64,' + encoded;
+          await image.decode();
+          const surface = document.createElement('canvas');
+          surface.width = image.width;
+          surface.height = image.height;
+          const ctx = surface.getContext('2d');
+          ctx.drawImage(image, 0, 0);
+          const pixels = ctx.getImageData(0, 0, image.width, image.height).data;
+          const bodies = [
+            [0, 0, 0],
+            [0, 0, 0],
+          ];
+          for (let i = 0; i < pixels.length; i += 4) {
+            const r = pixels[i],
+              g = pixels[i + 1],
+              b = pixels[i + 2];
+            const k = r > 170 && r > b * 1.5 ? 0 : b > 150 && g > 110 && b > r * 1.8 ? 1 : -1;
+            if (k < 0) continue;
+            bodies[k][0] += (i / 4) % image.width;
+            bodies[k][1] += Math.floor(i / 4 / image.width);
+            bodies[k][2]++;
+          }
+          return {
+            counts: bodies.map((b) => b[2]),
+            separation: Math.hypot(
+              bodies[1][0] / bodies[1][2] - bodies[0][0] / bodies[0][2],
+              bodies[1][1] / bodies[1][2] - bodies[0][1] / bodies[0][2]
+            ),
+          };
+        }, data);
+      };
+      await setRange(controls.nth(1), 0.212);
+      await setRange(controls.nth(0), 1);
+      await p.waitForTimeout(120);
+      const inner = await bodySeparation();
+      await setRange(controls.nth(0), 2);
+      await p.waitForTimeout(120);
+      const outer = await bodySeparation();
+      assert(
+        inner.counts.every((n) => n > 8) && outer.counts.every((n) => n > 8),
+        'Sol e planeta visíveis em 3D'
+      );
+      assert(
+        outer.separation / inner.separation > 1.8 && outer.separation / inner.separation < 2.2,
+        JSON.stringify({ inner, outer })
+      );
+    }
     await lab.getByRole('button', { name: 'Usar 2D' }).click();
   }
   checks.push('15 bancadas com presets, referência, reinicialização, curva D3 e canvas 3D');
@@ -133,6 +183,33 @@ try {
   await p.getByRole('button', { name: 'Abrir menu' }).click();
   await p.locator('#mobile-menu a').first().click();
   assert.match(p.url(), /trilhas/);
+  for (const width of [320, 360]) {
+    await p.setViewportSize({ width, height: 800 });
+    await page('/');
+    const menu = p.getByRole('button', { name: 'Abrir menu' });
+    const box = await menu.boundingBox();
+    assert(box && box.x + box.width <= width && box.width >= 44 && box.height >= 44);
+    await menu.click();
+    await p.locator('#mobile-menu a').first().click();
+    await p.waitForURL('**/trilhas/');
+    await page('/aulas/entropia-fotons-e-neutrinos/');
+    assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    const figures = await p.locator('.katex-display').evaluateAll((nodes) =>
+      nodes
+        .filter((el) => el.scrollWidth > el.clientWidth + 1)
+        .map((el) => {
+          const math = el.querySelector('.katex-html');
+          el.focus();
+          const start =
+            document.activeElement === el &&
+            math.getBoundingClientRect().left >= el.getBoundingClientRect().left - 1;
+          el.scrollLeft = el.scrollWidth;
+          return start && math.getBoundingClientRect().right <= el.getBoundingClientRect().right + 1;
+        })
+    );
+    assert(figures.length > 0 && figures.every(Boolean), 'Ler os dois extremos da fórmula longa');
+  }
+  await p.setViewportSize({ width: 390, height: 844 });
   const audits = [];
   for (const path of [
     '/',
@@ -172,6 +249,8 @@ try {
   await p.waitForTimeout(350);
   await p.getByRole('button', { name: 'Pausar' }).click();
   checks.push('Laboratório em navegador sem WebGL');
+  await verifyHero(browser, base);
+  checks.push('Cena de Saturno, recursos sob demanda, teclado e navegação sem JavaScript');
   assert.deepEqual(errors, []);
   console.log(checks.join('\n'));
 } finally {

@@ -16,6 +16,7 @@ import {
   facing,
   formatN,
   initialCamera,
+  orbitalSymbols,
   orbitPoint,
   orbitRadius,
   solar,
@@ -26,6 +27,7 @@ import type { CameraView, Orbit, Vec } from './explorer-data';
 import { ink, makeField, sky } from './explorer-geometry';
 
 const Scene = lazy(() => import('./ExpoScene'));
+const rockyPlanets = solar.slice(0, 4);
 const labels = [
   'Sistema planetário',
   'Sistema planetário',
@@ -125,12 +127,13 @@ function Diagram({
     return paths;
   }, [base, view]);
   const size = orbits.length ? orbits[orbits.length - 1].a : 1;
+  const symbols = useMemo(() => orbitalSymbols(orbits, linear), [orbits, linear]);
   const starTint = id === 'trappist' ? '#ff9976' : '#ffd283';
   const body = orbits
     .map((o, i) => ({ p: plot(orbitPoint(o, size, linear, day), view), o, i }))
     .sort((a, b) => a.p[2] - b.p[2]);
   const renderPlanet = ({ p, o, i }: (typeof body)[number]) => {
-    const r = o.symbolSize * 93 * view.zoom,
+    const r = symbols.bodies[i] * 91 * view.zoom,
       chosen = i === selected;
     return (
       <g
@@ -204,8 +207,8 @@ function Diagram({
             );
           })}
           {body.filter((b) => b.p[2] < 0).map(renderPlanet)}
-          <circle cx="350" cy="195" r={37 * view.zoom} fill={`url(#${prefix}-star)`} />
-          <circle cx="350" cy="195" r={7.5 * view.zoom} fill={starTint} />
+          <circle cx="350" cy="195" r={symbols.star * 355 * view.zoom} fill={`url(#${prefix}-star)`} />
+          <circle cx="350" cy="195" r={symbols.star * 91 * view.zoom} fill={starTint} />
           {body.filter((b) => b.p[2] >= 0).map(renderPlanet)}
         </>
       ) : (
@@ -259,10 +262,12 @@ export default function Expo() {
   const [index, setIndex] = useState(0),
     [selection, setSelection] = useState(2),
     [day, setDay] = useState(0),
-    [linear, setLinear] = useState(false);
+    [linear, setLinear] = useState(false),
+    [inner, setInner] = useState(false);
   const [view, setView] = useState<CameraView>(initialCamera),
     [mode, setMode] = useState<'2d' | '3d'>('2d'),
-    [has3D, setHas3D] = useState(true);
+    [has3D, setHas3D] = useState(true),
+    [sceneReady, setSceneReady] = useState(false);
   const [reduced, setReduced] = useState(true),
     [guided, setGuided] = useState(false),
     [readings, setReadings] = useState(true),
@@ -272,6 +277,7 @@ export default function Expo() {
   const baseId = useId();
   const station = stations[index];
   const orbits = index === 0 ? solar : index === 1 ? trappist : [];
+  const displayOrbits = index === 0 && linear && inner ? rockyPlanets : orbits;
   const body = orbits[selection];
   const select = useCallback((i: number) => {
     if (!drag.current?.moved) setSelection(i);
@@ -281,6 +287,7 @@ export default function Expo() {
     setIndex(n);
     setSelection(n === 1 ? 3 : 2);
     setDay(0);
+    setInner(false);
     setLinear(n === 1);
     setView(cameraStart(n));
     if (write && typeof window !== 'undefined') {
@@ -298,7 +305,11 @@ export default function Expo() {
     motion.addEventListener('change', syncMotion);
     const syncHash = () => {
       const i = stations.findIndex((s) => '#' + s.id === window.location.hash);
-      if (i !== -1) go(i, false);
+      if (i !== -1) {
+        setGuided(false);
+        setStatus('');
+        go(i, false);
+      }
     };
     syncHash();
     window.addEventListener('hashchange', syncHash);
@@ -320,11 +331,18 @@ export default function Expo() {
       });
     }
   }, [index, reduced]);
+  const ready = useCallback(() => setSceneReady(true), []);
   const fail = useCallback(() => {
     setMode('2d');
-    setHas3D(false);
-    setStatus('O mapa 2D está ativo. Este navegador não conseguiu abrir a cena 3D.');
+    setSceneReady(false);
+    setStatus('O mapa 2D está ativo. Você pode tentar abrir a cena 3D novamente.');
   }, []);
+  const freeTravel = (next: number) => {
+    if (index === next) return;
+    setGuided(false);
+    setStatus('');
+    go(next);
+  };
   function show3D() {
     if (mode === '3d') return;
     if (!has3D) return;
@@ -332,10 +350,13 @@ export default function Expo() {
       const c = document.createElement('canvas');
       const g = c.getContext('webgl2', { powerPreference: 'low-power' });
       if (!g) {
+        setHas3D(false);
         fail();
+        setStatus('O mapa 2D está ativo. WebGL 2 está indisponível neste navegador.');
         return;
       }
       g.getExtension('WEBGL_lose_context')?.loseContext();
+      setSceneReady(false);
       setMode('3d');
       setStatus('');
     } catch {
@@ -398,6 +419,7 @@ export default function Expo() {
   }
   const stepJourney = () => {
     if (!guided) {
+      setStatus('');
       go(0);
       setGuided(true);
       setReadings(true);
@@ -426,39 +448,64 @@ export default function Expo() {
             type="button"
             className={index === i ? 'active' : ''}
             aria-current={index === i ? 'step' : undefined}
-            onClick={() => go(i)}
+            onClick={() => freeTravel(i)}
           >
             <span className="exp-station-dot" aria-hidden="true" />
             {s.short}
           </button>
         ))}
       </nav>
+      <section className="exp-guide" aria-label="Viagem guiada">
+        <div className="exp-guide-symbol">
+          <Icon name="path" />
+        </div>
+        <div>
+          <p className="exp-kicker">
+            {guided ? 'Viagem guiada · ' + (index + 1) + ' de 6' : 'Viagem guiada'}
+          </p>
+          <h3 aria-live="polite" aria-atomic="true">
+            {guided ? station.guide : 'Uma pergunta em cada escala'}
+          </h3>
+        </div>
+        <div className="exp-guide-actions">
+          {guided && (
+            <button type="button" className="exp-secondary" onClick={() => setGuided(false)}>
+              Sair da viagem
+            </button>
+          )}
+          <button type="button" className="exp-primary" onClick={stepJourney}>
+            {!guided ? 'Iniciar viagem' : index === 5 ? 'Concluir viagem' : 'Próxima parada'}
+          </button>
+        </div>
+      </section>
       <div className="exp-console">
         <div className="exp-map-column">
           <div className="exp-map">
             <Background />
-            <div className="exp-map-caption">
-              <span className="exp-sight" />
-              <span>
-                {mode === '3d' ? 'Cena 3D' : 'Mapa 2D'}
-                <b>{station.family}</b>
-              </span>
-            </div>
-            <div className="exp-mode">
-              <button
-                type="button"
-                aria-pressed={mode === '2d'}
-                onClick={() => {
-                  setMode('2d');
-                  setStatus('');
-                }}
-              >
-                Mapa 2D
-              </button>
-              <button type="button" aria-pressed={mode === '3d'} disabled={!has3D} onClick={show3D}>
-                <Icon name="box" />
-                Cena 3D
-              </button>
+            <div className="exp-toolbar">
+              <div className="exp-map-caption">
+                <span className="exp-sight" />
+                <span>
+                  {mode === '3d' ? (sceneReady ? 'Cena 3D' : 'Carregando 3D…') : 'Mapa 2D'}
+                  <b>{station.family}</b>
+                </span>
+              </div>
+              <div className="exp-mode">
+                <button
+                  type="button"
+                  aria-pressed={mode === '2d'}
+                  onClick={() => {
+                    setMode('2d');
+                    setStatus('');
+                  }}
+                >
+                  Mapa 2D
+                </button>
+                <button type="button" aria-pressed={mode === '3d'} disabled={!has3D} onClick={show3D}>
+                  <Icon name="box" />
+                  Cena 3D
+                </button>
+              </div>
             </div>
             <div
               className="exp-surface"
@@ -481,7 +528,7 @@ export default function Expo() {
                       <Diagram
                         id={station.id}
                         view={view}
-                        orbits={orbits}
+                        orbits={displayOrbits}
                         linear={linear}
                         day={day}
                         selected={selection}
@@ -492,13 +539,14 @@ export default function Expo() {
                     <Scene
                       station={station.id}
                       cameraView={view}
-                      orbits={orbits}
+                      orbits={displayOrbits}
                       selected={selection}
                       day={day}
                       linear={linear}
                       reduced={reduced}
                       onSelect={select}
                       onFailure={fail}
+                      onReady={ready}
                     />
                   </Suspense>
                 </SceneGuard>
@@ -506,7 +554,7 @@ export default function Expo() {
                 <Diagram
                   id={station.id}
                   view={view}
-                  orbits={orbits}
+                  orbits={displayOrbits}
                   linear={linear}
                   day={day}
                   selected={selection}
@@ -515,7 +563,10 @@ export default function Expo() {
               )}
             </div>
             <div className="exp-map-footer">
-              <span>Ilustração · {station.frame}</span>
+              <span>
+                Ilustração ·{' '}
+                {displayOrbits === rockyPlanets ? 'Órbitas de Mercúrio a Marte' : station.frame}
+              </span>
               <span>{formatN(view.zoom, 1)}×</span>
             </div>
           </div>
@@ -598,7 +649,11 @@ export default function Expo() {
                 <select
                   aria-label="Planeta"
                   value={selection}
-                  onChange={(e) => setSelection(Number(e.target.value))}
+                  onChange={(e) => {
+                    const next = Number(e.target.value);
+                    if (next >= rockyPlanets.length) setInner(false);
+                    setSelection(next);
+                  }}
                 >
                   {orbits.map((o, i) => (
                     <option key={o.name} value={i}>
@@ -635,7 +690,14 @@ export default function Expo() {
                 />
               </label>
               <label className="exp-check">
-                <input type="checkbox" checked={linear} onChange={(e) => setLinear(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={linear}
+                  onChange={(e) => {
+                    setLinear(e.target.checked);
+                    setInner(false);
+                  }}
+                />
                 Distâncias orbitais lineares
               </label>
               <small>
@@ -643,6 +705,19 @@ export default function Expo() {
                   ? 'Escala radial proporcional aos semieixos.'
                   : 'Escala radial logarítmica para distinguir as órbitas internas.'}
               </small>
+              {index === 0 && linear && (
+                <label className="exp-check">
+                  <input
+                    type="checkbox"
+                    checked={inner}
+                    onChange={(e) => {
+                      setInner(e.target.checked);
+                      if (e.target.checked && selection >= rockyPlanets.length) setSelection(2);
+                    }}
+                  />
+                  Enquadrar os quatro planetas rochosos
+                </label>
+              )}
             </div>
           )}
           <label className="exp-check exp-reading">
@@ -668,27 +743,6 @@ export default function Expo() {
           {status}
         </p>
       )}
-      <section className="exp-guide" aria-label="Viagem guiada">
-        <div className="exp-guide-symbol">
-          <Icon name="path" />
-        </div>
-        <div>
-          <p className="exp-kicker">
-            {guided ? 'Viagem guiada · ' + (index + 1) + ' de 6' : 'Viagem guiada'}
-          </p>
-          <h3>{guided ? station.guide : 'Uma pergunta em cada escala'}</h3>
-        </div>
-        <div className="exp-guide-actions">
-          {guided && (
-            <button type="button" className="exp-secondary" onClick={() => setGuided(false)}>
-              Sair da viagem
-            </button>
-          )}
-          <button type="button" className="exp-primary" onClick={stepJourney}>
-            {!guided ? 'Iniciar viagem' : index === 5 ? 'Concluir viagem' : 'Próxima parada'}
-          </button>
-        </div>
-      </section>
       <details className="exp-notes" open>
         <summary>Como interpretar a cena</summary>
         <p>{station.convention}</p>

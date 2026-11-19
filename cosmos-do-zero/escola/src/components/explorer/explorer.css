@@ -168,15 +168,21 @@
   display: block;
   overflow: hidden;
 }
-.cosmos-explorer .exp-map-caption,
-.cosmos-explorer .exp-map-footer,
-.cosmos-explorer .exp-mode {
+.cosmos-explorer .exp-toolbar,
+.cosmos-explorer .exp-map-footer {
   position: absolute;
   z-index: 2;
 }
+.cosmos-explorer .exp-toolbar {
+  inset: 0.82rem 0.85rem auto 1.3rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.55rem;
+  pointer-events: none;
+}
 .cosmos-explorer .exp-map-caption {
-  left: 1.3rem;
-  top: 1.05rem;
+  min-width: 0;
   display: flex;
   gap: 0.62rem;
   align-items: center;
@@ -213,8 +219,7 @@
   letter-spacing: 0.015em;
 }
 .cosmos-explorer .exp-mode {
-  right: 0.85rem;
-  top: 0.82rem;
+  pointer-events: auto;
   display: flex;
   padding: 0.2rem;
   border: 1px solid #52647b;
@@ -446,7 +451,7 @@
   gap: 1rem;
   background: #e6f0f9;
   color: var(--ex-ink);
-  margin: 1.6rem 0 1.1rem;
+  margin: 0 0 1.1rem;
   padding: 1.18rem 1.3rem;
   border-radius: 1rem;
   border: 1px solid #c7dceb;
@@ -546,9 +551,8 @@
   .cosmos-explorer .exp-map {
     aspect-ratio: 1.33;
   }
-  .cosmos-explorer .exp-map-caption {
+  .cosmos-explorer .exp-toolbar {
     left: 0.9rem;
-    top: 1rem;
   }
 }
 @media (max-width: 720px) {
@@ -581,17 +585,11 @@
   }
 }
 @media (max-width: 390px) {
-  .cosmos-explorer .exp-map-caption {
-    left: 0.65rem;
-    top: 0.8rem;
-    max-width: 43%;
+  .cosmos-explorer .exp-toolbar {
+    inset: 0.62rem 0.56rem auto 0.65rem;
   }
   .cosmos-explorer .exp-map-caption b {
     line-height: 1.22;
-  }
-  .cosmos-explorer .exp-mode {
-    right: 0.56rem;
-    top: 0.62rem;
   }
   .cosmos-explorer .exp-mode button {
     padding: 0.42rem 0.45rem;

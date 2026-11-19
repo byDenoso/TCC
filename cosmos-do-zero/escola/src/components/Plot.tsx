@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { memo, useId, useState } from 'react';
 import { scaleLinear } from 'd3-scale';
 import { line } from 'd3-shape';
 import { compact } from '../lib/school';
@@ -8,7 +8,7 @@ function extent(values: number[]): [number, number] {
     hi = Math.max(...values);
   return hi === lo ? [lo - 1, hi + 1] : [lo, hi];
 }
-export function Plot({
+export const Plot = memo(function Plot({
   points,
   xLabel,
   yLabel,
@@ -24,7 +24,8 @@ export function Plot({
   inspect?: boolean;
 }) {
   const id = useId(),
-    [fraction, setFraction] = useState(0.5);
+    [fraction, setFraction] = useState(0.5),
+    [tableOpen, setTableOpen] = useState(false);
   const valid = points.filter((p) => p.every(Number.isFinite)),
     other = (reference || []).filter((p) => p.every(Number.isFinite));
   if (!valid.length) return <p>Esta configuração está fora do domínio do gráfico.</p>;
@@ -94,28 +95,30 @@ export function Plot({
       )}
       {caption && <figcaption>{caption}</figcaption>}
       {inspect && (
-        <details>
+        <details onToggle={(e) => setTableOpen(e.currentTarget.open)}>
           <summary>Valores em tabela</summary>
-          <div className="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>{xLabel}</th>
-                  <th>{yLabel}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {valid.map(([x, y], i) => (
-                  <tr key={i}>
-                    <td>{compact(x)}</td>
-                    <td>{compact(y)}</td>
+          {tableOpen && (
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>{xLabel}</th>
+                    <th>{yLabel}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {valid.map(([x, y], i) => (
+                    <tr key={i}>
+                      <td>{compact(x)}</td>
+                      <td>{compact(y)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </details>
       )}
     </figure>
   );
-}
+});

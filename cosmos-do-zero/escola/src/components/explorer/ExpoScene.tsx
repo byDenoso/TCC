@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { rad, orbitPoint, orbitRadius } from './explorer-data';
+import { rad, orbitalSymbols, orbitPoint, orbitRadius } from './explorer-data';
 import type { CameraView, Orbit } from './explorer-data';
 import { ink, makeField } from './explorer-geometry';
 
@@ -16,6 +16,7 @@ export interface SceneProps {
   reduced: boolean;
   onSelect: (i: number) => void;
   onFailure: () => void;
+  onReady: () => void;
 }
 
 const grainVertex = `
@@ -171,6 +172,7 @@ const starFragment = `uniform vec3 uColor;varying vec2 vUv;void main(){vec2 u=(v
 
 function Solar({ orbits, selected, linear, day, onSelect, station }: SceneProps) {
   const max = orbits[orbits.length - 1].a;
+  const symbols = useMemo(() => orbitalSymbols(orbits, linear), [orbits, linear]);
   const tint = station === 'solar' ? '#ffbb66' : '#ff8657';
   const glow = useMemo(() => ({ uColor: { value: new THREE.Color(tint) } }), [tint]);
   return (
@@ -178,7 +180,7 @@ function Solar({ orbits, selected, linear, day, onSelect, station }: SceneProps)
       <ambientLight intensity={1.45} />
       <directionalLight position={[3, 4, 6]} intensity={1.65} color="#ffecd5" />
       <mesh renderOrder={-1}>
-        <planeGeometry args={[0.8, 0.8]} />
+        <planeGeometry args={[symbols.star * 7.6, symbols.star * 7.6]} />
         <shaderMaterial
           uniforms={glow}
           vertexShader={starVertex}
@@ -189,12 +191,12 @@ function Solar({ orbits, selected, linear, day, onSelect, station }: SceneProps)
         />
       </mesh>
       <mesh>
-        <sphereGeometry args={[0.105, 24, 18]} />
+        <sphereGeometry args={[symbols.star, 24, 18]} />
         <meshBasicMaterial color={tint} />
       </mesh>
       {orbits.map((ob, i) => {
         const chosen = i === selected,
-          r = ob.symbolSize,
+          r = symbols.bodies[i],
           p = orbitPoint(ob, max, linear, day);
         return (
           <group key={ob.name}>
@@ -223,8 +225,14 @@ function Solar({ orbits, selected, linear, day, onSelect, station }: SceneProps)
               )}
               {chosen && (
                 <mesh>
-                  <sphereGeometry args={[r * 1.55, 14, 9]} />
-                  <meshBasicMaterial color={ob.color} transparent opacity={0.32} wireframe />
+                  <sphereGeometry args={[Math.max(0.048, r * 1.55), 14, 9]} />
+                  <meshBasicMaterial
+                    color={ob.color}
+                    transparent
+                    opacity={0.45}
+                    depthTest={false}
+                    wireframe
+                  />
                 </mesh>
               )}
             </group>
@@ -239,6 +247,9 @@ function Universe(props: SceneProps) {
   const group = useRef<THREE.Group>(null);
   const { camera, size, invalidate, gl } = useThree();
   const view = props.cameraView;
+  useEffect(() => {
+    props.onReady();
+  }, [props.onReady]);
   useLayoutEffect(() => {
     const lens = camera as THREE.OrthographicCamera;
     const aspect = Math.max(0.05, size.width / Math.max(size.height, 1));

@@ -30,6 +30,7 @@ function seeded(seed: number) {
     return state / 4294967296;
   };
 }
+export const webBoxSide = 4;
 const fields = new Map<string, Field>();
 
 export function makeField(id: string): Field {
@@ -108,7 +109,7 @@ export function makeField(id: string): Field {
   } else if (id === 'teia') {
     const knots: Vec[] = [];
     for (let i = 0; i < 55; i++)
-      knots.push([(rnd() - 0.5) * 5.4, (rnd() - 0.5) * 2.4, (rnd() - 0.5) * 4]);
+      knots.push([(rnd() - 0.5) * webBoxSide, (rnd() - 0.5) * webBoxSide, (rnd() - 0.5) * webBoxSide]);
     const seen = new Set<string>();
     knots.forEach((p, i) => {
       const closest = knots
@@ -145,6 +146,8 @@ export function makeField(id: string): Field {
         );
     });
   }
+  if (id === 'teia')
+    f.grains = f.grains.filter(({ p }) => p.every((value) => Math.abs(value) <= webBoxSide / 2));
   fields.set(id, f);
   return f;
 }

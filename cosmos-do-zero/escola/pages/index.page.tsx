@@ -1,5 +1,6 @@
 import { Meta } from '../src/components/Frame';
 import { LevelCard } from '../src/components/Catalog';
+import { CourseImage } from '../src/components/CourseImage';
 import HeroSky from '../src/components/hero/HeroSky';
 import MotionBand from '../src/components/MotionBand';
 import { LabView } from '../src/components/Laboratory';
@@ -97,11 +98,8 @@ export default function Home({ start, featured }: { start: string; featured: Car
         <div className="feature-grid">
           {featured.map((l, i) => (
             <a className="feature" href={'/aulas/' + l.slug + '/'} key={l.slug}>
-              <img
-                alt=""
-                loading="lazy"
-                src={'/imagens/' + ['orbita.webp', 'estrela.webp', 'm51.webp'][i]}
-              />
+              <CourseImage file={['orbita.webp', 'estrela.webp', 'm51.webp'][i]}
+                sizes="(max-width: 680px) calc(100vw - 36px), (max-width: 1300px) 30vw, 390px" />
               <small>
                 Nível {l.level} · {l.subject}
               </small>

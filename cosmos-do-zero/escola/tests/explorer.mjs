@@ -17,6 +17,21 @@ const browser = await chromium.launch({
 try {
   const desktop = await browser.newPage({ viewport: { width: 1350, height: 900 } });
   const errors = [];
+  await desktop.addInitScript(() => {
+    window.explorerDraws = 0;
+    for (const method of [
+      'drawArrays',
+      'drawElements',
+      'drawArraysInstanced',
+      'drawElementsInstanced',
+    ]) {
+      const native = WebGL2RenderingContext.prototype[method];
+      WebGL2RenderingContext.prototype[method] = function (...args) {
+        window.explorerDraws++;
+        return native.apply(this, args);
+      };
+    }
+  });
   desktop.on('pageerror', (error) => errors.push(error.message));
   desktop.on('console', (message) => {
     if (message.type() === 'error' && /shader|WebGLProgram|hydration/i.test(message.text()))
@@ -32,6 +47,16 @@ try {
   assert.match(await desktop.locator('.exp-map-footer').innerText(), /1,2×/);
   await desktop.getByRole('button', { name: 'Restaurar câmera' }).click();
   await desktop.getByLabel('Distâncias orbitais lineares').check();
+  const rocky = desktop.getByLabel('Enquadrar os quatro planetas rochosos');
+  await rocky.check();
+  assert.equal(await desktop.locator('.exp-diagram polyline').count(), 4);
+  assert.equal(await desktop.getByRole('combobox', { name: 'Planeta' }).inputValue(), '2');
+  await desktop.getByRole('combobox', { name: 'Planeta' }).selectOption({ label: 'Netuno' });
+  assert.equal(await desktop.locator('.exp-diagram polyline').count(), 8);
+  assert.equal(await rocky.isChecked(), false);
+  await desktop.getByRole('button', { name: 'Iniciar viagem' }).click();
+  await desktop.getByRole('button', { name: 'Teia cósmica', exact: true }).click();
+  assert.equal(await desktop.getByRole('button', { name: 'Concluir viagem' }).count(), 0);
   await desktop.getByRole('button', { name: 'Iniciar viagem' }).click();
   for (const name of [
     'TRAPPIST-1',
@@ -45,6 +70,8 @@ try {
   }
   await desktop.getByRole('button', { name: 'Concluir viagem' }).click();
   assert.match(await desktop.locator('.exp-status').innerText(), /concluída/);
+  await desktop.getByRole('button', { name: 'Iniciar viagem' }).click();
+  assert.equal(await desktop.locator('.exp-status').count(), 0);
   await desktop.getByRole('button', { name: 'Órion', exact: true }).click();
   await desktop.getByRole('button', { name: 'Cena 3D' }).click();
   await desktop.locator('.exp-surface canvas').waitFor();
@@ -55,6 +82,19 @@ try {
       () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
     );
   }
+  await desktop.waitForFunction(() => window.explorerDraws > 0);
+  await desktop.waitForTimeout(1200);
+  const draws = await desktop.evaluate(() => window.explorerDraws);
+  await desktop.waitForTimeout(300);
+  assert.equal(await desktop.evaluate(() => window.explorerDraws), draws);
+  await desktop
+    .locator('.exp-surface canvas')
+    .evaluate((canvas) => canvas.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
+  await desktop.locator('.exp-diagram').waitFor();
+  const open3D = desktop.getByRole('button', { name: 'Cena 3D' });
+  assert(await open3D.isEnabled());
+  await open3D.click();
+  await desktop.locator('.exp-surface canvas').waitFor();
   assert.deepEqual(errors, []);
 
   const mobile = await browser.newPage({
@@ -87,6 +127,29 @@ try {
       )
     );
   }
+  for (const width of [320, 721, 768]) {
+    await mobile.setViewportSize({ width, height: 740 });
+    await mobile.getByRole('button', { name: 'Teia cósmica', exact: true }).click();
+    assert(
+      await mobile.evaluate(() => {
+        const label = document.querySelector('.exp-map-caption').getBoundingClientRect();
+        const mode = document.querySelector('.exp-mode').getBoundingClientRect();
+        return (
+          label.right <= mode.left &&
+          document.documentElement.scrollWidth <= document.documentElement.clientWidth
+        );
+      })
+    );
+  }
+  await mobile.setViewportSize({ width: 320, height: 650 });
+  await mobile.getByRole('button', { name: 'Iniciar viagem' }).tap();
+  await mobile.getByRole('button', { name: 'Próxima parada' }).tap();
+  assert(
+    await mobile.evaluate(() => {
+      const map = document.querySelector('.exp-map').getBoundingClientRect();
+      return map.bottom > 0 && map.top < document.documentElement.clientHeight;
+    })
+  );
   console.log(
     'Explorador verificado em seis destinos, com WebGL 2, mapa 2D, teclado, viagem e largura móvel de 360 px.'
   );

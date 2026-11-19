@@ -4,20 +4,12 @@ export type SaturnPaint = { paint: (degrees: number, longitude?: number) => void
 
 export async function mountSaturn(
   canvas: HTMLCanvasElement,
-  mapUrl: string,
-  forPoster = false
+  gl: WebGLRenderingContext,
+  mapUrl: string
 ): Promise<SaturnPaint | null> {
   const image = new Image();
   image.src = mapUrl;
   await image.decode();
-  const gl = canvas.getContext('webgl', {
-    alpha: true,
-    antialias: false,
-    premultipliedAlpha: false,
-    preserveDrawingBuffer: forPoster,
-    powerPreference: 'low-power',
-  });
-  if (!gl) return null;
   const program = gl.createProgram();
   if (!program) return null;
   const shaders: WebGLShader[] = [];

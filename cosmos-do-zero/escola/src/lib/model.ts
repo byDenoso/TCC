@@ -37,14 +37,7 @@ const protonMass = 1.67262192595e-27;
 const schwarzKm = (2 * solarGM) / (c * c * 1000);
 const dim = 'adimensional';
 
-function parameter(
-  label: string,
-  unit: string,
-  min: number,
-  max: number,
-  step: number,
-  initial: number
-) {
+function parameter(label: string, unit: string, min: number, max: number, step: number, initial: number) {
   return { label, unit, min, max, step, initial };
 }
 function preset(name: string, ...values: number[]) {
@@ -132,11 +125,7 @@ export const labs: Lab[] = [
       parameter('Comprimento de onda', 'm', 0.5, 4, 0.05, 2),
       parameter('Diferença de fase', '°', 0, 180, 1, 60),
     ],
-    presets: [
-      preset('Em fase', 2, 0),
-      preset('Um quarto de ciclo', 2, 90),
-      preset('Em oposição', 2, 180),
-    ],
+    presets: [preset('Em fase', 2, 0), preset('Um quarto de ciclo', 2, 90), preset('Em oposição', 2, 180)],
     xLabel: 'Posição (m)',
     yLabel: 'Deslocamento resultante (m)',
   },
@@ -251,8 +240,7 @@ export const labs: Lab[] = [
   {
     id: 'expansao',
     title: 'Expansão cosmológica',
-    description:
-      'Leia a inclinação da relação velocidade–distância e examine o campo de recessão radial.',
+    description: 'Leia a inclinação da relação velocidade–distância e examine o campo de recessão radial.',
     assumptions:
       'Instantâneo FLRW no presente com separações próprias e galáxias comóveis. Velocidades peculiares são omitidas. A identificação observacional v ≈ cz vale em baixo desvio para o vermelho.',
     reference: source(
@@ -440,20 +428,30 @@ function result(
   return { points, dots, segments, metric: { label, value, unit }, caption };
 }
 
+// The frame uses one distance scale for every orbit. Body diameters are enlarged markers.
+export const orbitUnitsPerAU = 0.82;
+export const orbitGuide = orbitSegments(orbitUnitsPerAU).filter((_, i) => i % 2 === 0);
+let orbitCache: { a: number; e: number; period: number; points: Point[]; ring: Segment[] } | undefined;
+function eccentricAnomaly(fraction: number, e: number) {
+  const mean = tau * fraction;
+  let E = mean;
+  for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - mean) / (1 - e * Math.cos(E));
+  return E;
+}
 function orbit([a, e]: number[], time: number) {
-  const period = (2 * Math.PI * Math.sqrt((a * au) ** 3 / solarGM)) / 86400;
-  const anomaly = (frac: number) => {
-    const mean = tau * frac;
-    let E = mean;
-    for (let i = 0; i < 8; i++) E -= (E - e * Math.sin(E) - mean) / (1 - e * Math.cos(E));
-    return E;
-  };
-  const points = samples(96, 0, period, (t) => a * (1 - e * Math.cos(anomaly(t / period))));
-  const zoom = 1.7 / (a * (1 + e));
   const position = (E: number) =>
-    orbitPlane(zoom * a * (Math.cos(E) - e), zoom * a * Math.sqrt(1 - e * e) * Math.sin(E));
-  const ring = stroke(Array.from({ length: 97 }, (_, i) => position((tau * i) / 96)));
-  const planet = position(anomaly(((time * 30) % period) / period));
+    orbitPlane(
+      orbitUnitsPerAU * a * (Math.cos(E) - e),
+      orbitUnitsPerAU * a * Math.sqrt(1 - e * e) * Math.sin(E)
+    );
+  if (!orbitCache || orbitCache.a !== a || orbitCache.e !== e) {
+    const period = (tau * Math.sqrt((a * au) ** 3 / solarGM)) / 86400;
+    const points = samples(96, 0, period, (t) => a * (1 - e * Math.cos(eccentricAnomaly(t / period, e))));
+    const ring = stroke(Array.from({ length: 97 }, (_, i) => position((tau * i) / 96)));
+    orbitCache = { a, e, period, points, ring };
+  }
+  const { period, points, ring } = orbitCache;
+  const planet = position(eccentricAnomaly(((time * 30) % period) / period, e));
   return result(
     points,
     [[0, 0, 0], planet],
@@ -461,7 +459,7 @@ function orbit([a, e]: number[], time: number) {
     'Período orbital',
     period,
     'dias',
-    'O segmento une o Sol ao planeta. Cada segundo de exibição avança 30 dias. O enquadramento acompanha o tamanho da órbita.'
+    'O Sol ocupa um foco da elipse. A escala de distância permanece fixa ao alterar a órbita. Os diâmetros dos corpos estão ampliados. Cada segundo de animação corresponde a 30 dias.'
   );
 }
 
@@ -664,11 +662,7 @@ function fields([electric, fieldMT]: number[], time: number) {
   // Initial motion is +x; B is +z, so the positive charge turns toward −y.
   const pos = (us: number): Dot => {
     const t = us / 1e6;
-    return [
-      radius * Math.sin(omega * t),
-      radius * (Math.cos(omega * t) - 1),
-      0.5 * acceleration * t * t,
-    ];
+    return [radius * Math.sin(omega * t), radius * (Math.cos(omega * t) - 1), 0.5 * acceleration * t * t];
   };
   const times = samples(120, 0, 60, (x) => Math.hypot(...pos(x)));
   const center = pos(30);
@@ -1039,6 +1033,9 @@ const timeIndependent = new Set([
   'energia-escura',
   'cmb',
 ]);
+export function hasTimeEvolution(id: string) {
+  return !timeIndependent.has(id);
+}
 export function simulate(id: string, values: number[], time = 0): Simulation {
   const lab = settings.get(id);
   if (!lab) throw new RangeError('Laboratório desconhecido: ' + id);
