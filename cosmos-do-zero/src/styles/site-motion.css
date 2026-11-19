@@ -10,8 +10,8 @@
   inset: 0 6%;
   pointer-events: none;
   background:
-    radial-gradient(ellipse at 28% 38%, var(--space-halo), transparent 63%),
-    radial-gradient(ellipse at 75% 60%, var(--space-cyan), transparent 65%);
+    radial-gradient(ellipse 33% 48% at 36% 51%, var(--space-halo), transparent),
+    radial-gradient(ellipse 27% 42% at 69% 57%, var(--space-cyan), transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
