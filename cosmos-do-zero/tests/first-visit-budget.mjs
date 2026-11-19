@@ -28,7 +28,11 @@ try {
     const files=[...resources].map(([path,size])=>({path,...size}));
     for(const type of ['document','script','stylesheet'])assert.ok(files.some(file=>file.type===type),`missing ${type} response`);
     const gzip=files.reduce((sum,item)=>sum+item.gzip,0);
-    const row={viewport:`${viewport.width}x${viewport.height}`,gzipBytes:gzip,files};rows.push(row);
+    const media=await page.evaluate(()=>performance.getEntriesByType('resource')
+      .filter(entry=>entry.name.startsWith(location.origin+'/')&&/\.(?:webp|avif|jpe?g|png|svg|mp4|webm)(?:\?|$)/i.test(entry.name))
+      .map(entry=>({path:new URL(entry.name).pathname,bytes:entry.encodedBodySize})));
+    assert.ok(!media.some(item=>item.path.includes('/solar-turntable/')||item.path.includes('/saturn/frames/')),'home loads exhibit sequences');
+    const row={viewport:`${viewport.width}x${viewport.height}`,gzipBytes:gzip,mediaBodyBytes:media.reduce((sum,item)=>sum+item.bytes,0),media,files};rows.push(row);
     if(process.env.ASSERT_BUDGET!=='0')assert.ok(gzip<=300000,`first-visit HTML/CSS/JS: ${gzip} gzip bytes > 300000`);
     await context.close();
   }

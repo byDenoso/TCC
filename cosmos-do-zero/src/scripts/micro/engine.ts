@@ -1,3 +1,5 @@
+import { mountMicroReference } from './web3d';
+import { mountDepthView } from './depth-view';
 import { motionPreference, motionFactor } from '../motion-preference';
 import { advanceDemonstration } from '../../lib/demonstration';
 /**
@@ -16,7 +18,7 @@ export interface Scene {
   duration?: number;
   /** Controle deslizante: 'sweep' (padrão) anima o valor; 'time' anima o movimento no valor escolhido. */
   animate?: 'sweep' | 'time';
-  /** Sincroniza movimentos auxiliares (como a câmera 3D) com o transporte da cena. */
+  /** Sincroniza movimentos auxiliares com o transporte da cena. */
   setPlaying?(playing: boolean): void;
   dispose?(): void;
 }
@@ -103,82 +105,23 @@ function setup(root: HTMLElement, scene: Scene): void {
   let guided = true, hold = 0;
   root.dataset.guide = 'automatic';
   scene.init(svg);
-  let volume: import('../visual/runtime').MountedScene | null = null;
-  let visualStage = svg.parentElement!;
-  const visualNotice = root.querySelector<HTMLElement>('[data-mx-visual-state]')!;
-  const threeButton = root.querySelector<HTMLButtonElement>('[data-mx-enable-3d]');
-  let visualUnavailable = false;
-  const showVisualFallback = () => {
-    visualUnavailable = true;
-    if (threeButton) { threeButton.disabled = true; threeButton.textContent = '3D indisponível · diagrama ativo'; }
-    visualNotice.textContent = 'Cena 3D indisponível neste navegador. O diagrama e os controles do experimento continuam disponíveis.';
-    visualNotice.hidden = false;
-  };
   let alive = true;
-  // Spatial geometry helps these scenes; charts and process diagrams stay in 2D.
-  const spatial = new Set(['galaxias-e-nebulosas-via-lactea', 'galaxias-e-nebulosas-tipos', 'origem-do-universo-o-universo', 'terra-e-atmosfera-formacao-da-terra', 'terra-e-atmosfera-campo-magnetico', 'sistema-solar-orbitas', 'galaxias-e-nebulosas-teia-cosmica', 'vida-das-estrelas-sol', 'sistema-solar-gigantes', 'origem-do-universo-fase-quente']);
-  const diagramOnly = new URLSearchParams(location.search).get('visual') === 'diagram';
-  if (threeButton && spatial.has(id) && !diagramOnly) {
-    threeButton.hidden = false;
-    threeButton.addEventListener('click', async () => {
-      if (volume) {
-        const on = threeButton.getAttribute('aria-pressed') !== 'true';
-        visualStage.hidden = !on;
-        svg.parentElement!.hidden = on;
-        threeButton.setAttribute('aria-pressed', String(on));
-        threeButton.textContent = on ? 'Voltar ao diagrama' : 'Explorar em 3D';
-        visualNotice.hidden = !on;
-        volume.play(on && playing);
-        return;
-      }
-      threeButton.disabled = true;
-      threeButton.textContent = 'Preparando a vista…';
-      try {
-        const { visualCatalog } = await import('../visual/exhibits');
-        const spec = visualCatalog[id]; if (!spec || !alive) return;
-        visualNotice.textContent = 'Vista 3D ilustrativa. ' + (spec.legend ?? 'Tamanhos, cores e posições servem à explicação; confira os limites abaixo.');
-        visualNotice.hidden = false;
-        // The complete SVG remains intact, including on WebGL context loss.
-        visualStage = document.createElement('div');
-        visualStage.className = 'mx-stage mx-volume-stage';
-        svg.parentElement!.before(visualStage);
-        const restoreDiagram = () => {
-          visualStage.hidden = true; svg.parentElement!.hidden = false;
-          threeButton.setAttribute('aria-pressed', 'false');
-          threeButton.textContent = 'Explorar em 3D';
-          showVisualFallback();
-        };
-        visualStage.addEventListener('cosmos:unavailable', restoreDiagram);
-        visualStage.addEventListener('cosmos:contextlost', restoreDiagram);
-        if (spec.assets) await (await import('../visual/assets')).prepareWorlds();
-        if (spec.galaxies) {
-          const { prepareEmissionGalaxies, prepareStarsOnly, emissionSize } = await import('../visual/galaxy-emission');
-          const size = emissionSize(visualStage.clientWidth, 'auto');
-          await Promise.all([prepareEmissionGalaxies(size), ...(spec.galaxyStars ? [prepareStarsOnly(size)] : [])]);
-          visualStage.dataset.galaxySeedSize = String(size);
-        }
-        if (spec.stellar) await (await import('../visual/stellar-materials')).prepareStellarMaterials(spec.stellar);
-        if (!alive) return;
-        const { observeScene } = await import('../visual/runtime');
-        svg.parentElement!.hidden = true;
-        threeButton.setAttribute('aria-pressed', 'true');
-        threeButton.textContent = 'Voltar ao diagrama';
-        volume = observeScene(visualStage, () => spec.make(visualStage));
-        volume.play(playing); volume.state({ value:v, phase:t });
-      } catch {
-        visualStage.hidden = true; svg.parentElement!.hidden = false;
-        threeButton.setAttribute('aria-pressed', 'false');
-        threeButton.textContent = 'Explorar em 3D';
-        if (alive) showVisualFallback();
-      } finally { threeButton.disabled = visualUnavailable; }
-    });
-  }
-
+  const reference = mountMicroReference(root);
+  const depth = mountDepthView(root);
+  let lastReading = -Infinity, previousChoice = NaN;
 
   let liveTimer = 0;
   const render = (announce = true) => {
+    depth?.draw(v, t);
+    const now = performance.now();
+    // While the spatial view animates, update the hidden analytical diagram and
+    // live readouts at reading speed. Direct input and diagram mode stay immediate.
+    const sameControl = kind === 'range' || previousChoice === v;
+    if (!announce && sameControl && playing && root.dataset.mxView === 'depth' && now-lastReading < 80) return;
+    lastReading = now;
+    previousChoice = v;
     const text = scene.draw(v, t);
-    volume?.state({ value:v, phase:t });
+    reference?.(v);
     caption.textContent = text;
     if (range) { range.value = String(v); const val = scene.value?.(v) ?? String(v); if (out) out.textContent = val; range.setAttribute('aria-valuetext', val); }
     opts.forEach((b, i) => b.setAttribute('aria-pressed', String(i === Math.round(v))));
@@ -186,7 +129,6 @@ function setup(root: HTMLElement, scene: Scene): void {
   };
   const setPlaying = (on: boolean) => {
     playing = on;
-    volume?.play(on);
     play.setAttribute('aria-pressed', String(on));
     playLabel.textContent = on ? 'Pausar' : reducedQuery.matches ? 'Avançar' : 'Reproduzir';
     play.querySelector('.mx-ico')!.textContent = on ? '❚❚' : '▶';
@@ -196,7 +138,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   const stop = () => { if (!playing) return; cancelAnimationFrame(frame); setPlaying(false); if (running === runner) running = null; render(interacted && visible && !document.hidden); };
   let automatic: ReturnType<typeof visibleMotion> | null = null;
   const reducedChange = () => { if (reducedQuery.matches) { stop(); t = 1; render(); } setPlaying(playing); };
-  const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); reducedQuery.removeEventListener('change',reducedChange); volume?.dispose(); scene.dispose?.(); } };
+  const runner: Runner = { stop, dispose() { if (!alive) return; alive=false; stop(); cancelAnimationFrame(frame); clearTimeout(liveTimer); automatic?.dispose(); depth?.dispose(); reducedQuery.removeEventListener('change',reducedChange); scene.dispose?.(); } };
   mounted.add(runner);
 
   const touched = () => {

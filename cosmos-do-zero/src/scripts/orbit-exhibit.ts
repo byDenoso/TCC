@@ -1,3 +1,4 @@
+import { plate, disc } from './lab/plate';
 import { JUPITER_IN_SOLAR_MASSES, ORBIT_VIEW, orbitPeriod, orbitPoint, orbitSectorPath, orbitState, TAU } from '../lib/kepler';
 import { motionPreference, motionFactor } from './motion-preference';
 
@@ -32,9 +33,25 @@ export function initOrbitExhibit(): void {
   let position = phase.valueAsNumber;
   let duration = orbitPeriod(axis.valueAsNumber);
 
+  let planetX = 0, planetY = 0;
+  const stage = ellipse.ownerSVGElement!;
+  const scene = plate(stage, ['star', 'earth'], (ctx, img) => {
+    disc(ctx, img('star'), cx, ORBIT_VIEW.cy, 17, 2/2.12);
+    ctx.save();
+    ctx.translate(planetX, planetY);
+    ctx.rotate(Math.atan2(planetY-ORBIT_VIEW.cy, planetX-cx));
+    disc(ctx, img('earth'), 0, 0, 9, .84);
+    const night = ctx.createLinearGradient(-9, 0, 9, 0);
+    night.addColorStop(0, 'transparent');
+    night.addColorStop(.48, 'rgba(4,9,18,.06)');
+    night.addColorStop(1, 'rgba(4,9,18,.86)');
+    ctx.fillStyle = night; ctx.beginPath(); ctx.arc(0,0,9,0,2*Math.PI); ctx.fill();
+    ctx.restore();
+  });
   function updatePosition() {
     const state = orbitState(axis.valueAsNumber, eccentricity.valueAsNumber, TAU * position / 100, totalMass());
     const [x, y] = orbitPoint(state.x, state.y);
+    planetX = x; planetY = y; scene.refresh();
     planet.setAttribute('cx', String(x));
     planet.setAttribute('cy', String(y));
     radius.setAttribute('x2', String(x));
@@ -77,6 +94,11 @@ export function initOrbitExhibit(): void {
 
   function setPlaying(active: boolean) {
     cancelAnimationFrame(frame);
+    if (active) {
+      const box = stage.getBoundingClientRect();
+      if (box.bottom <= 0 || box.top >= innerHeight) stage.scrollIntoView({block:'center', behavior:'instant'});
+      active = !document.hidden;
+    }
     playing = active;
     previous = 0;
     play.setAttribute('aria-pressed', String(active));
@@ -115,7 +137,7 @@ export function initOrbitExhibit(): void {
   motionPreference.addEventListener('change', () => setPlaying(false));
   document.addEventListener('visibilitychange', () => { if (document.hidden) setPlaying(false); });
   window.addEventListener('pagehide', () => setPlaying(false));
-  new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) setPlaying(false); }).observe(exhibit);
+  new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) setPlaying(false); }).observe(stage);
   field('fields').hidden = false;
   updateOrbit();
   setPlaying(false);

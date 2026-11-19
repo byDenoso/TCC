@@ -45,6 +45,7 @@ for (const vp of [{ name: '390', width: 390, height: 844 }, { name: '768', width
       await page.waitForTimeout(250);
       const panel = page.locator(`[data-sci-panel="${id}"]`);
       ok(`${label}/${id}: painel aparece e os outros somem`, (await panel.isVisible()) && (await page.locator('[data-sci-panel]:visible').count()) === 1);
+      await panel.getByRole('button', { name: 'Ver medidas' }).click();
       const info = await page.evaluate((id) => {
         const root = document.querySelector(`[data-sci-panel="${id}"]`), svg = root.querySelector('[data-sci-svg]'), stage = root.querySelector('[data-sci-stage]');
         const scale = stage.clientWidth / 480;
@@ -83,8 +84,13 @@ for (const vp of [{ name: '390', width: 390, height: 844 }, { name: '768', width
         await tabs.nth(i).click();
         await page.click(`[data-sci-panel="${id}"] [data-sci-reset]`);
         await page.click(`[data-sci-panel="${id}"] [data-sci-play]`);
-        const a = await snap(page, id); await sleep(700); const b = await snap(page, id);
-        ok(`${label}/${id}: anima quando "Animar"`, a !== b);
+        const panel = page.locator(`[data-sci-panel="${id}"]`);
+        await panel.locator('[data-sci-stage]').scrollIntoViewIfNeeded();
+        const initial = await snap(page, id);
+        await page.waitForFunction(({ id, initial }) =>
+          document.querySelector(`[data-sci-panel="${id}"] [data-sci-svg]`).innerHTML !== initial,
+          { id, initial }, { timeout: 5000 });
+        ok(`${label}/${id}: anima quando "Animar"`, (await snap(page, id)) !== initial);
         ok(`${label}/${id}: botão vira "Pausar"`, (await page.locator(`[data-sci-panel="${id}"] [data-sci-play-label]`).textContent()) === 'Pausar');
         await page.click(`[data-sci-panel="${id}"] [data-sci-play]`);
         const c = await snap(page, id); await sleep(500); const d = await snap(page, id);
@@ -133,6 +139,7 @@ for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
   const { ctx, page, errors } = await open(vp, { scheme: 'dark' });
   for (const [i, id] of IDS.entries()) {
     await page.locator('[data-sci-tab]').nth(i).click(); await page.waitForTimeout(250);
+    await page.locator(`[data-sci-panel="${id}"]`).getByRole('button', { name: 'Ver medidas' }).click();
     const bad = await page.evaluate((id) => {
       const lum = (c) => { const m = c.match(/\d+(\.\d+)?/g).slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2]; };
       const stage = document.querySelector(`[data-sci-panel="${id}"] [data-sci-stage]`);

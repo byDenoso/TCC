@@ -23,8 +23,8 @@ const Title = Astro.props.heading ?? 'h2';
         <ellipse cx="252.7" cy="164" rx="86" ry="71.83" class="orbit-path" data-orbit-path/>
         <g data-orbit-wedges>{[0, Math.PI].map((center) => <path d={orbitSectorPath(1, 0.55, center)} />)}</g>
         <line x1="300" x2="338.7" y1="164" y2="164" class="orbit-radius" data-orbit-radius/>
-        <circle cx="300" cy="164" r="10" fill="url(#orbit-star)" class="orbit-star"/>
-        <circle cx="338.7" cy="164" r="6" class="orbit-planet" data-orbit-planet/>
+        <circle cx="300" cy="164" r="10" fill="url(#orbit-star)" data-lab-body class="orbit-star"/>
+        <circle cx="338.7" cy="164" r="6" data-lab-body class="orbit-planet" data-orbit-planet/>
       </svg>
       <figcaption><span><i></i> ⅛ do período perto da estrela</span><span><i></i> ⅛ do período longe da estrela</span></figcaption>
     </figure>

@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { selectLessonStep, openLessonStory } from './lib/reader-navigation.mjs';
 const base=(process.env.BASE_URL||'http://127.0.0.1:4321').replace(/\/$/,'');
 const ids=['galaxias-e-nebulosas','origem-do-universo','misterios-do-cosmos','vida-das-estrelas','sistema-solar','terra-e-atmosfera'];
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache'],args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,ignoreDefaultArgs:['--disable-back-forward-cache']});
 let checks=0;const ok=(x,message)=>{assert.ok(x,message);checks++;};
 try{
  const cold=await browser.newPage({viewport:{width:390,height:800},reducedMotion:'reduce'});
@@ -32,13 +32,22 @@ try{
  const root=page.locator(`[data-story="${id}"]`),stage=root.locator('[data-story-viewport]');
    ok(await root.count()===1,`${id}/${width}: abertura narrativa presente`);
    await stage.scrollIntoViewIfNeeded();
-   const world=root.locator('[data-story-world][data-renderer="webgl2"][data-renderer-engine="playcanvas"] canvas.cosmos-volume');
-   await world.waitFor({timeout:15000});
-   ok(await world.evaluate(canvas=>canvas.width>0&&canvas.height>0),`${id}/${width}: palco PlayCanvas renderizado`);
+   const poster=root.locator('[data-story-world] [data-story-poster]');
+   ok(await root.locator('[data-story-world] canvas').count()===(id==='origem-do-universo'?1:0),`${id}/${width}: palco com recursos locais`);
+   if(id==='origem-do-universo'){
+    ok(await root.locator('.story-wave-fallback path').last().isVisible(),`${id}/${width}: onda desenhada`);
+   }else{
+    await poster.evaluate(image=>image.decode());
+    ok(await poster.isVisible(),`${id}/${width}: quadro visível`);
+   }
    await page.waitForFunction(id=>document.querySelector(`[data-story="${id}"] [data-story-play]`)?.getAttribute('aria-pressed')==='true',id);
    ok(await root.locator('[data-story-phase]').count()===3,`${id}/${width}: três momentos nomeados`);
    await root.locator('[data-story-phase]').last().click();
    ok(await root.locator('[data-story-play]').getAttribute('aria-pressed')==='false',`${id}/${width}: etapa escolhida fica pausada`);
+   if(id!=='origem-do-universo'){
+    await poster.evaluate(image=>image.decode());
+    ok((await poster.getAttribute('src')).endsWith(`${id}-3.webp`),`${id}/${width}: quadro da conclusão`);
+   }
    const graphic=root.locator('[data-story-graphic]'),svg=await graphic.innerHTML();await page.waitForTimeout(100);
    ok(await graphic.innerHTML()===svg,`${id}/${width}: escolha manual não é sobrescrita`);
    const sceneTime=Number(await root.locator('[data-story-time]').inputValue());
@@ -75,8 +84,8 @@ try{
    const fit=await root.evaluate(r=>{const stage=r.querySelector('[data-story-viewport]').getBoundingClientRect(),controls=r.querySelector('.story-transport').getBoundingClientRect();return stage.top>=0&&stage.bottom<=innerHeight&&controls.top>=0&&controls.bottom<=innerHeight;});
    ok(fit,`${id}/${width}: palco e comandos cabem na janela`);
    if(id==='origem-do-universo'){
-    await mkdir('docs/screenshots',{recursive:true});
-    await page.screenshot({path:`docs/screenshots/continuity-cinema-${width}.png`});
+    await mkdir('test-results/story-cinema',{recursive:true});
+    await page.screenshot({path:`test-results/story-cinema/continuity-cinema-${width}.png`});
    }
    await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('[data-expanded]'));
    ok(await root.locator('[data-experience-expand]').evaluate(b=>b===document.activeElement),`${id}/${width}: Escape devolve foco`);

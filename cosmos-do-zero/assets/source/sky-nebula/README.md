@@ -11,3 +11,9 @@ blender --background --python assets/source/sky-nebula/build_reference.py -- --o
 ```
 
 O mapa de temperatura em `/ceu/` usa uma simulação diferente. `node scripts/render-cmb-map.mjs` regenera a prévia HTML a partir do mesmo campo sintético consultado pelos números do indicador.
+
+## Imagem servida em Céu
+
+O botão “Mostrar nebulosa ilustrativa” carrega o WebP deste render Cycles, com 1440 × 900 pixels. O mapa da radiação de fundo e seu indicador de temperatura continuam independentes.
+
+SHA-256 do WebP: `33231439c5189c18f274d5c2e4f03d2485b6595c03bd71f3e23e15f5ac9236fa`.

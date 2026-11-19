@@ -1,0 +1,43 @@
+{
+  "title": "M51 e sua companheira",
+  "credit": "NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)",
+  "href": "https://esahubble.org/images/heic0506a/",
+  "license": "CC BY 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "usage": "https://esahubble.org/public/copyright/",
+  "download": "https://esahubble.org/media/archives/images/publicationjpg/heic0506a.jpg",
+  "original": {
+    "path": "assets/source/observed/heic0506a.jpg",
+    "width": 4000,
+    "height": 2776,
+    "sha256": "7b13a932bcf54653c591d369e8d1c4cbdbeb693ecc468242facb239fde52e4c2"
+  },
+  "transformation": "Redimensionamento proporcional e compressão WebP, sem recorte.",
+  "derivatives": [
+    {
+      "path": "public/photos/m51/m51-160.webp",
+      "width": 160,
+      "height": 111,
+      "sha256": "650087037419cca60600fd62785971da84755f0e167508a198b8381bae0362d6"
+    },
+    {
+      "path": "public/photos/m51/m51-480.webp",
+      "width": 480,
+      "height": 333,
+      "sha256": "32ebbe479322ee3a4414b5d05fd9f1558b16ec84666798d37163aaaf3aff9371"
+    },
+    {
+      "path": "public/photos/m51/m51-960.webp",
+      "width": 960,
+      "height": 666,
+      "sha256": "cc057756d333fc58124f41d1c8026fbd0c1e970e31c48f7ea1246ed3cadcff2a"
+    },
+    {
+      "path": "public/photos/m51/m51-1600.webp",
+      "width": 1600,
+      "height": 1110,
+      "sha256": "282eda715244b9f07d53392f4969d9e10a11948e39f8b444010f19d95ad9cb81"
+    }
+  ],
+  "alt": "Uma galáxia espiral vista de frente, com dois braços azulados e uma companheira de núcleo amarelo na ponta de um braço."
+}

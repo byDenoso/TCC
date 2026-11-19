@@ -30,14 +30,6 @@ export async function openLessonStory(page) {
   if (await film.count() && !await film.evaluate(node => node.open)) await film.locator(':scope > summary').click();
 }
 
-/** O 3D é uma escolha explícita; os testes de GPU também fazem essa escolha. */
-export async function activateMicro3D(page, id) {
-  const root = page.locator(`[data-mx="${id}"]`);
-  await root.scrollIntoViewIfNeeded();
-  await root.locator('[data-mx-enable-3d]').click();
-  await root.locator('.mx-volume-stage').waitFor({state: 'attached'});
-}
-
 /** Progresso fica no painel de percurso, sem competir com a primeira descoberta. */
 export async function openJourneyProgress(page) {
   const panel = page.locator('.journey-details');

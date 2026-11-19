@@ -1,5 +1,6 @@
+import { plate, disc, phaseControl } from './lab/plate';
 import {
-  TRANSIT_KIND_LABELS, TRANSIT_PRESETS, TRANSIT_VIEW,
+  TRANSIT_KIND_LABELS, TRANSIT_PRESETS, TRANSIT_VIEW, TRANSIT_PHASE_LIMIT,
   transitPercent, transitPlot, transitPlotPoint, transitSnapshot,
   type TransitModel,
 } from '../lib/transit';
@@ -30,6 +31,12 @@ export function initTransitExhibit(): void {
   const [kind, depth, flux, impact, status] = ['kind', 'depth', 'flux', 'impact', 'status'].map((key) => find<HTMLElement>(`[data-transit-${key}]`));
   const { x, y, solarRadius } = TRANSIT_VIEW.geometry;
   let scale: number;
+  let planetX: number = x, planetY: number = y, planetRadius = 0;
+  const scene = plate(sky, ['star'], (ctx, img) => {
+    disc(ctx, img('star'), x, y, star.valueAsNumber * solarRadius, 2/2.12);
+    ctx.fillStyle = '#060910';
+    ctx.beginPath(); ctx.arc(planetX, planetY, planetRadius, 0, 2 * Math.PI); ctx.fill();
+  }, ring);
 
   function readModel(): TransitModel {
     return { planet: planet.valueAsNumber, star: star.valueAsNumber, inclination: inclination.valueAsNumber };
@@ -46,6 +53,7 @@ export function initTransitExhibit(): void {
     const [px, py] = transitPlotPoint(offset, current.loss, scale);
     const cx = x + current.x * solarRadius;
     const cy = y + current.y * solarRadius;
+    planetX = cx; planetY = cy; scene.refresh();
     position(silhouette, cx, cy);
     position(ring, cx, cy);
     position(marker, px, py);
@@ -63,6 +71,7 @@ export function initTransitExhibit(): void {
     const plot = transitPlot(model);
     scale = plot.scale;
     const radius = plot.center.radius * solarRadius;
+    planetRadius = radius;
     disk.setAttribute('r', String(model.star * solarRadius));
     silhouette.setAttribute('r', String(radius));
     ring.setAttribute('r', String(Math.max(5.5, radius + 4)));
@@ -93,11 +102,22 @@ export function initTransitExhibit(): void {
     status.textContent = `${kind.textContent}. Queda máxima de ${depth.textContent}. Fluxo na fase de ${flux.textContent}.`;
   }
 
+  let playbackPhase = phase.valueAsNumber;
+  const advance = (delta: number) => {
+    if (playbackPhase >= TRANSIT_PHASE_LIMIT) playbackPhase = -TRANSIT_PHASE_LIMIT;
+    playbackPhase = Math.min(TRANSIT_PHASE_LIMIT, playbackPhase + delta);
+    phase.valueAsNumber = playbackPhase;
+    updatePhase();
+    return playbackPhase < TRANSIT_PHASE_LIMIT;
+  };
+  const stop = phaseControl(sky, find<HTMLButtonElement>('[data-transit-play]'),
+    ms => advance(ms * .00075), () => advance(.25));
+  fields.addEventListener('input', () => { stop(); playbackPhase = phase.valueAsNumber; });
   function applyPreset(preset: TransitModel) {
     planet.value = String(preset.planet);
     star.value = String(preset.star);
     inclination.value = String(preset.inclination);
-    phase.value = phase.defaultValue;
+    stop(); phase.value = phase.defaultValue; playbackPhase = phase.valueAsNumber;
     updateModel();
     announce();
   }

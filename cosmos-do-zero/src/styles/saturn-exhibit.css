@@ -33,14 +33,12 @@
 .saturn-presets button:focus-visible, .saturn-controls input:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .saturn-stage {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 704 / 512;
   overflow: hidden;
   border-radius: .65rem;
   background: #10131c;
 }
-.saturn-stage svg, .saturn-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.saturn-stage canvas { visibility: hidden; }
-.saturn-stage[data-renderer="playcanvas-webgl2"] canvas { visibility: visible; }
-.saturn-stage[data-renderer="playcanvas-webgl2"] svg { visibility: hidden; }
+.saturn-stage svg, .saturn-stage img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.saturn-stage img[hidden] { display: none; }
 .saturn-exhibit > p { margin: .75rem 0; }
 .saturn-credits { margin: 0; font-size: .88rem; }

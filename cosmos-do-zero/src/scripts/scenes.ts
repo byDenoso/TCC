@@ -1,3 +1,4 @@
+import { baked, portrait, depthCanvas } from './lesson-depth';
 import { motionPreference } from './motion-preference';
 /** Conceptual teaching scenes. Motion requires an explicit action and stops out of view. */
 export function initScenes(): void {
@@ -13,9 +14,7 @@ export function initScenes(): void {
       const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-scale-step]')];
       const panels = [...root.querySelectorAll<HTMLElement>('[data-scale-panel]')];
       const visuals = [...root.querySelectorAll<SVGGElement | HTMLElement>('[data-scale-visual]')];
-      let shown = 0,alive=true;let view:import('./visual/runtime').MountedScene|null=null;
-      const stage=root.querySelector<HTMLElement>('[data-scale-stage]');if(stage)(async()=>{const{whenNear}=await import('./visual/runtime');if(!await whenNear(stage,()=>alive))return;const assets=await import('./visual/assets'),maps=await import('./visual/galaxy-emission');const size=maps.emissionSize(stage.clientWidth);await Promise.all([assets.prepareWorlds(),maps.prepareEmissionGalaxies(size)]);if(!alive)return;const{address}=await import('./visual/exhibits'),{observeScene}=await import('./visual/runtime');view=observeScene(stage,()=>address(size));view.state({value:shown});})().catch(()=>{if(stage)stage.dataset.visualFallback='true';});
-      window.addEventListener('pagehide',e=>{if(!e.persisted){alive=false;view?.dispose();}});
+      let shown = 0;
       const select = (index: number) => {
         buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(i === index)));
         panels.forEach((p, i) => p.hidden = i !== index);
@@ -29,7 +28,7 @@ export function initScenes(): void {
           to.animate([{ transform: `scale(${out ? 5 : 0.1})`, opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: 900, easing: ease });
           visuals.forEach((v) => { if (v !== from && v !== to) v.dataset.hidden = 'true'; });
         } else visuals.forEach((v,i) => v.dataset.hidden = String(i !== index));
-        shown = index;view?.state({value:index});
+        shown = index;
         status.textContent = `Escala ${index + 1} de 5: ${buttons[index].textContent?.split('·')[1]?.trim()}. ${panels[index].querySelector('.scene-unit')?.textContent}. Ilustração esquemática; não é um zoom em escala contínua.`;
       };
       buttons.forEach((b,i) => b.addEventListener('click', () => select(i)));
@@ -38,17 +37,26 @@ export function initScenes(): void {
       const pulse = root.querySelector<SVGCircleElement>('[data-light-pulse]')!;
       const lightStatus = root.querySelector<HTMLElement>('[data-light-status]')!;
       let frame = 0, position = 0, last = 0, playing = false;
+      const paintFlight = depthCanvas(root.querySelector('[data-flight-depth]'), (ctx, image) => {
+        const sun=image(baked('star')), earth=image(portrait('terra'));
+        if(sun)ctx.drawImage(sun,24,24,42,42);
+        if(earth)ctx.drawImage(earth,432,27,36,36);
+        const x=45+position*405;
+        const halo=ctx.createRadialGradient(x,45,1,x,45,10);
+        halo.addColorStop(0,'#fff5c4');halo.addColorStop(1,'#ffd67700');
+        ctx.fillStyle=halo;ctx.fillRect(x-10,35,20,20);
+      });
       stopMotion = () => { if (playing && position < 1) lightStatus.textContent = 'Viagem pausada. Inicie novamente para acompanhar o restante do trajeto.'; playing = false; cancelAnimationFrame(frame); play.setAttribute('aria-pressed','false'); play.textContent = position >= 1 ? 'Repetir viagem da luz' : position > 0 ? 'Continuar viagem da luz' : 'Iniciar viagem da luz'; };
       const tick = (now: number) => {
         if (!playing) return;
         if (last) position = Math.min(1, position + Math.min(now-last, 80)/4200);
-        last = now; pulse.setAttribute('cx', String(45 + position * 405));
+        last = now; paintFlight(); pulse.setAttribute('cx', String(45 + position * 405));
         if (position >= 1) { stopMotion(); lightStatus.textContent = 'A luz chegou. Você recebe agora a informação emitida antes pela fonte.'; }
         else frame = requestAnimationFrame(tick);
       };
       play.addEventListener('click', () => {
         if (playing) { stopMotion(); lightStatus.textContent = 'Viagem pausada. A luz leva tempo para transportar informação.'; return; }
-        if (reduced.matches) { position = position >= 1 ? 0 : 1; pulse.setAttribute('cx', String(45+405*position)); lightStatus.textContent = position ? 'Estado final: a luz chegou. Movimento reduzido: o trajeto muda sem animação.' : 'Estado inicial: pulso na fonte. Movimento reduzido: o trajeto muda sem animação.'; stopMotion(); return; }
+        if (reduced.matches) { position = position >= 1 ? 0 : 1; paintFlight(); pulse.setAttribute('cx', String(45+405*position)); lightStatus.textContent = position ? 'Estado final: a luz chegou. Movimento reduzido: o trajeto muda sem animação.' : 'Estado inicial: pulso na fonte. Movimento reduzido: o trajeto muda sem animação.'; stopMotion(); return; }
         if (position >= 1) position = 0;
         playing = true; last = 0; play.textContent = 'Pausar viagem da luz'; play.setAttribute('aria-pressed','true'); lightStatus.textContent = 'A luz está em viagem. A imagem recebida será do passado da fonte.'; frame = requestAnimationFrame(tick);
       });

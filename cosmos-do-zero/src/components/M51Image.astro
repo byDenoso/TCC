@@ -1,0 +1,10 @@
+---
+import plate from '../../assets/source/m51.json';
+import { u } from '../lib/url';
+interface Props { sizes: string; thumbnail?: boolean }
+const { sizes, thumbnail = false } = Astro.props;
+const url = (path: string) => u(path.replace(/^public/, ''));
+const source = thumbnail ? plate.derivatives[0] : plate.derivatives[2];
+---
+<img src={url(source.path)} srcset={thumbnail ? undefined : plate.derivatives.map(d => `${url(d.path)} ${d.width}w`).join(', ')}
+  sizes={thumbnail ? undefined : sizes} width={source.width} height={source.height} alt={thumbnail ? '' : plate.alt} loading="lazy" decoding="async" draggable="false" />

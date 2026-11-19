@@ -6,10 +6,13 @@ import { photos } from '../lib/images';
 import { photoStories } from '../data/photo-explorer';
 import { pad2 } from '../lib/format';
 /**
- * Leia a imagem: três imagens reais com pontos explicativos, zoom e arraste.
- * Sem JavaScript, as três aparecem em sequência, com os traços, os pontos numerados e as explicações.
+ * Leia a imagem: imagens reais com pontos explicativos, zoom e arraste.
+ * Sem JavaScript, as imagens aparecem em sequência, com os traços, os pontos numerados e as explicações.
  * O movimento da imagem só acontece por ação da pessoa; a rolagem da página é preservada.
  */
+import M51Image from './M51Image.astro';
+import m51 from '../../assets/source/m51.json';
+const m51Credit = { ...m51, kind: 'observação em cores compostas' };
 const ext = ' (abre em outra aba)';
 ---
 <section class="px" id="imagens" aria-labelledby="px-title" data-px>
@@ -17,25 +20,25 @@ const ext = ' (abre em outra aba)';
     <header class="px-head">
       <p class="section-id">Arquivo de imagens</p>
       <h2 class="display" id="px-title">Imagens<br /><em>astronômicas</em></h2>
-      <p class="px-lede">Toque nos pontos numerados para localizar estruturas na nebulosa de Carina, em Andrômeda e na atmosfera terrestre.</p>
+      <p class="px-lede">Toque nos pontos numerados para localizar estruturas na nebulosa de Carina, em Andrômeda, em M51 e na atmosfera terrestre.</p>
     </header>
     <div class="px-tabs" role="group" aria-label="Escolha a imagem" data-px-tabs hidden>
       {photoStories.map((story, i) => (
         <button type="button" class="px-tab" data-px-tab={story.key} aria-pressed={i === 0 ? 'true' : 'false'}>
-          <Image src={photos[story.key]} alt="" width={120} height={80} fit="cover" format="webp" quality={60} loading="lazy" />
+          {story.key === 'm51' ? <M51Image thumbnail sizes="84px" /> : <Image src={photos[story.key]} alt="" width={120} height={80} fit="cover" format="webp" quality={60} loading="lazy" />}
           <span><small>{pad2(i + 1)}</small>{story.tab}</span>
         </button>
       ))}
     </div>
     {photoStories.map((story, i) => {
-      const credit = imageCredits[story.credit];
-      const photo = photos[story.key];
+      const credit = story.credit === 'm51' ? m51Credit : imageCredits[story.credit];
+      const photo = story.key === 'm51' ? m51.original : photos[story.key];
       return (
         <article class="px-panel" data-px-panel={story.key} data-px-ratio={(photo.width / photo.height).toFixed(4)} aria-labelledby={`px-${story.key}-title`}>
           <div class="px-stage">
             <div class="px-view" data-px-view tabindex="-1">
               <div class="px-canvas" data-px-canvas style={`aspect-ratio:${photo.width}/${photo.height}`}>
-                <Image src={photo} alt={credit.alt} widths={[800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />
+                {story.key === 'm51' ? <M51Image sizes="(max-width: 860px) 100vw, 900px" /> : <Image src={photos[story.key]} alt={credit.alt} widths={[800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />}
                 <svg class="px-annotations" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                   {story.spots.map((spot, k) => <path data-px-annotation={k} d={spot.trace} pathLength="1" vector-effect="non-scaling-stroke" />)}
                 </svg>
@@ -50,7 +53,7 @@ const ext = ' (abre em outra aba)';
               <button type="button" data-px-zoom="reset">Ver inteira</button>
               <span class="px-hint">Arraste para mover</span>
             </div>
-            <p class="px-credit"><strong>{credit.title}</strong> · {credit.kind} · {credit.credit}. <a href={credit.href} target="_blank" rel="noopener noreferrer">Imagem e legenda originais <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a></p>
+            <p class="px-credit"><strong>{credit.title}</strong> · {credit.kind} · <a href={credit.href} target="_blank" rel="noopener noreferrer">{credit.credit} <span aria-hidden="true">↗</span><span class="visually-hidden">{ext}</span></a></p>
           </div>
           <div class="px-side">
             <p class="px-count">{pad2(i + 1)} / {pad2(photoStories.length)}</p>
@@ -71,7 +74,7 @@ const ext = ' (abre em outra aba)';
             <ol class="px-list" data-px-list>
               {story.spots.map((spot) => <li data-general={spot.general ? 'true' : undefined}><strong>{spot.title}.</strong> {spot.text}</li>)}
             </ol>
-            <p class="px-source">As explicações seguem a legenda da NASA para esta imagem.{story.spots.some((spot) => spot.general) && ' Os pontos sobre óptica e órbita são conhecimento geral de astronomia.'}</p>
+            <p class="px-source">As explicações seguem a legenda original para esta imagem.{story.spots.some((spot) => spot.general) && ' Os pontos sobre óptica e órbita são conhecimento geral de astronomia.'}</p>
           </div>
         </article>
       );

@@ -1,6 +1,6 @@
+import { plate, galaxy, galaxies } from './plate';
 import { animator, clear, fmt, initGuess, q, qa, reduced, svg } from './common';
 import { expansionPositions, separation, projectExpansion } from '../../lib/expansion';
-import type { MountedScene } from '../visual/runtime';
 import { motionPreference } from '../motion-preference';
 import { visibleMotion } from '../visible-motion';
 
@@ -13,7 +13,7 @@ export function initExpansao(root:HTMLElement):void {
  const before=q<HTMLInputElement>(root,'[data-e-before]'),stops=q<HTMLInputElement>(root,'[data-e-stops]'),speed=q<HTMLSelectElement>(root,'[data-e-speed]');
  const reading=q(root,'[data-e-reading]'),live=q(root,'[data-e-live]'),volume=q<HTMLElement>(root,'[data-e-volume]');
  const buttons=qa<HTMLButtonElement>(root,'[data-e-observer]'),targets=qa<HTMLButtonElement>(root,'[data-e-target]');
- let scaleValue=Number(range.value),observer=0,target=1,moved=false,visual:MountedScene|null=null,transition=0;
+ let scaleValue=Number(range.value),observer=0,target=1,moved=false,transition=0;
  clear(stage);clear(plot);
  const defs=svg('defs',{},stage);const glow=svg('radialGradient',{id:root.id+'-galaxy'},defs);svg('stop',{offset:0,'stop-color':'#fff6dc'},glow);svg('stop',{offset:.35,'stop-color':'#c6beff','stop-opacity':.8},glow);svg('stop',{offset:1,'stop-color':'#9bb8ff','stop-opacity':0},glow);
  for(let i=0;i<45;i++)svg('circle',{cx:(i*137.5)%640,cy:(i*83.7)%400,r:i%4===0?1:.6,fill:'#bdcbea',opacity:.15+(i%3)*.07},stage);
@@ -25,9 +25,17 @@ export function initExpansao(root:HTMLElement):void {
   svg('ellipse',{rx:i<3?23:14,ry:i<3?12:7,fill:`url(#${root.id}-galaxy)`},g);
   svg('ellipse',{rx:i<3?13:8,ry:i<3?6:4,fill:colors[i%3],opacity:.85},g);
   svg('ellipse',{rx:5,ry:2.5,fill:'#fff0cf'},g);
+  g.querySelectorAll('ellipse').forEach(body => body.setAttribute('data-lab-body', ''));
   if(i<3)svg('text',{x:0,y:22,class:'obs-cap','text-anchor':'middle'},g,'ABC'[i]);return g;
  });
  const ring=svg('circle',{r:20,fill:'none',stroke:colors[0],'stroke-width':1.5},stage);
+ const depths = expansionPositions.map((_, i) => i).sort((a,b) => expansionPositions[a][2] - expansionPositions[b][2]);
+ const scene = plate(stage, [...galaxies], (ctx, img) => {
+   for (const i of depths) {
+     const [x,y] = projectExpansion(i, observer, scaleValue);
+     galaxy(ctx, img(galaxies[i%3]), x, y, i < 3 ? 22 : 15, i*.43);
+   }
+ }, galaxyNodes[0]);
  const maxD=Math.ceil(Math.max(...expansionPositions.flatMap((_,i)=>[0,1,2].map(o=>separation(i,o)))));
  const px=(d:number)=>48+d/maxD*492,py=(d:number)=>190-d/((SCALE_MAX-1)*maxD)*170;
  svg('line',{x1:48,y1:190,x2:540,y2:190,class:'obs-axis'},plot);svg('line',{x1:48,y1:20,x2:48,y2:190,class:'obs-axis'},plot);
@@ -43,6 +51,7 @@ export function initExpansao(root:HTMLElement):void {
  });
  const set=(node:Element,attrs:Record<string,string|number>)=>Object.entries(attrs).forEach(([k,v])=>node.setAttribute(k,String(v)));
  const render=()=>{
+  scene.refresh();
   const scale=scaleValue;out.textContent=`${fmt(scale,2)} ×`;
   const [ox,oy]=projectExpansion(observer,observer,scale);set(ring,{cx:ox,cy:oy,stroke:colors[observer]});
   expansionPositions.forEach((_,i)=>{
@@ -56,7 +65,6 @@ export function initExpansao(root:HTMLElement):void {
   const [tx,ty]=projectExpansion(target,observer,scale),distance=separation(target,observer);
   set(ruler,{x1:ox,y1:oy,x2:tx,y2:ty});set(measure,{x:(ox+tx)/2,y:(oy+ty)/2-10});measure.textContent=`${fmt(distance*scale,1)} passos`;
   set(fit,{x1:px(0),x2:px(maxD),y1:py(0),y2:py(maxD*(scale-1))});
-  visual?.state({value:scale});
   buttons.forEach((b,i)=>{b.setAttribute('aria-pressed',String(i===observer));b.style.setProperty('--galaxy-color',colors[i]);});
   targets.forEach((b,i)=>{b.disabled=i===observer;b.setAttribute('aria-pressed',String(i===target));});
   const name=(i:number)=>i<3?'ABC'[i]:String(i+1);
@@ -70,15 +78,15 @@ export function initExpansao(root:HTMLElement):void {
   if(moved&&scale>=1.5)root.dispatchEvent(new CustomEvent('cosmos:badge',{bubbles:true,detail:{id:'sem-centro'}}));
  };
  const syncPlay=()=>{play.setAttribute('aria-pressed',String(anim.running()));play.textContent=anim.running()?'Pausar':scaleValue>=SCALE_MAX?'Recomeçar':reduced()?'Avançar expansão':'Deixar o espaço crescer';};
- const anim=animator(root,dt=>{
+ const anim=animator(volume,dt=>{
   const previous=scaleValue;scaleValue=Math.min(SCALE_MAX,scaleValue+dt*.00022*Number(speed.value));
   const stop=stops.checked?[1.5,2,2.5].find(value=>previous<value-1e-6&&scaleValue>=value):undefined;
   if(stop!==undefined)scaleValue=stop;
   range.value=String(scaleValue);render();const more=scaleValue<SCALE_MAX&&stop===undefined;
   if(!more)queueMicrotask(()=>{syncPlay();render();});return more;
  });
- const automatic=visibleMotion(volume,{start(){anim.start();syncPlay();},stop(){anim.stop();syncPlay();render();},running:()=>anim.running(),pauseTarget:root});
- root.addEventListener('cosmos:autopause',syncPlay);motionPreference.addEventListener('change',syncPlay);
+ const automatic=visibleMotion(volume,{start(){anim.start();syncPlay();},stop(){anim.stop();syncPlay();render();},running:()=>anim.running(),pauseTarget:volume});
+ volume.addEventListener('cosmos:autopause',syncPlay);motionPreference.addEventListener('change',syncPlay);
  const halt=()=>{automatic.manual();anim.stop();syncPlay();};
  buttons.forEach((b,i)=>b.addEventListener('click',()=>{halt();moved ||= i!==observer;observer=i;if(target===observer)target=(observer+1)%3;volume.classList.add('is-reframing');clearTimeout(transition);transition=window.setTimeout(()=>volume.classList.remove('is-reframing'),350);render();}));
  targets.forEach((b,i)=>b.addEventListener('click',()=>{target=i;render();}));
@@ -91,12 +99,6 @@ export function initExpansao(root:HTMLElement):void {
  range.addEventListener('input',()=>{halt();scaleValue=Number(range.value);render();syncPlay();});
  arrows.addEventListener('change',render);before.addEventListener('change',render);
  qa<HTMLButtonElement>(root,'[data-e-reset]').forEach(b=>b.addEventListener('click',()=>{halt();scaleValue=1;range.value='1';observer=0;target=1;render();syncPlay();}));
- import('../visual/runtime').then(async({observeScene,whenNear})=>{
-  if(!await whenNear(volume))return;
-  volume.dataset.sceneLoading='true';
-  const {prepareEmissionGalaxies,emissionSize,emissionReady}=await import('../visual/galaxy-emission');const size=emissionSize(volume.clientWidth,volume.dataset.cosmosQuality==='low'?'low':'auto');await prepareEmissionGalaxies(size);
-  const {expansion}=await import('../visual/expansion-pilot');visual=observeScene(volume,()=>expansion(()=>observer,()=>arrows.checked,volume.dataset.cosmosQuality==='low'&&emissionReady(512)?512:size,()=>target,()=>before.checked));visual.state({value:scaleValue});volume.dataset.sceneLoading='false';
- }).catch(()=>{volume.dataset.visualFallback='true';volume.dataset.sceneLoading='false';});
- window.addEventListener('pagehide',event=>{if(!event.persisted){clearTimeout(transition);motionPreference.removeEventListener('change',syncPlay);automatic.dispose();anim.dispose();visual?.dispose();}});
+ window.addEventListener('pagehide',event=>{if(!event.persisted){clearTimeout(transition);motionPreference.removeEventListener('change',syncPlay);automatic.dispose();anim.dispose();}});
  initGuess(root);render();syncPlay();
 }

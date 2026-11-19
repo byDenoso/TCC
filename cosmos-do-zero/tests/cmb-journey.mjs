@@ -80,7 +80,8 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
   await focusScene(page);
   if (await page.locator('[data-cmbj-play]').getAttribute('aria-pressed') !== 'true') await page.click('[data-cmbj-play]');
   await page.waitForTimeout(400);
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator('footer').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelector('[data-cmbj-stage]').getBoundingClientRect().bottom<=0);
   await page.waitForTimeout(500);
   const away = await page.evaluate(() => document.querySelector('[data-cmbj-play]').getAttribute('aria-pressed'));
   await focusScene(page);
@@ -89,7 +90,8 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 800, dpr: 1 }, { name:
   ok('fora da tela: pausa sozinha', away === 'false', away);
   ok('de volta à tela: retoma sozinha', back === 'true', back);
   await page.click('[data-cmbj-play]');
-  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.locator('footer').scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>document.querySelector('[data-cmbj-stage]').getBoundingClientRect().bottom<=0);
   await page.waitForTimeout(300);
   await focusScene(page);
   await page.waitForTimeout(500);

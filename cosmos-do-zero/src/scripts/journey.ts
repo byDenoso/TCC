@@ -3,11 +3,12 @@
  * Canvas 2D (não disputa o contexto WebGL das cenas 3D). Só desenha com a seção visível e a aba aberta.
  * Com movimento reduzido, nada se move sozinho: a cena salta de um marco ao outro conforme a leitura.
  */
+import { eraObjects, localSprites } from './lesson-depth';
 import { buildJourney, JOURNEY_ERAS, journeyPoint, journeyProgress, smooth, type JourneyEra, type JourneyLayout } from '../lib/journey';
 import { motionPreference, motionFactor } from './motion-preference';
 
 export function initJourney(): void {
-  const root = document.querySelector<HTMLElement>('[data-journey]');
+  const root = document.querySelector<HTMLElement>('.journey[data-journey]');
   const canvas = root?.querySelector<HTMLCanvasElement>('[data-journey-canvas]');
   const steps = root ? [...root.querySelectorAll<HTMLElement>('[data-journey-step]')] : [];
   const ctx = canvas?.getContext('2d');
@@ -16,6 +17,9 @@ export function initJourney(): void {
   const when = root.querySelector<HTMLElement>('[data-journey-when]');
   const count = root.querySelector<HTMLElement>('[data-journey-count]');
   const ticks = [...root.querySelectorAll<HTMLElement>('[data-journey-tick]')];
+  const choice = root.querySelector<HTMLSelectElement>('[data-journey-select]')!;
+  const pause = root.querySelector<HTMLButtonElement>('[data-journey-pause]')!;
+  let paused=false;
   const labels = steps.map(s => s.dataset.journeyShort ?? '');
 
   const small = matchMedia('(max-width: 860px)');
@@ -59,7 +63,7 @@ export function initJourney(): void {
     if (next !== progress) { progress = next; dirty = true; }
     const index = Math.round(p);
     if (index !== active) {
-      active = index;
+      active = index;choice.value=String(index);
       steps.forEach((s, i) => s.classList.toggle('is-active', i === index));
       ticks.forEach((t, i) => t.classList.toggle('is-active', i === index));
       if (when) when.textContent = labels[index] ?? '';
@@ -67,6 +71,7 @@ export function initJourney(): void {
     }
   };
 
+  const image = localSprites(() => { dirty = true; kick(); });
   const eraIndex = (id: JourneyEra) => JOURNEY_ERAS.indexOf(id);
   const layout = (id: JourneyEra) => layouts[eraIndex(id)];
   const weight = (id: JourneyEra) => Math.max(0, 1 - Math.abs(progress - eraIndex(id)));
@@ -168,6 +173,12 @@ export function initJourney(): void {
     const A = layouts[i0], B = layouts[i1], mix = smooth(progress - i0);
     const t = clock, jitter = (A.jitter + (B.jitter - A.jitter) * mix) * (motionPreference.matches ? 0 : motionFactor());
     const palette = [colors.ink, colors.hot, colors.light];
+    for (const [index, alpha] of [[i0, 1-mix], [i1, mix]]) {
+      if (alpha <= 0) continue;
+      ctx.globalAlpha = alpha;
+      eraObjects(ctx, image, JOURNEY_ERAS[index], f.cx, f.cy, f.k * 2.1, t * .15 + progress);
+    }
+    ctx.globalAlpha = 1;
     overlays(f, t);
     for (let i = 0; i < n; i++) {
       journeyPoint(A, i, t, pa); journeyPoint(B, i, t, pb);
@@ -185,7 +196,7 @@ export function initJourney(): void {
   const loop = (now: number) => {
     raf = 0;
     if (!visible || document.hidden) return;
-    const moving = !motionPreference.matches;
+    const moving = !motionPreference.matches && !paused;
     if (moving) { clock += Math.min(0.05, Math.max(0, (now - last) / 1000)) * motionFactor(); dirty = true; }
     last = now;
     if (dirty) draw();
@@ -198,7 +209,20 @@ export function initJourney(): void {
     visible = entry.isIntersecting;
     root.dataset.journeyVisible = String(visible);
     if (visible) { resize(); measure(); kick(); } else if (raf) { cancelAnimationFrame(raf); raf = 0; }
-  }, { rootMargin: '120px 0px' }).observe(root);
+  }, { threshold: 0 }).observe(stage);
+  choice.addEventListener('change',()=>{
+    const bounds=steps[Number(choice.value)].getBoundingClientRect();
+    window.scrollBy({top:bounds.top+bounds.height/2-innerHeight*.58,behavior:'instant'});
+    onScroll();
+  });
+  pause.addEventListener('click',()=>{
+    paused=!paused;
+    pause.setAttribute('aria-pressed',String(paused));
+    pause.textContent=paused?'Retomar movimento':'Pausar movimento';
+    kick();
+  });
+  pause.hidden=motionPreference.matches;
+  motionPreference.addEventListener('change',()=>{pause.hidden=motionPreference.matches;});
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', () => { if (visible) { resize(); measure(); kick(); } });
   document.addEventListener('visibilitychange', kick);
@@ -208,5 +232,4 @@ export function initJourney(): void {
   // O palco só ocupa espaço depois de pronto; sem JavaScript, os marcos viram uma lista comum.
   root.dataset.journeyReady = 'true';
   readColors(); resize(); measure();
-  draw();
 }

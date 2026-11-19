@@ -1,211 +1,146 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { chromium, devices } from 'playwright';
-import { installGpuProbe } from './lib/gpu-probe.mjs';
+import sharp from 'sharp';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
-const path = '/capitulos/sistema-solar/#saturno-aneis';
+const url = base + '/capitulos/sistema-solar/#saturno-aneis';
 const out = resolve(process.env.SATURN_OUTPUT ?? 'test-results/saturn');
-await mkdir(out, { recursive: true });
-
-const software = process.env.CI || process.env.COSMOS_SOFTWARE_GL === '1';
-const launchOptions = {
-  executablePath: process.env.CHROMIUM || undefined,
-  headless: process.env.HEADED !== '1',
-  args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist',
-    ...(software ? ['--use-gl=angle', '--use-angle=swiftshader'] : [])]
-};
-const browser = await chromium.launch(launchOptions);
-const report = { browser: browser.version(), checks: [], measurements: {} };
-
-async function captureComparison() {
-  const sources = await Promise.all(['open', 'edge'].map(async angle => ({
-    angle,
-    blender: (await readFile(new URL(`../assets/source/saturn/blender-${angle}.png`, import.meta.url))).toString('base64'),
-    web: (await readFile(resolve(out, `playcanvas-${angle}.png`))).toString('base64')
-  })));
-  const comparison = await browser.newPage({ viewport: { width: 1600, height: 1040 } });
-  await comparison.setContent(`<html lang="pt-BR">
-    <style>
-      body{margin:0;padding:28px 36px;background:#171c26;color:#e9e4d9;font:20px system-ui}
-      h1{margin:0 0 14px;font-size:30px} h2{margin:17px 0 6px;font-size:19px;font-weight:600}
-      .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px} figure{margin:0}
-      figcaption{font-size:15px;margin-bottom:6px;color:#d9cbaf}
-      img{display:block;width:100%;aspect-ratio:16 / 9;border-radius:6px}
-    </style>
-    <h1>Saturno · o mesmo enquadramento nos dois motores</h1>
-    ${sources.map(({ angle, blender, web }) => `<h2>${angle === 'open' ? '30° · Vista aberta' : '0° · De perfil'}</h2><div class="pair">
-      <figure><figcaption>Blender 5.3</figcaption><img src="data:image/png;base64,${blender}" /></figure>
-      <figure><figcaption>PlayCanvas 2.24.1</figcaption><img src="data:image/png;base64,${web}" /></figure>
-    </div>`).join('')}
-    </html>`);
-  await comparison.screenshot({ path: resolve(out, 'blender-playcanvas.png'), fullPage: true });
-  await comparison.close();
+const media = new URL('../public/models/saturn/', import.meta.url);
+const manifest = JSON.parse(await readFile(new URL('frames.json', media), 'utf8'));
+const hash = data => createHash('sha256').update(data).digest('hex');
+const records = manifest.frames;
+assert.deepEqual(records.map(frame => frame.degree), Array.from({ length: 91 }, (_, i) => i));
+assert.equal(new Set(records.map(frame => frame.sha256)).size, 91);
+assert.equal(hash(await readFile(new URL('../assets/source/saturn/saturn.blend', import.meta.url))), manifest.sourceSha256);
+for (const entry of [...records, manifest.poster]) {
+  const bytes = await readFile(new URL(entry.file, media));
+  assert.equal(bytes.toString('ascii', 8, 12), 'WEBP');
+  assert.equal(hash(bytes), entry.sha256, entry.file);
 }
-
-async function visit(page) {
-  await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded' });
-  const root = page.locator('[data-saturn]');
-  const stage = root.locator('[data-saturn-stage]');
-  const slider = root.getByRole('slider', { name: 'Ângulo de visão' });
-  await root.locator('[data-saturn-slider]:enabled').waitFor();
-  return { root, stage, slider };
-}
-
-try {
-  const desktop = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1 });
-  await desktop.addInitScript(installGpuProbe);
-  const errors = [];
-  desktop.on('pageerror', error => errors.push(error.message));
-  desktop.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
-  let allowModel;
-  const modelGate = new Promise(resolve => { allowModel = resolve; });
-  let requestedModel;
-  const modelRequested = new Promise(resolve => { requestedModel = resolve; });
-  await desktop.route('**/models/saturn/saturn.glb', async route => {
-    requestedModel();
-    await modelGate;
-    await route.continue();
-  });
-
-  const { root, stage, slider } = await visit(desktop);
-  await stage.scrollIntoViewIfNeeded();
-  await modelRequested;
-  assert.equal(await stage.locator('[data-saturn-diagram]').isVisible(), true);
-  await slider.press('End');
-  assert.equal(await slider.inputValue(), '90');
-  assert.equal(await stage.locator('[data-saturn-rings]').first().getAttribute('transform'), 'scale(1 1)');
-  await slider.press('Home');
-  assert.equal(await slider.inputValue(), '0');
-  assert.equal(await stage.locator('[data-saturn-edge]').getAttribute('visibility'), 'visible');
-  await root.getByRole('button', { name: 'Vista aberta' }).click();
-  assert.equal(await slider.inputValue(), '30');
-  report.checks.push('diagram interactive while GLB is blocked, keyboard endpoints and preset');
-
-  allowModel();
-  await desktop.locator('[data-saturn-stage][data-renderer="playcanvas-webgl2"]').waitFor({ timeout: 15000 });
-  assert.deepEqual(errors, []);
-  await stage.evaluate(node => { node.style.width = '960px'; });
-  await stage.scrollIntoViewIfNeeded();
-  await desktop.waitForFunction(() => document.querySelector('#saturn-canvas')?.width === 960);
-  await stage.screenshot({ path: resolve(out, 'playcanvas-open.png'), animations: 'disabled' });
-  const edgeFrame = stage.evaluate(node => new Promise(resolve => {
-    node.addEventListener('saturn:frame', event => {
-      if (event.detail.angle === 0) resolve(null);
-    });
-  }));
-  await root.getByRole('button', { name: 'De perfil' }).click();
-  assert.equal(await slider.inputValue(), '0');
-  await edgeFrame;
-  await stage.screenshot({ path: resolve(out, 'playcanvas-edge.png'), animations: 'disabled' });
-  const graphics = await stage.locator('canvas').evaluate(node => {
-    const gl = node.getContext('webgl2');
-    const info = gl.getExtension('WEBGL_debug_renderer_info');
-    return { renderer: info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER), resolution: [node.width, node.height] };
-  });
-  const animation = await root.evaluate(async node => {
-    const input = node.querySelector('[data-saturn-slider]');
-    const stage = node.querySelector('[data-saturn-stage]');
-    const frames = [];
-    const count = event => frames.push(event.detail.time);
-    stage.addEventListener('saturn:frame', count);
-    const start = performance.now();
-    let value = Number(input.value);
-    await new Promise(resolve => {
-      const step = () => {
-        const elapsed = performance.now() - start;
-        if (elapsed >= 5000) { resolve(); return; }
-        value = (value + 1) % 91;
-        input.value = String(value);
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    });
-    stage.removeEventListener('saturn:frame', count);
-    const gaps = frames.slice(1).map((time, index) => time - frames[index]).sort((a, b) => a - b);
-    return { frames: frames.length, seconds: (performance.now() - start) / 1000, p95Milliseconds: gaps[Math.floor(.95 * (gaps.length - 1))] };
-  });
-  assert.ok(animation.frames > 0);
-  report.measurements.continuousProgrammaticSlider = { ...graphics, ...animation, fps: animation.frames / animation.seconds };
-  report.checks.push('first 3D frame, rendered frames while changing angle, matched framing screenshots');
-
-  await root.getByRole('button', { name: 'De perfil' }).click();
-  await stage.locator('canvas').evaluate(node => node.getContext('webgl2').getExtension('WEBGL_lose_context').loseContext());
-  await stage.locator('canvas').waitFor({ state: 'detached' });
-  assert.equal(await slider.inputValue(), '0');
-  assert.equal(await stage.locator('[data-saturn-diagram]').isVisible(), true);
-  await slider.press('ArrowRight');
-  assert.equal(await slider.inputValue(), '1');
-  assert.equal(await stage.locator('canvas').count(), 0);
-  assert.equal(await desktop.evaluate(() => window.__GPU_PROBE.maxActive()), 1);
-  report.checks.push('real context loss preserves angle, input and no automatic retry');
-  await desktop.close();
-
-  for (const width of [360, 390]) {
-    const mobile = await browser.newPage({ ...devices['Pixel 7'], viewport: { width, height: 844 }, reducedMotion: 'reduce' });
-    await mobile.addInitScript(() => {
-      const actual = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function(type, ...args) {
-        return type.includes('webgl') ? null : actual.call(this, type, ...args);
-      };
-    });
-    const { root, slider, stage } = await visit(mobile);
-    await mobile.waitForFunction(() => {
-      const heading = document.querySelector('#saturn-title').getBoundingClientRect();
-      const slider = document.querySelector('#saturn-angle').getBoundingClientRect();
-      return heading.top >= 0 && slider.bottom <= innerHeight;
-    });
-    assert.ok(await root.evaluate(node => {
-      const heading = node.querySelector('h3').getBoundingClientRect();
-      const slider = node.querySelector('[data-saturn-slider]').getBoundingClientRect();
-      return heading.top >= 0 && slider.bottom <= innerHeight && slider.height >= 44;
-    }));
-    await root.getByRole('button', { name: 'De perfil' }).tap();
-    assert.equal(await slider.inputValue(), '0');
-    assert.equal(await stage.locator('[data-saturn-diagram]').isVisible(), true);
-    report.checks.push(`${width}px touch, reduced motion, visible heading and control, no WebGL`);
-    if (width === 390) await root.screenshot({ path: resolve(out, 'mobile-fallback.png'), animations: 'disabled' });
-    await mobile.close();
-  }
-
-  const interrupted = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await interrupted.route('**/models/saturn/saturn.glb', route => route.abort());
-  const fallback = await visit(interrupted);
-  await fallback.stage.scrollIntoViewIfNeeded();
-  await fallback.root.getByRole('button', { name: 'De perfil' }).click();
-  assert.equal(await fallback.slider.inputValue(), '0');
-  assert.equal(await fallback.stage.locator('[data-saturn-diagram]').isVisible(), true);
-  assert.equal(await fallback.stage.locator('canvas').count(), 0);
-  report.checks.push('diagram and controls with interrupted asset');
-  await interrupted.close();
-
-  const cold = [];
-  const coldBrowser = await chromium.launch(launchOptions);
-  try {
-    for (let trial = 0; trial < 5; trial++) {
-      const page = await coldBrowser.newPage({ viewport: { width: 1440, height: 900 } });
-      const { stage } = await visit(page);
-      await stage.scrollIntoViewIfNeeded();
-      await page.locator('[data-saturn-stage][data-renderer="playcanvas-webgl2"]').waitFor({ timeout: 15000 });
-      cold.push(await page.evaluate(() => {
-        const navigation = performance.getEntriesByType('navigation')[0];
-        const resources = performance.getEntriesByType('resource');
-        const control = performance.getEntriesByName('saturn:controls-ready')[0].startTime;
-        const firstFrame = performance.getEntriesByName('saturn:first-3d-frame')[0].startTime;
-        const bytesBefore = point => navigation.transferSize + resources.filter(entry => entry.responseEnd <= point).reduce((sum, entry) => sum + entry.transferSize, 0);
-        return { controlMs: control, frameMs: firstFrame, bytesThroughControl: bytesBefore(control), bytesThroughFrame: bytesBefore(firstFrame), modelBytes: resources.find(entry => entry.name.endsWith('/saturn.glb'))?.transferSize };
-      }));
-      await page.close();
+assert.equal(manifest.poster.sha256, records[30].sha256);
+// Compare the silhouette in the actual pixels with the orthographic ring projection.
+const silhouettes = [];
+for (const degree of [0, 30, 45, 60, 90]) {
+  const { data, info } = await sharp(await readFile(new URL(records[degree].file, media)))
+    .greyscale().raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, right = -1, top = info.height, bottom = -1;
+  for (let y = 0; y < info.height; y++) {
+    for (let x = 0; x < info.width; x++) {
+      if (Math.abs(data[y * info.width + x] - data[0]) <= 12) continue;
+      left = Math.min(left, x);
+      right = Math.max(right, x);
+      top = Math.min(top, y);
+      bottom = Math.max(bottom, y);
     }
-  } finally {
-    await coldBrowser.close();
   }
-  report.measurements.coldNavigations = cold;
-  await captureComparison();
-  await writeFile(resolve(out, 'saturn-results.json'), `${JSON.stringify(report, null, 2)}\n`);
-  console.log(JSON.stringify(report, null, 2));
+  const width = right - left + 1, height = bottom - top + 1;
+  assert.ok(left > 0 && top > 0 && right < info.width - 1 && bottom < info.height - 1);
+  if (degree === 0) {
+    // The edge-on ring has zero projected area. The remaining silhouette is the oblate globe.
+    assert.ok(Math.abs(height / width - 0.904) < 0.025 && width < info.width / 3);
+  } else {
+    assert.ok(Math.abs(height / width - Math.sin(degree * Math.PI / 180)) < 0.015, String(degree));
+  }
+  silhouettes.push({ degree, width, height });
+}
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--disable-webgl'] });
+try {
+  const context = await browser.newContext({ ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, reducedMotion: 'reduce', serviceWorkers: 'block' });
+  await context.route('**/*', route => new URL(route.request().url()).origin === new URL(base).origin ? route.continue() : route.abort());
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  await page.addInitScript(() => {
+    window.saturnGl = [];
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...options) {
+      if (/webgl/i.test(type)) window.saturnGl.push(new Error().stack);
+      return original.call(this, type, ...options);
+    };
+  });
+  const requests = [];
+  page.on('request', request => {
+    if (/\/models\/saturn\/.*\.(webp|glb)$/.test(request.url())) requests.push(new URL(request.url()).pathname);
+  });
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  const root = page.locator('[data-saturn]');
+  const slider = root.locator('input:enabled');
+  await slider.waitFor();
+  await root.scrollIntoViewIfNeeded();
+  async function visible(degree) {
+    await page.waitForFunction(degree => {
+      const img = document.querySelector('[data-saturn-frame]');
+      const suffix = degree === 30 ? '/poster.webp' : '/frames/' + String(degree).padStart(2, '0') + '.webp';
+      return !img.hidden && img.complete && img.naturalWidth === 704 && img.naturalHeight === 512 && img.currentSrc.endsWith(suffix);
+    }, degree);
+    assert.equal(await slider.inputValue(), String(degree));
+    assert.equal(await root.locator('output').textContent(), degree + '°');
+  }
+  await visible(30);
+  assert.equal(requests.length, 1, JSON.stringify(requests));
+  assert.ok(requests[0].endsWith('/poster.webp'));
+  await context.setOffline(true);
+  const failed = page.waitForEvent('requestfailed', request => request.url().endsWith('/frames/31.webp'));
+  await slider.press('ArrowRight');
+  await failed;
+  await page.waitForFunction(() => document.querySelector('[data-saturn-frame]').hidden);
+  assert.equal(await slider.inputValue(), '31');
+  assert.equal(await root.locator('output').textContent(), '31°');
+  assert.ok((await root.locator('[data-saturn-rings]').first().getAttribute('transform')).includes(String(Math.sin(31 * Math.PI / 180))));
+  await slider.press('Home');
+  assert.equal(await root.locator('[data-saturn-edge]').getAttribute('visibility'), 'visible');
+  await page.waitForFunction(() => document.querySelector('[data-saturn-frame]').getAttribute('src').endsWith('/00.webp'));
+  await root.screenshot({ path: resolve(out, 'mobile-offline-edge.png') });
+  await context.setOffline(false);
+  await root.getByRole('button', { name: 'Vista polar' }).tap();
+  await visible(90);
+  // Change the selection while the previous image request is still in flight.
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  await page.route('**/frames/89.webp', async route => {
+    await gate;
+    await route.continue();
+  }, { times: 1 });
+  const previous = page.waitForRequest('**/frames/89.webp');
+  await slider.press('ArrowLeft');
+  await previous;
+  try {
+    await slider.press('ArrowLeft');
+    await visible(88);
+  } finally {
+    release();
+  }
+  await root.getByRole('button', { name: 'De perfil' }).tap();
+  await visible(0);
+  for (let degree = 1; degree <= 90; degree++) {
+    await slider.press('ArrowRight');
+    await visible(degree);
+  }
+  await root.getByRole('button', { name: 'Vista aberta' }).tap();
+  await visible(30);
+  await root.screenshot({ path: resolve(out, 'mobile-open.png') });
+
+  assert.equal(await root.locator('canvas').count(), 0);
+  assert.ok(requests.every(path => !path.endsWith('.glb')));
+  const attempts = await page.evaluate(() => window.saturnGl);
+  assert.ok(attempts.every(stack => !/saturn-exhibit|saturn-view/i.test(stack)), JSON.stringify(attempts));
+  const staticPage = await browser.newPage({ javaScriptEnabled: false });
+  await staticPage.goto(url, { waitUntil: 'domcontentloaded' });
+  const staticImage = staticPage.locator('[data-saturn-frame]');
+  await staticImage.scrollIntoViewIfNeeded();
+  await staticImage.evaluate(img => img.decode());
+  assert.equal(await staticImage.evaluate(img => img.naturalWidth), 704);
+  assert.equal(await staticPage.locator('[data-saturn-controls]').isVisible(), false);
+  await staticPage.close();
+  const report = { browser: browser.version(), renderedDegrees: records.length, verifiedHashes: 93,
+    displayedDegrees: 91, resolution: manifest.resolution, silhouettes, firstRequest: requests[0],
+    input: ['touch presets', 'keyboard 0–90'], offlineFallbackDegrees: [31, 0],
+    recoveredDegree: 90, changedWhileLoading: [89, 88], noScriptPoster: true, saturnGlCalls: 0, chapterGlAttempts: attempts.length };
+  await writeFile(resolve(out, 'saturn-results.json'), JSON.stringify(report, null, 2) + '\n');
+  console.log(report);
 } finally {
   await browser.close();
 }

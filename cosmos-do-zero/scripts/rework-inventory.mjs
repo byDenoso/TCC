@@ -2,14 +2,32 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 const read = path => readFile(new URL(`../${path}`, import.meta.url), 'utf8');
-const [chapterSource, exhibits, engine] = await Promise.all([
-  read('src/data/chapters.json'), read('src/scripts/visual/exhibits.ts'), read('src/scripts/micro/engine.ts')
+// Published scene IDs at 44dd939a. Keep this baseline independent of the new renderer.
+const chapters = JSON.parse(await read('src/data/chapters.json'));
+const visibleMicro3d = new Set([
+  "galaxias-e-nebulosas-via-lactea",
+  "galaxias-e-nebulosas-tipos",
+  "origem-do-universo-o-universo",
+  "terra-e-atmosfera-formacao-da-terra",
+  "terra-e-atmosfera-campo-magnetico",
+  "sistema-solar-orbitas",
+  "galaxias-e-nebulosas-teia-cosmica",
+  "vida-das-estrelas-sol",
+  "sistema-solar-gigantes",
+  "origem-do-universo-fase-quente"
 ]);
-const chapters = JSON.parse(chapterSource);
-const micro3d = new Set([...exhibits.matchAll(/^\s*'([^']+)':\s*\{\s*make\s*:/gm)].map(match => match[1]));
-const spatialDeclaration = engine.match(/const spatial = new Set\(\[([^\]]+)\]\)/);
-if (!spatialDeclaration) throw new Error('Missing visible 3D micro-scene inventory');
-const visibleMicro3d = new Set([...spatialDeclaration[1].matchAll(/'([^']+)'/g)].map(match => match[1]));
+const micro3d = new Set([...visibleMicro3d, ...[
+  "galaxias-e-nebulosas-nebulosas",
+  "galaxias-e-nebulosas-gas-e-estrelas",
+  "galaxias-e-nebulosas-centros-galacticos",
+  "origem-do-universo-primeiras-estruturas",
+  "vida-das-estrelas-colapso",
+  "vida-das-estrelas-pequenas-e-medias",
+  "vida-das-estrelas-massivas",
+  "sistema-solar-disco",
+  "sistema-solar-pequenos-corpos",
+  "terra-e-atmosfera-camadas"
+]]);
 const chapterRoute = chapter => `/capitulos/${chapter}/`;
 
 export const sceneInventory = [

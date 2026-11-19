@@ -1,0 +1,69 @@
+{
+  "galaxias-e-nebulosas-via-lactea": {
+    "paths": [
+      "/renders/earth.webp",
+      "/renders/solar-system.webp",
+      "/renders/reel-cycles/galaxy.webp",
+      "/renders/galaxies.webp",
+      "/renders/reel-cycles/cosmic-web.webp"
+    ],
+    "description": "Referências das cinco escalas do endereço cósmico."
+  },
+  "galaxias-e-nebulosas-tipos": {
+    "paths": [
+      "/models/galaxies-v4/768/stars-only.webp",
+      "/models/galaxies-v4/768/barred-spiral.webp",
+      "/renders/dark-matter.webp",
+      "/models/galaxies-v4/768/elliptical.webp"
+    ],
+    "description": "Componentes e formas de galáxias. O halo escuro representa massa inferida."
+  },
+  "galaxias-e-nebulosas-teia-cosmica": {
+    "paths": [
+      "/renders/reel-cycles/cosmic-web.webp"
+    ],
+    "description": "Referência da distribuição final em filamentos."
+  },
+  "origem-do-universo-o-universo": {
+    "paths": [
+      "/renders/galaxies.webp"
+    ],
+    "description": "Grupo de galáxias usado como referência de escala."
+  },
+  "origem-do-universo-fase-quente": {
+    "paths": [
+      "/renders/ancient-light.webp"
+    ],
+    "description": "Luz antiga liberada quando o Universo se tornou transparente, após a formação dos núcleos leves."
+  },
+  "vida-das-estrelas-sol": {
+    "paths": [
+      "/renders/star.webp"
+    ],
+    "description": "Vista exterior de uma estrela. O diagrama acompanha o transporte de energia por dentro."
+  },
+  "sistema-solar-gigantes": {
+    "paths": [
+      "/models/portraits/jupiter.webp"
+    ],
+    "description": "Vista externa de Júpiter. O diagrama acompanha a descida."
+  },
+  "sistema-solar-orbitas": {
+    "paths": [
+      "/renders/reel-cycles/orbits.webp"
+    ],
+    "description": "Plano de órbitas ilustrativo. A trajetória do lançamento aparece no diagrama."
+  },
+  "terra-e-atmosfera-formacao-da-terra": {
+    "paths": [
+      "/renders/earth.webp"
+    ],
+    "description": "A Terra atual, depois da diferenciação em camadas."
+  },
+  "terra-e-atmosfera-campo-magnetico": {
+    "paths": [
+      "/renders/earth.webp"
+    ],
+    "description": "A Terra vista de fora. O diagrama compara as trajetórias de partículas."
+  }
+}

@@ -1,5 +1,7 @@
 # Cosmos do Zero · rework PlayCanvas
 
+> Registro histórico do renderizador aposentado em novembro de 2026. Os comandos de teste vigentes estão no [README](../README.md).
+
 O PlayCanvas renderiza os palcos da web. Saturno e a nebulosa têm cenas nativas. Os demais palcos reaproveitam as geometrias, cálculos e estados já autorados. O adaptador converte malhas, materiais, câmeras, luzes e primitivas para PlayCanvas enquanto a interface Astro controla a lição. Three.js continua como representação de autoria e conserva as rotinas de carga de assets e de câmera usadas nessas cenas.
 
 O inventário em `scripts/rework-inventory.mjs` cruza as subseções das aulas com o catálogo e a lista de microcenas 3D visíveis. Registra separado o trabalho de Laboratório, Observatório, resumos, Saturno, Céu e Escalas. Dez variantes do catálogo seguem sem botão público, conforme a base. Os módulos e assets gráficos são solicitados pelo palco quando necessário. Uma fila comum coordena a criação e a liberação dos contextos WebGL2.

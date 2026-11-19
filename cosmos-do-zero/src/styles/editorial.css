@@ -27,3 +27,47 @@ html { scroll-padding-top: 96px; }
  .lens-experiment h3, .solar-experiment h3 { font-size: 29px; }
  .hero-actions .cta { width: 100%; justify-content: space-between; }
 }
+
+.arrival-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+}
+.arrival-actions .editorial-link, .lab-page .lab-start {
+  display: inline-flex;
+  align-items: center;
+  gap: .5em;
+  min-height: 44px;
+}
+.arrival-actions .editorial-link {
+  color: var(--accent-ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: .25em;
+}
+.lab-start { margin-block: .75rem; }
+.lesson-section .lesson-plate {
+  display: grid;
+  margin: 1.5rem 0;
+  max-width: 640px;
+  border-block: 1px solid var(--line);
+}
+.lesson-plate img { display: block; width: 100%; height: auto; }
+.lesson-plate figcaption { padding-block: .65rem; display: grid; gap: .2em; }
+.lesson-plate figcaption strong { font-family: var(--serif); }
+.lesson-plate figcaption a { color: var(--accent-ink); font-size: .875rem; text-decoration: underline; }
+:is(.arrival-actions, .lab-page, .lesson-plate, .scale-exhibit, .px) :focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+@media (min-width: 761px) {
+  .scale-exhibit .cosmic-exhibit-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .px .px-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .scale-exhibit .scale-slider input, .scale-exhibit .scale-console-tools select { min-height: 44px; }
+}

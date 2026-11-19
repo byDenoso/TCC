@@ -44,42 +44,22 @@ async function boot(): Promise<void> {
     try { initReader(); } catch (err) { console.error('[cosmos] leitor', err); }
   }
   // SSR controls must be bound before load completes, including on a cold connection.
-  // Reader still prepares the chapter first; scene assets and 3D remain lazy.
-  // A abertura em WebGL só é carregada quando solicitada.
-  const hero3d = document.querySelector<HTMLButtonElement>('[data-hero-gl-enable]');
-  if (hero3d) {
-    let renderer: typeof import('./hero-gl') | undefined;
-    let pending = false;
-    const updateButton = (active: boolean, failed = false) => {
-      hero3d.removeAttribute('aria-busy');
-      hero3d.setAttribute('aria-pressed', String(active));
-      hero3d.textContent = active ? 'Desativar nebulosa 3D' :
-        failed ? 'Nebulosa 3D indisponível · tentar novamente' : 'Ativar nebulosa 3D';
-    };
-    hero3d.hidden = false;
-    updateButton(false);
-    hero3d.closest('.hero-shell')?.addEventListener('cosmos:hero3dlost', event => {
-      updateButton(false, event instanceof CustomEvent && event.detail?.failed === true);
+  const skyButton = document.querySelector<HTMLButtonElement>('[data-hero-gl-enable]');
+  const skyImage = document.querySelector<HTMLImageElement>('[data-nebula-plate]');
+  if (skyButton && skyImage) {
+    skyButton.hidden = false;
+    skyButton.addEventListener('click', () => {
+      const show = skyImage.hidden;
+      if (show && !skyImage.src) skyImage.src = skyImage.dataset.src!;
+      skyImage.hidden = !show;
+      skyButton.setAttribute('aria-pressed', String(show));
+      skyButton.textContent = show ? 'Ocultar nebulosa ilustrativa' : 'Mostrar nebulosa ilustrativa';
     });
-    hero3d.addEventListener('click', async () => {
-      if (pending) return;
-      if (hero3d.getAttribute('aria-pressed') === 'true') {
-        renderer?.stopHeroGl();
-        return;
-      }
-      pending = true;
-      hero3d.setAttribute('aria-busy', 'true');
-      hero3d.textContent = 'Preparando nebulosa 3D…';
-      try {
-        renderer ??= await import('./hero-gl');
-        const ready = await renderer.initHeroGl();
-        updateButton(ready, !ready);
-      } catch (error) {
-        console.warn('[cosmos] nebulosa 3D indisponível', error);
-        updateButton(false, true);
-      } finally {
-        pending = false;
-      }
+    skyImage.addEventListener('error', () => {
+      skyImage.hidden = true;
+      skyImage.removeAttribute('src');
+      skyButton.setAttribute('aria-pressed', 'false');
+      skyButton.textContent = 'Tentar carregar a nebulosa';
     });
   }
   if (document.querySelector('[data-scene]')) {

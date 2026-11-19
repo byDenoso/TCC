@@ -1,0 +1,57 @@
+{
+  "credit": "Cosmos do Zero · Reel Blender, cenas originais do projeto",
+  "sourceProject": "20261118-cosmos-reel-blender/assets",
+  "editableScenes": "assets/source/reel-cycles/",
+  "engine": "Blender Cycles",
+  "conversion": "Pillow 12.3.0, thumbnail 960 × 960 LANCZOS, WebP quality=84 method=6, transparência preservada",
+  "assets": [
+    {
+      "source": "cosmic-web.png",
+      "blend": "cosmic-web.blend",
+      "sha256Source": "f114d58a70681305c9879a44521c5ecb1a30ea119a9f29c319d3154d585d99f0",
+      "file": "cosmic-web.webp",
+      "sha256": "c562dc7b660fd9295f531d76119755cc346f1dd041de451ff3d747e423859e59",
+      "dimensions": [
+        960,
+        960
+      ],
+      "bytes": 103666
+    },
+    {
+      "source": "galaxy.png",
+      "blend": "galaxy.blend",
+      "sha256Source": "602a43b9bd60287a1c89ef8cb33a081ebe769551f8485d2a412b1bc163a9f559",
+      "file": "galaxy.webp",
+      "sha256": "e2d69c83a0104d7de03414b294b5dd31476a430ce6a07ce2f869cf2d6e3fa16f",
+      "dimensions": [
+        960,
+        960
+      ],
+      "bytes": 296054
+    },
+    {
+      "source": "nebula.png",
+      "blend": "nebula.blend",
+      "sha256Source": "5bd6b898a2b717d2c73c8cb826c2581831df5344288aa968618f0bbd980218a1",
+      "file": "nebula.webp",
+      "sha256": "2684a4cb1c64bdf77b903be312859ddccb35cea964348e069d5241e0d45ac062",
+      "dimensions": [
+        540,
+        960
+      ],
+      "bytes": 3456
+    },
+    {
+      "source": "orbits.png",
+      "blend": "orbits.blend",
+      "sha256Source": "94f73816e2b5b308a847768b3ae0f209bb0e21dd2e6c138290471c9767469fc9",
+      "file": "orbits.webp",
+      "sha256": "33c817599d3dd65bc9ebc46e5e5f089370606514cd786a48e1b92484f51b4f45",
+      "dimensions": [
+        960,
+        960
+      ],
+      "bytes": 62024
+    }
+  ]
+}

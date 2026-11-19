@@ -1,4 +1,5 @@
 ---
+import { u } from '../lib/url';
 import type { MicroSpec } from '../data/micro';
 import { STEP_TEXT, fmtTemp, T_DEC, T0 } from '../lib/cmb-journey';
 interface Props { spec: MicroSpec; id: string }
@@ -22,6 +23,7 @@ const checks = [spec.guess, spec.check];
 
   <div class="cmbj-scene">
     <div class="cmbj-stage" data-cmbj-stage>
+      <img class="cmbj-still" data-cmbj-still src={u('/posters/plasma-small.webp')} alt="" aria-hidden="true" loading="lazy" />
       <canvas data-cmbj-canvas aria-hidden="true"></canvas>
       <ul class="cmbj-legend" aria-label="Legenda do desenho">
         <li data-cmbj-legend="quente atomos"><i class="k-light" aria-hidden="true"></i>luz</li>
@@ -95,3 +97,8 @@ const checks = [spec.guess, spec.check];
     </ol>
   </noscript>
 </div>
+
+<style>
+  .cmbj-still {position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+  :global(.is-ready:not(.is-static)) .cmbj-still {display:none}
+</style>

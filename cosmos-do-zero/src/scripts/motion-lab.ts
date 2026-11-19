@@ -6,6 +6,7 @@ import { motionPreference, motionFactor } from './motion-preference';
  * nenhum WebGL, então não disputa o contexto único das cenas em 3D.
  */
 import { SCI_SCENES, type SciFrame, type SciScene } from './motion-lab-scenes';
+import { MotionSky, type SkyFrame } from './motion-lab-canvas';
 import { clamp, ease } from './micro/draw';
 
 const reducedQuery = motionPreference;
@@ -13,6 +14,7 @@ const reducedQuery = motionPreference;
 class SciPanel {
   readonly id: string;
   private scene: SciScene | null = null;
+  private sky: MotionSky | null = null;
   private p: number;
   private time = 0;
   private sweepT = 0;
@@ -52,7 +54,7 @@ class SciPanel {
     this.live = root.querySelector<HTMLElement>('[data-sci-live]')!;
     this.p = Number(this.range.value) || 0;
     // Texto dentro do SVG com tamanho real constante (px), qualquer que seja a largura da figura.
-    this.sizer = 'ResizeObserver' in window ? new ResizeObserver(() => this.fitText()) : null;
+    this.sizer = 'ResizeObserver' in window ? new ResizeObserver(() => { this.fitText(); if (this.active) this.draw(false); }) : null;
     this.sizer?.observe(this.stage);
     this.fitText();
     this.bind();
@@ -68,11 +70,18 @@ class SciPanel {
   private ensure(): SciScene {
     if (this.scene) return this.scene;
     const scene = this.make();
+    this.svg.querySelector('[data-sci-static-example]')?.remove();
     scene.mount(this.svg, {
       canAnimate: () => this.active && this.visible && !document.hidden && !reducedQuery.matches,
       redraw: () => this.draw(false)
     });
     this.scene = scene;
+    const host = this.stage.querySelector<HTMLElement>('[data-sci-sky]');
+    const canvas = host?.querySelector('canvas');
+    if (host && canvas) {
+      this.sky = new MotionSky(host, canvas);
+      void this.sky.load(this.id as SkyFrame['kind'], () => this.draw(false));
+    }
     this.p = this.initial(scene);
     this.range.value = String(this.p);
     if (scene.action && this.action) { this.action.hidden = false; this.action.querySelector('[data-sci-action-label]')!.textContent = scene.action.label; }
@@ -97,13 +106,19 @@ class SciPanel {
       const scene = this.ensure();
       if (reducedQuery.matches) { this.advance(scene); return; }
       if (this.playing) { this.setPlaying(false); this.draw(true); return; }
-      if (scene.sweep) { this.sweeping = true; this.sweepT = 0; }
+      if (scene.sweep && !this.sweeping) {
+        const p = this.p === 1 ? 0 : this.p;
+        const fraction = scene.sweep.mode === 'fill' ? p
+          : p < .5 ? Math.cbrt(p / 4) : 1 - Math.cbrt((1 - p) / 4);
+        this.sweepT = scene.sweep.seconds * fraction;
+        this.sweeping = true;
+      }
       this.setPlaying(true);
     });
     this.reset.addEventListener('click', () => {
       this.manual = true;
       const scene = this.ensure();
-      this.setPlaying(false); this.time = 0; this.sweepT = 0; this.p = this.initial(scene); this.sweeping = true;
+      this.setPlaying(false); scene.reset?.(); this.time = 0; this.sweepT = 0; this.p = this.initial(scene); this.sweeping = true;
       this.range.value = String(this.p); this.draw(true);
     });
     this.action?.addEventListener('click', () => { const scene = this.ensure(); scene.action?.run(); this.announce('Visão trocada para outra galáxia.'); });
@@ -157,6 +172,7 @@ class SciPanel {
   draw(announce: boolean): void {
     if (!this.scene) return;
     const f = this.frame();
+    this.sky?.draw(f.sky);
     if (f.read !== this.lastRead) { this.read.textContent = f.read; this.lastRead = f.read; }
     if (this.value.textContent !== f.value) this.value.textContent = f.value;
     this.range.setAttribute('aria-valuetext', f.value);
@@ -210,7 +226,7 @@ class SciPanel {
 
   dispose(): void {
     cancelAnimationFrame(this.raf); this.raf = 0; clearTimeout(this.liveTimer);
-    this.sizer?.disconnect(); this.scene?.dispose?.();
+    this.sky?.dispose(); this.sizer?.disconnect(); this.scene?.dispose?.();
   }
 }
 
@@ -251,8 +267,10 @@ function setup(root: HTMLElement): void {
 
   if ('IntersectionObserver' in window) {
     const expansion = panels.find((panel) => panel.id === 'expansao');
-    const others = panels.filter((panel) => panel !== expansion);
-    new IntersectionObserver(([entry]) => others.forEach((panel) => panel.setVisible(entry.isIntersecting)), { threshold: 0.2 }).observe(root.querySelector('[data-sci-body]') ?? root);
+    for (const panel of panels.filter(p => p !== expansion)) {
+      const stage = panel.root.querySelector('[data-sci-stage]');
+      if (stage) new IntersectionObserver(([entry]) => panel.setVisible(entry.isIntersecting)).observe(stage);
+    }
     const expansionStage = expansion?.root.querySelector('[data-sci-stage]');
     if (expansion && expansionStage) {
       let frame = 0;

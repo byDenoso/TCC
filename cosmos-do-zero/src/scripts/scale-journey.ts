@@ -1,17 +1,13 @@
 import { scaleLogs, scaleStations } from '../data/scale-stations';
 import { journeyLayers, journeyLog, journeyPosition, journeyVideoTime } from '../lib/scale-journey';
 import { motionPreference } from './motion-preference';
-import type { FrameBudget } from './visual/render-policy';
-import type { MountedScene } from './visual/runtime';
-
-const phone = matchMedia('(max-width: 760px) and (pointer: coarse)');
 const fullMotion = () => !motionPreference.matches && document.documentElement.dataset.motion === 'full';
 const lastStage = scaleStations.length - 1;
 const firstVideoStage = scaleStations.findIndex(station => station.id === 'terra');
 const finalVideoStage = scaleStations.findIndex(station => station.id === 'teia-cosmica');
 const logSpan = scaleLogs[lastStage] - scaleLogs[0];
 const sliderSteps = 10000;
-type Mode = '3d' | 'video' | 'posters';
+type Mode = 'video' | 'posters';
 
 function mountJourney(root: HTMLElement): void {
   const visual = root.querySelector<HTMLElement>('[data-scale-visual-stage]')!;
@@ -25,10 +21,9 @@ function mountJourney(root: HTMLElement): void {
   const input = root.querySelector<HTMLInputElement>('[data-scale-input]')!;
   const jump = root.querySelector<HTMLSelectElement>('[data-scale-jump]')!;
   const light = root.querySelector<HTMLButtonElement>('[data-scale-light]')!;
-  let visible = false, disposed = false, pending = false, generation = 0;
-  let view: MountedScene | null = null, budget: FrameBudget | null = null;
-  let mode: Mode = '3d', videoFailed = false, webglFailed = false;
-  let frame = 0, sampleFrame = 0, warmup = 0, previous = -1, currentStation = -1;
+  let visible = false, disposed = false;
+  let mode: Mode = 'video', videoFailed = false;
+  let frame = 0, previous = -1, currentStation = -1;
   let offsets: number[] = [];
   const canDraw = () => visible && fullMotion() && !document.hidden && !disposed;
 
@@ -38,23 +33,15 @@ function mountJourney(root: HTMLElement): void {
 
   function release() {
     cancelAnimationFrame(frame);
-    cancelAnimationFrame(sampleFrame);
-    frame = sampleFrame = 0;
+    frame = 0;
     previous = -1;
-    warmup = 0;
-    budget?.reset();
-    generation++;
-    pending = false;
-    view?.dispose();
-    view = null;
     visual.dataset.media = 'posters';
   }
 
   function setMode(next: Mode) {
     release();
     mode = next;
-    light.setAttribute('aria-pressed', String(mode !== '3d'));
-    void start();
+    light.setAttribute('aria-pressed', String(mode === 'posters'));
     queue();
   }
 
@@ -106,10 +93,13 @@ function mountJourney(root: HTMLElement): void {
     queue();
   }
 
-  function draw(now: number) {
+  function draw() {
     frame = 0;
     if (!canDraw()) return;
-    const value = journeyPosition(stationOffsets(), offsets);
+    // Scrolling to an anchor rounds to a CSS pixel, including on fractional-DPR phones.
+    const distance = stationOffsets();
+    const stop = offsets.findIndex(offset => Math.abs(offset - distance) <= 1);
+    const value = stop < 0 ? journeyPosition(distance, offsets) : stop;
     const index = Math.round(value);
     if (index !== currentStation) selectStation(index);
     if (value !== previous) {
@@ -117,65 +107,14 @@ function mountJourney(root: HTMLElement): void {
       input.value = String(Math.round(sliderSteps * progress));
       root.style.setProperty('--scale-travel', `${progress * 100}%`);
       visual.dataset.scalePosition = value.toFixed(4);
-      if (canvas.dataset.renderer) {
-        view?.state({ value });
-        if (phone.matches && budget && ++warmup > 12 && !sampleFrame) {
-          // Measure the frame after actual scroll work, excluding time between gestures.
-          sampleFrame = requestAnimationFrame(next => {
-            sampleFrame = 0;
-            if (!canDraw() || !canvas.dataset.renderer || !budget) return;
-            budget.record(next - now);
-            const profile = budget.decide(45, 1000 / 50);
-            if (!profile) return;
-            visual.dataset.scaleP90 = budget.p90!.toFixed(1);
-            budget.reset();
-            if (profile === 'low') setMode('video');
-          });
-        }
-      } else syncPosters(value);
+      syncPosters(value);
       previous = value;
     }
-    if (!canvas.dataset.renderer) visual.dataset.media = syncVideo(value) ? 'video' : 'posters';
-  }
-
-  async function start() {
-    if (!canDraw() || view || pending || mode !== '3d' || webglFailed) return;
-    pending = true;
-    const ticket = ++generation;
-    const valid = () => ticket === generation && canDraw();
-    try {
-      const [scene, runtime, policy] = await Promise.all([
-        import('./visual/scale-exhibit'), import('./visual/runtime'), import('./visual/render-policy'),
-      ]);
-      if (!valid()) return;
-      budget = new policy.FrameBudget();
-      view = runtime.observeScene(canvas, () => scene.scaleExhibit(canvas.clientWidth < 600, () => {
-        if (canDraw() && previous >= 0) view?.state({ value: previous });
-      }));
-      if (previous >= 0) view.state({ value: previous });
-    } catch {
-      if (valid()) failWebgl();
-    } finally {
-      if (ticket === generation) pending = false;
-    }
-  }
-
-  function failWebgl() {
-    webglFailed = true;
-    setMode(phone.matches ? 'video' : 'posters');
-    light.disabled = true;
+    visual.dataset.media = syncVideo(value) ? 'video' : 'posters';
   }
 
   const refresh = () => {
     offsets = [];
-    queue();
-  };
-  const ready = () => {
-    if (!canDraw()) return;
-    visual.dataset.media = canvas.dataset.renderer === 'webgpu' ? 'webgpu' : 'webgl';
-    const options = canvas.parentElement?.querySelector('.cosmos-view-options > summary');
-    if (options) options.textContent = 'Câmera 3D';
-    previous = -1;
     queue();
   };
   const onVideoError = () => {
@@ -185,10 +124,8 @@ function mountJourney(root: HTMLElement): void {
     queue();
   };
   const syncVisibility = () => {
-    if (canDraw()) {
-      void start();
-      queue();
-    } else release();
+    if (canDraw()) queue();
+    else release();
   };
   const applyMotion = () => {
     const enabled = fullMotion();
@@ -214,15 +151,7 @@ function mountJourney(root: HTMLElement): void {
     history.replaceState(history.state, '', `#${stations[i].id}`);
     seek(i);
   });
-  light.addEventListener('click', () => setMode(mode === '3d' ? 'posters' : '3d'));
-  canvas.addEventListener('cosmos:ready', ready);
-  canvas.addEventListener('cosmos:contextlost', failWebgl);
-  canvas.addEventListener('cosmos:unavailable', failWebgl);
-  canvas.addEventListener('cosmos:gpulost', () => {
-    visual.dataset.media = 'posters';
-    previous = -1;
-    queue();
-  });
+  light.addEventListener('click', () => setMode(mode === 'video' ? 'posters' : 'video'));
   video.addEventListener('loadedmetadata', queue);
   video.addEventListener('loadeddata', queue);
   video.addEventListener('seeked', queue);

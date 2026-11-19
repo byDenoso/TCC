@@ -1,22 +1,29 @@
 ---
+import references from '../data/micro-frames.json';
+import { u } from '../lib/url';
 import type { MicroSpec } from '../data/micro';
 interface Props { spec: MicroSpec; id: string; chapter: string }
 const { spec, id, chapter } = Astro.props;
+const reference = references[id as keyof typeof references];
 const c = spec.control;
 const letters = 'ABCDE';
 ---
 <fieldset class="mx" disabled aria-busy="true" data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
   <div class="mx-head">
-    <span class="meta">Experimente · diagrama ilustrativo</span>
+    <span class="meta">Experimento ilustrativo</span>
     <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
     <p class="mx-hint" data-mx-history hidden></p>
   </div>
 
   <div class="mx-lab">
-    <p class="mx-visual-state" data-mx-visual-state role="status" hidden></p>
     <div class="mx-visuals" data-mx-visuals><div class="mx-stage">
+      {id === 'sistema-solar-disco' && <img class="formation-still" src={u('/renders/formation/cloud.webp')}
+        width="1152" height="648" loading="lazy" alt="Poeira escura em Barnard 59, uma nuvem onde se formam estrelas." />}
       <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
-    </div></div>
+      <canvas hidden data-mx-depth role="img" aria-label={spec.alt} aria-describedby={`${id}-leitura`}></canvas>
+    </div>
+    <button type="button" class="mx-diagram-toggle" data-mx-diagram hidden>Ver diagrama</button>
+    </div>
     <div class="mx-controls">
       <p class="mx-action-label">{c.kind === 'range' ? 'Mova para comparar' : 'Escolha e compare'}</p>
       {c.kind === 'range' ? (
@@ -37,7 +44,11 @@ const letters = 'ABCDE';
       </div>
     </div>
     <p class="mx-inline-feedback" data-mx-inline-feedback role="status" hidden></p>
-    <p class="mx-caption" data-mx-caption>{spec.alt}</p>
+    <p class="mx-caption" id={`${id}-leitura`} data-mx-caption>{spec.alt}</p>
+    {id === 'sistema-solar-disco' && <p class="mx-detail-note">Formação ilustrativa. Texturas adaptadas de <a href="https://www.eso.org/public/images/eso1233a/">Barnard 59 · ESO</a>,
+      do <a href="https://www.eso.org/public/images/eso1436a/">disco de HL Tauri · ALMA (ESO/NAOJ/NRAO)</a> e da
+      <a href="https://www.eso.org/public/images/eso1436f/"> ilustração de um disco · ESO/L. Calçada</a>.
+      A montagem, as cores, a projeção e o movimento ilustram as etapas. <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</p>}
     {id === 'galaxias-e-nebulosas-nebulosas' && <p class="mx-detail-note">Detalhe de luz: <a href="https://esahubble.org/images/heic0601a/">composição Hubble de Orion</a>, <a href="https://esahubble.org/copyright/">CC BY 4.0</a>. Crédito: NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team. Imagem reduzida e filtrada; profundidade e cores por mecanismo atribuídas nesta ilustração, sem reconstruir Orion em 3D.</p>}
 
 
@@ -47,7 +58,13 @@ const letters = 'ABCDE';
     {id === 'terra-e-atmosfera-campo-magnetico' && <p class="mx-detail-note">Comparação ilustrativa, sem prever quanto ar se perde. Gravidade, radiação, composição e campos induzidos também importam: <a href="https://science.nasa.gov/venus/venus-facts/">Vênus mantém uma atmosfera densa e tem um campo induzido na ionosfera</a>, embora não tenha dínamo interno como a Terra.</p>}
     {id === 'terra-e-atmosfera-camadas' && <p class="mx-detail-note">O controle vai de 0 a 120 km. Ele cruza troposfera, estratosfera e mesosfera e chega à termosfera. O marcador usa altitude em proporção ao raio terrestre. A borda luminosa é ilustrativa e o gráfico mostra o perfil térmico.</p>}
     <p class="visually-hidden" role="status" data-mx-live></p>
-    <div class="mx-view-choice"><span>O diagrama mostra o essencial.</span><button type="button" data-mx-enable-3d aria-pressed="false" hidden>Explorar em 3D</button></div>
+    {reference && <>
+      <div class="mx-view-choice"><button type="button" data-mx-reference-toggle aria-expanded="false" aria-controls={`${id}-reference`} hidden>Imagem de referência</button></div>
+      <figure id={`${id}-reference`} data-mx-reference-panel hidden>
+        <img data-mx-reference alt="" decoding="async" />
+        <figcaption>{reference.description}</figcaption>
+      </figure>
+    </>}
     <p class="mx-limit"><strong>Sobre o desenho.</strong> {spec.limit}</p>
   </div>
 
@@ -69,3 +86,15 @@ const letters = 'ABCDE';
     <div class="mx-verdict" data-mx-check-out hidden role="status"><p><strong data-mx-check-label></strong> {spec.check.why}</p></div>
   </div>
 </fieldset>
+
+<style>
+  .formation-still { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .mx[data-mx-load='ready'] .formation-still { display:none; }
+  [data-mx-depth] { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  [data-mx-depth][hidden], .mx-diagram-toggle[hidden] { display:none; }
+  .mx-stage:has(canvas:not([hidden])) svg { visibility:hidden; }
+  .mx-diagram-toggle { display:block; min-height:44px; margin-inline-start:auto; padding:5px 10px; border:0; background:transparent; color:var(--accent-ink); font:600 13px/1.3 var(--body); cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  [data-mx-reference-panel] { margin: 0; }
+  [data-mx-reference-panel][hidden] { display: none; }
+  [data-mx-reference] { display: block; width: 100%; height: clamp(150px, 32vh, 320px); object-fit: contain; background: #070c18; }
+</style>

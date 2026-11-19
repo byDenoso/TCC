@@ -6,6 +6,10 @@ const walk = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return
 // Only browser-used WebP/materials are copied to the private deployment artifact.
 for(const name of ['galaxies','galaxies-v3']){const dir=join('dist','models',name);if(existsSync(dir))rmSync(dir,{recursive:true});}
 const originals=join('dist','models','galaxies-v4');if(existsSync(originals))for(const name of readdirSync(originals)){if(name.endsWith('.png'))rmSync(join(originals,name));}
+// GLB geometry belongs to Blender authoring. The browser consumes baked views.
+for (const model of walk(join('dist', 'models'))) {
+  if (model.endsWith('.glb')) rmSync(model);
+}
 const files = walk('dist');
 const sum = (re) => files.filter((f) => re.test(f)).reduce((a, f) => a + statSync(f).size, 0);
 const kb = (n) => (n / 1024).toFixed(1) + ' kB';

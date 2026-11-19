@@ -5,8 +5,7 @@ import { openExtraExperiments } from './lib/reader-navigation.mjs';
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
 const browser = await chromium.launch({
   executablePath: process.env.CHROMIUM || undefined,
-  headless: true,
-  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']
+  headless: true
 });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
 const problems = [];
@@ -29,14 +28,22 @@ try {
   await openExtraExperiments(page);
   for (let i = 0; i < 5; i++) {
     await page.locator(`[data-scale-step="${i}"]`).click();
-    await page.waitForTimeout(1300);
+    await page.waitForFunction(() => document.querySelectorAll('[data-scale-visual][data-hidden="false"]').length === 1);
     assert.equal(await page.locator('[data-scale-visual][data-hidden="false"]').count(), 1, `um estado visual ativo na escala ${i}`);
+    const selected = page.locator(`[data-scale-visual="${i}"]`);
+    assert.ok(await selected.isVisible());
+    const images = await selected.locator('image').all();
+    assert.ok(images.length > 0);
+    for (const node of images) {
+      await node.evaluate(async node => {
+        const image = new Image();
+        image.src = node.href.baseVal;
+        if (new URL(image.src).origin !== location.origin) throw Error(image.src);
+        await image.decode();
+      });
+      checked++;
+    }
   }
-  const scaleStage = page.locator('[data-scale-stage]');
-  await scaleStage.scrollIntoViewIfNeeded();
-  await page.locator('[data-scale-stage][data-renderer-engine="playcanvas"] canvas.cosmos-volume').waitFor();
-  checked++;
-  const fallback=await browser.newPage({viewport:{width:390,height:844}});await fallback.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /^webgl|experimental-webgl/.test(type)?null:original.call(this,type,...args);};});await fallback.goto(`${base}/capitulos/galaxias-e-nebulosas/`);await openExtraExperiments(fallback);for(let i=0;i<5;i++){await fallback.locator(`[data-scale-step="${i}"]`).click();await fallback.waitForTimeout(1300);assert.equal(await fallback.locator('[data-scale-visual]:visible').count(),1,`fallback visível${i}`);checked++;}await fallback.close();
   await page.goto(`${base}/capitulos/misterios-do-cosmos/`, { waitUntil: 'networkidle' });
   await openExtraExperiments(page);
   for (let i = 0; i < 4; i++) {

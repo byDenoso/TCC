@@ -1,3 +1,5 @@
+import { u } from '../lib/url';
+import { baked, localSprites } from './lesson-depth';
 import { motionPreference, motionFactor } from './motion-preference';
 import { advanceDemonstration } from '../lib/demonstration';
 /**
@@ -104,7 +106,7 @@ export function initCmbJourney(): void {
 
 function setup(root: HTMLElement): void {
   const canvas = root.querySelector<HTMLCanvasElement>('[data-cmbj-canvas]')!;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d')!;
   const stage = root.querySelector<HTMLElement>('[data-cmbj-stage]')!;
   const q = <T extends HTMLElement>(s: string) => root.querySelector<T>(s)!;
   const stepBtns = [...root.querySelectorAll<HTMLButtonElement>('[data-cmbj-goto]')];
@@ -116,7 +118,8 @@ function setup(root: HTMLElement): void {
   // faixas da régua na mesma escala do marcador (o CSS tem os mesmos valores como reserva sem JS)
   { const v = rulerPos(0.75), m = rulerPos(1000); panel.ruler.style.gridTemplateColumns = `${v}fr ${m - v}fr ${1 - m}fr`; }
   const legends = [...root.querySelectorAll<HTMLElement>('[data-cmbj-legend]')];
-  if (!ctx) { root.classList.add('is-static'); return; }
+  const still = () => reduced.matches || !ctx;
+  if (!ctx) root.classList.add('is-static');
 
   let step = stepFromParam(getParam(URL_PARAM));
   let t = 0, elapsed = 0, playing = false, frame = 0, last = 0, visible = true, done = false, autoPaused = false, autoStarted = false;
@@ -126,8 +129,15 @@ function setup(root: HTMLElement): void {
   let W = 0, H = 0, dpr = 1;
   const plasma = new Plasma(0.56);
   const r = rng(7);
+  const texture = localSprites(() => { if (visible && !document.hidden) draw(); });
   const sprites = new Map<string, HTMLCanvasElement>();
-  const particle = (x: number, y: number, radius: number, color: string) => {
+  const particle = (x: number, y: number, radius: number, color: string, body?: string) => {
+    const volume = body && texture(baked(body));
+    if (volume) {
+      const diameter = radius * 2.8;
+      ctx.drawImage(volume, x - diameter / 2, y - diameter / 2, diameter, diameter);
+      return;
+    }
     let sprite = sprites.get(color);
     if (!sprite) {
       sprite = document.createElement('canvas'); sprite.width = sprite.height = 64;
@@ -151,7 +161,7 @@ function setup(root: HTMLElement): void {
     draw();
   };
   /** Pré-aquece a simulação para não começar com trilhas vazias. */
-  const warm = () => { for (let i = 0; i < 160; i++) plasma.step(1 / 30, step === 0 ? null : step === 1 ? (reduced.matches ? 1 : ease(t)) : 1, r); };
+  const warm = () => { for (let i = 0; i < 160; i++) plasma.step(1 / 30, step === 0 ? null : step === 1 ? (still() ? 1 : ease(t)) : 1, r); };
 
   /* ── desenho ── */
   const drawPlasma = (bind: number | null) => {
@@ -165,7 +175,7 @@ function setup(root: HTMLElement): void {
     }
     // núcleos e átomos
     for (const nu of plasma.n) {
-      particle(nu.x * s, nu.y * s, nu.he ? 4.6 : 3.4, pal.n);
+      particle(nu.x * s, nu.y * s, nu.he ? 6 : 4.5, pal.n, nu.he ? 'helium' : 'proton');
     }
     // elétrons
     for (const el of plasma.e) {
@@ -177,11 +187,11 @@ function setup(root: HTMLElement): void {
         if (tx - el.x0 > 0.5) tx -= 1; if (tx - el.x0 < -0.5) tx += 1; if (ty - el.y0 > plasma.h / 2) ty -= plasma.h; if (ty - el.y0 < -plasma.h / 2) ty += plasma.h;
         const ang = elapsed / 600 + el.bindAt * 40;
         const orb = 9 / s;
-        const x = el.x0 + (tx - el.x0) * k + Math.cos(ang) * orb * k, y = el.y0 + (ty - el.y0) * k + Math.sin(ang) * orb * k;
-        if (k > 0.85) { ctx.strokeStyle = pal.e; ctx.globalAlpha = 0.45 * (k - 0.85) / 0.15; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(nu.x * s, nu.y * s, 9, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
-        particle(((x % 1) + 1) % 1 * s, ((y % plasma.h) + plasma.h) % plasma.h * s, 2.1, pal.e);
+        const x = el.x0 + (tx - el.x0) * k + Math.cos(ang) * orb * k, y = el.y0 + (ty - el.y0) * k + Math.sin(ang) * orb * k * .5;
+        if (k > 0.85) { ctx.strokeStyle = pal.e; ctx.globalAlpha = 0.45 * (k - 0.85) / 0.15; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(nu.x * s, nu.y * s, 9, 4.5, 0, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
+        particle(((x % 1) + 1) % 1 * s, ((y % plasma.h) + plasma.h) % plasma.h * s, 3, pal.e, 'electron');
       } else {
-        particle(el.x * s, el.y * s, 2.1, pal.e);
+        particle(el.x * s, el.y * s, 3, pal.e, 'electron');
       }
     }
     // luz: trilhas com cauda que desbota; pontos de desvio marcados
@@ -224,7 +234,7 @@ function setup(root: HTMLElement): void {
     for (const [i, j] of nodes) {
       const x = ox + i * cell, y = oy + j * cell;
       if (x > W + 10 || y < -10 || y > H + 10) continue;
-      ctx.fillStyle = pal.n; ctx.beginPath(); ctx.arc(x, y, 3.4, 0, Math.PI * 2); ctx.fill();
+      particle(x, y, 4, pal.n, 'proton');
       ctx.strokeStyle = pal.e; ctx.globalAlpha = 0.6; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
     }
     // onda: comprimento de onda proporcional à célula da grade (as duas crescem juntas)
@@ -251,13 +261,20 @@ function setup(root: HTMLElement): void {
 
   const draw = () => {
     root.dataset.bound = String(plasma.e.filter((e) => e.bound > 0.5).length); // elétrons presos (lido pelos testes)
+    if (!ctx) {
+      const image = root.querySelector<HTMLImageElement>('[data-cmbj-still]')!;
+      const path = u('/posters/'+['plasma','nuclei','cmb'][step]+'-small.webp');
+      if (image.getAttribute('src')!==path) image.src=path;
+      sync(step === 2 ? scaleAt(1) : A_DEC, 1);
+      return;
+    }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    const k = reduced.matches ? 1 : t;
+    const k = still() ? 1 : t;
     let a = A_DEC;
     if (step === 0) drawPlasma(null);
     else if (step === 1) drawPlasma(ease(k));
-    else a = drawExpansion(ease(k), reduced.matches ? 0.92 : clamp(t * 1.25));
+    else a = drawExpansion(ease(k), still() ? 0.92 : clamp(t * 1.25));
     sync(a, k);
   };
 
@@ -284,13 +301,13 @@ function setup(root: HTMLElement): void {
     if (um !== null) panel.marker.style.setProperty('--pos', String(rulerPos(um)));
     panel.ruler.setAttribute('aria-valuetext', um === null ? 'sem valor nesta etapa' : `${fmtLength(um)}, ${bandOf(um)}`);
     fields.ask.textContent = st.ask; fields.say.textContent = st.say; fields.act.textContent = st.act; fields.changed.textContent = st.changed;
-    root.classList.toggle('show-changed', done || reduced.matches || guided && t >= 1 || !playing && t > 0.5);
+    root.classList.toggle('show-changed', done || still() || guided && t >= 1 || !playing && t > 0.5);
   };
 
   const announce = () => { const st = STEP_TEXT[step]; live.textContent = `Etapa ${step + 1} de 3: ${st.label}. ${st.say}`; };
   const setPlaying = (on: boolean) => {
     playing = on; btnPlay.setAttribute('aria-pressed', String(on));
-    const finished = !on && t >= 1;
+    const finished = !on && (t >= 1 || !ctx);
     btnPlay.dataset.mode = on ? 'pause' : finished && step < 2 ? 'next' : finished ? 'again' : t > 0 ? 'resume' : 'start';
     btnPlay.querySelector('[data-cmbj-play-label]')!.textContent = { pause: 'Pausar', next: 'Próxima etapa', again: 'Ver de novo', resume: 'Continuar', start: 'Começar' }[btnPlay.dataset.mode]!;
     btnPlay.querySelector('.cmbj-ico')!.textContent = on ? '❚❚' : btnPlay.dataset.mode === 'next' ? '→' : btnPlay.dataset.mode === 'again' ? '↺' : '▶';
@@ -313,7 +330,7 @@ function setup(root: HTMLElement): void {
     draw();
     frame = requestAnimationFrame(tick);
   };
-  const play = () => { if (!visible || document.hidden || reduced.matches) { if (!reduced.matches) autoPaused = true; draw(); return; } if (t >= 1 && !guided) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
+  const play = () => { if (!visible || document.hidden || still()) { if (!still()) autoPaused = true; draw(); return; } if (t >= 1 && !guided) t = 0; last = 0; setPlaying(true); cancelAnimationFrame(frame); frame = requestAnimationFrame(tick); };
   const pause = () => { cancelAnimationFrame(frame); setPlaying(false); draw(); };
   const go = (i: number, autoplay = true, user = true) => {
     autoStarted = true;
@@ -321,7 +338,7 @@ function setup(root: HTMLElement): void {
     if (step <= 1) { plasma.reset(plasma.h); warm(); } // A: elétrons livres; B: recomeça a captura
     if (user) { setParams({ [URL_PARAM]: step === 0 ? null : String(step + 1) }); announce(); }
     draw(); // painel e etapa atualizados já no clique, sem esperar o próximo quadro
-    if (autoplay && !reduced.matches) play(); else { pause(); }
+    if (autoplay && !still()) play(); else { pause(); }
   };
   root.addEventListener('click', (event) => {
     if ((event.target as Element).closest('[data-cmbj-prev],[data-cmbj-next],[data-cmbj-play],[data-cmbj-replay],[data-cmbj-goto]')) {
@@ -350,15 +367,15 @@ function setup(root: HTMLElement): void {
     visible = e.isIntersecting;
     if (!visible && playing) { pause(); autoPaused = true; }
     else if (visible && autoPaused && !document.hidden) { autoPaused = false; play(); }
-    else if (visible && !autoStarted && !document.hidden && !reduced.matches) { autoStarted = true; play(); }
+    else if (visible && !autoStarted && !document.hidden && !still()) { autoStarted = true; play(); }
   }, { threshold: 0.2 }).observe(stage);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && playing) { pause(); autoPaused = true; }
     else if (!document.hidden && autoPaused && visible) { autoPaused = false; play(); }
-    else if (!document.hidden && visible && !autoStarted && !reduced.matches) { autoStarted = true; play(); }
+    else if (!document.hidden && visible && !autoStarted && !still()) { autoStarted = true; play(); }
   });
   reduced.addEventListener('change', () => {
-    if (reduced.matches) { if (playing) autoPaused = true; pause(); }
+    if (still()) { if (playing) autoPaused = true; pause(); }
     else if (visible && !document.hidden && (autoPaused || !autoStarted)) { autoPaused = false; autoStarted = true; play(); }
   });
   const refreshPalette = () => { pal = palette(); sprites.clear(); draw(); };

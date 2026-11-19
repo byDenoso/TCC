@@ -9,8 +9,11 @@ import {
   lightTemperatureK, peakNm, planckShape, rotationSpeed, seenFrom, slopeThroughOrigin, stretchNm, visibleGlow, wavelengthRgb, KELVIN_TO_C
 } from '../lib/motion-lab';
 
+import type { SkyFrame } from './motion-lab-canvas';
+
 export interface SciContext { canAnimate(): boolean; redraw(): void }
 export interface SciFrame {
+  sky: SkyFrame;
   /** Texto de leitura (parágrafo abaixo da figura). */
   read: string;
   /** Valor mostrado ao lado do rótulo da barra. */
@@ -31,6 +34,7 @@ export interface SciScene {
   /** Valor inicial do controle. */
   start: number;
   action?: { label: string; run(): void };
+  reset?(): void;
   dispose?(): void;
 }
 
@@ -102,7 +106,7 @@ function luzScene(): SciScene {
         read += vis ? `A luz, que saiu azul, chega ${lightName(nm)}.` : 'A luz, que saiu azul, chega infravermelha: nossos olhos não veem, mas telescópios como o James Webb sim.';
         read += ' As linhas escuras do arco-íris andam junto: é assim que os astrônomos medem o quanto uma galáxia se afastou.';
       }
-      return { read, value: `${x}×`, aria: `Espaço ${x} vezes maior; luz ${vis ? lightName(nm) : 'infravermelha'}.` };
+      return { sky: { kind: 'luz', nm, phase, growth: gr }, read, value: `${x}×`, aria: `Espaço ${x} vezes maior; luz ${vis ? lightName(nm) : 'infravermelha'}.` };
     }
   };
 }
@@ -169,8 +173,9 @@ function expansaoScene(): SciScene {
       const read = s < 1.03
         ? 'Aqui o espaço ainda não cresceu. Role a página ou use os controles para mudar as distâncias. Toque numa galáxia para ver o Universo dali.'
         : `O espaço cresceu ${x}×. As setas mostram o afastamento: quanto mais longe a galáxia, maior a seta. Toque em outra galáxia (ou no botão) e veja que, neste desenho, o padrão é o mesmo de qualquer ponto.`;
-      return { read, value: `${x}×`, aria: `Espaço ${x} vezes maior. Galáxias mais distantes se afastam mais depressa, de qualquer galáxia observadora.` };
+      return { sky: { kind: 'expansao', field, observer: cur, scale: s, select: goTo }, read, value: `${x}×`, aria: `Espaço ${x} vezes maior. Galáxias mais distantes se afastam mais depressa, de qualquer galáxia observadora.` };
     },
+    reset() { cancelAnimationFrame(anim); obsIdx = 0; cur = { ...field[observers[0]] }; },
     dispose() { cancelAnimationFrame(anim); svgRef?.removeEventListener('click', onTap); }
   };
 }
@@ -217,7 +222,7 @@ function hubbleScene(): SciScene {
       else if (n < 8) read = `${n} ${plural(n, 'galáxia simulada', 'galáxias simuladas')}. Por enquanto parece só um monte de pontos soltos.`;
       else if (n < 17) read = `${n} galáxias simuladas. Um padrão começa a aparecer: as mais distantes estão mais acima.`;
       else read = `${n} galáxias simuladas. Nesta ilustração, os pontos seguem uma reta: ao dobrar a distância, dobra a rapidez. Um padrão semelhante nas observações ajudou a descobrir a expansão do Universo.`;
-      return { read, value: `${n} de ${N}`, aria: `${n} de ${N} galáxias simuladas.` };
+      return { sky: { kind: 'hubble', sample: data, count: n }, read, value: `${n} de ${N}`, aria: `${n} de ${N} galáxias simuladas.` };
     }
   };
 }
@@ -277,7 +282,7 @@ function frioScene(): SciScene {
       if (gr < 1.5) read = `Hoje a luz do começo está a ${temp(T)}, quase no zero absoluto. A parte mais forte da curva está ${bandIn(pk)}: invisível aos olhos. Mova a barra para voltar no tempo.`;
       else if (gr > 900) read = `Quando essa luz se soltou, estava a uns ${temp(T)}: brilhava com cor ${colourWords(T)}. Desde então o espaço cresceu cerca de ${fmt(gr > 1000 ? 1100 : Math.round(gr))}× e a luz esfriou na mesma proporção.`;
       else read = `Voltando no tempo, a luz era ${x}: ${temp(T)}. O pico da curva está ${bandIn(pk)}${glow > 0.02 ? `, e a cor já é ${colourWords(T)}` : ''}. O espaço esticou a luz, e ela foi esfriando.`;
-      return { read, value: x, aria: `Luz do começo a ${temp(T)}; pico ${bandIn(pk)}.` };
+      return { sky: { kind: 'frio', temperature: T, peak: pk }, read, value: x, aria: `Luz do começo a ${temp(T)}; pico ${bandIn(pk)}.` };
     }
   };
 }
@@ -291,7 +296,7 @@ function giroScene(): SciScene {
   const speedScale = 0.14;
   const rx = (r: number): number => LX + r * (RX - LX);
   const vy = (v: number): number => BY - (v / VMAX) * (BY - TY);
-  const stars: { el: SVGCircleElement; ring: number; a: number }[] = [];
+  const stars: { el: SVGCircleElement; ring: number; a: number; initial: number }[] = [];
   const dots: SVGCircleElement[] = [];
   let halo!: SVGCircleElement, haloLabel!: SVGTextElement, now!: SVGPathElement, last = 0;
   const curve = (dark: number): string => pathOf(Array.from({ length: 41 }, (_, i) => { const r = 0.04 + (0.96 * i) / 40; return [rx(r), vy(rotationSpeed(r, dark))] as [number, number]; }));
@@ -310,7 +315,7 @@ function giroScene(): SciScene {
       el('circle', { cx: GX, cy: GY, r: R, fill: 'url(#sci-giro-disc)' }, svg);
       rings.forEach((r) => el('circle', { cx: GX, cy: GY, r: r * R, fill: 'none', stroke: C.line, 'stroke-width': 1, opacity: 0.55 }, svg));
       el('circle', { cx: GX, cy: GY, r: 8, fill: C.ink }, svg);
-      rings.forEach((_, ri) => { for (let k = 0; k < counts[ri]; k++) stars.push({ ring: ri, a: ((k + ((ri * 0.37) % 1)) / counts[ri]) * 2 * Math.PI, el: el('circle', { r: ri === rings.length - 1 && k === 0 ? 5 : 2.6, fill: ri === rings.length - 1 && k === 0 ? C.accentInk : C.ink2, opacity: 0.92 }, svg) }); });
+      rings.forEach((_, ri) => { for (let k = 0; k < counts[ri]; k++) stars.push({ ring: ri, initial: ((k + ((ri * 0.37) % 1)) / counts[ri]) * 2 * Math.PI, a: 0, el: el('circle', { r: ri === rings.length - 1 && k === 0 ? 5 : 2.6, fill: ri === rings.length - 1 && k === 0 ? C.accentInk : C.ink2, opacity: 0.92 }, svg) }); });
       el('path', { d: `M${LX} ${TY - 6}V${BY}H${RX + 6}`, fill: 'none', stroke: C.ink2, 'stroke-width': 2.2, 'stroke-linecap': 'round' }, svg);
       label(svg, LX + 12, 24, 'Rapidez ↑', 'mute');
       label(svg, RX, 252, 'Centro → borda', 'mute', 'end');
@@ -321,6 +326,7 @@ function giroScene(): SciScene {
     render(p, time) {
       const dt = clamp(time - last, 0, 0.1); last = time;
       for (const s of stars) {
+        if (time === 0) s.a = s.initial;
         s.a += angularSpeed(rings[s.ring], p) * speedScale * dt;
         set(s.el, { cx: GX + Math.cos(s.a) * rings[s.ring] * R, cy: GY + Math.sin(s.a) * rings[s.ring] * R });
       }
@@ -332,7 +338,7 @@ function giroScene(): SciScene {
       if (p < 0.04) read = 'Neste modelo, usando apenas estrelas e gás, a velocidade cai na borda. Aperte "Reproduzir" para comparar com o efeito de acrescentar matéria escura.';
       else if (p > 0.96) read = 'Neste modelo, a matéria escura mantém a velocidade alta na borda. Em muitas galáxias observadas, curvas de rotação mostram um comportamento semelhante.';
       else read = `Com ${pct}% do efeito ilustrativo da matéria escura, a velocidade na borda aumenta. A linha tracejada usa só matéria visível; a linha cheia mostra este modelo.`;
-      return { read, value: `${pct}%`, aria: `Efeito ilustrativo da matéria escura em ${pct}%.` };
+      return { sky: { kind: 'giro', stars, rings, dark: p }, read, value: `${pct}%`, aria: `Efeito ilustrativo da matéria escura em ${pct}%.` };
     }
   };
 }

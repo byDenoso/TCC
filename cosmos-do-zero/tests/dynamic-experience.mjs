@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 const base=(process.env.BASE_URL??'http://127.0.0.1:4321').replace(/\/$/,'');
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined,args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM||undefined});
 let checks=0; const ok=(v,m)=>{assert.ok(v,m);checks++;};
 try {
  for(const width of [390,1280]){

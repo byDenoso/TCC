@@ -1,6 +1,9 @@
 ---
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
+import { courseCovers } from '../../lib/course-covers';
+import M51Image from '../../components/M51Image.astro';
+import m51 from '../../../assets/source/m51.json';
 import Header from '../../components/Header.astro';
 import HubbleLesson from '../../components/HubbleLesson.astro';
 import LessonPath from '../../components/LessonPath.astro';
@@ -36,6 +39,8 @@ export function getStaticPaths() {
 }
 const { id } = Astro.props;
 const ch = chapters.find((c) => c.id === id)!;
+const cover = courseCovers[ch.id];
+const isM51 = ch.id === 'galaxias-e-nebulosas';
 const n = chapterOrder.indexOf(ch.id)+1;
 const isPrimary = chapterTrack(ch.id) === 'primary';
 const prev = chapters.find(c => c.id === chapterOrder[n - 2]);
@@ -99,6 +104,12 @@ const labStations = ({ 'galaxias-e-nebulosas': ['tempo'], 'origem-do-universo': 
               {s.id === 'vida-das-estrelas-fusao' && <HRExhibit heading="h3" />}
               {s.id === 'galaxias-e-nebulosas-centros-galacticos' && <BlackHoleExhibit heading="h3" />}
               <div class="lesson-observe"><span aria-hidden="true">◎</span><p><strong>Repare no que mudou. </strong>{LESSON_GUIDES[s.id].observe}</p></div>
+              {i === 0 && <figure class="lesson-plate">
+                {isM51 ? <M51Image sizes="(max-width: 760px) 100vw, 640px" /> : <Image src={cover.image} alt={cover.alt} widths={[480, 960, 1440]} sizes="(max-width: 760px) 100vw, 640px" format="webp" loading="lazy" />}
+                <figcaption><strong>{isM51 ? m51.title : cover.caption}</strong>
+                  <a href={isM51 ? m51.href : cover.source.href}>{isM51 ? m51.credit : cover.source.credit}</a>
+                </figcaption>
+              </figure>}
               <aside class="lesson-connection"><span>A ideia por trás da cena</span><p>{LESSON_GUIDES[s.id].connect}</p></aside>
               <p class="lesson-try"><strong>Agora experimente. </strong>{LESSON_GUIDES[s.id].try}</p>
               <p>{bodies[i].map((seg, k) => 'term' in seg ? (

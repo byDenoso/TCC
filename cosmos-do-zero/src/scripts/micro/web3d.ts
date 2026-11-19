@@ -1,9 +1,34 @@
-import { observeScene } from '../visual/runtime';
-import { cosmicWeb } from '../visual/web';
-export interface Web3D { set(k:number):void; setPlaying(on:boolean):void; dispose():void }
-/** Adaptador compatível; usa a mesma licença de WebGL e o relógio do motor. */
-export async function mountWeb3D(stage:HTMLElement,_reduced:()=>boolean):Promise<Web3D|null>{
- const {prepareEmissionGalaxies,emissionSize}=await import('../visual/galaxy-emission');const size=emissionSize(stage.clientWidth);await prepareEmissionGalaxies(size);
- const view=observeScene(stage,()=>cosmicWeb(size));
- return {set(k){view.state({value:k});},setPlaying(on){view.play(on);},dispose(){view.dispose();}};
+import frames from '../../data/micro-frames.json';
+import { u } from '../../lib/url';
+
+interface Reference { paths: string[]; description: string }
+const references: Record<string, Reference> = frames;
+
+/** A imagem acompanha a etapa. O SVG continua mostrando os valores contínuos. */
+export function mountMicroReference(root: HTMLElement) {
+  const reference = references[root.dataset.mx!];
+  const toggle = root.querySelector<HTMLButtonElement>('[data-mx-reference-toggle]');
+  const panel = root.querySelector<HTMLElement>('[data-mx-reference-panel]');
+  const image = panel?.querySelector<HTMLImageElement>('[data-mx-reference]');
+  if (!reference || !toggle || !panel || !image || new URLSearchParams(location.search).get('visual') === 'diagram') return;
+
+  let selected = 0;
+  const update = (value: number) => {
+    selected = Math.max(0, Math.min(reference.paths.length - 1, Math.round(value)));
+    if (panel.hidden) return;
+    const src = u(reference.paths[selected]);
+    if (image.getAttribute('src') === src) return;
+    image.src = src;
+    const option = root.querySelector<HTMLElement>(`[data-mx-opt="${selected}"]`);
+    image.alt = reference.paths.length > 1
+      ? `Ilustração de referência · ${option?.textContent?.replace(/^\d+/, '').trim()}`
+      : reference.description;
+  };
+  toggle.hidden = false;
+  toggle.addEventListener('click', () => {
+    panel.hidden = !panel.hidden;
+    toggle.setAttribute('aria-expanded', String(!panel.hidden));
+    update(selected);
+  });
+  return update;
 }

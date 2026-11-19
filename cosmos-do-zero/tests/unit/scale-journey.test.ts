@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { journeyLayers, journeyLog, journeyPosition, journeyVideoTime } from '../../src/lib/scale-journey';
 import { scaleLogs, scaleStations } from '../../src/data/scale-stations';
-import { FrameBudget } from '../../src/scripts/visual/render-policy';
 
 describe('exposição de escalas', () => {
   it('maps measured station offsets to continuous, clamped scroll progress', () => {
@@ -40,16 +39,5 @@ describe('exposição de escalas', () => {
         expect(journeyPosition(journeyLog(i - .4, scaleLogs), scaleLogs)).toBeCloseTo(i - .4, 9);
       }
     });
-  });
-
-  it('switches mobile to video only after measured frames miss the 50 fps budget', () => {
-    const fast = new FrameBudget();
-    const slow = new FrameBudget();
-    for (let frame = 0; frame < 44; frame++) { fast.record(20); slow.record(24); }
-    expect(slow.decide(45, 20)).toBeNull();
-    fast.record(20);
-    slow.record(24);
-    expect(fast.decide(45, 20)).toBe('standard');
-    expect(slow.decide(45, 20)).toBe('low');
   });
 });

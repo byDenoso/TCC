@@ -1,3 +1,4 @@
+import { plate, disc } from './lab/plate';
 import { formatHR, formatHRTemperature, hrModels, hrPlot, luminosityInSuns, projectHR } from '../lib/hr';
 
 export function initHRExhibit(): void {
@@ -15,11 +16,24 @@ export function initHRExhibit(): void {
     const presets = root.querySelectorAll<HTMLButtonElement>('[data-hr-preset]');
     if (!fields || !temperatureInput || !radiusInput || !temperatureReading || !radiusReading || !luminosityReading || !insight || !status || !marker || !crosshair) return;
 
+    const surface = root.querySelector<SVGSVGElement>('[data-hr-surface]')!;
+    let size = 34, tint = '';
+    const fallback = surface.querySelector('circle')!;
+    const scene = plate(surface, ['star'], (ctx, img) => {
+      disc(ctx, img('star'), 242, 88, size, 2/2.12, tint);
+    });
     const update = (announce = false) => {
       const temperature = temperatureInput.valueAsNumber;
       const logRadius = radiusInput.valueAsNumber;
       const radius = 10 ** logRadius;
       const luminosity = luminosityInSuns(temperature, radius);
+      size = 34 * 10 ** (logRadius * .17);
+      const cool = temperature < 5772;
+      const strength = cool ? (5772-temperature)/3272 : (temperature-5772)/24228;
+      tint = cool ? `rgba(229,54,14,${.56*strength})` : `rgba(174,211,255,${.84*Math.sqrt(strength)})`;
+      fallback.setAttribute('r', String(size));
+      fallback.setAttribute('fill', cool ? '#ffb477' : '#d1e6ff');
+      scene.refresh();
       const model = hrModels.find((item) => item.temperature === temperature && item.logRadius === logRadius);
       const point = projectHR(temperature, luminosity);
       const temperatureText = formatHRTemperature.format(temperature);

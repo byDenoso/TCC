@@ -1,0 +1,25 @@
+svg[data-lab-plate="ready"] [data-lab-body] { opacity: 0; }
+.lab-model-band { display: block; width: 100%; height: auto; background: #090f20; }
+
+.lab-model-band,
+.observatory :is([data-e-svg], [data-h-sky], [data-t-3d] svg),
+.lens-experiment [data-lens-fallback] {
+  background: radial-gradient(ellipse at 42% 35%, #19263b, #070d19 75%);
+}
+.observatory :is([data-e-svg], [data-h-sky], [data-t-3d] svg) text,
+.lens-experiment [data-lens-fallback] text {
+  fill: #d5dfef;
+  paint-order: stroke;
+  stroke: #0a1222;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+.observatory [data-h-sky] .h-ring { stroke: #8195af; }
+.observatory [data-h-sky] .is-selected .h-ring { stroke: #ffd89b; }
+
+[data-transit-play], [data-expansion-play] {
+  display: block; min-height: 44px; margin: 8px auto; padding: 6px 15px;
+  border: 1px solid var(--line-strong); border-radius: 20px;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+}
+[data-transit-play][hidden], [data-expansion-play][hidden] { display:none; }

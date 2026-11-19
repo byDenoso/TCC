@@ -11,7 +11,10 @@ import { u } from '../lib/url';
       <p class="arrival-eyebrow">Cosmos do Zero · um planetário para explorar</p>
       <h1 id="hero-title">Há um Universo<br />em cada <em>pergunta.</em></h1>
       <p>Mude uma escala. Acompanhe uma órbita. Aprenda a ler a luz. Seis aulas para descobrir o céu, uma ideia de cada vez.</p>
-      <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')}>Descubra seu endereço no Universo <span aria-hidden="true">→</span></a>
+      <div class="arrival-actions">
+        <a class="cta" href={u('/capitulos/galaxias-e-nebulosas/')}>Descubra seu endereço no Universo <span aria-hidden="true">→</span></a>
+        <a class="editorial-link" href="#capitulos">Escolha outra pergunta <span aria-hidden="true">↓</span></a>
+      </div>
       <span class="arrival-invitation">Comece pela Terra. O primeiro experimento já está esperando.</span>
       <a class="textlink" href={u('/capitulos/galaxias-e-nebulosas/')} data-start-journey data-home-continue hidden><span data-start-label>Continuar de onde parei</span> →</a>
     </div>
@@ -20,5 +23,5 @@ import { u } from '../lib/url';
       <figcaption><span>Imagem real · cores atribuídas</span><strong>Um pequeno pedaço do céu.<br />Milhares de histórias.</strong><a href="https://esawebb.org/images/weic2209a/" target="_blank" rel="noopener noreferrer">SMACS 0723 · NASA, ESA, CSA, STScI ↗</a></figcaption>
     </figure>
   </section>
-  <div class="arrival-orientation page-width"><span>Sem pré-requisitos. No seu ritmo.</span><a href="#capitulos">Escolha outra pergunta <span aria-hidden="true">↓</span></a></div>
+  <div class="arrival-orientation page-width"><span>Sem pré-requisitos. No seu ritmo.</span></div>
 </div>

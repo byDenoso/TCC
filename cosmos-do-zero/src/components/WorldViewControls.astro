@@ -1,0 +1,11 @@
+<div class="world-controls">
+  <label>Rotação <input type="range" min="0" max="35" value="0" data-world-angle /><output data-world-degrees>0°</output></label>
+  <label>Zoom <input type="range" min="75" max="175" step="5" value="100" data-world-zoom /><output data-world-percent>100%</output></label>
+  <small>Arraste na horizontal para girar.</small>
+</div>
+<style>
+  .world-controls { display:flex; align-items:center; gap:.75rem 1.5rem; flex-wrap:wrap; margin-block:.75rem; }
+  label { display:inline-flex; align-items:center; gap:.5rem; }
+  input { width:6rem; }
+  output { min-width:3.5ch; font-variant-numeric:tabular-nums; }
+</style>

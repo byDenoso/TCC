@@ -1,0 +1,65 @@
+{
+  "credit": "Cosmos do Zero · materiais ilustrativos. Esferas, hélio, estrela e disco modelados para a aula em Blender 5.3 Cycles.",
+  "source": "assets/source/lesson-depth/bake.py",
+  "sourceSha256": "fd7d168b6fb1ad6ccc047a582815c61ae574f050a0f281af84a95480812afcdd",
+  "files": [
+    {
+      "file": "disk.webp",
+      "size": [
+        320,
+        320
+      ],
+      "bytes": 10456,
+      "sha256": "0a43616fd0414c84c75fbb2106ebae388b94e9fd595c05eca8d3c2a37e0bbb6f"
+    },
+    {
+      "file": "electron.webp",
+      "size": [
+        320,
+        320
+      ],
+      "bytes": 7356,
+      "sha256": "ac867010a79f21b61fb6a02a4d1bc379a766b7f9920066a26e09e99ba1432890"
+    },
+    {
+      "file": "helium.webp",
+      "size": [
+        320,
+        320
+      ],
+      "bytes": 8520,
+      "sha256": "0bb029b09925d801f42c6b10cd5974519c4c5f311862990239691ced714ccb99"
+    },
+    {
+      "file": "proton.webp",
+      "size": [
+        320,
+        320
+      ],
+      "bytes": 7828,
+      "sha256": "9b880bda17a168aeeb651173a5eae4d120f628e8cdcf763bcaa106c125c6f58c"
+    },
+    {
+      "file": "star.webp",
+      "size": [
+        320,
+        320
+      ],
+      "bytes": 30454,
+      "sha256": "00f5c7aeec0fd62671dbfca8315de1ba33fea4f03fd8f4541ad15796aa68a604"
+    },
+    {
+      "file": "stars-far.webp",
+      "size": [
+        540,
+        960
+      ],
+      "bytes": 54680,
+      "sha256": "8615a2425a7b2958c195003085f1487b884c139f4809e32d2f7d7c91c0778bf5",
+      "source": "20261118-cosmos-reel-blender/assets/stars-far.png",
+      "sourceSha256": "10d3fd77163faa92e963eec06eb2c715ca58839d4e404bef1c3c9615d7170935",
+      "credit": "Cosmos do Zero · Reel Blender/Cycles",
+      "conversion": "Pillow LANCZOS, WebP quality 88"
+    }
+  ]
+}

@@ -1,15 +1,16 @@
-import { $, $$, setText } from './dom';
+import { $, setText } from './dom';
 import { planets } from '../data/client';
 import { compareInsight, compareRows, comparison } from '../lib/planets';
 import { getParam, setParams } from '../lib/url-state';
-import { readArt } from './planets';
+import { mountWorldView } from './visual/world-view';
 
 export function initCompare(): void {
   const root = $('[data-island="compare"]');
   if (!root) return;
-  const art = readArt();
   const a = $<HTMLSelectElement>('[data-compare-a]', root)!;
   const b = $<HTMLSelectElement>('[data-compare-b]', root)!;
+  const view = mountWorldView(root, $('[data-compare-visual]', root)!, () =>
+    [a.value, b.value].map(id => id === 'saturno' ? 'saturno-globo' : id));
   const find = (id: string) => planets.find((p) => p.id === id);
   const render = (url = true) => {
     const left = find(a.value), right = find(b.value);
@@ -19,8 +20,6 @@ export function initCompare(): void {
       setText($(`[data-compare-name="${side}"]`, root), p.name);
       setText($(`[data-compare-col="${side}"]`, root), p.name);
       const img = $<HTMLImageElement>(`[data-compare-img="${side}"]`, root)!;
-      const g = art[p.id]?.globe;
-      if (g && img.getAttribute('src') !== g) img.src = g;
       img.style.width = `${cmp.diameters[i].toFixed(3)}%`;
     });
     const insight = compareInsight(left, right);
@@ -34,13 +33,16 @@ export function initCompare(): void {
       return tr;
     }));
     if (url) setParams({ a: a.value === 'terra' ? null : a.value, b: b.value === 'jupiter' ? null : b.value });
-    root.dispatchEvent(new CustomEvent('cosmos:worldselection'));
+    view.refresh();
   };
   const ok = (v: string | null) => (v && find(v) ? v : null);
-  a.value = ok(getParam('a')) ?? a.value; b.value = ok(getParam('b')) ?? b.value;
   a.addEventListener('change', () => render()); b.addEventListener('change', () => render());
   $('[data-compare-swap]', root)!.addEventListener('click', () => { [a.value, b.value] = [b.value, a.value]; render(); });
-  if (getParam('a') || getParam('b')) render(false);
-  void import('./visual/world-view').then(m=>m.initCatalogWorld(root,$('[data-compare-visual]',root)!,()=>[a.value,b.value],()=>[find(a.value)!.radius,find(b.value)!.radius]));
-  void $$;
+  const restore = () => {
+    a.value = ok(getParam('a')) ?? 'terra';
+    b.value = ok(getParam('b')) ?? 'jupiter';
+    render(false);
+  };
+  window.addEventListener('popstate', restore);
+  restore();
 }

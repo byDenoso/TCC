@@ -1,10 +1,9 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { openExtraExperiments } from './lib/reader-navigation.mjs';
-import { installSceneQa,assertPausedScene,useStandardQuality } from './lib/scene-capture.mjs';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 let checks = 0;
 const expect = (value, message) => { assert.ok(value, message); checks++; };
 const pressed = locator => locator.getAttribute('aria-pressed');
@@ -23,7 +22,6 @@ try {
     await stage.scrollIntoViewIfNeeded();
     await page.waitForFunction(() => document.querySelector('[data-e-play]')?.getAttribute('aria-pressed') === 'true', null, { timeout: 5000 });
     const first = Number(await range.inputValue());
-    // Compilar o primeiro shader no SwiftShader pode bloquear mais de um quadro.
     await page.waitForFunction(first => Number(document.querySelector('[data-e-range]')?.value) > first, first, { timeout: 5000 });
     expect(Number(await range.inputValue()) > first, `${width}: expansão começa ao ficar visível`);
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
@@ -97,44 +95,26 @@ try {
   expect(await pressed(stars.locator('[data-star-play]')) === 'false', 'ajustar a estrela interrompe a animação automática');
   await stars.close();
 
-  const solar = await browser.newPage({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
-  await installSceneQa(solar);
-  const errors = []; solar.on('pageerror', error => errors.push(String(error)));
+  const solar = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
   await solar.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
   await openExtraExperiments(solar);
-  const earthStage = solar.locator('[data-solar-stage]'); await earthStage.scrollIntoViewIfNeeded();
-  await earthStage.locator('.cosmos-volume').waitFor();
-  const earthPlay = solar.locator('[data-solar-play]');
-  await solar.waitForFunction(() => document.querySelector('[data-solar-play]')?.getAttribute('aria-pressed') === 'true');
-  expect(await pressed(earthPlay) === 'true', 'rotação da Terra inicia com a cena 3D visível');
-  assert.equal(await earthStage.getAttribute('data-cosmos-quality'),'auto','a cena inicia em qualidade automática');
-  await earthPlay.click(); await earthStage.scrollIntoViewIfNeeded();
-  assert.equal(await pressed(earthPlay),'false','a pausa manual interrompe a rotação');
-  await useStandardQuality(earthStage,solar.locator('[data-solar-studio]'),'Autoplay Solar 1280','world');
-  assert.equal(await pressed(earthPlay),'false','a cena permanece pausada após selecionar a qualidade');
-  if (process.env.EARTH_CAPTURE) await earthStage.screenshot({ path: process.env.EARTH_CAPTURE });
-  await assertPausedScene(earthStage.locator('canvas'),'Autoplay Solar 1280',250); checks++;
-  expect(errors.length === 0, `a cena 3D não produz erros: ${errors.join('; ')}`);
+  const studio = solar.locator('[data-solar-studio]');
+  const image = studio.locator('[data-solar-poster]');
+  const play = studio.locator('[data-solar-play]');
+  await image.scrollIntoViewIfNeeded();
+  const waitFrame = file => solar.waitForFunction(file => {
+    const poster = document.querySelector('[data-solar-poster]');
+    return poster instanceof HTMLImageElement && poster.complete && poster.naturalWidth > 0 && poster.currentSrc.endsWith(file);
+  }, '/solar-turntable/terra/' + file);
+  await waitFrame('00.webp');
+  expect(await pressed(play) === 'false', 'a Terra espera o comando com movimento reduzido');
+  await play.click();
+  await waitFrame('01.webp');
+  expect(await pressed(play) === 'false', 'Avançar troca um quadro e mantém a pausa');
+  await studio.locator('[data-solar-reset]').click();
+  await waitFrame('00.webp');
+  expect(await studio.locator('[data-world-angle]').inputValue() === '0', 'reiniciar restaura o ângulo e a imagem');
   await solar.close();
-
-  const stillEarth = await browser.newPage({ viewport: { width: 390, height: 900 }, reducedMotion: 'reduce' });
-  await stillEarth.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
-  await openExtraExperiments(stillEarth);
-  await stillEarth.locator('[data-solar-stage]').scrollIntoViewIfNeeded();
-  await stillEarth.locator('[data-solar-stage] .cosmos-volume').waitFor(); await stillEarth.waitForTimeout(300);
-  expect(await pressed(stillEarth.locator('[data-solar-play]')) === 'false', 'a Terra não gira sozinha com movimento reduzido');
-  await stillEarth.close();
-
-  const fallback = await browser.newPage({ viewport: { width: 390, height: 900 } });
-  await fallback.route('**/models/mundos.glb', route => route.abort());
-  await fallback.goto(`${base}/capitulos/sistema-solar/#sistema-solar-sol-e-planetas`, { waitUntil: 'domcontentloaded' });
-  await openExtraExperiments(fallback);
-  await fallback.locator('[data-solar-stage]').scrollIntoViewIfNeeded();
-  await fallback.waitForFunction(() => document.querySelector('[data-solar-play]')?.disabled === true);
-  expect(await fallback.locator('[data-solar-poster]').isVisible(), 'imagem da Terra continua visível quando o modelo 3D falha');
-  expect(/indisponível/.test(await fallback.locator('[data-solar-play]').innerText()), 'controle explica quando não há rotação 3D');
-  expect(await fallback.locator('[data-solar-reset]').isDisabled(), 'reiniciar rotação também fica indisponível sem 3D');
-  await fallback.close();
 
   console.log(`${checks} verificações de animação por visibilidade OK.`);
 } finally { await browser.close(); }

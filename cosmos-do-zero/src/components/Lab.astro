@@ -1,7 +1,7 @@
 ---
 import { planets } from '../data';
+import WorldViewControls from './WorldViewControls.astro';
 import SolarCredits from './SolarCredits.astro';
-import { planetGlobe } from '../lib/images';
 import { chapterUrl, u } from '../lib/url';
 import { compareInsight, compareRows, comparison } from '../lib/planets';
 import { format } from '../lib/format';
@@ -44,12 +44,13 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         {[A, B].map((p, i) => (
           <div class="compare-body">
             <div class="scale-space">
-              <img data-compare-img={i === 0 ? 'a' : 'b'} src={planetGlobe[p.id].src} alt="" width={planetGlobe[p.id].width} height={planetGlobe[p.id].height} style={`width:${cmp.diameters[i].toFixed(3)}%`} loading="lazy" decoding="async" />
+              <img data-compare-img={i === 0 ? 'a' : 'b'} src={u(`/models/solar-turntable/${p.id}/00.webp`)} alt="" width="320" height="320" style={`width:${cmp.diameters[i].toFixed(3)}%`} loading="lazy" decoding="async" />
             </div>
             <strong data-compare-name={i === 0 ? 'a' : 'b'}>{p.name}</strong>
           </div>
         ))}
       </div>
+      <WorldViewControls/>
       <SolarCredits/>
       <p class="compare-insight" role="status" data-compare-insight>{insight}</p>
       <div class="table-scroll">

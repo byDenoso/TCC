@@ -4,7 +4,7 @@ import { u } from '../lib/url';
 interface Props { id:string }
 const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
 ---
-<section class="story-lesson" data-story={id} data-story-mode-active="scene" role="group" aria-labelledby={`${prefix}-title`}>
+<section class="story-lesson" data-story={id} data-story-reference data-story-mode-active="scene" role="group" aria-labelledby={`${prefix}-title`}>
   <header class="story-heading"><span class="meta">Resumo animado · 20 segundos</span><h2 id={`${prefix}-title`}>{story.title}</h2></header>
   <div class="story-modes" role="group" aria-label="Como você quer ver esta ideia">
     <button type="button" data-story-mode="scene" aria-pressed="true">Explorar a cena</button>
@@ -18,6 +18,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <div class="story-stage" data-story-stage>
       <div class="story-frame">
         <div class="story-webgl" data-story-world aria-hidden="true">
+          {id==='origem-do-universo' && <canvas data-wave-depth width="960" height="540" style="position:absolute;inset:0;width:100%;height:100%"></canvas>}
           <img data-story-poster src={u(`/media/stories/${id}.webp`)} width="960" height="540" alt="" decoding="async" />
         </div>
         <div class="story-overlay" data-story-graphic set:html={renderStory(id,0,prefix,true)} />
@@ -36,7 +37,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <output for={`${prefix}-time`} data-story-clock>0:00 / 0:20</output>
   </div>
   <p class="story-caption" data-story-caption>{story.phases[0].say}</p>
-  <p class="story-limit story-reference">{id === 'origem-do-universo' ? 'Diagrama interativo da onda. O vídeo mostra a versão em 3D.' : 'Quadros de referência em 3D. O vídeo acompanha a cena inteira.'}</p>
+  <p class="story-limit story-reference">{id === 'origem-do-universo' ? 'Diagrama interativo da onda. O vídeo mostra a versão em 3D.' : 'A imagem muda a cada etapa. O diagrama acompanha o instante escolhido.'}</p>
   <p class="story-limit">{story.limit}</p>
   <details class="story-transcript"><summary>Ler a explicação</summary><ol>{story.phases.map(phase=><li><strong>{phase.label}.</strong> {phase.say}</li>)}</ol><p>Vídeo ilustrativo, sem narração. Você escolhe o ritmo pelos controles.</p><a href={u(`/media/stories/${id}.mp4`)}>Abrir o vídeo de 20 segundos ↗</a></details>
   <noscript><p>A cena acima mostra o primeiro momento. Leia as três etapas em “Ler a explicação” ou abra o vídeo.</p></noscript>

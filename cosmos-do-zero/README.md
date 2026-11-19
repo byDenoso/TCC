@@ -1,57 +1,43 @@
 # Cosmos do Zero
 
-Escola estática de cosmologia em português com seis aulas e instrumentos interativos. Astro 7 e TypeScript organizam a interface e PlayCanvas renderiza as cenas 3D. Os dados, mapas, fontes e modelos são servidos pelo próprio site.
+Planetário editorial em português com seis aulas, fotografias astronômicas e experiências guiadas. O Astro gera HTML estático. As vistas dos mundos chegam como imagens prontas do Blender Cycles. Os controles de órbita, expansão, lente gravitacional e tempo continuam calculando os resultados no navegador.
 
-## Executar
+## Executar localmente
 
-Node >= 22.12; implementação/QA em Node 24.19.0. Instale com `npm ci`, execute `npm run dev` ou gere `npm run build`. A saída estática é `dist/`; `npm run serve` oferece o servidor local. Para homologação privada use `SITE_PUBLIC=false`, `SITE_BASE=/` e a URL privada em `SITE_URL`.
+Com Node 22.12 ou superior, execute na pasta do site:
 
-Links, modelos e posters passam por `u()` para funcionar na raiz e em `/TCC/cosmos-do-zero/`. Os dois destinos foram validados somente em builds locais; essa revisão não publicou produção nem alterou o domínio.
+```sh
+npm ci
+npm run dev
+```
 
-## Experiências
+Para testar a saída estática, execute `npm run build` e depois `npm run serve`. O servidor de prévia atende na porta 4321 por padrão. Use `BASE_URL` ao executar os testes em outra porta ou subpasta. `SITE_BASE` define a subpasta durante a compilação.
 
-As 36 subseções preservam IDs, âncoras, quizzes e retomada:20 palcos 3D com alternativaSVG,15 microexperiências 2D e1 CmbJourney 2D. Gráficos de composição, Hubble, espectros, rotação, supernovas, ajuste e atmosfera permanecem2D onde favorecem a comparação.
+## Explorar
 
-Um runtime compartilhado controla montagem, estado, pausa, câmera, tamanho e qualidade. O acesso WebGL2 é serializado e sua indisponibilidade devolve o palco ao diagrama ou à ilustração. Assets são carregados perto do palco ou na seleção. A câmera requer ação explícita, e o toque comum preserva a rolagem. Consulte [o rework PlayCanvas, as cenas e suas fontes](docs/REWORK_PLAYCANVAS.md).
+- **Início e aulas.** A página inicial leva à primeira pergunta ou à escolha de outro tema. As seis aulas preservam as âncoras, os quizzes e a retomada da leitura. As 35 microexperiências têm cenas em Canvas 2,5D que acompanham os controles. O botão **Ver diagrama** alterna para a representação analítica. As cinco experiências de luz e galáxias da página inicial apresentam a cena espacial e o botão **Ver medidas**.
+- **Laboratório.** O catálogo e o comparador compartilham a mesma convenção de ângulo. Há arraste horizontal, controle de rotação e zoom. O comparador orienta as duas imagens em conjunto. Os resultados numéricos vêm dos modelos didáticos.
+- **Saturno.** A câmera percorre as inclinações de 0° a 90° em passos de um grau. Na ausência de um quadro, um diagrama acompanha o valor escolhido.
+- **Escalas.** Dez paradas, do próton ao universo observável. A régua usa o logaritmo do tamanho em metros. O trecho Terra–teia cósmica usa um vídeo controlado pela posição da régua. Os pôsteres também permitem percorrer as paradas, e a versão HTML apresenta a lista completa. Os valores e referências estão em `src/data/scale-stations.ts`.
+- **Imagens e Céu.** A fotografia de M51 mantém o crédito Hubble e a proporção do original. A nebulosa que se pode mostrar em Céu é uma ilustração autoral. O mapa interativo da radiação cósmica de fundo identifica seu campo sintético.
 
-Qualidade ajustada à largura/DPR: mapas galácticos 1536 no desktop e 768 no mobile; modo Econômico 512. Os mundos selecionados usam mapas até 2048/1024/512 e restauram a fonte original após trocas. A preferência por palco é preservada ao remontar. Essas resoluções não são uma promessa de FPS em qualquer dispositivo.
+## Materiais e autoria
 
-## Materiais e proveniência
+| Material | Origem e reprodução |
+|---|---|
+| Mapas e retratos dos mundos | `assets/source/solar-materials/manifest.json`, `assets/source/mundos.blend` |
+| Rotações e camadas | `assets/source/solar-turntable/solar-turntable.blend` contém a cena editável. `scripts/render_solar_turntable.py` gera os atlas no Cycles. `scripts/pack_solar_turntable.py` recorta os quadros e verifica hashes e dimensões |
+| Anéis de Saturno | `assets/source/saturn/saturn.blend`, `assets/source/saturn/render_frames.py`, `public/models/saturn/frames.json` |
+| Nebulosa de Céu | `assets/source/sky-nebula/nebulosa.blend`, `build_reference.py` e README no mesmo diretório |
+| Teia, galáxia, nebulosa e órbitas ilustrativas | Cenas em `assets/source/reel-cycles/`. `public/renders/reel-cycles/manifest.json` identifica os quadros e a conversão para WebP |
+| M51 e sua companheira | `assets/source/m51.json` identifica o original ESA/Hubble, o crédito completo e as quatro versões proporcionais |
+| Formação do Sistema Solar | Texturas de Barnard 59, HL Tauri e ilustração ESO/L. Calçada em `assets/source/formation/manifest.json`. Os agregados minerais e de gelo têm cena Blender e renderizador em `assets/source/formation/` |
+| Pôsteres e microexperiências | `public/posters/manifest.json` e `src/data/micro-frames.json` |
 
-### Escala contínua
+Créditos completos acompanham as experiências e a página `/fontes/`. Os mapas de missão, os modelos ilustrativos e as fotografias têm origens diferentes. Os materiais de terceiros preservam os créditos individuais. Os arquivos em `docs/rework/` e o relatório `docs/REWORK_PLAYCANVAS.md` documentam a versão histórica.
 
-Em `/escalas/`, a rolagem e a régua logarítmica percorrem dez escalas, do raio de carga do próton ao diâmetro do universo observável. Os comprimentos e as fontes aparecem junto a cada etapa. A régua usa metros e a escala das cenas tem finalidade ilustrativa. Nos modelos sobrepostos, a câmera interpola a posição e os objetos mantêm uma âncora local quando há uma relação espacial, como a Terra no Sistema Solar.
+## Verificar
 
-A cena usa um contexto PlayCanvas compartilhado entre as dez paradas. A montagem acontece perto da área visível, e o mapa MODIS da Terra só é carregado ao chegar às escalas planetárias. `Modo leve` usa ilustrações. Em celulares com movimento habilitado e desempenho insuficiente, o trecho Terra → teia também pode usar o vídeo de referência que já estava no site. As paradas, legendas e fontes ficam em `src/data/scale-stations.ts`. O teste `npm run test:scales` usa `BASE_URL` do preview.
+`npm run check`, `npm test` e `npm run build` verificam os tipos, os testes unitários e a saída estática. Com a variável `BASE_URL` apontando para a prévia, `npm run test:depth` exercita as cenas das aulas, da página inicial e das bancadas, inclusive alternativas a falhas de mídia. Com o site servido, `npm run test:assets` exercita a navegação com as APIs 3D bloqueadas. `test:scales`, `test:saturn`, `test:hero`, `test:renders`, `test:e2e`, `test:browsers` e `test:cinema` exercitam as experiências específicas. `test:budget` mede HTML/CSS/JS da primeira visita com gzip nível 6 e registra à parte as imagens e os vídeos carregados.
 
-Terra: composição MODIS/Blue Marble de julho2004. Lua: mosaico LROC 2025, com tratamento de cor declarado pela fonte, e relevo LOLA. Júpiter: Hubble/OPAL 2015. Marte: mosaico Viking/USGS. Mercúrio: MESSENGER em cores realçadas. Mapas de Saturno/Netuno da coleção NASA são ilustrativos; Vênus/Urano usam authoring original de nuvens. Geometria, iluminação, espessura de atmosfera, anéis e relevos visuais são aproximações explícitas.
-
-As seis morfologias galácticas são assets originais com emissão/poeira/estrelas sintetizadas; não correspondem a mapas observacionais de galáxias específicas. A nebulosa combina densidade original e detalhe Hubble/Orion creditado; a profundidade e as cores são artísticas. Estrelas usam granulação original. BH ilustra horizonte/disco, sem calcular sombra ou ray tracing relativístico. Lente calcula imagem 2D pelo modelo de lente fina, com geometria 3D coerente e limites declarados.
-
-Posters atuais derivam das cenas/mapas creditados: plasma/núcleos sem estrelas e mapaCMB sintético identificado. Imagens oficiais da escola mantêm seus créditos. Recursos antigos e versões reprovadas permanecem como histórico de autoria no código-fonte; o pós-build exclui mapas antigos ePNGeditáveis do artefato servido.
-
-Fontes/creditos aparecem junto às experiências e em `/fontes/`. Manifests: `assets/source/manifest.json`, `assets/source/solar-materials/manifest.json`, `public/models/galaxies-v4/manifest.json`, `public/models/stellar/manifest.json`, `public/posters/manifest.json`. Não há licença CC0 genérica para recursos NASA/terceiros.
-
-## Fonte editável e reprodução
-
-`assets/source/mundos.blend` contém o authoring solar. `assets/source/build_worlds.py` reproduz o GLB e os portraits com Blender 4.5.9 LTS. Os scripts `prepare_solar_materials.py`, `build_galaxies_v4.py`, `build_stellar_materials.py` e `build_posters.py` documentam os processamentos; originais/PNG/.npy ficam junto às fontes. Consulte as dependências no cabeçalho de cada script. Nenhum poster estático substitui a câmera interativa.
-
-## Verificação
-
-`npm run check`, `npm test`, `npm run test:http`, `npm run test:e2e`, `npm run test:renders`, `npm run test:graphics`, `npm run test:browsers`, `npm run test:motion` (painel "Ciência em movimento" da home, com a página servida em `BASE_URL`). `test:pages` valida a saída local com variáveis dos dois destinos autorizados; não envia arquivos para eles.
-
-Testes dedicados incluem60/120 Hz da expansão, navegação/progresso/storage bloqueado, BFCache real, perda de contexto/falha de asset, pausa exata, seleção rápida, remount de qualidade,20 trocas e medição de memória. Registros e capturas estão no pacote de homologação; resultados históricos de outras revisões não são resultados desta execução.
-
-Ilustrações e pontos gerados são TOY_MODEL. Testes numéricos verificam implementação e aproximações; não confirmam modelos contra dados.390/360 são emulação de viewport, sem teste em celular físico. Bytes de texturas/buffers submetidos não são VRAM física. A máquina é compartilhada e sua atividade comum não foi controlada.
-
-## Persistência e reversão
-
-Preservados `cosmos-v3-progress`, `cosmos-v5-selos`, `cosmos-v6-praticado`, `cosmos-v6-onde`, `cosmos-quiz:${pathname}:${chapter}` e `cosmos-quiz-review`. Reiniciar experimento/restaurar câmera não apaga conquistas. A origem privada mantém progresso separado da produção; QA usa fixtures artificiais.
-
-Base de reversão: commit67a467f242fae92a638ec01884ef8ee6c81c3dcf da branch cosmos-do-zero. Homologação ocorre em branch/ambiente separados; nenhuma reversão exige apagar dados do aluno. Para reverter a prévia, publique uma versão privada previamente registrada ou reconstrua essa base em outro checkout. A produção exige autorização futura específica do Dener.
-
-## Ciência em movimento (home)
-
-Cinco animações SVG interativas (luz esticada pela expansão, expansão sem centro, diagrama de Hubble se montando, luz do começo esfriando, curva de rotação de galáxia) em `src/components/MotionLab.astro`, `src/scripts/motion-lab*.ts` e `src/styles/motion-lab.css`. A matemática fica em `src/lib/motion-lab.ts` (testada em `tests/unit/motion-lab.test.ts`). Todas são ilustrações didáticas rotuladas como tal; nenhuma usa dados observacionais. Não usam WebGL (não disputam o contexto único das cenas 3D), só a aba aberta anima, tudo para fora da tela ou com a aba do navegador escondida, e com `prefers-reduced-motion` nada se move sozinho ("Avançar" mostra o próximo estado).
-
-`src/styles/ux-refinements.css` (importado por último em cada página) fixa o piso de 12 px para texto e de 13 px para texto de leitura e controles no celular, e amplia áreas de toque para 44 px sem mexer no desenho.
+A retomada usa as chaves já existentes, incluindo `cosmos-v3-progress`, `cosmos-v5-selos`, `cosmos-v6-praticado`, `cosmos-v6-onde`, `cosmos-quiz:${pathname}:${chapter}` e `cosmos-quiz-review`. O armazenamento é separado por origem.

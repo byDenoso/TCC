@@ -111,7 +111,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: cosmos-cinema-continuidade
-          path: cosmos-do-zero/docs/screenshots/continuity-cinema-*.png
+          path: cosmos-do-zero/test-results/story-cinema/continuity-cinema-*.png
           retention-days: 30
       - name: E2E e renders no preview com caminho base
         run: |
@@ -128,7 +128,7 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           # Collect every independent suite result; any failure still blocks publication.
           failed=0
-          for suite in browsers budget world-frame quality-calibration gpu-quarantine graphics webgpu e2e renders saturn scales; do
+          for suite in browsers budget assets depth e2e renders saturn scales; do
             if ! npm run "test:$suite"; then failed=1; fi
           done
           test "$failed" -eq 0
@@ -139,8 +139,6 @@ jobs:
           name: cosmos-diagnosticos-visuais
           path: |
             cosmos-do-zero/test-results/scale-visual/*.png
-            cosmos-do-zero/test-results/graphics/*.png
-            cosmos-do-zero/test-results/graphics/*.json
             cosmos-do-zero/test-results/browser-smoke/*.png
             cosmos-do-zero/test-results/browser-smoke/*.json
             cosmos-do-zero/test-results/saturn/*.png
@@ -239,7 +237,7 @@ jobs:
       - name: Jornada, escalas, interacoes, progresso e renders publicados
         run: |
           npm run test:e2e
-          npm run test:graphics
+          npm run test:assets
           npm run test:renders
           npm run test:saturn
           npm run test:scales
@@ -253,6 +251,6 @@ jobs:
             cosmos-do-zero/docs/screenshots/publicado-desktop.png
             cosmos-do-zero/docs/screenshots/publicado-mobile.png
             cosmos-do-zero/docs/screenshots/render-*.png
-            cosmos-do-zero/test-results/saturn/blender-playcanvas.png
+            cosmos-do-zero/test-results/saturn/mobile-*.png
             cosmos-do-zero/test-results/saturn/saturn-results.json
           retention-days: 30

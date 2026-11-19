@@ -40,7 +40,7 @@
     const deadline = performance.now() + 15000;
     const stage = window.document.querySelector('[data-saturn-stage]');
     stage.scrollIntoView({ block: 'center' });
-    while (stage.dataset.renderer !== 'playcanvas-webgl2' && performance.now() < deadline) {
+    while (stage.dataset.renderer !== 'webp' && performance.now() < deadline) {
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     return stage;
@@ -48,28 +48,19 @@
 
   async function sample(window, stage) {
     const clock = window.performance;
-    const start = clock.now();
-    const times = [];
     const input = window.document.querySelector('[data-saturn-slider]');
-    const onFrame = event => times.push(event.detail.time);
-    const oldValue = Number(input.value);
-    stage.addEventListener('saturn:frame', onFrame);
-    await new Promise(resolve => {
-      const inject = () => {
-        const elapsed = clock.now() - start;
-        if (elapsed >= 5000) return resolve();
-        input.value = String(Math.round(45 - 44 * Math.cos(elapsed / 800)));
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        window.requestAnimationFrame(inject);
-      };
-      window.requestAnimationFrame(inject);
-    });
-    stage.removeEventListener('saturn:frame', onFrame);
-    input.value = String(oldValue);
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    const durationSeconds = (clock.now() - start) / 1000;
-    const gaps = times.slice(1).map((time, i) => time - times[i]).sort((a, b) => a - b);
-    return { durationSeconds, frames: times.length, fps: times.length / durationSeconds, p95Ms: gaps[Math.floor(.95 * (gaps.length - 1))] };
+    const image = stage.querySelector('img');
+    const results = [];
+    for (const degree of [0, 1, 45, 89, 90, 30]) {
+      const start = clock.now();
+      input.value = String(degree);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      while (image.hidden && clock.now() - start < 5000) {
+        await new Promise(resolve => window.requestAnimationFrame(resolve));
+      }
+      results.push({ degree, decoded: !image.hidden && image.naturalWidth > 0, elapsedMs: clock.now() - start });
+    }
+    return results;
   }
 
   function readTiming(window) {
@@ -77,7 +68,7 @@
     const navigation = clock.getEntriesByType('navigation')[0];
     const resources = clock.getEntriesByType('resource');
     const controlMs = clock.getEntriesByName('saturn:controls-ready')[0]?.startTime;
-    const frameMs = clock.getEntriesByName('saturn:first-3d-frame')[0]?.startTime;
+    const frameMs = clock.getEntriesByName('saturn:first-image')[0]?.startTime;
     const bytes = point => point === undefined ? undefined : navigation.transferSize +
       resources.filter(resource => resource.responseEnd <= point).reduce((total, resource) => total + resource.transferSize, 0);
     return { controlMs, frameMs, bytesThroughControl: bytes(controlMs), bytesThroughFrame: bytes(frameMs) };
@@ -104,18 +95,19 @@
         viewport: [current.innerWidth, current.innerHeight],
         pixelRatio: current.devicePixelRatio,
         backend: stage.dataset.renderer ?? 'diagram',
-        method: 'Aberturas pela rede local e varredura programática do controle; conta renderizações da aplicação.',
+        method: 'Aberturas pela rede local e varredura programática do controle; mede a espera pela imagem de cada grau selecionado.',
         trials
       };
-      if (stage.dataset.renderer === 'playcanvas-webgl2') {
+      if (stage.dataset.renderer === 'webp') {
         status.textContent = 'Medindo quadros · mantenha esta aba aberta';
         output.render = await sample(current, stage);
       }
       result.href = URL.createObjectURL(new Blob([JSON.stringify(output, null, 2)], { type: 'application/json' }));
       result.hidden = false;
-      status.textContent = `Medição pronta · ${output.render ? output.render.fps.toFixed(1) + ' fps' : 'diagrama ativo'}`;
+      status.textContent = `Medição pronta · ${output.render ? output.render.filter(frame => frame.decoded).length + '/6 imagens' : 'diagrama ativo'}`;
     } catch (error) {
       status.textContent = String(error.message);
+    } finally {
       button.disabled = false;
     }
   });

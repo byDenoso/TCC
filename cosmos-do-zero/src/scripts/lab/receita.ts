@@ -1,3 +1,4 @@
+import { galaxyGroup } from './plate';
 import { LOCAL_H0, OMEGA_B, PLANCK, ageNow, fate, flat, hasBounce, omegaK, omegaR, scaleCurve, type Cosmos } from '../../lib/cosmology';
 import { clear, duration, fmt, initGuess, q, qa, svg } from './common';
 import { getParam, setParams } from '../../lib/url-state';
@@ -16,6 +17,9 @@ export function initReceita(root: HTMLElement): void {
   const sOm = q<HTMLInputElement>(root, '[data-r-om]'), sOl = q<HTMLInputElement>(root, '[data-r-ol]'), sH0 = q<HTMLInputElement>(root, '[data-r-h0]');
   const oOm = q(root, '[data-r-om-out]'), oOl = q(root, '[data-r-ol-out]'), oH0 = q(root, '[data-r-h0-out]');
   const out = Object.fromEntries(qa(root, '[data-r-out]').map((n) => [n.dataset.rOut!, n])) as Record<string, HTMLElement>;
+  const forecast = q(root, '[data-r-forecast]');
+  const forecastNote = q(root, '[data-r-forecast-note]');
+  const setSpacing = galaxyGroup(q<SVGSVGElement>(root, '[data-r-group]'));
   const mix = qa(root, '[data-r-mix] span');
   const mixText = q(root, '[data-r-mixtext]');
   const warn = q(root, '[data-r-warn]');
@@ -34,6 +38,9 @@ export function initReceita(root: HTMLElement): void {
     const x0 = -(Math.max(age, refAge) + 1.2);
     const x1 = f.kind === 'crunch' ? f.crunchGyr! - age + 3 : 42;
     const curve = scaleCurve(p, age + 46);
+    const spacing = interp(curve, age + 5);
+    setSpacing(spacing);
+    forecastNote.textContent = `Daqui a 5 bilhões de anos: separações de ${fmt(spacing, 2)} × o valor de hoje.`;
     const yMax = f.kind === 'crunch' ? Math.max(2, f.aMax! * 1.12) : Math.min(8, Math.max(2.4, interp(curve, age + x1) * 1.04));
     const X = (x: number) => PL + ((x - x0) / (x1 - x0)) * (W - PL - PR);
     const Y = (a: number) => H - PB - (a / yMax) * (H - PB - PT);
@@ -72,6 +79,7 @@ export function initReceita(root: HTMLElement): void {
     const age = bounce ? NaN : ageNow(p);
     const ok = !bounce && Number.isFinite(age);
     const f = ok ? fate(p) : null;
+    forecast.hidden = !ok;
     if (ok && f) draw(p, age, f); else clear(chart);
     out.age.textContent = ok ? `${duration(age)}${Math.abs(age - refAge) > 0.05 ? ` (o nosso: ${fmt(refAge, 1)} bilhões)` : ''}` : '—';
     out.accel.textContent = f ? (f.q0 < 0 ? 'acelerando' : 'freando') : '—';

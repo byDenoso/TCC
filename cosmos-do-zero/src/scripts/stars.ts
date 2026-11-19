@@ -1,3 +1,5 @@
+import { baked, depthCanvas } from './lesson-depth';
+import { u } from '../lib/url';
 import { motionPreference } from './motion-preference';
 import { $, $$, setText } from './dom';
 import { clampMass, massLabel, stellarPath } from '../lib/stars';
@@ -20,17 +22,63 @@ export function initStars(): void {
   if (svg && layer) svg.append(layer);
   let step = 2, t = 1, playing = false, frame = 0, last = 0;
   let automatic: ReturnType<typeof visibleMotion> | null = null;
-  let volume:import('./visual/runtime').MountedScene|null=null;
-  if(svg)import('./visual/exhibits').then(async({stellarMass})=>{
-    await(await import('./visual/stellar-materials')).prepareStellarMaterials();
-    const {observeScene}=await import('./visual/runtime');
-    volume=observeScene(svg.parentElement!,()=>stellarMass(()=>clampMass(Number(slider.value))));volume.state({value:step,phase:t});
-  }).catch(()=>{});
+  // A nuvem é o ambiente ilustrativo das duas primeiras etapas.
+  const cloud = svg && layer ? document.createElementNS(svg.namespaceURI!, 'image') : null;
+  if (cloud && layer) {
+    cloud.setAttribute('x', '35');
+    cloud.setAttribute('y', '15');
+    cloud.setAttribute('width', '230');
+    cloud.setAttribute('height', '215');
+    cloud.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    cloud.setAttribute('opacity', '.55');
+    cloud.setAttribute('aria-hidden', 'true');
+    layer.before(cloud);
+  }
 
+  const texture = document.createElement('canvas');
+  texture.width=480; texture.height=270;
+  if (svg) {
+    const plane=document.createElementNS('http://www.w3.org/2000/svg','foreignObject');
+    plane.setAttribute('width','480');plane.setAttribute('height','270');plane.setAttribute('aria-hidden','true');
+    plane.append(texture);svg.append(plane);texture.dataset.stellarDepth='';
+  }
+  const tinted=document.createElement('canvas');
+  let lastColor='';
+  const paintSurface=depthCanvas(svg ? texture : null,(ctx,image)=>{
+    const star=image(baked('star'));
+    if(!layer || !star)return;
+    // The model's own disks set the center and radius at this mass, stage and instant.
+    for(const disk of layer.querySelectorAll<SVGCircleElement>('circle[fill^="url("]')) {
+      if(disk.getAttribute('fill')?.includes('-halo'))continue;
+      const radius=disk.r.baseVal.value*1.07, x=disk.cx.baseVal.value, y=disk.cy.baseVal.value;
+      const gradientId=disk.getAttribute('fill')!.slice(5,-1);
+      const color=layer.querySelector(`[id="${gradientId}"] stop[offset="50%"]`)?.getAttribute('stop-color') ?? '#fff';
+      if(color!==lastColor){
+        tinted.width=star.naturalWidth;tinted.height=star.naturalHeight;
+        const material=tinted.getContext('2d');
+        if(material){
+          material.drawImage(star,0,0);
+          material.globalCompositeOperation='color';material.fillStyle=color;
+          material.fillRect(0,0,tinted.width,tinted.height);
+          material.globalCompositeOperation='destination-in';material.drawImage(star,0,0);
+          lastColor=color;
+        }
+      }
+      ctx.drawImage(lastColor===color?tinted:star,x-radius,y-radius,radius*2,radius*2);
+    }
+    if(step===4 && clampMass(Number(slider.value))>=8) {
+      const disk=image(baked('disk'));
+      if(disk) {ctx.globalAlpha=1;ctx.drawImage(disk,173,94,64,64);}
+    }
+  });
   const paint = () => {
     const m = clampMass(Number(slider.value));
     if (layer && caption) caption.textContent = drawStellar(layer, m, step, t);
-    volume?.state({value:step,phase:t});
+    paintSurface();
+    if (cloud) {
+      if (step < 2 && !cloud.hasAttribute('href')) cloud.setAttribute('href', u('/renders/reel-cycles/nebula.webp'));
+      cloud.setAttribute('visibility', step < 2 ? 'visible' : 'hidden');
+    }
     $$<HTMLButtonElement>('[data-star-step]', root).forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.starStep) === step)));
   };
   const setPlaying = (on: boolean) => {
@@ -84,7 +132,7 @@ export function initStars(): void {
   });
   $('[data-star-next]', root)?.addEventListener('click', () => { automatic?.manual(); next(); });
   $('[data-star-reset]', root)?.addEventListener('click', () => { automatic?.manual(); stop(); step = 2; t = 1; paint(); });
-  window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted){automatic?.dispose();volume?.dispose();}});
+  window.addEventListener('pagehide',(event)=>{stop();if(!event.persisted){automatic?.dispose();}});
   reduced.addEventListener('change', () => { if (reduced.matches) { stop(); t = 1; paint(); } setPlaying(playing); });
   const q = getParam('massa');
   if (q) slider.value = String(clampMass(Number(q.replace(',', '.'))));

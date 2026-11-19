@@ -2,7 +2,7 @@ import { motionPreference } from '../motion-preference';
 import { PLANCK, ageAtRedshift, ageNow, cmbTemperature, comovingMpc, densityFractions, lookbackGyr, observedWavelengthNm, zAcceleration } from '../../lib/cosmology';
 import { clear, duration, fmt, fmtAuto, initGuess, lightYears, q, qa, reduced, svg } from './common';
 import { getParam, setParams } from '../../lib/url-state';
-import type { Tempo3D } from './tempo3d';
+import { mountTempo3D, type Tempo3D } from './tempo3d';
 
 const Z_MAX = 1100;
 const LN = Math.log(1 + Z_MAX);
@@ -102,18 +102,17 @@ export function initTempo(root: HTMLElement): void {
   const note3d = root.querySelector<HTMLElement>('[data-t-3d-note]');
   let view3d: Tempo3D | null = null;
   const use2d = () => { if (host3d) host3d.hidden = true; if (note3d) note3d.hidden = true; winsG.removeAttribute('display'); svgEl.setAttribute('viewBox', '0 0 640 420'); };
-  if (host3d && !reduced()) {
-    import('./tempo3d').then((m) => m.mountTempo3D(host3d, reduced)).then((v) => {
-      if (!v) {use2d();return;}
-      view3d = v; host3d.hidden = false; if (note3d) note3d.hidden = false;
-      winsG.setAttribute('display', 'none'); svgEl.setAttribute('viewBox', '0 0 640 134');
-      host3d.addEventListener('obs3d:lost', () => { view3d?.dispose(); view3d = null; use2d(); }, { once: true });
-      render();
-    }).catch(() => use2d());
-  }
-  motionPreference.addEventListener('change', () => {
-    if (motionPreference.matches) { view3d?.dispose(); view3d = null; use2d(); }
-  });
+  const syncView = () => {
+    if (!host3d) use2d();
+    else {
+      host3d.hidden = false;
+      view3d ??= mountTempo3D(host3d, reduced);
+      if (note3d) note3d.hidden = false;
+      winsG.setAttribute('display', reduced() ? 'inline' : 'none');
+      svgEl.setAttribute('viewBox', reduced() ? '0 0 640 420' : '0 0 640 134');
+    }
+    render();
+  };
   let exact: number | null = null;
   const render = (): void => {
     const z = exact ?? zOf(Number(range.value));
@@ -158,7 +157,7 @@ export function initTempo(root: HTMLElement): void {
     capR.textContent = z < 0.005 ? 'luz vermelha · 656 nm' : `chega com ${lam < 1e3 ? `${Math.round(lam)} nm` : lam < 1e6 ? `${fmt(lam / 1e3, lam < 1e4 ? 1 : 0)} µm` : `${fmt(lam / 1e6, 1)} mm`}`;
     capR2.textContent = z < 0.005 ? '' : visibleNow ? 'ainda visível, um pouco mais avermelhada' : `${bandShort(lam)} · invisível aos olhos`;
     note.textContent = z < 0.005 ? 'Luz de agora: nada cresceu no caminho.' : `As separações entre pontos de referência e o comprimento de onda cresceram ×${fmtAuto(1 + z)} (na tela, ×${fmt(grow, 1)}).`;
-    if (view3d) { view3d.set(z, lam); if (note3d) note3d.textContent = z < 0.005 ? 'Luz de agora: escolha um ponto de parada para ver a luz viajar enquanto o espaço cresce.' : `${capR.textContent}${capR2.textContent ? ' · ' + capR2.textContent : ''}. ${note.textContent}`; }
+    if (view3d) { view3d.set(z, lam); if (note3d) note3d.textContent = z < 0.005 ? 'Luz de agora: escolha um ponto de parada para ver a luz viajar enquanto o espaço cresce.' : `${capR.textContent}${capR2.textContent ? ' · ' + capR2.textContent : ''}. Desde a emissão, o comprimento de onda cresceu ×${fmtAuto(1 + z)}.`; }
 
     if (z >= 1000) root.dispatchEvent(new CustomEvent('cosmos:badge', { bubbles: true, detail: { id: 'luz-antiga' } }));
     const ep = epochFor(z);
@@ -180,6 +179,10 @@ export function initTempo(root: HTMLElement): void {
     if (reduced() || from === to) { exact = z; range.value = String(to); render(); return; }
     const t0 = performance.now(), dur = 700 + Math.min(900, Math.abs(to - from) * 1.4);
     const step = (now: number) => {
+      const rect = root.getBoundingClientRect();
+      if (document.hidden || reduced() || rect.bottom <= 0 || rect.top >= innerHeight) {
+        exact = z; range.value = String(to); render(); return;
+      }
       const k = Math.min(1, (now - t0) / dur), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
       range.value = String(Math.round(from + (to - from) * e));
       exact = k >= 1 ? z : null;
@@ -193,5 +196,12 @@ export function initTempo(root: HTMLElement): void {
   if (Number.isFinite(fromUrl) && fromUrl > 0 && fromUrl <= Z_MAX) { exact = fromUrl; range.value = String(pOf(fromUrl)); }
   initGuess(root, { unlocked: Number.isFinite(fromUrl) && fromUrl > 0 });
   qa<HTMLButtonElement>(root, '[data-t-go]').forEach((b) => b.addEventListener('click', () => { travelTo(Number(b.dataset.tGo)); range.focus({ preventScroll: true }); }));
-  render();
+  motionPreference.addEventListener('change', syncView);
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    cancelAnimationFrame(tween);
+    motionPreference.removeEventListener('change', syncView);
+    view3d?.dispose();
+  });
+  syncView();
 }

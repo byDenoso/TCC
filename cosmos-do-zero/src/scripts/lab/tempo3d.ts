@@ -1,48 +1,93 @@
-import * as THREE from 'three';
-import { observeScene,whenNear,type MountedScene,type Exhibit } from '../visual/runtime';
-import { createGalaxyFactory } from '../visual/galaxy';
-import {prepareEmissionGalaxies,emissionSize,emissionReady} from '../visual/galaxy-emission';
+import { plate, galaxy as drawGalaxy } from './plate';
 import { PLANCK } from '../../lib/cosmology';
-import { photonTable,photonAt } from '../../lib/photon';
-import { animator,svg } from './common';
-export interface Tempo3D { set(z:number,lamNm:number):void; dispose():void }
+import { photonAt, photonTable } from '../../lib/photon';
+import { animator, svg } from './common';
 
-/** Caminho FLRW calculado por evento; distâncias projetadas comprimidas, corpos ligados constantes. */
-export async function mountTempo3D(host:HTMLElement,reduced:()=>boolean):Promise<Tempo3D|null>{
- let z=0,phase=0,playing=false,table=photonTable(0,PLANCK),view:MountedScene|null=null;
- host.querySelectorAll<HTMLElement>('.obs3d-label,.obs3d-tag').forEach(e=>e.hidden=true);
- const fallback=svg('svg',{viewBox:'0 0 640 400',role:'img','aria-label':'A luz percorre o espaço enquanto as distâncias crescem. Trajetória calculada no modelo FLRW, distâncias comprimidas na imagem.'},host);
- const source=svg('ellipse',{rx:15,ry:7,fill:'#b4a184'},fallback),us=svg('ellipse',{cx:490,cy:210,rx:15,ry:7,fill:'#779bc5'},fallback),light=svg('circle',{r:5,fill:'#f8bc75'},fallback);
- void us;
- const make=():Exhibit=>{
-  const size=host.dataset.cosmosQuality==='low'&&emissionReady(512)?512:initialSize,galaxy=createGalaxyFactory(size);
-  const group=new THREE.Group(),usGalaxy=galaxy(29),srcGalaxy=galaxy(19),photon=new THREE.Mesh(new THREE.SphereGeometry(.045,12,8),new THREE.MeshBasicMaterial({color:0xf4c99b}));
-  usGalaxy.scale.setScalar(.85);srcGalaxy.scale.setScalar(.85);usGalaxy.position.x=1.85;
-  const field=Array.from({length:9},(_,i)=>{const g=galaxy(22+i,i%3===0?'elliptical':i%5===0?'irregular':'spiral',true);g.scale.setScalar(.32);group.add(g);return g;});
-  const gas=new THREE.Mesh(new THREE.SphereGeometry(.5,32,16),new THREE.ShaderMaterial({transparent:true,depthWrite:false,toneMapped:false,vertexShader:'varying vec3 n;varying vec3 p;void main(){vec4 v=modelViewMatrix*vec4(position,1.);n=normalize(normalMatrix*normal);p=v.xyz;gl_Position=projectionMatrix*v;}',fragmentShader:'varying vec3 n;varying vec3 p;void main(){float mu=max(0.,dot(normalize(n),normalize(-p)));float a=pow(mu,2.)*.28;gl_FragColor=vec4(.75,.42,.24,a);}'}));
-  group.add(usGalaxy,srcGalaxy,photon,gas);
-  const srcLabel={text:'galáxia: emissão',position:srcGalaxy.position,visible:()=>z>.005};
-  return {group,...galaxy.presentation(group),camera:[0,4.8,7.4],labels:[{text:'nós · hoje',position:usGalaxy.position},srcLabel],update(){
-   const state=photonAt(table,phase),scale=state.a**.18;
-   srcGalaxy.position.set(1.85-3.7*scale,0,0);photon.position.set(1.85-3.7*state.chi*scale,0,0);gas.position.copy(srcGalaxy.position);
-   srcGalaxy.visible=z>.005&&z<20;gas.visible=z>=20;srcLabel.text=z<20?'galáxia: emissão':'região de gás: emissão';
-   field.forEach((g,i)=>{g.position.set((Math.sin(i*5)*3.4-1.85)*scale+1.85,Math.cos(i*3)*.7,Math.cos(i*7)*2*scale);g.visible=1/state.a-1<20;});
-   photon.visible=z>.005;
-  }};
- };
- const paint=()=>{const state=photonAt(table,phase),s=state.a**.18;source.style.display=z<.005?'none':'';light.style.display=z<.005?'none':'';source.setAttribute('cx',String(490-390*s));source.setAttribute('cy','210');light.setAttribute('cx',String(490-390*s*state.chi));light.setAttribute('cy','210');view?.state({value:z,phase});};
- const button=host.querySelector<HTMLButtonElement>('[data-3d-play]');
- const sync=()=>{button?.setAttribute('aria-pressed',String(playing));if(button){button.hidden=z<.005;button.querySelector('[data-3d-play-label]')!.textContent=playing?'Pausar':'Continuar';button.firstElementChild!.textContent=playing?'❚❚':'▶';}};
- const anim=animator(host,dt=>{phase+=dt/5200;if(phase>1.25)phase=0;paint();return playing;});
- const autoPause=()=>{playing=false;sync();};host.addEventListener('cosmos:autopause',autoPause);
- const click=()=>{if(playing){anim.stop();playing=false;}else{anim.start();playing=anim.running();}sync();};button?.addEventListener('click',click);
- const initialSize=emissionSize(host.closest<HTMLElement>('.obs-viz')?.clientWidth??host.clientWidth,host.dataset.cosmosQuality==='low'?'low':'auto');
- if(!await whenNear(host.closest<HTMLElement>('.obs-viz')??host)){fallback.remove();anim.dispose();button?.removeEventListener('click',click);host.removeEventListener('cosmos:autopause',autoPause);return null;}
- try{await prepareEmissionGalaxies(initialSize);}catch{fallback.remove();anim.dispose();button?.removeEventListener('click',click);host.removeEventListener('cosmos:autopause',autoPause);return null;}
- view=host.dataset.visualFallback==='true'?null:observeScene(host,make);
- const fail=()=>{anim.stop();playing=false;sync();host.dispatchEvent(new CustomEvent('obs3d:lost',{bubbles:true}));};
- host.addEventListener('cosmos:contextlost',fail);host.addEventListener('cosmos:unavailable',fail);
- const dispose=()=>{anim.dispose();view?.dispose();button?.removeEventListener('click',click);host.removeEventListener('cosmos:autopause',autoPause);host.removeEventListener('cosmos:contextlost',fail);host.removeEventListener('cosmos:unavailable',fail);fallback.remove();};
- window.addEventListener('pagehide',(event)=>{if(event.persisted){anim.stop();playing=false;sync();}else dispose();});
- return {set(next){if(next===z){paint();return;}z=next;table=photonTable(z,PLANCK);phase=reduced()?1:0;playing=!reduced()&&z>=.005;anim.stop();if(playing){anim.start();playing=anim.running();}paint();sync();},dispose};
+export interface Tempo3D { set(z: number, lamNm: number): void; dispose(): void }
+
+/** Projeção do caminho radial FLRW. A potência comprime apenas as distâncias desenhadas. */
+export function mountTempo3D(host: HTMLElement, reduced: () => boolean): Tempo3D {
+  let z = 0, phase = 0, table = photonTable(0, PLANCK);
+  const scene = svg('svg', { viewBox: '0 0 640 400', role: 'img',
+    'aria-label': 'Percurso da luz entre a região emissora e a Via Láctea durante a expansão.' }, host);
+  const source = svg('g', {}, scene);
+  const galaxy = svg('ellipse', { rx: 20, ry: 9, fill: '#d4b59b' }, source);
+  const gas = svg('circle', { r: 24, fill: '#cf835e', opacity: .65 }, source);
+  const label = svg('text', { y: -36, 'text-anchor': 'middle', fill: '#ffe3c3' }, source);
+  svg('ellipse', { cx: 490, cy: 210, rx: 20, ry: 9, fill: '#89acdc' }, scene);
+  svg('text', { x: 490, y: 254, 'text-anchor': 'middle', fill: '#cbddff' }, scene, 'nós · hoje');
+  const ray = svg('line', { x2: 490, y1: 210, y2: 210, stroke: '#ffbd87', 'stroke-dasharray': '3 6' }, scene);
+  const light = svg('circle', { cy: 210, r: 5, fill: '#fff1a6' }, scene);
+  const button = host.querySelector<HTMLButtonElement>('[data-3d-play]')!;
+  let sourceX = 0, lightX = 0, localScale = 1, observedNm = 656.28;
+  for (const body of [galaxy, gas, light, scene.querySelector('ellipse[cx]')!]) body.setAttribute('data-lab-body', '');
+  const surface = plate(scene, ['spiral','barred','plasma'], (ctx, img) => {
+    drawGalaxy(ctx,img('barred'),490,210,39,-.24);
+    if (z < .005) return;
+    if (z < 20) drawGalaxy(ctx,img('spiral'),sourceX,210,40,.23);
+    else ctx.drawImage(img('plasma'),sourceX-42,179,84,62);
+    // Wavelength along this geodesic tracks a(t); compress the displayed crest spacing.
+    const wavelength = observedNm * localScale;
+    const period = 8 * (localScale * (1+z)) ** .22;
+    ctx.save();
+    ctx.strokeStyle = wavelength < 750 ? '#ff987e' : '#c0cede';
+    if (wavelength >= 750) ctx.setLineDash([3,3]);
+    ctx.beginPath();
+    for (let d = 0; d <= Math.min(74, lightX-sourceX); d++) {
+      const y = 210 + 5*Math.sin(d*2*Math.PI/period);
+      if (d === 0) ctx.moveTo(lightX,y); else ctx.lineTo(lightX-d,y);
+    }
+    ctx.stroke(); ctx.restore();
+    const glow = ctx.createRadialGradient(lightX,210,1,lightX,210,10);
+    glow.addColorStop(0,'#fff5c7'); glow.addColorStop(.34,'#ffd585'); glow.addColorStop(1,'rgba(246,175,81,0)');
+    ctx.fillStyle = glow; ctx.fillRect(lightX-10,200,20,20);
+  });
+  const paint = () => {
+    const { a, chi } = photonAt(table, phase);
+    const span = 390 * a ** .18;
+    localScale = a; sourceX = 490 - span; lightX = 490 - span * chi; surface.refresh();
+    source.setAttribute('transform', `translate(${490 - span} 210)`);
+    ray.setAttribute('x1', String(490 - span));
+    light.setAttribute('cx', String(490 - span * chi));
+  };
+  const anim = animator(host, dt => {
+    phase += dt / 5200;
+    if (phase > 1.25) phase = 0;
+    paint();
+    return true;
+  });
+  const sync = () => {
+    button.setAttribute('aria-pressed', String(anim.running()));
+    button.querySelector('[data-3d-play-label]')!.textContent = reduced() ? 'Avançar percurso' : anim.running() ? 'Pausar' : 'Continuar';
+    button.firstElementChild!.textContent = anim.running() ? '❚❚' : '▶';
+  };
+  const click = () => { if (reduced()) { phase = phase >= 1 ? 0 : Math.min(1,phase+.25); paint(); } else if (anim.running()) anim.stop(); else anim.start(); sync(); };
+  button.addEventListener('click', click);
+  host.addEventListener('cosmos:autopause', sync);
+  const set = (next: number, lamNm: number) => {
+    observedNm = lamNm;
+    if (next !== z) {
+      z = next;
+      table = photonTable(z, PLANCK);
+      phase = reduced() ? 1 : 0;
+      anim.stop();
+      if (!reduced() && z >= .005) anim.start();
+    }
+    const now = z < .005;
+    for (const node of [source, ray, light]) node.style.display = now ? 'none' : '';
+    galaxy.style.display = z < 20 ? '' : 'none';
+    gas.style.display = z >= 20 ? '' : 'none';
+    label.textContent = z >= 20 ? 'região de gás · emissão' : 'galáxia · emissão';
+    button.hidden = now;
+    paint();
+    sync();
+  };
+  const dispose = () => {
+    anim.dispose(); surface.dispose();
+    button.removeEventListener('click', click);
+    host.removeEventListener('cosmos:autopause', sync);
+    scene.remove();
+  };
+  set(0, 656.28);
+  return { set, dispose };
 }

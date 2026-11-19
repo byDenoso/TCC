@@ -1,3 +1,4 @@
+import { galaxyGroup, phaseControl } from './lab/plate';
 import {
   EXPANSION_CHARTS, EXPANSION_DEFAULT_Z, EXPANSION_FIELDS, EXPANSION_PRESETS, EXPANSION_READINGS,
   expansionCurvature, expansionHistory, expansionNumber, expansionPlotPath, expansionPlotPoint, expansionPoint,
@@ -25,6 +26,24 @@ export function initExpansionExhibit(): void {
     const status = root.querySelector<HTMLElement>('[data-expansion-status]');
     let model: ExpansionModel = { ...reference };
 
+    const stage = root.querySelector<SVGSVGElement>('[data-expansion-group]')!;
+    const setSpacing = galaxyGroup(stage);
+    let history = expansionHistory(model);
+    let lookback = expansionPoint(zInput.valueAsNumber, model).lookback;
+    const advance = (deltaGyr: number) => {
+      if (lookback <= 0) lookback = history[history.length-1].lookback;
+      lookback = Math.max(0, lookback-deltaGyr);
+      let i = 1;
+      while (i < history.length-1 && history[i].lookback < lookback) i++;
+      const left = history[i-1], right = history[i];
+      const fraction = (lookback-left.lookback)/(right.lookback-left.lookback);
+      const previous = zInput.value;
+      zInput.valueAsNumber = left.z + fraction*(right.z-left.z);
+      if (zInput.value !== previous) render();
+      return lookback > 0;
+    };
+    const stop = phaseControl(stage, root.querySelector<HTMLButtonElement>('[data-expansion-play]')!,
+      ms => advance(ms*.001), () => advance(.5));
     const setText = (selector: string, value: string) => {
       const node = root.querySelector<HTMLElement>(selector);
       if (node) node.textContent = value;
@@ -33,6 +52,7 @@ export function initExpansionExhibit(): void {
     const render = (announce = false): void => {
       const z = zInput.valueAsNumber;
       const point = expansionPoint(z, model);
+      setSpacing(point.a);
       const ref = expansionPoint(z, reference);
       const zText = expansionNumber(z, 2);
       setText('[data-expansion-value="z"]', `z = ${zText}`);
@@ -61,8 +81,9 @@ export function initExpansionExhibit(): void {
       }
     };
 
-    function renderModel(announce = false): void {
-      const history = expansionHistory(model);
+    const renderModel = (announce = false): void => {
+      stop(); history = expansionHistory(model);
+      lookback = expansionPoint(zInput.valueAsNumber, model).lookback;
       for (const { chart, node } of plots) {
         node?.querySelector('[data-expansion-curve]')?.setAttribute('d', expansionPlotPath(chart, history));
       }
@@ -80,7 +101,7 @@ export function initExpansionExhibit(): void {
         button.setAttribute('aria-pressed', String(inputs.every(({ key }) => model[key] === preset[key])));
       }
       render(announce);
-    }
+    };
 
     function applyPreset(preset: ExpansionModel): void {
       model = { ...preset };
@@ -97,7 +118,9 @@ export function initExpansionExhibit(): void {
       });
       input?.addEventListener('change', () => render(true));
     }
-    zInput.addEventListener('input', () => render());
+    zInput.addEventListener('input', () => {
+      stop(); lookback = expansionPoint(zInput.valueAsNumber, model).lookback; render();
+    });
     zInput.addEventListener('change', () => render(true));
     for (const button of presets) {
       const preset = EXPANSION_PRESETS[button.dataset.expansionPreset as keyof typeof EXPANSION_PRESETS];

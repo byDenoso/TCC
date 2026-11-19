@@ -1,0 +1,27 @@
+{
+  "assets": {
+    "amber.webp": "Granulação solar · paleta âmbar",
+    "red.webp": "Granulação solar · paleta vermelha",
+    "blue.webp": "Granulação solar · paleta azul",
+    "white.webp": "Granulação solar · paleta branca"
+  },
+  "source": "../granulation.png",
+  "author": "Cosmos do Zero",
+  "license": "CC0-1.0",
+  "processing": "Projeção esférica, escurecimento de bordo e paletas ilustrativas. Mesma textura de granulação ampliada, sem escala de tamanho ou cor observacional.",
+  "cloud": {
+    "file": "cloud.webp",
+    "source": "../orion-detail.webp",
+    "original": "https://esahubble.org/images/heic0601a/",
+    "credit": "NASA, ESA, M. Robberto (Space Telescope Science Institute/ESA) and the Hubble Space Telescope Orion Treasury Project Team",
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "processing": "Recorte com transparência radial para ilustrar volumes de gás. As camadas e os movimentos são artísticos."
+  },
+  "simulated": {
+    "license": "CC0-1.0",
+    "author": "Cosmos do Zero",
+    "ejecta.webp": "Camada emissiva ilustrativa com borda perturbada e filamentos em várias escalas.",
+    "disk.webp": "Anel de acreção ilustrativo com filamentos espirais e gradiente radial de cor."
+  }
+}

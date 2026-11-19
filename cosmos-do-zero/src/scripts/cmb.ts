@@ -1,3 +1,4 @@
+import { cmbSphere } from './cmb-sphere';
 import { cmbTemperature, inCmbMap } from '../lib/cmb-map';
 
 export function initCmb(): void {
@@ -18,11 +19,13 @@ export function initCmb(): void {
     poster.hidden = true;
   }).catch(() => { /* Keep the HTML map and its controls available. */ });
 
+  const pointGlobe = cmbSphere(root!.querySelector('[data-cmb-sphere]'), poster);
   let xPosition = 0.5;
   let yPosition = 0.5;
   const format = new Intl.NumberFormat('pt-BR');
   const show = (x: number, y: number) => {
     if (!inCmbMap(x, y) || (!probe.hidden && x === xPosition && y === yPosition)) return;
+    pointGlobe(x,y);
     xPosition = x;
     yPosition = y;
     probe.hidden = false;

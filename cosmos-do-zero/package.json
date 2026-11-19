@@ -16,34 +16,27 @@
     "test:e2e": "node tests/e2e.mjs",
     "serve": "node scripts/serve-dist.mjs",
     "test:browsers": "node tests/browser-smoke.mjs",
-    "test:webgpu": "node tests/verify-lifecycle-unhandled.mjs && node tests/webgpu-fallback.mjs",
     "test:renders": "node tests/renders.mjs && node tests/scale-visual.mjs",
     "test:scales": "node tests/scale-journey.mjs",
     "test:saturn": "node tests/saturn.mjs",
     "test:pages": "node tests/pages-base.mjs",
-    "test:graphics": "node tests/graphics.mjs && node tests/autoplay-visible.mjs && node tests/dynamic-experience.mjs",
     "test:hero": "node tests/hero-blue.mjs",
     "test:budget": "node tests/first-visit-budget.mjs",
-    "test:world-frame": "node tests/world-frame-render.mjs",
-    "test:cinematic-effects": "node tests/cinematic-effects.mjs",
-    "test:quality-calibration": "node tests/quality-calibration.mjs",
-    "test:gpu-quarantine": "node tests/gpu-quarantine.mjs",
     "test:autoplay": "node tests/autoplay-visible.mjs",
     "test:motion": "node tests/motion-lab.mjs",
     "test:cinema": "node tests/story-cinema.mjs",
     "test:experience": "node tests/ambient-motion.mjs && node tests/beginner-flow.mjs && node tests/visual-fallback.mjs",
-    "test:dynamic": "node tests/dynamic-experience.mjs"
+    "test:dynamic": "node tests/dynamic-experience.mjs",
+    "test:assets": "node tests/assets-guided.mjs",
+    "test:depth": "node tests/micro-depth.mjs && node tests/motion-lab-canvas.mjs && node tests/lab-plates.mjs && node tests/lesson-depth.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
     "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/inter-tight": "^5.3.0",
-    "@types/three": "0.187.0",
     "astro": "^7.3.8",
-    "gsap": "3.13.0",
-    "playcanvas": "2.24.1",
-    "three": "0.187.0"
+    "gsap": "3.13.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",

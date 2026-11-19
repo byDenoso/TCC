@@ -1,3 +1,4 @@
+import { plate, galaxy, galaxies } from './plate';
 import { C_KMS, HALPHA_NM, fitHubble } from '../../lib/cosmology';
 import { clear, fmt, fmtAuto, initGuess, q, rng, svg } from './common';
 
@@ -20,6 +21,10 @@ export function initHubble(root: HTMLElement): void {
   const revealBtn = q<HTMLButtonElement>(root, '[data-h-reveal]');
   let seed = 11, gals: Gal[] = [], trueH0 = 70, selected: Gal | null = null, revealed = false, lastCount = 0;
 
+  const overlays = svg('g', {}, sky);
+  const scene = plate(sky, [...galaxies], (ctx, img) => {
+    for (const g of gals) galaxy(ctx, img(galaxies[g.id%3]), g.x, g.y, 24 - g.d / 40, g.id*.46);
+  }, overlays);
   const make = (): void => {
     const r = rng(seed);
     trueH0 = 66 + 8 * r.next();
@@ -33,20 +38,20 @@ export function initHubble(root: HTMLElement): void {
       gals.push({ id: gals.length + 1, x, y, d, v, dm: d * (1 + SIGMA_D * r.gauss()), done: false });
     }
     selected = null; revealed = false;
-    drawSky(); render();
+    drawSky(); scene.refresh(); render();
   };
 
   const drawSky = (): void => {
-    clear(sky);
-    const defs = svg('defs', {}, sky);
+    clear(overlays);
+    const defs = svg('defs', {}, overlays);
     const g = svg('radialGradient', { id: 'h-glow' }, defs);
     svg('stop', { offset: '0', style: 'stop-color: var(--glow-core)' }, g); svg('stop', { offset: '.4', style: 'stop-color: var(--glow-mid); stop-opacity: .55' }, g); svg('stop', { offset: '1', style: 'stop-color: var(--glow-mid); stop-opacity: 0' }, g);
     const r = rng(seed + 99);
-    for (let i = 0; i < 70; i++) svg('circle', { cx: r.next() * W, cy: r.next() * H, r: 0.5 + r.next() * 0.9, class: 'h-star' }, sky);
+    for (let i = 0; i < 70; i++) svg('circle', { cx: r.next() * W, cy: r.next() * H, r: 0.5 + r.next() * 0.9, class: 'h-star' }, overlays);
     for (const gal of gals) {
-      const n = svg('g', { class: 'h-gal', transform: `translate(${gal.x.toFixed(1)} ${gal.y.toFixed(1)})`, tabindex: 0, role: 'button', 'aria-label': `Galáxia ${gal.id}` }, sky);
-      svg('circle', { r: 22, fill: 'url(#h-glow)' }, n);
-      svg('ellipse', { rx: 11, ry: 4.5, class: 'h-body', transform: `rotate(${(gal.id * 37) % 180})` }, n);
+      const n = svg('g', { class: 'h-gal', transform: `translate(${gal.x.toFixed(1)} ${gal.y.toFixed(1)})`, tabindex: 0, role: 'button', 'aria-label': `Galáxia ${gal.id}` }, overlays);
+      svg('circle', { r: 22, 'data-lab-body':'', fill: 'url(#h-glow)' }, n);
+      svg('ellipse', { rx: 11, 'data-lab-body':'', ry: 4.5, class: 'h-body', transform: `rotate(${(gal.id * 37) % 180})` }, n);
       svg('circle', { r: 17, class: 'h-ring' }, n);
       svg('text', { y: 34, 'text-anchor': 'middle', class: 'obs-cap small' }, n, String(gal.id));
       n.addEventListener('click', () => select(gal));

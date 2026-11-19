@@ -1,0 +1,3113 @@
+{
+  "render": {
+    "worlds": [
+      "mercurio",
+      "venus",
+      "terra",
+      "marte",
+      "jupiter",
+      "saturno",
+      "urano",
+      "netuno",
+      "lua",
+      "saturno-globo",
+      "terra-solo",
+      "terra-nuvens",
+      "terra-ar"
+    ],
+    "size": 320,
+    "rows": 4,
+    "renderer": "Cycles",
+    "blender": "5.3.0",
+    "device": "CPU",
+    "threads": 4,
+    "samples": 4,
+    "stepDegrees": 10
+  },
+  "atlases": [
+    {
+      "file": "atlases/00.webp",
+      "sourcePngSha256": "e9aea5536b1639f26905010c63d1eecd1cc8396caf0a240ee6adc81011c792b0",
+      "source": "atlas-0.png",
+      "sha256": "a0397acd28873214c68d07bf3a6af4c6aeb5811cc7b55d524964504c747d037c",
+      "bytes": 303470,
+      "firstDegrees": 0
+    },
+    {
+      "file": "atlases/01.webp",
+      "sourcePngSha256": "ecc32cc464ff10824b44630453ec204113ee659ae84782e6d47d488c4be402bc",
+      "source": "atlas-1.png",
+      "sha256": "eacac8ad9d28de6627daa3c5f015f377281126c52fe92c8f174c62698a63db05",
+      "bytes": 299430,
+      "firstDegrees": 40
+    },
+    {
+      "file": "atlases/02.webp",
+      "sourcePngSha256": "165b0798f70f79b69193380c5cf02fc75f34579f71f888da762913371a69e0b9",
+      "source": "atlas-2.png",
+      "sha256": "b379ad5356f8bc80720c313271f41b8fe7fc8965e5ccddd2424f1a285d877a3a",
+      "bytes": 302256,
+      "firstDegrees": 80
+    },
+    {
+      "file": "atlases/03.webp",
+      "sourcePngSha256": "eba051a7ea6afddecc75d04409a8837d491aaffb6812823cdc1b50f6b0120b3d",
+      "source": "atlas-3.png",
+      "sha256": "dd544976fcf550250decb379329287e6de6f2d14e1130d6be1d154363bd19854",
+      "bytes": 316940,
+      "firstDegrees": 120
+    },
+    {
+      "file": "atlases/04.webp",
+      "sourcePngSha256": "515799359940c9323bc0f9d5b2ab91b81416fd93f36795cac9fd7960a7e37c42",
+      "source": "atlas-4.png",
+      "sha256": "cfdefc700569543a83e05bf610dcc1621c31357bbe60a009fdb2ca75471705eb",
+      "bytes": 321864,
+      "firstDegrees": 160
+    },
+    {
+      "file": "atlases/05.webp",
+      "sourcePngSha256": "d1f2eaf03eda9794b0deac933ea82c1e50f4784357069badb5bfcb7a42b39ed3",
+      "source": "atlas-5.png",
+      "sha256": "63d18c024fa9e43275c9e6cb0d5b6a18c416b0d09ff6918b45e454dde8f378d0",
+      "bytes": 329150,
+      "firstDegrees": 200
+    },
+    {
+      "file": "atlases/06.webp",
+      "sourcePngSha256": "b4ac9f28611d62f355eeda3b5eaf9b8512bd6208cc1a86f7eee36cf0916bfcad",
+      "source": "atlas-6.png",
+      "sha256": "1862447662a1365d57add02445b16827a1c82bfb093105c0fd21590081cdddde",
+      "bytes": 324632,
+      "firstDegrees": 240
+    },
+    {
+      "file": "atlases/07.webp",
+      "sourcePngSha256": "23c2d138fb12743600512008eef5a07c55d0b15f9b1680edf150ad9fb849aef6",
+      "source": "atlas-7.png",
+      "sha256": "0392991576112ef8c1754aa9e994a8711ea107b8808de3ef92c8684c33a430dc",
+      "bytes": 317170,
+      "firstDegrees": 280
+    },
+    {
+      "file": "atlases/08.webp",
+      "sourcePngSha256": "469d233fe938badd98721dfa109301a99315cefc8b497b98838cfbb1b7b883bb",
+      "source": "atlas-8.png",
+      "sha256": "9004495b6fcc3a770f6e23816c8fcf0b39ca4916c230470af6dbcad5acc210ac",
+      "bytes": 310736,
+      "firstDegrees": 320
+    }
+  ],
+  "sources": [
+    {
+      "world": "terra",
+      "original": "assets/source/observed/earth-bmng-200407.jpg",
+      "source_url": "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/",
+      "credit": "NASA Earth Observatory / Blue Marble: Next Generation / MODIS",
+      "status": "Observed monthly composite, July2004, not current weather",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/terra.jpg",
+      "sha256": "6bd138fc923a381c3fa7a77ae80bf9ef376a02ec25432ba3eb5cbb16f4167cf7",
+      "originalSha256": "f55226d46d27e05511f2118dc6aa24f5dbf9b6b2cddc87cc6e0e7dd067c00b11",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "lua",
+      "original": "assets/source/observed/moon-lroc-color-2025.jpg",
+      "source_url": "https://svs.gsfc.nasa.gov/4720/",
+      "credit": "NASA Scientific Visualization Studio / Ernie Wright (USRA), Noah Petro (NASA/GSFC); LRO/LOLA/LROC/ASU",
+      "status": "Observed LROC mosaic, December2025 rendering-optimized colors; polar gaps filled by source authors",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/lua.jpg",
+      "sha256": "4f751f4af594a75021e63cc503bc334e3a71d680fe7d8679ae268b1c2f703679",
+      "originalSha256": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "downloadUrl": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_2k.jpg"
+    },
+    {
+      "world": "jupiter",
+      "original": "assets/source/observed/jupiter-hubble-opal-2015.tif",
+      "source_url": "https://svs.gsfc.nasa.gov/12021/",
+      "credit": "NASA Goddard Space Flight Center / Space Telescope Science Institute; Amy Simon, Michael Wong, Glenn Orton",
+      "status": "Hubble WFC3 OPAL observed global color composite, 2015; unobserved polar strips filled visually, not data",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/jupiter.jpg",
+      "sha256": "2187fb79a0f92b4952dcf16433760550a556d17511fd480903777bc68b4efc6f",
+      "originalSha256": "c3b915227ef88899a07a2b62584d9303d77d3491b9bb7de8824fb6df4a52f7b2",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "marte",
+      "original": "assets/source/observed/mars-nasa.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/mars/",
+      "credit": "NASA/Jet Propulsion Laboratory & Caltech; Viking/USGS",
+      "status": "Viking composite texture processed at USGS",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/marte.jpg",
+      "sha256": "2bca94e9ab668026fee51d6137d422d7056da83055042c8177f1d23c3300fab8",
+      "originalSha256": "12ec6bf02ebd42a246edc778cb2ce8c595b4d9f0892badf0bfff8abb2303c780",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "saturno",
+      "original": "assets/source/observed/saturn-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/saturn/",
+      "credit": "JPL/Caltech planetary-map collection",
+      "status": "Fictional/illustrative map as classified by NASA",
+      "modification": "Illustrative NASA map desaturated for cream atmospheric appearance; resize and recompression; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/saturno.jpg",
+      "sha256": "1c00a57fd208ae28b994363854d1930e91a72ef28e96945f483d681d2d558aae",
+      "originalSha256": "d959a239e3d87630daf08e2a688dcbf315fe01b1fd474e55522770108f40aca7",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "netuno",
+      "original": "assets/source/observed/neptune-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/neptune/",
+      "credit": "Don Davis & JPL/Caltech",
+      "status": "Fictional/illustrative map as classified by NASA; not an observed globe map",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "path": "assets/source/solar-materials/netuno.jpg",
+      "sha256": "f6e327aa909561a1eb098d906c633eaf3175c830bcf45a72c788c67f5c7e84be",
+      "originalSha256": "e9bb2b7bcfb98d3f1adc6f2e20e833a00c11e9677238d8a00ae7431214ca70aa",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "venus",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original illustrative optical cloud layer, no radar surface",
+      "source": "assets/source/prepare_solar_materials.py",
+      "path": "assets/source/solar-materials/venus.jpg",
+      "sha256": "96616e8720921976ab07d2dde0f029e2d03d61e0fbb37609a5f75dddf9e01e40",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "world": "urano",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original illustrative atmospheric colors, not observed global texture",
+      "source": "assets/source/prepare_solar_materials.py",
+      "path": "assets/source/solar-materials/urano.jpg",
+      "sha256": "2d1de43e2c69c2680ca806759ba69cddafad83ee0f77b96e58ff974793e242fd",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "world": "terra-clouds",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Original weather/cloud illustration, not satellite weather data",
+      "source": "assets/source/prepare_solar_materials.py",
+      "path": "assets/source/solar-materials/terra-clouds.png",
+      "sha256": "a05ae77f8a0e00ff00f6ed8deb64ae06c7bc15bfaff06575663a1211769d089b",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "world": "terra-roughness",
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "status": "Visual land/ocean roughness inferred from color composition; not a scientific surface mask",
+      "source": "assets/source/prepare_solar_materials.py",
+      "path": "assets/source/solar-materials/terra-roughness.png",
+      "sha256": "b6f8fa9583949398faf38c8ec72dcd1533fcae96bceec8ccba7e0566abf8ca8d",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "world": "mercurio",
+      "original": "assets/source/observed/mercury-messenger-enhanced.jpg",
+      "source_url": "https://science.nasa.gov/resource/enhanced-color-mercury-map/",
+      "credit": "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
+      "status": "MESSENGER PIA17386 enhanced-color global map; not human-eye colors",
+      "modification": "Resize and recompression; colors enhanced by source authors, not recolored by Cosmos; normalized sphere and lighting illustrative",
+      "license": "NASA resource usage policy; retain listed credit",
+      "path": "assets/source/solar-materials/mercurio.jpg",
+      "sha256": "04258b35c1c80a8bff6b6dc20af955a478e4fdacd30a4e3c12bad9d2bc1202d8",
+      "originalSha256": "95b5d222f842dc0a46ca9eb6928af7a2f4a3b43345be49ef798047279139a2df",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/"
+    },
+    {
+      "world": "saturno-rings",
+      "path": "assets/source/solar-materials/saturno-rings.png",
+      "sha256": "d8091bd14524d4dfeb63bb211d9649597f65b09f64121e262ade7a049d2ca88c",
+      "credit": "Cosmos do Zero",
+      "source": "assets/source/prepare_solar_materials.py",
+      "license": "Original project artwork; no separate redistribution license stated in the source manifest."
+    },
+    {
+      "world": "lua-height",
+      "path": "assets/source/solar-turntable/ldem_4_uint.tif",
+      "sha256": "e6668bec27fc9b8fbb02d198c7ddfb08eedeeb790167b494f95e6b34201da05e",
+      "source_url": "https://svs.gsfc.nasa.gov/4720/",
+      "downloadUrl": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4_uint.tif",
+      "credit": "NASA Scientific Visualization Studio / Ernie Wright; LRO/LOLA",
+      "license": "NASA resource usage policy; retain credit",
+      "licenseUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "status": "16-bit height map, illustrative bump strength"
+    }
+  ],
+  "seriesSources": {
+    "mercurio": [
+      "mercurio"
+    ],
+    "venus": [
+      "venus"
+    ],
+    "terra": [
+      "terra",
+      "terra-roughness",
+      "terra-clouds"
+    ],
+    "marte": [
+      "marte"
+    ],
+    "jupiter": [
+      "jupiter"
+    ],
+    "saturno": [
+      "saturno",
+      "saturno-rings"
+    ],
+    "urano": [
+      "urano"
+    ],
+    "netuno": [
+      "netuno"
+    ],
+    "lua": [
+      "lua",
+      "lua-height"
+    ],
+    "saturno-globo": [
+      "saturno"
+    ],
+    "terra-solo": [
+      "terra",
+      "terra-roughness"
+    ],
+    "terra-nuvens": [
+      "terra",
+      "terra-roughness",
+      "terra-clouds"
+    ],
+    "terra-ar": [
+      "terra",
+      "terra-roughness"
+    ]
+  },
+  "frames": [
+    {
+      "file": "mercurio/00.webp",
+      "degrees": 0,
+      "bytes": 8840,
+      "sha256": "143ed63751c388d442922d2bf47162aa90911731a8bd1ad19eacd6a4440f44d5"
+    },
+    {
+      "file": "mercurio/01.webp",
+      "degrees": 10,
+      "bytes": 9340,
+      "sha256": "5cf13c4eaaa98ddef5d5ff39ced8d23bde080c88fa0c2f84081bf5af762768c4"
+    },
+    {
+      "file": "mercurio/02.webp",
+      "degrees": 20,
+      "bytes": 8926,
+      "sha256": "94aa83a7106193f13208c936a0f90e1f9434c439be20c043bf73b5f51ba599f0"
+    },
+    {
+      "file": "mercurio/03.webp",
+      "degrees": 30,
+      "bytes": 9008,
+      "sha256": "b68e51c40e40e60214e03ba14fb872795b06803da778eec403cdae7c401ce745"
+    },
+    {
+      "file": "venus/00.webp",
+      "degrees": 0,
+      "bytes": 3178,
+      "sha256": "7ba79212a37903fbedb6b5b8e420361d3d47fa576c4a83581da8dd286dbb6dd2"
+    },
+    {
+      "file": "venus/01.webp",
+      "degrees": 10,
+      "bytes": 3270,
+      "sha256": "e359ebd8c08eb204ed76b31426b87cdf69e0b346e38d07a115802ad03fd8fa3b"
+    },
+    {
+      "file": "venus/02.webp",
+      "degrees": 20,
+      "bytes": 3150,
+      "sha256": "50cfd2dc82c86edee1038de0a248aacaa150eabf4d166684d8e51dfb4e454b69"
+    },
+    {
+      "file": "venus/03.webp",
+      "degrees": 30,
+      "bytes": 3216,
+      "sha256": "da0d70ca3e2db0f031fc3ef1935a47af7f5ed8c47664d75ea9eed5bde04cbff7"
+    },
+    {
+      "file": "terra/00.webp",
+      "degrees": 0,
+      "bytes": 6522,
+      "sha256": "f866e3d477702ab3a0f054b2637e1952d800637b41f1d089a2d7632551867b7c"
+    },
+    {
+      "file": "terra/01.webp",
+      "degrees": 10,
+      "bytes": 6538,
+      "sha256": "85a96904dc8ec7108c7cacb7b9d4f84de13f75aaffc87c5bb11ec47b30a546a8"
+    },
+    {
+      "file": "terra/02.webp",
+      "degrees": 20,
+      "bytes": 6612,
+      "sha256": "ef4d48919d4b28b4fb3435bebf7a441fe3857dc1c29dd91887523db532ff5871"
+    },
+    {
+      "file": "terra/03.webp",
+      "degrees": 30,
+      "bytes": 6626,
+      "sha256": "2ff31cba5ea041b94ec5513f59b8e2bd4ab95f1b3eff4c71ceb43cf5b2b5bf4f"
+    },
+    {
+      "file": "marte/00.webp",
+      "degrees": 0,
+      "bytes": 5414,
+      "sha256": "596308fb5f4465380c3a3cd211b7f35ed96c5b6ccafc23ea6848cf3befe818ea"
+    },
+    {
+      "file": "marte/01.webp",
+      "degrees": 10,
+      "bytes": 5338,
+      "sha256": "9367dc6eb8adfe4fc3ea757dd239fbb0446aa941a48ecb2fc6e1ebdf0a097d69"
+    },
+    {
+      "file": "marte/02.webp",
+      "degrees": 20,
+      "bytes": 5162,
+      "sha256": "aa0e8746cd628c8aa40d152131eb3850e86f396fc2ca430d061cb6f2f62390a1"
+    },
+    {
+      "file": "marte/03.webp",
+      "degrees": 30,
+      "bytes": 5162,
+      "sha256": "b4af3ce8090cbbcecbf756410c6b3044fc6ba026760c45bc83744a9d6f9afbdb"
+    },
+    {
+      "file": "jupiter/00.webp",
+      "degrees": 0,
+      "bytes": 5476,
+      "sha256": "c1974b15c7b40298a8bd2e6963a706e082e95515a56239b26851e75f882ae591"
+    },
+    {
+      "file": "jupiter/01.webp",
+      "degrees": 10,
+      "bytes": 5552,
+      "sha256": "4229c9a8b130b2ba21e9410cd0e031326427636f102bcb5157919341b4e3654f"
+    },
+    {
+      "file": "jupiter/02.webp",
+      "degrees": 20,
+      "bytes": 5406,
+      "sha256": "89db7e3a8b9c5ca3f680fadfb7652a065e92d9fe5db3b8e8bc13eeeb58694bdc"
+    },
+    {
+      "file": "jupiter/03.webp",
+      "degrees": 30,
+      "bytes": 5456,
+      "sha256": "2cb39aaeb930438d4490878c0c4278b2f838665586010c4c17a5df3240deb866"
+    },
+    {
+      "file": "saturno/00.webp",
+      "degrees": 0,
+      "bytes": 11702,
+      "sha256": "c96d28b884832026e71e8630b6b816878ff2b862f76e96b005aefe7845e220a7"
+    },
+    {
+      "file": "saturno/01.webp",
+      "degrees": 10,
+      "bytes": 11686,
+      "sha256": "1f65b3c1b96b9ceaf1703319aa2cec3f94302223c43e6e514eff406c114476bc"
+    },
+    {
+      "file": "saturno/02.webp",
+      "degrees": 20,
+      "bytes": 11540,
+      "sha256": "27190a4999984aab8022d6865a2f5bc489c86e94b5f9d182b40db97387a055e2"
+    },
+    {
+      "file": "saturno/03.webp",
+      "degrees": 30,
+      "bytes": 11712,
+      "sha256": "d7797ffa3c4bf872f473308278f8945ab3721c39793013c278a0679a4edd54a3"
+    },
+    {
+      "file": "urano/00.webp",
+      "degrees": 0,
+      "bytes": 3422,
+      "sha256": "9e1f10864ad508bcaf16240affe9d8eae21b874697a673fc641994bebcd19a91"
+    },
+    {
+      "file": "urano/01.webp",
+      "degrees": 10,
+      "bytes": 3406,
+      "sha256": "91c3cec283be5f0c7359e8395a5c723ce563a17b44cf93868493cd91c1e89f4e"
+    },
+    {
+      "file": "urano/02.webp",
+      "degrees": 20,
+      "bytes": 3440,
+      "sha256": "09ed55809692a3471f64364623fee2a8c0a819cb733dbb57924390ef3a7b9eb9"
+    },
+    {
+      "file": "urano/03.webp",
+      "degrees": 30,
+      "bytes": 3362,
+      "sha256": "836c6a78089b3c6680864190388370dc9fbfd4ad89a0f41348d212a524b1dced"
+    },
+    {
+      "file": "netuno/00.webp",
+      "degrees": 0,
+      "bytes": 6284,
+      "sha256": "b103a7a91104bb2490937a3cec1454881aa0a2ce71f088fe6b9c56954db925e6"
+    },
+    {
+      "file": "netuno/01.webp",
+      "degrees": 10,
+      "bytes": 6244,
+      "sha256": "7a27db55e629e7d6e64a173b4be6f65e0b8672677205c24677789277040e0306"
+    },
+    {
+      "file": "netuno/02.webp",
+      "degrees": 20,
+      "bytes": 6272,
+      "sha256": "16f804936384845a92f41bfda69ff28bf598d1bd349e94ff203f21b36bb1904e"
+    },
+    {
+      "file": "netuno/03.webp",
+      "degrees": 30,
+      "bytes": 6244,
+      "sha256": "1f0976a84afdb01b3ea57e969f7ab688e6b41840b96d94afa3829c3431db99f2"
+    },
+    {
+      "file": "lua/00.webp",
+      "degrees": 0,
+      "bytes": 4996,
+      "sha256": "2db27b46b0a1b8fa2a6934ef48c79dc70b06f5cd731f15fb932fc58019b23800"
+    },
+    {
+      "file": "lua/01.webp",
+      "degrees": 10,
+      "bytes": 4974,
+      "sha256": "d619d73fc4b33fe6c3ed3b731b9c6420a19f4f5899ec96e24ab0473676f78f42"
+    },
+    {
+      "file": "lua/02.webp",
+      "degrees": 20,
+      "bytes": 4764,
+      "sha256": "cd3fa61e5ce6a3ce23ddd2c28f4e37af34be9f98bf80caa9f16b2aec91b2e131"
+    },
+    {
+      "file": "lua/03.webp",
+      "degrees": 30,
+      "bytes": 4914,
+      "sha256": "2979cf2edfc74b821975954350b0368b05d8b792b4e1aecf9ea4e183df1def9c"
+    },
+    {
+      "file": "saturno-globo/00.webp",
+      "degrees": 0,
+      "bytes": 4074,
+      "sha256": "8600b831f30a88295669b0ef2a9d6f82685a496404bb03634eb337eeb1933583"
+    },
+    {
+      "file": "saturno-globo/01.webp",
+      "degrees": 10,
+      "bytes": 4088,
+      "sha256": "cbdbf09298df0ccf546d284e27f1973a828ad09cc3558804bc29e593126f291a"
+    },
+    {
+      "file": "saturno-globo/02.webp",
+      "degrees": 20,
+      "bytes": 4156,
+      "sha256": "550f24602d80cd34a44d87814e614dc3c8c9440c07677c1cbcc6e39c6c5e51f5"
+    },
+    {
+      "file": "saturno-globo/03.webp",
+      "degrees": 30,
+      "bytes": 4034,
+      "sha256": "e8598b7192967b6f8b430c32b07a5116814571170372982d93962cefdfa4aa06"
+    },
+    {
+      "file": "terra-solo/00.webp",
+      "degrees": 0,
+      "bytes": 5574,
+      "sha256": "e4642cb398af3eef16b9c0f31656a4715557f0db8f7e6d4c6480da744d65e323"
+    },
+    {
+      "file": "terra-solo/01.webp",
+      "degrees": 10,
+      "bytes": 5564,
+      "sha256": "54604177298f37c18b606f0e84670e91440721303be7f9360ea5dfc9bc191dd6"
+    },
+    {
+      "file": "terra-solo/02.webp",
+      "degrees": 20,
+      "bytes": 5486,
+      "sha256": "3873e997ea19198aeb56792d611a99a4048c64db2606c8459c4e0e5c82ca0708"
+    },
+    {
+      "file": "terra-solo/03.webp",
+      "degrees": 30,
+      "bytes": 5234,
+      "sha256": "3642c0d72546a14906cbb515e85702996415446e881632d8a496151427cfe243"
+    },
+    {
+      "file": "terra-nuvens/00.webp",
+      "degrees": 0,
+      "bytes": 6850,
+      "sha256": "235c3637c2c496fece7f0b495fbe869844dab666efc81eca98eecb77784aa1dc"
+    },
+    {
+      "file": "terra-nuvens/01.webp",
+      "degrees": 10,
+      "bytes": 6776,
+      "sha256": "ec5d08b421cfc094333887af6d5f51e63fc28cbdf1f7e90a7c7c0f096d08ff6a"
+    },
+    {
+      "file": "terra-nuvens/02.webp",
+      "degrees": 20,
+      "bytes": 6960,
+      "sha256": "32c898293943d7ade3d39f6203c4ea4e9e5a0c344f6ea00ee325d5b7f430a3d9"
+    },
+    {
+      "file": "terra-nuvens/03.webp",
+      "degrees": 30,
+      "bytes": 6830,
+      "sha256": "3755f1c28c1b61b1127707dd9bbd89078e23b3c71d6803f6e57dcb12667f2350"
+    },
+    {
+      "file": "terra-ar/00.webp",
+      "degrees": 0,
+      "bytes": 5620,
+      "sha256": "c0f3ec4b8694e08de149ab3cb988d28c7102a3a8fdc483b3611e00ddd1de0590"
+    },
+    {
+      "file": "terra-ar/01.webp",
+      "degrees": 10,
+      "bytes": 5534,
+      "sha256": "6536213ed9cce1cbc7cc563029e1ed912c4c50801aa1a242be397b76b51d3119"
+    },
+    {
+      "file": "terra-ar/02.webp",
+      "degrees": 20,
+      "bytes": 5480,
+      "sha256": "7535ec2badd4bb46bdc46338db403b94c4d898fd0c3e406a1eb1067ec23d82bf"
+    },
+    {
+      "file": "terra-ar/03.webp",
+      "degrees": 30,
+      "bytes": 5292,
+      "sha256": "1df95e83df883115e8aa0ba06b7ac2ee840ee8ab3adc598a8f50ae11fc53b923"
+    },
+    {
+      "file": "mercurio/04.webp",
+      "degrees": 40,
+      "bytes": 9270,
+      "sha256": "de0859b4fa409e2cfbe8d5c60f22b4c9a66e86f3b7538140f76115f8841a08c0"
+    },
+    {
+      "file": "mercurio/05.webp",
+      "degrees": 50,
+      "bytes": 9276,
+      "sha256": "ee583a046b75c9d8eaf98bd6af08659b023777ebfc7a0d62a3533d24dbb926bb"
+    },
+    {
+      "file": "mercurio/06.webp",
+      "degrees": 60,
+      "bytes": 9334,
+      "sha256": "a3eb6b28683e9604bef6d9c93b8c9b833e1ca55336e5d61ee993c4c6f9a45cd0"
+    },
+    {
+      "file": "mercurio/07.webp",
+      "degrees": 70,
+      "bytes": 9478,
+      "sha256": "0d8b304db27ad5dc6dfb92a6b0343f00bfca85aa0effd77f33fc00d78d0eab0b"
+    },
+    {
+      "file": "venus/04.webp",
+      "degrees": 40,
+      "bytes": 3202,
+      "sha256": "baf2a8c0cbc5cbd6f2f03b571679014e0b712491c8cbd4a58f5ec24619e8a764"
+    },
+    {
+      "file": "venus/05.webp",
+      "degrees": 50,
+      "bytes": 3292,
+      "sha256": "a066e3f49d08cf4288b9d0b1d1b8e7cf5d3672a05e8c1f83b2473df55249e163"
+    },
+    {
+      "file": "venus/06.webp",
+      "degrees": 60,
+      "bytes": 3192,
+      "sha256": "7cb00aebec05dcd704871ca67a1737aee5c679a1725eed70ed3e1e5275a186e5"
+    },
+    {
+      "file": "venus/07.webp",
+      "degrees": 70,
+      "bytes": 3256,
+      "sha256": "0aca32f05cb31b458ef25229a4cc20a412b707a9862cd79c752ae68eb33ea683"
+    },
+    {
+      "file": "terra/04.webp",
+      "degrees": 40,
+      "bytes": 6582,
+      "sha256": "4192ef3c97a51fe69b08837e86b1b47fcf222e227106dfdfbbebf9aea8aff561"
+    },
+    {
+      "file": "terra/05.webp",
+      "degrees": 50,
+      "bytes": 6456,
+      "sha256": "1ec9ebdcd04074502560f7a07b5741696e83465f07cc90bb69a2f93058e593b2"
+    },
+    {
+      "file": "terra/06.webp",
+      "degrees": 60,
+      "bytes": 6528,
+      "sha256": "1724c4af439865c7821ca684581339299fb8ab863d1429ae350d218c4b2af3d0"
+    },
+    {
+      "file": "terra/07.webp",
+      "degrees": 70,
+      "bytes": 6578,
+      "sha256": "c6b00f9b0a1031d0fa7bc4429ad049a1319daeed4288e49326ff763edf6d1b0f"
+    },
+    {
+      "file": "marte/04.webp",
+      "degrees": 40,
+      "bytes": 5174,
+      "sha256": "41eb91f84a06cda36425733121952cac9d65a5ba45eb77f3f64af3f03fc904c3"
+    },
+    {
+      "file": "marte/05.webp",
+      "degrees": 50,
+      "bytes": 5114,
+      "sha256": "3b1b9d6cbf16c0b85a8001dd03af94d479379ba7cf0c03f61c71cb44eebed3c9"
+    },
+    {
+      "file": "marte/06.webp",
+      "degrees": 60,
+      "bytes": 5088,
+      "sha256": "43a692ce267dfb68e0a441b49e0a8d5ff3cf9049f8d1e90b8a1ecfe0df7ef45b"
+    },
+    {
+      "file": "marte/07.webp",
+      "degrees": 70,
+      "bytes": 5182,
+      "sha256": "6bed836be0ee71204a05c741db2478ea95253f851e7d37ed6792f2de93272258"
+    },
+    {
+      "file": "jupiter/04.webp",
+      "degrees": 40,
+      "bytes": 5340,
+      "sha256": "b0348eca0d8822bf6c6e92915dbe191bedba5e7b237221e9a6944ef15e36bc3c"
+    },
+    {
+      "file": "jupiter/05.webp",
+      "degrees": 50,
+      "bytes": 5492,
+      "sha256": "0b0875adf12b8d257302d3ae183cb7f192c505c41e19bbb02f2a7246fca82b91"
+    },
+    {
+      "file": "jupiter/06.webp",
+      "degrees": 60,
+      "bytes": 5506,
+      "sha256": "da467bb30eceec67d91854e1407fb164383a4d285b5d709e6a7e454142a5332d"
+    },
+    {
+      "file": "jupiter/07.webp",
+      "degrees": 70,
+      "bytes": 5414,
+      "sha256": "13e019030326bf877a3722ce446ddda98936d03c773bf8c1afcfdf1239887d7e"
+    },
+    {
+      "file": "saturno/04.webp",
+      "degrees": 40,
+      "bytes": 11726,
+      "sha256": "57c7afdc79348a46958e076308008a4b2404058b72a613a74ab8526086a5e2a2"
+    },
+    {
+      "file": "saturno/05.webp",
+      "degrees": 50,
+      "bytes": 11604,
+      "sha256": "071fa039d7617e39928b0e4d15f17638eceb3a1468e9e3028d5c6012cd45ee6c"
+    },
+    {
+      "file": "saturno/06.webp",
+      "degrees": 60,
+      "bytes": 11592,
+      "sha256": "9203fde361752df175c5c1ab3e2eb5e4df4bd3e37930610a944a8cb9690d1dfd"
+    },
+    {
+      "file": "saturno/07.webp",
+      "degrees": 70,
+      "bytes": 11654,
+      "sha256": "c002586a1a646376f38fff2a78fb60a33c0134660d0326d94dc48e6f43f77f5d"
+    },
+    {
+      "file": "urano/04.webp",
+      "degrees": 40,
+      "bytes": 3404,
+      "sha256": "9445a8d8f6643771bb7b177efda696d679340f5e0e8b430f8683f4576440bb10"
+    },
+    {
+      "file": "urano/05.webp",
+      "degrees": 50,
+      "bytes": 3388,
+      "sha256": "a72356ebdaa673d0107fa93fe09e5437c82842e2a157f6a24a40a24f20d6a435"
+    },
+    {
+      "file": "urano/06.webp",
+      "degrees": 60,
+      "bytes": 3382,
+      "sha256": "3e5aa9e0f490fddbcdae6f788034b9d074f6cde375467af36c6c20ff17e3d5b0"
+    },
+    {
+      "file": "urano/07.webp",
+      "degrees": 70,
+      "bytes": 3346,
+      "sha256": "30e497c7105a1a21f5c4bcddd64a5c1357204ccc0291e641e87b441d3b50ae7b"
+    },
+    {
+      "file": "netuno/04.webp",
+      "degrees": 40,
+      "bytes": 6268,
+      "sha256": "a76329255fb2367c0d695af8cfb7f566be059641240c467ef1a38b7516062a99"
+    },
+    {
+      "file": "netuno/05.webp",
+      "degrees": 50,
+      "bytes": 6278,
+      "sha256": "29a44c2b00d7accc7bf2e9522aa4f185ed50b64003f7562151dc84c215e2b661"
+    },
+    {
+      "file": "netuno/06.webp",
+      "degrees": 60,
+      "bytes": 6288,
+      "sha256": "e9dd88e51efcaed84d1f3934b1b05fd129847d631265431619106f35d63fc8f4"
+    },
+    {
+      "file": "netuno/07.webp",
+      "degrees": 70,
+      "bytes": 6368,
+      "sha256": "057a5a9a6b7ca816691b0e2a8c4682a25db25e09c0d2aac742cd0d70e389b2d6"
+    },
+    {
+      "file": "lua/04.webp",
+      "degrees": 40,
+      "bytes": 4696,
+      "sha256": "223c565be1dbd4176c623507bb06dfdd0ace703d58888bf73abcec07b3bd5d86"
+    },
+    {
+      "file": "lua/05.webp",
+      "degrees": 50,
+      "bytes": 4766,
+      "sha256": "8c0957e652deb62881cbb2ce165cf1cfd16fa85925da1fafa3a6634c73681fcc"
+    },
+    {
+      "file": "lua/06.webp",
+      "degrees": 60,
+      "bytes": 4620,
+      "sha256": "1cab2b22bfed7a8d3f925118ffb5e76da1668a424be6cb44e02829444f12da60"
+    },
+    {
+      "file": "lua/07.webp",
+      "degrees": 70,
+      "bytes": 4766,
+      "sha256": "6b06be516222a9c2b47fea40386e5e5b9f21c10eda7a3b2f66d50e6d87d6f66d"
+    },
+    {
+      "file": "saturno-globo/04.webp",
+      "degrees": 40,
+      "bytes": 4102,
+      "sha256": "6d1c355dd1f67183c2116cbac3ac11cffc1153a4be694c2a8ed708fe1a5bb034"
+    },
+    {
+      "file": "saturno-globo/05.webp",
+      "degrees": 50,
+      "bytes": 4118,
+      "sha256": "a9f1534bac5567ab131cc4aef113a302e168e24383c72c3ae55fdf1c9a864f0a"
+    },
+    {
+      "file": "saturno-globo/06.webp",
+      "degrees": 60,
+      "bytes": 4150,
+      "sha256": "1feace6cb6d18ae765ed28ac2e58558647a9a837bcecdc3be1890f8e6536cf6f"
+    },
+    {
+      "file": "saturno-globo/07.webp",
+      "degrees": 70,
+      "bytes": 4136,
+      "sha256": "1d0a94324b25dbecad3a5b5bd947c67b00c2b1600a5e7a0d64967125d1fc4b1a"
+    },
+    {
+      "file": "terra-solo/04.webp",
+      "degrees": 40,
+      "bytes": 5024,
+      "sha256": "73282da80d18a2781dd050b38f5b820618b3235b6d80029e04cc015dcc4ba4eb"
+    },
+    {
+      "file": "terra-solo/05.webp",
+      "degrees": 50,
+      "bytes": 4740,
+      "sha256": "0d30b11dde6ac6fd27037b840e5bca030d596a4c626f563e4766c9b344cf635c"
+    },
+    {
+      "file": "terra-solo/06.webp",
+      "degrees": 60,
+      "bytes": 4748,
+      "sha256": "fa5af486bcdcbc65679699632313b06031f1574913cda268f490b65c0f4d246a"
+    },
+    {
+      "file": "terra-solo/07.webp",
+      "degrees": 70,
+      "bytes": 4728,
+      "sha256": "3b5f037bbfed46d57514a3ed5d344ed409eb18300a2bb687ffcb700a70c7f253"
+    },
+    {
+      "file": "terra-nuvens/04.webp",
+      "degrees": 40,
+      "bytes": 6562,
+      "sha256": "12b643e3785f36ae61d4499e99b1641ade4f16938a5547dabbb12752f682206b"
+    },
+    {
+      "file": "terra-nuvens/05.webp",
+      "degrees": 50,
+      "bytes": 6528,
+      "sha256": "0709ebcf6a147dee7df6652b1e52bb7c467ef958f9bbbd117eb7a544e00effc8"
+    },
+    {
+      "file": "terra-nuvens/06.webp",
+      "degrees": 60,
+      "bytes": 6540,
+      "sha256": "00ddb1e2ae1a26613ecc8834ac903c2a2c0b5cb89e928a6a67e7859909a3c955"
+    },
+    {
+      "file": "terra-nuvens/07.webp",
+      "degrees": 70,
+      "bytes": 6688,
+      "sha256": "d37e1f58a2a3a77f38739d9a08fca504d3aeada3c8dd6ccf5c64a47186f25ee6"
+    },
+    {
+      "file": "terra-ar/04.webp",
+      "degrees": 40,
+      "bytes": 5118,
+      "sha256": "642f999c1aac4ae20c3b3ce22eb292c49470b547fe7c6ee626311016a78c8c8c"
+    },
+    {
+      "file": "terra-ar/05.webp",
+      "degrees": 50,
+      "bytes": 4918,
+      "sha256": "38848c2ab885a4e5377f7de07038502abe0848eec3b3b1fda457b773fe6cf866"
+    },
+    {
+      "file": "terra-ar/06.webp",
+      "degrees": 60,
+      "bytes": 4942,
+      "sha256": "73373a094d25a699351f0bd09a9b6b08760d0f188616ca91f73013421dbed54f"
+    },
+    {
+      "file": "terra-ar/07.webp",
+      "degrees": 70,
+      "bytes": 4862,
+      "sha256": "fe6aaa629cdd2d4be27556c94adad4371c449ec014171285c93c842cc708c654"
+    },
+    {
+      "file": "mercurio/08.webp",
+      "degrees": 80,
+      "bytes": 9552,
+      "sha256": "77a5f56b3702ec2381038627ff56d399a08f0c942152e5e09415dca1059dbd47"
+    },
+    {
+      "file": "mercurio/09.webp",
+      "degrees": 90,
+      "bytes": 9724,
+      "sha256": "eea23659ee4b40d79580cb030ba9bc9af43ab69332593fdb0fbbfab487107108"
+    },
+    {
+      "file": "mercurio/10.webp",
+      "degrees": 100,
+      "bytes": 9524,
+      "sha256": "7627af9a881982402798813415a3bda23d02d991f2be8c7d2bab4f53a3293a30"
+    },
+    {
+      "file": "mercurio/11.webp",
+      "degrees": 110,
+      "bytes": 9820,
+      "sha256": "1c5bcaceb58b942a37b18b8955b5e5bc17b4037e26c1192c880905c04678b543"
+    },
+    {
+      "file": "venus/08.webp",
+      "degrees": 80,
+      "bytes": 3228,
+      "sha256": "d447914e73a43318178f30621cff09bfd675339ec1319af977d0552d699bd709"
+    },
+    {
+      "file": "venus/09.webp",
+      "degrees": 90,
+      "bytes": 3302,
+      "sha256": "dc4dd75366d5841af191a37945e8ed90ace32dd4dfa37164c318490cb05f8047"
+    },
+    {
+      "file": "venus/10.webp",
+      "degrees": 100,
+      "bytes": 3246,
+      "sha256": "c6811dc1d5a9c712f94068cb071157858d5b86898bf0ccb86d745232143e9a55"
+    },
+    {
+      "file": "venus/11.webp",
+      "degrees": 110,
+      "bytes": 3222,
+      "sha256": "044a87cba5681541c2549fbca3a20b3699a026cf5fd9da4cc10024447dc8b62d"
+    },
+    {
+      "file": "terra/08.webp",
+      "degrees": 80,
+      "bytes": 6422,
+      "sha256": "175128a0067357b55cf0ae8aa8197f1ffb4c721cbc63defde4578d331d73d124"
+    },
+    {
+      "file": "terra/09.webp",
+      "degrees": 90,
+      "bytes": 6398,
+      "sha256": "43f37aaecfad633a40a9e567b4784552c9b5d8dae9fa800eda2750269ec0de80"
+    },
+    {
+      "file": "terra/10.webp",
+      "degrees": 100,
+      "bytes": 6394,
+      "sha256": "4debb9ed2f18490e95efc8eb54381f2fad54dc0fed1c0d305b08dcc5f5fc4f14"
+    },
+    {
+      "file": "terra/11.webp",
+      "degrees": 110,
+      "bytes": 6464,
+      "sha256": "0d66519f4d863d833844415177d2c1e7e3e11faa435d391706b456b6e36a8516"
+    },
+    {
+      "file": "marte/08.webp",
+      "degrees": 80,
+      "bytes": 5154,
+      "sha256": "37bac4adff967505f952fcc7c915ca1ff01fbf6f5895a497f8d844f1141e17c9"
+    },
+    {
+      "file": "marte/09.webp",
+      "degrees": 90,
+      "bytes": 5226,
+      "sha256": "40157080209a3b7fbf43e42264027380bd6b1bd8d51de7022e9e0e8fd238b07f"
+    },
+    {
+      "file": "marte/10.webp",
+      "degrees": 100,
+      "bytes": 5152,
+      "sha256": "2b325e765a12078af3f56de01c782d37bc8bb182fa5fa3ac7abcc0add8ab6ee7"
+    },
+    {
+      "file": "marte/11.webp",
+      "degrees": 110,
+      "bytes": 5160,
+      "sha256": "989341dd254eb03380e219819c177d0580c197fe0273f076c0e2417a3c904294"
+    },
+    {
+      "file": "jupiter/08.webp",
+      "degrees": 80,
+      "bytes": 5378,
+      "sha256": "2373dfc48fd49742371eecd93ee16f6c218d7c7168b5d64b50930352ce4f182d"
+    },
+    {
+      "file": "jupiter/09.webp",
+      "degrees": 90,
+      "bytes": 5486,
+      "sha256": "3c61c86f48ee72fc12192bc3f5556c80c386d3b17d905b9747a6a705f17d5513"
+    },
+    {
+      "file": "jupiter/10.webp",
+      "degrees": 100,
+      "bytes": 5608,
+      "sha256": "922dbba1d825ea1623f96aea6ff5155efb7d2f5bc6cc5aaf12ae7260f9d00053"
+    },
+    {
+      "file": "jupiter/11.webp",
+      "degrees": 110,
+      "bytes": 5512,
+      "sha256": "76a3c285277ab1151af80fad7d8f549fad9c5933726b178f55e6ac5f776e5598"
+    },
+    {
+      "file": "saturno/08.webp",
+      "degrees": 80,
+      "bytes": 11672,
+      "sha256": "729de76682890dbb0ed269ce680bb34054deeccd506b7fd229e2d96a311518d2"
+    },
+    {
+      "file": "saturno/09.webp",
+      "degrees": 90,
+      "bytes": 11630,
+      "sha256": "92198a21b2f38384b8225b8fb5c3d6d5918d19b142caef3f42276b7ffed51b4c"
+    },
+    {
+      "file": "saturno/10.webp",
+      "degrees": 100,
+      "bytes": 11584,
+      "sha256": "03e85c749d15315ce5ad74c08d9cd163059ccbac0f8cdba9c66eebd6093eda6f"
+    },
+    {
+      "file": "saturno/11.webp",
+      "degrees": 110,
+      "bytes": 11660,
+      "sha256": "2552c225525a154f438d1e4e5dc96cb34f0df4184940fdc948560e1747ccce8c"
+    },
+    {
+      "file": "urano/08.webp",
+      "degrees": 80,
+      "bytes": 3432,
+      "sha256": "7ef67357b185da2f93ee564da4460a5c1068c747e5f332e2794717303a05e4fa"
+    },
+    {
+      "file": "urano/09.webp",
+      "degrees": 90,
+      "bytes": 3372,
+      "sha256": "288dccbb82689e1d5645c671b87f9cd77d08d2bb65ce04b5a5b722e11f32c947"
+    },
+    {
+      "file": "urano/10.webp",
+      "degrees": 100,
+      "bytes": 3432,
+      "sha256": "3da349457f9717c1641685d91a982ef28cdd225140638bbbafc06496c4d5681a"
+    },
+    {
+      "file": "urano/11.webp",
+      "degrees": 110,
+      "bytes": 3390,
+      "sha256": "3f4275a4d72c9e0e8b65f6f99e08d3c7b3715c19e04f71f100a4b514cc7ef7e1"
+    },
+    {
+      "file": "netuno/08.webp",
+      "degrees": 80,
+      "bytes": 6386,
+      "sha256": "061d08342bad17350354aae9500c3a29ea809363b9d24b34e7cd47e84a4e705d"
+    },
+    {
+      "file": "netuno/09.webp",
+      "degrees": 90,
+      "bytes": 6364,
+      "sha256": "1f67eefec26a5b0cb2d50c26cd5f9b1fe739aee6c5be44e148d0dbb76691d0e4"
+    },
+    {
+      "file": "netuno/10.webp",
+      "degrees": 100,
+      "bytes": 6240,
+      "sha256": "8680817134654496da26a30880725cf8e45c9e31910e09e3fe40e6ff11ab18fd"
+    },
+    {
+      "file": "netuno/11.webp",
+      "degrees": 110,
+      "bytes": 6260,
+      "sha256": "d280865acd80c199249dab6fd2c9768a8366576575c85fef033cc1eb0a8878dd"
+    },
+    {
+      "file": "lua/08.webp",
+      "degrees": 80,
+      "bytes": 4712,
+      "sha256": "0c632c7fc51728d08cd2a77c9b4a366b8389718f35235c9baa99729e388dd09d"
+    },
+    {
+      "file": "lua/09.webp",
+      "degrees": 90,
+      "bytes": 4870,
+      "sha256": "8a416e185e098a4d69f6d0477345f986b928b032f94e9f94bc86b42f7f89e29e"
+    },
+    {
+      "file": "lua/10.webp",
+      "degrees": 100,
+      "bytes": 4678,
+      "sha256": "b9aee786272a34141935efa27c646174ede4f320b25297bbc9e08018e399e95c"
+    },
+    {
+      "file": "lua/11.webp",
+      "degrees": 110,
+      "bytes": 4846,
+      "sha256": "1ac1fafa1282e0369acc02f816d7a54a023019b20bf2c9363b41880cb6dfc62c"
+    },
+    {
+      "file": "saturno-globo/08.webp",
+      "degrees": 80,
+      "bytes": 4166,
+      "sha256": "8013ad7847fe122c5ff0c250c3b316e03a400ca85ab6dac36790f2e6fcd7fe9c"
+    },
+    {
+      "file": "saturno-globo/09.webp",
+      "degrees": 90,
+      "bytes": 4214,
+      "sha256": "96091f92323e6fc1cb394eb6427d739d9adad5fd44cac2cc8375ee664fd77baf"
+    },
+    {
+      "file": "saturno-globo/10.webp",
+      "degrees": 100,
+      "bytes": 4220,
+      "sha256": "3a4dbfac25e86cc2052e62e34f9dad541fe1a1c9a79f87ceaa4455375e8419b0"
+    },
+    {
+      "file": "saturno-globo/11.webp",
+      "degrees": 110,
+      "bytes": 4206,
+      "sha256": "70c9a2b3c0688fc79968341b4b443c1638bd189cda9f6e8f71ee060fef17175a"
+    },
+    {
+      "file": "terra-solo/08.webp",
+      "degrees": 80,
+      "bytes": 4894,
+      "sha256": "0577ad987750ce26bda6f6d22da764b668c05c3c6a84544c118f7545ad6221f9"
+    },
+    {
+      "file": "terra-solo/09.webp",
+      "degrees": 90,
+      "bytes": 4984,
+      "sha256": "45eede0a3a741746f6cc5528aaa31d674a26b4abcd2559160b21703bb9e615a5"
+    },
+    {
+      "file": "terra-solo/10.webp",
+      "degrees": 100,
+      "bytes": 4990,
+      "sha256": "3636285c1085482d316a2f764b31b11b228f79cc97cc3d00abafc00fab6f7a05"
+    },
+    {
+      "file": "terra-solo/11.webp",
+      "degrees": 110,
+      "bytes": 5040,
+      "sha256": "32e0f1ae249612b0cb38270ab51fa75923d8fa4b1dd325e58bc2a4ebe5baf209"
+    },
+    {
+      "file": "terra-nuvens/08.webp",
+      "degrees": 80,
+      "bytes": 6498,
+      "sha256": "87b6f4e4e17d5dfbd96db945f5934a28b3da4885c67b5154ddf3481414ca6c56"
+    },
+    {
+      "file": "terra-nuvens/09.webp",
+      "degrees": 90,
+      "bytes": 6720,
+      "sha256": "3d0fbbbd0032ea93f8657fb404044b7ee6ee9da582f79f9d7e6586152493d8b1"
+    },
+    {
+      "file": "terra-nuvens/10.webp",
+      "degrees": 100,
+      "bytes": 6666,
+      "sha256": "960057f443bae7d6f5e0b40fc7b5d50c2bbdb657b9883c84d2ee0c10ece1c9f8"
+    },
+    {
+      "file": "terra-nuvens/11.webp",
+      "degrees": 110,
+      "bytes": 6630,
+      "sha256": "87e8966fbd8b2133f2f57a797edaec42362713526e17f00ceef2146f3beaf837"
+    },
+    {
+      "file": "terra-ar/08.webp",
+      "degrees": 80,
+      "bytes": 4964,
+      "sha256": "d9139cd803b64f3f37f979d61653163f1129677f6d483a4867284edf1ae60c8e"
+    },
+    {
+      "file": "terra-ar/09.webp",
+      "degrees": 90,
+      "bytes": 5034,
+      "sha256": "32c05dc33fd6edc15d31aad62495f1c562343a5912c8256c3733ea766d8cf444"
+    },
+    {
+      "file": "terra-ar/10.webp",
+      "degrees": 100,
+      "bytes": 4926,
+      "sha256": "56debf82317a346ba510bfda44922aaaa3a5c8b3a2187dbc4cdfa769a48ba2d7"
+    },
+    {
+      "file": "terra-ar/11.webp",
+      "degrees": 110,
+      "bytes": 5006,
+      "sha256": "90396778081774aa3ead6b4c367cfbe9625878ff92c7cd7637b4e3e3f50c0f85"
+    },
+    {
+      "file": "mercurio/12.webp",
+      "degrees": 120,
+      "bytes": 9558,
+      "sha256": "68eea6cdf127b49ede36c18e3c74ce0fddd57e336ef2531bdc7a6dfa51a9611a"
+    },
+    {
+      "file": "mercurio/13.webp",
+      "degrees": 130,
+      "bytes": 9434,
+      "sha256": "5bb565da7b340ec9c010b260da077a187278221f41ff8561f7e67f6df213dffb"
+    },
+    {
+      "file": "mercurio/14.webp",
+      "degrees": 140,
+      "bytes": 9094,
+      "sha256": "98afe7b66efd8fd13c19dd2bd31eea8cf9b87949bfbdf1ebc35b2dfa8be648c2"
+    },
+    {
+      "file": "mercurio/15.webp",
+      "degrees": 150,
+      "bytes": 8970,
+      "sha256": "e65568199386dd2dfe3efbe65c067dcac0fd943238602ad12af37ad90284a0cb"
+    },
+    {
+      "file": "venus/12.webp",
+      "degrees": 120,
+      "bytes": 3154,
+      "sha256": "50f4fd9db1f65ee218f50b0d3ae91d022cd858f92264f5e8ece009450e16aa1d"
+    },
+    {
+      "file": "venus/13.webp",
+      "degrees": 130,
+      "bytes": 3328,
+      "sha256": "103964deb230dc5d919e8ab8490448f4b59da9fcf8ca9a625720aa8f6de74f96"
+    },
+    {
+      "file": "venus/14.webp",
+      "degrees": 140,
+      "bytes": 3186,
+      "sha256": "9ee47545d76519146c3d8e4e41b6eaa3147d8f8881b25b975e71edbcbb2fac15"
+    },
+    {
+      "file": "venus/15.webp",
+      "degrees": 150,
+      "bytes": 3202,
+      "sha256": "27f953a4392e57bd742bf105b82d56211006bd3f9db7dce109fed307f92cf7d3"
+    },
+    {
+      "file": "terra/12.webp",
+      "degrees": 120,
+      "bytes": 6444,
+      "sha256": "5684405a9f12f56297829b5994e3f0ab3e4426995ab7c77887fd911e6d2ef6a9"
+    },
+    {
+      "file": "terra/13.webp",
+      "degrees": 130,
+      "bytes": 6708,
+      "sha256": "29e060fa14f105d25f09ce13255481dbd7de5c06deed3933bf17a788c786d4a2"
+    },
+    {
+      "file": "terra/14.webp",
+      "degrees": 140,
+      "bytes": 6912,
+      "sha256": "e9111dacfaa73ad716c86fe0de7ccb0d176178b5a92b5507012530743bfc2b25"
+    },
+    {
+      "file": "terra/15.webp",
+      "degrees": 150,
+      "bytes": 7112,
+      "sha256": "14652c1a21b93e30584073642405d820f3f065206ff7868e7c07c5db6e708fd8"
+    },
+    {
+      "file": "marte/12.webp",
+      "degrees": 120,
+      "bytes": 5254,
+      "sha256": "112c0f8ee53ed82bb47bde70994077c6d3ac5bc676f1ffec56d79b4b5c444788"
+    },
+    {
+      "file": "marte/13.webp",
+      "degrees": 130,
+      "bytes": 5446,
+      "sha256": "aeba884ecfe4e531b21470d35914fe96090f61caa9f2e1d3b044dd72cb21cf59"
+    },
+    {
+      "file": "marte/14.webp",
+      "degrees": 140,
+      "bytes": 5352,
+      "sha256": "fab90a4d7793bc69e66abd8edf225cc59b0e61f1a4b7f1ff0a9c734baad0dfa3"
+    },
+    {
+      "file": "marte/15.webp",
+      "degrees": 150,
+      "bytes": 5558,
+      "sha256": "65040a2a1e7fd03f899bc996d3ab973034eda694ea8e2888491c02e28762b4da"
+    },
+    {
+      "file": "jupiter/12.webp",
+      "degrees": 120,
+      "bytes": 5570,
+      "sha256": "1ac8b5c1c7323378a34afb75144b34a8a0e04ca4a7edf083f475ef8bf23c61d8"
+    },
+    {
+      "file": "jupiter/13.webp",
+      "degrees": 130,
+      "bytes": 5582,
+      "sha256": "49206f1deb360c07945d57d310b062b8b09a3d07e6ad826813800cc79cf321d3"
+    },
+    {
+      "file": "jupiter/14.webp",
+      "degrees": 140,
+      "bytes": 5580,
+      "sha256": "054dd3f019947d5bdfe11f0dd39392bb289b862d160ecb15fc27703b20c56290"
+    },
+    {
+      "file": "jupiter/15.webp",
+      "degrees": 150,
+      "bytes": 5522,
+      "sha256": "4c3c2eade98203b82ae38c24a2b1f6bba16dba6d9d710bbaabb5137998e72dc0"
+    },
+    {
+      "file": "saturno/12.webp",
+      "degrees": 120,
+      "bytes": 11708,
+      "sha256": "1cad63276d516c006617687c9c395f6a6f75d63c13fee75e57f915faea95768e"
+    },
+    {
+      "file": "saturno/13.webp",
+      "degrees": 130,
+      "bytes": 11646,
+      "sha256": "2528096d78af796cc87e8bc3c413b5714bae310956c08056ad349432af543b0f"
+    },
+    {
+      "file": "saturno/14.webp",
+      "degrees": 140,
+      "bytes": 11590,
+      "sha256": "f06a7327edf26d8695fc7c3827959663526fc8a55d90fe343f16a85ba8b7cde5"
+    },
+    {
+      "file": "saturno/15.webp",
+      "degrees": 150,
+      "bytes": 11758,
+      "sha256": "99e0465993ccba97f6bf13b8a19887f0d489a6f2c5d7d00c48263e2a8143929c"
+    },
+    {
+      "file": "urano/12.webp",
+      "degrees": 120,
+      "bytes": 3418,
+      "sha256": "de5a61be25ad9768cadab5293fe1ddd6ffa614d0eb93725fd72daf389f08a0d8"
+    },
+    {
+      "file": "urano/13.webp",
+      "degrees": 130,
+      "bytes": 3406,
+      "sha256": "43416d1d4e61e69ed9d991db1bae8a0af0f81a917eaf951caf485d2efbc08675"
+    },
+    {
+      "file": "urano/14.webp",
+      "degrees": 140,
+      "bytes": 3452,
+      "sha256": "2ba3a638d6ffdfeed12d4d5cca9351deef867a7c510c16081d50d9eb92a798d8"
+    },
+    {
+      "file": "urano/15.webp",
+      "degrees": 150,
+      "bytes": 3370,
+      "sha256": "cfe180e4559500158ded7fec3ac26b066d8ec0617bb03d8426abc1450da7c88f"
+    },
+    {
+      "file": "netuno/12.webp",
+      "degrees": 120,
+      "bytes": 6224,
+      "sha256": "0dbfca7868b921dd8bc1ca816b4387dbfb13b91ca2e512f44e7ea29cd48c1cf7"
+    },
+    {
+      "file": "netuno/13.webp",
+      "degrees": 130,
+      "bytes": 6148,
+      "sha256": "5cfdec2674efb5f3fc73eac95df070746d63217152a5355d56c6837014ffeb44"
+    },
+    {
+      "file": "netuno/14.webp",
+      "degrees": 140,
+      "bytes": 6148,
+      "sha256": "0be1dcf46597e02e629095b35c5dbd2d10864393449c3ebc3a59209ee2763d27"
+    },
+    {
+      "file": "netuno/15.webp",
+      "degrees": 150,
+      "bytes": 6100,
+      "sha256": "c773f2e445932a110fbda6819d798b37125b2a9a905a48ab9af210e8112d3b63"
+    },
+    {
+      "file": "lua/12.webp",
+      "degrees": 120,
+      "bytes": 4872,
+      "sha256": "e2e6f047e96d4758f2e582ba3ab05da0ea045775929a679e10fd92102202496a"
+    },
+    {
+      "file": "lua/13.webp",
+      "degrees": 130,
+      "bytes": 4884,
+      "sha256": "ff4cb97efc709d3cdd85eb2e03c80c6cd3b04771aa23dffeb19ecd6560d83b15"
+    },
+    {
+      "file": "lua/14.webp",
+      "degrees": 140,
+      "bytes": 4982,
+      "sha256": "5e6eb068c65e499b4aea789f01c282b60b533e5e32ec68aeefd907500199e13e"
+    },
+    {
+      "file": "lua/15.webp",
+      "degrees": 150,
+      "bytes": 5232,
+      "sha256": "9f7ec59cbd09289d751e107408ed21239960ad0a1a16963cda7380cbedf58e27"
+    },
+    {
+      "file": "saturno-globo/12.webp",
+      "degrees": 120,
+      "bytes": 4158,
+      "sha256": "0f9e606b154072b9d0725006cfbce8e12ae231e81a775299b69b6a3cc17ccb1b"
+    },
+    {
+      "file": "saturno-globo/13.webp",
+      "degrees": 130,
+      "bytes": 4342,
+      "sha256": "5ed6daa6db38e5a2e438fa9bb347bb08858bbcdedc2c30932782630f10fe8d2b"
+    },
+    {
+      "file": "saturno-globo/14.webp",
+      "degrees": 140,
+      "bytes": 4298,
+      "sha256": "5c2cd53a193de2166c5808a719846d8fe965f5023d45603b9d6a2d086092c667"
+    },
+    {
+      "file": "saturno-globo/15.webp",
+      "degrees": 150,
+      "bytes": 4202,
+      "sha256": "866eff22fe28748ff9c7db2f167d7b5b106dcbf4d7647f3aba08f7511d5b7dd1"
+    },
+    {
+      "file": "terra-solo/12.webp",
+      "degrees": 120,
+      "bytes": 5364,
+      "sha256": "d8c651e6b702ed1b0cb52f7d646b81181b72daf33bb90b3e8554961f17e70b93"
+    },
+    {
+      "file": "terra-solo/13.webp",
+      "degrees": 130,
+      "bytes": 5556,
+      "sha256": "c424cd5d73161ed699eca55a2c6c9080f06f0f428676d101556529f9298ca419"
+    },
+    {
+      "file": "terra-solo/14.webp",
+      "degrees": 140,
+      "bytes": 5770,
+      "sha256": "d32206918a519ad01a73951164100ecc90d762b8525572153073c0863b7030af"
+    },
+    {
+      "file": "terra-solo/15.webp",
+      "degrees": 150,
+      "bytes": 5912,
+      "sha256": "e43138c46362fcdae428bb068ef40f137995c9d19d5159bee0c20bb74a10593f"
+    },
+    {
+      "file": "terra-nuvens/12.webp",
+      "degrees": 120,
+      "bytes": 6722,
+      "sha256": "5436d2e5073642070a9f838dd94a5f1bc81f7b4c07940c8b7b0de8ee1a50c5a6"
+    },
+    {
+      "file": "terra-nuvens/13.webp",
+      "degrees": 130,
+      "bytes": 6814,
+      "sha256": "6f87dd5ceddf80c8936564cf982c536b5ec4b5a5bb6e1b8449f33f552a294a31"
+    },
+    {
+      "file": "terra-nuvens/14.webp",
+      "degrees": 140,
+      "bytes": 7122,
+      "sha256": "b6a9b3134de2dfd742a4c55eac3a6b1e126012f20a9fde343511b61bcabfbd51"
+    },
+    {
+      "file": "terra-nuvens/15.webp",
+      "degrees": 150,
+      "bytes": 7342,
+      "sha256": "8aee23ac26f224afbca71dade77166b5e522854daaacce097ddb15d6282df90c"
+    },
+    {
+      "file": "terra-ar/12.webp",
+      "degrees": 120,
+      "bytes": 5246,
+      "sha256": "5e476366a3d447b27aef784a59adb6547b5fd9dd0303a2ba601033b123d1ea74"
+    },
+    {
+      "file": "terra-ar/13.webp",
+      "degrees": 130,
+      "bytes": 5402,
+      "sha256": "e57ce56c271ad4cf7a13b1e507358ff2ce715f5b426f65bd251718aa072198c1"
+    },
+    {
+      "file": "terra-ar/14.webp",
+      "degrees": 140,
+      "bytes": 5604,
+      "sha256": "6ed4403f312a4f1c1491e8056aec2d0d80a244e9573d3832780353d5cc13d275"
+    },
+    {
+      "file": "terra-ar/15.webp",
+      "degrees": 150,
+      "bytes": 5676,
+      "sha256": "6372b0fda338edae97fcd841ef297fa4cd600fc43f862886ecc42c009be650f7"
+    },
+    {
+      "file": "mercurio/16.webp",
+      "degrees": 160,
+      "bytes": 8878,
+      "sha256": "bda36a0523c9a7355441e1d6980b3df3c1e12f653d76b863606ee33758ad9562"
+    },
+    {
+      "file": "mercurio/17.webp",
+      "degrees": 170,
+      "bytes": 8850,
+      "sha256": "d1ae6a70e85d1ad8decfbd8601678f8115c1b3a68f559833ee48675c181ca3a2"
+    },
+    {
+      "file": "mercurio/18.webp",
+      "degrees": 180,
+      "bytes": 8950,
+      "sha256": "841a8c6b74f94314f457cbce8108a2d79fa146d6df2e38913aeab036c6879ed9"
+    },
+    {
+      "file": "mercurio/19.webp",
+      "degrees": 190,
+      "bytes": 8974,
+      "sha256": "c77cb7e7110e71ac0e6e25a7d74493642e0d333ed588870f86688c73b27bb050"
+    },
+    {
+      "file": "venus/16.webp",
+      "degrees": 160,
+      "bytes": 3192,
+      "sha256": "6480d2c2212f779ae9c642d81997a890cab9393c9f0290b7f4d41e07df44581d"
+    },
+    {
+      "file": "venus/17.webp",
+      "degrees": 170,
+      "bytes": 3294,
+      "sha256": "4d4709d984ee5f073978a7190b1ae2b6960a4a2a9a31462d759f4287008d594f"
+    },
+    {
+      "file": "venus/18.webp",
+      "degrees": 180,
+      "bytes": 3200,
+      "sha256": "9acd3285aec7bc95b568a71bf138fe4fc87cf979d874c84fe79197de00770e7c"
+    },
+    {
+      "file": "venus/19.webp",
+      "degrees": 190,
+      "bytes": 3224,
+      "sha256": "8cd917922f0170a10de55f9c5245489865b83e38fc60a45ac3ab529a7f53c048"
+    },
+    {
+      "file": "terra/16.webp",
+      "degrees": 160,
+      "bytes": 7284,
+      "sha256": "27b50f5b607af4c62116be4c3dc96e3f4ab22cd4cf736a03f2a9c72e2ea7fec4"
+    },
+    {
+      "file": "terra/17.webp",
+      "degrees": 170,
+      "bytes": 7300,
+      "sha256": "e8d3dcfc093c09a46a535151f7b612c686b817d4011cb140c0b595616d032776"
+    },
+    {
+      "file": "terra/18.webp",
+      "degrees": 180,
+      "bytes": 7506,
+      "sha256": "aae2514c05c3847f9f52d703790109141de75501705173501c6031ff537d80c8"
+    },
+    {
+      "file": "terra/19.webp",
+      "degrees": 190,
+      "bytes": 7540,
+      "sha256": "b1416fe378eea450054bc9c9507e3316080f1553a5ed730806123b5bf4399662"
+    },
+    {
+      "file": "marte/16.webp",
+      "degrees": 160,
+      "bytes": 5730,
+      "sha256": "57aed9f81d3a722836d0841c34fe2987da6807d420532e1c1d0cba17bf4f8a7e"
+    },
+    {
+      "file": "marte/17.webp",
+      "degrees": 170,
+      "bytes": 5688,
+      "sha256": "3fb0f0a634bdc1c0309d907da17bf3d8f8bf09900a74c5ca29930aeb124faf9f"
+    },
+    {
+      "file": "marte/18.webp",
+      "degrees": 180,
+      "bytes": 5626,
+      "sha256": "309c9e8cac3b815dc5f38eab78b8470fd25d8ecfc97130d9a355f0684a32ed26"
+    },
+    {
+      "file": "marte/19.webp",
+      "degrees": 190,
+      "bytes": 5652,
+      "sha256": "f9336b6c3dc98dc0c8adf15d209db38361e0d1c01f44efbecaef48e62731e5a9"
+    },
+    {
+      "file": "jupiter/16.webp",
+      "degrees": 160,
+      "bytes": 5592,
+      "sha256": "d418d4eae9c81262dad91b273aa9db08d859b7c7b700da65a54076586fcbc871"
+    },
+    {
+      "file": "jupiter/17.webp",
+      "degrees": 170,
+      "bytes": 5634,
+      "sha256": "b44a29af0a3a1c6d4ce707f89bedf7b64c255710bc4b516985646b3d267c5c23"
+    },
+    {
+      "file": "jupiter/18.webp",
+      "degrees": 180,
+      "bytes": 5712,
+      "sha256": "2eff8dd6c71b773b9184522a073fc5914f31f461b58c3de38e1a7a3d148d2252"
+    },
+    {
+      "file": "jupiter/19.webp",
+      "degrees": 190,
+      "bytes": 5724,
+      "sha256": "907c850cb4669e1bda259670931cc45138a3b2951804f3412461eca881c159d5"
+    },
+    {
+      "file": "saturno/16.webp",
+      "degrees": 160,
+      "bytes": 11776,
+      "sha256": "16513e33194f9b06a04f9cfc93f20aee573a8e8c92732ec523ba3d87345c10ed"
+    },
+    {
+      "file": "saturno/17.webp",
+      "degrees": 170,
+      "bytes": 11696,
+      "sha256": "550933570a033af3da2944dff1747af9a7508e24e1c04f63d084e3584903166a"
+    },
+    {
+      "file": "saturno/18.webp",
+      "degrees": 180,
+      "bytes": 11684,
+      "sha256": "81420fe712892ef6e2eb432849818c071b0958980f87493712be1744ef418783"
+    },
+    {
+      "file": "saturno/19.webp",
+      "degrees": 190,
+      "bytes": 11686,
+      "sha256": "dd8bf2d0eefbb377f1fcc22f7ff52516ce5f4de86f8878d3ffcf432338c2e362"
+    },
+    {
+      "file": "urano/16.webp",
+      "degrees": 160,
+      "bytes": 3428,
+      "sha256": "4c04a37b5851f5649abf992a03a3b1b33bb64b4391e89b7579a8710412764b92"
+    },
+    {
+      "file": "urano/17.webp",
+      "degrees": 170,
+      "bytes": 3420,
+      "sha256": "2ce8d2d5b4e3265b48c2299d4b98675e1976b5f63a359e6c1d4503e96ca2507d"
+    },
+    {
+      "file": "urano/18.webp",
+      "degrees": 180,
+      "bytes": 3398,
+      "sha256": "12300ab93a43d582f96a7586435a540776a2d9464a1e9b5b3eaf9c4e41b2763c"
+    },
+    {
+      "file": "urano/19.webp",
+      "degrees": 190,
+      "bytes": 3380,
+      "sha256": "1a80825eb35bd46ec16b97cc9fd1183c51f2398b9be69931e9145a3e776f11be"
+    },
+    {
+      "file": "netuno/16.webp",
+      "degrees": 160,
+      "bytes": 6118,
+      "sha256": "808979c62cf16f0a440098e12b3afa412cad60faa700655bc7e34d28a8400189"
+    },
+    {
+      "file": "netuno/17.webp",
+      "degrees": 170,
+      "bytes": 6034,
+      "sha256": "62580b0b7633fee56fef68051ff2640356caca63d2d57010a5ba27f6ca4e3f35"
+    },
+    {
+      "file": "netuno/18.webp",
+      "degrees": 180,
+      "bytes": 6114,
+      "sha256": "ae5a623ba718d333b3f6cecb74b99ee959bbc3cf4289c9af53167cfe89b8bdf3"
+    },
+    {
+      "file": "netuno/19.webp",
+      "degrees": 190,
+      "bytes": 5986,
+      "sha256": "00b5547f98e0941fe59d464113f9bfb994a72966355e0d29343452e73caaeb5e"
+    },
+    {
+      "file": "lua/16.webp",
+      "degrees": 160,
+      "bytes": 5170,
+      "sha256": "25117c6f91ae3bdba163f2103486cb3d70121fddd3cfce1075d4aee2fa988f27"
+    },
+    {
+      "file": "lua/17.webp",
+      "degrees": 170,
+      "bytes": 5242,
+      "sha256": "e743c2b1d7d1f663452e78deba8228833e817233f42542bf3279aeb505fc4ff4"
+    },
+    {
+      "file": "lua/18.webp",
+      "degrees": 180,
+      "bytes": 5360,
+      "sha256": "15469a5638f65cf802e34c778555e0839e2485e85b779f6e880139363ec3c0bc"
+    },
+    {
+      "file": "lua/19.webp",
+      "degrees": 190,
+      "bytes": 5456,
+      "sha256": "a5edc7723de03777fbf78f47b3384c569a7cd6817608f173a16160bc8e9a33b5"
+    },
+    {
+      "file": "saturno-globo/16.webp",
+      "degrees": 160,
+      "bytes": 4274,
+      "sha256": "97b2ae4d14ac9e816788fd3ca672bb40fe22f3ca9a42b4ca23f6efc9a29d515a"
+    },
+    {
+      "file": "saturno-globo/17.webp",
+      "degrees": 170,
+      "bytes": 4384,
+      "sha256": "0d51551ac3cbda6d1af347fe692f81dc30afa017b82c297abc8443bd7b0ce36b"
+    },
+    {
+      "file": "saturno-globo/18.webp",
+      "degrees": 180,
+      "bytes": 4234,
+      "sha256": "e07511431aeab220fe250df32ed5950b1230b9cb857b8e8d68944106f8baec4b"
+    },
+    {
+      "file": "saturno-globo/19.webp",
+      "degrees": 190,
+      "bytes": 4230,
+      "sha256": "ef438ab2ddfba83e88568bc11e8fed0a471fbc45f8b76c76c95f6320b37299f4"
+    },
+    {
+      "file": "terra-solo/16.webp",
+      "degrees": 160,
+      "bytes": 6270,
+      "sha256": "c9ade68c4f3ac67a75f6287949fbdf9234a9faf887bb18526af44d23fa9ab049"
+    },
+    {
+      "file": "terra-solo/17.webp",
+      "degrees": 170,
+      "bytes": 6378,
+      "sha256": "fd53aa0ca0adc5635775239b32c2a448d4596ffe4ffe7dbc5841deb6153daf3a"
+    },
+    {
+      "file": "terra-solo/18.webp",
+      "degrees": 180,
+      "bytes": 6494,
+      "sha256": "b57ce937bba5df7c2d9474532a5184f9b796e080319bdc4cda95dfa887a498ee"
+    },
+    {
+      "file": "terra-solo/19.webp",
+      "degrees": 190,
+      "bytes": 6700,
+      "sha256": "a849acf543361b2c328143ed4949a8dc833f13aa0cdc7ba82ca00682964da1dc"
+    },
+    {
+      "file": "terra-nuvens/16.webp",
+      "degrees": 160,
+      "bytes": 7566,
+      "sha256": "146ffecde3fd832cb5e2283d4b33c469f3e6bf8dee6c2751ca2eaf007ed529ae"
+    },
+    {
+      "file": "terra-nuvens/17.webp",
+      "degrees": 170,
+      "bytes": 7742,
+      "sha256": "bed31b30b00164f1e09c099d8aa2f97309a5a0b3272e6bd4342bd7fdcdace511"
+    },
+    {
+      "file": "terra-nuvens/18.webp",
+      "degrees": 180,
+      "bytes": 7806,
+      "sha256": "98887d29afc826c9c5c4651e87859b894bbefcba34545a125eb1ae2c1b5574b7"
+    },
+    {
+      "file": "terra-nuvens/19.webp",
+      "degrees": 190,
+      "bytes": 7966,
+      "sha256": "2e7dcdfea52e0f2704c6804ec97238fb58510ad30e6317cae3004e1c04efe6e9"
+    },
+    {
+      "file": "terra-ar/16.webp",
+      "degrees": 160,
+      "bytes": 5944,
+      "sha256": "3647783ad82808ed0df68e642cb9df2b43ba720464d6282b6fd7ae92e54044e6"
+    },
+    {
+      "file": "terra-ar/17.webp",
+      "degrees": 170,
+      "bytes": 6004,
+      "sha256": "3a4723347e6bbea595e9298d74928ce758023ccb8c1e2fdde191671751d27621"
+    },
+    {
+      "file": "terra-ar/18.webp",
+      "degrees": 180,
+      "bytes": 6194,
+      "sha256": "7d44b25f5f4cf84ebf7eecc0701015a42c620b7dd6fc8585b49e0beff494fbc7"
+    },
+    {
+      "file": "terra-ar/19.webp",
+      "degrees": 190,
+      "bytes": 6528,
+      "sha256": "55e01a0d3f19c93cb3f9017980252328c2303da10f46c3b97e01ebcec93e95a2"
+    },
+    {
+      "file": "mercurio/20.webp",
+      "degrees": 200,
+      "bytes": 8692,
+      "sha256": "8cf76103e0871b9d4e7bda47fd779a47c1845116ddb5edc30ed9aae24ef2b879"
+    },
+    {
+      "file": "mercurio/21.webp",
+      "degrees": 210,
+      "bytes": 8752,
+      "sha256": "6da5014945da179de14459b801cabd466a760497741dba0054398ea8a50a146f"
+    },
+    {
+      "file": "mercurio/22.webp",
+      "degrees": 220,
+      "bytes": 8730,
+      "sha256": "411cc7639556cfdde8b9ba8412b7ea4ad0781bdec241093299c4281b275c5326"
+    },
+    {
+      "file": "mercurio/23.webp",
+      "degrees": 230,
+      "bytes": 8738,
+      "sha256": "e42869c1d5d3cb59864a1ae6f9fdfaf56d3095e920be9f4d709d9e531170fde9"
+    },
+    {
+      "file": "venus/20.webp",
+      "degrees": 200,
+      "bytes": 3226,
+      "sha256": "e11e28341f1e288eb2b08d4c87fb26819b4e1ba7b3a8726773a43363405346cf"
+    },
+    {
+      "file": "venus/21.webp",
+      "degrees": 210,
+      "bytes": 3280,
+      "sha256": "34e11a72b17a4315823e0733d2aa81ba2358418dfec3ece03c9673385a71fd1a"
+    },
+    {
+      "file": "venus/22.webp",
+      "degrees": 220,
+      "bytes": 3214,
+      "sha256": "d0c8f96a6018eea8596e7407abd1105f8471afe4c796e229c4fc5a0be6b5549b"
+    },
+    {
+      "file": "venus/23.webp",
+      "degrees": 230,
+      "bytes": 3258,
+      "sha256": "c23e372513f392b56154cac5b1d58a33bec164f28e06b26b7142891c9d764eb7"
+    },
+    {
+      "file": "terra/20.webp",
+      "degrees": 200,
+      "bytes": 7598,
+      "sha256": "f1b930ae33ce04d74e23e9e2fcf6e461baef2310bf25e0f3afb103a1ee60de06"
+    },
+    {
+      "file": "terra/21.webp",
+      "degrees": 210,
+      "bytes": 7544,
+      "sha256": "3b25258ca5d898de8c80d71922d842d8ed5d5d8902f800747b2c0373e2739110"
+    },
+    {
+      "file": "terra/22.webp",
+      "degrees": 220,
+      "bytes": 7592,
+      "sha256": "a89128172484b2bf198ce661fb649e8f83847e79eb643551b6f9460878f14213"
+    },
+    {
+      "file": "terra/23.webp",
+      "degrees": 230,
+      "bytes": 7674,
+      "sha256": "32b8eaeeaac2835a935049800f13b7550a4b56701b05d63ba4828ae01363608a"
+    },
+    {
+      "file": "marte/20.webp",
+      "degrees": 200,
+      "bytes": 5736,
+      "sha256": "2f632f4bde5757ab8a6e1327163a3b0f5f43fa89fd4120a8ea4fc6c0212305f6"
+    },
+    {
+      "file": "marte/21.webp",
+      "degrees": 210,
+      "bytes": 5738,
+      "sha256": "2c10fbfd8b7d0a8177ceba34113d94b3c818614a161cbeb279f0873e3ec90809"
+    },
+    {
+      "file": "marte/22.webp",
+      "degrees": 220,
+      "bytes": 5824,
+      "sha256": "106641e5e9bbe8b857a8666156ae9f0df6e0877c44b6ecfb8bb22a7e0468991c"
+    },
+    {
+      "file": "marte/23.webp",
+      "degrees": 230,
+      "bytes": 6036,
+      "sha256": "2ea5d763e9405538bc2858fe4cfc1bf508b71fa7eb20ee0ccb20d38f60a30cdc"
+    },
+    {
+      "file": "jupiter/20.webp",
+      "degrees": 200,
+      "bytes": 5596,
+      "sha256": "01edcf82ec16bffc6155e0ca93461de4314aa588abf4f8a1440c2e6393150015"
+    },
+    {
+      "file": "jupiter/21.webp",
+      "degrees": 210,
+      "bytes": 5662,
+      "sha256": "6798ebcca7b06842e60cea202410bc25f9c39c5924441a023dc450837f18a28f"
+    },
+    {
+      "file": "jupiter/22.webp",
+      "degrees": 220,
+      "bytes": 5606,
+      "sha256": "ae8d7b61573a76cb24c875fe65657835190fca849121992677e866d69183fc86"
+    },
+    {
+      "file": "jupiter/23.webp",
+      "degrees": 230,
+      "bytes": 5612,
+      "sha256": "152350c5157081e57b23217b971e862aa11e95cd47863ae17e62f45cf387428b"
+    },
+    {
+      "file": "saturno/20.webp",
+      "degrees": 200,
+      "bytes": 11740,
+      "sha256": "5fab38067eb6284ea9b57257a91e19e7ee417cae3d92f176f507bd2a6c15b73e"
+    },
+    {
+      "file": "saturno/21.webp",
+      "degrees": 210,
+      "bytes": 11578,
+      "sha256": "17f53f43bab2569f6471347ad54828dea36d0417fcc8cbb5456c6fddc911c9cd"
+    },
+    {
+      "file": "saturno/22.webp",
+      "degrees": 220,
+      "bytes": 11632,
+      "sha256": "0d4d0ff658f7217d88b8313b0ebfdd804dd0c305a78f271113feae006b95c219"
+    },
+    {
+      "file": "saturno/23.webp",
+      "degrees": 230,
+      "bytes": 11664,
+      "sha256": "d1e6fa020beda1f57ea0c792b8e068ff4781ac0421e743bfed18ab06ce4ae4c1"
+    },
+    {
+      "file": "urano/20.webp",
+      "degrees": 200,
+      "bytes": 3400,
+      "sha256": "e34c0a5165a46adfbbe7af0398c92b021f4396a4113a578d820bd4a3727aeed2"
+    },
+    {
+      "file": "urano/21.webp",
+      "degrees": 210,
+      "bytes": 3414,
+      "sha256": "302a9c32ccc1cf352d09a52e85f316b54c511a5c82a62d0114ca670f1445aa58"
+    },
+    {
+      "file": "urano/22.webp",
+      "degrees": 220,
+      "bytes": 3422,
+      "sha256": "ebceff23f2b16497ca40abe8a5cbd22d708ba9fb09d33024fa21683daf433bf9"
+    },
+    {
+      "file": "urano/23.webp",
+      "degrees": 230,
+      "bytes": 3356,
+      "sha256": "47b153a074887886fb2270574ba77a573928f34739e1299f67304c685e9626f3"
+    },
+    {
+      "file": "netuno/20.webp",
+      "degrees": 200,
+      "bytes": 6156,
+      "sha256": "94355413e66fc3c3646c42f42596f170b6f5a5c51a9d41f602f098cb21ff5540"
+    },
+    {
+      "file": "netuno/21.webp",
+      "degrees": 210,
+      "bytes": 6102,
+      "sha256": "6dea6e4a8578f3e8540fc0e1dca521425347e087adb676da2427dcc3340fd18d"
+    },
+    {
+      "file": "netuno/22.webp",
+      "degrees": 220,
+      "bytes": 6104,
+      "sha256": "444abe63337f5327cfced186d8d216140945ff3852a43f73a7a522801f8fd516"
+    },
+    {
+      "file": "netuno/23.webp",
+      "degrees": 230,
+      "bytes": 6132,
+      "sha256": "8d2735c4a4a9c71012b5aca536c817971c400d8c3a4c86db3f88e05268b905bf"
+    },
+    {
+      "file": "lua/20.webp",
+      "degrees": 200,
+      "bytes": 5340,
+      "sha256": "2dc4f3f1de9b9fd503936c63ba81734c34635f2eb4048de6c8f531378042a01f"
+    },
+    {
+      "file": "lua/21.webp",
+      "degrees": 210,
+      "bytes": 5470,
+      "sha256": "600b7f3af53ba1220048cfeee75b89d616b8e40e0f1031c77f3f90cd230fd397"
+    },
+    {
+      "file": "lua/22.webp",
+      "degrees": 220,
+      "bytes": 5434,
+      "sha256": "1018f0dd0d45c3624c9d07263ecfca7d80fcfbec21d23305473e01aadd9daa9d"
+    },
+    {
+      "file": "lua/23.webp",
+      "degrees": 230,
+      "bytes": 5648,
+      "sha256": "18bff891521fc3c5f575864147bbf34a66a3fad85b645d83e82cfbbd472c379c"
+    },
+    {
+      "file": "saturno-globo/20.webp",
+      "degrees": 200,
+      "bytes": 4320,
+      "sha256": "4b9ad54c0e3f3111a7949f42d167d55b63470a7468f358a031440071d626b64e"
+    },
+    {
+      "file": "saturno-globo/21.webp",
+      "degrees": 210,
+      "bytes": 4236,
+      "sha256": "df1bdb47384ba451c11db5782ac3ada823f2d80ce4aa9a8b6b166ca0463a7ef1"
+    },
+    {
+      "file": "saturno-globo/22.webp",
+      "degrees": 220,
+      "bytes": 4258,
+      "sha256": "30bfe2f16991e7377e1cb1458bd941b695922b67cfea9cb521561c9cdbbad320"
+    },
+    {
+      "file": "saturno-globo/23.webp",
+      "degrees": 230,
+      "bytes": 4252,
+      "sha256": "04ca07d1fafb8b89ae1e913b5f7b55c6667df8239b128bb6ed959c3173d10634"
+    },
+    {
+      "file": "terra-solo/20.webp",
+      "degrees": 200,
+      "bytes": 7190,
+      "sha256": "66a42e771f44aaceba61b2ab31585091db0ec5dbb1a27b7ae63c6aaaad3582ff"
+    },
+    {
+      "file": "terra-solo/21.webp",
+      "degrees": 210,
+      "bytes": 7026,
+      "sha256": "123673c9a13495eb9bba8d5c3ec69d62492711f6e866861c93510a6fb3652550"
+    },
+    {
+      "file": "terra-solo/22.webp",
+      "degrees": 220,
+      "bytes": 7192,
+      "sha256": "40a0de1e3b08f87e528a81a0845904834c0bfcfd2335b188fac577b9daf61140"
+    },
+    {
+      "file": "terra-solo/23.webp",
+      "degrees": 230,
+      "bytes": 7024,
+      "sha256": "5e0c1c8a5e028181643f169c272ca91fc6a020d31b611339e50930b0ef48d8cd"
+    },
+    {
+      "file": "terra-nuvens/20.webp",
+      "degrees": 200,
+      "bytes": 7990,
+      "sha256": "a19d26efe373822af8206a75f256135fd3158ec1de2e5cdb72af21ba92232e1b"
+    },
+    {
+      "file": "terra-nuvens/21.webp",
+      "degrees": 210,
+      "bytes": 8022,
+      "sha256": "e46e2a16fa11bc5804a0f6368f28a465845aaf737befaf8ac76e9978dda6916c"
+    },
+    {
+      "file": "terra-nuvens/22.webp",
+      "degrees": 220,
+      "bytes": 7972,
+      "sha256": "8b18da847002c6d78082dd1d928812ad2b0a69c74dcb5654203edb93e4a724b8"
+    },
+    {
+      "file": "terra-nuvens/23.webp",
+      "degrees": 230,
+      "bytes": 8054,
+      "sha256": "72aa0c0ee62553b3f4807a5732fc73bbc5a504af777d9cfdcf605ba07cfe8b31"
+    },
+    {
+      "file": "terra-ar/20.webp",
+      "degrees": 200,
+      "bytes": 6636,
+      "sha256": "67bbdfa58089e7d2617e71fbf6afc2223c49fd8c6d392a4212e6fb8e9ba755cf"
+    },
+    {
+      "file": "terra-ar/21.webp",
+      "degrees": 210,
+      "bytes": 6656,
+      "sha256": "b21c458a619628a5a01e2c9442905e3e7100766b02088dd1a22898559bc4c729"
+    },
+    {
+      "file": "terra-ar/22.webp",
+      "degrees": 220,
+      "bytes": 6814,
+      "sha256": "f903c0601fa52299122ea033a7fbfbef9763c7e6377d30e3acdc7ca4fd804da9"
+    },
+    {
+      "file": "terra-ar/23.webp",
+      "degrees": 230,
+      "bytes": 6774,
+      "sha256": "49cd91ed33dcaf828b98a02d03b0fc35bf323fd22b3724fe464632ab53f9fd2e"
+    },
+    {
+      "file": "mercurio/24.webp",
+      "degrees": 240,
+      "bytes": 8700,
+      "sha256": "f1fa468873a64cd696503f55bc29ab24668b75974b1e208a064e59a79d2adbd9"
+    },
+    {
+      "file": "mercurio/25.webp",
+      "degrees": 250,
+      "bytes": 8810,
+      "sha256": "7c63fb835e90181a1fe05dfa1a04f3de5b2d337deeefad2706016d20a092786a"
+    },
+    {
+      "file": "mercurio/26.webp",
+      "degrees": 260,
+      "bytes": 8750,
+      "sha256": "80b35891d8ecc19088535d4649b62547e023a35c0ded37acd8bba9cfd133dc68"
+    },
+    {
+      "file": "mercurio/27.webp",
+      "degrees": 270,
+      "bytes": 8978,
+      "sha256": "9a410ed402b963f471777e4defbcc0a8910e46fdfe7120337bbd34c0b14856d7"
+    },
+    {
+      "file": "venus/24.webp",
+      "degrees": 240,
+      "bytes": 3146,
+      "sha256": "55efa55509a8c1510286e52ad71221185a3bb8d71b7c049be163a3993119a7cb"
+    },
+    {
+      "file": "venus/25.webp",
+      "degrees": 250,
+      "bytes": 3274,
+      "sha256": "36f1b29d48be5f13833fa768780ad598834efbf1c88d8a048d579c14faedcdda"
+    },
+    {
+      "file": "venus/26.webp",
+      "degrees": 260,
+      "bytes": 3168,
+      "sha256": "5b409e9c310d69c98efe6f199e481912770fd348ab38d6d489a1419147dc860c"
+    },
+    {
+      "file": "venus/27.webp",
+      "degrees": 270,
+      "bytes": 3204,
+      "sha256": "1c91ae6c28691a52eb13a71f5c36f79eb31ca1e3a53e1aa5acd0f9a1290032d2"
+    },
+    {
+      "file": "terra/24.webp",
+      "degrees": 240,
+      "bytes": 7408,
+      "sha256": "4e7907fffd8a463a843efbba4d991b3f122dd3033ac8094d2859592a7fc42405"
+    },
+    {
+      "file": "terra/25.webp",
+      "degrees": 250,
+      "bytes": 7330,
+      "sha256": "3d27870ccade09c884d935d6f253550ff8809b958280db2224428370f9763e46"
+    },
+    {
+      "file": "terra/26.webp",
+      "degrees": 260,
+      "bytes": 6998,
+      "sha256": "32081f122d30a19eecfa567c1fd060a9975bbfcb305ee2d4b2d55b71486875db"
+    },
+    {
+      "file": "terra/27.webp",
+      "degrees": 270,
+      "bytes": 7072,
+      "sha256": "b005c1358e36447a64d0d3c8cb58b9d9a0b226f45886a6848c63fce01f950f52"
+    },
+    {
+      "file": "marte/24.webp",
+      "degrees": 240,
+      "bytes": 6070,
+      "sha256": "5a3d987b3f6b8399784c90eb07d788e25b39065aeecfc5bf429c1716ec9c7fcc"
+    },
+    {
+      "file": "marte/25.webp",
+      "degrees": 250,
+      "bytes": 6106,
+      "sha256": "73e5882d2abcd54f27bb64dc83aaa15eac3c6d76f0873f773de89aaa37622594"
+    },
+    {
+      "file": "marte/26.webp",
+      "degrees": 260,
+      "bytes": 6270,
+      "sha256": "1fbe997d0b47ef9475e9282e7dc912833b789a30e5369cbf4b96fd600185e778"
+    },
+    {
+      "file": "marte/27.webp",
+      "degrees": 270,
+      "bytes": 6212,
+      "sha256": "6a981850896af348d41e282573fadd613daffb68e7f2a1f987ca5cddd1927f12"
+    },
+    {
+      "file": "jupiter/24.webp",
+      "degrees": 240,
+      "bytes": 5532,
+      "sha256": "b5fa61c9b82547393a2016e5ca4c36ec9d61a35c75a097278bc6568c0d6cfdd3"
+    },
+    {
+      "file": "jupiter/25.webp",
+      "degrees": 250,
+      "bytes": 5640,
+      "sha256": "42b1912d0ab7dfa106aecbad69cf74e3c11a4573732899545feb96217b4d92a6"
+    },
+    {
+      "file": "jupiter/26.webp",
+      "degrees": 260,
+      "bytes": 5652,
+      "sha256": "5f9a804fd9ac3aa79e526e3061f6969f9547c9340badda166689ca9890405ec6"
+    },
+    {
+      "file": "jupiter/27.webp",
+      "degrees": 270,
+      "bytes": 5520,
+      "sha256": "dc553a70eccc40c9e9e000cd5dfd96110f5038a3d31c48ac6a8de8f5de25b6ed"
+    },
+    {
+      "file": "saturno/24.webp",
+      "degrees": 240,
+      "bytes": 11718,
+      "sha256": "81939e1a29a0d445e7ff98e34d6094610900930f4980de10f6c67aeb5b290965"
+    },
+    {
+      "file": "saturno/25.webp",
+      "degrees": 250,
+      "bytes": 11724,
+      "sha256": "c5d0fc1840ce8b9ff868077454cf0a26bd74273aab799a56086a60442060b2f1"
+    },
+    {
+      "file": "saturno/26.webp",
+      "degrees": 260,
+      "bytes": 11582,
+      "sha256": "c21f05660ac2d636df07e77811583319012196a801cce82bf7fc3bc580a9fdde"
+    },
+    {
+      "file": "saturno/27.webp",
+      "degrees": 270,
+      "bytes": 11800,
+      "sha256": "d06af52ce91faf6f7a6cfeb32ab0352508fd90517863695786d6f6f2b913dfa6"
+    },
+    {
+      "file": "urano/24.webp",
+      "degrees": 240,
+      "bytes": 3458,
+      "sha256": "5471d5418236552f2015b31d7b9b52b7cd974ff7938627cfb3d65d43e804d3dd"
+    },
+    {
+      "file": "urano/25.webp",
+      "degrees": 250,
+      "bytes": 3400,
+      "sha256": "66387a446d760674398a7ec1b456670c63bebf1b8eb0a7116ac3289406bd483b"
+    },
+    {
+      "file": "urano/26.webp",
+      "degrees": 260,
+      "bytes": 3424,
+      "sha256": "741483828b6ce91b5d2a9026bb82330aed486f9beeebc7d0cebb819b11ed2f20"
+    },
+    {
+      "file": "urano/27.webp",
+      "degrees": 270,
+      "bytes": 3350,
+      "sha256": "0ec230f4bcccfd1a4ddf7128bab95dc9f381e896cdecbadd3bdcdbbbaa0a3178"
+    },
+    {
+      "file": "netuno/24.webp",
+      "degrees": 240,
+      "bytes": 6150,
+      "sha256": "6712e811971e587e37429ac00fd151f0f54fd596c169eabc29bb7156c0c2b7d9"
+    },
+    {
+      "file": "netuno/25.webp",
+      "degrees": 250,
+      "bytes": 6126,
+      "sha256": "be723d569ead1c3d96c92e6a0a3ce07789f9fc16021fb58c3695ddfd44780adb"
+    },
+    {
+      "file": "netuno/26.webp",
+      "degrees": 260,
+      "bytes": 6204,
+      "sha256": "58c5dcc46e81c68a2bcb900fa3de411c236064c3063ab9488c879c044f36bac9"
+    },
+    {
+      "file": "netuno/27.webp",
+      "degrees": 270,
+      "bytes": 6134,
+      "sha256": "671801b436d9f851afa7897ebd48fe2e64180b7cb5624994520367a5ab12a012"
+    },
+    {
+      "file": "lua/24.webp",
+      "degrees": 240,
+      "bytes": 5562,
+      "sha256": "8392dd4b36a25f62738b3088ca15b690ccb9c86fb5e86020110eb34c89e9f48a"
+    },
+    {
+      "file": "lua/25.webp",
+      "degrees": 250,
+      "bytes": 5618,
+      "sha256": "712ecc6f94adf35ba5d6d456fe34a1b1d2a3c2b757721b872020094697105d10"
+    },
+    {
+      "file": "lua/26.webp",
+      "degrees": 260,
+      "bytes": 5628,
+      "sha256": "e2e170e8f44b4927843b09cf4b931da1dd527cace51d765508ab6a58ee04e082"
+    },
+    {
+      "file": "lua/27.webp",
+      "degrees": 270,
+      "bytes": 5772,
+      "sha256": "ba5686e56ad9ce4384c886cb40bc778a5a26230520a35a01f931f15c5aaed300"
+    },
+    {
+      "file": "saturno-globo/24.webp",
+      "degrees": 240,
+      "bytes": 4274,
+      "sha256": "cc8323b06418954f7ddf5e32055be0ecad15b3e73cfa9f7b30dce94713f1d437"
+    },
+    {
+      "file": "saturno-globo/25.webp",
+      "degrees": 250,
+      "bytes": 4314,
+      "sha256": "f23272172bd0d6f97af11cdcf39eebed1408036337d8a3e1b57895f17a3823d2"
+    },
+    {
+      "file": "saturno-globo/26.webp",
+      "degrees": 260,
+      "bytes": 4262,
+      "sha256": "125a2d38d4abbe67c657f2b5e1f4f79c9057b950c5174c38d2abfbded8dba54f"
+    },
+    {
+      "file": "saturno-globo/27.webp",
+      "degrees": 270,
+      "bytes": 4172,
+      "sha256": "b2c95a4ade587c91877eec35a1f07642940e3c914ec0b8eda38ebc8ea585f11c"
+    },
+    {
+      "file": "terra-solo/24.webp",
+      "degrees": 240,
+      "bytes": 6924,
+      "sha256": "f270da4679e5435d5b9434232bef333a9cb0d9d69710b09d616efb484be93951"
+    },
+    {
+      "file": "terra-solo/25.webp",
+      "degrees": 250,
+      "bytes": 6660,
+      "sha256": "6cee14e09b54f3ee932bcee36abe2841a335e7a2d62d00b32a09783904f7a927"
+    },
+    {
+      "file": "terra-solo/26.webp",
+      "degrees": 260,
+      "bytes": 6472,
+      "sha256": "72b5dbce9425f61c324af9359f56c89d01a46a2e19d21700de38eb1624b0e9c1"
+    },
+    {
+      "file": "terra-solo/27.webp",
+      "degrees": 270,
+      "bytes": 6474,
+      "sha256": "063a404291a208ae3f319f5eb4dc0e8e85024bf2be561ef5e70ba7dbe0fd655a"
+    },
+    {
+      "file": "terra-nuvens/24.webp",
+      "degrees": 240,
+      "bytes": 7626,
+      "sha256": "4880c98da5fe05527664b9f9f2ed20f17222edf3528cba5b08565e72338cde8f"
+    },
+    {
+      "file": "terra-nuvens/25.webp",
+      "degrees": 250,
+      "bytes": 7474,
+      "sha256": "5d1c54b53c07f8721d46433b9985e2863f23e6ac173374ac3559126372102745"
+    },
+    {
+      "file": "terra-nuvens/26.webp",
+      "degrees": 260,
+      "bytes": 7138,
+      "sha256": "7cf58bd7f2eeb54f6fc91354a2c23ac158f687d0a1dddfe7c13598965ab55f8f"
+    },
+    {
+      "file": "terra-nuvens/27.webp",
+      "degrees": 270,
+      "bytes": 7014,
+      "sha256": "856c9a732fe89e0ab28b1a72fecb0fcb6b97828634e18ffed43331db0403977e"
+    },
+    {
+      "file": "terra-ar/24.webp",
+      "degrees": 240,
+      "bytes": 6748,
+      "sha256": "ee5227cfb1c9da4e7cdd73a41541604168603b5b072e5ff86904ba669440efe6"
+    },
+    {
+      "file": "terra-ar/25.webp",
+      "degrees": 250,
+      "bytes": 6624,
+      "sha256": "2a7f3a64fb99a59d2370e8393d4c6d8412444361a6cf244592b7121ebbe18fa7"
+    },
+    {
+      "file": "terra-ar/26.webp",
+      "degrees": 260,
+      "bytes": 6508,
+      "sha256": "d90e2147a56319fdca14f88daefe7e7867a11f41bed51607c782522eab80c14d"
+    },
+    {
+      "file": "terra-ar/27.webp",
+      "degrees": 270,
+      "bytes": 6396,
+      "sha256": "4c67eaffd16c3bf0b4e5330ccc36f0372d3bb59a6c1e3f8e1d44736b2f2a792a"
+    },
+    {
+      "file": "mercurio/28.webp",
+      "degrees": 280,
+      "bytes": 8840,
+      "sha256": "b14beb094bc425d0f3a181e46189a7ccc2fb2512cc41526ded8d134eeac777e9"
+    },
+    {
+      "file": "mercurio/29.webp",
+      "degrees": 290,
+      "bytes": 8682,
+      "sha256": "9a56ddcc7c7469f82e7d5af34f193993a9301ea929fd8cbbf85b8141f8226514"
+    },
+    {
+      "file": "mercurio/30.webp",
+      "degrees": 300,
+      "bytes": 8644,
+      "sha256": "cdf50f2bd630bcf6991cf6614fe334cae4f542dfcb67c874a41988b44c2d3f0c"
+    },
+    {
+      "file": "mercurio/31.webp",
+      "degrees": 310,
+      "bytes": 8714,
+      "sha256": "942a7d4961778b174651f578c83475015adb913c4b8d08160c02135d55e08e4a"
+    },
+    {
+      "file": "venus/28.webp",
+      "degrees": 280,
+      "bytes": 3216,
+      "sha256": "3fa1c0b4371b55a7c1654ca1e6d644cffdef46a8c4744ad563ab2e62d6c406f6"
+    },
+    {
+      "file": "venus/29.webp",
+      "degrees": 290,
+      "bytes": 3292,
+      "sha256": "63478254d59eb51cdbaf4f102abe3bfbc1a1cc8b80066a0da230de7eaefca14b"
+    },
+    {
+      "file": "venus/30.webp",
+      "degrees": 300,
+      "bytes": 3240,
+      "sha256": "885f9a54be21d155d6a6d7cffbe12ca559625598a6a792f7617f04746a8d7e3e"
+    },
+    {
+      "file": "venus/31.webp",
+      "degrees": 310,
+      "bytes": 3234,
+      "sha256": "45bd98a3ddf5d20e214a2b5fb5b6f29ee84071a4debbf8b7e7033a22b653aa8e"
+    },
+    {
+      "file": "terra/28.webp",
+      "degrees": 280,
+      "bytes": 6906,
+      "sha256": "31f89c3070a92360e38200a848bdc2f685fda05b251cfeffbc8fb05b20080b1c"
+    },
+    {
+      "file": "terra/29.webp",
+      "degrees": 290,
+      "bytes": 7142,
+      "sha256": "f627f94015a0fbbcfd1a70a2497addbcd023125fa38d583529d2c2637b90d850"
+    },
+    {
+      "file": "terra/30.webp",
+      "degrees": 300,
+      "bytes": 7082,
+      "sha256": "23d644c3e4114a3d919b99efd60b2d8a3a5aa182e3aa340fe8ee480a9f526075"
+    },
+    {
+      "file": "terra/31.webp",
+      "degrees": 310,
+      "bytes": 6792,
+      "sha256": "2e11272e50b9d1fa028249a3804dbcdb26a4c510b62c6db8070fefbe3db7d844"
+    },
+    {
+      "file": "marte/28.webp",
+      "degrees": 280,
+      "bytes": 6172,
+      "sha256": "16501a1002250abcc0caba12afbedbaf2ff7071da11f47d53dfe4f506a304cdd"
+    },
+    {
+      "file": "marte/29.webp",
+      "degrees": 290,
+      "bytes": 6106,
+      "sha256": "193a0ff6beddee4ad15022cc48589430b4cda249688b5b6326adb233949f89e8"
+    },
+    {
+      "file": "marte/30.webp",
+      "degrees": 300,
+      "bytes": 6072,
+      "sha256": "4f5d7ad66a0ddd819a05567e1f9c23557d71f2b6b01e954bcb856983c2a1d5d1"
+    },
+    {
+      "file": "marte/31.webp",
+      "degrees": 310,
+      "bytes": 6056,
+      "sha256": "80a0fbd68991b5b6727854c545efdd86166339e74101781f43ac178b35e42d9d"
+    },
+    {
+      "file": "jupiter/28.webp",
+      "degrees": 280,
+      "bytes": 5480,
+      "sha256": "0bd158f49db182a2a34ff27985af2595525d2e8fb76a2b2ff917533b852bd417"
+    },
+    {
+      "file": "jupiter/29.webp",
+      "degrees": 290,
+      "bytes": 5592,
+      "sha256": "947364e591a4c79609372def6aaf4ac6cf51d83896b0af07b21ca7a9d3761d37"
+    },
+    {
+      "file": "jupiter/30.webp",
+      "degrees": 300,
+      "bytes": 5580,
+      "sha256": "f0fc7a30634f342615d077275a41cd626302cb3d8858925cad48bc9b4373a8da"
+    },
+    {
+      "file": "jupiter/31.webp",
+      "degrees": 310,
+      "bytes": 5580,
+      "sha256": "90a2af39b90e19b086aff2c5c4d10fa45a8ae3a5cd20551877f68115bb9c28f3"
+    },
+    {
+      "file": "saturno/28.webp",
+      "degrees": 280,
+      "bytes": 11780,
+      "sha256": "2830041af946d46ae99169c299487093690d0364580b577da33ce4058b5edc52"
+    },
+    {
+      "file": "saturno/29.webp",
+      "degrees": 290,
+      "bytes": 11692,
+      "sha256": "d7c26e2a49b92809a1d4214352c9a4987e71799d46c854e21428fa8541bbb59e"
+    },
+    {
+      "file": "saturno/30.webp",
+      "degrees": 300,
+      "bytes": 11618,
+      "sha256": "7a910fa6ea78930620f00d629ef64f61acfe6859df829c5c7161a3abf4653fa9"
+    },
+    {
+      "file": "saturno/31.webp",
+      "degrees": 310,
+      "bytes": 11692,
+      "sha256": "639e385b6732326e03fc262d6b7c2a5d053f621e3107e6cf23ad877d534390dd"
+    },
+    {
+      "file": "urano/28.webp",
+      "degrees": 280,
+      "bytes": 3408,
+      "sha256": "1ca31f63a7a5648377cafd519cca84af981ae688c729858418e2265286bfde19"
+    },
+    {
+      "file": "urano/29.webp",
+      "degrees": 290,
+      "bytes": 3382,
+      "sha256": "85b8dbc46216b930e2d7f3bf9f96cdc435f9613f35805d72bf3f0947e6f6008d"
+    },
+    {
+      "file": "urano/30.webp",
+      "degrees": 300,
+      "bytes": 3428,
+      "sha256": "c6dd29a61fea551c3438e8025acecbf2b9f1b1addf86ecd2367c7a787fd94087"
+    },
+    {
+      "file": "urano/31.webp",
+      "degrees": 310,
+      "bytes": 3390,
+      "sha256": "940b1b8a55b9bbd2bb7cc40233cc840363557f37ff7eb46472b5cdead64c95b3"
+    },
+    {
+      "file": "netuno/28.webp",
+      "degrees": 280,
+      "bytes": 6210,
+      "sha256": "6ad92ff9397ac0d61d7c8c05fde9b6a336144d10205b30e8f65d5ac3b9833fb9"
+    },
+    {
+      "file": "netuno/29.webp",
+      "degrees": 290,
+      "bytes": 6198,
+      "sha256": "5bea20a36b2fcbb3f60e35240cec1dd977d9f68de58d1116926036d200f10d1d"
+    },
+    {
+      "file": "netuno/30.webp",
+      "degrees": 300,
+      "bytes": 6144,
+      "sha256": "8fe41c1fbfce121e1fb1b0db224e1ddc65424f15fcb336628aea2dd3aa3eb399"
+    },
+    {
+      "file": "netuno/31.webp",
+      "degrees": 310,
+      "bytes": 6232,
+      "sha256": "bcac9f90118c0042d8f8c715b625e8b1ccabde4bb312b579bd675a74cb7c5a53"
+    },
+    {
+      "file": "lua/28.webp",
+      "degrees": 280,
+      "bytes": 5594,
+      "sha256": "724649e966c7b669e55f15dfbbe3583d1c7f84b4fe6753c26910c629335eea22"
+    },
+    {
+      "file": "lua/29.webp",
+      "degrees": 290,
+      "bytes": 5592,
+      "sha256": "b5ec3535de13c431b7c542aacdce697464fc2ffae8ce6fc6c49a917de2ee366d"
+    },
+    {
+      "file": "lua/30.webp",
+      "degrees": 300,
+      "bytes": 5506,
+      "sha256": "699cfc098835a116605e39ff19e3ca05b87cd255ee173e627733d7513590df55"
+    },
+    {
+      "file": "lua/31.webp",
+      "degrees": 310,
+      "bytes": 5608,
+      "sha256": "a83367f98035753e22e5325c9408262eb1d156530a26d336172429cb6f61090f"
+    },
+    {
+      "file": "saturno-globo/28.webp",
+      "degrees": 280,
+      "bytes": 4188,
+      "sha256": "b5ab5be788911be39d436c54737bb6e53c6123256c5730adb18acd3e3e56bb11"
+    },
+    {
+      "file": "saturno-globo/29.webp",
+      "degrees": 290,
+      "bytes": 4250,
+      "sha256": "f23d7807486970eb6a256bba5b37a4f5d27c4ed793f0f9093eba48636fb4501b"
+    },
+    {
+      "file": "saturno-globo/30.webp",
+      "degrees": 300,
+      "bytes": 4208,
+      "sha256": "fb5e3620755803f19ad2b725f144525854708bfa9e34a12433ed9b21ef0ab4a9"
+    },
+    {
+      "file": "saturno-globo/31.webp",
+      "degrees": 310,
+      "bytes": 4092,
+      "sha256": "9d8c6e6be6e6b80d4d6416c0fe1d12d12f14f960701e01cadc7f4d2c73c7d242"
+    },
+    {
+      "file": "terra-solo/28.webp",
+      "degrees": 280,
+      "bytes": 6272,
+      "sha256": "53b418b0dc70502a093777e4de31996ab3ccd440d14c03f53a0822d0bcab9c9a"
+    },
+    {
+      "file": "terra-solo/29.webp",
+      "degrees": 290,
+      "bytes": 6504,
+      "sha256": "6406501423a19cea74e6217b9cdbe39e16cf3f1bb862e95207064169d1241621"
+    },
+    {
+      "file": "terra-solo/30.webp",
+      "degrees": 300,
+      "bytes": 6514,
+      "sha256": "93383a609f45c8adcdbe86184bf937087703510ff08db3295af310e82695f715"
+    },
+    {
+      "file": "terra-solo/31.webp",
+      "degrees": 310,
+      "bytes": 6218,
+      "sha256": "ee4838f05330a50e96aaa5e168a5885977a2c1f8285fbfad689d6700d97b5d4f"
+    },
+    {
+      "file": "terra-nuvens/28.webp",
+      "degrees": 280,
+      "bytes": 7412,
+      "sha256": "24f07be67a5bd5032242c3c7d32e22334511e5d2f15d035e61601d24087969be"
+    },
+    {
+      "file": "terra-nuvens/29.webp",
+      "degrees": 290,
+      "bytes": 7330,
+      "sha256": "c0732e5a03a98640d34697603dc61f9925cbae9c67bb2d7ce154fde3750316fd"
+    },
+    {
+      "file": "terra-nuvens/30.webp",
+      "degrees": 300,
+      "bytes": 7308,
+      "sha256": "f29072d5b0c5ab660188a2a42ca9e930d77d5323296f54a3f58609486636bf73"
+    },
+    {
+      "file": "terra-nuvens/31.webp",
+      "degrees": 310,
+      "bytes": 7180,
+      "sha256": "6b8caeba4be13f1af710b6988b9657094ae026359caa247e6a9fdb06672b13de"
+    },
+    {
+      "file": "terra-ar/28.webp",
+      "degrees": 280,
+      "bytes": 6270,
+      "sha256": "7166d5348044499739ad67a20ed1bb1e2e16913123058e587ab4fe13391413c3"
+    },
+    {
+      "file": "terra-ar/29.webp",
+      "degrees": 290,
+      "bytes": 6382,
+      "sha256": "f0469ddad8d8434841edd9a50d8e59875ca2cfb6bc8a4d79bbb18ccaf21b71bf"
+    },
+    {
+      "file": "terra-ar/30.webp",
+      "degrees": 300,
+      "bytes": 6120,
+      "sha256": "ca0ad8a0f2f8d0d8db2bcaa71ad4d129f8c1e1d853718b5f5d5e4ed7dbafe9c6"
+    },
+    {
+      "file": "terra-ar/31.webp",
+      "degrees": 310,
+      "bytes": 6054,
+      "sha256": "099227d76fa615ae6ea0c728e7dacb38f60828306309cfea51b709f13d65b747"
+    },
+    {
+      "file": "mercurio/32.webp",
+      "degrees": 320,
+      "bytes": 8588,
+      "sha256": "1f285f78da2106d0d23e922d9929bc42b1f9e2dbf7ce7cf8d4614e1b3cf960cb"
+    },
+    {
+      "file": "mercurio/33.webp",
+      "degrees": 330,
+      "bytes": 8502,
+      "sha256": "048a4fa69dc1a90d540c5b303d43add3018b66c9c2df1269a1418fc60a1f9292"
+    },
+    {
+      "file": "mercurio/34.webp",
+      "degrees": 340,
+      "bytes": 8688,
+      "sha256": "3f6e1bc6b84877fd0c5d215eb04f84f887cf8483b5e01326b5d0ce27ea6f6ac5"
+    },
+    {
+      "file": "mercurio/35.webp",
+      "degrees": 350,
+      "bytes": 8870,
+      "sha256": "a20f15702a63a434adb7ebf57553c8fac910da698678ac353fdaa81c19015ee6"
+    },
+    {
+      "file": "venus/32.webp",
+      "degrees": 320,
+      "bytes": 3234,
+      "sha256": "b271a5f8deb299bc5f63d2f65c0e95979421fd3c75b1bef68051e9c90813e6ba"
+    },
+    {
+      "file": "venus/33.webp",
+      "degrees": 330,
+      "bytes": 3272,
+      "sha256": "794ca13d3ba6ada4728e4501b6a6c2b7ac15bab26209e6b8aeb22a94f74da6e8"
+    },
+    {
+      "file": "venus/34.webp",
+      "degrees": 340,
+      "bytes": 3198,
+      "sha256": "f35df424fc4aaddec9d7a4d147d886ef28007f6d59ed30dabf6c0c5e4f4cb57e"
+    },
+    {
+      "file": "venus/35.webp",
+      "degrees": 350,
+      "bytes": 3230,
+      "sha256": "baca6e018f6ad8c9ccabf4d52b10830514124dbfdf10b0bfe48ddf6417ad344a"
+    },
+    {
+      "file": "terra/32.webp",
+      "degrees": 320,
+      "bytes": 6772,
+      "sha256": "3691389e56eff67facf42e6478931fb0f1e7c6ee0ea18dc633b265c813d3046f"
+    },
+    {
+      "file": "terra/33.webp",
+      "degrees": 330,
+      "bytes": 6948,
+      "sha256": "f1f44f5dbc02c7c4642b429417a8691c0b83a756a4729d4565c631caa2ed9b02"
+    },
+    {
+      "file": "terra/34.webp",
+      "degrees": 340,
+      "bytes": 6772,
+      "sha256": "fd0f398ad512cbe8b20b76f19b771a466074917a4a9a9b0f7694aeb6ee8d2a54"
+    },
+    {
+      "file": "terra/35.webp",
+      "degrees": 350,
+      "bytes": 6904,
+      "sha256": "5aeb0a5ff9426bf65b0cd6fdd5151144424200b4a56b5285be172f1317d8f438"
+    },
+    {
+      "file": "marte/32.webp",
+      "degrees": 320,
+      "bytes": 5978,
+      "sha256": "94c3c326be5d2929633f592f9f590989c83e0b820f1007037c2096f251a0e5c7"
+    },
+    {
+      "file": "marte/33.webp",
+      "degrees": 330,
+      "bytes": 5774,
+      "sha256": "69628ecdedcd5b43e400937cc427f3417c22df20428e590bc1a3e3bb657ab064"
+    },
+    {
+      "file": "marte/34.webp",
+      "degrees": 340,
+      "bytes": 5626,
+      "sha256": "694982f3f88c2a7503b5836e69b1403d74aeb939ecf800c51cb216accda01089"
+    },
+    {
+      "file": "marte/35.webp",
+      "degrees": 350,
+      "bytes": 5632,
+      "sha256": "9bafe6f47b57e04909715dad2aabcdc27f74ecd36bdb678f9d512d8b92044e44"
+    },
+    {
+      "file": "jupiter/32.webp",
+      "degrees": 320,
+      "bytes": 5522,
+      "sha256": "060970ba902e1e08a0d2512760716cb0d8a543aa7e5fb4866c50d9db4cfe7cde"
+    },
+    {
+      "file": "jupiter/33.webp",
+      "degrees": 330,
+      "bytes": 5546,
+      "sha256": "1ede798ca713b4f40a778cc955e06dd62ccfb8d9f85169097bcdec28a73f5497"
+    },
+    {
+      "file": "jupiter/34.webp",
+      "degrees": 340,
+      "bytes": 5624,
+      "sha256": "4036b65c58e67aff78a541c8bfc9cfbb7e12abcb3bfb8081cf9cb49270f3a6bd"
+    },
+    {
+      "file": "jupiter/35.webp",
+      "degrees": 350,
+      "bytes": 5524,
+      "sha256": "f3d243d1860845091253d0d7fb77dff8f87f1bfd4fb3d31442e2c1936bd31672"
+    },
+    {
+      "file": "saturno/32.webp",
+      "degrees": 320,
+      "bytes": 11684,
+      "sha256": "766c8321189fb97f6e1f480a0124419a1e7bb87a494920c8d63539158b66025d"
+    },
+    {
+      "file": "saturno/33.webp",
+      "degrees": 330,
+      "bytes": 11638,
+      "sha256": "77e69f840bf54df0e170d311153bbe9b04b98894c57cdd8e57507bde11d2cfe6"
+    },
+    {
+      "file": "saturno/34.webp",
+      "degrees": 340,
+      "bytes": 11576,
+      "sha256": "5c717c1abe1dff11d486bf99f1699ce04397a957ca05da556be45b857ce20908"
+    },
+    {
+      "file": "saturno/35.webp",
+      "degrees": 350,
+      "bytes": 11682,
+      "sha256": "6b06e5bd8f368661cab3883f52508b28b87b0ce6b64379c7cebc47834bda5c06"
+    },
+    {
+      "file": "urano/32.webp",
+      "degrees": 320,
+      "bytes": 3430,
+      "sha256": "94d4ff53604020aa2200eb89246e9dde8b12305d4c5a7a4073b3e00c522a538a"
+    },
+    {
+      "file": "urano/33.webp",
+      "degrees": 330,
+      "bytes": 3392,
+      "sha256": "f6ce347cd718947b01838fc19e3385c4ba082d9ff8f7e3579044df6859464e3e"
+    },
+    {
+      "file": "urano/34.webp",
+      "degrees": 340,
+      "bytes": 3412,
+      "sha256": "b0afa75213ae65cd2c350738aa1461e3c41395d26b6b8f14347c676629c0e36b"
+    },
+    {
+      "file": "urano/35.webp",
+      "degrees": 350,
+      "bytes": 3406,
+      "sha256": "1751ebd9d56ae883e88e2f26f4e4a30f8c4583abe2e1a130d824939cdde83fcc"
+    },
+    {
+      "file": "netuno/32.webp",
+      "degrees": 320,
+      "bytes": 6242,
+      "sha256": "35e6bb1c3796df6491c009c940c2e823268ee773b74c92a105a27dcad5c8a091"
+    },
+    {
+      "file": "netuno/33.webp",
+      "degrees": 330,
+      "bytes": 6244,
+      "sha256": "ce1fd5789acac435cc35fa257adfb0cebfccfe767fbbb063a7050cb7f3f93c86"
+    },
+    {
+      "file": "netuno/34.webp",
+      "degrees": 340,
+      "bytes": 6178,
+      "sha256": "08f16c1d97e2a311fc0fe485867f4f0422c04d669e861e5a9c09bc5fd097dc50"
+    },
+    {
+      "file": "netuno/35.webp",
+      "degrees": 350,
+      "bytes": 6160,
+      "sha256": "8be8691a6ea28c5469c760c279607060bf215ee65f3787060384d905f21d9ba3"
+    },
+    {
+      "file": "lua/32.webp",
+      "degrees": 320,
+      "bytes": 5466,
+      "sha256": "4abe5d7eb9f4affc675d7302fca5b564f47c291c60ba8a04ad26b6324414f0be"
+    },
+    {
+      "file": "lua/33.webp",
+      "degrees": 330,
+      "bytes": 5326,
+      "sha256": "69c7b40b5297998953c70025d60a907449bd970250e95507d76d0b911c2f51e6"
+    },
+    {
+      "file": "lua/34.webp",
+      "degrees": 340,
+      "bytes": 5262,
+      "sha256": "95e5044e4190549f8c713927ec03584db3b23b603c46193890bdd9be369fb82c"
+    },
+    {
+      "file": "lua/35.webp",
+      "degrees": 350,
+      "bytes": 5198,
+      "sha256": "2cf2bb5ec460438d15ac02a64f52e5f2f67fdd796501556bf3a492f134b4e09f"
+    },
+    {
+      "file": "saturno-globo/32.webp",
+      "degrees": 320,
+      "bytes": 4142,
+      "sha256": "6a3b63ac147889c80738b9511041a86daf4c45204dda58989fd8f99a24c59941"
+    },
+    {
+      "file": "saturno-globo/33.webp",
+      "degrees": 330,
+      "bytes": 4100,
+      "sha256": "03ea537a65b80604cc571040eab5665f3dabdf0d79267e3208539ccf91a1e8f0"
+    },
+    {
+      "file": "saturno-globo/34.webp",
+      "degrees": 340,
+      "bytes": 4126,
+      "sha256": "b0ae1bfba410d360c22d25dc65530f0b71c9e89dcb605c2401a3114e48fbe293"
+    },
+    {
+      "file": "saturno-globo/35.webp",
+      "degrees": 350,
+      "bytes": 4088,
+      "sha256": "63732baa41cee0b8f3cfa83331e0b673b764f1348c65385ae0c0cb9e822ac9f7"
+    },
+    {
+      "file": "terra-solo/32.webp",
+      "degrees": 320,
+      "bytes": 6172,
+      "sha256": "000a2d0519f3c56493227ef03ca17608d717a70d64fcc8fa593201bbc88bce47"
+    },
+    {
+      "file": "terra-solo/33.webp",
+      "degrees": 330,
+      "bytes": 5892,
+      "sha256": "82716153d704efc8297648745d8fb8df4c4dda94f745c65f006c2e9ad10758f8"
+    },
+    {
+      "file": "terra-solo/34.webp",
+      "degrees": 340,
+      "bytes": 6070,
+      "sha256": "08e069ffc003158d0875b03e66e06a999662ab695a72aedfdfe27c59f2332be1"
+    },
+    {
+      "file": "terra-solo/35.webp",
+      "degrees": 350,
+      "bytes": 5852,
+      "sha256": "229a35b7818a9768ef2afbc6e9dff5a6d8f36fb0eb460a6f17fb6e833602fa2d"
+    },
+    {
+      "file": "terra-nuvens/32.webp",
+      "degrees": 320,
+      "bytes": 6928,
+      "sha256": "120efbeb31de99fedd5199d4d8b4afd1618d5cdedfaa6b92cea79770092cd616"
+    },
+    {
+      "file": "terra-nuvens/33.webp",
+      "degrees": 330,
+      "bytes": 7008,
+      "sha256": "33fc0d4e1514494581251db980e99f0ce28dbeae49c11118cb6af21726aa0c91"
+    },
+    {
+      "file": "terra-nuvens/34.webp",
+      "degrees": 340,
+      "bytes": 6968,
+      "sha256": "33f5bf8c63ad7481b197df1905b753b4f0a15d32005db480850941ea55966cbc"
+    },
+    {
+      "file": "terra-nuvens/35.webp",
+      "degrees": 350,
+      "bytes": 7084,
+      "sha256": "7f3a18157fe9aedfd61fddaa87f5ca07f77def7c21a0dd54fd6b2d281cc3f9ea"
+    },
+    {
+      "file": "terra-ar/32.webp",
+      "degrees": 320,
+      "bytes": 6060,
+      "sha256": "884e6e08c0e7edbb8f17221a8b60aa87fdf5206b5669699579261f0726983227"
+    },
+    {
+      "file": "terra-ar/33.webp",
+      "degrees": 330,
+      "bytes": 5984,
+      "sha256": "0650d5e2835a76e186afdba38a60a6bca9153b3c4fdcfe9470e78ad95d375268"
+    },
+    {
+      "file": "terra-ar/34.webp",
+      "degrees": 340,
+      "bytes": 6034,
+      "sha256": "8c6a38d9834b35fc50a6c51aa8ab1f1c26aa09f77c0372a86874443448e160a2"
+    },
+    {
+      "file": "terra-ar/35.webp",
+      "degrees": 350,
+      "bytes": 5876,
+      "sha256": "6b8665625ce50cc8f2abc058c2ace47df002ced37f2fa9c20c7487b61981d41c"
+    }
+  ]
+}

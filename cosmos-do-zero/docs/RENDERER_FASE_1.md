@@ -1,5 +1,7 @@
 # Renderer: fase 1 e limites de validação
 
+> Registro histórico do renderizador aposentado em novembro de 2026. Os comandos de teste vigentes estão no [README](../README.md).
+
 As cenas continuam ilustrações didáticas. O renderer não converte posições, cores ou escalas artísticas em medições astronômicas. Three.js r187 tenta WebGPU em cenas compatíveis; materiais GLSL legados, `onBeforeCompile` e `LineLoop` usam WebGL2. Fase quente e órbitas do Sistema Solar foram exercitadas com WebGPU nativo no equipamento de teste; a cena do Sol usa WebGL2. Sem 3D, os diagramas SVG ou a alternativa textual continuam disponíveis.
 
 ## Inicialização e falhas

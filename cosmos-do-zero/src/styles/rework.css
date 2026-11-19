@@ -174,10 +174,6 @@ html:root .planetarium-rework .lesson-stepper {position:static;inset:auto;transf
  html:root .planetarium-rework .mx-lab>.mx-controls {grid-column:2;grid-row:1}
  html:root .planetarium-rework .mx-lab>.mx-controls .mx-seg {display:grid;grid-template-columns:1fr}
  html:root .planetarium-rework .mx-lab>:not(.mx-controls):not(.mx-visuals) {grid-column:1/-1}
- html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab {grid-template-columns:1fr}
- html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls {grid-column:1;grid-row:2}
- html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx-lab>.mx-controls .mx-seg {grid-template-columns:repeat(4,minmax(0,1fr))}
- html:root .planetarium-rework [data-reader='misterios-do-cosmos'] .mx .mx-stage {max-height:310px;aspect-ratio:auto}
 }
 html:root .planetarium-rework .mx-head>h3,html:root .planetarium-rework .mx-head>.meta {display:block}
 html:root .planetarium-rework .mx>.experience-toolbar {min-height:34px;padding:0 0 8px;margin:0}

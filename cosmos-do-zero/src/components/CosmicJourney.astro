@@ -18,9 +18,13 @@ const total = pad2(marks.length);
     <a class="textlink" href="#capitulos">Voltar às aulas <span aria-hidden="true">↑</span></a>
   </div>
   <div class="journey-body">
-    <div class="journey-stage" aria-hidden="true">
-      <canvas data-journey-canvas></canvas>
+    <div class="journey-stage">
+      <canvas data-journey-canvas aria-hidden="true"></canvas>
       <div class="journey-hud">
+        <div class="journey-transport">
+          <label>Marco <select data-journey-select>{marks.map((era,i)=><option value={i}>{era.title}</option>)}</select></label>
+          <button type="button" data-journey-pause aria-pressed="false">Pausar movimento</button>
+        </div>
         <span class="journey-when" data-journey-when>{marks[0].short}</span>
       </div>
       <div class="journey-rail">
@@ -44,3 +48,10 @@ const total = pad2(marks.length);
     </ol>
   </div>
 </section>
+
+<style>
+  .journey-transport {display:flex;align-items:center;justify-content:end;flex-wrap:wrap;gap:.4rem;pointer-events:auto}
+  .journey-transport :is(select,button) {font:inherit;max-width:100%;min-height:40px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px}
+  .journey-hud {pointer-events:auto}
+  @media(max-width:860px) {.journey-hud {top:8px;bottom:auto;max-width:95%;z-index:4}.journey-transport {font-size:12px}}
+</style>

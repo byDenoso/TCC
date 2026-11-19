@@ -12,7 +12,7 @@
 .scene-split { display: grid; grid-template-columns: 1.2fr 1fr; gap: 36px; align-items: center; }
 .scene-canvas { margin: 0; min-width: 0; background: var(--bg-alt); border: 1px solid var(--line); }
 .cosmos-scene svg { display: block; width: 100%; height: auto; overflow: hidden; }
-.cosmos-scene svg text { fill: var(--surface); font: 12px var(--body); }
+.cosmos-scene svg:not([data-scale-svg]) text { fill: var(--surface); font: 12px var(--body); }
 .cosmos-scene figcaption { font-size: 12px; line-height: 1.7; color: var(--ink-2); padding: 15px 18px; }
 .scene-unit { color: var(--accent-ink); font-size: 12px; letter-spacing: .03em; }
 .scene-reading h3, .light-lab h3, .evidence-explanation h3 { font-size: 27px; line-height: 1.15; margin: 20px 0 12px; }

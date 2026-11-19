@@ -1,3 +1,4 @@
+import { depthCanvas, portrait, reel } from './lesson-depth';
 import { observedWavelengthNm } from '../lib/cosmology';
 import { motionPreference } from './motion-preference';
 
@@ -38,6 +39,20 @@ export function initLightExhibit(): void {
   let manual = false;
   let visible = false;
 
+  const renderDepth = depthCanvas(exhibit.querySelector('[data-spectrum-depth]'), (ctx, image, w, h) => {
+    const galaxy = image(reel('galaxy')), earth = image(portrait('terra'));
+    if (galaxy) ctx.drawImage(galaxy, 5, 0, h, h);
+    if (earth) ctx.drawImage(earth, w-85, 18, 76, 76);
+    const rest = wavelengths[mode][2];
+    const stretch = observedWavelengthNm(z, rest) / rest;
+    ctx.beginPath();
+    for (let x = 0; x < w-180; x++) {
+      const depth = x/(w-180);
+      const y = h*.55 + (8+10*depth)*Math.sin(2*Math.PI*x/(33*stretch));
+      if (x === 0) ctx.moveTo(95+x,y); else ctx.lineTo(95+x,y);
+    }
+    ctx.strokeStyle = '#edb075'; ctx.lineWidth = 2; ctx.stroke();
+  });
   function show(index: number) {
     if (index === scene) return;
     scene = index;
@@ -53,6 +68,7 @@ export function initLightExhibit(): void {
 
   function updateSpectrum(next = z) {
     z = next;
+    renderDepth();
     const wavelengthsNm = wavelengths[mode];
     restLines.setAttribute('d', wavelengthsNm.map((value) => `M${plotX(value)} 45v29`).join(''));
     lines.forEach((line, i) => {
@@ -82,7 +98,7 @@ export function initLightExhibit(): void {
     const next = index === 1 ? example * progress : example + (maxRedshift - example) * progress;
     if (next === z) return;
     slider.value = String(next);
-    updateSpectrum(next);
+    updateSpectrum(slider.valueAsNumber);
   }
 
   let scrollFrame = 0;

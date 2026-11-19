@@ -1,0 +1,53 @@
+{
+  "licenseURL": "https://creativecommons.org/licenses/by/4.0/",
+  "sources": [
+    {
+      "id": "eso1233a",
+      "name": "Barnard 59",
+      "credit": "ESO",
+      "page": "https://www.eso.org/public/images/eso1233a/",
+      "download": "https://cdn.eso.org/images/screen/eso1233a.jpg",
+      "sha256": "69ebca43988cef0f80a6ba2d12b42b3ec36861a1c21a05b8ed986529940c0302"
+    },
+    {
+      "id": "eso1436f",
+      "name": "Artist’s impression of a young star surrounded by a protoplanetary disc",
+      "credit": "ESO/L. Calçada",
+      "page": "https://www.eso.org/public/images/eso1436f/",
+      "download": "https://cdn.eso.org/images/screen/eso1436f.jpg",
+      "sha256": "440d04713277f923e16669841a3560b9e2ad5decb1f6800936274c359cb79b8b"
+    },
+    {
+      "id": "eso1436a",
+      "name": "ALMA image of the protoplanetary disc around HL Tauri",
+      "credit": "ALMA (ESO/NAOJ/NRAO)",
+      "page": "https://www.eso.org/public/images/eso1436a/",
+      "download": "https://cdn.eso.org/images/large/eso1436a.jpg",
+      "sha256": "e6e6b4c6eaa787b296d6f0256af7b75e3a9a348174a869fffb871a13d5069696"
+    }
+  ],
+  "method": "Illustrative motion and depth. Cloud cropped, divided into diffuse and point-like light. Discs geometrically resampled and alpha feathered for projection, using an artistic inclination. The measurements of HL Tauri are not measurements of the early Solar System.",
+  "textures": [
+    {
+      "name": "cloud",
+      "sha256": "f864478e0980793afd6429a6bef64991b71d9933d47fcaaf6e911a5b77291aca"
+    },
+    {
+      "name": "cloud-stars",
+      "sha256": "4ce178f8a14bb2f0efa3d153aacd1ae57b5323fe6be5c4f1955588d15f6e9c89"
+    },
+    {
+      "name": "disc",
+      "sha256": "a742229ec3de4099a65fe2d8942c09299ed108d04bc656cea1256a693713eb16"
+    },
+    {
+      "name": "disc-inner",
+      "sha256": "a81a7f7a594ab633472c35c2c73b6c75cc1ecab1a603d4786721f5332e2d5e3d"
+    },
+    {
+      "name": "hl-tauri",
+      "sha256": "ebda4c97fd437b9901a9c3ee5fb73c4253c7ce6b2263a419490735ea5ad5830e"
+    }
+  ],
+  "aggregates": "Mineral and ice-rich aggregates are original Blender Cycles illustrations. See build_aggregates.py and aggregates.blend."
+}

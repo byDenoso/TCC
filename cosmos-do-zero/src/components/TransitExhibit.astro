@@ -37,11 +37,12 @@ const presets = [
         </defs>
         <rect width="440" height="248" fill="url(#transit-grid)" />
         <path d={`M27 ${y}H413 M${x} 12V236`} class="transit-crosshair" />
-        <circle cx={x} cy={y} r={model.star * solarRadius} class="transit-star" data-transit-star />
+        <circle cx={x} cy={y} r={model.star * solarRadius} class="transit-star" data-lab-body data-transit-star />
         <path d={track} class="transit-track" data-transit-track />
-        <circle cx={x} cy={y} r={radius} class="transit-planet" data-transit-planet />
+        <circle cx={x} cy={y} r={radius} class="transit-planet" data-lab-body data-transit-planet />
         <circle cx={x} cy={y} r={Math.max(5.5, radius + 4)} class="transit-ring" data-transit-ring />
       </svg>
+      <button class="transit-reset" type="button" data-transit-play hidden>Reproduzir passagem</button>
       <div class="transit-plate-bar transit-plot-bar"><span>Fluxo relativo</span><span>Escala vertical automática</span></div>
       <svg viewBox="0 0 440 160" role="img" data-transit-chart aria-label={`Curva de luz simulada com queda máxima de ${transitPercent(center.loss)}. O eixo horizontal vai de menos três a mais três por cento do período orbital.`}>
         {[0, 0.5, 1].map((fraction, index) => {
@@ -56,7 +57,7 @@ const presets = [
         <text x={(left + right) / 2} y="147" text-anchor="middle">0%</text>
         <text x={right} y="147" text-anchor="end">+3%</text>
       </svg>
-      <figcaption>Os discos estão na mesma escala. O anel indica a posição do planeta. O eixo horizontal mostra o tempo em % do período, com 0% na passagem mais próxima do centro da estrela.</figcaption>
+      <figcaption>Os discos estão na mesma escala. A textura estelar é ilustrativa. O cálculo do fluxo usa brilho uniforme. O anel indica a posição do planeta. O eixo horizontal mostra o tempo em % do período, com 0% na passagem mais próxima do centro da estrela.</figcaption>
     </figure>
     <div class="transit-controls">
       <p class="transit-result" data-transit-kind>{TRANSIT_KIND_LABELS[center.kind]}</p>

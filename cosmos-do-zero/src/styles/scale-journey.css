@@ -178,7 +178,7 @@
   .scale-journey-posters img:first-child { opacity: var(--scale-opacity, 1); }
   .scale-journey-video { visibility: hidden; }
   .scale-journey-visual[data-media='video'] .scale-journey-video { visibility: visible; }
-  .scale-journey-visual:is([data-media='video'], [data-media='webgl'], [data-media='webgpu']) .scale-journey-posters { visibility: hidden; }
+  .scale-journey-visual[data-media='video'] .scale-journey-posters { visibility: hidden; }
   .scale-scene-window > .cosmos-view-options {
     position: absolute;
     left: 11px;

@@ -47,11 +47,8 @@ const ext = ' (abre em outra aba)';
           <div class="obs-grid">
             <figure class="obs-viz">
               <div class="obs3d" data-t-3d hidden>
-                <span class="obs3d-label us" data-3d-us>nós · Via Láctea</span>
-                <span class="obs3d-label src" data-3d-src>galáxia de onde a luz saiu</span>
-                <span class="obs3d-label wave" data-3d-wave></span>
-                <button type="button" class="obs3d-play" data-3d-play aria-pressed="true"><span aria-hidden="true">❚❚</span> <span data-3d-play-label>Pausar</span></button>
-                <p class="obs3d-tag">Ilustração · distâncias fora de escala · arraste para girar</p>
+                <button type="button" class="obs3d-play" data-3d-play hidden aria-pressed="false"><span aria-hidden="true">❚❚</span> <span data-3d-play-label>Pausar</span></button>
+                <p class="obs3d-tag">Ilustração · distâncias fora de escala</p>
               </div>
               <p class="obs3d-note" data-t-3d-note hidden></p>
               <svg data-t-svg viewBox="0 0 640 420" role="img" aria-label="Linha do tempo do Universo e percurso da luz entre a fonte e o observador. As distâncias entre galáxias e o comprimento de onda aumentam com a expansão. A alternativa em duas dimensões compara o mesmo trecho de espaço na emissão e hoje. Os valores aparecem ao lado."></svg>
@@ -204,6 +201,7 @@ const ext = ' (abre em outra aba)';
           </div>
           <div class="obs-grid">
             <figure class="obs-viz" data-r-chartwrap>
+              <div data-r-forecast><svg class="lab-model-band" data-r-group viewBox="0 0 640 160" role="img" aria-label="Galáxias em uma projeção do espaçamento daqui a cinco bilhões de anos."></svg><p class="obs3d-note" data-r-forecast-note></p></div>
               <svg data-r-chart viewBox="0 0 640 400" role="img" aria-label="Gráfico de como as distâncias entre galáxias mudam com o tempo no modelo escolhido. O tamanho das galáxias não muda com essa expansão. Os resultados aparecem ao lado."></svg>
               <p class="obs-warn" data-r-warn hidden role="status">Essa combinação é incompatível com a fase inicial quente e densa do Universo observado. Aumente a matéria ou reduza a energia escura.</p>
             </figure>
@@ -258,6 +256,7 @@ const ext = ' (abre em outra aba)';
       )}
     </div>
     <noscript><p class="obs-noscript">Os experimentos precisam de JavaScript ligado. As três jornadas, o glossário e as fontes continuam disponíveis para leitura.</p></noscript>
+    <p><small>Textura de M51 adaptada de <a href="https://esahubble.org/images/heic0506a/">NASA, ESA, S. Beckwith (STScI) e Hubble Heritage Team</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Recorte e bordas suavizadas.</small></p>
   </div>
-</section>
 
+</section>

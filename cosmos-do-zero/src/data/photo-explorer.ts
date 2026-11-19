@@ -1,16 +1,16 @@
 /**
- * "Leia a imagem": pontos explicativos sobre as três imagens reais do site.
+ * "Leia a imagem": pontos explicativos sobre as imagens reais do site.
  * Posições em porcentagem da imagem original (x da esquerda, y do topo).
- * Cada afirmação vem da página da NASA indicada em site.json (credits), conferida em 10/11/2026;
+ * Cada afirmação vem da legenda original identificada no crédito;
  * as marcadas com `general` são fatos de óptica ou de órbita que a página da imagem não descreve.
  */
-export type PhotoKey = 'carina-cosmic-cliffs' | 'andromeda-wise' | 'iss-sunrise';
+export type PhotoKey = 'carina-cosmic-cliffs' | 'andromeda-wise' | 'iss-sunrise' | 'm51';
 
 export interface PhotoSpot { x: number; y: number; trace: string; title: string; text: string; general?: boolean }
 export interface PhotoStory {
   key: PhotoKey;
-  /** Índice do crédito em site.json. */
-  credit: number;
+  /** Crédito do acervo em site.json ou manifesto da M51. */
+  credit: number | 'm51';
   tab: string;
   title: string;
   lede: string;
@@ -72,6 +72,16 @@ export const photoStories: PhotoStory[] = [
       { x: 26, y: 50.5, trace: 'M16 53Q26 52 36 51M16 55.8Q26 54.8 36 53.8M16 53V55.8M36 51V53.8', title: 'A faixa alaranjada', text: 'Perto do horizonte a luz atravessa muito mais ar. O azul se espalha pelo caminho, e chegam à câmera o laranja e o vermelho.', general: true },
       { x: 76, y: 42.5, trace: 'M66 41Q76 40 86 39M66 46Q76 45 86 44M66 41V46M86 39V44', title: 'A faixa azul', text: 'Mais acima o ar é mais rarefeito e espalha principalmente a luz azul, a mesma que deixa o céu azul visto do chão.', general: true },
       { x: 50, y: 14, trace: 'M43 11V7H46M54 7H57V11M57 17V21H54M46 21H43V17', title: 'O espaço escuro', text: 'Acima da atmosfera quase não há ar para espalhar a luz. O céu fica preto mesmo com o Sol à vista.', general: true }
+    ]
+  },
+  {
+    key: 'm51', credit: 'm51', tab: 'Galáxia do Redemoinho',
+    title: 'Dois núcleos, dois braços',
+    lede: 'Siga um braço de M51 do centro até a borda. Faixas de poeira e aglomerados de estrelas desenham a espiral.',
+    facts: [{ label: 'Objeto', value: 'M51 e NGC 5195' }, { label: 'Instrumento', value: 'Hubble · ACS' }],
+    spots: [
+      { x: 39, y: 48, trace: 'M33 48a6 8 0 1 0 12 0a6 8 0 1 0 -12 0', title: 'Núcleo de M51', text: 'O centro amarelado concentra estrelas mais velhas. Compare sua cor com a dos aglomerados azulados nos braços.' },
+      { x: 83, y: 32, trace: 'M77 32a6 8 0 1 0 12 0a6 8 0 1 0 -12 0', title: 'A galáxia companheira', text: 'O segundo núcleo brilhante pertence a NGC 5195. Um dos braços de M51 parece alcançar a companheira nesta projeção.' }
     ]
   }
 ];

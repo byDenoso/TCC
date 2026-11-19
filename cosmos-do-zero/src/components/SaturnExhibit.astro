@@ -1,9 +1,15 @@
 ---
 import settings from '../../public/models/saturn/scene.json';
+import manifest from '../../public/models/saturn/frames.json';
+import { u } from '../lib/url';
 import '../styles/saturn-exhibit.css';
 
+const media = u('/models/saturn');
 const width = 960;
-const unit = width / settings.camera.frameWidth;
+const [frameWidth, frameHeight] = manifest.resolution;
+const viewHeight = width * frameHeight / frameWidth;
+const unit = width / manifest.orthoWidth;
+const ringRadius = unit * settings.geometry.ringOuterRadius;
 const radians = settings.camera.openAngle * Math.PI / 180;
 const opening = Math.sin(radians);
 const globeHeight = unit * Math.hypot(settings.geometry.polarRadius * Math.cos(radians), opening);
@@ -26,15 +32,16 @@ const bands = [
     <div class="saturn-presets" role="group" aria-label="Posições da câmera">
       <button type="button" data-saturn-preset={settings.camera.openAngle} aria-pressed="true" disabled>Vista aberta</button>
       <button type="button" data-saturn-preset={settings.camera.edgeAngle} aria-pressed="false" disabled>De perfil</button>
+      <button type="button" data-saturn-preset="90" aria-pressed="false" disabled>Vista polar</button>
     </div>
   </div>
-  <div class="saturn-stage" data-saturn-stage aria-hidden="true">
-    <svg data-saturn-diagram viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <div class="saturn-stage" data-saturn-stage data-media={media} aria-hidden="true">
+    <svg data-saturn-diagram viewBox={`0 ${270 - viewHeight / 2} ${width} ${viewHeight}`} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <radialGradient id="saturn-disc" cx="37%" cy="35%" r="67%">
           <stop stop-color="#f0dab4" /><stop offset=".67" stop-color="#baa17d" /><stop offset="1" stop-color="#514439" />
         </radialGradient>
-        <clipPath id="saturn-rings-front"><path d="M0 270H960V540H0Z" /></clipPath>
+        <clipPath id="saturn-rings-front"><path d="M0 270H960V620H0Z" /></clipPath>
         <clipPath id="saturn-disc-clip"><ellipse cx="480" cy="270" rx={unit} ry={globeHeight} data-saturn-globe /></clipPath>
       </defs>
       <g transform="translate(480 270)">
@@ -54,8 +61,9 @@ const bands = [
           </g>
         </g>
       </g>
-      <path data-saturn-edge d="M63 270H301M659 270H897" stroke="#bc9a73" stroke-width="1.4" visibility="hidden" />
+      <path data-saturn-edge d={`M${480 - ringRadius} 270H${480 - unit}M${480 + unit} 270H${480 + ringRadius}`} stroke="#bc9a73" stroke-width="1.4" visibility="hidden" />
     </svg>
+    <img data-saturn-frame src={`${media}/${manifest.poster.file}`} width={frameWidth} height={frameHeight} loading="lazy" decoding="async" alt="" />
   </div>
   <noscript><style>.saturn-exhibit .saturn-controls { display: none; }</style></noscript>
   <p id="saturn-explanation">Quando a câmera chega ao plano dos anéis, vemos só sua borda. Os anéis são muito finos em relação à largura, então quase desaparecem. A posição do Sol fica fixa.</p>

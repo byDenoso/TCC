@@ -52,7 +52,7 @@ const stages = [
           <a href={stage.source} class="cosmic-exhibit-source">{stage.sourceLabel} <span aria-hidden="true">↗</span></a>
         </div>
 
-        <figure class="cosmic-exhibit-plate">
+        <figure class="cosmic-exhibit-plate" data-bh-stage={stage.id}>
           <div class="black-hole-plate-label"><span>Sagittarius A*</span><span>{stage.id === 'eht' ? 'Imagem de observação' : 'Diagrama conceitual'}</span></div>
           {stage.id === 'orbitas' && (
             <svg class="black-hole-diagram" viewBox="0 0 560 310" role="img" aria-label="A estrela S2 aparece sobre uma órbita elíptica. Sagittarius A* é marcado perto da extremidade direita da elipse, em um de seus focos.">
@@ -62,6 +62,7 @@ const stages = [
               <circle cx="409" cy="154" r="13" class="black-hole-body" />
               <circle cx="418" cy="208" r="11" class="black-hole-star-glow" />
               <circle cx="418" cy="208" r="6" class="black-hole-star" />
+              <foreignObject x="0" y="0" width="560" height="310" aria-hidden="true"><canvas width="560" height="310" data-bh-depth></canvas></foreignObject>
               <text x="466" y="160">Sgr A*</text>
               <text x="492" y="248">S2</text>
             </svg>
@@ -74,6 +75,7 @@ const stages = [
               <path d="M213 146c-16-48 21-86 62-87h173m-13-8 13 8-13 8" class="black-hole-ray" />
               <circle cx="213" cy="146" r="4" class="black-hole-star" />
               <path d="M98 228h53l31-32" class="black-hole-guide" />
+              <foreignObject x="0" y="0" width="560" height="310" aria-hidden="true"><canvas width="560" height="310" data-bh-depth></canvas></foreignObject>
               <text x="56" y="254">Gás quente</text>
               <text x="276" y="42">Luz desviada</text>
               <text x="373" y="88">Para o observador</text>
@@ -84,11 +86,19 @@ const stages = [
               <circle cx="270" cy="163" r="74" class="black-hole-horizon" />
               <path d="M80 170h151m-13-8 13 8-13 8M372 156h115m-13-8 13 8-13 8" class="black-hole-ray" />
               <path d="M270 89V63" class="black-hole-guide" />
+              <foreignObject x="0" y="0" width="560" height="310" aria-hidden="true"><canvas width="560" height="310" data-bh-depth></canvas></foreignObject>
               <text x="270" y="49" text-anchor="middle">Horizonte</text>
               <text x="63" y="206">Luz capturada</text>
               <text x="366" y="192">Luz que escapa</text>
             </svg>
           )}
+          {stage.id !== 'eht' && <div class="bh-control">
+            <label>{stage.id === 'orbitas' ? 'Tempo na órbita de S2' : stage.id === 'acrecao' ? 'Fase orbital do gás' : 'Percurso da luz'}
+              <input type="range" min="0" max={stage.id === 'orbitas' ? 16 : stage.id === 'acrecao' ? 360 : 100} step={stage.id === 'orbitas' ? .1 : 1} value="0" />
+              <output></output>
+            </label>
+            <button type="button" data-bh-play aria-pressed="false">Reproduzir</button>
+          </div>}
           {stage.id === 'eht' ? (
             <>
               <img class="black-hole-observation" src={u('/media/eht-sagittarius-a.webp')} width="640" height="640" alt="Imagem de rádio reconstruída de Sagittarius A*. Um anel difuso laranja e amarelo envolve uma região central mais escura." loading="lazy" decoding="async" />
@@ -100,3 +110,19 @@ const stages = [
     ))}
   </ol>
 </section>
+
+<script>
+  import { initBlackHoleDepth } from '../scripts/black-hole-depth';
+  initBlackHoleDepth();
+</script>
+<style>
+  [data-bh-depth] { display:block;width:100%;height:100%; }
+  .bh-control { display:none;gap:.5rem;flex-wrap:wrap;align-items:center;padding:.5rem 1rem; }
+  [data-bh-ready] .bh-control {display:flex}
+  .bh-control label {display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+  .bh-control input {max-width:100%;height:40px}
+  .bh-control output {min-width:4rem;font-variant-numeric:tabular-nums}
+  .bh-control button {padding:.45rem .75rem;min-height:40px}
+  [data-bh-ready][data-bh-stage='orbitas'] :is(.black-hole-star-glow,.black-hole-star,.black-hole-guide,text:last-child),
+  [data-bh-ready][data-bh-stage='acrecao'] :is(.black-hole-body,.black-hole-disk,.black-hole-disk-rim) {opacity:0}
+</style>
