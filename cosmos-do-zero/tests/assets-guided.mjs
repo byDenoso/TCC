@@ -171,9 +171,9 @@ async function exercise(page, entry, report) {
         const image = el(`[data-saturn-frame][src$="/${value.padStart(2,'0')}.webp"]`);
         await visibleImage(image);
       }
-      // Inject one failed frame. The diagram and angle readout must still work.
+      // Both resolutions must fail before the diagram replaces the selected angle.
       {
-        const failure = '**/saturn/frames/45.webp';
+        const failure = /\/(?:worlds-hd\/saturn-tilt|saturn\/frames)\/45\.webp$/;
         await page.route(failure, route => route.fulfill({status:404,body:''}));
         try {
           await Promise.all([page.waitForResponse(r => r.url().endsWith('/saturn/frames/45.webp') && r.status() === 404),
