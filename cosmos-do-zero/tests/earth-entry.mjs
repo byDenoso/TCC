@@ -2,15 +2,16 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4321').replace(/\/$/, '');
-const earth = base + '/capitulos/terra-e-atmosfera/';
-const scene = '[data-mx="terra-e-atmosfera-formacao-da-terra"]';
-const chapterScript = /\/_astro\/terra[.-][^/]+\.js$/;
+const journey = '/capitulos/galaxias-e-nebulosas/';
+const earth = '/capitulos/terra-e-atmosfera/';
+const scene = '[data-mx="galaxias-e-nebulosas-via-lactea"]';
+const chapterScript = /\/_astro\/galaxias[.-][^/]+\.js$/;
 const viewport = { width: 295, height: 850 };
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
 
 try {
   const page = await browser.newPage({ viewport, reducedMotion: 'no-preference' });
-  for (const path of ['/', '/capitulos/terra-e-atmosfera/', '/laboratorio/', '/observatorio/', '/escalas/', '/ceu/']) {
+  for (const path of ['/', journey, earth, '/laboratorio/', '/observatorio/', '/escalas/', '/ceu/']) {
     await page.goto(base + path);
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), viewport.width, path);
@@ -45,7 +46,7 @@ try {
     await route.continue();
   });
   const requested = cold.waitForRequest(chapterScript);
-  await cold.goto(earth + '?visual=diagram', { waitUntil: 'domcontentloaded' });
+  await cold.goto(base + journey + '?visual=diagram', { waitUntil: 'domcontentloaded' });
   const experiment = cold.locator(scene);
   const diagram = experiment.locator('[data-mx-svg]');
   const pending = experiment.locator('.mx-stage [data-mx-pending]');
@@ -64,17 +65,20 @@ try {
 
   const offline = await browser.newPage({ viewport });
   await offline.route(chapterScript, route => route.abort());
-  await offline.goto(earth);
+  await offline.goto(base + journey);
   const fallback = offline.locator(scene);
   await fallback.locator('.mx-stage [data-mx-error]').waitFor();
   assert.ok(await fallback.locator('[data-mx-opening] circle').first().isVisible());
   await offline.close();
 
   const noScript = await browser.newPage({ viewport, javaScriptEnabled: false });
-  await noScript.goto(earth);
+  await noScript.goto(base + journey);
   assert.ok(await noScript.locator(scene + ' [data-mx-opening] circle').first().isVisible());
   assert.equal(await noScript.locator(scene + ' .mx-load-status').isVisible(), false);
-  console.log('Abertura da Terra, carregamento atrasado/indisponível, movimento e seis rotas a 295 px verificados.');
+  await noScript.goto(base + earth);
+  assert.equal(await noScript.locator('[data-mx-opening]').count(), 6);
+  assert.ok(await noScript.locator('[data-mx-opening] circle').first().isVisible());
+  console.log('Abertura da Terra, carregamento atrasado/indisponível, movimento e sete rotas a 295 px verificados.');
 } finally {
   await browser.close();
 }
