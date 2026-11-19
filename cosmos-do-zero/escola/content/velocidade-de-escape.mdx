@@ -1,0 +1,21 @@
+---
+{"slug":"velocidade-de-escape","level":2,"subject":"Gravitação","order":2,"title":"Que velocidade leva uma sonda ao infinito?","objective":"Obter a velocidade de escape e distingui-la da velocidade circular à mesma distância.","summary":"A velocidade de escape decorre da energia mecânica mínima para alcançar distância infinita com velocidade final nula.","lab":"buracos-negros","reference":{"name":"OpenStax · Física Universitária, v. 1, § 13.3","url":"https://openstax.org/books/university-physics-volume-1/pages/13-3-gravitational-potential-energy-and-total-energy"},"exercise":{"kind":"numeric","prompt":"A velocidade circular em um raio é 10 km/s. No modelo newtoniano, qual a velocidade de escape nesse raio?","answer":14.142,"tolerance":0.06,"unit":"km/s","feedback":"No mesmo raio, v de escape é √2 vezes a velocidade circular."},"graph":{"xLabel":"Raio de lançamento r/R","yLabel":"Velocidade de escape relativa à superfície","points":[[1,1.0],[1.25,0.8944272],[1.5,0.8164966],[2,0.7071068],[2.5,0.6324555],[3,0.5773503],[4,0.5],[6,0.4082483],[8,0.3535534],[9,0.3333333]],"caption":"Massa central fixa e sem atmosfera. O eixo vertical mostra a razão entre velocidades de escape."}}
+---
+
+Imagine desligar os motores depois do lançamento. Se o planeta for esférico, isolado e sem atmosfera, a energia mecânica da sonda se conserva. Adote energia potencial gravitacional zero no infinito. O caso limite de escape chega ao infinito com velocidade tendendo a zero.
+
+## Faça o balanço de energia
+
+À distância inicial $r$, a energia cinética inicial precisa compensar o valor negativo da energia potencial. A massa da sonda divide ambos os termos. Para comparação, a órbita circular resulta do equilíbrio entre aceleração centrípeta e campo gravitacional.
+
+$$
+\frac12 m v_{\rm esc}^2-\frac{GMm}{r}=0,\qquad v_{\rm esc}=\sqrt{\frac{2GM}{r}}
+$$
+
+$$
+v_{\rm circ}=\sqrt{\frac{GM}{r}},\qquad v_{\rm esc}=\sqrt2\,v_{\rm circ}
+$$
+
+## Exemplo resolvido
+
+Se um satélite circular se move a 4 km/s, o módulo da velocidade mínima de escape no mesmo raio é aproximadamente 5,66 km/s. Para uma manobra instantânea tangencial no sentido orbital, o acréscimo seria cerca de 1,66 km/s. A expressão supõe gravitação newtoniana em campo fraco. A descrição do horizonte de um buraco negro requer relatividade geral.

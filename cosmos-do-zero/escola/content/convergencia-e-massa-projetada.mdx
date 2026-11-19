@@ -1,0 +1,14 @@
+---
+{"slug":"convergencia-e-massa-projetada","level":5,"subject":"Matéria escura","order":2,"title":"Como a luz pesa matéria projetada?","objective":"Traduzir uma densidade superficial em convergência para uma geometria fixa.","summary":"A convergência mede densidade superficial projetada em unidades da densidade crítica da lente.","lab":"lentes","reference":{"name":"Matthias Bartelmann e Peter Schneider, Weak Gravitational Lensing","url":"https://arxiv.org/abs/astro-ph/9912508"},"exercise":{"kind":"numeric","prompt":"Se Σcrit = 3.000 M☉/pc² e Σ = 450 M☉/pc², qual é a convergência?","answer":0.15,"tolerance":0.002,"unit":"adimensional","feedback":"κ = 450/3.000 = 0,15. As unidades de densidade superficial se cancelam."},"graph":{"xLabel":"Densidade superficial Σ (M☉/pc²)","yLabel":"Convergência κ","points":[[0,0.0],[100,0.0333333],[200,0.0666667],[300,0.1],[450,0.15],[600,0.2]],"caption":"Plano de lente único com Σcrit = 3.000 M☉/pc²; a geometria foi mantida fixa."}}
+---
+
+Uma distribuição de matéria entre nós e uma galáxia de fundo desvia a luz. No limite de lente fina, integra-se a densidade ao longo da linha de visada para obter a densidade superficial $\Sigma$. A geometria entre observador, lente e fonte fixa a normalização.
+
+$$
+\kappa=\frac{\Sigma}{\Sigma_{\rm crit}},\qquad
+\Sigma_{\rm crit}=\frac{c^2}{4\pi G}\frac{D_s}{D_lD_{ls}}.
+$$
+
+## Exemplo resolvido
+
+Com $\Sigma=300$ e $\Sigma_{\rm crit}=3\,000$ em $M_\odot/\mathrm{pc}^2$, a convergência vale $0{,}10$. As distâncias da equação são distâncias de diâmetro angular, com a fonte atrás da lente. Formas de galáxias distantes informam o cisalhamento reduzido; reconstruir a massa exige lidar com degenerescências, inclusive a da lâmina de massa. A densidade projetada inclui matéria luminosa e escura.

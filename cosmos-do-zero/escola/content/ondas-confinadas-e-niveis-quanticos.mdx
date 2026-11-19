@@ -1,0 +1,67 @@
+---
+{
+  "slug": "ondas-confinadas-e-niveis-quanticos",
+  "level": 4,
+  "subject": "Física quântica",
+  "order": 2,
+  "title": "Quais energias cabem dentro de uma caixa?",
+  "objective": "Derivar os níveis de energia de uma partícula em um poço unidimensional infinito e calcular a energia de uma transição.",
+  "summary": "As condições de contorno selecionam meias-ondas inteiras no poço. A energia cresce com n² e cai com o quadrado da largura.",
+  "lab": "ondas",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Partícula quântica em uma caixa",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/7-4-the-quantum-particle-in-a-box"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Em uma caixa com energia fundamental de 0,40 eV, quanta energia é absorvida em uma transição de n = 1 para n = 3?",
+    "answer": 3.2,
+    "tolerance": 0.02,
+    "unit": "eV",
+    "feedback": "O salto vale (3²−1²) × 0,40 eV = 3,20 eV."
+  },
+  "graph": {
+    "xLabel": "Número quântico n",
+    "yLabel": "Energia Eₙ/E₁",
+    "points": [
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        4
+      ],
+      [
+        3,
+        9
+      ],
+      [
+        4,
+        16
+      ],
+      [
+        5,
+        25
+      ],
+      [
+        6,
+        36
+      ]
+    ],
+    "caption": "Somente valores inteiros de n designam estados. As razões são calculadas para um poço de largura fixa e paredes infinitas."
+  }
+}
+---
+
+## Impor as condições nas paredes
+
+Em uma região de largura $L$ com potencial nulo no interior e infinito fora, a função de onda deve se anular nas duas bordas. Uma onda estacionária satisfaz a condição quando $L=n\lambda/2$ com $n=1,2,3,\ldots$. Pela relação de de Broglie $p=h/\lambda$, os módulos de momento permitidos ficam quantizados.
+
+$$
+E_n=\frac{p_n^2}{2m}=\frac{n^2h^2}{8mL^2}.
+$$
+
+## Calcular a energia trocada
+
+Se $E_1=0{,}30$ eV, a passagem de $n=2$ para $n=1$ libera $4E_1-E_1=0{,}90$ eV. Aqui calculamos a diferença de energia possível. A probabilidade de uma transição específica depende do mecanismo que acopla os estados. Paredes finitas ou uma partícula relativística modificam os níveis.

@@ -1,0 +1,69 @@
+---
+{
+  "slug": "o-relogio-de-luz-do-sistema-solar",
+  "level": 3,
+  "subject": "Sistema Solar",
+  "order": 1,
+  "title": "Quanto tempo a luz leva até um planeta?",
+  "objective": "Converter unidades astronômicas em minutos de viagem da luz e distinguir trajetos de ida e de ida e volta.",
+  "summary": "Cada unidade astronômica acrescenta cerca de 499 segundos ao percurso da luz no vácuo. O atraso depende da distância entre emissor e receptor.",
+  "lab": "orbitas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Constantes astronômicas",
+    "url": "https://openstax.org/books/astronomy-2e/pages/e-some-useful-constants-for-astronomy"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Uma antena envia um pulso a uma sonda a 2,0 UA da Terra. A sonda responde imediatamente. Em quantos minutos o eco volta? Use 499 s por UA.",
+    "answer": 33.2667,
+    "tolerance": 0.15,
+    "unit": "min",
+    "feedback": "O eco cobre 4 UA. Multiplicar 4 por 499 s e dividir por 60 dá 33,27 minutos."
+  },
+  "graph": {
+    "xLabel": "Distância percorrida (UA)",
+    "yLabel": "Tempo de ida (min)",
+    "points": [
+      [
+        0,
+        0.0
+      ],
+      [
+        0.5,
+        4.1583732
+      ],
+      [
+        1,
+        8.3167463
+      ],
+      [
+        2,
+        16.6334927
+      ],
+      [
+        3,
+        24.950239
+      ],
+      [
+        5,
+        41.5837317
+      ]
+    ],
+    "caption": "Modelo de um pulso no vácuo. A distância no eixo horizontal é o comprimento do trajeto."
+  }
+}
+---
+
+## Um sinal em trânsito
+
+Uma imagem de um planeta registra a luz que saiu de lá antes da exposição. Para saber quanto tempo antes, precisamos do comprimento do caminho entre a câmera e o planeta. A unidade astronômica (UA) vale exatamente 149 597 870 700 metros e torna esse comprimento legível na escala do Sistema Solar.
+
+## Da distância ao atraso
+
+À velocidade $c=299\,792\,458\ \mathrm{m/s}$, um pulso percorre a distância $d$ em um tempo $t$. Escreva primeiro $d$ em metros. Ao dividir por metros por segundo, restam segundos.
+
+$$
+t=\frac{d}{c},\qquad t(1\,\mathrm{UA})\simeq499\ \mathrm{s}.
+$$
+
+Por exemplo, para um percurso de 1,5 UA, a luz leva $1{,}5\times499=748{,}5$ segundos, cerca de 12,5 minutos. Um eco percorre o caminho duas vezes. Os raios orbitais medidos a partir do Sol só determinam a distância Terra–planeta depois de especificarmos a posição dos dois na órbita.

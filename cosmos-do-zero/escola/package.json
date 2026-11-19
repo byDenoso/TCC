@@ -1,0 +1,57 @@
+{
+  "name": "cosmos-escola",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "build:pages": "COSMOS_STATIC=1 next build --webpack",
+    "start": "next start",
+    "check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.ts tests/*.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:database": "node tests/database.mjs",
+    "predev": "node scripts/bank.mjs",
+    "prebuild": "node scripts/bank.mjs",
+    "prebuild:pages": "node scripts/bank.mjs",
+    "precheck": "node scripts/bank.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.2.0",
+    "@fontsource/ibm-plex-mono": "^5.2.0",
+    "@mdx-js/mdx": "3.1.1",
+    "@react-three/fiber": "9.8.2",
+    "d3-scale": "4.0.3",
+    "d3-shape": "3.2.1",
+    "gsap": "3.13.0",
+    "katex": "0.19.1",
+    "motion": "14.14.0",
+    "next": "16.4.5",
+    "pg": "8.23.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "rehype-katex": "7.0.1",
+    "remark-math": "6.0.0",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.0",
+    "@playwright/test": "1.65.0",
+    "@tailwindcss/postcss": "4.3.5",
+    "@types/d3-scale": "4.0.9",
+    "@types/d3-shape": "3.2.0",
+    "@types/katex": "0.16.8",
+    "@types/node": "22.19.19",
+    "@types/pg": "8.15.6",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@types/three": "0.187.0",
+    "postcss": "8.5.33",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3"
+  }
+}

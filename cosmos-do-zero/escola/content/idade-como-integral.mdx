@@ -1,0 +1,13 @@
+---
+{"slug":"idade-como-integral","level":6,"subject":"Equações de Friedmann","order":2,"title":"Como H(a) determina a idade cósmica?","objective":"Calcular o tempo decorrido entre dois fatores de escala.","summary":"A idade resulta da integral de 1/(aH), que pesa cada intervalo de expansão pelo seu ritmo.","lab":"fator-de-escala","reference":{"name":"David W. Hogg, Distance measures in cosmology","url":"https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html"},"exercise":{"kind":"numeric","prompt":"Em Einstein–de Sitter, qual é o tempo decorrido de a = 0,25 a a = 1 em unidades de H₀⁻¹?","answer":0.5833333333333333,"tolerance":0.006,"unit":"H₀⁻¹","feedback":"Integre a¹ᐟ² entre 0,25 e 1. O valor é (2/3)(1 − 0,25³ᐟ²) = 7/12."},"graph":{"xLabel":"Fator de escala a","yLabel":"Idade H₀ t","points":[[0.2,0.0596285],[0.4,0.1686548],[0.6,0.3098387],[0.8,0.4770278],[1,0.6666667]],"caption":"Solução de Einstein–de Sitter, com a = 1 no presente."}}
+---
+
+Uma medida instantânea de $H$ indica o tempo característico local da expansão. Para medir o tempo acumulado é necessário considerar todos os intervalos percorridos pelo fator de escala. Da definição de Hubble segue uma quadratura útil mesmo na ausência de solução analítica.
+
+$$
+H_0\Delta t=\int_{a_i}^{a_f}\frac{da}{aE(a)},\qquad E=H/H_0.
+$$
+
+## Exemplo resolvido
+
+Com $E=a^{-3/2}$ e $a_i=0$, o integrando se reduz a $a^{1/2}$. Até $a_f=1$, resulta $H_0t_0=2/3$. Se $H_0^{-1}=14~\mathrm{Gyr}$, a idade desse modelo vale cerca de $9{,}33~\mathrm{Gyr}$. Uma história contendo Λ resulta em outra idade para o mesmo $H_0$. Para um tempo de viagem da luz, escolha $a_i$ na emissão e $a_f$ na recepção.

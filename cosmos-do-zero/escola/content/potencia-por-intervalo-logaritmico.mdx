@@ -1,0 +1,14 @@
+---
+{"slug":"potencia-por-intervalo-logaritmico","level":6,"subject":"Espectro de potência","order":1,"title":"O que há em um intervalo de ln k?","objective":"Converter P(k) em potência adimensional por intervalo logarítmico.","summary":"O fator k³/(2π²) converte a potência dimensional de um campo isotrópico tridimensional em contribuição à variância por ln k.","lab":"estruturas","reference":{"name":"Francis Bernardeau et al., Large-Scale Structure of the Universe and Cosmological Perturbation Theory","url":"https://arxiv.org/abs/astro-ph/0112551"},"exercise":{"kind":"numeric","prompt":"Se P(k) = 2.000 Mpc³ em k = 0,1 Mpc⁻¹, quanto vale Δ²(k)?","answer":0.10132118364233778,"tolerance":0.002,"unit":"adimensional","feedback":"k³P = 0,001 × 2.000 = 2. Dividir por 2π² fornece 0,1013."},"graph":{"xLabel":"k (Mpc⁻¹)","yLabel":"Δ²(k)","points":[[0.02,0.0008106],[0.04,0.0064846],[0.06,0.0218854],[0.08,0.0518764],[0.1,0.1013212],[0.12,0.175083],[0.14,0.2780253]],"caption":"Faixa ilustrativa com P(k) constante em 2.000 Mpc³, restrita aos modos exibidos."}}
+---
+
+A transformada de Fourier do contraste de matéria possui um espectro de potência $P(k)$. Para um campo homogêneo e isotrópico, a casca de números de onda entre $k$ e $k+dk$ contém um volume proporcional a $k^2dk$. Reescrever o elemento de volume em $d\ln k$ introduz outra potência de $k$.
+
+$$
+\langle\delta^2\rangle=\int d\ln k\,\Delta^2(k),\qquad
+\Delta^2(k)=\frac{k^3P(k)}{2\pi^2}.
+$$
+
+## Exemplo resolvido
+
+Em $k=0{,}2~\mathrm{Mpc}^{-1}$ e $P=1\,000~\mathrm{Mpc}^3$, a combinação $k^3P=8$ é adimensional. A potência por intervalo logarítmico vale $8/(2\pi^2)\simeq0{,}405$. A variância total depende dos limites ou do filtro de suavização adotado. A normalização escrita assume a convenção de Fourier com medida $d^3k/(2\pi)^3$.

@@ -1,0 +1,15 @@
+---
+{"slug":"pressao-e-diluicao","level":5,"subject":"Energia escura","order":1,"title":"Como a pressão muda a diluição de energia?","objective":"Prever a densidade de um fluido cosmológico com equação de estado constante.","summary":"A conservação de energia no volume comóvel relaciona a diluição ao parâmetro w.","lab":"energia-escura","reference":{"name":"David Tong, Cosmology, §1 — The Expanding Universe","url":"https://www.davidtong.org/teaching/cosmology/cosmohtml/S1"},"exercise":{"kind":"numeric","prompt":"Para w = −2/3 constante, qual é a razão entre a densidade em z = 2 e sua densidade atual?","answer":3,"tolerance":0.02,"unit":"adimensional","feedback":"O expoente 3(1 + w) vale 1. A razão de densidades é 1 + z = 3."},"graph":{"xLabel":"Redshift z","yLabel":"Densidade / densidade atual","points":[[0,1.0],[0.25,1.1432626],[0.5,1.2754245],[0.75,1.3990165],[1,1.5157166],[1.5,1.7328621],[2,1.933182]],"caption":"Fluido hipotético homogêneo com w = −0,8 constante e conservação separada."}}
+---
+
+Considere uma região com volume físico proporcional a $a^3$. Para um fluido homogêneo que não troca energia com outras espécies, a variação de energia na região inclui o trabalho de pressão. Denote por $\epsilon$ a densidade de energia e por $w=p/\epsilon$ a razão adimensional.
+
+$$
+d(\epsilon a^3)=-p\,d(a^3)
+\quad\Rightarrow\quad
+\frac{\epsilon(z)}{\epsilon_0}=(1+z)^{3(1+w)}.
+$$
+
+## Exemplo resolvido
+
+Para $w=-1$ o expoente é zero e a densidade permanece constante. Para o modelo ilustrativo $w=-0{,}8$ o expoente é $0{,}6$; quando $z=1$ a densidade corresponde a $2^{0{,}6}\simeq1{,}52$ vezes o valor atual. A hipótese de $w$ constante é parte da integração. Um $w$ variável exige integrar a história de $w(a)$.

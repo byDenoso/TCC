@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /painel/
+Disallow: /gestao/
+Disallow: /api/
+Sitemap: https://cosmos.denerpereira.com.br/sitemap.xml

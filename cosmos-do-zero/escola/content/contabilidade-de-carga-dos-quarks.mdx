@@ -1,0 +1,64 @@
+---
+{
+  "slug": "contabilidade-de-carga-dos-quarks",
+  "level": 4,
+  "subject": "Partículas fundamentais",
+  "order": 1,
+  "title": "Como quarks fracionários formam um próton de carga inteira?",
+  "objective": "Somar as cargas de valência dos quarks up e down, conservando seus sinais e a unidade de carga elementar.",
+  "summary": "No próton, dois quarks u e um d dão carga +e. No nêutron, um u e dois d dão carga total zero.",
+  "lab": "campos",
+  "reference": {
+    "name": "Particle Data Group · Modelo de quarks",
+    "url": "https://pdg.lbl.gov/2025/reviews/rpp2025-rev-quark-model.pdf"
+  },
+  "exercise": {
+    "kind": "choice",
+    "prompt": "Qual troca de sabor transforma o conteúdo de valência de um nêutron no de um próton?",
+    "answer": 1,
+    "tolerance": 0,
+    "unit": "",
+    "feedback": "Trocar um d (−e/3) por um u (+2e/3) acrescenta uma unidade de carga positiva ao bárion.",
+    "choices": [
+      "Trocar um u por um d.",
+      "Trocar um d por um u.",
+      "Trocar os dois d por dois u."
+    ]
+  },
+  "graph": {
+    "xLabel": "Número de quarks u entre três",
+    "yLabel": "Carga total Q/e",
+    "points": [
+      [
+        0,
+        -1
+      ],
+      [
+        1,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        3,
+        2
+      ]
+    ],
+    "caption": "Contabilidade de valência de bárions formados com três quarks u e d. Só os quatro pontos inteiros têm significado físico."
+  }
+}
+---
+
+## Escolher uma unidade comum
+
+Usamos $e$ para a magnitude da carga elementar. Um quark de sabor up ($u$) tem carga $+2e/3$ e um down ($d$) tem $-e/3$. Para um bárion com três quarks de valência desses dois sabores, tome $n_u$ como a quantidade de quarks up. Restam $3-n_u$ quarks down.
+
+$$
+\frac{Q}{e}=\frac{2n_u}{3}-\frac{3-n_u}{3}=n_u-1.
+$$
+
+## Reconstruir próton e nêutron
+
+O próton, $uud$, tem $n_u=2$ e carga $+e$. O nêutron, $udd$, tem $n_u=1$ e carga nula. Os pares quark–antiquark do mar têm carga líquida nula aos pares e os glúons são eletricamente neutros. O modelo de valência permite essa contabilidade mesmo quando a dinâmica interna do hádron exige a teoria da interação forte. O laboratório de campos ilustra a força sobre a carga total de uma partícula de teste.

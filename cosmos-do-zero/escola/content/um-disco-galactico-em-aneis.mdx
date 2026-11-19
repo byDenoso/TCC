@@ -1,0 +1,71 @@
+---
+{
+  "slug": "um-disco-galactico-em-aneis",
+  "level": 3,
+  "subject": "Galáxias",
+  "order": 1,
+  "title": "O que se mede ao dividir uma galáxia em anéis?",
+  "objective": "Ler um perfil de brilho superficial e estimar a queda de luz entre dois raios de um disco exponencial.",
+  "summary": "O comprimento de escala indica o intervalo radial em que o brilho superficial de um disco exponencial cai por um fator e.",
+  "lab": "rotacao",
+  "reference": {
+    "name": "J. Bovy · Estrutura observada dos discos galácticos",
+    "url": "https://galaxiesbook.org/chapters/II-01.-Gravitation-in-Galactic-Disks_1-The-observed-structure-of-disk-galaxies.html"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "Para o disco do gráfico, que fração do brilho superficial central resta a 6 kpc? Digite a razão entre 0 e 1.",
+    "answer": 0.1353352832366127,
+    "tolerance": 0.005,
+    "unit": "",
+    "feedback": "São dois comprimentos de escala. O brilho relativo é exp(−2), cerca de 0,135."
+  },
+  "graph": {
+    "xLabel": "Raio (kpc)",
+    "yLabel": "Brilho relativo ao centro",
+    "points": [
+      [
+        0,
+        1.0
+      ],
+      [
+        1.5,
+        0.6065307
+      ],
+      [
+        3,
+        0.3678794
+      ],
+      [
+        4.5,
+        0.2231302
+      ],
+      [
+        6,
+        0.1353353
+      ],
+      [
+        7.5,
+        0.082085
+      ],
+      [
+        9,
+        0.0497871
+      ]
+    ],
+    "caption": "Disco exponencial visto de frente, sem bojo ou poeira, com comprimento de escala de 3 kpc."
+  }
+}
+---
+
+## Medir o brilho por unidade de área
+
+Uma imagem astronômica reúne a luz de muitas estrelas. Para descrever um disco visto de frente, meça o brilho médio por área em vários anéis concêntricos. Muitos discos apresentam uma faixa radial em que o brilho decresce aproximadamente de forma exponencial.
+
+$$
+I(R)=I_0\,e^{-R/h},\qquad \frac{I(R+h)}{I(R)}=e^{-1}.
+$$
+
+## Ler um comprimento de escala
+
+Se $h=3$ kpc, um ponto a 3 kpc tem $e^{-1}\simeq0{,}368$ do brilho central extrapolado. O anel inteiro pode emitir mais que um anel interno por ocupar uma área maior. Bojos, poeira, inclinação ou mudanças de inclinação do perfil alteram a medida. Converter luz em massa estelar ainda exige uma razão massa–luminosidade adequada à população.

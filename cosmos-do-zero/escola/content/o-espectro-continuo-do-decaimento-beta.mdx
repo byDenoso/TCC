@@ -1,0 +1,79 @@
+---
+{
+  "slug": "o-espectro-continuo-do-decaimento-beta",
+  "level": 4,
+  "subject": "Partículas fundamentais",
+  "order": 2,
+  "title": "Quem carrega a energia que o elétron deixou?",
+  "objective": "Usar a conservação da energia e do número leptônico de família no modelo introdutório do decaimento beta do nêutron livre.",
+  "summary": "O nêutron livre decai em próton, elétron e antineutrino eletrônico. A divisão da energia cinética entre os produtos permite um espectro contínuo para o elétron.",
+  "lab": "relatividade",
+  "reference": {
+    "name": "NIST · Decaimento beta do nêutron",
+    "url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=902353"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "No gráfico com Q = 0,782 MeV, um elétron sai com 0,300 MeV de energia cinética. Que energia o antineutrino leva na aproximação usada?",
+    "answer": 0.482,
+    "tolerance": 0.003,
+    "unit": "MeV",
+    "feedback": "A diferença Q − Tₑ = 0,782 − 0,300 = 0,482 MeV vai ao antineutrino quando o recuo é desprezado."
+  },
+  "graph": {
+    "xLabel": "Energia cinética do elétron (MeV)",
+    "yLabel": "Energia do antineutrino (MeV)",
+    "points": [
+      [
+        0,
+        0.782
+      ],
+      [
+        0.1,
+        0.682
+      ],
+      [
+        0.2,
+        0.582
+      ],
+      [
+        0.3,
+        0.482
+      ],
+      [
+        0.4,
+        0.382
+      ],
+      [
+        0.5,
+        0.282
+      ],
+      [
+        0.6,
+        0.182
+      ],
+      [
+        0.7,
+        0.082
+      ],
+      [
+        0.782,
+        0.0
+      ]
+    ],
+    "caption": "Balanço energético para Q = 0,782 MeV desprezando o recuo do próton e a massa do antineutrino. A curva dá a energia complementar, sem representar contagem de eventos."
+  }
+}
+---
+
+## Acompanhar a troca de sabor
+
+No nêutron livre, a interação fraca permite que um dos quarks down se transforme em up. O processo produz um próton, um elétron e um antineutrino eletrônico. As cargas finais somam zero. No vértice beta, o elétron e o antineutrino eletrônico também carregam números leptônicos eletrônicos opostos.
+
+$$
+n\longrightarrow p+e^-+\bar\nu_e,\qquad Q=(m_n-m_p-m_e)c^2\simeq0{,}782\ \mathrm{MeV}.
+$$
+
+## Montar a conta de energia
+
+No referencial de repouso do nêutron e desprezando a massa do antineutrino, $Q=T_p+T_e+E_\nu$. Um elétron com $T_e=0{,}20$ MeV deixa aproximadamente 0,582 MeV para o antineutrino quando desprezamos o pequeno recuo do próton. O processo inteiro conserva também o momento. Para a forma ou a extremidade precisa do espectro medido, o recuo, a cinemática exata e a resposta do detector entram no modelo.

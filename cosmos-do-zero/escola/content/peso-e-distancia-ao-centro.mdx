@@ -1,0 +1,17 @@
+---
+{"slug":"peso-e-distancia-ao-centro","level":2,"subject":"Gravitação","order":1,"title":"A gravidade cai com a altura de que jeito?","objective":"Calcular a gravidade externa de um corpo esférico usando a distância ao centro.","summary":"Fora de um corpo esfericamente simétrico, dobrar a distância ao centro reduz o módulo do campo gravitacional a um quarto.","lab":"gravitacao","reference":{"name":"OpenStax · Física Universitária, v. 1, § 13.1","url":"https://openstax.org/books/university-physics-volume-1/pages/13-1-newtons-law-of-universal-gravitation"},"exercise":{"kind":"experiment","prompt":"Use a curva desta aula para comparar a superfície com um ponto a três raios do centro. Se g na superfície é 9 m/s², qual é g nesse ponto?","answer":1,"tolerance":0.012,"unit":"m/s²","feedback":"Em r/R = 3, o gráfico dá 1/9. Multiplique essa fração pelos 9 m/s² da superfície."},"graph":{"xLabel":"Distância ao centro r/R","yLabel":"Gravidade relativa g(r)/g(R)","points":[[1,1.0],[1.25,0.64],[1.5,0.4444444],[1.75,0.3265306],[2,0.25],[2.5,0.16],[3,0.1111111],[3.5,0.0816327],[4,0.0625]],"caption":"Corpo esférico de massa fixa. O primeiro ponto é a superfície e r/R = 2 corresponde a uma altura de um raio."}}
+---
+
+A altitude costuma usar a superfície como zero. A lei gravitacional de Newton usa o centro de massa de um corpo esfericamente simétrico como origem radial. Trocar uma distância pela outra é suficiente para obter uma previsão errada por um fator grande.
+
+## Converta a altura em raio orbital
+
+Chame de $R$ o raio do planeta e de $h$ a altura acima da superfície. Fora do planeta, a aceleração gravitacional independe da massa do objeto de teste. Divida a expressão pelo campo na superfície para eliminar $GM$.
+
+$$
+r=R+h,\qquad g(r)=\frac{GM}{r^2},\qquad \frac{g(r)}{g(R)}=\left(\frac{R}{R+h}\right)^2
+$$
+
+## Exemplo resolvido
+
+Um planeta ideal tem $g(R)=12\,\mathrm{m/s^2}$. À altura $h=R$, o objeto está a $2R$ do centro. O campo vale $12/4=3\,\mathrm{m/s^2}$. A força sobre um corpo de 2 kg tem módulo 6 N e aponta para o centro. O cálculo considera a contribuição desse planeta e despreza rotação e outros corpos.

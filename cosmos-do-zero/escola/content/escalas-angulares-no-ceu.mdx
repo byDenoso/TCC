@@ -1,0 +1,14 @@
+---
+{"slug":"escalas-angulares-no-ceu","level":5,"subject":"Radiação cósmica de fundo","order":2,"title":"Do mapa de temperatura aos multipolos","objective":"Estimar a escala angular associada a um multipolo e interpretar a variância cósmica.","summary":"Multipolos maiores descrevem padrões angulares mais finos no céu.","lab":"cmb","reference":{"name":"Wayne Hu e Scott Dodelson, Cosmic Microwave Background Anisotropies","url":"https://arxiv.org/abs/astro-ph/0110414"},"exercise":{"kind":"graph","prompt":"Usando a aproximação do gráfico, que escala angular corresponde a ℓ = 180?","answer":1,"tolerance":0.01,"unit":"grau","feedback":"A escala característica é 180°/180 = 1°."},"graph":{"xLabel":"Multipolo ℓ","yLabel":"Escala característica (graus)","points":[[10,18.0],[20,9.0],[60,3.0],[90,2.0],[180,1.0],[360,0.5]],"caption":"Conversão angular aproximada, θ ≈ 180°/ℓ. Uma harmônica esférica tem extensão global."}}
+---
+
+Subtraia a temperatura média do mapa do céu e represente as flutuações por harmônicos esféricos. O número inteiro $\ell$ seleciona uma escala angular e o índice $m$ percorre os modos de orientação. O espectro $C_\ell$ mede a potência média de flutuação naquela escala.
+
+$$
+\theta_{\rm car}\simeq\frac{180^\circ}{\ell},\qquad
+\widehat C_\ell=\frac{1}{2\ell+1}\sum_{m=-\ell}^{\ell}|a_{\ell m}|^2.
+$$
+
+## Exemplo resolvido
+
+Para $\ell=60$, a escala estimada é $3^\circ$. Há $121$ valores de $m$. Mesmo com céu completo e ruído instrumental desprezível, dispomos de um número finito de modos, origem da variância cósmica. O mapa real também exige tratamento de emissão galáctica, feixe e máscara. A conversão angular é uma régua aproximada para interpretar o espectro.

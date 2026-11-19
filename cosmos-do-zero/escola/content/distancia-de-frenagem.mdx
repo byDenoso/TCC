@@ -1,0 +1,21 @@
+---
+{"slug":"distancia-de-frenagem","level":2,"subject":"Cinemática","order":2,"title":"Leia a distância de frenagem pela área","objective":"Integrar graficamente a velocidade em uma frenagem com aceleração constante.","summary":"A área sob o gráfico velocidade–tempo fornece o deslocamento. Quando a velocidade cai linearmente a zero, a figura formada é um triângulo.","lab":"gravitacao","reference":{"name":"OpenStax · Física Universitária, v. 1, § 3.4","url":"https://openstax.org/books/university-physics-volume-1/pages/3-4-motion-with-constant-acceleration"},"exercise":{"kind":"numeric","prompt":"Um módulo parte a +12 m/s e freia com aceleração constante de −3 m/s² até parar. Qual é o deslocamento durante a frenagem?","answer":24,"tolerance":0.05,"unit":"m","feedback":"A parada leva 4 s. A velocidade média é 6 m/s, o que fornece 24 m."},"graph":{"xLabel":"Tempo de frenagem (s)","yLabel":"Velocidade (m/s)","points":[[0.0,12.0],[0.5,10.5],[1.0,9.0],[1.5,7.5],[2.0,6.0],[2.5,4.5],[3.0,3.0],[3.5,1.5],[4.0,0.0]],"caption":"Aceleração de −3 m/s². A curva termina no repouso, antes de qualquer mudança de sentido."}}
+---
+
+Durante uma frenagem, cada segundo pode acrescentar uma distância diferente ao caminho. Imagine dividir o tempo em intervalos curtos. Em cada intervalo o produto da velocidade pelo tempo aproxima o deslocamento. Somar esses produtos corresponde a acumular área no gráfico.
+
+## Ache o tempo até parar
+
+Para aceleração constante, a velocidade muda linearmente. Coloque velocidade final zero para obter o tempo de parada. A área do triângulo é metade de sua base multiplicada pela altura.
+
+$$
+v(t)=v_0+at,\qquad t_{\rm parada}=-\frac{v_0}{a}
+$$
+
+$$
+\Delta x=\tfrac12 v_0 t_{\rm parada}
+$$
+
+## Exemplo resolvido
+
+Com velocidade inicial de 8 m/s e aceleração de −2 m/s², a frenagem dura 4 s. A área vale $8\times4/2=16\,\mathrm m$. A previsão supõe que a desaceleração começa imediatamente. Em uma aplicação com atraso entre o comando e a resposta, some a distância percorrida durante esse atraso.

@@ -1,0 +1,14 @@
+---
+{"slug":"degenerescencia-regua-e-hubble","level":6,"subject":"Tensões cosmológicas","order":2,"title":"Por que H₀ e r_d podem compensar um ao outro?","objective":"Demonstrar uma direção degenerada de BAO quando o histórico adimensional de expansão é fixo.","summary":"Com E(z) e a geometria fixa, BAO mede combinações que preservam o produto H₀ r_d.","lab":"expansao","reference":{"name":"DESI Collaboration, DESI 2024 VI — Cosmological Constraints from the Measurements of Baryon Acoustic Oscillations","url":"https://arxiv.org/abs/2404.03002"},"exercise":{"kind":"graph","prompt":"No gráfico, se H₀ cresce 20% mantendo H₀r_d fixo, qual razão r_d/r_d inicial é necessária?","answer":0.8333333333333334,"tolerance":0.006,"unit":"adimensional","feedback":"A régua deve encolher como o inverso da mudança em H₀, portanto a razão vale 1/1,2 ≈ 0,833."},"graph":{"xLabel":"H₀ / H₀ inicial","yLabel":"r_d / r_d inicial","points":[[0.8,1.25],[0.9,1.1111111],[1,1.0],[1.05,0.952381],[1.1,0.9090909],[1.2,0.8333333],[1.3,0.7692308]],"caption":"Família de modelos ilustrativos a E(z) fixo em geometria plana."}}
+---
+
+Em geometria plana, a distância comóvel transversal envolve $c/H_0$ multiplicado por uma integral de $1/E(z)$. BAO compara essa distância e a distância radial com uma régua comóvel $r_d$. Manter o histórico adimensional fixo permite isolar a combinação que normaliza o padrão.
+
+$$
+\frac{D_M}{r_d}=\frac{c}{H_0r_d}\int_0^z\frac{dz'}{E(z')},\qquad
+\frac{D_H}{r_d}=\frac{c}{H_0r_dE(z)}.
+$$
+
+## Exemplo resolvido
+
+Se $H_0$ aumenta de 70 para 77 nas mesmas unidades, uma régua inicial de $147~\mathrm{Mpc}$ passa a $147/1{,}1\simeq133{,}64~\mathrm{Mpc}$ nessa família. Isso conserva os dois observáveis no modelo ilustrativo. Realizar a transformação com uma teoria microfísica exige recalcular o plasma primordial e os demais observáveis. Uma calibração absoluta externa pode quebrar a degenerescência.

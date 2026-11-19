@@ -1,0 +1,14 @@
+---
+{"slug":"regua-transversal-e-radial","level":6,"subject":"Oscilações acústicas bariônicas","order":2,"title":"O que o sinal BAO mede em cada direção?","objective":"Inferir D_M/r_d e D_H/r_d a partir de uma separação angular e de uma separação em redshift.","summary":"BAO anisotrópica restringe distâncias transversais e radiais em unidades da régua comóvel.","lab":"expansao","reference":{"name":"DESI Collaboration, DESI 2024 VI — Cosmological Constraints from the Measurements of Baryon Acoustic Oscillations","url":"https://arxiv.org/abs/2404.03002"},"exercise":{"kind":"numeric","prompt":"Um sinal radial sintético tem Δz = 0,05. Assumindo pequena separação no bin, qual razão D_H/r_d ele implica?","answer":20,"tolerance":0.05,"unit":"adimensional","feedback":"A separação radial satisfaz Δz ≈ r_d/D_H, logo D_H/r_d ≈ 1/0,05 = 20."},"graph":{"xLabel":"Distância transversal Dₘ / r_d","yLabel":"Ângulo característico (rad)","points":[[5,0.2],[8,0.125],[10,0.1],[15,0.0666667],[20,0.05],[25,0.04],[30,0.0333333]],"caption":"Aproximação de pequeno ângulo para uma régua comóvel transversal."}}
+---
+
+Projete a mesma régua comóvel em duas orientações. Transversalmente, a separação angular depende da distância comóvel transversal $D_M$. Radialmente, um intervalo pequeno de redshift corresponde a uma distância comóvel $D_H\Delta z$, onde $D_H=c/H(z)$.
+
+$$
+\Delta\theta\simeq\frac{r_d}{D_M(z)},\qquad
+\Delta z\simeq\frac{r_d}{D_H(z)}.
+$$
+
+## Exemplo resolvido
+
+Se uma régua transversal ocupa $0{,}05$ radiano em um bin estreito, $D_M/r_d\simeq20$. Adotar $r_d=150~\mathrm{Mpc}$ como calibração adicional dá $D_M\simeq3\,000~\mathrm{Mpc}$. A razão pode ser medida sem escolher esse valor em megaparsecs. Levantamentos reais ajustam um padrão estatístico na distribuição de galáxias e fornecem covariâncias entre as combinações transversal e radial.

@@ -1,0 +1,71 @@
+---
+{
+  "slug": "velocidade-nos-extremos-da-elipse",
+  "level": 3,
+  "subject": "Mecânica orbital",
+  "order": 2,
+  "title": "Onde o planeta passa mais depressa?",
+  "objective": "Calcular a razão entre as velocidades no periastro e no apoastro usando a conservação do momento angular.",
+  "summary": "Nos extremos da elipse a velocidade é tangencial e o produto entre raio e velocidade tem o mesmo valor nos dois pontos.",
+  "lab": "orbitas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Lei das áreas",
+    "url": "https://openstax.org/books/astronomy-2e/pages/3-1-the-laws-of-planetary-motion"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Uma órbita tem excentricidade 0,5 e velocidade de 12 km/s no apoastro. Qual é a velocidade no periastro?",
+    "answer": 36,
+    "tolerance": 0.1,
+    "unit": "km/s",
+    "feedback": "A razão é (1+0,5)/(1−0,5) = 3. Portanto 3 × 12 = 36 km/s."
+  },
+  "graph": {
+    "xLabel": "Excentricidade",
+    "yLabel": "Razão entre velocidades vp/va",
+    "points": [
+      [
+        0,
+        1.0
+      ],
+      [
+        0.1,
+        1.2222222
+      ],
+      [
+        0.2,
+        1.5
+      ],
+      [
+        0.3,
+        1.8571429
+      ],
+      [
+        0.5,
+        3.0
+      ],
+      [
+        0.6,
+        4.0
+      ],
+      [
+        0.8,
+        9.0
+      ]
+    ],
+    "caption": "Elipses ideais. A razão cresce quando a separação entre o periastro e o apoastro aumenta."
+  }
+}
+---
+
+## Áreas iguais em tempos iguais
+
+A gravidade de um corpo central aponta ao longo do raio. O torque em torno desse centro é zero, e o momento angular por unidade de massa $h=r v_\perp$ permanece constante. Aqui $v_\perp$ é a componente perpendicular ao raio. No ponto mais próximo e no mais distante, toda a velocidade é perpendicular.
+
+$$
+r_p=a(1-e),\quad r_a=a(1+e),\quad r_pv_p=r_av_a.
+$$
+
+## Dividir os dois raios
+
+Eliminando $a$, obtemos $v_p/v_a=(1+e)/(1-e)$. Para $e=0{,}2$, os raios são $0{,}8a$ e $1{,}2a$. O planeta cruza o periastro 1,5 vez mais depressa que o apoastro. Isso explica por que ele passa mais tempo na região distante. O cálculo supõe movimento ligado de dois corpos e uma excentricidade menor que um.

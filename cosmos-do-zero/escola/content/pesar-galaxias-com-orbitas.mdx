@@ -1,0 +1,75 @@
+---
+{
+  "slug": "pesar-galaxias-com-orbitas",
+  "level": 3,
+  "subject": "Galáxias",
+  "order": 2,
+  "title": "Como uma curva de rotação pesa uma galáxia?",
+  "objective": "Inferir massa encerrada em um modelo esférico e identificar o crescimento exigido por uma curva de rotação plana.",
+  "summary": "Em simetria esférica, uma velocidade circular constante exige massa encerrada que aumenta em proporção ao raio.",
+  "lab": "rotacao",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — A massa da galáxia",
+    "url": "https://openstax.org/books/astronomy-2e/pages/25-3-the-mass-of-the-galaxy"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Uma galáxia idealizada tem 5 × 10¹⁰ massas solares dentro de 6 kpc. Até 12 kpc sua curva de rotação é plana. No modelo esférico, quantos bilhões de massas solares ficam dentro de 12 kpc?",
+    "answer": 100,
+    "tolerance": 0.2,
+    "unit": "bilhões de M☉",
+    "feedback": "Com velocidade constante, M cresce como r. Dobrar 6 para 12 kpc duplica 50 bilhões de massas solares para 100 bilhões."
+  },
+  "graph": {
+    "xLabel": "Raio (kpc)",
+    "yLabel": "Massa encerrada (10¹⁰ M☉)",
+    "points": [
+      [
+        2,
+        1.8604651
+      ],
+      [
+        4,
+        3.7209302
+      ],
+      [
+        6,
+        5.5813953
+      ],
+      [
+        8,
+        7.4418605
+      ],
+      [
+        10,
+        9.3023256
+      ],
+      [
+        12,
+        11.1627907
+      ],
+      [
+        16,
+        14.8837209
+      ],
+      [
+        20,
+        18.6046512
+      ]
+    ],
+    "caption": "Modelo com velocidade circular de 200 km/s constante. A geometria esférica dá uma estimativa de massa dinâmica."
+  }
+}
+---
+
+## Seguir o gás em movimento
+
+Linhas espectrais deslocadas em lados opostos de um disco permitem estimar sua velocidade de rotação, depois de corrigir a inclinação. Aproximemos o campo por uma distribuição esférica de massa. Para uma órbita circular, a aceleração centrípeta coincide com a gravitacional.
+
+$$
+\frac{v_c^2}{r}=\frac{GM(<r)}{r^2},\qquad M(<r)=\frac{rv_c^2}{G}.
+$$
+
+## Pesar até um raio conhecido
+
+Com $r=10$ kpc, $v_c=200$ km/s e $G=4{,}30\times10^{-6}\ \mathrm{kpc}\,(\mathrm{km/s})^2/M_\odot$, encontramos $9{,}3\times10^{10}M_\odot$. Uma velocidade ainda constante em raios maiores requer mais massa encerrada. Para comparar a massa dinâmica à luz observada, modelos detalhados tratam a geometria achatada do disco, o gás, as estrelas e o halo separadamente.

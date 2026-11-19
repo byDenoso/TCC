@@ -1,0 +1,71 @@
+---
+{
+  "slug": "medir-gravidade-com-duas-massas",
+  "level": 4,
+  "subject": "Relatividade geral",
+  "order": 1,
+  "title": "O que duas massas em queda livre conseguem medir?",
+  "objective": "Conectar o princípio de equivalência local à aceleração relativa de maré entre duas massas separadas radialmente.",
+  "summary": "Um laboratório em queda livre pode detectar a variação da gravidade através de uma separação finita. No campo fraco de uma massa esférica, o alongamento radial escala como 1/r³.",
+  "lab": "curvatura",
+  "reference": {
+    "name": "Einstein Online · O elevador, o foguete e a gravidade",
+    "url": "https://www.einstein-online.info/en/spotlight/equivalence_principle/"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "Mantendo a separação entre as massas de teste, que fração da aceleração relativa radial resta a 2r₀?",
+    "answer": 0.125,
+    "tolerance": 0.003,
+    "unit": "",
+    "feedback": "O módulo da derivada do campo varia como r⁻³. Dobrar o raio produz 1/2³ = 1/8 = 0,125."
+  },
+  "graph": {
+    "xLabel": "Raio em unidades de r₀",
+    "yLabel": "Maré radial relativa ao valor em r₀",
+    "points": [
+      [
+        1,
+        1.0
+      ],
+      [
+        1.25,
+        0.512
+      ],
+      [
+        1.5,
+        0.2962963
+      ],
+      [
+        2,
+        0.125
+      ],
+      [
+        2.5,
+        0.064
+      ],
+      [
+        3,
+        0.037037
+      ],
+      [
+        4,
+        0.015625
+      ]
+    ],
+    "caption": "Massas de teste com a mesma pequena separação radial. A curva mostra a magnitude da aceleração diferencial em campo fraco."
+  }
+}
+---
+
+## Um elevador com duas partículas soltas
+
+Um acelerômetro ideal em queda livre marca zero. Mesmo assim, duas partículas radialmente separadas caem com acelerações ligeiramente diferentes em direção a uma massa central. A partícula mais interna acelera mais para dentro, e a separação radial entre as duas tende a crescer. Esse efeito de maré é acessível dentro de um laboratório de extensão finita.
+
+$$
+g(r)=-\frac{GM}{r^2},\qquad \Delta a_r\simeq\frac{dg}{dr}\,\Delta r=\frac{2GM}{r^3}\,\Delta r.
+$$
+
+## Isolar a dependência que se mede
+
+Mantendo a massa central e a separação $\Delta r$, passar de $r$ para $3r$ reduz a aceleração relativa por um fator 27. A expansão em primeira ordem exige $\Delta r$ pequeno comparado a $r$. Aqui usamos o limite de campo fraco da descrição relativística. A relação geral entre geodésicas vizinhas utiliza a curvatura do espaço-tempo.

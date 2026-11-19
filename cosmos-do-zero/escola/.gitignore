@@ -1,0 +1,9 @@
+node_modules/
+.next*/
+out/
+test-results/
+*.tsbuildinfo
+.env*
+/src/server/answer-bank.json
+/public/sitemap.xml
+/src/server/lab-bank.json

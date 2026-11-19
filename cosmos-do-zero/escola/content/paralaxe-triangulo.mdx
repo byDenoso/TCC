@@ -1,0 +1,17 @@
+---
+{"slug":"paralaxe-triangulo","level":1,"subject":"Geometria e trigonometria","order":2,"title":"Use a órbita terrestre como régua","objective":"Converter uma paralaxe anual em distância e distinguir o semiângulo da excursão total.","summary":"A paralaxe anual usa uma base de uma unidade astronômica. Em pequenos ângulos, a distância em parsecs é o inverso da paralaxe em segundos de arco.","lab":"orbitas","reference":{"name":"OpenStax · Astronomia, 2ª ed., § 19.2","url":"https://openstax.org/books/astronomy-2e/pages/19-2-surveying-the-stars"},"exercise":{"kind":"numeric","prompt":"A separação entre as duas posições extremas de uma estrela, descontado o movimento próprio, é 0,50 segundo de arco. Qual a distância pela paralaxe anual?","answer":4,"tolerance":0.02,"unit":"pc","feedback":"A paralaxe é metade da excursão total, 0,25″. A distância é 1/0,25 = 4 pc."},"graph":{"xLabel":"Paralaxe anual (segundos de arco)","yLabel":"Distância (pc)","points":[[0.05,20.0],[0.1,10.0],[0.125,8.0],[0.2,5.0],[0.25,4.0],[0.4,2.5],[0.5,2.0],[0.75,1.3333333],[1,1.0]],"caption":"Modelo geométrico de pequenos ângulos. Quando a paralaxe dobra, a distância inferida cai à metade."}}
+---
+
+Um observador muda de posição ao acompanhar a Terra em sua órbita. Contra um fundo de estrelas muito distantes, uma estrela próxima descreve um deslocamento aparente anual. No eixo de maior deslocamento, a distância angular entre extremos corresponde ao dobro da paralaxe $p$.
+
+## Construa metade do triângulo
+
+Tome uma unidade astronômica como base perpendicular à direção da estrela. O cateto longo é a distância $d$. Para ângulos pequenos, a tangente é aproximadamente o próprio ângulo em radianos. A unidade parsec torna essa geometria prática quando $p$ vem em segundos de arco.
+
+$$
+\tan p=\frac{1\,\mathrm{UA}}{d},\qquad d\,[\mathrm{pc}]\simeq\frac{1}{p\,[\mathrm{arcsec}]}
+$$
+
+## Exemplo resolvido
+
+Uma excursão anual ponta a ponta de 0,20 segundo de arco dá $p=0{,}10$ segundo de arco. Inverter esse valor fornece 10 pc. Uma estrela a 20 pc produziria metade da paralaxe. A aplicação a um catálogo requer a paralaxe ajustada e sua incerteza. Quando o erro é comparável ao próprio ângulo medido, inverter a medida central pode distorcer a estimativa de distância.

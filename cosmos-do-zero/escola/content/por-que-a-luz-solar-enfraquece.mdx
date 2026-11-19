@@ -1,0 +1,67 @@
+---
+{
+  "slug": "por-que-a-luz-solar-enfraquece",
+  "level": 3,
+  "subject": "Sistema Solar",
+  "order": 2,
+  "title": "Por que a irradiância muda de planeta para planeta?",
+  "objective": "Prever a potência solar recebida por metro quadrado a partir da distância ao Sol.",
+  "summary": "A luminosidade solar se distribui sobre uma área proporcional ao quadrado da distância. Dobrar a distância reduz a irradiância a um quarto.",
+  "lab": "orbitas",
+  "reference": {
+    "name": "NASA Goddard · Irradiância solar",
+    "url": "https://earth.gsfc.nasa.gov/climate/projects/solar-irradiance/science"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "Leia o ponto em 2 UA. Qual irradiância o modelo fornece para uma placa perpendicular à luz?",
+    "answer": 340.25,
+    "tolerance": 1,
+    "unit": "W/m²",
+    "feedback": "Uma esfera de raio 2 UA tem quatro vezes a área da esfera de 1 UA. A placa recebe 1 361/4 = 340,25 W/m²."
+  },
+  "graph": {
+    "xLabel": "Distância ao Sol (UA)",
+    "yLabel": "Irradiância (W/m²)",
+    "points": [
+      [
+        0.5,
+        5444.0
+      ],
+      [
+        0.75,
+        2419.5555556
+      ],
+      [
+        1,
+        1361.0
+      ],
+      [
+        1.5,
+        604.8888889
+      ],
+      [
+        2,
+        340.25
+      ],
+      [
+        3,
+        151.2222222
+      ]
+    ],
+    "caption": "Sol isotrópico com irradiância de referência de 1 361 W/m² a 1 UA. Superfície perpendicular aos raios, fora da atmosfera."
+  }
+}
+---
+
+## Uma esfera cada vez maior
+
+Imagine esferas transparentes concêntricas ao redor do Sol. A mesma potência $L$ atravessa cada esfera quando a emissão é constante e o espaço entre elas é transparente. A área aumenta com o quadrado do raio $r$.
+
+$$
+F(r)=\frac{L}{4\pi r^2},\qquad \frac{F(r)}{F(1\,\mathrm{UA})}=\left(\frac{1\,\mathrm{UA}}{r}\right)^2.
+$$
+
+## A vizinhança de Marte
+
+Adote $F(1\,\mathrm{UA})=1361\ \mathrm{W/m^2}$. A 1,5 UA a irradiância perpendicular é $1361/2{,}25=605\ \mathrm{W/m^2}$, aproximadamente. Um planeta de raio $R$ intercepta essa radiação em um disco de área $\pi R^2$. Espalhar a potência por toda a superfície esférica introduz outro fator, igual a quatro. Reflexão e absorção atmosférica entram separadamente no balanço térmico.

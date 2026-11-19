@@ -1,0 +1,13 @@
+---
+{"slug":"temperatura-da-luz-fossil","level":5,"subject":"Radiação cósmica de fundo","order":1,"title":"Que temperatura tinha a luz de fundo?","objective":"Relacionar o deslocamento de um espectro térmico com a temperatura do fundo.","summary":"A expansão preserva a forma de um corpo negro livre e reduz sua temperatura como 1/a.","lab":"cmb","reference":{"name":"NASA LAMBDA, COBE/FIRAS — espectro do fundo cósmico","url":"https://lambda.gsfc.nasa.gov/product/cobe/firas_overview.html"},"exercise":{"kind":"numeric","prompt":"Para T₀ = 2,725 K, qual é a temperatura prevista em z = 3?","answer":10.9,"tolerance":0.02,"unit":"K","feedback":"O fator é 1 + z = 4. A temperatura vale 4 × 2,725 = 10,9 K."},"graph":{"xLabel":"Redshift z","yLabel":"Temperatura dos fótons (K)","points":[[0,2.725],[1,5.45],[2,8.175],[3,10.9],[4,13.625],[5,16.35]],"caption":"Evolução adiabática de um espectro de corpo negro com T₀ = 2,725 K."}}
+---
+
+O instrumento FIRAS, a bordo do COBE, comparou o espectro de micro-ondas do céu com um calibrador de corpo negro. A forma medida permite atribuir uma temperatura ao campo de radiação. Na propagação livre, cada frequência diminui na mesma proporção em que o espaço se expande.
+
+$$
+\nu\propto a^{-1},\qquad T_\gamma(z)=T_0(1+z).
+$$
+
+## Exemplo resolvido
+
+Adotando $T_0=2{,}725~\mathrm K$, em $z=1$ a temperatura de corpo negro prevista é $5{,}45~\mathrm K$. O motivo está no argumento $h\nu/(k_BT)$ da distribuição de Planck, que se conserva durante a propagação quando frequência e temperatura escalam juntas. O gráfico extrapola esse modelo adiabático. Cada ponto corresponde a uma previsão para a época indicada.

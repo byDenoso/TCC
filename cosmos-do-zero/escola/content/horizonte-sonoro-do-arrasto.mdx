@@ -1,0 +1,14 @@
+---
+{"slug":"horizonte-sonoro-do-arrasto","level":6,"subject":"Oscilações acústicas bariônicas","order":1,"title":"Qual percurso define a régua acústica?","objective":"Construir o horizonte sonoro comóvel integrando a velocidade de propagação no plasma.","summary":"A régua BAO depende do histórico de expansão e da velocidade do som até a época de arrasto dos bárions.","lab":"cmb","reference":{"name":"Daniel Eisenstein e Wayne Hu, Baryonic Features in the Matter Transfer Function","url":"https://arxiv.org/abs/astro-ph/9709112"},"exercise":{"kind":"numeric","prompt":"No modelo de referência H(a)=Hᵣa⁻², suponha cₛ/Hᵣ = 180.000 Mpc e a_d = 0,001. Qual é r_d?","answer":180,"tolerance":0.1,"unit":"Mpc","feedback":"Os fatores de a cancelam no integrando. Assim, r_d = 180.000 × 0,001 = 180 Mpc."},"graph":{"xLabel":"Fator de escala limite da integral","yLabel":"Horizonte sonoro comóvel (Mpc)","points":[[0,0],[0.0002,36.0],[0.0004,72.0],[0.0006,108.0],[0.0008,144.0],[0.001,180.0]],"caption":"Universo de radiação puro e som de velocidade constante, com cₛ/Hᵣ = 180.000 Mpc."}}
+---
+
+Antes de os bárions perderem o arrasto dos fótons, compressões se propagam no plasma primordial. A distância comóvel percorrida por uma onda sonora é a integral da velocidade física dividida pelo fator de escala ao longo do tempo.
+
+$$
+r_d=\int_0^{a_d}\frac{c_s(a)}{a^2H(a)}\,da,\qquad
+c_s=\frac{c}{\sqrt{3(1+R_b)}},\qquad R_b=\frac{3\rho_b}{4\rho_\gamma}.
+$$
+
+## Exemplo resolvido
+
+Escolha um universo de radiação puro, $H=H_r a^{-2}$, e velocidade do som constante. A integral se reduz a $r_d=(c_s/H_r)a_d$. Com $c_s/H_r=180\,000~\mathrm{Mpc}$ e $a_d=0{,}0008$, obtemos $144~\mathrm{Mpc}$. O modelo real atravessa a igualdade matéria–radiação e $R_b$ evolui. O final do arrasto dos bárions e a superfície de último espalhamento dos fótons são épocas distintas.

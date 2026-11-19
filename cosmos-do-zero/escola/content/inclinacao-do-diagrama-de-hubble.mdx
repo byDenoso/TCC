@@ -1,0 +1,13 @@
+---
+{"slug":"inclinacao-do-diagrama-de-hubble","level":5,"subject":"Lei de Hubble-Lemaître","order":1,"title":"A inclinação que mede a expansão local","objective":"Obter a constante de Hubble da inclinação de um diagrama ideal de velocidades e distâncias.","summary":"No limite de baixo redshift, uma escala de distâncias calibrada permite inferir H₀ em km s⁻¹ Mpc⁻¹.","lab":"expansao","reference":{"name":"David W. Hogg, Distance measures in cosmology","url":"https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html"},"exercise":{"kind":"numeric","prompt":"No regime linear ideal, uma galáxia a 50 Mpc recua a 3.400 km/s. Qual é H₀?","answer":68,"tolerance":0.1,"unit":"km/s/Mpc","feedback":"A inclinação vale 3.400/50 = 68 km s⁻¹ Mpc⁻¹."},"graph":{"xLabel":"Distância própria atual (Mpc)","yLabel":"Velocidade de recessão (km/s)","points":[[0,0],[10,700],[20,1400],[30,2100],[40,2800],[50,3500]],"caption":"Reta sintética para H₀ = 70 km/s/Mpc e velocidade peculiar nula."}}
+---
+
+Derive a distância entre duas coordenadas comóveis em relação ao tempo. Como a coordenada relativa é fixa, toda a derivada vem do fator de escala. O quociente entre a taxa de aumento e a distância define o parâmetro de Hubble de cada época.
+
+$$
+\dot D=\dot a\chi=H D,\qquad H=\dot a/a.
+$$
+
+## Exemplo resolvido
+
+No presente, um par de pontos comóveis separados por $20~\mathrm{Mpc}$ tem $\dot D=1\,400~\mathrm{km/s}$ quando $H_0=70~\mathrm{km\,s^{-1}\,Mpc^{-1}}$. Para inferir a velocidade a partir da luz, usa-se $cz\simeq H_0D$ no limite de baixo redshift e com movimento peculiar pequeno. Em redshifts maiores, é preciso especificar a definição observacional de distância e integrar a história de expansão.

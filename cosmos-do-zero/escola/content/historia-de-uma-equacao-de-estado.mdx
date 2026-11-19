@@ -1,0 +1,14 @@
+---
+{"slug":"historia-de-uma-equacao-de-estado","level":6,"subject":"Modelos além de ΛCDM","order":1,"title":"Como w₀ e wₐ alteram a história de energia escura?","objective":"Integrar a equação de continuidade para a parametrização CPL.","summary":"A densidade CPL depende da integral de w(a) e recupera a constante cosmológica no limite w₀ = −1 e wₐ = 0.","lab":"energia-escura","reference":{"name":"Eric Linder, Exploring the Expansion History of the Universe","url":"https://arxiv.org/abs/astro-ph/0208512"},"exercise":{"kind":"numeric","prompt":"Com w₀ = −1 e wₐ = 0,4, qual é w quando a = 0,5?","answer":-0.8,"tolerance":0.005,"unit":"adimensional","feedback":"Use w(a)=−1 + 0,4(1−0,5) = −0,8."},"graph":{"xLabel":"Fator de escala a","yLabel":"Densidade escura / densidade atual","points":[[0.2,2.6414434],[0.3,1.8308262],[0.4,1.4616251],[0.5,1.260838],[0.6,1.1422394],[0.8,1.0281615],[1,1.0]],"caption":"Trajetória CPL ilustrativa com w₀ = −1 e wₐ = 0,4. A curva é uma previsão do ansatz."}}
+---
+
+Uma forma fenomenológica de explorar evolução temporal é $w(a)=w_0+w_a(1-a)$. Ela fixa $w_0$ como valor presente e usa $w_a$ para controlar o desvio em épocas anteriores. Integre $d\ln\rho_{\rm de}=-3[1+w(a)]d\ln a$ a partir de $a=1$.
+
+$$
+\frac{\rho_{\rm de}(a)}{\rho_{{\rm de},0}}=
+a^{-3(1+w_0+w_a)}\exp[3w_a(a-1)].
+$$
+
+## Exemplo resolvido
+
+Com $w_0=-1$ e $w_a=0{,}4$, em $a=0{,}5$ o fluido tem $w=-0{,}8$ e a razão de densidades é $0{,}5^{-1{,}2}e^{-0{,}6}\simeq1{,}26$. Essa construção descreve a dinâmica homogênea. Interpretá-la como campo físico exige especificar estabilidade e perturbações. Extrapolar a parametrização muito além do intervalo sondado pelos dados constitui outra hipótese.

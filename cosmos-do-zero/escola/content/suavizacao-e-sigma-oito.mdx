@@ -1,0 +1,14 @@
+---
+{"slug":"suavizacao-e-sigma-oito","level":6,"subject":"Espectro de potência","order":2,"title":"Como uma janela seleciona as escalas de σ₈?","objective":"Aplicar uma janela esférica ao cálculo da variância suavizada.","summary":"σ₈ é a raiz da variância do contraste de matéria suavizado em esferas de 8 h⁻¹ Mpc comóveis.","lab":"estruturas","reference":{"name":"Francis Bernardeau et al., Large-Scale Structure of the Universe and Cosmological Perturbation Theory","url":"https://arxiv.org/abs/astro-ph/0112551"},"exercise":{"kind":"numeric","prompt":"Uma faixa estreita de ln k tem largura 0,2, com Δ² = 0,5 e |W|² = 0,8 aproximadamente constantes. Qual contribuição dá a σ²?","answer":0.08,"tolerance":0.001,"unit":"adimensional","feedback":"A contribuição aproximada é Δ² |W|² Δln k = 0,5 × 0,8 × 0,2 = 0,08."},"graph":{"xLabel":"kR","yLabel":"Resposta |W|²","points":[[0,1],[0.5,0.9510583],[1,0.8163232],[1.5,0.6278121],[2,0.4265353],[2.5,0.2494559],[3,0.1194929],[4,0.0075835],[4.5,9e-07],[5,0.0032551]],"caption":"Janela esférica uniforme de raio R; o eixo horizontal é o produto adimensional kR."}}
+---
+
+Uma esfera que contém muitos picos e vales de densidade suaviza uma flutuação de curto comprimento de onda. Em espaço de Fourier, cada modo recebe o peso $W(kR)$ da janela. A variância envolve a potência do modo e, portanto, o quadrado da transformação da janela.
+
+$$
+\sigma_R^2=\int d\ln k\,\Delta^2(k)|W(kR)|^2,\qquad
+W(x)=3\frac{\sin x-x\cos x}{x^3}.
+$$
+
+## Exemplo resolvido
+
+Para $kR=1$, o peso em amplitude é aproximadamente $0{,}904$ e o peso na variância é cerca de $0{,}816$. No limite $kR\to0$, use $W(0)=1$ pela expansão em série. O valor chamado $\sigma_8$ adota $R=8\,h^{-1}\mathrm{Mpc}$ com $h=H_0/(100~\mathrm{km\,s^{-1}\,Mpc^{-1}})$, usualmente no presente e no espectro linear. Compare valores usando a mesma definição e época.

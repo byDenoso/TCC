@@ -1,0 +1,14 @@
+---
+{"slug":"taxa-logaritmica-de-crescimento","level":6,"subject":"Perturbações cosmológicas","order":2,"title":"O que a taxa f mede?","objective":"Recuperar a taxa logarítmica de crescimento a partir de duas amplitudes de um modelo.","summary":"A derivada de ln D por ln a mede o crescimento relativo e independe da normalização de D.","lab":"estruturas","reference":{"name":"David Tong, Cosmology, §3 — Structure Formation","url":"https://www.davidtong.org/teaching/cosmology/cosmohtml/S3"},"exercise":{"kind":"graph","prompt":"Na curva de potência ilustrada, qual é o valor de D para a = 0,25? Responda com duas casas decimais.","answer":0.32987697769322355,"tolerance":0.01,"unit":"adimensional","feedback":"D = 0,25⁰·⁸ ≈ 0,33 na normalização D(1) = 1."},"graph":{"xLabel":"Fator de escala a","yLabel":"D(a), com D(1) = 1","points":[[0.125,0.1894646],[0.25,0.329877],[0.5,0.5743492],[0.75,0.7944179],[1,1.0]],"caption":"Lei de potência ilustrativa D = a⁰·⁸. O expoente é uma escolha didática."}}
+---
+
+No regime linear com crescimento independente da escala, a amplitude de uma perturbação separa-se em um fator inicial e uma função $D(a)$. A taxa logarítmica compara o crescimento fracionário da amplitude com o crescimento fracionário da escala. Duas épocas fornecem uma estimativa média no intervalo.
+
+$$
+f=\frac{d\ln D}{d\ln a},\qquad
+\bar f=\frac{\ln(D_2/D_1)}{\ln(a_2/a_1)}.
+$$
+
+## Exemplo resolvido
+
+Se $a$ dobra e $D$ também dobra, $\bar f=1$. No exemplo $D=a^{0{,}8}$, duplicar $a$ multiplica $D$ por $2^{0{,}8}\simeq1{,}741$ e fornece $\bar f=0{,}8$. A curva usada no gráfico ilustra a definição; uma previsão cosmológica obtém $D$ da equação de perturbações. Observações de distorções em espaço de redshift frequentemente restringem a combinação $f\sigma_8$.

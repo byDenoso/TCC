@@ -1,0 +1,13 @@
+---
+{"slug":"inventario-da-expansao","level":5,"subject":"Modelo ΛCDM","order":1,"title":"Do inventário cósmico à taxa de expansão","objective":"Calcular E(z) em um modelo plano com matéria fria e constante cosmológica.","summary":"Matéria e constante cosmológica contribuem com dependências distintas em redshift para H².","lab":"fator-de-escala","reference":{"name":"David Tong, Cosmology, §1 — The Expanding Universe","url":"https://www.davidtong.org/teaching/cosmology/cosmohtml/S1"},"exercise":{"kind":"numeric","prompt":"Com Ωm = 0,3 e ΩΛ = 0,7, quanto vale E² em z = 2, desprezando a radiação?","answer":8.8,"tolerance":0.02,"unit":"adimensional","feedback":"O termo de matéria vale 0,3 × 27 = 8,1. Somando 0,7, obtemos 8,8."},"graph":{"xLabel":"Redshift z","yLabel":"E(z) = H(z)/H₀","points":[[0,1.0],[0.25,1.1339918],[0.5,1.3086252],[0.75,1.5191486],[1,1.7606817],[1.5,2.3210989],[2,2.9664794]],"caption":"Previsão de ΛCDM plano, Ωm = 0,30 e ΩΛ = 0,70. A radiação foi omitida."}}
+---
+
+Um volume que acompanha a expansão cresce como $a^3$. O número de partículas frias nesse volume permanece aproximadamente constante e a densidade de matéria cai como $a^{-3}$. A densidade associada a uma constante cosmológica permanece fixa. A equação de Friedmann soma as duas contribuições na taxa quadrática.
+
+$$
+E^2(z)\equiv H^2(z)/H_0^2=\Omega_m(1+z)^3+\Omega_\Lambda.
+$$
+
+## Exemplo resolvido
+
+No modelo plano ilustrativo com $\Omega_m=0{,}30$ e $\Omega_\Lambda=0{,}70$, em $z=1$ temos $E^2=0{,}30\times 8+0{,}70=3{,}10$ e $E\simeq1{,}761$. O índice zero das frações de densidade está implícito. Use a expressão em épocas nas quais a radiação tenha contribuição pequena. Os parâmetros indicados definem uma simulação e podem ser confrontados com dados.

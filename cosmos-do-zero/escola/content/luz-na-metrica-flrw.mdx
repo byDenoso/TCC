@@ -1,0 +1,13 @@
+---
+{"slug":"luz-na-metrica-flrw","level":6,"subject":"Métrica FLRW","order":2,"title":"Como uma geodésica nula determina a distância?","objective":"Integrar o caminho radial da luz e convertê-lo em distância angular.","summary":"Para propagação radial FLRW, a distância comóvel envolve a integral de c/H; distâncias angulares incluem o fator da época de emissão.","lab":"expansao","reference":{"name":"David W. Hogg, Distance measures in cosmology","url":"https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html"},"exercise":{"kind":"numeric","prompt":"Em um modelo plano com H constante, tome c/H = 4.000 Mpc e z = 1,5. Qual é D_A?","answer":2400,"tolerance":1,"unit":"Mpc","feedback":"χ = (c/H)z = 6.000 Mpc. D_A = 6.000/(1 + 1,5) = 2.400 Mpc."},"graph":{"xLabel":"Redshift z","yLabel":"Dₐ / (c/H₀)","points":[[0,0.0],[0.25,0.2],[0.5,0.3333333],[0.75,0.4285714],[1,0.5],[1.5,0.6],[2,0.6666667]],"caption":"Geometria plana de H constante. A curva é uma solução analítica de referência."}}
+---
+
+Num raio de luz radial, $ds^2=0$ e as coordenadas angulares permanecem fixas. Na métrica FLRW isso implica $|d\chi|=c\,dt/a$. Trocar a variável temporal pelo redshift usa $dz/dt=-(1+z)H$ e leva à distância radial comóvel.
+
+$$
+\chi(z)=c\int_0^z\frac{dz'}{H(z')},\qquad D_A(z)=\frac{S_k(\chi)}{1+z}.
+$$
+
+## Exemplo resolvido
+
+Num universo plano com $H$ constante e $c/H=4\,000~\mathrm{Mpc}$, em $z=1$ encontramos $\chi=4\,000~\mathrm{Mpc}$ e $D_A=2\,000~\mathrm{Mpc}$. Um objeto de tamanho físico transversal $L$ na emissão subtende aproximadamente $L/D_A$ radianos. A integração geral deve usar o histórico correto de expansão, e a passagem de $\chi$ para distância transversal exige especificar a curvatura.

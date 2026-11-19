@@ -1,0 +1,71 @@
+---
+{
+  "slug": "dois-eventos-um-relogio",
+  "level": 4,
+  "subject": "Relatividade especial",
+  "order": 1,
+  "title": "Qual relógio marca o tempo próprio?",
+  "objective": "Identificar o tempo próprio entre dois eventos e calcular o intervalo de tempo de laboratório para um relógio em movimento uniforme.",
+  "summary": "O relógio que está presente nos dois eventos registra o tempo próprio. Um laboratório inercial mede um intervalo maior por um fator de Lorentz.",
+  "lab": "relatividade",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Dilatação temporal",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/5-3-time-dilation"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Duas emissões ocorrem no mesmo relógio de bordo com intervalo próprio de 6 s. O relógio viaja a 0,8c em relação ao laboratório. Qual intervalo o laboratório mede?",
+    "answer": 10,
+    "tolerance": 0.02,
+    "unit": "s",
+    "feedback": "Para v/c = 0,8, γ = 1/√0,36 = 5/3. Assim Δt = (5/3) × 6 = 10 s."
+  },
+  "graph": {
+    "xLabel": "Velocidade v/c",
+    "yLabel": "Fator de Lorentz γ",
+    "points": [
+      [
+        0,
+        1.0
+      ],
+      [
+        0.2,
+        1.0206207
+      ],
+      [
+        0.4,
+        1.0910895
+      ],
+      [
+        0.6,
+        1.25
+      ],
+      [
+        0.8,
+        1.6666667
+      ],
+      [
+        0.9,
+        2.2941573
+      ],
+      [
+        0.95,
+        3.2025631
+      ]
+    ],
+    "caption": "Um relógio com velocidade constante em relação ao laboratório. O fator compara intervalos medidos em referenciais especificados."
+  }
+}
+---
+
+## Marcar os eventos antes de usar a fórmula
+
+Um relógio a bordo de uma nave emite dois pulsos. As emissões acontecem no mesmo ponto do referencial da nave. Nele a diferença das leituras é o tempo próprio $\Delta\tau$. No referencial do laboratório, a nave percorre $\Delta x=v\Delta t$ entre as emissões.
+
+$$
+c^2\Delta\tau^2=c^2\Delta t^2-\Delta x^2,\qquad \Delta t=\frac{\Delta\tau}{\sqrt{1-v^2/c^2}}.
+$$
+
+## Calcular e interpretar
+
+A $0{,}6c$ o denominador vale 0,8. Se o bordo marca quatro segundos, a rede de relógios sincronizados do laboratório mede cinco segundos entre os eventos. Para recuperar esse intervalo a partir das chegadas dos pulsos a uma antena, deve-se descontar a mudança no tempo de propagação da luz. O exemplo usa movimento uniforme e espaço-tempo plano.

@@ -1,0 +1,18 @@
+---
+{"slug":"prior-e-verossimilhanca","level":6,"subject":"Inferência bayesiana","order":1,"title":"O que muda da priori para a posteriori?","objective":"Combinar uma distribuição a priori gaussiana com uma verossimilhança gaussiana.","summary":"No modelo gaussiano unidimensional, as precisões se somam e ponderam a média posterior.","lab":"expansao","reference":{"name":"Sanjib Sharma, Markov Chain Monte Carlo Methods for Bayesian Data Analysis in Astronomy","url":"https://arxiv.org/abs/1706.01629"},"exercise":{"kind":"numeric","prompt":"Uma priori normal tem média 68 e σ = 2. Uma medida independente, combinada com verossimilhança gaussiana de σ = 2, dá 72. Qual é a média posterior?","answer":70,"tolerance":0.01,"unit":"km/s/Mpc","feedback":"As precisões são iguais; a média posterior fica em (68 + 72)/2 = 70."},"graph":{"xLabel":"H₀ (km/s/Mpc)","yLabel":"Verossimilhança relativa","points":[[64,0.011109],[66,0.1353353],[68,0.6065307],[70,1.0],[72,0.6065307],[74,0.1353353],[76,0.011109]],"caption":"Verossimilhança gaussiana sintética centrada em 70, com σ = 2 km/s/Mpc e pico normalizado a um."}}
+---
+
+A verossimilhança expressa como um conjunto de dados se distribui sob cada valor de um parâmetro. Para construir sua distribuição a posteriori, multiplique a verossimilhança pela densidade a priori e normalize o produto. Se ambas são gaussianas em um parâmetro $h$, o produto normalizado também é gaussiano.
+
+$$
+s^{-2}=s_p^{-2}+s_d^{-2},\qquad
+\mu=s^2\left(\frac{\mu_p}{s_p^2}+\frac{x}{s_d^2}\right).
+$$
+
+## Exemplo resolvido
+
+Para $\mu_p=68$, $x=70$ e desvios iguais a 2 nas mesmas unidades, $\mu=69$ e $s=\sqrt2$. A média muda de acordo com a precisão relativa da priori e da medida. Este exemplo pressupõe uma priori externa aos dados usados na verossimilhança. Empregar os mesmos dados nas duas entradas duplicaria artificialmente a informação.
+
+## Leitura de um resultado público
+
+Na execução T-0062706e5bd5, o NEXO manteve as hipóteses do ajuste e retirou grupos de traçadores BAO sucessivamente. A direção da preferência por energia escura dinâmica persistiu nas exclusões examinadas. O registro classifica o resultado como candidato e documenta os priors utilizados. Identifique quais escolhas você precisaria variar para investigar a sensibilidade à priori. [Abrir a execução, o método e os limites no NEXO Research](https://nexoresearch.org/pt/results/t-0062706e5bd5).

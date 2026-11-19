@@ -1,0 +1,14 @@
+---
+{"slug":"solucao-potencia-do-fator-de-escala","level":6,"subject":"Equações de Friedmann","order":1,"title":"Por que a era da matéria produz a(t) ∝ t²ᐟ³?","objective":"Integrar a equação de Friedmann em um universo plano de matéria sem pressão.","summary":"A solução de Einstein–de Sitter tem a proporcional a t²ᐟ³ e idade Ht = 2/3.","lab":"fator-de-escala","reference":{"name":"David Tong, Cosmology, §1 — The Expanding Universe","url":"https://www.davidtong.org/teaching/cosmology/cosmohtml/S1"},"exercise":{"kind":"numeric","prompt":"Para uma solução de Einstein–de Sitter, se t passa de t₁ para 8 t₁, por qual fator cresce a?","answer":4,"tolerance":0.01,"unit":"vezes","feedback":"Da solução a ∝ t²ᐟ³ segue 8²ᐟ³ = 4."},"graph":{"xLabel":"Tempo / tempo de referência","yLabel":"a / a de referência","points":[[0.125,0.25],[0.25,0.3968503],[0.5,0.6299605],[1,1.0],[2,1.5874011],[4,2.5198421],[8,4.0]],"caption":"Universo plano expansivo de poeira, sem radiação e com Λ = 0."}}
+---
+
+Escolha o ramo expansivo da equação de Friedmann para matéria sem pressão. A continuidade dá $\rho_m\propto a^{-3}$ e, em geometria plana com Λ nulo, segue $H=H_0a^{-3/2}$. Multiplicar por $a$ e separar as variáveis fornece uma integral elementar.
+
+$$
+a^{1/2}da=H_0dt\quad\Rightarrow\quad
+a=\left(\tfrac32H_0t\right)^{2/3},\qquad Ht=\tfrac23.
+$$
+
+## Exemplo resolvido
+
+Tomando a origem do tempo na singularidade da solução, quando $t$ aumenta de $t_1$ para $2t_1$ o fator de escala cresce por $2^{2/3}\simeq1{,}587$. Essa solução oferece um teste analítico para integradores. O expoente muda em uma época dominada por radiação ou energia escura, e a idade inferida de $H_0$ depende desse histórico.

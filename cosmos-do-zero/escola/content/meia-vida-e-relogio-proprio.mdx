@@ -1,0 +1,79 @@
+---
+{
+  "slug": "meia-vida-e-relogio-proprio",
+  "level": 4,
+  "subject": "Física nuclear",
+  "order": 2,
+  "title": "O que a meia-vida prevê para uma população?",
+  "objective": "Converter intervalos em números de meias-vidas e usar o tempo próprio de uma população em movimento uniforme.",
+  "summary": "Uma taxa de decaimento constante dá sobrevivência exponencial no tempo próprio. A contagem individual flutua em torno do valor esperado.",
+  "lab": "relatividade",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Decaimento radioativo",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/10-3-radioactive-decay"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Um conjunto inicialmente com 800 núcleos tem meia-vida própria de 2 s e fator de Lorentz γ = 2. Após 8 s no laboratório, quantos núcleos sobreviventes se esperam?",
+    "answer": 200,
+    "tolerance": 0.1,
+    "unit": "núcleos",
+    "feedback": "O tempo próprio é 8/2 = 4 s. São duas meias-vidas. A expectativa cai de 800 para 800/4 = 200 núcleos."
+  },
+  "graph": {
+    "xLabel": "Tempo próprio em meias-vidas",
+    "yLabel": "Fração esperada sobrevivente",
+    "points": [
+      [
+        0,
+        1
+      ],
+      [
+        0.5,
+        0.7071068
+      ],
+      [
+        1,
+        0.5
+      ],
+      [
+        1.5,
+        0.3535534
+      ],
+      [
+        2,
+        0.25
+      ],
+      [
+        2.5,
+        0.1767767
+      ],
+      [
+        3,
+        0.125
+      ],
+      [
+        4,
+        0.0625
+      ],
+      [
+        5,
+        0.03125
+      ]
+    ],
+    "caption": "Conjunto idealizado de núcleos independentes com a mesma probabilidade de decaimento por unidade de tempo próprio."
+  }
+}
+---
+
+## Da probabilidade individual à população
+
+Uma taxa de decaimento constante $\lambda$ determina a probabilidade por unidade de tempo próprio. Em uma população grande, o número esperado $N$ cai a uma taxa proporcional ao número ainda presente. A integral de $dN/d\tau=-\lambda N$ fornece a curva de sobrevivência.
+
+$$
+N(\tau)=N_0e^{-\lambda\tau}=N_0\,2^{-\tau/t_{1/2}},\qquad t_{1/2}=\frac{\ln2}{\lambda}.
+$$
+
+## Seguir o relógio da população
+
+Entre 800 núcleos em repouso, restam em média 100 depois de três meias-vidas. Uma amostra pequena oscila de realização para realização. Se todos viajam uniformemente à mesma velocidade, a meia-vida especificada no repouso deve ser aplicada a $\tau=t_{\rm lab}/\gamma$. O cálculo supõe uma única espécie e despreza a reposição por outro decaimento.

@@ -1,0 +1,75 @@
+---
+{
+  "slug": "o-relogio-e-o-redshift-gravitacional",
+  "level": 4,
+  "subject": "Relatividade geral",
+  "order": 2,
+  "title": "Como a frequência de um relógio chega ao infinito?",
+  "objective": "Calcular a razão entre a frequência emitida por um relógio estático e a recebida muito longe de uma massa sem rotação.",
+  "summary": "No exterior de Schwarzschild, a frequência de uma fonte estática recebida no infinito adquire o fator √(1−rₛ/r) em relação à frequência local.",
+  "lab": "curvatura",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Tempo na relatividade geral",
+    "url": "https://openstax.org/books/astronomy-2e/pages/24-4-time-in-general-relativity"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Um emissor sustentado em r = 4rₛ emite pulsos a 1 000 Hz localmente. Calcule a frequência recebida no infinito, em hertz.",
+    "answer": 866.0254037844386,
+    "tolerance": 1,
+    "unit": "Hz",
+    "feedback": "O fator gravitacional é √(1−1/4) = √0,75. A frequência recebida é aproximadamente 866 Hz."
+  },
+  "graph": {
+    "xLabel": "Raio de emissão r/rₛ",
+    "yLabel": "Frequência recebida / emitida",
+    "points": [
+      [
+        1.1,
+        0.3015113
+      ],
+      [
+        1.25,
+        0.4472136
+      ],
+      [
+        1.5,
+        0.5773503
+      ],
+      [
+        2,
+        0.7071068
+      ],
+      [
+        3,
+        0.8164966
+      ],
+      [
+        4,
+        0.8660254
+      ],
+      [
+        5,
+        0.8944272
+      ],
+      [
+        10,
+        0.9486833
+      ]
+    ],
+    "caption": "Fonte estática sustentada acima do horizonte e receptor estático no infinito. O movimento adicional da fonte produziria um deslocamento Doppler."
+  }
+}
+---
+
+## Comparar os mesmos pulsos em dois lugares
+
+Dois relógios estáticos em raios distintos marcam tempos próprios diferentes para o mesmo intervalo de tempo coordenado de Schwarzschild. Sem rotação da massa e com o receptor no infinito, o relógio de emissão avança por um fator $\sqrt{1-r_s/r}$ em relação ao tempo distante. O número de pulsos emitidos e recebidos se conserva.
+
+$$
+\frac{\nu_{\infty}}{\nu_{\rm em}}=\sqrt{1-\frac{r_s}{r}},\qquad 1+z=\frac{\nu_{\rm em}}{\nu_{\infty}}.
+$$
+
+## Prever a leitura distante
+
+Um emissor em $r=2r_s$ que produz 100 pulsos por segundo localmente é recebido a aproximadamente $100/\sqrt2=70{,}7$ Hz. A fonte precisa de sustentação para permanecer a raio fixo. Uma fonte em queda produz também uma mudança cinemática, e um receptor a raio finito introduz seu próprio fator de relógio.

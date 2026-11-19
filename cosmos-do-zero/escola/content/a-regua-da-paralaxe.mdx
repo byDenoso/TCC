@@ -1,0 +1,71 @@
+---
+{
+  "slug": "a-regua-da-paralaxe",
+  "level": 3,
+  "subject": "Observação astronômica",
+  "order": 1,
+  "title": "Como uma mudança de perspectiva dá a distância?",
+  "objective": "Converter paralaxe anual em distância e reconhecer a função geométrica da linha de base.",
+  "summary": "A paralaxe anual usa uma linha de base de uma unidade astronômica. A relação d em parsecs = 1/p em segundos de arco vale no regime de ângulo pequeno.",
+  "lab": "orbitas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Distâncias por paralaxe",
+    "url": "https://openstax.org/books/astronomy-2e/pages/19-2-surveying-the-stars"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "O deslocamento total entre as duas extremidades da trajetória de paralaxe é de 40 milissegundos de arco. Qual é a distância? Use p como metade desse deslocamento.",
+    "answer": 50,
+    "tolerance": 0.15,
+    "unit": "pc",
+    "feedback": "A semiamplitude é 20 mas, ou 0,020 segundo de arco. O inverso é 50 pc."
+  },
+  "graph": {
+    "xLabel": "Paralaxe anual (mas)",
+    "yLabel": "Distância geométrica (pc)",
+    "points": [
+      [
+        5,
+        200.0
+      ],
+      [
+        10,
+        100.0
+      ],
+      [
+        20,
+        50.0
+      ],
+      [
+        25,
+        40.0
+      ],
+      [
+        50,
+        20.0
+      ],
+      [
+        100,
+        10.0
+      ],
+      [
+        200,
+        5.0
+      ]
+    ],
+    "caption": "Paralaxes exatas em milissegundos de arco. A inversão direta ilustrada exige paralaxe bem medida na aplicação a dados."
+  }
+}
+---
+
+## Usar a órbita terrestre como régua
+
+Uma estrela próxima descreve um pequeno movimento aparente em relação ao fundo distante enquanto a Terra orbita o Sol. Ajuste esse movimento ao longo do ano, separando o movimento próprio da estrela. A paralaxe anual $p$ é uma semiamplitude correspondente a uma linha de base de 1 UA.
+
+$$
+d\ (\mathrm{pc})=\frac{1}{p\ (\mathrm{arcsec})}=\frac{1000}{p\ (\mathrm{mas})}.
+$$
+
+## Ler o ângulo correto
+
+Uma paralaxe de 25 milissegundos de arco equivale a $0{,}025$ segundo de arco. A distância é $1/0{,}025=40$ pc. Metade da paralaxe corresponde ao dobro da distância. Quando a incerteza ocupa uma fração grande da paralaxe, inverter a estimativa observada produz incertezas assimétricas e pode introduzir viés. Nesse caso precisamos modelar a medida e a distribuição de distâncias.

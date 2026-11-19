@@ -1,0 +1,14 @@
+---
+{"slug":"conservacao-local-e-fluido","level":6,"subject":"Equações de Einstein","order":2,"title":"O que a conservação local exige de um fluido?","objective":"Derivar a evolução da densidade de radiação a partir da conservação covariante.","summary":"A identidade de Bianchi exige conservação covariante do tensor total quando Λ é constante.","lab":"fator-de-escala","reference":{"name":"Sean Carroll, Lecture Notes on General Relativity","url":"https://arxiv.org/abs/gr-qc/9712019"},"exercise":{"kind":"numeric","prompt":"Uma região comóvel expande de a = 0,5 para a = 1. Qual é a razão εfinal/εinicial para radiação livre?","answer":0.0625,"tolerance":0.0008,"unit":"adimensional","feedback":"ε escala como a⁻⁴. Ao duplicar a escala, a densidade final vale 1/16 da inicial."},"graph":{"xLabel":"Fator de escala a","yLabel":"εrad(a) / εrad(1)","points":[[0.5,16.0],[0.6,7.7160494],[0.7,4.1649313],[0.8,2.4414062],[0.9,1.5241579],[1,1.0]],"caption":"Conservação separada de um fluido ultrarrelativístico com p = ε/3."}}
+---
+
+A identidade geométrica $\nabla_\mu G^{\mu\nu}=0$ implica $\nabla_\mu T^{\mu\nu}=0$ para o tensor total em relatividade geral com Λ constante. Em um fundo FLRW, projetar a conservação ao longo da velocidade do fluido perfeito produz a equação de continuidade.
+
+$$
+\dot\epsilon+3H(\epsilon+p)=0,\qquad
+\frac{d\ln\epsilon}{d\ln a}=-3(1+w).
+$$
+
+## Exemplo resolvido
+
+Para radiação, $p=\epsilon/3$, logo $d\ln\epsilon/d\ln a=-4$. Integrar entre $a=0{,}5$ e $a=1$ fornece uma redução de um fator 16 na densidade. O volume comóvel aumenta oito vezes e a energia total de radiação no volume cai pela metade. Se dois fluidos trocam energia, suas equações individuais contêm termos de troca e apenas a soma obedece à continuidade sem fonte.

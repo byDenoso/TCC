@@ -1,0 +1,17 @@
+---
+{"slug":"altura-pelo-angulo","level":1,"subject":"Geometria e trigonometria","order":1,"title":"Descubra uma altura sem subir na torre","objective":"Escolher a tangente em um triângulo retângulo e corrigir a altura do instrumento.","summary":"Multiplicar a distância horizontal pela tangente da elevação fornece a altura do alvo acima da linha horizontal do instrumento.","lab":"orbitas","reference":{"name":"OpenStax · Pré-cálculo, 2ª ed., § 5.4","url":"https://openstax.org/books/precalculus-2e/pages/5-4-right-triangle-trigonometry"},"exercise":{"kind":"numeric","prompt":"A base da torre está a 12 m na horizontal. A elevação até o topo é 45°. O instrumento está a 1,5 m do solo. Qual é a altura total?","answer":13.5,"tolerance":0.02,"unit":"m","feedback":"Como tan(45°) = 1, o topo fica 12 m acima do instrumento. Some 1,5 m."},"graph":{"xLabel":"Ângulo de elevação (°)","yLabel":"Altura acima do instrumento (m)","points":[[5,0.8748866],[10,1.7632698],[15,2.6794919],[20,3.6397023],[25,4.6630766],[30,5.7735027],[35,7.0020754],[40,8.3909963],[45,10.0],[50,11.9175359],[55,14.2814801],[60,17.3205081],[65,21.4450692]],"caption":"Distância horizontal fixa de 10 m. A curva usa o ângulo em graus, medido a partir da horizontal."}}
+---
+
+Aponte um inclinômetro para o alto de uma torre erguida em terreno plano. A linha horizontal pelo centro do instrumento, a linha de visada e o trecho vertical até o topo formam um triângulo retângulo. A distância medida no chão corresponde ao cateto adjacente.
+
+## Escolha a razão trigonométrica
+
+Se $d$ é a distância horizontal e $h$ a elevação do topo acima do instrumento, a tangente do ângulo relaciona exatamente os dois comprimentos. Para obter a altura a partir do chão, some a altura do instrumento.
+
+$$
+\tan\theta=\frac{h}{d},\qquad H=d\tan\theta+h_{\rm inst}
+$$
+
+## Exemplo resolvido
+
+Meça $d=10\,\mathrm m$, $\theta=30^\circ$ e $h_{\rm inst}=1{,}5\,\mathrm m$. Usando $\tan(30^\circ)\simeq0{,}577$, o topo fica 5,77 m acima do instrumento. A torre mede aproximadamente 7,27 m. Se a base da torre estiver em terreno mais alto, ajuste a diferença de cotas antes de interpretar o resultado.

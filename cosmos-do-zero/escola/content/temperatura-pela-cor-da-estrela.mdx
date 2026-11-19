@@ -1,0 +1,67 @@
+---
+{
+  "slug": "temperatura-pela-cor-da-estrela",
+  "level": 3,
+  "subject": "Física estelar",
+  "order": 1,
+  "title": "Como a cor indica a temperatura de uma estrela?",
+  "objective": "Inferir a temperatura de um emissor térmico a partir do máximo da intensidade por unidade de comprimento de onda.",
+  "summary": "No espectro por comprimento de onda de um corpo negro, o produto entre temperatura e comprimento de onda do máximo é constante.",
+  "lab": "ondas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Espectro e radiação térmica",
+    "url": "https://openstax.org/books/astronomy-2e/pages/5-2-the-electromagnetic-spectrum"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "O contínuo de um emissor térmico tem máximo em 483 nm no referencial da fonte. Qual é sua temperatura aproximada? Use b = 2 898 000 nm·K.",
+    "answer": 6000,
+    "tolerance": 15,
+    "unit": "K",
+    "feedback": "T = b/λmáx. Dividindo 2 898 000 por 483 obtemos 6 000 K."
+  },
+  "graph": {
+    "xLabel": "Temperatura (K)",
+    "yLabel": "Comprimento de onda do pico (nm)",
+    "points": [
+      [
+        3000,
+        966.0
+      ],
+      [
+        4000,
+        724.5
+      ],
+      [
+        5000,
+        579.6
+      ],
+      [
+        6000,
+        483.0
+      ],
+      [
+        8000,
+        362.25
+      ],
+      [
+        10000,
+        289.8
+      ]
+    ],
+    "caption": "Lei de Wien aplicada ao espectro por comprimento de onda. O pico se desloca para comprimentos menores com o aquecimento."
+  }
+}
+---
+
+## Localizar o máximo do contínuo
+
+Um espectrógrafo separa a luz em faixas estreitas. Depois de corrigir a resposta do instrumento, podemos estimar a posição do máximo da energia emitida por unidade de comprimento de onda. Uma fotosfera pode aproximar um corpo negro em parte do contínuo.
+
+$$
+\lambda_{\max}T=b,\qquad b\simeq2{,}898\times10^6\ \mathrm{nm\,K}.
+$$
+
+## Fazer a conta na mesma unidade
+
+Para um máximo em 725 nm, $T=b/(725\ \mathrm{nm})\simeq4000\ \mathrm K$. A estrela idealizada mais fria tem seu pico em comprimentos de onda maiores. Poeira interestelar pode avermelhar um espectro, e linhas de absorção alteram sua forma. O máximo da distribuição por frequência obedece a outra expressão, pois uma faixa fixa de frequência corresponde a larguras diferentes em comprimento de onda.

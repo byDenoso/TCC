@@ -1,0 +1,13 @@
+---
+{"slug":"tamanho-de-uma-perturbacao","level":5,"subject":"Formação de estruturas","order":2,"title":"Que tamanho tem uma onda de densidade?","objective":"Converter um número de onda comóvel em comprimento e relacioná-lo à suavização.","summary":"A escala comóvel de um modo harmônico é 2π/k. Escalas de suavização distintas selecionam modos distintos.","lab":"estruturas","reference":{"name":"Francis Bernardeau et al., Large-Scale Structure of the Universe and Cosmological Perturbation Theory","url":"https://arxiv.org/abs/astro-ph/0112551"},"exercise":{"kind":"numeric","prompt":"Para k = 0,25 Mpc⁻¹, qual é o comprimento de onda comóvel?","answer":25.132741228718345,"tolerance":0.1,"unit":"Mpc","feedback":"Use λ = 2π/0,25 ≈ 25,13 Mpc."},"graph":{"xLabel":"Número de onda k (Mpc⁻¹)","yLabel":"Comprimento de onda (Mpc)","points":[[0.02,314.1592654],[0.05,125.6637061],[0.1,62.8318531],[0.2,31.4159265],[0.25,25.1327412],[0.4,15.7079633]],"caption":"Escalas comóveis. A unidade adotada para k é Mpc⁻¹, sem fator h."}}
+---
+
+Uma distribuição de densidade irregular pode ser decomposta em ondas. Se percorrermos uma onda por uma distância $\lambda$, a fase varia em $2\pi$. Isso fixa a relação entre tamanho espacial e número de onda; a unidade adotada para uma grandeza determina a unidade da outra.
+
+$$
+\delta(x)=A\cos(kx),\qquad k\lambda=2\pi.
+$$
+
+## Exemplo resolvido
+
+Em $k=0{,}1~\mathrm{Mpc}^{-1}$ encontramos $\lambda\simeq62{,}8~\mathrm{Mpc}$ comóveis. Na época $a=0{,}5$ esse comprimento equivale a $31{,}4~\mathrm{Mpc}$ próprios. Ao suavizar uma distribuição numa janela ampla, oscilações rápidas tendem a cancelar-se. A unidade do catálogo entra na conversão. Números de onda expressos em $h\,\mathrm{Mpc}^{-1}$ dependem da convenção para a constante de Hubble.

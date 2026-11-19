@@ -1,0 +1,17 @@
+---
+{"slug":"dimensoes-de-um-modelo","level":1,"subject":"Introdução à Física","order":2,"title":"Quais fórmulas podem representar um tempo?","objective":"Testar a dimensão de uma previsão antes de compará-la com uma medida.","summary":"A análise dimensional elimina fórmulas incompatíveis e deixa coeficientes adimensionais para a teoria ou o experimento.","lab":"gravitacao","reference":{"name":"OpenStax · Física Universitária, v. 1, § 1.4","url":"https://openstax.org/books/university-physics-volume-1/pages/1-4-dimensional-analysis"},"exercise":{"kind":"choice","prompt":"Considere um comprimento L e uma aceleração g. Qual expressão tem dimensão de tempo?","answer":2,"tolerance":0,"unit":"","feedback":"L/g tem dimensão de tempo ao quadrado. Sua raiz quadrada tem dimensão de tempo.","choices":["L/g","g/L","√(L/g)","√(gL)"]},"graph":{"xLabel":"Comprimento L (m)","yLabel":"Escala de tempo √(L/g) (s)","points":[[0.1,0.1],[0.2,0.1414214],[0.4,0.2],[0.6,0.244949],[0.8,0.2828427],[1,0.3162278],[1.5,0.3872983],[2,0.4472136],[3,0.5477226],[4,0.6324555]],"caption":"Escala dimensional em um campo uniforme com g = 10 m/s². O coeficiente da lei física depende do fenômeno."}}
+---
+
+Uma pedra é solta do repouso a uma altura $L$ em um campo gravitacional uniforme de módulo $g$. Ignore a resistência do ar. Antes de resolver a equação de movimento, procure uma combinação desses dois dados que tenha unidade de tempo.
+
+## Faça a conta com dimensões
+
+Escreva $[L]=\mathrm{m}$ e $[g]=\mathrm{m/s^2}$. Na razão, os metros se cancelam. Tirar a raiz fornece segundos. A análise permite um fator numérico adimensional $C$, cujo valor depende da dinâmica e das condições iniciais.
+
+$$
+\left[\frac{L}{g}\right]=\mathrm{s^2},\qquad t=C\sqrt{\frac{L}{g}}
+$$
+
+## Exemplo resolvido
+
+Com $L=5\,\mathrm m$ e $g=10\,\mathrm{m/s^2}$, a escala dimensional vale cerca de 0,707 s. A cinemática da queda a partir do repouso dá $L=gt^2/2$, de onde $C=\sqrt{2}$ e $t=1\,\mathrm s$. O resultado mostra por que acertar a unidade ainda deixa espaço para previsões numéricas diferentes.

@@ -1,0 +1,75 @@
+---
+{
+  "slug": "quantos-fotons-fazem-uma-deteccao",
+  "level": 3,
+  "subject": "Observação astronômica",
+  "order": 2,
+  "title": "Quanto tempo de exposição ganha sinal?",
+  "objective": "Prever a relação sinal–ruído de uma exposição limitada pela estatística dos fótons da fonte e do céu.",
+  "summary": "Em uma abertura fixa e no regime de Poisson, fonte e céu contribuem para a variância. Quadruplicar o tempo duplica a relação sinal–ruído.",
+  "lab": "ondas",
+  "reference": {
+    "name": "STScI · Manual do Hubble ACS, cálculo de exposições",
+    "url": "https://hst-docs.stsci.edu/acsihb/chapter-9-exposure-time-calculations/9-3-computing-exposure-times"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "No cenário do gráfico, que tempo de exposição dá relação sinal–ruído 7?",
+    "answer": 49,
+    "tolerance": 0.1,
+    "unit": "s",
+    "feedback": "Com fonte 3 e fundo 6 elétrons/s, S/R = 3t/√(9t) = √t, com t em segundos. Elevar 7 ao quadrado dá 49 s."
+  },
+  "graph": {
+    "xLabel": "Tempo de exposição (s)",
+    "yLabel": "Sinal/ruído",
+    "points": [
+      [
+        1,
+        1.0
+      ],
+      [
+        4,
+        2.0
+      ],
+      [
+        9,
+        3.0
+      ],
+      [
+        16,
+        4.0
+      ],
+      [
+        25,
+        5.0
+      ],
+      [
+        36,
+        6.0
+      ],
+      [
+        49,
+        7.0
+      ],
+      [
+        64,
+        8.0
+      ]
+    ],
+    "caption": "Fonte com 3 elétrons/s e fundo com 6 elétrons/s dentro da mesma abertura. Fundo médio conhecido com precisão e ruído de leitura desprezível."
+  }
+}
+---
+
+## Somar elétrons e variâncias
+
+Um detector converte a luz em elétrons. Dentro de uma abertura, seja $s$ a taxa de elétrons da fonte e $b$ a do céu. Em uma exposição de duração $t$, as duas contagens contribuem para a flutuação de Poisson, mesmo depois de subtrair o fundo médio. Se a estimativa desse fundo tem erro desprezível, a variância residual é $(s+b)t$.
+
+$$
+\frac{S}{N}=\frac{st}{\sqrt{(s+b)t}}=\frac{s\sqrt t}{\sqrt{s+b}}.
+$$
+
+## Estimar o ganho
+
+Para $s=3$ e $b=6$ elétrons/s, em 16 s a fonte fornece 48 elétrons. A flutuação é $\sqrt{144}=12$ elétrons e $S/N=4$. Exposições muito curtas podem sofrer ruído de leitura relevante. Saturação, correntes escuras ou variação do céu também exigem termos adicionais.

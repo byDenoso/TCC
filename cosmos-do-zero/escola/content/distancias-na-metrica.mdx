@@ -1,0 +1,13 @@
+---
+{"slug":"distancias-na-metrica","level":6,"subject":"Métrica FLRW","order":1,"title":"Comprimentos numa fatia espacial curva","objective":"Distinguir a coordenada radial geodésica da distância transversal comóvel.","summary":"Em uma fatia FLRW de curvatura constante, a circunferência depende de Sₖ(χ) e da escala a.","lab":"curvatura","reference":{"name":"Sean Carroll, Lecture Notes on General Relativity","url":"https://arxiv.org/abs/gr-qc/9712019"},"exercise":{"kind":"numeric","prompt":"Numa esfera espacial com raio de curvatura comóvel R = 100 Mpc, a = 1 e χ/R = π/2, qual é a distância transversal comóvel?","answer":100,"tolerance":0.1,"unit":"Mpc","feedback":"Sₖ(χ) = R sen(χ/R) dá 100 Mpc nesse ponto."},"graph":{"xLabel":"χ / raio de curvatura","yLabel":"Distância transversal / raio","points":[[0,0.0],[0.25,0.247404],[0.5,0.4794255],[0.75,0.6816388],[1,0.841471],[1.25,0.9489846],[1.5,0.997495]],"caption":"Curvatura positiva. A abscissa é a distância comóvel radial em unidades do raio de curvatura."}}
+---
+
+Homogeneidade e isotropia espaciais permitem escrever a geometria numa coordenada radial comóvel $\chi$. Uma circunferência de raio radial $\chi$ em uma fatia de tempo tem comprimento $2\pi aS_k(\chi)$. A função $S_k$ contém a informação sobre a curvatura espacial dessa fatia.
+
+$$
+ds^2=-c^2dt^2+a^2(t)\big[d\chi^2+S_k^2(\chi)d\Omega^2\big].
+$$
+
+## Exemplo resolvido
+
+Em curvatura positiva de raio comóvel $R$, $S_k=R\sin(\chi/R)$. Para $\chi/R=\pi/6$ e $R=100~\mathrm{Mpc}$, a distância transversal comóvel é $50~\mathrm{Mpc}$, enquanto a radial é cerca de $52{,}36~\mathrm{Mpc}$. No limite de pequenas distâncias $\sin x\simeq x$ recupera a relação euclidiana local. Em geometria plana, $S_k(\chi)=\chi$ em qualquer raio.

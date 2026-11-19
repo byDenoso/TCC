@@ -1,0 +1,17 @@
+---
+{"slug":"precisao-e-desvio","level":1,"subject":"Método científico","order":2,"title":"O que melhora quando você repete a medição?","objective":"Distinguir o espalhamento de uma média de um erro de calibração que se repete.","summary":"Para erros independentes de mesmo desvio padrão, a incerteza da média cai como a raiz inversa do número de medidas. Um desvio comum sobrevive à média.","lab":"gravitacao","reference":{"name":"OpenStax · Física, 2ª ed., § 1.3","url":"https://openstax.org/books/college-physics-2e/pages/1-3-accuracy-precision-and-significant-figures"},"exercise":{"kind":"graph","prompt":"Use o gráfico para um desvio padrão individual de 0,12 s. Qual é o erro padrão da média de 16 medidas independentes?","answer":0.03,"tolerance":0.001,"unit":"s","feedback":"Divida 0,12 s por √16 = 4. O erro padrão da média é 0,03 s."},"graph":{"xLabel":"Número de medidas independentes","yLabel":"Erro padrão da média (s)","points":[[1,0.12],[2,0.0848528],[4,0.06],[6,0.0489898],[9,0.04],[12,0.034641],[16,0.03],[20,0.0268328],[25,0.024],[36,0.02]],"caption":"Modelo de repetição com desvio padrão individual de 0,12 s. A curva trata apenas da componente aleatória independente."}}
+---
+
+Imagine medir a mesma duração várias vezes. O dedo pode disparar o cronômetro ligeiramente antes ou depois a cada repetição. Um relógio com um viés fixo acrescenta a mesma diferença a toda duração indicada. Essas duas contribuições têm efeitos distintos quando calculamos uma média.
+
+## Separe as contribuições
+
+Escreva cada leitura como o valor verdadeiro $T$, um viés $b$ e uma variação aleatória de média zero. Se as variações forem independentes e tiverem desvio padrão comum $\sigma$, a média de $n$ medidas tem o seguinte comportamento.
+
+$$
+T_i=T+b+\epsilon_i,\qquad E[\bar T]=T+b,\qquad \sigma_{\bar T}=\frac{\sigma}{\sqrt n}
+$$
+
+## Exemplo resolvido
+
+Para $\sigma=0{,}12\,\mathrm s$, nove leituras dão erro padrão de 0,04 s. Um viés de +0,08 s ainda desloca a média pelo mesmo +0,08 s. Para testar esse viés, cronometre um intervalo conhecido com o mesmo aparelho. Variações correlacionadas entre repetições também podem impedir a redução calculada acima.

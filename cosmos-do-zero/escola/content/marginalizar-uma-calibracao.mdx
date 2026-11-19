@@ -1,0 +1,14 @@
+---
+{"slug":"marginalizar-uma-calibracao","level":6,"subject":"Inferência bayesiana","order":2,"title":"Como propagar a incerteza de calibração?","objective":"Marginalizar uma correção aditiva gaussiana e interpretar o efeito na variância.","summary":"Uma calibração comum propaga incerteza correlacionada e exige marginalização conjunta.","lab":"expansao","reference":{"name":"Sanjib Sharma, Markov Chain Monte Carlo Methods for Bayesian Data Analysis in Astronomy","url":"https://arxiv.org/abs/1706.01629"},"exercise":{"kind":"numeric","prompt":"Em uma medida única, σ estatístico = 3 e σ de calibração = 4, gaussianos independentes nas mesmas unidades. Qual é o desvio marginal?","answer":5,"tolerance":0.01,"unit":"unidades da medida","feedback":"O modelo aditivo dá √(3² + 4²) = 5."},"graph":{"xLabel":"Desvio de calibração (unidades da medida)","yLabel":"Desvio marginal (mesmas unidades)","points":[[0,3.0],[1,3.1622777],[2,3.6055513],[3,4.2426407],[4,5.0],[5,5.8309519],[6,6.7082039]],"caption":"Um único dado com desvio estatístico de 3 e um termo aditivo de calibração independente."}}
+---
+
+Modele uma leitura como $y=\theta+b+e$, em que $e$ é o erro estatístico gaussiano e $b$ é o deslocamento de calibração. O dado condiciona a soma. Para inferir $\theta$, integre a densidade conjunta sobre todos os valores de $b$ ponderados pela sua distribuição de calibração.
+
+$$
+p(y\mid\theta)=\int p(y\mid\theta,b)p(b)\,db,\qquad
+\mathrm{Var}(y\mid\theta)=s_e^2+s_b^2.
+$$
+
+## Exemplo resolvido
+
+Para $s_e=3$ e $s_b=4$, uma leitura tem desvio marginal 5. Se quatro leituras partilham o mesmo $b$ e têm erros estatísticos independentes, o desvio da média é $\sqrt{3^2/4+4^2}\simeq4{,}27$. Repetir a leitura reduz a componente estatística. A correlação criada pela calibração comum mantém sua contribuição no valor médio.

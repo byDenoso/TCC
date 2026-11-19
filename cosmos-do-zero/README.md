@@ -1,4 +1,9 @@
-# Cosmos do Zero
+# Cosmos · Escola Digital
+
+A escola atual está em [escola/](escola/README.md). O domínio [cosmos.denerpereira.com.br](https://cosmos.denerpereira.com.br) serve a versão estática e [cosmos-do-zero.vercel.app](https://cosmos-do-zero.vercel.app) também oferece a API acadêmica.
+
+## Acervo da edição Astro
+
 
 Planetário editorial em português com seis aulas, fotografias astronômicas e experiências guiadas. O Astro gera HTML estático. As vistas dos mundos chegam como imagens prontas do Blender Cycles. Os controles de órbita, expansão, lente gravitacional e tempo continuam calculando os resultados no navegador.
 

@@ -1,0 +1,23 @@
+---
+{"slug":"reta-de-calibracao","level":1,"subject":"Álgebra e funções","order":1,"title":"Leia a reta de um sensor","objective":"Distinguir a inclinação e o valor inicial em uma calibração afim.","summary":"A inclinação converte variações da entrada em variações da saída. O intercepto registra a indicação do instrumento quando a entrada vale zero.","lab":"campos","reference":{"name":"OpenStax · Álgebra, 2ª ed., § 4.1","url":"https://openstax.org/books/college-algebra-2e/pages/4-1-linear-functions"},"exercise":{"kind":"numeric","prompt":"O sensor indica 0,20 V a 0 N e 0,80 V a 3 N. Qual é a sensibilidade em volts por newton?","answer":0.2,"tolerance":0.002,"unit":"V/N","feedback":"A resposta muda em 0,60 V quando a força muda em 3 N. Divida a primeira variação pela segunda."},"graph":{"xLabel":"Força aplicada (N)","yLabel":"Tensão de saída (V)","points":[[0,0.2],[1,0.4],[2,0.6],[3,0.8],[4,1.0],[5,1.2],[6,1.4],[7,1.6]],"caption":"Calibração didática de um transdutor na faixa de 0 a 7 N. A leitura em vazio é 0,20 V."}}
+---
+
+Um transdutor de força entrega uma tensão elétrica. Durante a calibração aplicamos forças conhecidas e anotamos a indicação. Suponha uma resposta afim dentro da faixa ensaiada. Uma reta precisa de duas informações independentes para ficar definida.
+
+## Da tabela para a função
+
+Chame de $F$ a força, de $U$ a tensão e de $b$ a tensão em vazio. A sensibilidade $m$ informa o aumento de tensão por newton adicionado. A inclinação deve ser calculada com diferenças entre duas leituras.
+
+$$
+U(F)=mF+b,\qquad m=\frac{U_2-U_1}{F_2-F_1}
+$$
+
+## Exemplo resolvido
+
+Em uma segunda calibração, as indicações foram 0,10 V para 1 N e 0,50 V para 3 N. A sensibilidade vale 0,40 V divididos por 2 N, ou 0,20 V/N. Recupere agora a tensão de origem com o primeiro ponto.
+
+$$
+b=0{,}10\,\mathrm{V}-(0{,}20\,\mathrm{V/N})(1\,\mathrm{N})=-0{,}10\,\mathrm{V}
+$$
+
+Para 2 N, o modelo dessa segunda calibração prevê 0,30 V. O sinal negativo do intercepto expressa o zero deslocado do instrumento. O gráfico da atividade traz uma calibração com outro intercepto.

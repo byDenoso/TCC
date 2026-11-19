@@ -1,0 +1,71 @@
+---
+{
+  "slug": "quanto-tempo-dura-uma-estrela",
+  "level": 3,
+  "subject": "Evolução das estrelas",
+  "order": 1,
+  "title": "Quanto tempo dura a fusão no núcleo?",
+  "objective": "Prever a duração relativa da sequência principal a partir do combustível disponível e da luminosidade média.",
+  "summary": "O tempo disponível na sequência principal depende da razão entre energia nuclear aproveitável e potência. A luminosidade aumenta fortemente com a massa.",
+  "lab": "gravitacao",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Da sequência principal à fase de gigante",
+    "url": "https://openstax.org/books/astronomy-2e/pages/22-1-evolution-from-the-main-sequence-to-red-giants"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Compare uma estrela de 2 massas solares e luminosidade média de 10 luminosidades solares com o Sol. Com a mesma fração de combustível utilizável e 10 bilhões de anos para o Sol, qual é a duração estimada?",
+    "answer": 2,
+    "tolerance": 0.05,
+    "unit": "bilhões de anos",
+    "feedback": "A reserva é duas vezes maior e o consumo dez vezes maior. A duração é 10 × 2/10 = 2 bilhões de anos."
+  },
+  "graph": {
+    "xLabel": "Massa inicial (M☉)",
+    "yLabel": "Tempo aproximado (bilhões de anos)",
+    "points": [
+      [
+        1,
+        10.0
+      ],
+      [
+        1.1,
+        7.8798561
+      ],
+      [
+        1.2,
+        6.3393815
+      ],
+      [
+        1.4,
+        4.3120115
+      ],
+      [
+        1.6,
+        3.0881618
+      ],
+      [
+        1.8,
+        2.3004815
+      ],
+      [
+        2,
+        1.767767
+      ]
+    ],
+    "caption": "Exemplo de escala local entre 1 e 2 massas solares. Adota L/L☉ = (M/M☉)^3,5 e 10 bilhões de anos para a referência solar."
+  }
+}
+---
+
+## Um orçamento de energia
+
+Durante a sequência principal, a fusão de hidrogênio no núcleo fornece a maior parte da luminosidade. A duração estimada é a reserva de energia aproveitável $E_{\rm nuc}$ dividida pela potência média. Se composição química e fração de massa participante são semelhantes, a reserva é aproximadamente proporcional à massa inicial.
+
+$$
+\frac{t_{\rm SP}}{t_\odot}\simeq\frac{M/M_\odot}{L/L_\odot}.
+$$
+
+## Comparar ritmos de consumo
+
+Uma estrela com $1{,}5$ massa solar e quatro vezes a luminosidade média do Sol consumiria a reserva relativa em $1{,}5/4=0{,}375$ do tempo solar. Com referência de 10 bilhões de anos, são 3,75 bilhões de anos. O gráfico usa uma aproximação local para a luminosidade. Mistura no núcleo, composição e variação da potência durante a vida exigem modelos de evolução estelar para estimativas individuais.

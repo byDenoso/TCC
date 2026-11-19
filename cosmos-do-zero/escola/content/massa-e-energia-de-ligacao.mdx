@@ -1,0 +1,67 @@
+---
+{
+  "slug": "massa-e-energia-de-ligacao",
+  "level": 4,
+  "subject": "Física nuclear",
+  "order": 1,
+  "title": "Por que a massa do núcleo é menor que a soma das partes?",
+  "objective": "Calcular a energia de ligação a partir da diferença entre as massas de repouso de um núcleo e de seus constituintes separados.",
+  "summary": "A energia necessária para separar um núcleo em núcleons livres é o defeito de massa multiplicado por c², com convenções de massa consistentes.",
+  "lab": "relatividade",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Energia de ligação nuclear",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/10-2-nuclear-binding-energy"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Um sistema ligado hipotético apresenta defeito de massa de 0,003 u em relação às partes separadas. Qual é sua energia de ligação em MeV? Use 931,5 MeV por u.",
+    "answer": 2.7945,
+    "tolerance": 0.01,
+    "unit": "MeV",
+    "feedback": "B = 0,003 × 931,5 MeV = 2,7945 MeV. É a energia necessária para separar o sistema em seus constituintes de referência."
+  },
+  "graph": {
+    "xLabel": "Defeito de massa (u)",
+    "yLabel": "Energia de ligação (MeV)",
+    "points": [
+      [
+        0,
+        0.0
+      ],
+      [
+        0.001,
+        0.9315
+      ],
+      [
+        0.002,
+        1.863
+      ],
+      [
+        0.003,
+        2.7945
+      ],
+      [
+        0.004,
+        3.726
+      ],
+      [
+        0.005,
+        4.6575
+      ]
+    ],
+    "caption": "Conversão entre massa e energia com 1 u × c² ≈ 931,5 MeV. Cada ponto representa uma diferença de massa hipotética."
+  }
+}
+---
+
+## Comparar estados com as mesmas partículas
+
+Imagine um próton e um nêutron livres e em repouso, depois o deuteron formado pelos dois. Com a emissão da energia liberada, o sistema ligado em repouso tem energia total menor. A diferença é a energia necessária para separar o núcleo e deixar os núcleons novamente livres e em repouso.
+
+$$
+\Delta m=Zm_p+Nm_n-m_{\rm nuc},\qquad B=\Delta m\,c^2.
+$$
+
+## Fixar a convenção das massas
+
+Para o deuteron a diferença é cerca de $0{,}002388$ unidade de massa atômica (u). Multiplicando por 931,5 MeV por u obtemos aproximadamente 2,22 MeV. A expressão acima usa massas nucleares nuas. Se a tabela fornece massas de átomos neutros, contabilizamos os elétrons de forma consistente nos dois lados, inclusive suas energias de ligação quando a precisão exigir.

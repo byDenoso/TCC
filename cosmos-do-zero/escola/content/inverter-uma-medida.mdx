@@ -1,0 +1,23 @@
+---
+{"slug":"inverter-uma-medida","level":1,"subject":"Álgebra e funções","order":2,"title":"Recupere a força a partir da tensão","objective":"Inverter uma calibração e transportar a incerteza de leitura para a unidade da força.","summary":"Subtrair o zero e dividir pela sensibilidade converte a indicação em força. A faixa de calibração delimita o domínio válido.","lab":"campos","reference":{"name":"OpenStax · Álgebra, 2ª ed., § 3.7","url":"https://openstax.org/books/college-algebra-2e/pages/3-7-inverse-functions"},"exercise":{"kind":"numeric","prompt":"Um transdutor obedece a U = 0,20 V + (0,20 V/N) F. Qual força produziu a leitura de 1,10 V?","answer":4.5,"tolerance":0.01,"unit":"N","feedback":"Retire os 0,20 V do zero. Divida os 0,90 V restantes por 0,20 V/N."},"graph":{"xLabel":"Tensão indicada (V)","yLabel":"Força estimada (N)","points":[[0.2,0.0],[0.4,1.0],[0.6,2.0],[0.8,3.0],[1,4.0],[1.2,5.0],[1.4,6.0],[1.6,7.0]],"caption":"Função inversa da calibração do primeiro gráfico. As unidades de entrada e saída trocam de eixo."}}
+---
+
+Depois da calibração conhecemos a tensão e queremos obter a força que a produziu. Uma sensibilidade constante e diferente de zero associa cada força da faixa a uma tensão única. Podemos então desfazer as operações na ordem inversa.
+
+## Isole a grandeza procurada
+
+Na expressão original a força é multiplicada pela sensibilidade e depois acrescentamos o zero. Comece retirando o zero. A unidade volt dividida por volt por newton resulta em newton.
+
+$$
+U=mF+b \quad\Longrightarrow\quad U-b=mF \quad\Longrightarrow\quad F=\frac{U-b}{m}
+$$
+
+## Exemplo resolvido
+
+Com $m=0{,}20\,\mathrm{V/N}$ e $b=0{,}20\,\mathrm{V}$, uma leitura de 0,80 V corresponde a 3,0 N. Se a tensão variar em 0,02 V, mantendo os coeficientes de calibração fixos, a força calculada varia em 0,10 N.
+
+$$
+|\Delta F|=\frac{|\Delta U|}{|m|}=\frac{0{,}02\,\mathrm V}{0{,}20\,\mathrm{V/N}}=0{,}10\,\mathrm N
+$$
+
+Um sensor saturado pode emitir a mesma tensão para forças diferentes. A inversão aplica-se aqui ao trecho em que o instrumento mantém a resposta afim ensaiada.

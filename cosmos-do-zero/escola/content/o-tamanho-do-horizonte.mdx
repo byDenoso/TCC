@@ -1,0 +1,71 @@
+---
+{
+  "slug": "o-tamanho-do-horizonte",
+  "level": 3,
+  "subject": "Buracos negros",
+  "order": 1,
+  "title": "Como a massa define o tamanho do horizonte?",
+  "objective": "Calcular o raio areal do horizonte de Schwarzschild e interpretar sua relação com a área.",
+  "summary": "Um buraco negro esférico sem rotação e sem carga tem raio areal de horizonte de aproximadamente 2,95 km por massa solar.",
+  "lab": "buracos-negros",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Buracos negros",
+    "url": "https://openstax.org/books/astronomy-2e/pages/24-5-black-holes"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "Na curva de Schwarzschild, que raio areal tem o horizonte de um buraco negro de 10 massas solares?",
+    "answer": 29.53,
+    "tolerance": 0.15,
+    "unit": "km",
+    "feedback": "São 2,953 km por massa solar. Para 10 massas solares, o raio é 29,53 km."
+  },
+  "graph": {
+    "xLabel": "Massa (M☉)",
+    "yLabel": "Raio do horizonte (km)",
+    "points": [
+      [
+        1,
+        2.953
+      ],
+      [
+        2,
+        5.906
+      ],
+      [
+        3,
+        8.859
+      ],
+      [
+        5,
+        14.765
+      ],
+      [
+        10,
+        29.53
+      ],
+      [
+        20,
+        59.06
+      ],
+      [
+        30,
+        88.59
+      ]
+    ],
+    "caption": "Raio areal da solução de Schwarzschild. A régua se ajusta à massa, mantendo nulos o spin e a carga."
+  }
+}
+---
+
+## Uma fronteira para a luz
+
+O horizonte de eventos delimita a região da qual sinais futuros conseguem alcançar observadores distantes. Na solução esférica, sem carga elétrica nem rotação, a massa determina a escala do horizonte. O raio $r_s$ é definido pela área da esfera, $A=4\pi r_s^2$.
+
+$$
+r_s=\frac{2GM}{c^2}\simeq2{,}953\ \mathrm{km}\,\frac{M}{M_\odot}.
+$$
+
+## Comparar tamanho e área
+
+Para cinco massas solares, $r_s\simeq14{,}8$ km. Aumentar a massa para dez massas solares duplica o raio e quadruplica a área. Uma imagem de emissão em torno de um buraco negro inclui plasma e trajetórias curvas da luz. Medir o diâmetro da região escura na fotografia requer um modelo que a relacione ao horizonte.

@@ -1,0 +1,14 @@
+---
+{"slug":"velocidade-peculiar-na-escala-local","level":5,"subject":"Lei de Hubble-Lemaître","order":2,"title":"Por que uma galáxia próxima pode desviar da reta?","objective":"Quantificar o viés fracionário causado por uma velocidade peculiar radial.","summary":"Uma mesma velocidade peculiar afeta mais a estimativa individual de H₀ para uma fonte próxima.","lab":"expansao","reference":{"name":"David W. Hogg, Distance measures in cosmology","url":"https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html"},"exercise":{"kind":"graph","prompt":"Para uma velocidade peculiar radial de +210 km/s, qual é o viés percentual de H₀ a 30 Mpc, segundo o gráfico?","answer":10,"tolerance":0.15,"unit":"%","feedback":"O fluxo ideal fornece 2.100 km/s. A fração adicional é 210/2.100 = 10%."},"graph":{"xLabel":"Distância (Mpc)","yLabel":"Viés em H₀ (%)","points":[[10,30.0],[15,20.0],[20,15.0],[30,10.0],[40,7.5],[60,5.0]],"caption":"Estimativas de uma única fonte. H₀ = 70 km/s/Mpc e componente peculiar de +210 km/s."}}
+---
+
+Uma galáxia que cai em direção a um aglomerado ganha velocidade em relação ao fluxo médio. No regime de pequenas velocidades e baixo redshift, a componente radial desse movimento soma-se ao termo de expansão. Uma distância medida por um indicador independente permite estimar seu efeito.
+
+$$
+cz\simeq H_0D+v_{\rm pec},\qquad
+\frac{\widehat H_0-H_0}{H_0}=\frac{v_{\rm pec}}{H_0D}.
+$$
+
+## Exemplo resolvido
+
+A $10~\mathrm{Mpc}$, um fluxo de $700~\mathrm{km/s}$ e uma velocidade peculiar de $+210~\mathrm{km/s}$ produzem $910~\mathrm{km/s}$. Dividir por 10 dá $91~\mathrm{km\,s^{-1}\,Mpc^{-1}}$, um excesso de 30%. A contribuição muda de sinal se a fonte se move em nossa direção. Fluxos coerentes numa mesma região também podem correlacionar os resíduos de várias galáxias.

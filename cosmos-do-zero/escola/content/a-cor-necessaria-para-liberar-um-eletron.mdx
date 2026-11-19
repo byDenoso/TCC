@@ -1,0 +1,76 @@
+---
+{
+  "slug": "a-cor-necessaria-para-liberar-um-eletron",
+  "level": 4,
+  "subject": "Física quântica",
+  "order": 1,
+  "title": "Qual fóton consegue liberar um elétron?",
+  "objective": "Usar a conservação de energia no efeito fotoelétrico para obter o limiar e a energia cinética máxima de um elétron.",
+  "summary": "Acima da função trabalho, a energia adicional por fóton aumenta a energia cinética máxima. Abaixo do limiar, o modelo de um único fóton não produz emissão.",
+  "lab": "ondas",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Efeito fotoelétrico",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/6-2-photoelectric-effect"
+  },
+  "exercise": {
+    "kind": "choice",
+    "prompt": "No regime monofotônico, um metal com função trabalho de 2 eV recebe fótons de 1,5 eV. Aumentamos apenas a intensidade. Qual é a previsão?",
+    "answer": 2,
+    "tolerance": 0,
+    "unit": "",
+    "feedback": "Cada fóton continua abaixo do limiar. Maior intensidade fornece mais fótons, com os mesmos 1,5 eV cada.",
+    "choices": [
+      "A energia cinética máxima passa a 0,5 eV.",
+      "A função trabalho do metal passa a 1,5 eV.",
+      "A fotoemissão monofotônica continua abaixo do limiar."
+    ]
+  },
+  "graph": {
+    "xLabel": "Energia do fóton (eV)",
+    "yLabel": "Energia cinética máxima (eV)",
+    "points": [
+      [
+        2,
+        0
+      ],
+      [
+        2.5,
+        0.5
+      ],
+      [
+        3,
+        1
+      ],
+      [
+        3.5,
+        1.5
+      ],
+      [
+        4,
+        2
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        4
+      ]
+    ],
+    "caption": "Metal ideal com função trabalho de 2 eV. Os pontos começam no limiar de emissão."
+  }
+}
+---
+
+## Uma conta por fóton
+
+Cada fóton incidente tem energia $E_\gamma=hf$. Retirar um elétron do material requer ao menos a função trabalho $\Phi$. Para os elétrons que saem com a maior energia cinética, a conservação de energia fornece uma relação linear acima do limiar.
+
+$$
+K_{\max}=hf-\Phi,\qquad f_0=\Phi/h.
+$$
+
+## Usar a unidade do elétron-volt
+
+Com $\Phi=2$ eV e fótons de 3,5 eV, os elétrons mais energéticos emergem com $1{,}5$ eV. Um potencial de frenagem de magnitude 1,5 V pode detê-los idealmente, pois $eV_{\rm freio}=K_{\max}$. A intensidade controla a taxa de fótons. A interpretação pressupõe uma superfície de função trabalho conhecida e intensidade suficientemente baixa para predominar a absorção de um fóton por evento.

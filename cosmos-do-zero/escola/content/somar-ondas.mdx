@@ -1,0 +1,21 @@
+---
+{"slug":"somar-ondas","level":2,"subject":"Ondas e óptica","order":1,"title":"Quando duas ondas se reforçam?","objective":"Prever a amplitude resultante a partir da diferença de fase entre duas ondas.","summary":"Para duas ondas senoidais coerentes de igual amplitude, a diferença de fase determina o reforço ou cancelamento em um ponto.","lab":"ondas","reference":{"name":"OpenStax · Física Universitária, v. 1, § 16.5","url":"https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves"},"exercise":{"kind":"graph","prompt":"O gráfico usa duas ondas com amplitude individual de 1 mm. Em uma diferença de fase de 120°, qual é a amplitude da oscilação resultante?","answer":1,"tolerance":0.02,"unit":"mm","feedback":"A amplitude vale 2 × 1 mm × |cos(60°)| = 1 mm."},"graph":{"xLabel":"Diferença de fase (°)","yLabel":"Amplitude resultante (mm)","points":[[0,2.0],[15,1.9828897],[30,1.9318517],[45,1.8477591],[60,1.7320508],[75,1.5867067],[90,1.4142136],[105,1.2175229],[120,1.0],[135,0.7653669],[150,0.5176381],[165,0.2610524],[180,0.0],[195,0.2610524],[210,0.5176381],[225,0.7653669],[240,1.0],[255,1.2175229],[270,1.4142136],[285,1.5867067],[300,1.7320508],[315,1.8477591],[330,1.9318517],[345,1.9828897],[360,2.0]],"caption":"Duas ondas coerentes de 1 mm de amplitude cada, avaliadas no mesmo ponto de um meio linear."}}
+---
+
+Dois excitadores mantêm ondas de mesma frequência em uma corda. Em um ponto onde ambas têm o mesmo módulo de amplitude, a fase relativa determina se máximos e mínimos chegam juntos. Em regime linear, o deslocamento instantâneo é a soma algébrica dos deslocamentos individuais.
+
+## Some as oscilações no tempo
+
+No ponto de interesse, escreva uma onda com fase zero e a outra adiantada de $\delta$. A identidade de soma de cossenos mostra como a fase altera a amplitude da oscilação resultante.
+
+$$
+y(t)=A\cos(\omega t)+A\cos(\omega t+\delta)
+$$
+
+$$
+A_{\rm res}=2A\left|\cos\left(\frac{\delta}{2}\right)\right|
+$$
+
+## Exemplo resolvido
+
+Tome $A=2\,\mathrm{mm}$. Em fase, o ponto oscila com amplitude de 4 mm. Com meia volta de diferença de fase, uma crista coincide com um vale e a amplitude ali se anula. O cancelamento local é compatível com a redistribuição de energia por outras regiões do padrão de interferência.

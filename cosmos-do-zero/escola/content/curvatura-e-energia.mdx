@@ -1,0 +1,14 @@
+---
+{"slug":"curvatura-e-energia","level":6,"subject":"Equações de Einstein","order":1,"title":"Como a matéria entra na geometria?","objective":"Reconhecer o conteúdo físico de Gμν, Tμν e do termo cosmológico e calcular o escalar de Ricci no vácuo com Λ.","summary":"A contração das equações de Einstein relaciona a curvatura escalar ao traço da fonte e a Λ.","lab":"curvatura","reference":{"name":"Sean Carroll, Lecture Notes on General Relativity","url":"https://arxiv.org/abs/gr-qc/9712019"},"exercise":{"kind":"numeric","prompt":"No vácuo com Λ = 2 × 10⁻⁵² m⁻², quanto vale R em unidades de 10⁻⁵² m⁻²?","answer":8,"tolerance":0.01,"unit":"10⁻⁵² m⁻²","feedback":"A contração em quatro dimensões fornece R = 4Λ = 8 × 10⁻⁵² m⁻²."},"graph":{"xLabel":"Λ (10⁻⁵² m⁻²)","yLabel":"R (10⁻⁵² m⁻²)","points":[[0,0],[0.5,2.0],[1,4],[1.5,6.0],[2,8],[3,12]],"caption":"Soluções de vácuo em quatro dimensões, na convenção de sinal adotada no texto."}}
+---
+
+As componentes do tensor energia–momento descrevem densidade, fluxo e tensões num referencial escolhido. O tensor de Einstein $G_{\mu\nu}=R_{\mu\nu}-Rg_{\mu\nu}/2$ combina os componentes do tensor de Ricci e a sua contração. Adotamos assinatura $(-,+,+,+)$ e a convenção em que de Sitter tem $R>0$.
+
+$$
+G_{\mu\nu}+\Lambda g_{\mu\nu}=\frac{8\pi G}{c^4}T_{\mu\nu},\qquad
+-R+4\Lambda=\frac{8\pi G}{c^4}T.
+$$
+
+## Exemplo resolvido
+
+No vácuo com $\Lambda=10^{-52}~\mathrm{m^{-2}}$, o traço $T$ é zero e $R=4\times10^{-52}~\mathrm{m^{-2}}$. A contração comprime informação. Por exemplo, fora de uma massa esférica com Λ nulo, o escalar de Ricci pode ser zero enquanto forças de maré permanecem presentes. Elas dependem de outras componentes da curvatura.

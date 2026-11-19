@@ -48,8 +48,17 @@ jobs:
           cache-dependency-path: cosmos-do-zero/escola/package-lock.json
       - run: npm ci --no-fund --no-audit
       - run: npm run check && npm test && npm run test:database
-      - run: npm run build:pages
       - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Conferir contas e publicação editorial em PostgreSQL
+        run: |
+          export DATABASE_URL="$COSMOS_TEST_DATABASE_URL"
+          node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 4173 > /tmp/cosmos-school-node.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for i in {1..30}; do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 1; done
+          BASE_URL=http://127.0.0.1:4173 node tests/account.mjs
+      - run: npm run build:pages
       - name: Exercitar a escola exportada
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 --directory out > /tmp/cosmos-school-http.log 2>&1 &

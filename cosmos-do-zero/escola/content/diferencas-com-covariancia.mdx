@@ -1,0 +1,13 @@
+---
+{"slug":"diferencas-com-covariancia","level":6,"subject":"Tensões cosmológicas","order":1,"title":"Quão discrepantes são duas determinações?","objective":"Calcular a discrepância entre duas estimativas gaussianas com covariância conhecida.","summary":"A significância de uma diferença depende da covariância entre as estimativas e de medirem a mesma grandeza.","lab":"expansao","reference":{"name":"Licia Verde, Tommaso Treu e Adam Riess, Tensions between the Early and the Late Universe","url":"https://arxiv.org/abs/1907.10625"},"exercise":{"kind":"numeric","prompt":"Duas estimativas gaussianas dão 72 ± 2 e 68 ± 2. A correlação assumida é 0,5. Qual a discrepância em desvios padrão?","answer":2,"tolerance":0.01,"unit":"σ","feedback":"A variância da diferença é 4 + 4 − 2 × 0,5 × 2 × 2 = 4; a diferença 4 corresponde a 2σ."},"graph":{"xLabel":"Correlação ρ","yLabel":"Discrepância (σ)","points":[[-0.8,1.0540926],[-0.5,1.1547005],[0,1.4142136],[0.25,1.6329932],[0.5,2.0],[0.75,2.8284271],[0.9,4.472136]],"caption":"Dados sintéticos 72 ± 2 e 68 ± 2 nas mesmas unidades. Varia-se apenas a correlação."}}
+---
+
+Uma tensão unidimensional pode ser expressa pela distância entre duas estimativas em unidades do desvio de sua diferença. Construa a variável $d=x_1-x_2$. A propagação da variância contém um termo de covariância com sinal negativo porque as estimativas entram com sinais opostos.
+
+$$
+Z=\frac{|x_1-x_2|}{\sqrt{s_1^2+s_2^2-2\rho s_1s_2}}.
+$$
+
+## Exemplo resolvido
+
+Use dois valores didáticos $72\pm2$ e $68\pm2$ em $\mathrm{km\,s^{-1}\,Mpc^{-1}}$. Para estimativas independentes, a discrepância é $4/\sqrt8\simeq1{,}41$ desvios. Se partilham uma calibração, a covariância deve ser estimada. O cálculo pressupõe erros gaussianos e interpretações compatíveis do parâmetro. Uma inferência a partir do CMB, por exemplo, depende do modelo adotado para converter observáveis em $H_0$.

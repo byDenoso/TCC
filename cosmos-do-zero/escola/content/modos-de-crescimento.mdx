@@ -1,0 +1,14 @@
+---
+{"slug":"modos-de-crescimento","level":6,"subject":"Perturbações cosmológicas","order":1,"title":"Dois modos para a mesma perturbação de matéria","objective":"Identificar as soluções crescente e decrescente num fundo de Einstein–de Sitter.","summary":"A evolução linear de segunda ordem exige amplitude e derivada iniciais para selecionar o modo físico.","lab":"estruturas","reference":{"name":"Francis Bernardeau et al., Large-Scale Structure of the Universe and Cosmological Perturbation Theory","url":"https://arxiv.org/abs/astro-ph/0112551"},"exercise":{"kind":"numeric","prompt":"Em Einstein–de Sitter, qual é a razão δfinal/δinicial de um modo puramente decrescente ao passar de a = 0,25 para a = 1?","answer":0.125,"tolerance":0.002,"unit":"adimensional","feedback":"Para D₋ ∝ a⁻³ᐟ² e razão de escalas 4, o fator é 4⁻³ᐟ² = 1/8."},"graph":{"xLabel":"Fator de escala a","yLabel":"Modo decrescente D₋(a) / D₋(1)","points":[[0.25,8.0],[0.375,4.3546484],[0.5,2.8284271],[0.625,2.0238577],[0.75,1.5396007],[1,1.0]],"caption":"Modo linear decrescente em matéria sem pressão. A normalização é arbitrária."}}
+---
+
+Em escalas sub-horizonte, para matéria não relativística sem pressão, a equação linear tem um termo de atrito da expansão e um termo gravitacional. Num fundo de Einstein–de Sitter podemos procurar soluções de potência em $a$.
+
+$$
+\ddot\delta+2H\dot\delta-4\pi G\bar\rho_m\delta=0,\qquad
+\delta(a)=A a+B a^{-3/2}.
+$$
+
+## Exemplo resolvido
+
+Um modo puramente crescente com $\delta=0{,}01$ em $a=0{,}25$ atinge $0{,}04$ em $a=1$. Com a mesma amplitude inicial, o modo puramente decrescente atinge $0{,}00125$. A diferença física está na velocidade inicial da perturbação. Um integrador que especifica somente a amplitude pode excitar uma mistura indevida desses modos. Para contrastes de ordem um, a aproximação linear perde validade.

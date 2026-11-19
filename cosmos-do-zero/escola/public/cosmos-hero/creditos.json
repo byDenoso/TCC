@@ -1,0 +1,8 @@
+{
+  "title": "Saturno e a inclinação aparente dos anéis",
+  "kind": "Ilustração interativa",
+  "credit": "Iluminação, anéis, campo de estrelas e composição do Cosmos. Mapa ilustrativo de Saturno do acervo JPL/Caltech, distribuído pela NASA.",
+  "source": "https://science.nasa.gov/3d-resources/saturn/",
+  "model": "Câmera ortográfica em 12°–44° de latitude acima do plano dos anéis. Semieixos do esferoide 1 e 0,904 em raios equatoriais. Densidade radial, luz e fundo são ilustrativos.",
+  "render": "Interseções raio–elipsoide e raio–plano, sombra do globo nos anéis, atenuação da luz dos anéis no globo e integração óptica aproximada na borda. Os quadros WebP são exportados do mesmo shader GLSL que responde ao controle de ângulo."
+}

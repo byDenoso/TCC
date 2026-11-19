@@ -1,0 +1,75 @@
+---
+{
+  "slug": "a-ultima-orbita-circular-estavel",
+  "level": 3,
+  "subject": "Buracos negros",
+  "order": 2,
+  "title": "Onde termina a sequência de órbitas circulares estáveis?",
+  "objective": "Relacionar o raio da órbita circular marginalmente estável ao horizonte e identificar sua assinatura de escala no período.",
+  "summary": "Na geometria de Schwarzschild, a órbita circular marginalmente estável de uma partícula massiva de teste fica a três raios de horizonte.",
+  "lab": "buracos-negros",
+  "reference": {
+    "name": "T. Moore · A General Relativity Workbook, órbitas de partículas",
+    "url": "https://pages.pomona.edu/~tmoore/grw/resources/grwbook.pdf"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Um buraco negro sem spin tem raio de horizonte de 45 km. Qual é o raio da órbita circular marginalmente estável para uma partícula massiva de teste?",
+    "answer": 135,
+    "tolerance": 0.15,
+    "unit": "km",
+    "feedback": "rₘₑ = 6GM/c² e rₛ = 2GM/c². O quociente é três, portanto 135 km."
+  },
+  "graph": {
+    "xLabel": "Massa (M☉)",
+    "yLabel": "Raio marginalmente estável (km)",
+    "points": [
+      [
+        1,
+        8.859
+      ],
+      [
+        2,
+        17.718
+      ],
+      [
+        4,
+        35.436
+      ],
+      [
+        6,
+        53.154
+      ],
+      [
+        8,
+        70.872
+      ],
+      [
+        10,
+        88.59
+      ],
+      [
+        15,
+        132.885
+      ],
+      [
+        20,
+        177.18
+      ]
+    ],
+    "caption": "Órbita circular marginalmente estável de uma partícula de teste. A própria luz tem uma órbita circular distinta e instável."
+  }
+}
+---
+
+## Perturbar uma órbita
+
+Para testar estabilidade, dê um pequeno deslocamento radial a uma partícula em órbita circular. Em uma órbita estável ela oscila em torno da posição de equilíbrio. Na geometria de Schwarzschild, a frequência dessa oscilação vai a zero em um raio crítico. O resultado vem do potencial efetivo das geodésicas de partículas massivas.
+
+$$
+r_{\rm ME}=\frac{6GM}{c^2}=3r_s,\qquad \Omega_{\rm ME}=\sqrt{\frac{GM}{r_{\rm ME}^3}}.
+$$
+
+## Seguir a escala com a massa
+
+Se $M=8M_\odot$, o horizonte tem cerca de 23,6 km e o raio marginalmente estável é 70,9 km. Como $r_{\rm ME}$ cresce proporcionalmente a $M$, a frequência angular medida pelo tempo do observador no infinito varia como $1/M$. A rotação do buraco negro altera o raio crítico. Pressão e campos magnéticos também influenciam a borda luminosa de um disco real.

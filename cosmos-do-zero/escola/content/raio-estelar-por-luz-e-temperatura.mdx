@@ -1,0 +1,71 @@
+---
+{
+  "slug": "raio-estelar-por-luz-e-temperatura",
+  "level": 3,
+  "subject": "Física estelar",
+  "order": 2,
+  "title": "Quanto mede a superfície que emite a luz?",
+  "objective": "Combinar luminosidade bolométrica e temperatura efetiva para estimar um raio estelar.",
+  "summary": "A área emissora cresce como o quadrado do raio e a potência térmica por área cresce como a quarta potência da temperatura efetiva.",
+  "lab": "ondas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Raio e espectro estelares",
+    "url": "https://openstax.org/books/astronomy-2e/pages/17-4-using-spectra-to-measure-stellar-radius-composition-and-motion"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Uma estrela emite 16 luminosidades solares e tem temperatura efetiva igual à do Sol. Qual é o raio em unidades solares?",
+    "answer": 4,
+    "tolerance": 0.02,
+    "unit": "R☉",
+    "feedback": "Para temperaturas iguais, L/L☉ = (R/R☉)². A raiz quadrada de 16 é 4."
+  },
+  "graph": {
+    "xLabel": "Temperatura relativa ao Sol",
+    "yLabel": "Luminosidade relativa ao Sol",
+    "points": [
+      [
+        0.5,
+        0.0625
+      ],
+      [
+        0.75,
+        0.3164062
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        1.25,
+        2.4414062
+      ],
+      [
+        1.5,
+        5.0625
+      ],
+      [
+        1.75,
+        9.3789062
+      ],
+      [
+        2,
+        16
+      ]
+    ],
+    "caption": "Família de estrelas com raio solar. As razões sem unidade permitem visualizar a quarta potência."
+  }
+}
+---
+
+## Separar temperatura e área
+
+A temperatura efetiva caracteriza o fluxo total que atravessa cada metro quadrado da fotosfera. A luminosidade bolométrica $L$ soma a energia emitida por segundo em todos os comprimentos de onda. Uma estrela esférica tem área $4\pi R^2$.
+
+$$
+L=4\pi R^2\sigma T_{\rm ef}^4,\qquad \frac{R}{R_\odot}=\sqrt{\frac{L}{L_\odot}}\left(\frac{T_\odot}{T_{\rm ef}}\right)^2.
+$$
+
+## Duas medidas para obter um raio
+
+Suponha $L=9L_\odot$ e $T_{\rm ef}=1{,}5T_\odot$. A razão entre os raios é $3/1{,}5^2=1{,}33$. Para obter a luminosidade de uma estrela distante, precisamos corrigir o fluxo pela extinção e conhecer a distância. Usar apenas uma faixa fotométrica também exige estimar a luz emitida fora dessa faixa.

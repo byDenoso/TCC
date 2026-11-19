@@ -1,0 +1,75 @@
+---
+{
+  "slug": "somar-velocidades-relativisticas",
+  "level": 4,
+  "subject": "Relatividade especial",
+  "order": 2,
+  "title": "Como combinar velocidades próximas à da luz?",
+  "objective": "Transformar uma velocidade longitudinal entre dois referenciais inerciais e conferir o limite da velocidade da luz.",
+  "summary": "A transformação relativística de velocidades incorpora a transformação do tempo. Para velocidades colineares menores que c, o resultado também é menor que c.",
+  "lab": "relatividade",
+  "reference": {
+    "name": "OpenStax · Física universitária, vol. 3 — Transformação de velocidades",
+    "url": "https://openstax.org/books/university-physics-volume-3/pages/5-6-relativistic-velocity-transformation"
+  },
+  "exercise": {
+    "kind": "numeric",
+    "prompt": "Uma nave viaja a +0,6c no laboratório e lança uma sonda a +0,6c em seu próprio referencial. Qual é u/c no laboratório?",
+    "answer": 0.8823529411764705,
+    "tolerance": 0.003,
+    "unit": "",
+    "feedback": "Usando as duas velocidades em unidades de c, u/c = (0,6+0,6)/(1+0,36) ≈ 0,882."
+  },
+  "graph": {
+    "xLabel": "Velocidade no veículo u′/c",
+    "yLabel": "Velocidade no laboratório u/c",
+    "points": [
+      [
+        -0.9,
+        -0.6521739
+      ],
+      [
+        -0.6,
+        0.0
+      ],
+      [
+        -0.3,
+        0.3658537
+      ],
+      [
+        0,
+        0.6
+      ],
+      [
+        0.3,
+        0.7627119
+      ],
+      [
+        0.6,
+        0.8823529
+      ],
+      [
+        0.9,
+        0.974026
+      ],
+      [
+        1,
+        1.0
+      ]
+    ],
+    "caption": "Veículo a +0,6c. Valores negativos representam movimento para trás no referencial do veículo."
+  }
+}
+---
+
+## Escolher o sentido do movimento
+
+Considere uma nave com velocidade $v$ positiva no laboratório. Uma sonda tem velocidade $u'$ medida na nave, ao longo da mesma reta. Transformamos tanto o deslocamento quanto o intervalo temporal entre dois eventos do trajeto. Ao dividir as expressões de Lorentz para $dx$ e $dt$, o fator comum desaparece.
+
+$$
+u=\frac{u'+v}{1+u'v/c^2}.
+$$
+
+## Verificar dois casos
+
+Para $v=0{,}6c$ e $u'=-0{,}6c$, o numerador se anula e a sonda fica momentaneamente em repouso no laboratório. Se a nave emitir luz para a frente, $u'=c$ e a expressão dá $u=c$. A direção é parte da medida. A expressão escalar acima trata velocidades colineares e exige manter o sinal em cada termo.

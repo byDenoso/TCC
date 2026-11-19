@@ -1,0 +1,73 @@
+---
+{
+  "slug": "o-periodo-revela-a-orbita",
+  "level": 3,
+  "subject": "Mecânica orbital",
+  "order": 1,
+  "title": "O que o período revela sobre a órbita?",
+  "objective": "Usar a terceira lei de Kepler para relacionar o semieixo maior e o período em torno de uma estrela de massa conhecida.",
+  "summary": "Para a mesma massa central, o período orbital cresce com o semieixo maior elevado a três meios. A lei vale também para elipses.",
+  "lab": "orbitas",
+  "reference": {
+    "name": "OpenStax · Astronomy 2e — Leis do movimento planetário",
+    "url": "https://openstax.org/books/astronomy-2e/pages/3-1-the-laws-of-planetary-motion"
+  },
+  "exercise": {
+    "kind": "graph",
+    "prompt": "Em torno de uma estrela de uma massa solar, que período corresponde ao ponto de semieixo maior igual a 4 UA?",
+    "answer": 8,
+    "tolerance": 0.05,
+    "unit": "anos",
+    "feedback": "P² = 4³ = 64 em unidades solares, de modo que P = 8 anos."
+  },
+  "graph": {
+    "xLabel": "Semieixo maior (UA)",
+    "yLabel": "Período (anos)",
+    "points": [
+      [
+        0.25,
+        0.125
+      ],
+      [
+        0.5,
+        0.3535534
+      ],
+      [
+        1,
+        1.0
+      ],
+      [
+        2,
+        2.8284271
+      ],
+      [
+        3,
+        5.1961524
+      ],
+      [
+        4,
+        8.0
+      ],
+      [
+        5,
+        11.1803399
+      ]
+    ],
+    "caption": "Previsão kepleriana para planetas de massa desprezível em torno de uma estrela de uma massa solar."
+  }
+}
+---
+
+## Cronometrar uma volta
+
+O semieixo maior $a$ é metade do eixo longo de uma elipse. Uma órbita quase circular de raio $a$ permite derivar a escala temporal. Igualamos a aceleração centrípeta $v^2/a$ à gravitacional $GM/a^2$, depois usamos $P=2\pi a/v$.
+
+$$
+P^2=\frac{4\pi^2 a^3}{G(M+m)}.
+$$
+
+A expressão completa para dois corpos inclui a massa do planeta $m$ e vale para o movimento relativo em elipse. Quando $m$ é desprezível e $M$ vale uma massa solar, medir $P$ em anos e $a$ em UA dá, com excelente aproximação, $P^2=a^3$.
+
+## Medir sem ver toda a elipse
+
+Um planeta com $P=3$ anos tem $a=\sqrt[3]{9}\simeq2{,}08$ UA para essa estrela. O mesmo período em torno de uma estrela mais massiva implica uma órbita maior. Perturbações de outros planetas podem deslocar os tempos de passagem em relação à previsão de dois corpos.

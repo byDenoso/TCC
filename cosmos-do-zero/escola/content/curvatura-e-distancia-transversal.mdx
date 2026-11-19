@@ -1,0 +1,14 @@
+---
+{"slug":"curvatura-e-distancia-transversal","level":6,"subject":"Modelos além de ΛCDM","order":2,"title":"Como a curvatura altera uma distância transversal?","objective":"Separar o efeito geométrico de Ωₖ sobre D_M do efeito dinâmico sobre H(z).","summary":"A curvatura espacial modifica a relação entre a integral radial e a distância transversal observável.","lab":"curvatura","reference":{"name":"David W. Hogg, Distance measures in cosmology","url":"https://ned.ipac.caltech.edu/level5/Hogg/Hogg_contents.html"},"exercise":{"kind":"numeric","prompt":"Na expansão de primeira ordem, com Ωk = 0,03 e χ/D_H₀ = 1, qual é o acréscimo fracionário percentual em D_M?","answer":0.5,"tolerance":0.025,"unit":"%","feedback":"A correção fracionária é Ωk(χ/D_H₀)²/6 = 0,005, ou 0,5%."},"graph":{"xLabel":"χ / D_H₀","yLabel":"(Dₘ/χ − 1) em %","points":[[0.1,0.0050001],[0.25,0.0312529],[0.5,0.1250469],[0.75,0.2814874],[1,0.5007505],[1.25,0.7830831],[1.5,1.128803]],"caption":"Relação geométrica exata para Ωₖ = +0,03 e D_H₀ = c/H₀. χ é mantida como entrada."}}
+---
+
+Uma extensão de ΛCDM permite curvatura espacial. Na convenção usual, $\Omega_k>0$ indica curvatura espacial negativa. A distância radial comóvel $\chi$ resulta do histórico $H(z)$; a distância transversal se obtém aplicando a geometria sobre a integral já calculada. Defina $D_{H0}=c/H_0$.
+
+$$
+D_M=\frac{D_{H0}}{\sqrt{\Omega_k}}\sinh\left(\sqrt{\Omega_k}\frac{\chi}{D_{H0}}\right),\qquad
+\frac{D_M}{\chi}\simeq1+\frac{\Omega_k}{6}\left(\frac{\chi}{D_{H0}}\right)^2.
+$$
+
+## Exemplo resolvido
+
+Em $\chi/D_{H0}=0{,}5$ e $\Omega_k=0{,}03$, a correção fracionária de primeira ordem vale $0{,}00125$, ou $0{,}125\%$. A expansão vale quando $|\Omega_k|(\chi/D_{H0})^2$ é pequeno. Ao comparar modelos com os mesmos dados, a curvatura também entra em $H(z)$; fixar $\chi$ neste gráfico isola somente a etapa geométrica.
