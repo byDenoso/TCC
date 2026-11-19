@@ -20,7 +20,8 @@ export function initExperience(): void {
    const running=play?.getAttribute('aria-pressed')==='true';
    const range=root.querySelector<HTMLInputElement>('[data-e-range],[data-sci-range],[data-mx-range],[data-story-time]');
    const complete=range&&Number(range.max)>Number(range.min)&&Number(range.value)>=Number(range.max);
-   const text=root.dataset.mxLoad==='error'?'A cena não carregou. Recarregue a página para tentar de novo.':root.matches('[data-mx]')&&!root.classList.contains('is-ready')?'Preparando a cena…':play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Fim da cena · você pode rever':visible?'Pronto para explorar':'Pronto para começar';
+   status.hidden=root.matches('[data-mx]')&&root.dataset.mxLoad!=='ready';
+   const text=play?.hasAttribute('disabled')?'Visualização estática disponível':motionPreference.matches?'Movimento reduzido · avance pelos controles':running&&visible?(root.dataset.guide==='automatic'?'Demonstração automática · observe a cena':'Reproduzindo'):manual?'Pausado por você':complete?'Fim da cena · você pode rever':visible?'Pronto para explorar':'Pronto para começar';
    if(status.textContent!==text)status.textContent=text;
    const state=running&&visible?'playing':complete?'complete':'paused';if(root.dataset.playback!==state)root.dataset.playback=state;
   };

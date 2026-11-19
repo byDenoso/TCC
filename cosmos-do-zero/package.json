@@ -29,7 +29,7 @@
     "test:dynamic": "node tests/dynamic-experience.mjs",
     "test:assets": "node tests/assets-guided.mjs",
     "test:hd": "node tests/journey-hd.mjs && node tests/flight-pointer.mjs && node tests/site-hd.mjs",
-    "test:depth": "node tests/micro-depth.mjs && node tests/motion-lab-canvas.mjs && node tests/lab-plates.mjs && node tests/lesson-depth.mjs"
+    "test:depth": "node tests/earth-entry.mjs && node tests/micro-depth.mjs && node tests/motion-lab-canvas.mjs && node tests/lab-plates.mjs && node tests/lesson-depth.mjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

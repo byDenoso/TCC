@@ -1,14 +1,17 @@
 ---
 import references from '../data/micro-frames.json';
+import openingDiagrams from '../data/earth-opening-diagrams.json';
 import { u } from '../lib/url';
 import type { MicroSpec } from '../data/micro';
 interface Props { spec: MicroSpec; id: string; chapter: string }
 const { spec, id, chapter } = Astro.props;
 const reference = references[id as keyof typeof references];
+// Quadros do estado inicial desenhado em scripts/micro/terra.ts.
+const openingDiagram = openingDiagrams[id as keyof typeof openingDiagrams];
 const c = spec.control;
 const letters = 'ABCDE';
 ---
-<fieldset class="mx" disabled aria-busy="true" data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
+<fieldset class="mx" disabled data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
   <div class="mx-head">
     <span class="meta">Experimento ilustrativo</span>
     <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
@@ -19,12 +22,18 @@ const letters = 'ABCDE';
     <div class="mx-visuals" data-mx-visuals><div class="mx-stage">
       {id === 'sistema-solar-disco' && <img class="formation-still" src={u('/renders/formation/cloud.webp')}
         width="1152" height="648" loading="lazy" alt="Poeira escura em Barnard 59, uma nuvem onde se formam estrelas." />}
-      <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}></svg>
+      <svg data-mx-svg viewBox="0 0 480 270" role="img" aria-label={spec.alt}>
+        {openingDiagram && <g data-mx-opening set:html={openingDiagram} />}
+      </svg>
       <canvas hidden data-mx-depth role="img" aria-label={spec.alt} aria-describedby={`${id}-leitura`}></canvas>
+      <div class="mx-load-status" role="status">
+        <span data-mx-pending>Carregando controles…</span>
+        <span data-mx-error>Recarregue para ativar os controles.</span>
+      </div>
     </div>
     <button type="button" class="mx-diagram-toggle" data-mx-diagram hidden>Ver diagrama</button>
     </div>
-    <div class="mx-controls">
+    <div class="mx-controls" aria-busy="true">
       <p class="mx-action-label">{c.kind === 'range' ? 'Mova para comparar' : 'Escolha e compare'}</p>
       {c.kind === 'range' ? (
         <div class="mx-range">

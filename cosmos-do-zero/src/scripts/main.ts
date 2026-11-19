@@ -66,7 +66,15 @@ async function boot(): Promise<void> {
     try { initScenes(); } catch (err) { console.error('[cosmos] instrumento', '[data-scene]', err); }
   }
   await Promise.all(instruments.filter(([selector]) => document.querySelector(selector)).map(async ([selector, init]) => {
-    try { await init(); } catch (err) { console.error('[cosmos] instrumento', selector, err); }
+    try { await init(); } catch (err) {
+      if (selector === '[data-mx]') {
+        for (const scene of document.querySelectorAll<HTMLElement>('[data-mx-load="pending"]')) {
+          scene.dataset.mxLoad = 'error';
+          scene.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
+        }
+      }
+      console.error('[cosmos] instrumento', selector, err);
+    }
   }));
   initAmbient();
   initMotion();

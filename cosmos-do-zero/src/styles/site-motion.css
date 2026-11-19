@@ -1,0 +1,43 @@
+:is(.arrival-grid, .reader-opening, .subpage-head, .obs-head, .cosmic-exhibit-heading) {
+  position: relative;
+  isolation: isolate;
+}
+
+:is(.arrival-grid, .reader-opening, .subpage-head, .obs-head, .cosmic-exhibit-heading)::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0 6%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 28% 38%, var(--space-halo), transparent 63%),
+    radial-gradient(ellipse at 75% 60%, var(--space-cyan), transparent 65%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-motion='reduced']) :is(.arrival-grid, .reader-opening, .subpage-head, .obs-head, .cosmic-exhibit-heading)::before {
+    animation: ambient-drift var(--ambient-period, 24s) ease-in-out infinite alternate;
+  }
+
+  html[data-motion='gentle'] { --ambient-period: 48s; --control-lift: -1px; }
+  html:not([data-motion='reduced']) :is(button:enabled, .cta, .header-cta, .editorial-link) {
+    transition: translate .2s var(--ease), scale .16s var(--ease), background-color .2s, color .2s, border-color .2s, box-shadow .2s;
+  }
+  html:not([data-motion='reduced']) :is(button:enabled, .cta, .header-cta, .editorial-link):focus-visible {
+    translate: 0 var(--control-lift, -2px);
+  }
+  @media (hover: hover) {
+    html:not([data-motion='reduced']) :is(button:enabled, .cta, .header-cta, .editorial-link):hover {
+      translate: 0 var(--control-lift, -2px);
+    }
+  }
+  html:not([data-motion='reduced']) :is(button:enabled, .cta, .header-cta, .editorial-link):active {
+    translate: 0 0;
+    scale: .975;
+  }
+
+  @keyframes ambient-drift {
+    from { transform: translate3d(-3%, -2%, 0) scale(.98); opacity: .68; }
+    to { transform: translate3d(3%, 2%, 0) scale(1.04); opacity: 1; }
+  }
+}

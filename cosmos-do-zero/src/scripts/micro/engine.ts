@@ -52,15 +52,17 @@ export function initMicro(): void {
   const roots = [...document.querySelectorAll<HTMLElement>('[data-mx]')];
   if (!roots.length) return;
   paintToc();
-  const boot = (root: HTMLElement) => {
+  const boot = async (root: HTMLElement) => {
     if (root.dataset.mxBooted) return;
     root.dataset.mxBooted = '1';
-    const load = loaders[root.dataset.mxChapter ?? ''];
-    if (!load) return;
-    load().then((m) => { const make = m.scenes[root.dataset.mx!]; if (make) setup(root, make()); }).catch((err) => {
-      root.dataset.mxLoad = 'error'; root.setAttribute('aria-busy', 'false');
+    try {
+      const { scenes } = await loaders[root.dataset.mxChapter!]();
+      setup(root, scenes[root.dataset.mx!]());
+    } catch (err) {
+      root.dataset.mxLoad = 'error';
+      root.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
       console.error('[cosmos] cena', root.dataset.mx, err);
-    });
+    }
   };
   if (!('IntersectionObserver' in window)) { roots.forEach(boot); return; }
   const io = new IntersectionObserver((entries) => {
@@ -273,6 +275,7 @@ function setup(root: HTMLElement, scene: Scene): void {
   root.classList.add('is-ready');
   setPlaying(false);
   render(false);
+  svg.querySelector('[data-mx-opening]')?.remove();
   automatic = visibleMotion(root.querySelector('[data-mx-visuals]')!, { start, stop, running: () => playing, visibility: (on) => {
     visible = on;
     if (!on) { clearTimeout(liveTimer); live.textContent = ''; }
@@ -281,6 +284,6 @@ function setup(root: HTMLElement, scene: Scene): void {
   guided = false; root.dataset.guide = 'manual';
   // Os controles só aceitam ações depois do SVG e de todos os listeners estarem prontos.
   root.dataset.mxLoad = 'ready';
-  root.setAttribute('aria-busy', 'false');
+  root.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
   root.removeAttribute('disabled');
 }
