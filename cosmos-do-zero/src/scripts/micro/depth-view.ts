@@ -1,4 +1,5 @@
 import { createStageSurface, type StagePaint } from '../stage-surface';
+import { materialCredits } from './hd-materials';
 import { motionPreference } from '../motion-preference';
 
 type Painter = (surface: StagePaint, id: string, value: number, phase: number) => boolean;
@@ -50,9 +51,10 @@ export function mountDepthView(root: HTMLElement) {
   }
   const surface = createStageSurface(canvas, redraw);
   if (!surface) return;
+  const credited = materialCredits(root, surface.surface);
   function redraw() {
     if (!painter || disposed || !surface || preferDiagram) return;
-    const rendered = surface.draw(s => painter!(s, id, value, phase));
+    const rendered = surface.draw(() => painter!(credited, id, value, phase));
     if (lastFrame && surface.loading) return;
     if (lastFrame && !dissolve) {
       if (rendered && !motionPreference.matches) {

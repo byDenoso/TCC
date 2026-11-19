@@ -13,6 +13,8 @@ npm run dev
 
 Para testar a saída estática, execute `npm run build` e depois `npm run serve`. O servidor de prévia atende na porta 4321 por padrão. Use `BASE_URL` ao executar os testes em outra porta ou subpasta. `SITE_BASE` define a subpasta durante a compilação.
 
+A História do Universo usa 12 imagens fotográficas ou ilustrações preparadas, com enquadramento suave e carregamento por etapa. O marco das primeiras galáxias apresenta o campo GOODS-S observado pela NIRCam do Webb no levantamento JADES. Cada cartão identifica o tipo de imagem e dá acesso ao crédito. O endereço `/#viagem-galaxies` abre o sétimo marco.
+
 ## Explorar
 
 - **Início e aulas.** A página inicial leva à primeira pergunta ou à escolha de outro tema. As seis aulas preservam as âncoras, os quizzes e a retomada da leitura. As 35 microexperiências têm cenas em Canvas 2,5D que acompanham os controles. O botão **Ver diagrama** alterna para a representação analítica. As cinco experiências de luz e galáxias da página inicial apresentam a cena espacial e o botão **Ver medidas**.

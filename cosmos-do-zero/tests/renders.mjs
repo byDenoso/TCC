@@ -55,10 +55,13 @@ try {
   for (let i = 0; i < eraCount; i++) {
     await page.locator(`[data-era-index="${i}"]`).click();
     await loaded('[data-era-render]');
+    const bounds = await page.locator('[data-era-render]').boundingBox();
+    assert.ok(bounds && bounds.width >= 200 && bounds.height >= 160, `marco ${i} tem área de leitura`);
     const state = await page.locator('[data-era-render]').evaluate(image => ({ src: image.src, srcset: image.srcset, current: image.currentSrc }));
     const file = state.src.slice(state.src.lastIndexOf('/') + 1);
-    assert.ok(state.srcset.includes(file.replace('.webp', '-small.webp')), `srcset da era ${i}`);
-    assert.ok(state.current.includes(file.replace('.webp', '')), `imagem exibida da era ${i}`);
+    const small = file.endsWith('-1600.webp') ? file.replace('-1600.webp','-880.webp') : file.replace('.webp','-small.webp');
+    assert.ok(state.srcset.includes(small), `srcset da era ${i}`);
+    assert.ok([small,file].includes(new URL(state.current).pathname.split('/').pop()), `imagem exibida da era ${i}`);
   }
   assert.ok(await page.locator('[data-star-svg] circle').count() > 0, 'cena estelar desenhada');
   assert.deepEqual(problems, []);

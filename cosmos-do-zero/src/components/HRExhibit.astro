@@ -1,4 +1,5 @@
 ---
+import InstrumentCredits from './InstrumentCredits.astro';
 import {
   formatHR, formatHRTemperature, hrDomain, hrModels, hrPlot, luminosityInSuns, projectHR,
 } from '../lib/hr';
@@ -52,7 +53,7 @@ const powers = [{ n: 6, label: '10⁶' }, { n: 4, label: '10⁴' }, { n: 2, labe
           <circle r="9" /><circle r="2.2" />
         </g>
       </svg>
-      <figcaption>O disco ilustra a temperatura pela cor e o raio em escala comprimida. Os dois eixos são logarítmicos. Os tracejados indicam raios fixos de 0,01, 1 e 100 raios solares.</figcaption>
+      <figcaption>A fotosfera solar recebe uma cor ilustrativa para a temperatura e o raio em escala comprimida. Os dois eixos são logarítmicos. Os tracejados indicam raios fixos de 0,01, 1 e 100 raios solares. <InstrumentCredits photos={['solar-photosphere']}/></figcaption>
     </figure>
     <div class="hr-controls">
       <dl class="hr-readout">

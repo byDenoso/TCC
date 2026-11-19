@@ -1,0 +1,92 @@
+{
+  "sol": {
+    "credit": "NASA/SDO",
+    "page": "https://svs.gsfc.nasa.gov/14683/",
+    "license": "NASA media usage guidelines",
+    "modification": "Recorte do disco do Sol em luz visível; cores adaptadas para ilustrar outras estrelas."
+  },
+  "hartley": {
+    "credit": "NASA/JPL-Caltech/UMD · EPOXI",
+    "page": "https://science.nasa.gov/solar-system/comets/103p-hartley-hartley-2/",
+    "license": "NASA/JPL image use policy",
+    "modification": "Recorte de Hartley 2 usado como referência de aparência; órbita e caudas ilustrativas."
+  },
+  "espiral": {
+    "credit": "NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)",
+    "page": "https://esahubble.org/images/heic0506a/",
+    "license": "CC BY 4.0",
+    "modification": "Recorte do disco de M51; inclinação, escala e movimento ilustrativos."
+  },
+  "andromeda": {
+    "credit": "NASA/JPL-Caltech/UCLA · WISE",
+    "page": "https://science.nasa.gov/photojournal/our-neighbor-andromeda/",
+    "license": "NASA/JPL image use policy",
+    "modification": "Recorte do mosaico infravermelho em cores atribuídas."
+  },
+  "fundo-planck": {
+    "credit": "ESA/Planck Collaboration",
+    "page": "https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137",
+    "license": "ESA image terms; crédito conforme ficha",
+    "modification": "Mapa observado; contraste e primeiro plano simulados para comparar leituras."
+  },
+  "limbo-iss": {
+    "credit": "NASA / ISS Crew Earth Observations Facility / Earth Science and Remote Sensing Unit, Johnson Space Center; Expedição 70",
+    "page": "https://earthobservatory.nasa.gov/images/152259/sunrise-from-the-station",
+    "license": "NASA media usage guidelines",
+    "modification": "Fotografia do limbo terrestre atual; a escala de altitude e as camadas são um esquema independente."
+  },
+  "terra": {
+    "credit": "NASA Earth Observatory / Blue Marble: Next Generation / MODIS",
+    "page": "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/",
+    "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+    "modification": "Observed monthly composite, July2004, not current weather · projeção, iluminação e rotação ilustrativas. Nuvens ilustrativas Cosmos do Zero, CC0."
+  },
+  "lua": {
+    "credit": "NASA Scientific Visualization Studio / Ernie Wright (USRA), Noah Petro (NASA/GSFC); LRO/LOLA/LROC/ASU",
+    "page": "https://svs.gsfc.nasa.gov/4720/",
+    "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+    "modification": "Observed LROC mosaic, December2025 rendering-optimized colors; polar gaps filled by source authors · projeção, iluminação e rotação ilustrativas."
+  },
+  "jupiter": {
+    "credit": "NASA Goddard Space Flight Center / Space Telescope Science Institute; Amy Simon, Michael Wong, Glenn Orton",
+    "page": "https://svs.gsfc.nasa.gov/12021/",
+    "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+    "modification": "Hubble WFC3 OPAL observed global color composite, 2015; unobserved polar strips filled visually, not data · projeção, iluminação e rotação ilustrativas."
+  },
+  "marte": {
+    "credit": "NASA/Jet Propulsion Laboratory & Caltech; Viking/USGS",
+    "page": "https://science.nasa.gov/3d-resources/mars/",
+    "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+    "modification": "Viking composite texture processed at USGS · projeção, iluminação e rotação ilustrativas."
+  },
+  "mercurio": {
+    "credit": "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
+    "page": "https://science.nasa.gov/resource/enhanced-color-mercury-map/",
+    "license": "NASA resource usage policy; retain listed credit",
+    "modification": "MESSENGER PIA17386 enhanced-color global map; not human-eye colors · projeção, iluminação e rotação ilustrativas."
+  },
+  "venus": {
+    "credit": "Cosmos do Zero original authoring",
+    "page": "",
+    "license": "CC0-1.0",
+    "modification": "Original illustrative optical cloud layer, no radar surface · projeção, iluminação e rotação ilustrativas."
+  },
+  "gas": {
+    "credit": "Cosmos do Zero · volume de plasma ilustrativo",
+    "page": "",
+    "license": "Arte do acervo do projeto",
+    "modification": "Recorte da ilustração de radiação antiga. Densidade e cor atribuídas."
+  },
+  "molecular": {
+    "credit": "ESO · Barnard 59",
+    "page": "https://www.eso.org/public/images/eso1233a/",
+    "license": "CC BY 4.0",
+    "modification": "Recorte da nuvem; contração, escala e iluminação ilustrativas."
+  },
+  "saturno": {
+    "credit": "JPL/Caltech planetary-map collection",
+    "page": "https://science.nasa.gov/3d-resources/saturn/",
+    "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+    "modification": "Fictional/illustrative map as classified by NASA · projeção e iluminação ilustrativas."
+  }
+}

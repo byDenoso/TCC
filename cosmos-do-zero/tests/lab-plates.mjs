@@ -3,9 +3,9 @@ import {mkdir} from 'node:fs/promises';
 import {chromium} from 'playwright';
 
 const base = (process.env.BASE_URL ?? 'http://127.0.0.1:4339').replace(/\/$/, '');
-const out = 'test-results/lab-plates';
+const out = process.env.SHOTS ?? 'test-results/lab-plates';
 await mkdir(out, {recursive:true});
-const browser = await chromium.launch();
+const browser = await chromium.launch({executablePath:process.env.CHROMIUM});
 try {
   const page = await browser.newPage({viewport:{width:1120,height:900}, reducedMotion:'reduce'});
   const errors = [];
@@ -125,7 +125,7 @@ try {
 
   for(const mode of ['assets','canvas']) {
     const ctx = await browser.newContext({reducedMotion:'reduce'});
-    if(mode==='assets') await ctx.route('**/models/lab/photosphere.webp',r=>r.abort());
+    if(mode==='assets') await ctx.route('**/renders/instruments-hd/solar-photosphere.webp',r=>r.abort());
     else await ctx.addInitScript(()=>{
       const original = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = function(kind,...args) {

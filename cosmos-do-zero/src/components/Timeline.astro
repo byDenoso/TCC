@@ -3,16 +3,34 @@ import { eras } from '../data';
 import { u, chapterUrl } from '../lib/url';
 import { pad2 } from '../lib/format';
 const first = eras[0];
-const eraRenders: Record<string, string> = { 'primordial': 'plasma', 'nucleosynthesis': 'nuclei', 'cmb': 'cmb', 'dark-ages': 'dark-ages', 'first-stars': 'star', 'reionization': 'reionization', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'earth', 'present': 'cosmic-web' };
-const altByEra: Record<string, string> = {
-  cmb: 'Mapa ilustrativo do céu na CMB, com contraste ampliado.',
-  primordial: 'Esquema de plasma primordial, com luz, elétrons e núcleos.',
-  nucleosynthesis: 'Esquema dos primeiros núcleos, com partículas ampliadas.',
-  'dark-ages': 'Esquema da Idade das Trevas cósmica. Pontos suaves representam gás neutro antes das primeiras estrelas.',
-  reionization: 'Esquema da reionização. Regiões azuis de gás ionizado cercam fontes de luz ultravioleta, com gás neutro ao redor.',
+const eraRenders: Record<string, string> = { 'primordial': 'plasma', 'nucleosynthesis': 'nuclei', 'cmb': 'cmb', 'dark-ages': 'dark-ages', 'first-stars': 'star', 'reionization': 'reionization', 'galaxies': 'galaxies', 'acceleration': 'cosmic-web', 'solar-system': 'solar-system', 'earth': 'earth', 'oxygen': 'oxygen', 'present': 'cosmic-web' };
+const hd = new Set(['plasma','nuclei','dark-ages','reionization','cmb','galaxies','oxygen']);
+const altByEra: Record<string,string> = {
+  primordial: 'Plasma quente e denso preenchendo o espaço. Textura e cores ilustrativas.',
+  nucleosynthesis: 'Ilustração de um núcleo de hélio e prótons.',
+  cmb: 'Mapa de todo o céu observado pelo Planck, com diferenças de temperatura em cores.',
+  'dark-ages': 'Ilustração do gás neutro antes das primeiras estrelas.',
+  reionization: 'Ilustração de regiões de gás ionizado em torno das primeiras fontes.',
+  galaxies: 'Campo profundo do Webb com galáxias vistas em diferentes épocas.',
+  oxygen: 'A borda da atmosfera terrestre atual vista da Estação Espacial Internacional.',
+};
+const credits: Record<string,string> = {
+  primordial: 'Plasma primordial · ilustração Cosmos do Zero',
+  reionization: 'Reionização · ilustração ESO/M. Kornmesser · CC BY 4.0',
+  cmb: 'Mapa observado · ESA/Planck Collaboration',
+  galaxies: 'Campo profundo · NASA, ESA, CSA, STScI',
+  oxygen: 'Atmosfera atual · NASA/JSC, Expedição 70',
 };
 const eraAlt = (id: string, title: string) => altByEra[id] ?? `Representação ilustrativa para ${title}, fora de escala.`;
-const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
+function eraImages(id: string) {
+  if (id === 'primordial' || id === 'reionization') {
+    const path = u('/renders/journey-hd/' + id);
+    return { src: path + '-1600.webp', srcset: path + '-880.webp 880w, ' + path + '-1600.webp 1600w' };
+  }
+  const path = u((hd.has(eraRenders[id]) ? '/renders/lessons-hd/' : '/renders/') + eraRenders[id]);
+  return { src: path + '.webp', srcset: path + '-small.webp 600w, ' + path + '.webp 1200w' };
+}
+const initial = eraImages(first.id);
 ---
 <section class="timeline-section dark" id="tempo" aria-labelledby="timeline-title" data-island="timeline">
   <div class="page-width">
@@ -21,11 +39,10 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
       <p>Selecione um marco para ver sua data aproximada e as evidências usadas para estimá-la.</p>
     </div>
     <div class="timeline-window">
-      <figure class={`timeline-visual ${first.visual}`} data-era="0" data-timeline-visual>
-        <img class="era-render" data-era-render src={u(`/posters/${eraRender(first.id)}.webp`)} srcset={`${u(`/posters/${eraRender(first.id)}-small.webp`)} 600w, ${u(`/posters/${eraRender(first.id)}.webp`)} 1200w`} sizes="(max-width: 760px) calc(100vw - 34px), 45vw" alt={eraAlt(first.id,first.title)} width="1200" height="800" loading="lazy" decoding="async" />
-        <canvas data-era-depth width="720" height="480" aria-hidden="true"></canvas>
+      <figure class="timeline-visual" data-era="0" data-timeline-visual>
+        <img class="era-render" data-era-render src={initial.src} srcset={initial.srcset} sizes="(max-width: 760px) calc(100vw - 34px), 45vw" alt={eraAlt(first.id,first.title)} width="1200" height="800" loading="lazy" decoding="async" />
         <span class="era-number" data-era-number>01 / {pad2(eras.length)}</span>
-        <figcaption class="era-bottom">Ilustração fora de escala</figcaption>
+        <figcaption class="era-bottom" data-era-credit>{credits[first.id]}</figcaption>
       </figure>
       <div class="timeline-detail" aria-live="polite" aria-atomic="true">
         <div class="detail-kicker" data-era-evidence>{first.evidence}</div>
@@ -37,7 +54,7 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
     </div>
     <div class="time-nav" role="group" aria-label="Marcos da história do Universo" data-era-nav>
       {eras.map((e, i) => (
-        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-era-id={e.id} data-render-alt={eraAlt(e.id,e.title)} data-render-src={u(`/posters/${eraRender(e.id)}.webp`)} aria-pressed={i === 0 ? 'true' : 'false'}>
+        <button type="button" class:list={['time-event', i === 0 && 'active']} data-era-index={i} data-era-id={e.id} data-credit={credits[e.id] ?? 'Ilustração fora de escala'} data-render-alt={eraAlt(e.id,e.title)} data-render-src={eraImages(e.id).src} data-render-srcset={eraImages(e.id).srcset} aria-pressed={i === 0 ? 'true' : 'false'}>
           <b>{e.title}</b><span>{e.short}</span>
         </button>
       ))}
@@ -53,6 +70,5 @@ const eraRender = (id: string) => eraRenders[id] ?? 'cosmic-web';
 </section>
 
 <style>
-  :global([data-depth-ready='true']) [data-era-depth] {background:#0b1320}
-  [data-era-depth] { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }
+  .era-render { object-fit: contain; background: #060b13; opacity: 1; }
 </style>

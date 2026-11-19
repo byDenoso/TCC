@@ -1,6 +1,6 @@
 ---
+import InstrumentCredits from './InstrumentCredits.astro';
 import '../styles/motion-lab.css';
-import m51 from '../../assets/source/m51.json';
 import { galaxyField, seenFrom, hubbleSample, slopeThroughOrigin, planckShape, rotationSpeed } from '../lib/motion-lab';
 /**
  * Ciência em movimento: cinco animações científicas interativas. O texto e a estrutura vêm do servidor;
@@ -29,7 +29,7 @@ const sceneNotes: Record<string, string> = {
   expansao: 'Campo periódico em perspectiva. As galáxias mantêm seu tamanho no modelo.',
   hubble: 'A profundidade representa a distância simulada. O ponto destacado é a última medida.',
   frio: 'Mapa de referência atual · ESA/Planck Collaboration. As curvas mostram espectros de corpo negro normalizados.',
-  giro: 'Textura de M51 · ESA/Hubble. Os pontos são estrelas de teste do modelo.'
+  giro: 'Textura de M51 · ESA/Hubble. Três marcadores acompanham órbitas de teste em raios diferentes.'
 };
 const panels: Panel[] = [
   {
@@ -147,7 +147,7 @@ const panels: Panel[] = [
               </svg></div>
             </div>
             <figcaption class="sci-sky-credit" data-sci-credit hidden>{sceneNotes[p.id]}{' '}
-              {p.id !== 'frio' && <a href={m51.href}>M51 · {m51.credit}</a>}
+              {p.id !== 'frio' && <InstrumentCredits earth={p.id === 'luz'} photos={p.id === 'expansao' || p.id === 'hubble' ? ['m51','ngc1300','ngc1132'] : ['m51']}/>}
               {p.id === 'frio' && <a href="https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137">Mapa original ↗</a>}
             </figcaption>
             <ul class="sci-key" aria-label="Legenda">

@@ -1,4 +1,5 @@
 ---
+import InstrumentCredits from './InstrumentCredits.astro';
 import {
   TRANSIT_KIND_LABELS, TRANSIT_PHASE_LIMIT, TRANSIT_PRESETS, TRANSIT_VIEW,
   transitPercent, transitPlot, transitPlotPoint,
@@ -57,7 +58,7 @@ const presets = [
         <text x={(left + right) / 2} y="147" text-anchor="middle">0%</text>
         <text x={right} y="147" text-anchor="end">+3%</text>
       </svg>
-      <figcaption>Os discos estão na mesma escala. A textura estelar é ilustrativa. O cálculo do fluxo usa brilho uniforme. O anel indica a posição do planeta. O eixo horizontal mostra o tempo em % do período, com 0% na passagem mais próxima do centro da estrela.</figcaption>
+      <figcaption>Os discos estão na mesma escala. A textura é do Sol observado pelo SDO. O cálculo do fluxo usa brilho uniforme. O anel indica a posição do planeta. O eixo horizontal mostra o tempo em % do período, com 0% na passagem mais próxima do centro da estrela. <InstrumentCredits earth photos={['solar-photosphere']}/></figcaption>
     </figure>
     <div class="transit-controls">
       <p class="transit-result" data-transit-kind>{TRANSIT_KIND_LABELS[center.kind]}</p>

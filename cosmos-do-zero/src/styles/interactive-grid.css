@@ -11,10 +11,8 @@
 .igrid-card { position: relative; display: grid; grid-template-rows: auto 1fr; min-width: 0; color: var(--ink); text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease), border-color 0.35s var(--ease); }
 .igrid-media { position: relative; display: block; aspect-ratio: 4 / 3; overflow: hidden; background: #0b0f16; border-bottom: 2px solid var(--accent); }
 .igrid-media img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
-.igrid-media--planet { display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 60%, #1a2233 0%, #0b0f16 70%); }
-.igrid-media--planet img { width: 82%; height: auto; object-fit: contain; }
-/* Os pôsteres trazem uma legenda gravada no rodapé; o tipo de imagem já aparece no rótulo do cartão. */
-.igrid-media--poster img { height: 126%; object-position: 50% 0; }
+.igrid-credit { align-self: start; margin: 6px 10px 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.igrid-cards li { grid-template-rows: 1fr auto; }
 .igrid-body .igrid-kind { position: absolute; left: 12px; top: 12px; padding: 6px 10px; font: 750 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: #1b2330; background: #fbf6e9; border-radius: 100px; }
 .igrid-body { display: grid; gap: 8px; align-content: start; padding: clamp(18px, 2vw, 26px); }
 .igrid-body strong { font-size: clamp(20px, 1.9vw, 26px); line-height: 1.15; letter-spacing: -0.03em; font-weight: 800; text-wrap: balance; }

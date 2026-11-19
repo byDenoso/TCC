@@ -1,4 +1,5 @@
 ---
+import InstrumentCredits from './InstrumentCredits.astro';
 import '../styles/lab.css';
 import { PLANCK } from '../lib/cosmology';
 type Station = 'tempo' | 'expansao' | 'hubble' | 'receita';
@@ -256,7 +257,8 @@ const ext = ' (abre em outra aba)';
       )}
     </div>
     <noscript><p class="obs-noscript">Os experimentos precisam de JavaScript ligado. As três jornadas, o glossário e as fontes continuam disponíveis para leitura.</p></noscript>
-    <p><small>Textura de M51 adaptada de <a href="https://esahubble.org/images/heic0506a/">NASA, ESA, S. Beckwith (STScI) e Hubble Heritage Team</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Recorte e bordas suavizadas.</small></p>
+    <p>As fotografias do Hubble representam galáxias nos modelos. A vista externa da Via Láctea e a região de emissão no Universo jovem são ilustrações.</p>
+    <p><InstrumentCredits photos={['m51','ngc1300','ngc1132']}/></p>
   </div>
 
 </section>

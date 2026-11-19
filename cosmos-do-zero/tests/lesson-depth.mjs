@@ -112,13 +112,19 @@ try {
   await go('/laboratorio/');
   const era = page.locator('[data-era-index="8"]');
   await era.click();
-  await painted('[data-era-depth]');
+  await page.locator('[data-era-render]').evaluate(async img => { await img.decode(); const file = new Image(); file.src = img.currentSrc; await file.decode(); if (file.naturalWidth < 600) throw Error('Imagem da época abaixo de 600 px'); });
   await snap('timeline', '[data-timeline-visual]');
   await page.locator('[data-mass="15"]').click();
   await page.locator('[data-star-step="2"]').click();
   await painted('[data-stellar-depth]');
   await snap('estrelas', '[data-star-svg]');
-  await page.locator('[data-star-step="4"]').click();
+  await Promise.all([
+    page.waitForResponse(r => r.url().endsWith('/renders/lesson-depth/disk.webp') && r.ok()),
+    (async () => {
+      await page.locator('[data-star-step="4"]').click();
+      await canvas('[data-stellar-depth]').scrollIntoViewIfNeeded();
+    })(),
+  ]);
   assert.match(
     await page.locator('[data-star-caption]').innerText(),
     /buraco negro/,
@@ -232,8 +238,6 @@ try {
     'helium',
     'proton',
     'electron',
-    'disk',
-    'stars-far',
   ]) {
     assert.ok(
       [...requests].some((url) =>
@@ -241,6 +245,9 @@ try {
       ),
       name,
     );
+  }
+  for (const asset of ['lessons-hd/disk-nasa.webp','lessons-hd/sgr-field.webp','micro-hd/sol.webp','micro-hd/espiral.webp']) {
+    assert.ok([...requests].some(path => path.endsWith('/renders/'+asset)),asset);
   }
   await writeFile(
     join(out, 'acceptance.json'),
@@ -251,7 +258,7 @@ try {
         checks,
         gl,
         errors,
-        assets: [...requests].filter((p) => p.includes('/lesson-depth/')),
+        assets: [...requests].filter((p) => /\/(lesson-depth|lessons-hd|micro-hd)\//.test(p)),
       },
       null,
       2,

@@ -37,12 +37,15 @@ try{
   const reference=await readFile(path);
   const pixels=async input=>(await sharp(input).resize(96,64,{fit:'fill'}).removeAlpha().raw().toBuffer());
   const bounds=await sharp(image).metadata(), target=await sharp(reference).metadata();
-  // Chromium includes one extra top scanline when the scrolled SVG starts between CSS pixels.
-  // Compare the same rectangle; other viewport and artwork changes keep their original error.
-  const aligned=bounds.width===target.width && bounds.height===target.height+1
-   ? await sharp(image).extract({left:0,top:1,width:target.width,height:target.height}).png().toBuffer()
-   : image;
-  const actual=await pixels(aligned),expected=await pixels(reference);
+  // Chromium may place the same scrolled SVG one device pixel higher or lower
+  // across platforms. Only that vertical offset is allowed; keep the artwork threshold.
+  assert.equal(bounds.width,target.width,'width of the rendered stage');
+  assert.ok(Math.abs(bounds.height-target.height)<=1,'height of the rendered stage');
+  const cropHeight=Math.min(bounds.height,target.height)-2;
+  const crop=(buffer,top)=>sharp(buffer).extract({left:0,top,width:target.width,height:cropHeight}).png().toBuffer();
+  const expected=await pixels(await crop(reference,1));
+  const candidates=await Promise.all([0,1,2].map(async top=>pixels(await crop(image,top))));
+  const actual=candidates.reduce((best,sample)=>mean(sample,expected)<mean(best,expected)?sample:best);
   const delta=mean(actual,expected),black=mean(Buffer.alloc(expected.length),expected);
   if(delta>=2){
    const failures=join(process.cwd(),'test-results','scale-visual');await mkdir(failures,{recursive:true});

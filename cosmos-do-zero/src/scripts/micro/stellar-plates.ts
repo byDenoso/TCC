@@ -1,3 +1,4 @@
+import { hd, skyBackdrop } from './hd-materials';
 import type { StagePaint } from '../stage-surface';
 import { deltaMagnitude, linearFit } from '../../lib/teaching-numerics';
 import { vHalo, vLum, vTotal } from '../../lib/rotation';
@@ -10,15 +11,10 @@ const gold = '#ffce82',
   ice = '#9fdfff',
   pink = '#ffa194';
 const library = '/models/stellar/plates/';
-// Spherical projections of the project's granulation.png. Cloud billboards sample
-// orion-detail.webp (Hubble Orion Treasury Project; credit in stellar/manifest.json).
-const amber = library + 'amber.webp',
-  red = library + 'red.webp';
-const white = library + 'white.webp',
-  blue = library + 'blue.webp',
-  cloud = library + 'cloud.webp';
-const galaxy = '/models/galaxies-v4/512/grand-spiral.webp';
-const cmbField = '/posters/cmb-field.webp';
+const amber = hd + 'sol.webp', red = hd + 'gigante.webp';
+const white = hd + 'branca.webp', blue = hd + 'azul.webp';
+const cloud = library + 'cloud.webp';
+const cmbField = hd + 'fundo-planck.webp';
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
 function label(s: StagePaint, text: string, x: number, y: number, size = 16, color = '#f0f4fa') {
@@ -59,23 +55,6 @@ const grains = Array.from({ length: 84 }, () => ({
   size: 1 + seeded() * 2,
 }));
 
-// Front and back passes let the opaque photosphere actually occult the far stream.
-function stream(s: StagePaint, x: number, y: number, r: number, flat: number, t: number, front: boolean) {
-  for (const p of grains) {
-    const a = p.angle + t * (1.25 - 0.65 * p.radius);
-    const depth = Math.sin(a);
-    if (depth > 0 !== front) continue;
-    const distance = r * (0.22 + 0.78 * p.radius);
-    const scale = 1 + 0.09 * depth;
-    dot(
-      s.ctx,
-      x + distance * Math.cos(a) * scale,
-      y + distance * flat * depth + p.depth * 4,
-      p.size * scale,
-      front ? '#ffc98ab8' : '#a0aacc85',
-    );
-  }
-}
 function eject(s: StagePaint, x: number, y: number, r: number, t: number) {
   const width = r * (1.25 + 1.2 * t);
   s.sprite(library + 'ejecta.webp', x, y, width, width * 0.87, 0.94);
@@ -84,32 +63,25 @@ const collapse: Plate = (s, v, t) => {
   const radii = [139, 95, 67, 42];
   const radius = mix(radii[Math.max(v - 1, 0)], radii[v], t);
   const flatten = v < 2 ? 0.78 : mix(v === 2 ? 0.78 : 0.21, 0.21, t);
-  for (let i = 0; i < 18; i++) {
-    const p = grains[i],
-      a = p.angle + t * 0.28;
-    s.sprite(
-      cloud,
-      219 + radius * p.radius * Math.cos(a),
-      177 + radius * p.radius * Math.sin(a) * flatten,
-      radius * 1.38,
-      radius * flatten * 1.5,
-      0.35,
-    );
+  const c = s.ctx;
+  c.save();
+  c.translate(219,177);
+  c.rotate(-.18 + .08*t);
+  if (v < 2) {
+    s.sprite(hd + 'molecular.webp', 0, 0, radius*2.7, radius*2.2);
+  } else {
+    c.scale(1, flatten + .13);
+    c.rotate(.18*t);
+    s.sprite('/renders/formation/disc.webp', 0, 0, 325);
   }
-  const span = v >= 2 ? 143 : radius;
-  stream(s, 219, 177, span, flatten, t, false);
+  c.restore();
   if (v) s.sprite(v === 3 ? amber : red, 219, 177, 14 + v * 13 + 5 * t);
-  stream(s, 219, 177, span, flatten, t, true);
   label(s, ['Nuvem molecular', 'Contração', 'Protoestrela e disco', 'Fusão de hidrogênio'][v], 395, 141, 19);
   label(s, ['−260 °C', 'Milhares de °C', '≈ 1 milhão °C', '≈ 10 milhões °C'][v], 395, 177, 22, gold);
   label(s, v === 0 ? 'Gás e poeira' : 'Temperatura central', 395, 202, 15);
 };
-function nucleon(c: Ink, x: number, y: number, r: number, proton: boolean) {
-  const g = c.createRadialGradient(x - r * 0.3, y - r * 0.4, 0, x, y, r);
-  g.addColorStop(0, proton ? '#ffe6b7' : '#effaff');
-  g.addColorStop(0.55, proton ? '#ee8a47' : '#78b8dc');
-  g.addColorStop(1, proton ? '#844029' : '#31516b');
-  dot(c, x, y, r, g);
+function nucleon(s: StagePaint, x: number, y: number, r: number, proton: boolean) {
+  s.sprite('/renders/lesson-depth/' + (proton ? 'proton' : 'electron') + '.webp', x, y, r*2.3);
 }
 const fusion: Plate = (s, v, t) => {
   const c = s.ctx;
@@ -151,7 +123,7 @@ const fusion: Plate = (s, v, t) => {
     const a = 0.76 + (i * Math.PI) / 2 + 0.3 * t,
       x = 308 + Math.cos(a) * separation,
       y = 177 + Math.sin(a) * separation * 0.84;
-    nucleon(c, x, y, 14, v === 0 || i % 2 === 0 || (v === 1 && t < 0.55));
+    nucleon(s, x, y, 14, v === 0 || i % 2 === 0 || (v === 1 && t < 0.55));
   }
   if (v === 2)
     for (let i = 0; i < 8; i++) {
@@ -298,9 +270,9 @@ const elements: Plate = (s, v, t) => {
     for (let i = 0; i < 15; i++) {
       const p = grains[i],
         d = 42 + (60 + 47 * t) * p.radius;
-      nucleon(s.ctx, x + Math.cos(p.angle) * d, y + Math.sin(p.angle) * d * 0.72, 3 + 3 * p.radius, true);
+      nucleon(s, x + Math.cos(p.angle) * d, y + Math.sin(p.angle) * d * 0.72, 3 + 3 * p.radius, true);
     }
-    s.sprite(cloud, x, y, 285, 176, 0.3);
+    s.sprite(hd + 'gas.webp', x, y, 360, 228, .8);
   } else if (v === 4) {
     const approach = Math.min(1, t / 0.66);
     const a = approach * 4.1 + 0.36,
@@ -349,14 +321,14 @@ function spectrum(s: StagePaint, x: number, y: number, w: number, shift: number)
     }
   }
 }
-function spiral(s: StagePaint, x: number, y: number, w: number, h: number, angle = 0) {
+function spiral(s: StagePaint, x: number, y: number, w: number, h: number, angle = 0, texture = hd + 'espiral.webp') {
   const c = s.ctx;
   c.save();
   c.translate(x, y);
   c.globalCompositeOperation = 'screen';
   c.scale(1, h / w);
   c.rotate(angle);
-  s.sprite(galaxy, 0, 0, w, w);
+  s.sprite(texture, 0, 0, w, w);
   c.restore();
 }
 const method: Plate = (s, v, t) => {
@@ -419,7 +391,7 @@ const method: Plate = (s, v, t) => {
 const spectra: Plate = (s, v, t) => {
   const exp = [0, 22, 120][v],
     local = [-14, 10, 8][v];
-  spiral(s, 151, 153, [212, 160, 107][v], [125, 99, 70][v], -0.4);
+  spiral(s, 151, 153, [212, 160, 107][v], [125, 99, 70][v], -0.4, v === 0 ? hd + 'andromeda.webp' : hd + 'espiral.webp');
   const x = 291,
     y = 91,
     w = 307;
@@ -490,7 +462,7 @@ const microwave: Plate = (s, v, t) => {
     308,
     20,
   );
-  label(s, 'Mapa simulado de temperatura · cores atribuídas', 44, 333, 15, ice);
+  label(s, 'Mapa ESA/Planck · contraste e primeiro plano ilustrativos', 44, 333, 15, ice);
 };
 
 function trace(c: Ink, points: readonly (readonly number[])[], color: string, width = 2) {
@@ -667,7 +639,7 @@ export function paint(canvas: StagePaint, id: string, value: number, phase: numb
   const v = Math.min(scene.last, Math.max(lower, Math.round(value)));
   canvas.ctx.save();
   try {
-    canvas.backdrop();
+    skyBackdrop(canvas);
     scene.draw(canvas, v, Math.max(0, Math.min(1, phase)));
   } finally {
     canvas.ctx.restore();

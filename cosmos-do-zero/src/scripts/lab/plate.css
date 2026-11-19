@@ -14,8 +14,9 @@ svg[data-lab-plate="ready"] [data-lab-body] { opacity: 0; }
   stroke-width: 2px;
   stroke-linejoin: round;
 }
-.observatory [data-h-sky] .h-ring { stroke: #8195af; }
-.observatory [data-h-sky] .is-selected .h-ring { stroke: #ffd89b; }
+.observatory [data-h-sky] .h-ring { stroke: transparent; }
+.observatory [data-h-sky] .is-done .h-ring { stroke: #8195af; }
+.observatory [data-h-sky] .h-gal:is(:hover, :focus-visible, .is-selected) .h-ring { stroke: #ffd89b; }
 
 [data-transit-play], [data-expansion-play] {
   display: block; min-height: 44px; margin: 8px auto; padding: 6px 15px;

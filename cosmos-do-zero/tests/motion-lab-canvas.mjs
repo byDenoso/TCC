@@ -34,8 +34,12 @@ try {
       assert.equal(await close.getAttribute('aria-expanded'), 'true');
       await close.press('Space');
       assert(await diagram.isHidden());
-      if (id !== 'frio') assert.equal(await panel.locator('[data-sci-credit] a').innerText(),
-        'M51 · NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)');
+      if (id !== 'frio') {
+        const credits = panel.locator('[data-sci-credit]');
+        assert.match(await credits.innerText(), /S\. Beckwith/);
+        const ids = ['expansao', 'hubble'].includes(id) ? ['M51', 'NGC 1300', 'NGC 1132'] : ['M51'];
+        for (const name of ids) assert(await credits.getByRole('link', { name, exact:true }).isVisible());
+      }
       const range = panel.locator('[data-sci-range]');
       await range.press('Home');
       const before = await pixels(canvas);
@@ -80,7 +84,8 @@ try {
   for (const failure of ['context', 'asset']) {
     const p = await browser.newPage({ reducedMotion: 'reduce' });
     if (failure === 'context') await p.addInitScript(() => { HTMLCanvasElement.prototype.getContext = () => null; });
-    else await p.route(/m51-480\.webp|planck-cmb[^/]*\.webp/, route => route.abort());
+    else await p.route(/instruments-hd\/m51\.webp|planck-cmb[^/]*\.webp/, route =>
+      route.request().resourceType() === 'image' ? route.abort() : route.continue());
     await p.goto(base);
     for (const id of ids) {
       await p.locator(`[data-sci-tab="${id}"]`).click();

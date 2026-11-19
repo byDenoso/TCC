@@ -63,3 +63,31 @@ html:not([data-motion='reduced']) .journey[data-journey-ready] .journey-step:not
   .journey[data-journey-ready] .journey-steps { margin-top: 0; }
   .journey[data-journey-ready] .journey-step { min-height: 0; }
 }
+/* Photographic plates behind the reading cards retain dark framing in both themes. */
+.journey-still { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius); }
+.journey[data-journey-ready] .journey-still { display: none; }
+.journey[data-journey-ready] .journey-stage { background: #0a1018; isolation: isolate; }
+.journey-stage::after { background: linear-gradient(180deg, rgb(5 9 16 / .18), transparent 20%, transparent 65%, rgb(5 9 16 / .79)); }
+.journey-transport { display: flex; align-items: center; justify-content: end; flex-wrap: wrap; gap: .55rem; pointer-events: auto; }
+.journey-transport label { display:flex; align-items:center; gap:.55rem; color:#fff; font:600 .85rem/1.2 var(--body); }
+.journey-transport :is(select,button) { font:inherit; max-width:100%; min-height:40px; color:#f6f5f0; background:#111a24; border:1px solid #77818b; border-radius:var(--radius); padding:.4rem .65rem; }
+.journey-hud { pointer-events:auto; text-shadow:0 1px 6px #05090f; }
+html:root:root .journey-stage .journey-when { color:#faf8f1; }
+.journey-stage .journey-rail i { background:#d1d5d7; }
+.journey-photo-credit { color:var(--muted); font-size:13px; line-height:1.45; }
+.journey-photo-credit summary { width:fit-content; cursor:pointer; color:var(--ink); }
+.journey-photo-credit summary span { font-size:.85em; }
+.journey-photo-credit[open] summary span { display:none; }
+.journey-photo-credit p { margin:.4rem 0 0; }
+.journey-photo-credit a { color:inherit; text-decoration:underline; }
+@media(max-width:860px) {
+  .journey-stage::after { background:linear-gradient(180deg,rgb(5 9 16 / .8),transparent 30%,transparent 70%,rgb(5 9 16 / .55)); }
+  .journey-hud { top:max(12px,env(safe-area-inset-top)); max-width:calc(100% - 28px); z-index:4; }
+  .journey-transport { justify-content:start; gap:.35rem; font-size:12px; }
+  .journey-transport label { font-size:12px; }
+  .journey-transport select { max-width: min(55vw, 19rem); }
+  .journey-when { font-size:clamp(20px,5vw,30px); }
+}
+@media print { .journey[data-journey-ready] .journey-still { display:block; } }
+
+.journey-missing { position:absolute; z-index:2; top:28%; right:var(--gutter); max-width:28ch; padding:.65rem 1rem; color:#fbfaf8; background:#111a24; border-radius:var(--radius); }

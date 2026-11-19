@@ -49,7 +49,7 @@ function mountJourney(root: HTMLElement): void {
     if (mode !== 'video' || videoFailed || value < firstVideoStage || value > finalVideoStage) return false;
     if (!video.getAttribute('src')) {
       video.preload = 'auto';
-      video.src = video.dataset.scaleVideo!;
+      video.src = canvas.clientWidth * devicePixelRatio <= 900 ? video.dataset.compact! : video.dataset.scaleVideo!;
     }
     if (video.readyState < HTMLMediaElement.HAVE_METADATA || !Number.isFinite(video.duration)) return false;
     const wantedTime = journeyVideoTime(value - firstVideoStage, video.duration);
@@ -61,7 +61,10 @@ function mountJourney(root: HTMLElement): void {
     const { from, to, blend } = journeyLayers(value, lastStage);
     posters.forEach((img, i) => {
       const opacity = i === from ? 1 - blend : i === to ? blend : 0;
-      if (opacity && !img.getAttribute('src')) img.src = img.dataset.src!;
+      if (opacity && !img.getAttribute('src')) {
+        img.srcset = img.dataset.srcset!;
+        img.src = img.dataset.src!;
+      }
       img.style.setProperty('--scale-opacity', String(opacity));
       img.style.setProperty('--scale-size', String(i === from ? .08 ** blend : i === to ? 3.2 ** (1 - blend) : 1));
     });

@@ -3,11 +3,11 @@
  * Nada se move sozinho: toda mudança de enquadramento responde a um toque, clique ou tecla.
  * O arraste horizontal move a imagem; o vertical continua rolando a página no toque (touch-action: pan-y).
  */
-import { clampView, coverSize, focusOn, zoomAbout, type ViewBox, type ViewState } from '../lib/photo-view';
+import { clampView, focusOn, zoomAbout, type ViewBox, type ViewState } from '../lib/photo-view';
 import { motionPreference } from './motion-preference';
 
 interface Panel {
-  root: HTMLElement; view: HTMLElement; canvas: HTMLElement; ratio: number;
+  root: HTMLElement; view: HTMLElement; canvas: HTMLElement; image: HTMLImageElement; ratio: number;
   spots: HTMLButtonElement[]; annotations: SVGPathElement[]; texts: { title: string; text: string }[];
   box: ViewBox; state: ViewState; active: number;
   count: HTMLElement | null; title: HTMLElement | null; text: HTMLElement | null;
@@ -19,10 +19,11 @@ export function initPhotoExplorer(): void {
   const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-px-tab]')];
   const panels: Panel[] = [...root.querySelectorAll<HTMLElement>('[data-px-panel]')].flatMap((el) => {
     const view = el.querySelector<HTMLElement>('[data-px-view]'), canvas = el.querySelector<HTMLElement>('[data-px-canvas]');
-    if (!view || !canvas) return [];
+    const image = canvas?.querySelector('img');
+    if (!view || !canvas || !image) return [];
     const items = [...el.querySelectorAll<HTMLLIElement>('[data-px-list] li')];
     return [{
-      root: el, view, canvas, ratio: Number(el.dataset.pxRatio) || 1.5,
+      root: el, view, canvas, image, ratio: Number(el.dataset.pxRatio) || 1.5,
       spots: [...el.querySelectorAll<HTMLButtonElement>('[data-px-spot]')],
       annotations: [...el.querySelectorAll<SVGPathElement>('[data-px-annotation]')],
       texts: items.map((li) => { const strong = li.querySelector('strong')?.textContent ?? ''; return { title: strong.replace(/\.$/, ''), text: (li.textContent ?? '').slice(strong.length).trim() }; }),
@@ -39,6 +40,8 @@ export function initPhotoExplorer(): void {
   };
   const apply = (p: Panel, animate: boolean) => {
     p.canvas.classList.toggle('is-gliding', animate && canAnimate(p));
+    const slot = Math.ceil(p.box.cw * p.state.z) + 'px';
+    if (p.image.sizes !== slot) p.image.sizes = slot;
     p.canvas.style.width = `${p.box.cw}px`; p.canvas.style.height = `${p.box.ch}px`;
     p.canvas.style.transform = `translate3d(${p.state.tx.toFixed(1)}px, ${p.state.ty.toFixed(1)}px, 0) scale(${p.state.z.toFixed(4)})`;
     p.canvas.style.setProperty('--px-z', p.state.z.toFixed(4));
@@ -47,7 +50,8 @@ export function initPhotoExplorer(): void {
   const measure = (p: Panel) => {
     const vw = p.view.clientWidth, vh = p.view.clientHeight;
     if (vw === 0 || vh === 0) return false;
-    p.box = { vw, vh, ...coverSize(vw, vh, p.ratio) };
+    const cw = Math.min(vw, vh * p.ratio);
+    p.box = { vw, vh, cw, ch: cw / p.ratio };
     return true;
   };
   const focus = (p: Panel, animate: boolean) => {

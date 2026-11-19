@@ -37,7 +37,7 @@ const {id}=Astro.props,story=STORIES[id],prefix=`story-${id}`;
     <output for={`${prefix}-time`} data-story-clock>0:00 / 0:20</output>
   </div>
   <p class="story-caption" data-story-caption>{story.phases[0].say}</p>
-  <p class="story-limit story-reference">{id === 'origem-do-universo' ? 'Diagrama interativo da onda. O vídeo mostra a versão em 3D.' : 'A imagem muda a cada etapa. O diagrama acompanha o instante escolhido.'}</p>
+  <p class="story-limit story-reference">{id === 'origem-do-universo' ? 'M51 (Hubble · NASA/ESA) ilustra a fonte. A onda mostra o efeito da expansão no modelo.' : 'A imagem muda a cada etapa. O diagrama acompanha o instante escolhido.'}</p>
   <p class="story-limit">{story.limit}</p>
   <details class="story-transcript"><summary>Ler a explicação</summary><ol>{story.phases.map(phase=><li><strong>{phase.label}.</strong> {phase.say}</li>)}</ol><p>Vídeo ilustrativo, sem narração. Você escolhe o ritmo pelos controles.</p><a href={u(`/media/stories/${id}.mp4`)}>Abrir o vídeo de 20 segundos ↗</a></details>
   <noscript><p>A cena acima mostra o primeiro momento. Leia as três etapas em “Ler a explicação” ou abra o vídeo.</p></noscript>

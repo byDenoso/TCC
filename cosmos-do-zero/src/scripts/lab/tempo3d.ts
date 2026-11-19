@@ -21,11 +21,11 @@ export function mountTempo3D(host: HTMLElement, reduced: () => boolean): Tempo3D
   const button = host.querySelector<HTMLButtonElement>('[data-3d-play]')!;
   let sourceX = 0, lightX = 0, localScale = 1, observedNm = 656.28;
   for (const body of [galaxy, gas, light, scene.querySelector('ellipse[cx]')!]) body.setAttribute('data-lab-body', '');
-  const surface = plate(scene, ['spiral','barred','plasma'], (ctx, img) => {
-    drawGalaxy(ctx,img('barred'),490,210,39,-.24);
+  const surface = plate(scene, ['spiral','milkyWay','plasma'], (ctx, img) => {
+    drawGalaxy(ctx,img('milkyWay'),490,210,54,-.24,.64);
     if (z < .005) return;
-    if (z < 20) drawGalaxy(ctx,img('spiral'),sourceX,210,40,.23);
-    else ctx.drawImage(img('plasma'),sourceX-42,179,84,62);
+    if (z < 20) drawGalaxy(ctx,img('spiral'),sourceX,210,50,.23);
+    else ctx.drawImage(img('plasma'),sourceX-62,169,124,82);
     // Wavelength along this geodesic tracks a(t); compress the displayed crest spacing.
     const wavelength = observedNm * localScale;
     const period = 8 * (localScale * (1+z)) ** .22;

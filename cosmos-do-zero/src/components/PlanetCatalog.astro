@@ -1,9 +1,9 @@
 ---
 import { planets } from '../data';
-import { planetGlobe } from '../lib/images';
 import { catalogFacts } from '../lib/planets';
 import { u } from '../lib/url';
 import { pad2 } from '../lib/format';
+import { frameSources } from '../scripts/visual/world-view';
 import WorldViewControls from './WorldViewControls.astro';
 import SolarCredits from './SolarCredits.astro';
 const def = planets.find((p) => p.id === 'terra')!;
@@ -25,7 +25,7 @@ const maxR = Math.max(...planets.map((p) => p.radius));
           <div class="planet-illustration solar-stage" data-planet-stage>
             <span class="diagram-coord">CATÁLOGO PLANETÁRIO / <span data-planet-number>{pad2(defIndex + 1)}</span></span>
             <div class="planet-ellipse" aria-hidden="true"></div>
-            <img class="planet-img" data-planet-img data-planet={def.id} src={u('/models/solar-turntable/terra/00.webp')} width="320" height="320" loading="lazy" alt={`Ilustração artística da ${def.name}`} decoding="async" />
+            <img class="planet-img" data-planet-img data-planet={def.id} src={u('/models/solar-turntable/terra/00.webp')} srcset={frameSources('terra')} sizes="auto, (max-width: 600px) 74vw, 400px" width="320" height="320" loading="lazy" alt={`Ilustração artística da ${def.name}`} decoding="async" />
             <span class="illustration-note">Ilustração artística · sem escala</span>
           </div>
           <WorldViewControls/>
@@ -56,7 +56,7 @@ const maxR = Math.max(...planets.map((p) => p.radius));
         <div class="ruler-row">
           {planets.map((p) => (
             <button type="button" data-ruler={p.id} aria-label={`Selecionar ${p.name} na régua de tamanhos`} aria-pressed={p.id === def.id ? 'true' : 'false'} class:list={['ruler-item', p.id === def.id && 'active']} style={`--size:${((p.radius / maxR) * 100).toFixed(3)}`}>
-              <img src={planetGlobe[p.id].src} alt="" width={planetGlobe[p.id].width} height={planetGlobe[p.id].height} loading="lazy" decoding="async" />
+              <img src={u(`/models/worlds-hd/thumbs/${p.id === 'saturno' ? 'saturno-globo' : p.id}.webp`)} alt="" width="112" height="112" loading="lazy" decoding="async" />
               <span>{p.name}</span>
             </button>
           ))}

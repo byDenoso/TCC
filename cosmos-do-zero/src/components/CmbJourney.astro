@@ -22,8 +22,8 @@ const checks = [spec.guess, spec.check];
   </ol>
 
   <div class="cmbj-scene">
-    <div class="cmbj-stage" data-cmbj-stage>
-      <img class="cmbj-still" data-cmbj-still src={u('/posters/plasma-small.webp')} alt="" aria-hidden="true" loading="lazy" />
+    <div class="cmbj-stage" style={`--plasma:url("${u('/renders/journey-hd/primordial-1600.webp')}");--neutral:url("${u('/renders/journey-hd/dark-ages-1600.webp')}")`} data-cmbj-stage>
+      <img class="cmbj-still" data-cmbj-still src={u('/renders/journey-hd/primordial-1600.webp')} alt="" aria-hidden="true" loading="lazy" />
       <canvas data-cmbj-canvas aria-hidden="true"></canvas>
       <ul class="cmbj-legend" aria-label="Legenda do desenho">
         <li data-cmbj-legend="quente atomos"><i class="k-light" aria-hidden="true"></i>luz</li>
@@ -99,6 +99,12 @@ const checks = [spec.guess, spec.check];
 </div>
 
 <style>
+  [data-step='quente'] .cmbj-stage, [data-step='atomos'] .cmbj-stage {
+    background-color:#080e18;
+    background-image:linear-gradient(#1010219c,#070d19ba),var(--plasma);
+    background-size:cover;background-position:center;
+  }
+  [data-step='atomos'] .cmbj-stage {background-image:linear-gradient(#07112155,#070d1977),var(--neutral)}
   .cmbj-still {position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
   :global(.is-ready:not(.is-static)) .cmbj-still {display:none}
 </style>

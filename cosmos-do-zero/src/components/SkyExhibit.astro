@@ -1,16 +1,13 @@
 ---
 import { Image } from 'astro:assets';
+import carina from '../assets/photos/carina-cosmic-cliffs.webp';
 import planck from '../assets/photos/planck-cmb.webp';
 import { u } from '../lib/url';
-// Estrelas determinísticas (sem JS): mesma semente = mesma abertura em todo build.
-let seed = 235711;
-const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand() * 88, o: 0.12 + rand() * 0.38, big: rand() > 0.9 }));
 ---
 <div class="hero-shell" id="ceu">
   <img hidden data-nebula-plate data-src={u('/renders/sky-nebula.webp')} alt="" width="1440" height="900" class="sky-nebula-plate" />
-  <div class="starfield" aria-hidden="true" style={`background-image:url("${u('/renders/lesson-depth/stars-far.webp')}");background-position:center;background-size:cover`}>
-    {stars.map((s) => <i class:list={['star', s.big && 'big']} style={`left:${s.left.toFixed(2)}%;top:${s.top.toFixed(2)}%;opacity:${s.o.toFixed(2)}`}></i>)}
+  <div class="starfield" aria-hidden="true" style={`background-image:linear-gradient(#080d19b5,#080d19df),url("${carina.src}");background-position:center;background-size:cover`}>
+    <i class="star" style="left:72%;top:18%" />
   </div>
   <section class="hero-main page-width hero" aria-labelledby="hero-instrument-title">
     <div class="hero-instrument-copy">
@@ -51,7 +48,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
         <details class="cmb-projections" open><summary>Ver o hemisfério selecionado e o mapa do Planck</summary>
           <div class="cmb-pair">
             <figure><canvas width="176" height="176" data-cmb-sphere aria-label="Hemisfério do mapa simulado centrado no ponto selecionado"></canvas><figcaption>Direção selecionada no centro do hemisfério simulado.</figcaption></figure>
-            <figure><Image src={planck} width={320} alt="Mapa de temperatura do céu observado pela missão Planck." loading="lazy"/><figcaption><a href="https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137">Mapa observado · ESA/Planck Collaboration</a>.</figcaption></figure>
+            <figure><Image src={planck} width={840} widths={[420,840]} sizes="(max-width:700px) 85vw, 440px" alt="Mapa de temperatura do céu observado pela missão Planck." loading="lazy"/><figcaption><a href="https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137">Mapa observado · ESA/Planck Collaboration</a>.</figcaption></figure>
           </div>
         </details>
         <p class="cmb-note" id="cmb-provenance">Mapa simulado: as cores e temperaturas são ilustrativas; não são medidas do céu nem dados do satélite Planck. Um µK equivale a um milionésimo de kelvin.</p>
@@ -64,7 +61,7 @@ const stars = Array.from({ length: 64 }, () => ({ left: rand() * 100, top: rand(
 </div>
 
 <style>
-  .cmb-pair {display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:1rem}
+  .cmb-pair {display:grid;grid-template-columns:minmax(74px,1fr) 3fr;align-items:center;gap:1rem}
   .cmb-pair figure {margin:0}
   .cmb-pair canvas,.cmb-pair img {max-width:100%;height:auto}
   .cmb-projections summary {cursor:pointer}

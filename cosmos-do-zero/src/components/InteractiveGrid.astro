@@ -1,24 +1,20 @@
 ---
 import '../styles/interactive-grid.css';
 import { Image } from 'astro:assets';
-import { photos, planetArt } from '../lib/images';
+import { courseCovers } from '../lib/course-covers';
 import { u } from '../lib/url';
 /**
  * Vitrine dos interativos que já existem no site. Cada cartão diz o que a imagem é
  * (foto real, simulação ou ilustração), para ninguém confundir desenho com observação.
  */
-type Card = { href: string; kind: string; title: string; text: string; action: string } & (
-  | { photo: keyof typeof photos; focus?: string }
-  | { poster: string }
-  | { planet: keyof typeof planetArt }
-);
+type Card = { href: string; cover: keyof typeof courseCovers; title: string; text: string; action: string };
 const cards: Card[] = [
-  { href: u('/escalas/'), kind: 'Exploração 3D', title: 'Do próton ao universo observável', text: 'Arraste a régua ou role para viajar entre partículas, planetas e galáxias.', action: 'Explorar as escalas', poster: 'earth' },
-  { href: u('/imagens/'), kind: 'Fotos reais · NASA', title: 'Fotos do Webb, WISE e da estação espacial', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', photo: 'andromeda-wise', focus: '50% 50%' },
-  { href: `${u('/laboratorio/')}#planetas`, kind: 'Ilustração artística', title: 'Os oito planetas do Sistema Solar', text: 'Compare composição, atmosfera e tamanho dos planetas.', action: 'Conhecer os planetas', planet: 'saturno' },
-  { href: u('/#viagem'), kind: 'Animação guiada', title: 'Marcos da história do Universo', text: 'Role a página para avançar da fase de plasma quente até as galáxias de hoje.', action: 'Abrir a linha do tempo', poster: 'galaxies' },
-  { href: u('/observatorio/?lab=tempo#observatorio'), kind: 'Mapa simulado', title: 'A radiação cósmica de fundo', text: 'Ajuste o redshift e veja quando essa radiação passou a viajar livremente.', action: 'Abrir a máquina do tempo', poster: 'cmb' },
-  { href: `${u('/laboratorio/')}#estrelas`, kind: 'Foto real · Webb', title: 'A vida de uma estrela', text: 'Estrelas nascem em nuvens como esta. Escolha a massa inicial e acompanhe o caminho da evolução.', action: 'Seguir uma estrela', photo: 'carina-cosmic-cliffs', focus: '30% 40%' }
+  { href: u('/escalas/'), title: 'Do próton ao universo observável', text: 'Arraste a régua ou role para viajar entre partículas, planetas e galáxias.', action: 'Explorar as escalas', cover: 'terra-e-atmosfera' },
+  { href: u('/imagens/'), title: 'Fotos do Webb, WISE e da estação espacial', text: 'Amplie Andrômeda, os Penhascos Cósmicos e o nascer do Sol visto da Estação Espacial.', action: 'Ler as imagens', cover: 'galaxias-e-nebulosas' },
+  { href: `${u('/laboratorio/')}#planetas`, title: 'Os oito planetas do Sistema Solar', text: 'Compare composição, atmosfera e tamanho dos planetas.', action: 'Conhecer os planetas', cover: 'sistema-solar' },
+  { href: u('/#viagem'), title: 'Marcos da história do Universo', text: 'Role a página para avançar da fase de plasma quente até as galáxias de hoje.', action: 'Abrir a linha do tempo', cover: 'misterios-do-cosmos' },
+  { href: u('/observatorio/?lab=tempo#observatorio'), title: 'A radiação cósmica de fundo', text: 'Ajuste o redshift e veja quando essa radiação passou a viajar livremente.', action: 'Abrir a máquina do tempo', cover: 'origem-do-universo' },
+  { href: `${u('/laboratorio/')}#estrelas`, title: 'A vida de uma estrela', text: 'Estrelas nascem em nuvens como esta. Escolha a massa inicial e acompanhe o caminho da evolução.', action: 'Seguir uma estrela', cover: 'vida-das-estrelas' }
 ];
 ---
 <section class="igrid" id="interativos" aria-labelledby="igrid-title">
@@ -32,18 +28,20 @@ const cards: Card[] = [
       {cards.map((c) => (
         <li>
           <a class="igrid-card" href={c.href}>
-            <span class:list={['igrid-media', 'planet' in c && 'igrid-media--planet', 'poster' in c && 'igrid-media--poster']}>
-              {'photo' in c && <Image src={photos[c.photo]} alt="" width={720} height={540} widths={[360, 720]} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 400px" fit="cover" position="center" format="webp" quality={78} loading="lazy" style={`object-position:${c.focus ?? '50% 50%'}`} />}
-              {'poster' in c && <img src={u(`/posters/${c.poster}-small.webp`)} srcset={`${u(`/posters/${c.poster}-small.webp`)} 600w, ${u(`/posters/${c.poster}.webp`)} 1200w`} sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 400px" alt="" width="1200" height="800" loading="lazy" decoding="async" />}
-              {'planet' in c && <Image src={planetArt[c.planet]} alt="" width={640} widths={[320, 640]} sizes="(max-width: 700px) 80vw, 320px" format="webp" quality={82} loading="lazy" />}
+            <span class="igrid-media">
+              <Image src={courseCovers[c.cover].image} alt={courseCovers[c.cover].alt}
+                widths={[240, 480, 800]} sizes="(max-width: 700px) 116px, (max-width: 1100px) 46vw, 400px"
+                format="webp" quality={83} loading="lazy" decoding="async"
+                style={`object-position:${courseCovers[c.cover].position ?? 'center'}`} />
             </span>
             <span class="igrid-body">
-              <span class="igrid-kind">{c.kind}</span>
+              <span class="igrid-kind">{courseCovers[c.cover].caption}</span>
               <strong>{c.title}</strong>
               <span>{c.text}</span>
               <span class="igrid-action">{c.action} <i aria-hidden="true">→</i></span>
             </span>
           </a>
+          <a class="igrid-credit" href={courseCovers[c.cover].source.href}>Imagem · {courseCovers[c.cover].source.credit}</a>
         </li>
       ))}
     </ul>

@@ -1,6 +1,8 @@
 ---
 import '../styles/photo-explorer.css';
-import { Image } from 'astro:assets';
+import { getImage, Image } from 'astro:assets';
+import m51Original from '../../assets/source/observed/heic0506a.jpg';
+import { u } from '../lib/url';
 import { imageCredits } from '../data';
 import { photos } from '../lib/images';
 import { photoStories } from '../data/photo-explorer';
@@ -13,6 +15,8 @@ import { pad2 } from '../lib/format';
 import M51Image from './M51Image.astro';
 import m51 from '../../assets/source/m51.json';
 const m51Credit = { ...m51, kind: 'observação em cores compostas' };
+const m51Detail = await getImage({ src: m51Original, width: m51.original.width, format: 'webp', quality: 86 });
+const m51Set = [...m51.derivatives.map(d => `${u(d.path.replace(/^public/, ''))} ${d.width}w`), `${m51Detail.src} ${m51.original.width}w`].join(', ');
 const ext = ' (abre em outra aba)';
 ---
 <section class="px" id="imagens" aria-labelledby="px-title" data-px>
@@ -36,9 +40,9 @@ const ext = ' (abre em outra aba)';
       return (
         <article class="px-panel" data-px-panel={story.key} data-px-ratio={(photo.width / photo.height).toFixed(4)} aria-labelledby={`px-${story.key}-title`}>
           <div class="px-stage">
-            <div class="px-view" data-px-view tabindex="-1">
+            <div class="px-view" style={`--photo-ratio:${photo.width / photo.height}`} data-px-view tabindex="-1">
               <div class="px-canvas" data-px-canvas style={`aspect-ratio:${photo.width}/${photo.height}`}>
-                {story.key === 'm51' ? <M51Image sizes="(max-width: 860px) 100vw, 900px" /> : <Image src={photos[story.key]} alt={credit.alt} widths={[800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />}
+                {story.key === 'm51' ? <img src={u('/photos/m51/m51-960.webp')} srcset={m51Set} sizes="(max-width: 860px) 100vw, 900px" alt={m51.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" draggable="false" /> : <Image src={photos[story.key]} alt={credit.alt} widths={[480, 800, 1400, photo.width]} sizes="(max-width: 860px) 100vw, 900px" format="webp" quality={82} loading="lazy" draggable="false" />}
                 <svg class="px-annotations" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
                   {story.spots.map((spot, k) => <path data-px-annotation={k} d={spot.trace} pathLength="1" vector-effect="non-scaling-stroke" />)}
                 </svg>

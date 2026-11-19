@@ -40,12 +40,13 @@ export function initStars(): void {
   if (svg) {
     const plane=document.createElementNS('http://www.w3.org/2000/svg','foreignObject');
     plane.setAttribute('width','480');plane.setAttribute('height','270');plane.setAttribute('aria-hidden','true');
+    plane.style.pointerEvents='none';plane.style.overflow='hidden';texture.style.pointerEvents='none';
     plane.append(texture);svg.append(plane);texture.dataset.stellarDepth='';
   }
   const tinted=document.createElement('canvas');
   let lastColor='';
   const paintSurface=depthCanvas(svg ? texture : null,(ctx,image)=>{
-    const star=image(baked('star'));
+    const star=image('/renders/micro-hd/sol.webp');
     if(!layer || !star)return;
     // The model's own disks set the center and radius at this mass, stage and instant.
     for(const disk of layer.querySelectorAll<SVGCircleElement>('circle[fill^="url("]')) {
@@ -76,7 +77,7 @@ export function initStars(): void {
     if (layer && caption) caption.textContent = drawStellar(layer, m, step, t);
     paintSurface();
     if (cloud) {
-      if (step < 2 && !cloud.hasAttribute('href')) cloud.setAttribute('href', u('/renders/reel-cycles/nebula.webp'));
+      if (step < 2 && !cloud.hasAttribute('href')) cloud.setAttribute('href', u('/models/stellar/plates/cloud.webp'));
       cloud.setAttribute('visibility', step < 2 ? 'visible' : 'hidden');
     }
     $$<HTMLButtonElement>('[data-star-step]', root).forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.starStep) === step)));

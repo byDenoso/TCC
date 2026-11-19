@@ -1,0 +1,221 @@
+[
+  {
+    "name": "plasma",
+    "origin": "public/renders/lesson-depth/manifest.json",
+    "credit": "Cosmos do Zero",
+    "rights": "Ilustração original CC0-1.0. Densidade e cores artísticas, partículas ampliadas.",
+    "files": [
+      {
+        "file": "plasma-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "15e83ed02a865b067272914113ec77597884cc00756bb5db49fc779b8005220e"
+      },
+      {
+        "file": "plasma.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "e1ef8619e5aba589dd85fdb2b7bc2d7eecef3189a2cb8cb64bb14a4ba4b044b8"
+      }
+    ]
+  },
+  {
+    "name": "nuclei",
+    "origin": "public/renders/lesson-depth/manifest.json",
+    "credit": "Cosmos do Zero",
+    "rights": "Ilustração original CC0-1.0. Densidade e cores artísticas, partículas ampliadas.",
+    "files": [
+      {
+        "file": "nuclei-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "e0fe8fe7f08e0a34a73c20f2cfd13862e309e43908af1fb6094db5708e74634b"
+      },
+      {
+        "file": "nuclei.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "9db74540ae2c459d1a6c123e70ca13bc9ce59f933960a779e33577f520a6f0e0"
+      }
+    ]
+  },
+  {
+    "name": "dark-ages",
+    "origin": "public/renders/lesson-depth/manifest.json",
+    "credit": "Cosmos do Zero",
+    "rights": "Ilustração original CC0-1.0. Densidade e cores artísticas, partículas ampliadas.",
+    "files": [
+      {
+        "file": "dark-ages-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "839e863aa98de1dde38d53abf1b414e29ae381f0d3f428f024bbac2b2bc90576"
+      },
+      {
+        "file": "dark-ages.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "c62c946ebc5e4401cdf3df1d92562422ea3a5370e28199888ff32c7e176591fe"
+      }
+    ]
+  },
+  {
+    "name": "reionization",
+    "origin": "public/renders/lesson-depth/manifest.json",
+    "credit": "Cosmos do Zero",
+    "rights": "Ilustração original CC0-1.0. Densidade e cores artísticas, partículas ampliadas.",
+    "files": [
+      {
+        "file": "reionization-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "49e08bccfe4df99e330b865d9150204a7c33015953e09be0906b103a516e2213"
+      },
+      {
+        "file": "reionization.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "2ea7d53d3e9b8210e4fe2748e854c9faf79de35b43ee20ccae31cd2f3bac4c87"
+      }
+    ]
+  },
+  {
+    "name": "cmb",
+    "origin": "https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137",
+    "credit": "ESA/Planck Collaboration",
+    "rights": "ESA multimedia terms",
+    "files": [
+      {
+        "file": "cmb-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "cf6470d3245b7d5407d1b12d63b777da67ae2e51385c16156f4ad3cd793f94a0"
+      },
+      {
+        "file": "cmb.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "00d074a2c7fcb47c8a576efd4a6e9bcaebd170e485af9e92fc016fec8b6d8048"
+      }
+    ]
+  },
+  {
+    "name": "galaxies",
+    "origin": "https://science.nasa.gov/asset/webb/webbs-first-deep-field/",
+    "credit": "NASA, ESA, CSA, STScI",
+    "rights": "NASA/Webb image use guidelines",
+    "files": [
+      {
+        "file": "galaxies-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "760582b07cad3e3526b894ee0666e828345b66f657580d3611ed9dd1e2d76ad5"
+      },
+      {
+        "file": "galaxies.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "9555d9c0709ee6f603e64407949acbbb0f8bda035a242cba2124f5cff09258fe"
+      }
+    ]
+  },
+  {
+    "name": "oxygen",
+    "origin": "https://earthobservatory.nasa.gov/images/152259/sunrise-from-the-station",
+    "credit": "NASA/JSC · Expedition 70",
+    "rights": "NASA media usage guidelines",
+    "files": [
+      {
+        "file": "oxygen-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "4c2485c8f6695e1cd41fb038720a72306bb4a57d844d46be5568405e97440d03"
+      },
+      {
+        "file": "oxygen.webp",
+        "dimensions": [
+          1200,
+          800
+        ],
+        "sha256": "06309b6abcf46a42960799e51ba3526f360e790bcea10e47097400d7ba900a23"
+      }
+    ]
+  },
+  {
+    "name": "sgr-field",
+    "origin": "https://www.eso.org/public/images/ann17051c/",
+    "credit": "ESO/MPE/S. Gillessen et al.",
+    "rights": "CC BY 4.0 · https://www.eso.org/public/outreach/copyright/",
+    "files": [
+      {
+        "file": "sgr-field.webp",
+        "dimensions": [
+          1280,
+          1041
+        ],
+        "sha256": "6907b95ee8f2031d19e15891a6a658e2cef9c78ea7277afa5f52f84cd85ea125"
+      }
+    ]
+  },
+  {
+    "name": "disk-nasa",
+    "origin": "https://svs.gsfc.nasa.gov/13326/",
+    "credit": "NASA/Goddard Space Flight Center/Jeremy Schnittman",
+    "rights": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+    "files": [
+      {
+        "file": "disk-nasa.webp",
+        "dimensions": [
+          1024,
+          1024
+        ],
+        "sha256": "4837d927239ea712d981844e2ea96c50a42e9a666eb8d9f02ca52e1eef9b1ec8"
+      }
+    ],
+    "download": "https://svs.gsfc.nasa.gov/vis/a010000/a013300/a013326/BH_Accretion_Disk_Sim_360_4k_Prores.00001_print.jpg",
+    "processing": "Fundo preto convertido em transparência."
+  },
+  {
+    "name": "hydrogen",
+    "origin": "public/renders/lesson-depth/manifest.json",
+    "credit": "Cosmos do Zero",
+    "rights": "CC0-1.0",
+    "processing": "Átomo neutro ilustrativo. Próton e elétron ampliados, separação fora de escala.",
+    "files": [
+      {
+        "file": "hydrogen-small.webp",
+        "dimensions": [
+          600,
+          400
+        ],
+        "sha256": "e676d021f0d3724cd60c74013010b8d207827e07bf7d8710a4a3597e53e3b3a0"
+      }
+    ]
+  }
+]

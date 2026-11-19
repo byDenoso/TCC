@@ -33,7 +33,7 @@ export function initTransitExhibit(): void {
   let scale: number;
   let planetX: number = x, planetY: number = y, planetRadius = 0;
   const scene = plate(sky, ['star'], (ctx, img) => {
-    disc(ctx, img('star'), x, y, star.valueAsNumber * solarRadius, 2/2.12);
+    disc(ctx, img('star'), x, y, star.valueAsNumber * solarRadius, 1);
     ctx.fillStyle = '#060910';
     ctx.beginPath(); ctx.arc(planetX, planetY, planetRadius, 0, 2 * Math.PI); ctx.fill();
   }, ring);

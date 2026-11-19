@@ -1,4 +1,4 @@
-import { depthCanvas, portrait, reel } from './lesson-depth';
+import { depthCanvas, portrait } from './lesson-depth';
 import { observedWavelengthNm } from '../lib/cosmology';
 import { motionPreference } from './motion-preference';
 
@@ -40,7 +40,7 @@ export function initLightExhibit(): void {
   let visible = false;
 
   const renderDepth = depthCanvas(exhibit.querySelector('[data-spectrum-depth]'), (ctx, image, w, h) => {
-    const galaxy = image(reel('galaxy')), earth = image(portrait('terra'));
+    const galaxy = image('/renders/micro-hd/espiral.webp'), earth = image(portrait('terra'));
     if (galaxy) ctx.drawImage(galaxy, 5, 0, h, h);
     if (earth) ctx.drawImage(earth, w-85, 18, 76, 76);
     const rest = wavelengths[mode][2];

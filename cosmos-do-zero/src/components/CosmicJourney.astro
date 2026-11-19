@@ -1,14 +1,23 @@
 ---
 import '../styles/journey.css';
 import { eras } from '../data';
-import { chapterUrl } from '../lib/url';
+import { chapterUrl, u } from '../lib/url';
 import { pad2 } from '../lib/format';
 import { JOURNEY_ERAS } from '../lib/journey';
-/**
- * Viagem pelo tempo: scrollytelling da home. O texto vem de eras.json (mesmos marcos da linha do tempo);
- * a cena de partículas é montada por src/scripts/journey.ts. Sem JavaScript, os marcos formam uma lista comum.
- */
-const marks = JOURNEY_ERAS.map((id) => eras.find((era) => era.id === id)).filter((era) => era !== undefined);
+import jades from '../data/journey-jades.json';
+import eraPlates from '../../public/renders/journey-hd/manifest.json';
+
+const allPlates = [...eraPlates, {
+  ...jades, id: 'galaxies', small: '/photos/journey/jades-880.webp',
+  large: '/photos/journey/jades-2211.webp', width: 2211, height: 1685,
+}];
+const marks = JOURNEY_ERAS.map(id => {
+  const era = eras.find(item => item.id === id);
+  const plate = allPlates.find(item => item.id === id);
+  if (!era || !plate) throw new Error('Imagem ou época ausente: ' + id);
+  const kind = plate.kind === 'illustration' ? 'Ilustração' : plate.kind === 'observation' ? 'Observação' : plate.kind;
+  return { ...era, plate: { ...plate, kind } };
+});
 const total = pad2(marks.length);
 ---
 <section class="journey" id="viagem" data-home-section="04" aria-labelledby="journey-title" data-journey>
@@ -19,7 +28,8 @@ const total = pad2(marks.length);
   </div>
   <div class="journey-body">
     <div class="journey-stage">
-      <canvas data-journey-canvas aria-hidden="true"></canvas>
+      <canvas data-journey-canvas role="img" aria-label={marks[0].plate.caption}></canvas>
+      <p class="journey-missing" data-journey-missing hidden>Imagem indisponível. A descrição está no cartão desta etapa.</p>
       <div class="journey-hud">
         <div class="journey-transport">
           <label>Marco <select data-journey-select>{marks.map((era,i)=><option value={i}>{era.title}</option>)}</select></label>
@@ -30,17 +40,25 @@ const total = pad2(marks.length);
       <div class="journey-rail">
         {marks.map((_, i) => <i class:list={[i === 0 && 'is-active']} data-journey-tick></i>)}
       </div>
-      <p class="journey-note">Ilustração esquemática, fora de escala. Datas aproximadas.</p>
+
     </div>
     <ol class="journey-steps">
       {marks.map((era, i) => (
-        <li class:list={['journey-step', i === 0 && 'is-active']} data-journey-step={i} data-journey-era={era.id} data-journey-short={era.short}>
+        <li class:list={['journey-step', i === 0 && 'is-active']} data-journey-step={i} id={`viagem-${era.id}`} data-journey-era={era.id} data-journey-large={u(era.plate.large)} data-journey-aspect={era.plate.width / era.plate.height} data-journey-short={era.short}>
           <article>
+            <img class="journey-still" data-journey-still src={u(era.plate.small)}
+              width={880} height={Math.round(880 * era.plate.height / era.plate.width)}
+              loading="lazy" decoding="async" alt={era.plate.caption} />
             <p class="journey-step-count">{pad2(i + 1)} / {total}</p>
             <p class="journey-step-time">{era.short}</p>
             <h3>{era.title}</h3>
             <p class="journey-step-text">{era.text}</p>
             <p class="journey-step-evidence"><b>Como sabemos</b> {era.evidence}</p>
+            <details class="journey-photo-credit">
+              <summary>{era.plate.kind} <span aria-hidden="true">＋</span></summary>
+              <p>{era.plate.caption}</p>
+              <p>{era.plate.source ? <a href={era.plate.source}>{era.plate.credit}</a> : era.plate.credit}</p>
+            </details>
             <a class="textlink" href={chapterUrl(era.chapter)}>Entrar nesta aula <span aria-hidden="true">↗</span></a>
           </article>
         </li>
@@ -48,10 +66,3 @@ const total = pad2(marks.length);
     </ol>
   </div>
 </section>
-
-<style>
-  .journey-transport {display:flex;align-items:center;justify-content:end;flex-wrap:wrap;gap:.4rem;pointer-events:auto}
-  .journey-transport :is(select,button) {font:inherit;max-width:100%;min-height:40px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px}
-  .journey-hud {pointer-events:auto}
-  @media(max-width:860px) {.journey-hud {top:8px;bottom:auto;max-width:95%;z-index:4}.journey-transport {font-size:12px}}
-</style>

@@ -4,12 +4,13 @@ import { animator, reduced, svg } from './common';
 import { motionPreference } from '../motion-preference';
 
 const paths = {
-  star: '/models/lab/photosphere.webp',
-  earth: '/models/solar-turntable/terra/00.webp',
-  spiral: '/photos/m51/lab-disc.webp',
-  barred: '/models/lab/barred-spiral.webp',
-  elliptical: '/models/lab/elliptical.webp',
-  plasma: '/models/lab/gas-region.webp',
+  star: '/renders/instruments-hd/solar-photosphere.webp',
+  earth: '/models/worlds-hd/compact/terra-solo/00.webp',
+  spiral: '/renders/instruments-hd/m51.webp',
+  barred: '/renders/instruments-hd/ngc1300.webp',
+  elliptical: '/renders/instruments-hd/ngc1132.webp',
+  milkyWay: '/models/lab/barred-spiral.webp',
+  plasma: '/renders/instruments-hd/early-light.webp',
 } as const;
 
 type Asset = keyof typeof paths;
@@ -84,9 +85,10 @@ export function disc(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: 
 }
 
 export const galaxies = ['spiral', 'barred', 'elliptical'] as const;
-export function galaxy(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, radius: number, angle: number, tilt = .58) {
+export function galaxy(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, radius: number, angle: number, tilt = 1) {
   ctx.save(); ctx.translate(x,y); ctx.rotate(angle); ctx.scale(1,tilt);
-  ctx.drawImage(image,-radius,-radius,2*radius,2*radius); ctx.restore();
+  const height = radius * image.naturalHeight / image.naturalWidth;
+  ctx.drawImage(image,-radius,-height,2*radius,2*height); ctx.restore();
 }
 
 /** Two projected sky coordinates and a fixed depth for each comoving galaxy. */
@@ -94,7 +96,7 @@ export function galaxyGroup(stage: SVGSVGElement) {
   let scale = 1;
   const fallback = svg('g', { 'data-lab-body':'' }, stage);
   const bodies = Array.from({length:13}, (_, i) => ({
-    x: (i*167 % 565)-282, y: (i*71 % 127)-63, radius: 14+(i%4)*4,
+    x: (i*167 % 565)-282, y: (i*71 % 127)-63, radius: 20+(i%4)*5,
     node: svg('ellipse', { rx:7, ry:4, fill:'#c6bbce' }, fallback)
   }));
   const surface = plate(stage, [...galaxies], (ctx, img) => {

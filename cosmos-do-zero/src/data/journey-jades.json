@@ -1,0 +1,14 @@
+{
+  "caption": "Campo GOODS-S observado no infravermelho pelo Webb. As galáxias no mesmo campo estão a distâncias diferentes.",
+  "kind": "Observação · Webb / NIRCam",
+  "credit": "ESA/Webb, NASA, ESA, CSA, B. Robertson (UC Santa Cruz), B. Johnson (Center for Astrophysics, Harvard & Smithsonian), S. Tacchella (University of Cambridge, M. Rieke (Univ. of Arizona), D. Eisenstein (Center for Astrophysics, Harvard & Smithsonian), A. Pagan (STScI)",
+  "source": "https://esawebb.org/images/weic2317c/",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "original": "https://cdn.esawebb.org/archives/images/large/weic2317c.jpg",
+  "sha256": "d0193d3541e98191d1cc0fe619ee676a6fb21cfcf0f17644bbd7b45c9ff03820",
+  "dimensions": [
+    2211,
+    1685
+  ],
+  "change": "Recorte de exibição responsivo, redimensionamento e conversão para WebP."
+}

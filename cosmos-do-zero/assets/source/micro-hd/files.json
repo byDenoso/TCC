@@ -1,0 +1,112 @@
+[
+  {
+    "file": "sol.webp",
+    "size": [
+      693,
+      693
+    ],
+    "bytes": 30722,
+    "sha256": "897a494b32450c87765eaabc5486bc109f2df887001956a1c46cb074709b96e5",
+    "source": "assets/source/micro-hd/sdo.png"
+  },
+  {
+    "file": "gigante.webp",
+    "size": [
+      693,
+      693
+    ],
+    "bytes": 20542,
+    "sha256": "230fa354d26b829b85c9e8d1899b39e7b52728cf2fcd4b814a9acebc6c8f91dc",
+    "source": "assets/source/micro-hd/sdo.png"
+  },
+  {
+    "file": "azul.webp",
+    "size": [
+      693,
+      693
+    ],
+    "bytes": 21346,
+    "sha256": "a036828881f6063b807a42981c7cb71575a78661d70ce9ef54f9f76fd426c3b7",
+    "source": "assets/source/micro-hd/sdo.png"
+  },
+  {
+    "file": "branca.webp",
+    "size": [
+      693,
+      693
+    ],
+    "bytes": 24500,
+    "sha256": "42d4a09a25a457b6257ee89740ad93f916cbe5cb0bd61e08e95bf63a52e13499",
+    "source": "assets/source/micro-hd/sdo.png"
+  },
+  {
+    "file": "espiral.webp",
+    "size": [
+      832,
+      832
+    ],
+    "bytes": 150012,
+    "sha256": "5986350d0180ae75d6fa0ebd53a805e2ea919b45ec573c7575690a60a98fb2e1",
+    "source": "assets/source/observed/heic0506a.jpg"
+  },
+  {
+    "file": "andromeda.webp",
+    "size": [
+      768,
+      768
+    ],
+    "bytes": 104652,
+    "sha256": "5786479a94e5856aa159c5e7ee9fa815f3fd9170739c92cc46ed2d551bfea915",
+    "source": "src/assets/photos/andromeda-wise.webp"
+  },
+  {
+    "file": "hartley.webp",
+    "size": [
+      476,
+      353
+    ],
+    "bytes": 16260,
+    "sha256": "61989a7d847fd30a8d04506459e930fd17d0d33815a93052ff8602da9ed6f604",
+    "source": "assets/source/micro-hd/hartley.jpg"
+  },
+  {
+    "file": "fundo-planck.webp",
+    "size": [
+      841,
+      444
+    ],
+    "bytes": 164930,
+    "sha256": "63e7c51bc29e87ac8e3f2f337594f0d503b76911d676861f2cf088ec63f7368a",
+    "source": "src/assets/photos/planck-cmb.webp"
+  },
+  {
+    "file": "limbo-iss.webp",
+    "size": [
+      1120,
+      747
+    ],
+    "bytes": 10784,
+    "sha256": "d6c4a14ac989aff629142fc56708a99955f02bd49caa02b517a33f35c1e2a924",
+    "source": "src/assets/photos/iss-sunrise.webp"
+  },
+  {
+    "file": "gas.webp",
+    "size": [
+      832,
+      624
+    ],
+    "bytes": 74842,
+    "sha256": "57e56d0ff8f1dd7a0a21d8d870985bd0b96413f5eca26c9a4dafee8ac9c3484c",
+    "source": "public/renders/ancient-light.webp"
+  },
+  {
+    "file": "molecular.webp",
+    "size": [
+      832,
+      624
+    ],
+    "bytes": 209334,
+    "sha256": "b14aaccd8493f0cdde26c5cb488fbc6e2cbcf1b47273071dabdd5a920ddc3409",
+    "source": "assets/source/formation/eso1233a.jpg"
+  }
+]

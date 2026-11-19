@@ -2,7 +2,7 @@
 // Uso: npm run build && npm run preview &  →  npm run test:e2e   (SHOTS=1 salva capturas em docs/screenshots)
 import { chromium } from 'playwright';
 import {selectLessonStep,lastLessonStep,openExtraExperiments,openJourneyProgress} from './lib/reader-navigation.mjs';
-import { mkdirSync, existsSync } from 'node:fs';
+import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 
 const BASE = (process.env.BASE_URL ?? 'http://localhost:4321').replace(/\/$/, '');
 const SHOTS = process.env.SHOTS === '1';
@@ -385,7 +385,15 @@ section('Imagens, créditos e links');
   await frame.focus(); await p.keyboard.press('ArrowRight');
   ok('mapa explorável pelo teclado', !(await p.locator('[data-cmb-probe]').isHidden()));
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  ok('home sem renders fotorrealistas de IA', await p.locator('img[src*="/renders/"]').count() === 0);
+  const plates = JSON.parse(readFileSync(new URL('../public/renders/journey-hd/manifest.json', import.meta.url), 'utf8'));
+  const documented = await p.locator('img[src*="/renders/"]').evaluateAll((images, catalog) =>
+    images.every(img => {
+      const step = img.closest('[data-journey-era]');
+      const plate = catalog.find(item => item.id === step?.dataset.journeyEra);
+      return plate && img.src.endsWith(plate.small) && img.alt === plate.caption &&
+        step.querySelector('.journey-photo-credit')?.textContent.includes(plate.credit);
+    }), plates);
+  ok('home exibe apenas imagens do diretório de renders com origem e legenda identificadas', documented);
   ok('home sem esferas procedurais', await p.locator('.stellar-orb,.era-orb,.solar-disc,.solar-rim,.eclipse-glow').count() === 0);
   const broken = await p.evaluate(() => [...document.images].filter((i) => i.loading !== 'lazy' || i.getBoundingClientRect().top < innerHeight * 3).filter((i) => i.complete && i.naturalWidth === 0).map((i) => i.src));
   ok('nenhuma imagem quebrada na home', broken.length === 0, broken.join(','));

@@ -1,235 +1,154 @@
-/**
- * Viagem pelo tempo: a rolagem conduz uma única cena de partículas pelos marcos de eras.json.
- * Canvas 2D (não disputa o contexto WebGL das cenas 3D). Só desenha com a seção visível e a aba aberta.
- * Com movimento reduzido, nada se move sozinho: a cena salta de um marco ao outro conforme a leitura.
- */
-import { eraObjects, localSprites } from './lesson-depth';
-import { buildJourney, JOURNEY_ERAS, journeyPoint, journeyProgress, smooth, type JourneyEra, type JourneyLayout } from '../lib/journey';
-import { motionPreference, motionFactor } from './motion-preference';
+import { journeyProgress, smooth } from '../lib/journey';
+import { motionFactor, motionPreference } from './motion-preference';
 
+/** Photography and pre-rendered plates. The camera moves the entire frame as a unit. */
 export function initJourney(): void {
   const root = document.querySelector<HTMLElement>('.journey[data-journey]');
   const canvas = root?.querySelector<HTMLCanvasElement>('[data-journey-canvas]');
-  const steps = root ? [...root.querySelectorAll<HTMLElement>('[data-journey-step]')] : [];
-  const ctx = canvas?.getContext('2d');
-  if (!root || !canvas || !ctx || steps.length === 0) return;
-  const stage = canvas.parentElement as HTMLElement;
-  const when = root.querySelector<HTMLElement>('[data-journey-when]');
-  const count = root.querySelector<HTMLElement>('[data-journey-count]');
+  const context = canvas?.getContext('2d', { alpha: false });
+  if (!root || !canvas || !context || root.dataset.journeyReady) return;
+  const stage = canvas.parentElement!;
+  const steps = [...root.querySelectorAll<HTMLElement>('[data-journey-step]')];
+  if (!steps.length) return;
   const ticks = [...root.querySelectorAll<HTMLElement>('[data-journey-tick]')];
+  const when = root.querySelector<HTMLElement>('[data-journey-when]')!;
   const choice = root.querySelector<HTMLSelectElement>('[data-journey-select]')!;
   const pause = root.querySelector<HTMLButtonElement>('[data-journey-pause]')!;
-  let paused=false;
-  const labels = steps.map(s => s.dataset.journeyShort ?? '');
+  const missing = root.querySelector<HTMLElement>('[data-journey-missing]')!;
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  const stills = steps.map(step => step.querySelector<HTMLImageElement>('[data-journey-still]')!);
+  const cache = new Map<string, HTMLImageElement>();
+  const failed = new Set<string>();
+  let visible = false, paused = false, active = -1, progress = 0;
+  let width = 0, height = 0, ratio = 1, request = 0, last = 0, clock = 0;
 
-  const small = matchMedia('(max-width: 860px)');
-  let n = small.matches ? 460 : 780;
-  let layouts: JourneyLayout[] = buildJourney(n);
-  let W = 0, H = 0, dpr = 1;
-  let colors = { ink: '#1b2330', hot: '#c8461f', light: '#1f5fa8', bg: '#f1e9d6', muted: '#5b6472' };
-  let visible = false, raf = 0, last = 0, clock = 0, progress = 0, active = -1, dirty = true;
-  const pa: [number, number] = [0, 0], pb: [number, number] = [0, 0];
-
-  const readColors = () => {
-    const cs = getComputedStyle(root);
-    const v = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
-    colors = { ink: v('--ink', colors.ink), hot: v('--accent', colors.hot), light: v('--accent-2', colors.light), bg: v('--bg', colors.bg), muted: v('--muted', colors.muted) };
-    dirty = true;
-  };
-
-  const resize = () => {
-    const rect = stage.getBoundingClientRect();
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = Math.max(1, Math.round(rect.width)); H = Math.max(1, Math.round(rect.height));
-    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-    const want = small.matches ? 460 : 780;
-    if (want !== n) { n = want; layouts = buildJourney(n); }
-    dirty = true;
-  };
-
-  /** Quadro central: à direita no desktop (o texto ocupa a esquerda), no alto no celular. */
-  const frame = () => {
-    const wide = !small.matches;
-    return { cx: W * (wide ? 0.66 : 0.5), cy: H * (wide ? 0.46 : 0.36), k: Math.min(W * (wide ? 0.27 : 0.42), H * (wide ? 0.34 : 0.17)) };
-  };
-
-  const measure = () => {
-    const anchor = window.innerHeight * 0.58;
-    const centers = steps.map(s => { const r = s.getBoundingClientRect(); return r.top + r.height / 2; });
-    const p = journeyProgress(centers, anchor);
-    // Cada marco tem uma zona de repouso: a cena só se transforma no trecho central entre dois passos.
-    const base = Math.floor(p), settle = base + smooth((p - base - 0.18) / 0.64);
-    const next = motionPreference.matches ? Math.round(p) : settle;
-    if (next !== progress) { progress = next; dirty = true; }
+  function queue() {
+    if (visible && !document.hidden && !request) request = requestAnimationFrame(paint);
+  }
+  function load(url: string) {
+    if (failed.has(url)) return;
+    let image = cache.get(url);
+    if (!image) {
+      image = new Image();
+      image.decoding = 'async';
+      image.onload = queue;
+      image.onerror = () => { failed.add(url); cache.delete(url); queue(); };
+      cache.set(url, image);
+      image.src = url;
+    }
+    if (image.complete && image.naturalWidth) return image;
+  }
+  function imageAt(index: number) {
+    const step = steps[index];
+    const small = stills[index].getAttribute('src')!;
+    const large = step.dataset.journeyLarge!;
+    // Portrait screens crop the wide plates. Use the larger source when height requires it.
+    const hd = Math.max(width, height * Number(step.dataset.journeyAspect)) * ratio > 900;
+    if (!hd) return load(small) || (failed.has(small) ? load(large) : undefined);
+    return load(large) || (failed.has(large) ? load(small) : undefined);
+  }
+  function resize() {
+    const bounds = stage.getBoundingClientRect();
+    width = Math.max(1, Math.round(bounds.width));
+    height = Math.max(1, Math.round(bounds.height));
+    ratio = Math.min(devicePixelRatio || 1, 2, 2400 / Math.max(width, height));
+    const pixels = [Math.round(width * ratio), Math.round(height * ratio)];
+    if (canvas!.width !== pixels[0] || canvas!.height !== pixels[1]) {
+      canvas!.width = pixels[0]; canvas!.height = pixels[1];
+    }
+    queue();
+  }
+  function measure() {
+    const centers = steps.map(step => { const r = step.getBoundingClientRect(); return r.top + r.height / 2; });
+    const p = journeyProgress(centers, innerHeight * .58);
     const index = Math.round(p);
-    if (index !== active) {
-      active = index;choice.value=String(index);
-      steps.forEach((s, i) => s.classList.toggle('is-active', i === index));
-      ticks.forEach((t, i) => t.classList.toggle('is-active', i === index));
-      if (when) when.textContent = labels[index] ?? '';
-      if (count) count.textContent = `${String(index + 1).padStart(2, '0')} / ${String(steps.length).padStart(2, '0')}`;
-    }
-  };
-
-  const image = localSprites(() => { dirty = true; kick(); });
-  const eraIndex = (id: JourneyEra) => JOURNEY_ERAS.indexOf(id);
-  const layout = (id: JourneyEra) => layouts[eraIndex(id)];
-  const weight = (id: JourneyEra) => Math.max(0, 1 - Math.abs(progress - eraIndex(id)));
-  const fill = (color: string, alpha: number) => { ctx.fillStyle = color; ctx.globalAlpha = Math.max(0, Math.min(1, alpha)); };
-  const glow = (x: number, y: number, r: number, color: string, alpha: number) => {
-    if (alpha <= 0.01 || r <= 0) return;
-    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-    g.addColorStop(0, color); g.addColorStop(1, 'transparent');
-    ctx.globalAlpha = Math.min(1, alpha); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-  };
-  const label = (text: string, x: number, y: number, alpha: number, color = colors.ink) => {
-    if (alpha <= 0.02) return;
-    ctx.globalAlpha = Math.min(1, alpha); ctx.fillStyle = color;
-    ctx.font = `650 ${small.matches ? 12 : 13}px 'Inter Tight Variable', 'Inter Tight', Arial, sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x, y);
-  };
-
-  /** Camadas de contexto de cada marco, com peso máximo no centro do passo correspondente. */
-  const overlays = (f: { cx: number; cy: number; k: number }, t: number) => {
-    const at = (L: JourneyLayout, m: number): [number, number, number] => {
-      const mark = L.marks[m]; if (!mark) return [f.cx, f.cy, 0];
-      return L.fill ? [W / 2 + mark.x * W / 2, H / 2 + mark.y * H / 2, mark.r * f.k] : [f.cx + mark.x * f.k, f.cy - mark.y * f.k, mark.r * f.k];
-    };
-    let w = weight('primordial');
-    if (w > 0) glow(W / 2, H / 2, Math.max(W, H) * 0.75, colors.hot, 0.2 * w);
-    w = weight('nucleosynthesis');
-    if (w > 0) { const [x, y] = at(layout('nucleosynthesis'), 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 22, 0, Math.PI * 2); ctx.stroke(); label('núcleo de hélio', x, y - 36, w, colors.hot); }
-    w = weight('cmb');
-    if (w > 0) {
-      ctx.lineWidth = 2; ctx.strokeStyle = colors.light;
-      for (let ray = 0; ray < 7; ray++) {
-        const y0 = H * (0.12 + ray * 0.125), phase = t * 2.2 + ray * 1.7, dir = ray % 2 ? -1 : 1;
-        ctx.globalAlpha = 0.62 * w; ctx.beginPath();
-        for (let x = 0; x <= W; x += 6) { const y = y0 + 9 * Math.sin((x * dir) / 26 + phase) + (x - W / 2) * 0.06 * (ray - 3); if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-        ctx.stroke();
+    progress = motionPreference.matches ? index : Math.floor(p) + smooth((p % 1 - .22) / .56);
+    if (active !== index) {
+      active = index;
+      choice.value = String(index);
+      when.textContent = steps[index].dataset.journeyShort || '';
+      canvas!.setAttribute('aria-label', stills[index].alt);
+      steps.forEach((step, i) => step.classList.toggle('is-active', i === active));
+      ticks.forEach((tick, i) => tick.classList.toggle('is-active', i === active));
+      for (const url of cache.keys()) {
+        const nearby = steps.slice(Math.max(0,index - 1),index + 2);
+        if (!nearby.some(s => s.dataset.journeyLarge === url || s.querySelector('img')?.getAttribute('src') === url)) cache.delete(url);
       }
-      label('luz livre para viajar', f.cx, H * (small.matches ? 0.56 : 0.182), w, colors.light);
     }
-    w = weight('dark-ages');
-    if (w > 0) {
-      glow(f.cx, f.cy, f.k * 1.24, colors.muted, 0.14 * w);
-      label('gás neutro antes das estrelas', f.cx, f.cy + f.k * 1.08, w);
-    }
-    w = weight('first-stars');
-    if (w > 0) {
-      const stars = layout('first-stars');
-      stars.marks.forEach((_, m) => { const [x, y, r] = at(stars, m); glow(x, y, r * (1.5 + 0.12 * Math.sin(t * 1.3 + m)), colors.hot, 0.5 * w); });
-    }
-    w = weight('reionization');
-    if (w > 0) {
-      const ionized = layout('reionization');
-      ctx.strokeStyle = colors.light; ctx.lineWidth = 1.2; ctx.setLineDash([4, 6]);
-      ionized.marks.forEach((_, m) => {
-        const [x, y, r] = at(ionized, m);
-        glow(x, y, r, colors.light, 0.24 * w);
-        glow(x, y, r * 0.32, colors.hot, 0.85 * w);
-        fill(colors.hot, w); ctx.beginPath(); ctx.arc(x, y, 3, 0, 2 * Math.PI); ctx.fill();
-        ctx.globalAlpha = 0.48 * w; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * Math.PI); ctx.stroke();
-      });
-      ctx.setLineDash([]);
-      label('gás ionizado em torno das fontes', f.cx, f.cy + f.k * 1.08, w, colors.light);
-    }
-    w = weight('acceleration');
-    if (w > 0) {
-      ctx.strokeStyle = colors.light; ctx.lineWidth = 1.2; ctx.setLineDash([5, 7]);
-      for (let ring = 1; ring <= 3; ring++) { ctx.globalAlpha = 0.4 * w; ctx.beginPath(); ctx.arc(f.cx, f.cy, f.k * 0.42 * ring * (0.9 + 0.1 * smooth(progress - eraIndex('galaxies'))), 0, Math.PI * 2); ctx.stroke(); }
-      ctx.setLineDash([]);
-      label('o espaço entre as galáxias cresce', f.cx, f.cy - f.k * 0.3, w, colors.light);
-    }
-    w = weight('solar-system');
-    if (w > 0) {
-      glow(f.cx, f.cy, f.k * 0.2, colors.hot, 0.6 * w);
-      ctx.strokeStyle = colors.ink; ctx.lineWidth = 1;
-      layout('solar-system').marks.forEach(mark => { ctx.globalAlpha = 0.22 * w; ctx.beginPath(); ctx.ellipse(f.cx, f.cy, mark.r * f.k, mark.r * f.k * 0.44, 0, 0, Math.PI * 2); ctx.stroke(); });
-      label('perto do Sol, as órbitas são mais rápidas', f.cx, f.cy + f.k * 0.52, w);
-    }
-    const we = Math.min(1, weight('earth') + weight('oxygen'));
-    if (we > 0) {
-      const earth = layout('earth');
-      const [x, y, r] = at(earth, 0);
-      ctx.globalAlpha = 0.5 * we; ctx.strokeStyle = colors.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-      const [mx, my, mr] = at(earth, 1);
-      label('Lua', mx, my - mr - 16, we);
-      const wo = weight('oxygen');
-      if (wo > 0) { ctx.globalAlpha = 0.5 * wo; ctx.strokeStyle = colors.light; ctx.lineWidth = 7; ctx.beginPath(); ctx.arc(x, y, r * 1.12, 0, Math.PI * 2); ctx.stroke(); label('atmosfera com oxigênio', x, y - r * 1.3, wo, colors.light); }
-    }
-    w = weight('present');
-    if (w > 0) { const [x, y] = at(layout('present'), 0); ctx.globalAlpha = w; ctx.strokeStyle = colors.hot; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 20 + 3 * Math.sin(t * 2), 0, Math.PI * 2); ctx.stroke(); label('estamos em uma destas', x, y - 36, w, colors.hot); }
-    ctx.globalAlpha = 1;
-  };
-
-  const draw = () => {
-    dirty = false;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-    const f = frame();
-    const i0 = Math.min(layouts.length - 1, Math.max(0, Math.floor(progress)));
-    const i1 = Math.min(layouts.length - 1, i0 + 1);
-    const A = layouts[i0], B = layouts[i1], mix = smooth(progress - i0);
-    const t = clock, jitter = (A.jitter + (B.jitter - A.jitter) * mix) * (motionPreference.matches ? 0 : motionFactor());
-    const palette = [colors.ink, colors.hot, colors.light];
-    for (const [index, alpha] of [[i0, 1-mix], [i1, mix]]) {
-      if (alpha <= 0) continue;
-      ctx.globalAlpha = alpha;
-      eraObjects(ctx, image, JOURNEY_ERAS[index], f.cx, f.cy, f.k * 2.1, t * .15 + progress);
-    }
-    ctx.globalAlpha = 1;
-    overlays(f, t);
-    for (let i = 0; i < n; i++) {
-      journeyPoint(A, i, t, pa); journeyPoint(B, i, t, pb);
-      const ax = A.fill ? W / 2 + pa[0] * W / 2 : f.cx + pa[0] * f.k, ay = A.fill ? H / 2 + pa[1] * H / 2 : f.cy - pa[1] * f.k;
-      const bx = B.fill ? W / 2 + pb[0] * W / 2 : f.cx + pb[0] * f.k, by = B.fill ? H / 2 + pb[1] * H / 2 : f.cy - pb[1] * f.k;
-      let x = ax + (bx - ax) * mix, y = ay + (by - ay) * mix;
-      if (jitter > 0) { const ph = i * 12.9898; x += jitter * f.k * Math.sin(t * 7.1 + ph); y += jitter * f.k * Math.cos(t * 6.3 + ph * 1.7); }
-      const size = A.s[i] + (B.s[i] - A.s[i]) * mix, alpha = A.a[i] + (B.a[i] - A.a[i]) * mix;
-      fill(palette[(mix < 0.5 ? A : B).c[i]], alpha);
-      ctx.beginPath(); ctx.arc(x, y, size, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  };
-
-  const loop = (now: number) => {
-    raf = 0;
+    queue();
+  }
+  function paint(now: number) {
+    request = 0;
     if (!visible || document.hidden) return;
-    const moving = !motionPreference.matches && !paused;
-    if (moving) { clock += Math.min(0.05, Math.max(0, (now - last) / 1000)) * motionFactor(); dirty = true; }
+    const moving = !paused && !motionPreference.matches;
+    if (moving && last) clock += Math.min(.08, (now - last) / 1000) * motionFactor();
     last = now;
-    if (dirty) draw();
-    if (moving) raf = requestAnimationFrame(loop);
-  };
-  const kick = () => { if (!raf && visible && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(loop); } };
-  const onScroll = () => { if (!visible) return; measure(); kick(); };
-
+    const first = Math.floor(progress), mix = progress - first;
+    const a = imageAt(first);
+    const b = mix > 0 ? imageAt(Math.min(first + 1, steps.length - 1)) : undefined;
+    context!.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context!.globalAlpha = 1;
+    context!.fillStyle = '#0a1018';
+    context!.fillRect(0, 0, width, height);
+    const draw = (image: HTMLImageElement, alpha: number, index: number) => {
+      context!.globalAlpha = alpha;
+      // A full-sky projection must retain both poles and both ends of the map.
+      if (steps[index].dataset.journeyEra === 'cmb') {
+        const compact = width <= 860;
+        const span = Math.min(width * (compact ? .98 : .60), height * (compact ? .65 : 1.12));
+        const h = span * image.naturalHeight / image.naturalWidth;
+        context!.fillStyle = '#080c13';
+        context!.fillRect(0, 0, width, height);
+        context!.drawImage(image, width * (compact ? .5 : .66) - span / 2, height * (compact ? .36 : .45) - h / 2, span, h);
+        return;
+      }
+      // Slow editorial pan with overscan, preserving the proportions of the observation.
+      const phase = motionPreference.matches ? 0 : clock * .075;
+      const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight) * (1.022 + .011 * Math.sin(phase));
+      const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
+      const x = (width - w) * (.5 + .09 * Math.sin(phase));
+      context!.drawImage(image, x, (height - h) * .48, w, h);
+    };
+    if (a) draw(a, 1, first);
+    if (b) draw(b, a ? mix : 1, first + 1);
+    context!.globalAlpha = 1;
+    const displayed = mix >= .5 ? b || a : a || b;
+    const plate = displayed?.getAttribute('src') || '';
+    if (canvas!.dataset.plate !== plate) canvas!.dataset.plate = plate;
+    const unavailable = failed.has(steps[active].dataset.journeyLarge!) && failed.has(stills[active].getAttribute('src')!);
+    missing.hidden = !unavailable;
+    if (displayed && !saveData && active + 1 < steps.length && mix === 0 && !motionPreference.matches) imageAt(active + 1);
+    if (moving && displayed) queue();
+  }
+  function jump(index: number) {
+    if (!steps[index]) return;
+    const r = steps[index].getBoundingClientRect();
+    window.scrollBy({ top: r.top + r.height / 2 - innerHeight * .58, behavior: 'instant' });
+    measure();
+  }
+  function anchor() {
+    const index = steps.findIndex(step => '#' + step.id === location.hash);
+    if (index >= 0) jump(index);
+  }
+  function stopFrame() { cancelAnimationFrame(request); request = 0; last = 0; }
   new IntersectionObserver(([entry]) => {
     visible = entry.isIntersecting;
-    root.dataset.journeyVisible = String(visible);
-    if (visible) { resize(); measure(); kick(); } else if (raf) { cancelAnimationFrame(raf); raf = 0; }
-  }, { threshold: 0 }).observe(stage);
-  choice.addEventListener('change',()=>{
-    const bounds=steps[Number(choice.value)].getBoundingClientRect();
-    window.scrollBy({top:bounds.top+bounds.height/2-innerHeight*.58,behavior:'instant'});
-    onScroll();
+    root!.dataset.journeyVisible = String(visible);
+    if (visible) { resize(); measure(); } else stopFrame();
+  }).observe(stage);
+  new ResizeObserver(() => { if (visible) { resize(); measure(); } }).observe(stage);
+  choice.addEventListener('change', () => jump(Number(choice.value)));
+  pause.addEventListener('click', () => {
+    paused = !paused; last = 0;
+    pause.setAttribute('aria-pressed', String(paused));
+    pause.textContent = paused ? 'Retomar movimento' : 'Pausar movimento';
+    if (paused) stopFrame(); else queue();
   });
-  pause.addEventListener('click',()=>{
-    paused=!paused;
-    pause.setAttribute('aria-pressed',String(paused));
-    pause.textContent=paused?'Retomar movimento':'Pausar movimento';
-    kick();
-  });
-  pause.hidden=motionPreference.matches;
-  motionPreference.addEventListener('change',()=>{pause.hidden=motionPreference.matches;});
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', () => { if (visible) { resize(); measure(); kick(); } });
-  document.addEventListener('visibilitychange', kick);
-  motionPreference.addEventListener('change', () => { measure(); dirty = true; kick(); });
-  new MutationObserver(() => { readColors(); kick(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-  // O palco só ocupa espaço depois de pronto; sem JavaScript, os marcos viram uma lista comum.
+  window.addEventListener('scroll', () => { if (visible) measure(); }, { passive: true });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopFrame(); else queue(); });
+  motionPreference.addEventListener('change', () => { pause.hidden = motionPreference.matches; last = 0; if (visible) measure(); });
+  window.addEventListener('hashchange', anchor);
+  pause.hidden = motionPreference.matches;
   root.dataset.journeyReady = 'true';
-  readColors(); resize(); measure();
+  anchor();
 }

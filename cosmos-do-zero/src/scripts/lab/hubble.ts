@@ -23,7 +23,7 @@ export function initHubble(root: HTMLElement): void {
 
   const overlays = svg('g', {}, sky);
   const scene = plate(sky, [...galaxies], (ctx, img) => {
-    for (const g of gals) galaxy(ctx, img(galaxies[g.id%3]), g.x, g.y, 24 - g.d / 40, g.id*.46);
+    for (const g of gals) galaxy(ctx, img(galaxies[g.id%3]), g.x, g.y, 32 - g.d / 35, g.id*.46);
   }, overlays);
   const make = (): void => {
     const r = rng(seed);
@@ -46,8 +46,6 @@ export function initHubble(root: HTMLElement): void {
     const defs = svg('defs', {}, overlays);
     const g = svg('radialGradient', { id: 'h-glow' }, defs);
     svg('stop', { offset: '0', style: 'stop-color: var(--glow-core)' }, g); svg('stop', { offset: '.4', style: 'stop-color: var(--glow-mid); stop-opacity: .55' }, g); svg('stop', { offset: '1', style: 'stop-color: var(--glow-mid); stop-opacity: 0' }, g);
-    const r = rng(seed + 99);
-    for (let i = 0; i < 70; i++) svg('circle', { cx: r.next() * W, cy: r.next() * H, r: 0.5 + r.next() * 0.9, class: 'h-star' }, overlays);
     for (const gal of gals) {
       const n = svg('g', { class: 'h-gal', transform: `translate(${gal.x.toFixed(1)} ${gal.y.toFixed(1)})`, tabindex: 0, role: 'button', 'aria-label': `Galáxia ${gal.id}` }, overlays);
       svg('circle', { r: 22, 'data-lab-body':'', fill: 'url(#h-glow)' }, n);

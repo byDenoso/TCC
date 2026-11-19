@@ -20,7 +20,7 @@ export function initHRExhibit(): void {
     let size = 34, tint = '';
     const fallback = surface.querySelector('circle')!;
     const scene = plate(surface, ['star'], (ctx, img) => {
-      disc(ctx, img('star'), 242, 88, size, 2/2.12, tint);
+      disc(ctx, img('star'), 242, 88, size, 1, tint);
     });
     const update = (announce = false) => {
       const temperature = temperatureInput.valueAsNumber;

@@ -1,3 +1,4 @@
+import { hd, drawGlobe, skyBackdrop } from './hd-materials';
 import type { StagePaint } from '../stage-surface';
 import { planets } from '../../data/client';
 import { atmosphereLayer, atmosphereProfile, atmosphereTemperatureC } from '../../lib/teaching-numerics';
@@ -36,23 +37,10 @@ function orb(c: Ctx, x: number, y: number, r: number, hi: string, lo: string) {
   g.addColorStop(0, hi); g.addColorStop(1, lo); ellipse(c, x, y, r, r, g);
 }
 function world(s: StagePaint, id: string, x: number, y: number, r: number, phase = 0) {
-  const step = Math.floor(clamp(phase) * 10);
-  const url = (n: number) => '/models/solar-turntable/'+id+'/'+String(n).padStart(2,'0')+'.webp';
-  const current = url(step);
-  // The Cycles camera spans 2.4 globe radii across the square crop.
-  if (s.image(current)) s.sprite(current, x, y, r*2.4);
-  else if (step && s.image(url(0))) s.sprite(url(0), x, y, r*2.4);
-  else orb(s.ctx, x, y, r, '#9faeb1', '#1b2630');
+  drawGlobe(s, id, x, y, r * 2.4, clamp(phase) * 36);
 }
 function sun(s: StagePaint, x: number, y: number, r: number) {
-  const c = s.ctx, glow = c.createRadialGradient(x,y,r*.75,x,y,r*2.9);
-  glow.addColorStop(0,'#ffc360aa'); glow.addColorStop(1,'#ff9d2600');
-  ellipse(c,x,y,2.9*r,2.9*r,glow); orb(c,x,y,r,'#fff6bc','#f8a835');
-  const texture = s.image('/models/stellar/granulation.png');
-  if (texture) {
-    c.save(); c.beginPath(); c.arc(x,y,r,0,TAU); c.clip(); c.globalCompositeOperation='multiply';
-    c.globalAlpha=.55; c.drawImage(texture,x-r,y-r,2*r,2*r); c.restore();
-  }
+  s.sprite(hd + 'sol.webp', x, y, 2*r);
 }
 function gauge(s: StagePaint, x: number, y: number, w: number, fraction: number, title: string, value: string, color: string) {
   s.label(title,x,y,{size:13}); s.label(value,x+w,y,{size:14,color,align:'right'});
@@ -110,17 +98,21 @@ const comet: Plate = (s,v) => {
   const speed=Math.hypot(vx,vy), L=Math.min(114,9e5/d**2);
   const [px,py]=proj(x,y);
   if(L>4){
-    for(let i=0;i<60;i++){
-      const k=unit(i*.618+f*5), dust=i%2===0, spread=Math.sin(i*27)*k*(dust?6:2);
-      const bend=dust?.36*k*k*L:0;
-      const q=proj(x+ux*k*L-vx/speed*bend-uy*spread,y+uy*k*L-vy/speed*bend+ux*spread);
-      c.globalAlpha=1-k*.9; ellipse(c,...q,dust?2:1.5,dust?1.5:1, dust?gold:blue);
+    for (const dust of [false,true]) {
+      const tip=proj(x+ux*L-(dust?.36*L*vx/speed:0),y+uy*L-(dust?.36*L*vy/speed:0));
+      const mid=proj(x+ux*L*.6,y+uy*L*.6);
+      const grad=c.createLinearGradient(px,py,tip[0],tip[1]);
+      grad.addColorStop(0,dust?'#ffca8ddb':'#8fcfffde');
+      grad.addColorStop(1,dust?'#ffca8d00':'#8fcfff00');
+      c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(...mid,...tip);
+      c.lineWidth=dust?6:3;c.strokeStyle=grad;c.stroke();
     }
     c.globalAlpha=1;
   }
-  // A cropped lunar texture illustrates an irregular rocky nucleus.
-  c.save(); c.translate(px,py); c.rotate(.5+f*TAU); c.scale(1.3,.72);
-  world(s,'lua',0,0,7); c.restore();
+  s.sprite(hd+'hartley.webp',px,py,39,29);
+  // The inset exposes the photographed nucleus without enlarging the orbit marker.
+  s.sprite(hd+'hartley.webp',514,91,166,124);
+  s.label('Núcleo · Hartley 2',514,166,{align:'center',size:15});
   s.label('Gás ionizado',26,307,{color:blue}); s.label('Poeira',163,307,{color:gold});
   s.label('Fase orbital '+fmt(Math.round(f*100))+'%',604,307,{align:'right'});
 };
@@ -180,7 +172,7 @@ const formation: Plate = (s,v,t) => {
       const end=metal ? initial*.31 : .39+initial*.58;
       const rr=(stage===1?mix(initial,end,t):initial)*r*.94;
       const depth=Math.cos(i*1.83+a), rad=(metal?3.8:2.4)*(1+.31*depth);
-      orb(c,x+rr*Math.cos(a),y+rr*Math.sin(a),rad,metal?'#d09474':'#ffe7a8',metal?'#502c2c':'#b86e30');
+      s.sprite('/renders/formation/mineral.webp',x+rr*Math.cos(a),y+rr*Math.sin(a),rad*(metal?4.4:2.5));
     }
   }else{
     c.beginPath();c.rect(x,y-r,r,2*r);c.clip();
@@ -209,15 +201,13 @@ const ancientAir: Plate = (s,v) => {
   const sink=clamp((3-ga)/.6);
   // Clip a textured limb below the sampling column. Early geography is illustrative.
   c.save();c.beginPath();c.rect(0,28,279,262);c.clip();
-  world(s,ga<.05?'terra':'lua',139,351,202,f);
+  if(ga<.05) s.sprite(hd+'limbo-iss.webp',140,163,445,294);
+  else world(s,'lua',139,351,202,f);
   const ocean=c.createLinearGradient(0,143,0,280);
   ocean.addColorStop(0,'#23769b00');ocean.addColorStop(.45,'#246882b0');ocean.addColorStop(1,'#804f32e8');
   c.fillStyle=ocean;c.fillRect(0,150,279,140);
-  for(let i=0;i<42;i++){
-    const px=22+unit(Math.sin((i+1)*73.2)*4719)*238, wave=unit(i*.381+f*5);
-    if(i<Math.round(air*30))ellipse(c,px,143-wave*94,2.7,2,blue);
-    if(i<Math.round(sink*34))ellipse(c,px,201+wave*59,3,2,coral);
-  }
+  if (air > .01) arrow(c,[95,167],[95,160-72*air],blue);
+  if (sink > .01) arrow(c,[174,197],[174,207+38*sink],coral);
   c.restore();
   s.label('O₂ no ar',22,55,{color:blue});s.label('Oxidação nas rochas e oceanos',18,286,{size:13,color:gold});
   const X=(time:number)=>310+(4.5-time)/4.5*294, Y=(level:number)=>249-level*140;
@@ -242,15 +232,13 @@ const presentAir: Plate = (s,v,t) => {
   if(select(v,1)===0){
     world(s,'terra',124,167,83,t);
     s.label('Ar seco',124,283,{align:'center',size:18});
-    for(let i=0;i<100;i++){
-      const x=266+(i%10)*16,y=71+Math.floor(i/10)*19;
-      const color=i<78?blue:i<99?coral:'#e7dfb5';
-      c.globalAlpha=i<Math.round(100*t)?1:.28;
-      orb(c,x,y,4.8,color,'#293647');
-      if(i<99)orb(c,x+4.7,y-2,4,color,'#263345');
-    }
-    c.globalAlpha=1;
-    ['78 N₂','21 O₂','≈ 1 Ar'].forEach((n,i)=>s.label(n,458,115+i*40,{color:[blue,coral,gold][i],size:18}));
+    const components = [
+      {name:'Nitrogênio · N₂', share:78, color:blue},
+      {name:'Oxigênio · O₂', share:21, color:coral},
+      {name:'Argônio · Ar', share:1, color:gold}
+    ];
+    components.forEach((item,i) => gauge(s,259,78+i*65,327,t*item.share/100,
+      item.name,(i===2?'≈ ':'')+item.share+'%',item.color));
     s.label('CO₂ ≈ 4 partes em 10.000',265,293,{size:16});
   }else{
     limb(s,t);
@@ -280,7 +268,7 @@ const altitude: Plate = (s,v) => {
   const c=s.ctx,h=clamp(v,120),tc=atmosphereTemperatureC(h);
   const Y=(z:number)=>292-z*1.95, X=(temp:number)=>453+temp*1.28;
   c.save();c.beginPath();c.rect(0,43,284,264);c.clip();
-  world(s,'terra',151,688,405,h/120);
+  s.sprite(hd+'limbo-iss.webp',142,179,440,294);
   const air=c.createLinearGradient(0,60,0,288);air.addColorStop(0,'#20355400');air.addColorStop(1,'#619fc16b');
   c.fillStyle=air;c.fillRect(0,44,284,248);
   c.restore();
@@ -295,6 +283,7 @@ const altitude: Plate = (s,v) => {
   c.strokeStyle=coral;c.lineWidth=2.5;c.stroke();
   line(c,[15,Y(h)],[X(tc),Y(h)],blue);ellipse(c,X(tc),Y(h),5,5,gold);
   [-100,0,100].forEach(n=>s.label(fmt(n)+' °C',X(n),316,{size:12,align:'center'}));
+  s.label('Foto da ISS · sem escala vertical',14,322,{size:13});
   s.label(fmt(h)+' km · '+atmosphereLayer(h),19,30,{size:18,color:blue});
   s.label(fmt(Math.round(tc))+' °C',605,30,{size:18,color:coral,align:'right'});
 };
@@ -344,13 +333,10 @@ const habitability: Plate = (s,v,t) => {
   gauge(s,297,154,302,(temp+100)/600,'Temperatura média',fmt(temp)+' °C',coral);
   const water=['Sem água líquida estável','Água líquida possível','Gelo ou vapor','Gelo em boa parte'][i];
   s.label(water,297,240,{size:19,color:blue});
-  // Particle spacing illustrates the water state in each selected scenario.
-  for(let j=0;j<24;j++){
-    const col=j%8,row=Math.floor(j/8), vapor=i===0 || (i===2 && j%3===0);
-    const x=310+col*25+(vapor?12*Math.sin(TAU*t+j):0);
-    const y=291+row*9+(vapor?-30*unit(t+j*.618):i===1?4*Math.sin(5*t+col):0);
-    orb(c,x,y,3.4,vapor?'#c6e5e9':blue,'#285575');
+  if (i === 2 || hypothetical) {
+    s.sprite('/renders/formation/ice.webp', 452, 300, 95, 72);
   }
+
 };
 
 const plates: Record<string, Plate> = {
@@ -373,7 +359,7 @@ export function paint(canvas: StagePaint, id: string, value: number, phase: numb
   const c=canvas.ctx;
   c.save();
   try {
-    canvas.backdrop();
+    skyBackdrop(canvas);
     plates[id](canvas,Number.isFinite(value)?value:0,Number.isFinite(phase)?clamp(phase):1);
     return true;
   } finally {

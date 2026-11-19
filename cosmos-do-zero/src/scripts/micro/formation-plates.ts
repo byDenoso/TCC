@@ -1,3 +1,4 @@
+import { hd, skyBackdrop } from './hd-materials';
 import type { StagePaint } from '../stage-surface';
 
 const dir = '/renders/formation/';
@@ -9,12 +10,8 @@ const tau = Math.PI * 2;
 const clamp = (n: number) => Math.max(0, Math.min(1,n));
 const ease = (n: number) => { const x = clamp(n); return x*x*(3-2*x); };
 
-function sun(c: CanvasRenderingContext2D, x: number, y: number, size: number) {
-  const glow=c.createRadialGradient(x,y,0,x,y,size);
-  glow.addColorStop(0,'#fffbdd'); glow.addColorStop(.075,'#fff6cc');
-  glow.addColorStop(.14,'rgba(255,212,139,.96)'); glow.addColorStop(.25,'rgba(255,160,69,.46)');
-  glow.addColorStop(.58,'rgba(236,105,41,.10)'); glow.addColorStop(1,'rgba(232,96,33,0)');
-  c.fillStyle=glow; c.fillRect(x-size,y-size,size*2,size*2);
+function sun(s: StagePaint, x: number, y: number, size: number) {
+  s.sprite(hd + 'sol.webp', x, y, size * .68);
 }
 
 function drawCloud(s: StagePaint, t: number) {
@@ -32,13 +29,6 @@ function drawCloud(s: StagePaint, t: number) {
   const vignette=c.createRadialGradient(324,177,86,320,175,350);
   vignette.addColorStop(0,'rgba(5,10,15,0)'); vignette.addColorStop(1,'rgba(2,7,15,.67)');
   c.fillStyle=vignette; c.fillRect(0,0,640,360);
-  // Two convergent streams trace gas flow. Depth and density grow toward the centre.
-  for (let i=0;i<48;i++) {
-    const d=(i*.61803+.11*t)%1, side=i%2===0?1:-1, a=side*(d*1.48+.10*t)+.37;
-    const r=36+(1-d)*216, z=Math.sin(i*76.41);
-    const x=322+side*r*Math.cos(a), y=174+side*.53*r*Math.sin(a)+z*21*(1-d);
-    c.fillStyle=`rgba(218,178,138,${.16+.43*d})`;c.beginPath();c.arc(x,y,.65+(z+1)*.45,0,tau);c.fill();
-  }
   s.label('Barnard 59',25,325,{size:21});
   return true;
 }
@@ -57,7 +47,7 @@ function flattened(s: StagePaint, t: number) {
   const c=s.ctx;
   const inclination=.64-.24*ease(t);
   if (!ringTexture(s,320,174,322,inclination,t)) return false;
-  sun(c,320,174,46);
+  sun(s,320,174,46);
   c.strokeStyle='rgba(224,234,241,.68)';c.lineWidth=1;
   c.beginPath();c.moveTo(325,158);c.lineTo(348,53);c.lineTo(370,53);c.stroke();
   s.label('Sol jovem',377,52,{size:18});
@@ -76,7 +66,7 @@ function grains(s: StagePaint, t: number) {
   c.strokeStyle='#a2d5de';c.lineWidth=1;c.beginPath();c.moveTo(lineX,lineY);c.lineTo(318,98);c.lineTo(343,98);c.stroke();
   s.label('Linha do gelo',213,81,{size:18,color:'#c3eef0'});
   // Mark the schematic snow line independently from HL Tauri’s observed gaps.
-  sun(c,cx,cy,23);
+  sun(s,cx,cy,23);
   for (const [idx,kind] of ['mineral','ice'].entries()) {
     const x=489,y=103+idx*157, rock=s.image(dir+kind+'.webp');
     if (rock) for (const [offset,dy,r,spin] of [[-47,-12,32,-.56],[44,15,23,1.1],[2,1,103,.2]]) {
@@ -105,14 +95,14 @@ function planets(s: StagePaint, t: number) {
     const d=diameters[body.i]*(1+.09*body.depth);
     s.sprite('/models/solar-turntable/'+names[body.i]+'/00.webp',body.x,body.y,d);
   };
-  bodies.filter(b=>b.depth<0).forEach(paint);sun(c,cx,cy,80);bodies.filter(b=>b.depth>=0).forEach(paint);
+  bodies.filter(b=>b.depth<0).forEach(paint);sun(s,cx,cy,80);bodies.filter(b=>b.depth>=0).forEach(paint);
   s.label('Sistema Solar em formação',24,326,{size:20});
   return true;
 }
 
 export function paint(s: StagePaint, id: string, value: number, phase: number): boolean {
   if (id !== 'sistema-solar-disco') return false;
-  s.backdrop();
+  skyBackdrop(s);
   const t=clamp(phase);
   switch (Math.round(value)) {
     case 0: return drawCloud(s,t);

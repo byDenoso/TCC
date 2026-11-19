@@ -1,0 +1,332 @@
+[
+  {
+    "id": "primordial",
+    "input": "assets/source/journey-hd/paint.py",
+    "inputSize": [
+      1600,
+      900
+    ],
+    "inputSha256": "1ecd7a5e1b4fe4c4dc58e547a56f02a56933a85839094ce4f93a0d0e53c15a56",
+    "download": "",
+    "source": "",
+    "credit": "Cosmos do Zero",
+    "license": "Material autoral do projeto",
+    "method": "Ilustração original renderizada em CPU na resolução final.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/primordial-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 77346,
+        "sha256": "ce1b92f209ddb79f84396f0e25059f0814f020df1170cc47ef9d8db1622243f5"
+      },
+      {
+        "url": "/renders/journey-hd/primordial-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 198376,
+        "sha256": "0fd7dc396b51dbc746e501943eea7580386427ffd42d18b94f33e39642a28699"
+      }
+    ]
+  },
+  {
+    "id": "nucleosynthesis",
+    "input": "assets/source/journey-hd/paint.py",
+    "inputSize": [
+      1600,
+      900
+    ],
+    "inputSha256": "1ecd7a5e1b4fe4c4dc58e547a56f02a56933a85839094ce4f93a0d0e53c15a56",
+    "download": "",
+    "source": "",
+    "credit": "Cosmos do Zero",
+    "license": "Material autoral do projeto",
+    "method": "Ilustração original renderizada em CPU na resolução final.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/nucleosynthesis-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 8764,
+        "sha256": "290b04ead7056901d5e0d0deb097823b1c731ee86fd0f2cbfc9670f374cda078"
+      },
+      {
+        "url": "/renders/journey-hd/nucleosynthesis-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 21002,
+        "sha256": "6c4e6baeb15d1724a67b3454a361710b0ca58fd3b7589c83da0d4ba47f01a11a"
+      }
+    ]
+  },
+  {
+    "id": "cmb",
+    "input": "assets/source/journey-hd/ilc_9yr_moll4096.png",
+    "inputSize": [
+      4096,
+      2048
+    ],
+    "inputSha256": "ddd0fd38feefbdbad7563b88fdc0ba2f26c4264a6d8097cf98fd35ad8e5e445a",
+    "download": "https://assets.science.nasa.gov/content/dam/science/missions/wmap/ilc_9yr_moll4096.png",
+    "source": "https://science.nasa.gov/mission/wmap/wmap-overview/",
+    "credit": "NASA/WMAP Science Team",
+    "license": "NASA Media Usage Guidelines",
+    "method": "Mapa integral; fundo externo escurecido e margens.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/cmb-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 134362,
+        "sha256": "f89ce28ad2bcd76a3658c6f3c4a072251028e42cd62132f9511e70b5cb9ba8dc"
+      },
+      {
+        "url": "/renders/journey-hd/cmb-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 298748,
+        "sha256": "ff39419888aca662ac2cde6f32d8b79ff7aea847ff7caa29bd862db49b552bd7"
+      }
+    ]
+  },
+  {
+    "id": "dark-ages",
+    "input": "assets/source/journey-hd/paint.py",
+    "inputSize": [
+      1600,
+      900
+    ],
+    "inputSha256": "1ecd7a5e1b4fe4c4dc58e547a56f02a56933a85839094ce4f93a0d0e53c15a56",
+    "download": "",
+    "source": "",
+    "credit": "Cosmos do Zero",
+    "license": "Material autoral do projeto",
+    "method": "Ilustração original renderizada em CPU na resolução final.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/dark-ages-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 55922,
+        "sha256": "fde403b179d2256851932923da8a1ef51a1c823cfec7a64a8a33d1dcd1735b47"
+      },
+      {
+        "url": "/renders/journey-hd/dark-ages-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 150624,
+        "sha256": "931a9a63b2ceb6c12c5a8ce52fa4037f317e1ee4f951ebc3b45d08504714fdb4"
+      }
+    ]
+  },
+  {
+    "id": "first-stars",
+    "input": "assets/source/journey-hd/eso1524a.jpg",
+    "inputSize": [
+      4237,
+      3014
+    ],
+    "inputSha256": "ff460ec95cdb8e00e45eedc5124c19c75b305af55522672f285b7220bcc12892",
+    "download": "https://cdn.eso.org/images/large/eso1524a.jpg",
+    "source": "https://www.eso.org/public/images/eso1524a/",
+    "credit": "ESO/M. Kornmesser",
+    "license": "CC BY 4.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/first-stars-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 40042,
+        "sha256": "bbe2f9acd067759b92ebfcf25d8e3fa821cbcb86041dc5a212dc9c3017f7d6bd"
+      },
+      {
+        "url": "/renders/journey-hd/first-stars-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 133518,
+        "sha256": "230b0bac16b3fae67650ba0c156736d2f81f4ad1f1f55d6cc621333c7cd41fe9"
+      }
+    ]
+  },
+  {
+    "id": "reionization",
+    "input": "assets/source/journey-hd/eso1138a.jpg",
+    "inputSize": [
+      2901,
+      1923
+    ],
+    "inputSha256": "310ada3d57b0108d46a854e130ac3e892f275ef68a7cedfdb1a23f9ad8f0264b",
+    "download": "https://cdn.eso.org/images/large/eso1138a.jpg",
+    "source": "https://www.eso.org/public/images/eso1138a/",
+    "credit": "ESO/M. Kornmesser",
+    "license": "CC BY 4.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/reionization-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 37748,
+        "sha256": "076c9790e864f54893cf7dbf4f37cf6f351674170646180a4707887eccaa17f6"
+      },
+      {
+        "url": "/renders/journey-hd/reionization-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 101632,
+        "sha256": "fd99c07984ff09c8558b2dca91fca52ee1ffaed26d87cb8bbf98f81449bd4b49"
+      }
+    ]
+  },
+  {
+    "id": "acceleration",
+    "input": "assets/source/journey-hd/heic2018a.jpg",
+    "inputSize": [
+      1763,
+      1156
+    ],
+    "inputSha256": "49360384ee612d9f1489da5e4038136f3ec854f058dc0de08f74aa12be4ebde7",
+    "download": "https://cdn.esahubble.org/archives/images/large/heic2018a.jpg",
+    "source": "https://esahubble.org/news/heic2018/",
+    "credit": "ESA/Hubble & NASA, A. Riess and the SH0ES team. Agradecimento a Mahdi Zamani.",
+    "license": "CC BY 4.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/acceleration-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 82502,
+        "sha256": "0b4c801cf04b5d309732771dede8636db278e7f3790bb8628943700860c9aa0f"
+      },
+      {
+        "url": "/renders/journey-hd/acceleration-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 285842,
+        "sha256": "af5f122435700f99212c6ed9a9f7d02b9aeb6db5e4ee65c8bdc1dd56bc0a18db"
+      }
+    ]
+  },
+  {
+    "id": "solar-system",
+    "input": "assets/source/journey-hd/eso1436f.jpg",
+    "inputSize": [
+      9000,
+      6000
+    ],
+    "inputSha256": "1ccb1c50f8c158c649b99cd062bccd4eb4d407db6213f57e837056369f26ee5d",
+    "download": "https://cdn.eso.org/images/large/eso1436f.jpg",
+    "source": "https://www.eso.org/public/images/eso1436f/",
+    "credit": "ESO/L. Calçada",
+    "license": "CC BY 4.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/solar-system-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 47266,
+        "sha256": "88dff435562983958c40031404283e5b33a7571b8574a47f4d43535452f95a54"
+      },
+      {
+        "url": "/renders/journey-hd/solar-system-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 163808,
+        "sha256": "3eee4d01b0a2939e88e0d7335162b96ffd6cc9e92da4847692eb7e1ce625c47b"
+      }
+    ]
+  },
+  {
+    "id": "earth",
+    "input": "assets/source/journey-hd/paint.py",
+    "inputSize": [
+      1600,
+      900
+    ],
+    "inputSha256": "1ecd7a5e1b4fe4c4dc58e547a56f02a56933a85839094ce4f93a0d0e53c15a56",
+    "download": "",
+    "source": "",
+    "credit": "Cosmos do Zero",
+    "license": "Material autoral do projeto",
+    "method": "Ilustração original renderizada em CPU na resolução final.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/earth-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 58516,
+        "sha256": "2eb659ff6ad2ffad4d5466eaeaa29eec89a8b06568359fbc4391f8e398900e7e"
+      },
+      {
+        "url": "/renders/journey-hd/earth-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 173228,
+        "sha256": "efa8d418a97a0f3b804d4b65494ecc8edf9f18abbb7f71b4c9826c907570e4ba"
+      }
+    ]
+  },
+  {
+    "id": "oxygen",
+    "input": "assets/source/journey-hd/soudan.jpg",
+    "inputSize": [
+      4000,
+      3000
+    ],
+    "inputSha256": "bc215591f5f2dc3d1153c27b688ff25294f6468597f9113495e152952b75d420",
+    "download": "https://d9-wret.s3.us-west-2.amazonaws.com/assets/palladium/production/s3fs-public/thumbnails/image/Jaspilite_banded_iron_formation_%28Soudan_Iron-Formation%2C_Neoarchean%2C_-2.69_Ga%3B_Stuntz_Bay_Road_outcrop%2C_Soudan_Underground_State_Park%2C_Soudan%2C_Minnesota%2C_USA%29_16_%2819225416055%29_0.jpg",
+    "source": "https://www.usgs.gov/media/images/minnesota-banded-iron",
+    "credit": "James St. John",
+    "license": "CC BY 2.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/oxygen-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 178672,
+        "sha256": "03cdd0f756395b5334747b37db06d90e1193e62904ede80efaa0b57b84c6a968"
+      },
+      {
+        "url": "/renders/journey-hd/oxygen-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 516238,
+        "sha256": "8950490e9e01f9b68d430a69733343402339d6df965a75a35e37551888801302"
+      }
+    ]
+  },
+  {
+    "id": "present",
+    "input": "assets/source/observed/heic0506a.jpg",
+    "inputSize": [
+      4000,
+      2776
+    ],
+    "inputSha256": "7b13a932bcf54653c591d369e8d1c4cbdbeb693ecc468242facb239fde52e4c2",
+    "download": "https://esahubble.org/media/archives/images/publicationjpg/heic0506a.jpg",
+    "source": "https://esahubble.org/images/heic0506a/",
+    "credit": "NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)",
+    "license": "CC BY 4.0",
+    "method": "Recorte panorâmico e redução proporcional.",
+    "variants": [
+      {
+        "url": "/renders/journey-hd/present-880.webp",
+        "width": 880,
+        "height": 495,
+        "bytes": 63970,
+        "sha256": "4fdcbdde0936cd936fb0e05cf33a1741ce7dadee2ad7c6797d0951d92d09bfca"
+      },
+      {
+        "url": "/renders/journey-hd/present-1600.webp",
+        "width": 1600,
+        "height": 900,
+        "bytes": 232154,
+        "sha256": "56e63b407d596e1af401e94858af44412216f2d113e3addd643f8a3c64ffce3e"
+      }
+    ]
+  }
+]

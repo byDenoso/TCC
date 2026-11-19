@@ -1,4 +1,5 @@
 ---
+import InstrumentCredits from './InstrumentCredits.astro';
 import {
   EXPANSION_CHARTS, EXPANSION_DEFAULT_Z, EXPANSION_FIELDS, EXPANSION_MAX_Z, EXPANSION_PLOT,
   EXPANSION_PRESETS, EXPANSION_READINGS, expansionHistory, expansionNumber, expansionPlotPath,
@@ -55,7 +56,7 @@ const { width, height, left, right, top, bottom } = EXPANSION_PLOT;
   <div class="expansion-comparison">
     <svg class="lab-model-band" data-expansion-group viewBox="0 0 640 160" role="img" aria-label="Separação das galáxias na época escolhida, proporcional ao fator de escala."></svg>
     <button class="expansion-reset" type="button" data-expansion-play hidden>Reproduzir até hoje</button>
-    <p>O espaçamento mostrado acompanha o fator de escala. <small>Textura de M51 adaptada de <a href="https://esahubble.org/images/heic0506a/">NASA, ESA, S. Beckwith (STScI) e Hubble Heritage Team</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Recorte e bordas suavizadas.</small></p>
+    <p>O espaçamento mostrado acompanha o fator de escala. <InstrumentCredits photos={['m51','ngc1300','ngc1132']}/></p>
     <ul class="expansion-legend" aria-label="Legenda dos gráficos">
       <li><span aria-hidden="true"></span>Seu modelo</li>
       <li><span aria-hidden="true"></span>ΛCDM de referência</li>

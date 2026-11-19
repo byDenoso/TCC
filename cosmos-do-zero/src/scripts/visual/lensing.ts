@@ -27,15 +27,16 @@ export function initLensing():void {
    svg('text',{x:120+sx*2,y:40,'text-anchor':'middle',fill:'var(--ink-2)'},diagram,'fonte');svg('text',{x:240+lx,y:180,'text-anchor':'middle',fill:'var(--ink-2)'},diagram,'lente');svg('text',{x:370,y:245,fill:'var(--ink-2)'},diagram,'observador');
    for(const theta of pointImages(Number(source.value)-Number(lens.value),ratio()))svg('polyline',{points:`${120+sx*2},70 ${240+lx+theta*45},140 360,210`,fill:'none',stroke:'#ac936f','stroke-width':1.5},diagram);
   };
+  const image = ctx?.createImageData(canvas.width, canvas.height);
+  const pxPerUnit = canvas.width / 5;
   const render=()=>{
    const beta=Number(source.value)-Number(lens.value),mu=ratio(),aligned=Math.abs(beta)<.04;
-   if(ctx){
-    const image=ctx.createImageData(240,240);
+   if(ctx && image){
     const photo = brightness.value === 'photo' ? sourcePixels : undefined;
-   for(let y=0;y<240;y++)for(let x=0;x<240;x++){
-    const tx=(x-120)/48,ty=(y-120)/48,[bx,by]=lensSource(tx,ty,mu);
-    const intensity=Math.exp(-((bx-beta)**2+by**2)/(.12**2*2));const r2=tx*tx+ty*ty,lensGlow=Math.exp(-r2/.035)*.55;
-    const i=(y*240+x)*4;image.data[i]=7+intensity*176+lensGlow*126;image.data[i+1]=12+intensity*153+lensGlow*105;image.data[i+2]=24+intensity*114+lensGlow*76;image.data[i+3]=255;
+   for(let y=0;y<image.height;y++)for(let x=0;x<image.width;x++){
+    const tx=(x-image.width/2)/pxPerUnit,ty=(y-image.height/2)/pxPerUnit,[bx,by]=lensSource(tx,ty,mu);
+    const intensity=photo ? 0 : Math.exp(-((bx-beta)**2+by**2)/(.12**2*2));const r2=tx*tx+ty*ty,lensGlow=Math.exp(-r2/.035)*.55;
+    const i=(y*image.width+x)*4;image.data[i]=7+intensity*176+lensGlow*126;image.data[i+1]=12+intensity*153+lensGlow*105;image.data[i+2]=24+intensity*114+lensGlow*76;image.data[i+3]=255;
     if (photo) {
       // The source spans 0.72 Einstein radii of the reference mass in each dimension.
       const ix = Math.floor(((bx-beta)/.72 + .5)*photo.width);
@@ -67,11 +68,12 @@ export function initLensing():void {
     observer.disconnect();
     loadPlateImage('spiral').then(image => {
       const sample = document.createElement('canvas');
-      sample.width = 192; sample.height = 192;
+      sample.width = sample.height = 384;
       const sourceCtx = sample.getContext('2d');
       if (!sourceCtx) return;
-      sourceCtx.drawImage(image,0,0,192,192);
-      sourcePixels = sourceCtx.getImageData(0,0,192,192);
+      const h = sample.width * image.height / image.width;
+      sourceCtx.drawImage(image,0,(sample.height-h)/2,sample.width,h);
+      sourcePixels = sourceCtx.getImageData(0,0,sample.width,sample.height);
       brightness.disabled = false;
       brightness.value = 'photo';
       render();

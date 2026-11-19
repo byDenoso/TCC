@@ -6,7 +6,7 @@
 .px-head h2 em { color: var(--accent-ink); }
 .px-lede { margin: 0; max-width: 46ch; font-size: clamp(16px, 1.5vw, 20px); line-height: 1.6; color: var(--ink-2); }
 
-.px-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: clamp(18px, 2.4vw, 30px); }
+.px-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: clamp(18px, 2.4vw, 30px); }
 .px-tab { display: grid; grid-template-columns: 84px minmax(0, 1fr); align-items: center; gap: 14px; padding: 8px; min-height: 72px; text-align: left; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), transform 0.25s var(--ease); }
 .px-tab img { width: 84px; height: 56px; object-fit: cover; border-radius: 8px; display: block; }
 .px-tab span { display: grid; gap: 2px; font-size: 15px; font-weight: 700; line-height: 1.25; letter-spacing: -0.01em; }
@@ -68,7 +68,7 @@
 .px-source { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 
 /* Com JavaScript: janela de proporção fixa, imagem maior que a janela, arraste e zoom. */
-.px[data-px-ready] .px-view { aspect-ratio: 3 / 2; cursor: grab; touch-action: pan-y; }
+.px[data-px-ready] .px-view { aspect-ratio: clamp(1.25, var(--photo-ratio), 2.9); cursor: grab; touch-action: pan-y; }
 .px[data-px-ready] .px-view.is-dragging { cursor: grabbing; }
 .px[data-px-ready] .px-canvas { position: absolute; left: 0; top: 0; transform-origin: 0 0; aspect-ratio: auto !important; }
 @media (prefers-reduced-motion: no-preference) {
@@ -92,7 +92,7 @@
   .px-view { order: 4; } .px-tools { order: 5; } .px-reading, .px-list { order: 6; }
   .px-facts { order: 7; } .px-credit { order: 8; } .px-source { order: 9; }
   .px-panel { gap: 14px; }
-  .px[data-px-ready] .px-view { aspect-ratio: 1 / 1; }
+  .px[data-px-ready] .px-view { aspect-ratio: clamp(1, var(--photo-ratio), 1.8); }
   .px-hint { display: none; }
   .px-reading p:not(.px-reading-count) { min-height: 0; }
 }

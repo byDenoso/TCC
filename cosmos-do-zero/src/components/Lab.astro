@@ -1,5 +1,6 @@
 ---
 import { planets } from '../data';
+import { frameSources } from '../scripts/visual/world-view';
 import WorldViewControls from './WorldViewControls.astro';
 import SolarCredits from './SolarCredits.astro';
 import { chapterUrl, u } from '../lib/url';
@@ -44,7 +45,7 @@ const options = (sel: string) => planets.map((p) => ({ id: p.id, name: p.name, s
         {[A, B].map((p, i) => (
           <div class="compare-body">
             <div class="scale-space">
-              <img data-compare-img={i === 0 ? 'a' : 'b'} src={u(`/models/solar-turntable/${p.id}/00.webp`)} alt="" width="320" height="320" style={`width:${cmp.diameters[i].toFixed(3)}%`} loading="lazy" decoding="async" />
+              <img data-compare-img={i === 0 ? 'a' : 'b'} src={u(`/models/solar-turntable/${p.id}/00.webp`)} alt="" srcset={frameSources(p.id)} sizes="auto, 280px" width="320" height="320" style={`width:${cmp.diameters[i].toFixed(3)}%`} loading="lazy" decoding="async" />
             </div>
             <strong data-compare-name={i === 0 ? 'a' : 'b'}>{p.name}</strong>
           </div>

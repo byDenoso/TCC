@@ -130,6 +130,7 @@ function setup(root: HTMLElement): void {
   const plasma = new Plasma(0.56);
   const r = rng(7);
   const texture = localSprites(() => { if (visible && !document.hidden) draw(); });
+  const hydrogenPlate = '/models/worlds-hd/scales/scale-hydrogen-600.webp';
   const sprites = new Map<string, HTMLCanvasElement>();
   const particle = (x: number, y: number, radius: number, color: string, body?: string) => {
     const volume = body && texture(baked(body));
@@ -166,13 +167,6 @@ function setup(root: HTMLElement): void {
   /* ── desenho ── */
   const drawPlasma = (bind: number | null) => {
     const s = W; // 1 unidade = largura
-    // brilho de fundo: meio quente e opaco (A) que esfria em B
-    const heat = bind === null ? 1 : 1 - ease(clamp(bind));
-    if (heat > 0.01) {
-      // meio quente e opaco por igual (sem foco central): véu quente uniforme que some quando o Universo esfria
-      ctx.fillStyle = pal.n; ctx.globalAlpha = (pal.dark ? 0.13 : 0.10) * heat; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = pal.light; ctx.globalAlpha = (pal.dark ? 0.06 : 0.16) * heat; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
-    }
     // núcleos e átomos
     for (const nu of plasma.n) {
       particle(nu.x * s, nu.y * s, nu.he ? 6 : 4.5, pal.n, nu.he ? 'helium' : 'proton');
@@ -215,6 +209,34 @@ function setup(root: HTMLElement): void {
       ctx.globalAlpha = 1; ctx.shadowBlur = 0;
       if (lead && ph.flash > 0) { ctx.strokeStyle = pal.light; ctx.globalAlpha = ph.flash; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(ph.x * s, ph.y * s, 6 + 12 * (1 - ph.flash), 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; }
     });
+
+    // O primeiro hidrogênio do modelo tem um elétron de origem conhecida.
+    const hydrogen = plasma.e.find(el => !plasma.n[el.home].he)!;
+    const bound = hydrogen.bound;
+    const radius = Math.min(W * .22, H * .29, 115);
+    const cx = W - radius - 14, cy = H * .5;
+    const nucleus = texture(baked('proton'));
+    const electron = texture(baked('electron'));
+    const atom = bound > 0 && texture(hydrogenPlate);
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, 2*Math.PI); ctx.clip();
+    ctx.fillStyle='#08111d';ctx.fillRect(cx-radius,cy-radius,2*radius,2*radius);
+    if(nucleus) ctx.drawImage(nucleus,cx-.64*radius,cy-.54*radius,1.12*radius,1.12*radius);
+    if(electron) {
+      const ex=cx+radius*(hydrogen.x-.5), ey=cy+radius*(hydrogen.y/plasma.h-.5);
+      ctx.drawImage(electron,ex-.16*radius,ey-.16*radius,.32*radius,.32*radius);
+    }
+    if(atom) {
+      ctx.globalAlpha=bound;
+      const side=Math.min(atom.width,atom.height)*.74;
+      ctx.drawImage(atom,(atom.width-side)/2,(atom.height-side)/2,side,side,cx-radius,cy-radius,2*radius,2*radius);
+    }
+    ctx.restore();
+    ctx.strokeStyle='#aec2d8'; ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(cx,cy,radius,0,2*Math.PI);ctx.stroke();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='600 13px sans-serif';
+    ctx.fillText(bound>.85?'Hidrogênio neutro':'Próton e elétron',cx,cy+radius+17);
+
   };
 
   /** Etapa C: grade do espaço e uma onda, ampliadas. k ∈ [0,1] percorre o fator de escala de 1/1091 até 1 em escala logarítmica. */
@@ -263,7 +285,7 @@ function setup(root: HTMLElement): void {
     root.dataset.bound = String(plasma.e.filter((e) => e.bound > 0.5).length); // elétrons presos (lido pelos testes)
     if (!ctx) {
       const image = root.querySelector<HTMLImageElement>('[data-cmbj-still]')!;
-      const path = u('/posters/'+['plasma','nuclei','cmb'][step]+'-small.webp');
+      const path = u(['/renders/journey-hd/primordial-1600.webp',hydrogenPlate,'/renders/lessons-hd/cmb-small.webp'][step]);
       if (image.getAttribute('src')!==path) image.src=path;
       sync(step === 2 ? scaleAt(1) : A_DEC, 1);
       return;

@@ -35,7 +35,7 @@ const bands = [
       <button type="button" data-saturn-preset="90" aria-pressed="false" disabled>Vista polar</button>
     </div>
   </div>
-  <div class="saturn-stage" data-saturn-stage data-media={media} aria-hidden="true">
+  <div class="saturn-stage" data-saturn-stage data-media={media} data-hd={u('/models/worlds-hd/saturn-tilt')} aria-hidden="true">
     <svg data-saturn-diagram viewBox={`0 ${270 - viewHeight / 2} ${width} ${viewHeight}`} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
       <defs>
         <radialGradient id="saturn-disc" cx="37%" cy="35%" r="67%">
@@ -67,6 +67,17 @@ const bands = [
   </div>
   <noscript><style>.saturn-exhibit .saturn-controls { display: none; }</style></noscript>
   <p id="saturn-explanation">Quando a câmera chega ao plano dos anéis, vemos só sua borda. Os anéis são muito finos em relação à largura, então quase desaparecem. A posição do Sol fica fixa.</p>
+  <details class="depth-detail saturn-observation">
+    <summary>Comparar os anéis com uma fotografia do Hubble</summary>
+    <figure>
+      <img src={u('/models/worlds-hd/hubble-saturn-600.webp')}
+        srcset={`${u('/models/worlds-hd/hubble-saturn-600.webp')} 600w, ${u('/models/worlds-hd/hubble-saturn-1440.webp')} 1440w`}
+        sizes="auto, (max-width: 760px) 90vw, 740px" width="1440" height="915" loading="lazy" decoding="async"
+        alt="Saturno fotografado pelo Hubble com a sombra do globo sobre os anéis e faixas de nuvens no hemisfério norte." />
+      <figcaption>Em 20 de junho de 2019, o Hubble registrou os anéis inclinados em relação à Terra.
+        <a href="https://esahubble.org/images/heic1917a/">NASA, ESA, A. Simon (GSFC) e M. H. Wong (UC Berkeley)</a>.</figcaption>
+    </figure>
+  </details>
   <details class="depth-detail saturn-credits">
     <summary>Créditos e limites da ilustração</summary>
     <p>Mapa ilustrativo de JPL/Caltech, disponibilizado pela NASA. Faixas e transparência dos anéis foram modeladas pelo Cosmos do Zero. Cores, brilho e largura aparente da atmosfera têm ajuste artístico. No diagrama de perfil, a borda dos anéis é ampliada para ficar legível.</p>
@@ -78,3 +89,9 @@ const bands = [
   import { initSaturn } from '../scripts/saturn-exhibit';
   initSaturn();
 </script>
+
+<style>
+  .saturn-observation figure { margin: .8rem 0; }
+  .saturn-observation img { display: block; width: 100%; height: auto; border-radius: .55rem; }
+  .saturn-observation figcaption { margin-top: .6rem; font-size: .9rem; }
+</style>

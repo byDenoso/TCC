@@ -41,6 +41,14 @@ try {
       await root.locator('[data-mx-reset]').click(); await canvas.waitFor();
       await page.waitForLoadState('networkidle');
       const before=await pixels(canvas);
+      if (id === 'sistema-solar-pequenos-corpos') {
+        await root.getByText('Materiais e créditos da cena', {exact:true}).press('Enter');
+        assert.ok(await root.getByRole('link',{name:'NASA/JPL-Caltech/UMD · EPOXI'}).isVisible());
+      }
+      if(evidence && width===1280) {
+        await mkdir(evidence+'/abertura',{recursive:true});
+        await canvas.screenshot({path:evidence+'/abertura/'+id+'.png'});
+      }
       assert.ok(before.sum>20000,id+' empty');
       const options=root.locator('[data-mx-opt]'),range=root.locator('[data-mx-range]');
       if (await options.count()) await options.last().click(); else await range.press('End');
@@ -52,10 +60,16 @@ try {
       assert.ok(await root.locator('[data-mx-svg]').isVisible());
       await root.getByRole('button',{name:'Ver cena'}).click();await canvas.waitFor();
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,id+' overflow');
-      rows.push({width,id,initial:before.hash,selected:after.hash});count++;
+      const credits = await root.locator('.mx-detail-note summary').allTextContents();
+      rows.push({width,id,initial:before.hash,selected:after.hash,credits:credits.length});count++;
     }
   }
   assert.equal(count,35);
+  const selected = page.locator('[data-mx="terra-e-atmosfera-habitabilidade"]');
+  const credits = selected.getByText('Materiais e créditos da cena', {exact:true});
+  await credits.click();
+  assert.ok(await selected.locator('details.mx-detail-note a[href*="blue-marble"]').isVisible());
+  assert.equal(await selected.locator('[data-mx-play]').getAttribute('aria-pressed'),'false');
   await page.close();
  }
  assert.deepEqual(errors,[]);

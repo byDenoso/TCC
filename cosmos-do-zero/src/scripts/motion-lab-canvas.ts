@@ -1,6 +1,5 @@
 import { u } from '../lib/url';
-import { isVisibleNm, planckShape, seeded, seenFrom, wavelengthRgb, type Galaxy, type HubblePoint } from '../lib/motion-lab';
-import earthUrl from '../assets/planets/terra.webp?url';
+import { isVisibleNm, planckShape, seenFrom, wavelengthRgb, type Galaxy, type HubblePoint } from '../lib/motion-lab';
 import planckUrl from '../assets/photos/planck-cmb.webp?url';
 
 export type SkyFrame =
@@ -10,18 +9,19 @@ export type SkyFrame =
   | { kind: 'frio'; temperature: number; peak: number }
   | { kind: 'giro'; rings: number[]; stars: { ring: number; a: number }[]; dark: number };
 
-type ImageSource = HTMLImageElement | HTMLCanvasElement;
+type ImageSource = HTMLImageElement;
 type Brush = CanvasRenderingContext2D;
 const W = 640, H = 278;
 const textures = {
-  spiral: u('/photos/m51/m51-480.webp'),
-  cycles: u('/renders/reel-cycles/galaxy.webp'),
-  earth: earthUrl,
+  spiral: u('/renders/instruments-hd/m51.webp'),
+  barred: u('/renders/instruments-hd/ngc1300.webp'),
+  elliptical: u('/renders/instruments-hd/ngc1132.webp'),
+  earth: u('/models/worlds-hd/compact/terra-solo/00.webp'),
   planck: planckUrl
 };
 type Texture = keyof typeof textures;
 const required: Record<SkyFrame['kind'], Texture[]> = {
-  luz: ['spiral', 'earth'], expansao: ['spiral', 'cycles'], hubble: ['spiral', 'cycles'],
+  luz: ['spiral', 'earth'], expansao: ['spiral', 'barred', 'elliptical'], hubble: ['spiral', 'barred', 'elliptical'],
   frio: ['planck'], giro: ['spiral']
 };
 const cache = new Map<Texture, Promise<ImageSource>>();
@@ -34,20 +34,7 @@ function loadTexture(key: Texture): Promise<ImageSource> {
     const img = new Image();
     img.src = textures[key];
     await img.decode();
-    if (key !== 'spiral' && key !== 'cycles') return img;
-    // Isolate the main disk, excluding the companion in the Hubble photograph.
-    const tile = document.createElement('canvas');
-    tile.width = tile.height = 256;
-    const brush = tile.getContext('2d');
-    if (!brush) throw new Error('Canvas 2D indisponível');
-    const size = (key === 'spiral' ? .76 : .9) * img.height;
-    const cx = img.width * (key === 'spiral' ? .39 : .5);
-    brush.drawImage(img, cx - size / 2, img.height * .48 - size / 2, size, size, 0, 0, 256, 256);
-    brush.globalCompositeOperation = 'destination-in';
-    const mask = brush.createRadialGradient(128, 128, 65, 128, 128, 128);
-    mask.addColorStop(0, '#fff'); mask.addColorStop(.84, '#fffe'); mask.addColorStop(1, '#fff0');
-    brush.fillStyle = mask; brush.fillRect(0, 0, 256, 256);
-    return tile;
+    return img;
   })().catch(error => { cache.delete(key); throw error; });
   cache.set(key, task);
   return task;
@@ -62,8 +49,7 @@ function sprite(g: Brush, img: ImageSource, x: number, y: number, width: number,
 function line(g: Brush, x: number, y: number, endX: number, endY: number, color: string) {
   g.beginPath(); g.moveTo(x, y); g.lineTo(endX, endY); g.strokeStyle = color; g.stroke();
 }
-const random = seeded(701);
-const sky = Array.from({ length: 120 }, () => ({ x: random() * W, y: random() * H, r: .35 + random(), alpha: .18 + random() * .65 }));
+const galaxies = ['spiral', 'barred', 'elliptical'] as const;
 
 export class MotionSky {
   private images = new Map<Texture, ImageSource>();
@@ -134,13 +120,6 @@ export class MotionSky {
     }
     g.setTransform(w / W, 0, 0, w / W, 0, 0);
     g.fillStyle = '#091322'; g.fillRect(0, 0, W, worldHeight);
-    if (f.kind !== 'frio') {
-      for (const star of sky) {
-        g.globalAlpha = star.alpha; g.fillStyle = '#dceaff';
-        g.fillRect(star.x, star.y * worldHeight / H, star.r, star.r);
-      }
-      g.globalAlpha = 1;
-    }
     g.translate(0, this.sceneOffsetY);
     const image = (key: Texture) => this.images.get(key)!;
     let caption: string;
@@ -181,9 +160,10 @@ export class MotionSky {
           if (nearest) f.select(nearest);
         };
         for (const obj of objects) {
-          const s = 44 * obj.k * obj.size;
+          const s = 56 * obj.k * obj.size;
           if (obj.y < -this.sceneOffsetY - s || obj.y > H + this.sceneOffsetY + s || obj.x < -s || obj.x > W + s) continue;
-          sprite(g, image(obj.i % 3 === 0 ? 'cycles' : 'spiral'), obj.x, obj.y, s, s * .65, Math.sin(obj.i) * .9);
+          const photo = image(galaxies[obj.i % 3]);
+          sprite(g, photo, obj.x, obj.y, s, s * photo.height / photo.width, Math.sin(obj.i) * .9);
         }
         g.beginPath(); g.ellipse(320, 138, 32, 20, 0, 0, Math.PI * 2);
         g.strokeStyle = '#f8ce91'; g.lineWidth = 1.8; g.stroke();
@@ -195,20 +175,28 @@ export class MotionSky {
         const targets = f.sample.map((pt, i) => {
           const depth = 1 / (1 + pt.mpc / 125);
           const a = i * 2.39996;
-          return { x: 316 + Math.cos(a) * 350 * depth, y: 124 + Math.sin(a) * 145 * depth, width: 85 * depth, i };
+          return { x: 180 + Math.cos(a) * 160 * depth, y: 135 + Math.sin(a) * 116 * depth, width: 85 * depth, i };
         });
         const latest = targets[f.count - 1];
+        const focus = latest ?? targets[0];
         if (latest) {
           g.lineWidth = 1.2; line(g, 320, H + this.sceneOffsetY, latest.x, latest.y, '#ecd4a9a8');
         }
         targets.sort((a, b) => a.width - b.width).forEach(t => {
           g.globalAlpha = t.i < f.count ? 1 : .32;
-          sprite(g, image(t.i % 2 ? 'spiral' : 'cycles'), t.x, t.y, t.width, t.width * .68, Math.sin(t.i) * .8);
+          const photo = image(galaxies[t.i % 3]);
+          sprite(g, photo, t.x, t.y, t.width, t.width * photo.height / photo.width, Math.sin(t.i) * .8);
         });
         g.globalAlpha = 1;
         if (latest) {
           g.beginPath(); g.arc(latest.x, latest.y, latest.width / 2 + 4, 0, Math.PI * 2);
           g.strokeStyle = '#ffe0aa'; g.stroke();
+        }
+        if (focus) {
+          const photo = image(galaxies[focus.i % 3]);
+          sprite(g, photo, 488, 132, 212, 212 * photo.height / photo.width);
+          g.fillStyle = '#cddae7'; g.font = '16px system-ui'; g.textAlign = 'center';
+          g.fillText(latest ? 'Última medida · ampliação' : 'Primeiro alvo · ampliação', 488, 264);
         }
         const pt = f.sample[f.count - 1];
         caption = pt ? format(pt.mpc, 1) + ' Mpc   ·   ' + format(pt.kms) + ' km/s' : 'Campo simulado · aguardando a primeira medida';
@@ -233,6 +221,9 @@ export class MotionSky {
           g.strokeStyle = layer ? 'rgba(126,183,196,' + (.68 - layer * .04) + ')' : '#ffcf92';
           g.lineWidth = layer ? 1 : 2.6; g.stroke();
         }
+        g.fillStyle = '#cddae7'; g.font = '16px system-ui'; g.textAlign = 'center';
+        g.fillText('Planck · céu observado', 128, 252);
+        g.fillText('Espectros térmicos · modelo', 421, 252);
         caption = format(f.temperature, 2) + ' K   ·   pico ' + format(f.peak / 1000, 2) + ' µm';
         break;
       }
@@ -245,10 +236,14 @@ export class MotionSky {
           g.fillStyle = halo; g.fillRect(-220, -220, 440, 440);
         }
         sprite(g, image('spiral'), 0, 0, radius * 2, radius * 2);
-        for (const star of f.stars) {
+        for (const ring of [1, 4, 8]) {
+          const star = f.stars.find(point => point.ring === ring);
+          if (!star) continue;
           const r = radius * f.rings[star.ring];
           const x = r * Math.cos(star.a), y = r * Math.sin(star.a);
-          g.beginPath(); g.ellipse(x, y, 2, 2 / tilt, 0, 0, Math.PI * 2);
+          g.beginPath(); g.arc(0, 0, r, star.a - .42, star.a);
+          g.lineWidth = 2.5; g.strokeStyle = '#ffd1a0'; g.stroke();
+          g.beginPath(); g.ellipse(x, y, 3.4, 3.4 / tilt, 0, 0, Math.PI * 2);
           g.fillStyle = star.ring % 2 ? '#9bd5e8' : '#ffe0a2'; g.fill();
         }
         g.restore();

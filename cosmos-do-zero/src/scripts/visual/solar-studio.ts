@@ -1,4 +1,5 @@
 import { planets } from '../../data/client';
+import { u } from '../../lib/url';
 import { mountWorldView } from './world-view';
 import { svg,animator,reduced } from '../lab/common';
 import { orbitalPeriodYears,SOLAR_MASS_KG } from '../../lib/physics';
@@ -26,7 +27,7 @@ export async function initSolarStudio():Promise<void>{
    const p=planets[selected];
    const earth=p.id==='terra'&&!moon;layerPanel.hidden=!earth;layerNote.hidden=!earth;
    layerInputs.forEach(input=>input.disabled=!earth);
-   layerNote.textContent='Alterne as nuvens e o brilho atmosférico ilustrativos para observar o mapa da superfície.';
+   layerNote.textContent='Alterne o mosaico de nuvens e o brilho atmosférico ilustrativo para observar a superfície.';
    root.querySelector('[data-solar-fact="radius"]')!.textContent=(moon?1737:p.radius).toLocaleString('pt-BR')+' km';
    root.querySelector('[data-solar-fact="distance"]')!.previousElementSibling!.textContent=moon?'Distância à Terra':'Distância ao Sol';
    root.querySelector('[data-solar-fact="distance"]')!.textContent=moon?'384 mil km da Terra':p.distance.toLocaleString('pt-BR')+' UA';
@@ -39,7 +40,18 @@ export async function initSolarStudio():Promise<void>{
    root.querySelector<HTMLElement>('[data-solar-limit]')!.textContent=mode==='sizes'?'Diâmetros dos planetas proporcionais entre si. Separações ajustadas para caber; Sol e anéis omitidos nesta régua.':'Semieixos maiores das órbitas proporcionais. Corpos ampliados e desenhados com o mesmo tamanho para poder vê-los; não use esta régua para comparar diâmetros.';
    root.querySelector<HTMLElement>('[data-solar-period]')!.textContent=`No modelo de dois corpos, uma volta de ${p.name} leva aproximadamente ${orbitalPeriodYears(p.distance,1,p.mass/SOLAR_MASS_KG).toLocaleString('pt-BR',{maximumFractionDigits:3})} anos terrestres.`;
    if(moon)root.querySelector<HTMLElement>('[data-solar-period]')!.textContent='A Lua leva cerca de 27,3 dias para orbitar a Terra em relação às estrelas. A fórmula dos planetas ao redor do Sol não é aplicada a esta escolha.';
-   fallback.replaceChildren();ruler.replaceChildren();planets.forEach((p,i)=>{const x=mode==='sizes'?38+i*80:24+p.distance/furthest*572,r=mode==='sizes'?p.radius/largest*28:6;svg('circle',{cx:x,cy:40,r,fill:i===selected?'#ce804c':'#91a9be'},ruler);if(mode==='sizes'||i===selected)svg('text',{x,y:90,'text-anchor':'middle',fill:'var(--ink-2)','font-size':12},ruler,p.name);});view.refresh();
+   fallback.replaceChildren();
+   ruler.replaceChildren();
+   planets.forEach((planet, i) => {
+     const x = mode === 'sizes' ? 38 + i * 80 : 24 + planet.distance / furthest * 572;
+     const radius = mode === 'sizes' ? planet.radius / largest * 28 : 6;
+     const side = radius * 2.4; // Both export tiers have the same globe-to-frame ratio.
+     const id = planet.id === 'saturno' ? 'saturno-globo' : planet.id;
+     svg('image', {href: u(`/models/worlds-hd/thumbs/${id}.webp`), x:x-side/2, y:40-side/2, width:side, height:side}, ruler);
+     if (mode === 'sizes' || i === selected)
+       svg('text', {x, y:90, 'text-anchor':'middle', fill:'var(--ink-2)', 'font-size':12}, ruler, planet.name);
+   });
+   view.refresh();
   };
   const advance = () => view.advance(!moon && planets[selected].rotation < 0 ? -1 : 1);
   let elapsed = 0;

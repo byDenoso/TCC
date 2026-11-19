@@ -36,7 +36,7 @@ export function initOrbitExhibit(): void {
   let planetX = 0, planetY = 0;
   const stage = ellipse.ownerSVGElement!;
   const scene = plate(stage, ['star', 'earth'], (ctx, img) => {
-    disc(ctx, img('star'), cx, ORBIT_VIEW.cy, 17, 2/2.12);
+    disc(ctx, img('star'), cx, ORBIT_VIEW.cy, 17, 1);
     ctx.save();
     ctx.translate(planetX, planetY);
     ctx.rotate(Math.atan2(planetY-ORBIT_VIEW.cy, planetX-cx));

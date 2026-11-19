@@ -1,0 +1,16 @@
+---
+import assets from '../../public/renders/instruments-hd/credits.json';
+type Photo = 'solar-photosphere' | 'm51' | 'ngc1300' | 'ngc1132';
+interface Props { photos: Photo[]; earth?: boolean }
+const labels = { 'solar-photosphere': 'Sol · HMI', m51: 'M51', ngc1300: 'NGC 1300', ngc1132: 'NGC 1132' };
+const items = Astro.props.photos.map(id => ({label: labels[id], ...assets.find(row => row.file === id+'.webp')!}));
+---
+<small class="instrument-credits">
+  {Astro.props.earth && <span>Terra · <a href="https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/">mapa MODIS</a> e <a href="https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution/">nuvens Blue Marble</a>, NASA Earth Observatory.</span>}
+  {items.map(item => <span><a href={item.source}>{item.label}</a> · {item.credit}.</span>)}
+  {items.some(item => item.file !== 'solar-photosphere.webp') && <span>Recortes com bordas suavizadas · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.</span>}
+</small>
+<style>
+  .instrument-credits { display: block; margin-block: .4em; font-size: .8rem; line-height: 1.5; }
+  .instrument-credits span + span::before { content: ' '; white-space: pre; }
+</style>

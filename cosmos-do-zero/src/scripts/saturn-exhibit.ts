@@ -14,7 +14,12 @@ export function initSaturn(): void {
   const unit = globe[0].rx.baseVal.value;
   let pending = 0;
 
+  const unavailableHD = new Set<number>();
   function source(degree: number) {
+    const width = stage.clientWidth;
+    if (width > 400 && width * window.devicePixelRatio > 704 && !unavailableHD.has(degree)) {
+      return `${stage.dataset.hd}/${String(degree).padStart(2, '0')}.webp`;
+    }
     const file = degree === settings.camera.openAngle ? 'poster.webp' : `frames/${String(degree).padStart(2, '0')}.webp`;
     return `${stage.dataset.media}/${file}`;
   }
@@ -29,7 +34,7 @@ export function initSaturn(): void {
     }
   }
 
-  function setAngle(degrees: number) {
+  function setAngle(degrees: number, manual = false) {
     slider.value = String(degrees);
     slider.setAttribute('aria-valuetext', `${degrees} graus${degrees === settings.camera.edgeAngle ? ', de perfil' : ''}`);
     output.value = `${degrees}°`;
@@ -45,20 +50,32 @@ export function initSaturn(): void {
     showLoaded();
     if (image.getAttribute('src') !== source(degrees) || (image.complete && !image.naturalWidth)) {
       pending = requestAnimationFrame(() => {
-        image.loading = 'eager';
+        image.hidden = false;
+        if (manual) image.loading = 'eager';
         image.src = source(degrees);
       });
     }
   }
 
   image.addEventListener('load', showLoaded);
-  image.addEventListener('error', showLoaded);
+  image.addEventListener('error', () => {
+    const degree = Number(slider.value);
+    if (image.getAttribute('src') === source(degree) && image.src.includes('/worlds-hd/')) {
+      unavailableHD.add(degree);
+      setAngle(degree);
+    } else showLoaded();
+  });
   slider.disabled = false;
-  slider.addEventListener('input', () => setAngle(Number(slider.value)));
+  slider.addEventListener('input', () => setAngle(Number(slider.value), true));
   for (const button of presets) {
     button.disabled = false;
-    button.addEventListener('click', () => setAngle(Number(button.dataset.saturnPreset)));
+    button.addEventListener('click', () => setAngle(Number(button.dataset.saturnPreset), true));
   }
+  const resize = new ResizeObserver(() => setAngle(Number(slider.value)));
+  resize.observe(stage);
+  window.addEventListener('pagehide', event => {
+    if (!event.persisted) { resize.disconnect(); cancelAnimationFrame(pending); }
+  });
   setAngle(Number(slider.value));
   root.dataset.controlsReady = 'true';
   performance.mark('saturn:controls-ready');

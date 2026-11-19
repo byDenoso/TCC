@@ -14,16 +14,16 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: Destino do build (o domínio requer DNS e Pages preparados)
+        description: Destino do build (o domÃ­nio requer DNS e Pages preparados)
         type: choice
         options: [github, custom]
         default: github
       publish:
-        description: Publicar após todos os testes (substitui o site Pages de TCC)
+        description: Publicar apÃ³s todos os testes (substitui o site Pages de TCC)
         type: boolean
         default: false
       domain_ready:
-        description: DNS e domínio do Pages conferidos para o destino selecionado
+        description: DNS e domÃ­nio do Pages conferidos para o destino selecionado
         type: boolean
         default: false
 
@@ -49,10 +49,10 @@ jobs:
       run:
         working-directory: cosmos-do-zero
     steps:
-      - name: Exigir conferência antes de publicar
+      - name: Exigir conferÃªncia antes de publicar
         if: inputs.publish && !inputs.domain_ready
         run: |
-          echo 'Confirme DNS e Settings > Pages antes da publicação.'
+          echo 'Confirme DNS e Settings > Pages antes da publicaÃ§Ã£o.'
           exit 1
       - name: Checkout da branch isolada
         uses: actions/checkout@v7
@@ -74,11 +74,11 @@ jobs:
         run: npm run test:http
       - name: Compilar site publico
         run: npm run build
-      - name: Validar links, recursos, canônicas, robots e sitemap
+      - name: Validar links, recursos, canÃ´nicas, robots e sitemap
         run: npm run test:pages
       - name: Instalar navegadores de teste
         run: npx playwright install --with-deps chromium firefox webkit
-      - name: Conferir azul do céu WebGL
+      - name: Conferir azul do cÃ©u WebGL
         run: |
           export BASE_URL="http://127.0.0.1:4322${SITE_BASE%/}"
           set -euo pipefail
@@ -128,11 +128,11 @@ jobs:
           if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
           # Collect every independent suite result; any failure still blocks publication.
           failed=0
-          for suite in browsers budget assets depth e2e renders saturn scales; do
+          for suite in browsers budget assets depth hd e2e renders saturn scales; do
             if ! npm run "test:$suite"; then failed=1; fi
           done
           test "$failed" -eq 0
-      - name: Guardar diagnósticos visuais das escalas e gráficos
+      - name: Guardar diagnÃ³sticos visuais das escalas e grÃ¡ficos
         if: always()
         uses: actions/upload-artifact@v7
         with:
@@ -141,19 +141,20 @@ jobs:
             cosmos-do-zero/test-results/scale-visual/*.png
             cosmos-do-zero/test-results/browser-smoke/*.png
             cosmos-do-zero/test-results/browser-smoke/*.json
+            cosmos-do-zero/test-results/site-hd/audit.json
             cosmos-do-zero/test-results/saturn/*.png
             cosmos-do-zero/test-results/saturn/*.json
           if-no-files-found: ignore
           retention-days: 14
       - name: Empacotar destino selecionado
         run: node scripts/package-pages.mjs
-      - name: Guardar artefato para inspeção (sem publicar)
+      - name: Guardar artefato para inspeÃ§Ã£o (sem publicar)
         uses: actions/upload-artifact@v7
         with:
           name: cosmos-${{ inputs.target || 'github' }}-preview
           path: cosmos-do-zero/pages-root
           include-hidden-files: true
-      - name: Conferir domínio configurado no Pages antes do deploy
+      - name: Conferir domÃ­nio configurado no Pages antes do deploy
         if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
         env:
           GH_TOKEN: ${{ github.token }}
@@ -165,11 +166,11 @@ jobs:
             expected='cosmos.denerpereira.com.br'
             node --input-type=module -e 'import {resolveCname} from "node:dns/promises"; import assert from "node:assert/strict"; const records=await resolveCname("cosmos.denerpereira.com.br"); assert.ok(records.some(x=>x.toLowerCase().replace(/\.$/, "") === "bydenoso.github.io"), "CNAME DNS inesperado");'
           fi
-          test "$actual" = "$expected" || { echo 'Domínio de Settings > Pages difere do destino; deploy recusado.'; exit 1; }
+          test "$actual" = "$expected" || { echo 'DomÃ­nio de Settings > Pages difere do destino; deploy recusado.'; exit 1; }
       - name: Configurar Pages previamente habilitado
         if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
         uses: actions/configure-pages@v6
-      - name: Upload do artefato público
+      - name: Upload do artefato pÃºblico
         if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
         uses: actions/upload-pages-artifact@v5
         with:
@@ -215,7 +216,7 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-      - name: Definir URL de verificação
+      - name: Definir URL de verificaÃ§Ã£o
         run: echo "BASE_URL=${SITE_URL}${SITE_BASE%/}" >> "$GITHUB_ENV"
       - name: URL publica e recursos
         run: |
@@ -230,7 +231,7 @@ jobs:
           curl -fLsS "$BASE_URL/sitemap.xml" | grep -F "$BASE_URL/"
           curl -fLsS "$BASE_URL/renders/hero-eclipse.webp" -o /tmp/cosmos-hero.webp
           test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
-      - name: Céu e cinema publicados
+      - name: CÃ©u e cinema publicados
         run: |
           npm run test:hero
           npm run test:cinema
@@ -238,6 +239,7 @@ jobs:
         run: |
           npm run test:e2e
           npm run test:assets
+          npm run test:hd
           npm run test:renders
           npm run test:saturn
           npm run test:scales
@@ -253,4 +255,5 @@ jobs:
             cosmos-do-zero/docs/screenshots/render-*.png
             cosmos-do-zero/test-results/saturn/mobile-*.png
             cosmos-do-zero/test-results/saturn/saturn-results.json
+            cosmos-do-zero/test-results/site-hd/audit.json
           retention-days: 30

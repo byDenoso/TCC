@@ -1,5 +1,7 @@
 ---
 import M51Image from './M51Image.astro';
+import jades from '../data/journey-jades.json';
+import { u as imageUrl } from '../lib/url';
 import m51 from '../../assets/source/m51.json';
 import webb from '../assets/photos/webb-deep-field.webp';
 import { Image } from 'astro:assets';
@@ -37,6 +39,16 @@ const Title = Astro.props.headingLevel ?? 'h2';
         <figcaption><span class="meta">Observação · Hubble / ACS</span><h3>{m51.title}</h3>
           <p>{m51.transformation} <a href={m51.licenseUrl}>{m51.license}</a>.</p>
           <a href={m51.href}>{m51.credit}</a></figcaption>
+      </figure>
+      <figure id="observacao-jades">
+        <img src={imageUrl('/photos/journey/jades-880.webp')} width="880" height="671" alt={jades.caption} loading="lazy" decoding="async" />
+        <figcaption>
+          <span class="meta">{jades.kind}</span>
+          <h3>Galáxias no campo GOODS-S</h3>
+          <p>{jades.caption} As cores representam filtros de infravermelho próximo.</p>
+          <p class="credit-line"><a href={jades.source}>{jades.credit}</a></p>
+          <p>{jades.change} <a href={jades.license}>CC BY 4.0</a>.</p>
+        </figcaption>
       </figure>
       {imageCredits.map((c, i) => (
         <figure>

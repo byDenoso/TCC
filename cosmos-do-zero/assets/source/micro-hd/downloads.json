@@ -1,0 +1,12 @@
+[
+  {
+    "file": "sdo.png",
+    "url": "https://svs.gsfc.nasa.gov/vis/a010000/a014600/a014683/002_Sunspot_ComparisonAUG.png",
+    "sha256": "79b6c134dcba1f8ffc4420fe7c3b906d0f65e1de89cd68b7f9a50d425ef63b1d"
+  },
+  {
+    "file": "hartley.jpg",
+    "url": "https://assets.science.nasa.gov/content/dam/science/psd/solar/2023/07/hartley2_main.jpg",
+    "sha256": "f5709080e2f5018746761baa4cf7b59e6c84e4a1258c15de784d5ebd071c50fa"
+  }
+]

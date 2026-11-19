@@ -1,4 +1,4 @@
-import { depthCanvas, reel } from './lesson-depth';
+import { depthCanvas } from './lesson-depth';
 import { STORIES, renderStory, sampleStory, storyProgress } from '../lib/story-scenes';
 import { visibleMotion } from './visible-motion';
 import { motionPreference } from './motion-preference';
@@ -14,18 +14,9 @@ export function initStories():void {
   const range=root.querySelector<HTMLInputElement>('[data-story-time]')!,clock=root.querySelector<HTMLOutputElement>('[data-story-clock]')!,caption=root.querySelector<HTMLElement>('[data-story-caption]')!;
   const phases=[...root.querySelectorAll<HTMLButtonElement>('[data-story-phase]')],modes=[...root.querySelectorAll<HTMLButtonElement>('[data-story-mode]')];
   let seconds=motionPreference.matches?20:0,running=false,raf=0,last=0,lastPaint=0,lastProgress=-1,visible=false,mode='scene',sceneAutomatic=true,pendingFilmTime:number|null=null;
-  let waveProgress=0;
   const paintWave=depthCanvas(world.querySelector('[data-wave-depth]'),(ctx,image)=>{
-   const galaxy=image(reel('galaxy'));
-   if(!galaxy)return;
-   ctx.globalAlpha=.42;
-   for(const [y,scale] of [[172,1],[326,1+waveProgress]]) {
-    for(let i=0;i<4;i++){
-     const x=480+(i-1.5)*170*scale;
-     const size=84+i*8;
-     ctx.drawImage(galaxy,x-size/2,y-size/2,size,size);
-    }
-   }
+   const galaxy=image('/renders/micro-hd/espiral.webp');
+   if(galaxy)ctx.drawImage(galaxy,400,-28,160,160);
   });
   const showPoster=(phase:number)=>{
    if(id==='origem-do-universo')return;
@@ -36,7 +27,8 @@ export function initStories():void {
    const t=mode==='film'?(pendingFilmTime??film.currentTime):seconds,p=storyProgress(t),state=sampleStory(id,p);
    if(mode==='scene'&&p!==lastProgress){
     graphic.innerHTML=renderStory(id,p,`story-${id}`,true);
-    showPoster(state.phase);waveProgress=p;paintWave();
+    showPoster(state.phase);
+    if(lastProgress<0)paintWave();
     lastProgress=p;
    }
    const value=t.toFixed(2);if(range.value!==value)range.value=value;

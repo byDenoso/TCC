@@ -1,3 +1,4 @@
+import { hd, drawGlobe, skyBackdrop } from './hd-materials';
 import type { StagePaint } from '../stage-surface';
 import { expansionPositions, projectExpansion, separation } from '../../lib/expansion';
 import { rng } from './draw';
@@ -9,9 +10,7 @@ const tau = 2 * Math.PI;
 const gold = '#ffcf88';
 const ice = '#a6e2ff';
 const muted = '#a1b7c8';
-const galaxy = '/models/galaxies-v4/512/';
-const turntable = '/models/solar-turntable/';
-const reel = '/renders/reel-cycles/';
+const galaxy = '/models/galaxies-v4/';
 const clamp = (v: number, max = 1) => Math.max(0, Math.min(max, v));
 const choice = (v: number, max: number) => Math.round(clamp(v, max));
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -51,20 +50,13 @@ function earlySky(s: Surface, opacity: number) {
   // Before the first stars, use a diffuse illustration without the stage's star field.
   s.ctx.fillStyle = '#090e18';
   s.ctx.fillRect(0, 0, 640, 360);
-  s.sprite('/renders/ancient-light-small.webp', 320, 145, 640, 427, opacity);
+  s.sprite('/renders/ancient-light.webp', 320, 145, 640, 427, opacity);
 }
 function globe(s: Surface, name: string, x: number, y: number, w: number, frame = 0) {
-  s.sprite(turntable + name + '/' + String(frame % 36).padStart(2, '0') + '.webp', x, y, w, w);
+  drawGlobe(s, name, x, y, w, frame);
 }
 function sun(s: Surface, x: number, y: number, size: number) {
-  const c = s.ctx;
-  c.save();
-  c.beginPath();
-  c.arc(x, y, size * 0.48, 0, tau);
-  c.clip();
-  c.globalCompositeOperation = 'screen';
-  s.sprite('/renders/star-small.webp', x, y, size * 1.5, size);
-  c.restore();
+  s.sprite(hd + 'sol.webp', x, y, size);
 }
 function disc(s: Surface, texture: string, x: number, y: number, w: number, h: number, angle = 0) {
   const c = s.ctx;
@@ -73,7 +65,10 @@ function disc(s: Surface, texture: string, x: number, y: number, w: number, h: n
   c.scale(1, h / w);
   c.rotate(angle);
   c.globalCompositeOperation = 'screen';
-  s.sprite(galaxy + texture + '.webp', 0, 0, w, w);
+  const path = texture === 'grand-spiral' ? hd + 'espiral.webp'
+    : texture === 'andromeda' ? hd + 'andromeda.webp'
+    : galaxy + (w < 150 ? '512/' : '768/') + texture + '.webp';
+  s.sprite(path, 0, 0, w, w);
   c.restore();
 }
 function orbit(s: Surface, x: number, y: number, r: number, a: number): Point {
@@ -93,9 +88,9 @@ const worlds = ['mercurio', 'venus', 'terra', 'marte', 'jupiter', 'saturno', 'ur
 function address(s: Surface, v: number, t: number) {
   const k = choice(v, 4);
   if (k === 0) {
-    globe(s, 'terra', 320, 142, 278, Math.round(t * 12));
-    // The rendered terrestrial limb spans 266 of the 320 atlas pixels.
-    const halfDiameter = (278 * 266) / 640;
+    globe(s, 'terra', 320, 142, 278, Math.round(t * 36));
+    // The orthographic square spans 2.4 globe radii.
+    const halfDiameter = 278 / 2.4;
     line(s, [320 - halfDiameter, 271], [320 + halfDiameter, 271], ice);
     for (const x of [320 - halfDiameter, 320 + halfDiameter]) line(s, [x, 266], [x, 276], ice);
   } else if (k === 1) {
@@ -116,14 +111,14 @@ function address(s: Surface, v: number, t: number) {
     line(s, [x + 6, y], [x + 37, y - 25], gold);
     s.label('Sol', x + 40, y - 25, { size: 16, color: gold });
   } else if (k === 3) {
-    disc(s, 'grand-spiral', 408 + 6 * t, 112, 169, 69, -0.6);
+    disc(s, 'andromeda', 408 + 6 * t, 112, 169, 69, -0.6);
     disc(s, 'barred-spiral', 209 - 4 * t, 185, 150, 81, 0.7);
     for (let i = 0; i < 13; i++)
       disc(s, 'irregular', 110 + i * 33, 134 + 81 * Math.sin(i * 3.7 + t * 0.12), 19, 10, i);
     s.label('Via Láctea', 155, 249, { size: 15 });
     s.label('Andrômeda', 390, 72, { size: 15 });
   } else {
-    s.sprite(reel + 'cosmic-web.webp', 320, 142, 445 + 22 * t, 345 + 17 * t);
+    s.sprite('/renders/cosmic-web.webp', 320, 142, 640 + 22 * t, 400 + 14 * t);
     s.label('Distribuição ilustrativa', 24, 40, { size: 15, color: ice });
   }
   band(
@@ -177,49 +172,22 @@ const nodes: Point[] = [
   [570, 172],
   [297, 268],
 ];
-const edges = [
-  [0, 1],
-  [0, 4],
-  [1, 2],
-  [2, 3],
-  [2, 5],
-  [3, 7],
-  [4, 5],
-  [5, 6],
-  [6, 7],
-  [5, 8],
-  [2, 6],
-];
 const random = rng(38521);
-const dust = Array.from({ length: 390 }, (_, i) => {
-  const [a, b] = edges[i % edges.length],
-    f = random(),
-    depth = random();
-  return {
-    x: 24 + 592 * random(),
-    y: 22 + 253 * random(),
-    depth,
-    endX: mix(nodes[a][0], nodes[b][0], f) + (random() - 0.5) * 17,
-    endY: mix(nodes[a][1], nodes[b][1], f) + (random() - 0.5) * 13,
-  };
-}).sort((a, b) => a.depth - b.depth);
+const dust = Array.from({ length: 390 }, () => ({
+  x: 24 + 592 * random(), y: 22 + 253 * random(), depth: random(),
+}));
 function web(s: Surface, v: number, t: number) {
   const growth = clamp(v),
     f = 1 - (1 - growth) ** 2;
   earlySky(s, 0.07 * (1 - growth));
-  for (const p of dust) {
-    const x = mix(p.x, p.endX, f) + (t - 0.5) * (p.depth - 0.5) * 9;
-    dot(s, x, mix(p.y, p.endY, f), 0.65 + 1.45 * p.depth, p.depth > 0.55 ? '#ffddb4' : '#89a6bc');
-  }
-  for (const [x, y] of nodes) if (growth > 0.1) disc(s, 'elliptical', x, y, 3 + growth * 23, 2 + growth * 12);
-  if (growth > 0.85) {
-    s.label('Nó', 410, 253, { size: 15, color: gold });
-    s.label('Vazio', 405, 116, { size: 15, color: ice });
-  }
+  // Density contrast grows in the rendered filaments. No tracer points stand in for matter.
+  s.sprite('/renders/ancient-light.webp', 320, 146, 650, 370, .32 * (1 - growth));
+  s.sprite('/renders/cosmic-web.webp', 320, 145, 650 + 16*t, 365 + 9*t, .08 + .92*f);
+
   band(
     s,
     'Formação da teia · ' + Math.round(growth * 100) + '% do percurso',
-    'Partículas do modelo convergem para filamentos e nós.',
+    'Contraste da densidade cresce entre filamentos, nós e vazios · ilustração.',
   );
 }
 
@@ -232,14 +200,14 @@ function cloudTexture(s: Surface, mode: number) {
   let texture = modes.get(mode);
   if (texture) return texture;
   texture = document.createElement('canvas');
-  texture.width = 368;
-  texture.height = 256;
+  texture.width = 832;
+  texture.height = 576;
   const c = texture.getContext('2d');
   if (!c) return null;
   c.filter = ['saturate(1.15)', 'saturate(0.7) hue-rotate(325deg)', 'brightness(0.14) saturate(0.6)'][mode];
-  c.drawImage(image, 0, 0, 368, 256);
+  c.drawImage(image, 0, 0, texture.width, texture.height);
   c.filter = 'none';
-  c.scale(184, 128);
+  c.scale(texture.width / 2, texture.height / 2);
   const mask = c.createRadialGradient(1, 1, 0.33, 1, 1, 1);
   mask.addColorStop(0, '#fff');
   mask.addColorStop(0.73, '#ffffffbe');
@@ -440,16 +408,6 @@ function redshift(s: Surface, v: number, t: number) {
   );
 }
 
-function bead(s: Surface, x: number, y: number, r: number, color: string) {
-  const g = s.ctx.createRadialGradient(x - r * 0.28, y - r * 0.38, 0.1, x, y, r);
-  g.addColorStop(0, '#fff4dd');
-  g.addColorStop(0.38, color);
-  g.addColorStop(1, '#151827');
-  s.ctx.fillStyle = g;
-  s.ctx.beginPath();
-  s.ctx.arc(x, y, r, 0, tau);
-  s.ctx.fill();
-}
 function nuclei(s: Surface, v: number, t: number) {
   const k = choice(v, 3),
     binding = k === 0 ? 0 : k === 1 ? t : 1;
@@ -470,9 +428,10 @@ function nuclei(s: Surface, v: number, t: number) {
     }
     if (k === 3 && !bound) {
       ring(s, x, y, 10, 7, '#89c9ff99');
-      dot(s, x + 10 * Math.cos(i + t * tau), y + 7 * Math.sin(i + t * tau), 1.8, ice);
+      s.sprite('/renders/lesson-depth/electron.webp', x + 10 * Math.cos(i + t * tau), y + 7 * Math.sin(i + t * tau), 4);
     }
-    bead(s, x, y, 4.3 + p.depth * 2, bound && i % 4 >= 2 ? '#adbad0' : '#f48765');
+    const size = 10 + p.depth * 5;
+    s.sprite('/renders/lesson-depth/' + (bound && i % 4 >= 2 ? 'electron' : 'proton') + '.webp', x, y, size);
   }
   for (let i = 0; i < 28; i++) {
     if (k === 3 && i >= 4) break;
@@ -481,10 +440,10 @@ function nuclei(s: Surface, v: number, t: number) {
         cy = i < 2 ? 99 : 160,
         a = t * tau + i * Math.PI;
       ring(s, cx, cy, 17, 11, '#89c9ff77');
-      dot(s, cx + 17 * Math.cos(a), cy + 11 * Math.sin(a), 2, ice);
+      s.sprite('/renders/lesson-depth/electron.webp', cx + 17 * Math.cos(a), cy + 11 * Math.sin(a), 4);
     } else {
       const p = dust[5 * i];
-      dot(s, 24 + ((p.x + t * 85) % 588), 24 + ((p.y + i + t * 28) % 246), 2, ice);
+      s.sprite('/renders/lesson-depth/electron.webp', 24 + ((p.x + t * 85) % 588), 24 + ((p.y + i + t * 28) % 246), 5);
     }
   }
   s.label('Próton', 28, 28, { size: 15, color: '#ffab8d' });
@@ -507,18 +466,6 @@ function nuclei(s: Surface, v: number, t: number) {
   );
 }
 
-const scatterPath: Point[] = [
-  [44, 156],
-  [118, 81],
-  [163, 202],
-  [228, 117],
-  [276, 214],
-  [340, 72],
-  [403, 164],
-  [458, 102],
-  [522, 190],
-  [592, 129],
-];
 function structures(s: Surface, v: number, t: number) {
   const g = clamp(v),
     epoch = g < 0.15 ? 0 : g < 0.45 ? 1 : g < 0.75 ? 2 : 3;
@@ -527,17 +474,7 @@ function structures(s: Surface, v: number, t: number) {
     const size = 68 - 45 * g,
       cx = x + 6 * Math.sin(index),
       cy = 38 + y * 0.7;
-    for (let i = 0; i < 25; i++) {
-      const p = dust[index * 25 + i];
-      const drift = (t - 0.5) * (1 - g) * 8;
-      dot(
-        s,
-        cx + (p.x / 620 - 0.5) * size + drift * (p.depth - 0.5),
-        cy + (p.y / 270 - 0.5) * size * 0.7,
-        1 + p.depth,
-        g < 0.45 ? '#9099a8' : '#c8b7a9',
-      );
-    }
+    s.sprite(hd + 'gas.webp', cx + 4*t, cy, size*2.6, size*1.8, .21 + .44*g);
     if (g > 0.45) {
       const lit = clamp((g - 0.45) / 0.35),
         bubble = clamp((g - 0.55) / 0.45);
@@ -579,7 +516,7 @@ function evidence(s: Surface, v: number, t: number) {
   const c = s.ctx;
   // Only the M51 plate is an observation; the other two thumbnails illustrate the probes.
   s.sprite('/posters/nuclei-small.webp', 300, 107, 100, 70, 0.9);
-  s.sprite('/posters/cmb-field.webp', 404, 106, 92, 49, 0.95);
+  s.sprite(hd + 'fundo-planck.webp', 404, 106, 92, 49, 0.95);
   s.sprite('/photos/m51/m51-480.webp', 535, 102, 132, 92);
   ['Núcleos leves', 'Luz antiga', 'M51 · Hubble/ACS'].forEach((name, i) => {
     s.label(name, stops[i + 2], 196, { size: 15, align: 'center' });
@@ -608,7 +545,7 @@ function evidence(s: Surface, v: number, t: number) {
     size: 14,
     color: muted,
   });
-  s.label('(STScI/AURA) · CC BY 4.0. Núcleos e mapa de fundo: ilustrações.', 26, 279, {
+  s.label('(STScI/AURA) · CC BY 4.0. Núcleos ilustrativos · mapa ESA/Planck.', 26, 279, {
     size: 14,
     color: muted,
   });
@@ -643,7 +580,7 @@ export function paint(canvas: StagePaint, id: string, value: number, phase: numb
   canvas.ctx.save();
   try {
     if (!id.startsWith('origem-do-universo-') || id.endsWith('-o-universo') || id.endsWith('-expansao'))
-      canvas.backdrop();
+      skyBackdrop(canvas);
     scenes[id](canvas, value, clamp(phase));
     return true;
   } finally {

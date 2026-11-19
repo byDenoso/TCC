@@ -10,11 +10,11 @@ export function coverSize(vw: number, vh: number, ratio: number): { cw: number; 
   return vw / vh > ratio ? { cw: vw, ch: vw / ratio } : { cw: vh * ratio, ch: vh };
 }
 
-/** Mantém o zoom na faixa permitida e a imagem cobrindo a janela. */
+/** Centraliza os eixos que cabem na janela; limita o arraste nos eixos ampliados. */
 export function clampView(state: ViewState, box: ViewBox): ViewState {
   const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, state.z));
   const minX = box.vw - box.cw * z, minY = box.vh - box.ch * z;
-  return { z, tx: Math.min(0, Math.max(minX, state.tx)), ty: Math.min(0, Math.max(minY, state.ty)) };
+  return { z, tx: minX > 0 ? minX / 2 : Math.min(0, Math.max(minX, state.tx)), ty: minY > 0 ? minY / 2 : Math.min(0, Math.max(minY, state.ty)) };
 }
 
 /** Centraliza um ponto da imagem (em porcentagem) na janela, até onde os limites deixam. */

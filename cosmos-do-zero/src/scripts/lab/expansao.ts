@@ -16,7 +16,6 @@ export function initExpansao(root:HTMLElement):void {
  let scaleValue=Number(range.value),observer=0,target=1,moved=false,transition=0;
  clear(stage);clear(plot);
  const defs=svg('defs',{},stage);const glow=svg('radialGradient',{id:root.id+'-galaxy'},defs);svg('stop',{offset:0,'stop-color':'#fff6dc'},glow);svg('stop',{offset:.35,'stop-color':'#c6beff','stop-opacity':.8},glow);svg('stop',{offset:1,'stop-color':'#9bb8ff','stop-opacity':0},glow);
- for(let i=0;i<45;i++)svg('circle',{cx:(i*137.5)%640,cy:(i*83.7)%400,r:i%4===0?1:.6,fill:'#bdcbea',opacity:.15+(i%3)*.07},stage);
  const ghosts=expansionPositions.map(()=>svg('ellipse',{rx:12,ry:7,class:'e-before'},stage));
  const lines=expansionPositions.map(()=>svg('line',{stroke:'#9eb9e8','stroke-width':1,opacity:.5},stage));
  const ruler=svg('line',{class:'e-ruler'},stage),measure=svg('text',{class:'e-measure','text-anchor':'middle'},stage);
@@ -33,7 +32,7 @@ export function initExpansao(root:HTMLElement):void {
  const scene = plate(stage, [...galaxies], (ctx, img) => {
    for (const i of depths) {
      const [x,y] = projectExpansion(i, observer, scaleValue);
-     galaxy(ctx, img(galaxies[i%3]), x, y, i < 3 ? 22 : 15, i*.43);
+     galaxy(ctx, img(galaxies[i%3]), x, y, i < 3 ? 31 : 21, i*.43);
    }
  }, galaxyNodes[0]);
  const maxD=Math.ceil(Math.max(...expansionPositions.flatMap((_,i)=>[0,1,2].map(o=>separation(i,o)))));

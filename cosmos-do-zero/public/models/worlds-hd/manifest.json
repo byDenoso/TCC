@@ -1,0 +1,7583 @@
+{
+  "additionalSources": [
+    {
+      "appliesTo": "terra, terra-nuvens, corresponding compact frames and Earth thumbnail",
+      "credit": "NASA Earth Observatory / Blue Marble",
+      "downloadUrl": "https://assets.science.nasa.gov/content/dam/science/esd/eo/content-feature/bluemarble/images/cloud_combined_2048.jpg",
+      "license": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "sourceSha256": "daddaad84d7a33bbbc86cdda3f591099f57cee8607b7bcf3b67eb7e4f7a1c793",
+      "sourceUrl": "https://science.nasa.gov/earth/earth-observatory/the-blue-marble-true-color-global-imagery-at-1km-resolution/"
+    },
+    {
+      "appliesTo": "lua relief",
+      "credit": "NASA SVS / LRO LOLA",
+      "downloadUrl": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_4_uint.tif",
+      "license": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "sourceSha256": "e6668bec27fc9b8fbb02d198c7ddfb08eedeeb790167b494f95e6b34201da05e",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/4720/"
+    },
+    {
+      "appliesTo": "sun-sdo.webp, scales/solar-system, video",
+      "credit": "NASA/GSFC/Solar Dynamics Observatory, AIA 171 angstroms",
+      "downloadUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26681/PIA26681.jpg",
+      "license": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "sourceSha256": "8b829280455d14fa7bbeac4d5ebe18fabacb74221344634947359ed0efd28a82",
+      "sourceUrl": "https://science.nasa.gov/photojournal/image-of-sun-from-nasas-solar-dynamics-observatory/"
+    },
+    {
+      "appliesTo": "scales/earth, video",
+      "credit": "NASA / Apollo 17, AS17-148-22727",
+      "downloadUrl": "https://images-assets.nasa.gov/image/as17-148-22727/as17-148-22727~orig.jpg",
+      "license": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "sourceSha256": "cb4c3d2da98ee72130ebfd2ea472fc84ede6726002c2a8c9cabd86e4deea9f0f",
+      "sourceUrl": "https://images.nasa.gov/details/as17-148-22727"
+    },
+    {
+      "appliesTo": "scales/scale-proton: reframed rasterizations, shared under CC BY-SA 4.0",
+      "credit": "Jacek rybak",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b7/Proton_quark_structure.svg",
+      "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "sourceSha256": "0ac168b4457b7a322c5a407f0a7cc237547bafe5dceec5becb5227b81b66f2d5",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Proton_quark_structure.svg"
+    },
+    {
+      "appliesTo": "scales/scale-hydrogen: central slice of 1s probability density, logarithmically compressed brightness",
+      "credit": "Cosmos do Zero; Bohr radius reference: NIST",
+      "license": "Original project illustration",
+      "sourceUrl": "https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0"
+    },
+    {
+      "appliesTo": "scales/scale-cell",
+      "credit": "CDC/Dr. L. L. A. Moore, Jr.",
+      "downloadUrl": "https://wwwn.cdc.gov/phil/PHIL_Images/17516/17516.tif",
+      "license": "Public domain (PHIL 17516)",
+      "sourceSha256": "01a49cdecde6150f74a39cc8b561e04a51a439901e0f2363991b32b0bc27ceca",
+      "sourceUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=17516"
+    },
+    {
+      "appliesTo": "scales/group-local, video",
+      "credit": "NASA/JPL-Caltech/UCLA, WISE",
+      "license": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+      "sourceSha256": "81d3ae310d018fe3c16e74ca2b5d05d47c164aca90a8c326cc63004ec606987b",
+      "sourceUrl": "https://science.nasa.gov/photojournal/our-neighbor-andromeda/"
+    },
+    {
+      "appliesTo": "scales/cosmic-web, video: cropped and resized image of gas emission",
+      "credit": "ESO/D. Tornotti et al./Hubble: M. Revalski, P. Francis et al.",
+      "downloadUrl": "https://cdn.eso.org/images/large/potw2504a.jpg",
+      "license": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceSha256": "058e870c7f79d347d3fe8ca094abc3827f3ce0a3693f4155a4e812edfda8e2fa",
+      "sourceUrl": "https://www.eso.org/public/images/potw2504a/"
+    },
+    {
+      "appliesTo": "scales/scale-horizon: full-sky CMB temperature map",
+      "credit": "ESA/Planck Collaboration",
+      "downloadUrl": "https://media.esa.int/legacy/web/images/esa_multimedia/images/2018/07/planck_s_view_of_the_cosmic_microwave_background2/17601832-1-eng-GB/Planck_s_view_of_the_cosmic_microwave_background.jpg",
+      "license": "ESA educational use with credit: https://www.esa.int/Terms_and_Conditions",
+      "sourceSha256": "010fa81685716d64fd800feac27a231bffb43a1510ffeee5acb78b3ca1bacf44",
+      "sourceUrl": "https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137"
+    },
+    {
+      "appliesTo": "hubble-saturn: resized observation",
+      "credit": "NASA, ESA, A. Simon (GSFC) and M. H. Wong (UC Berkeley)",
+      "downloadUrl": "https://cdn.esahubble.org/archives/images/large/heic1917a.jpg",
+      "license": "https://esahubble.org/copyright/",
+      "sourceSha256": "c7861c116b5b4da2ab7bb4f33002c802e5a2e23acbe8af3be5f5ef6349f898de",
+      "sourceUrl": "https://esahubble.org/images/heic1917a/"
+    },
+    {
+      "appliesTo": "media and compact/media: conceptual Milky Way reconstruction",
+      "credit": "Cosmos do Zero / image_gen",
+      "license": "Project artwork",
+      "sourceSha256": "e8021e93881fe0ab6b35b3e3f98fc2f8a653a416587b7a2a4bbef972270e0de9",
+      "sourceUrl": "docs/render-assets.json"
+    },
+    {
+      "appliesTo": "saturn-tilt: 91 offline camera elevations",
+      "credit": "Cosmos do Zero, JPL/Caltech planetary map via NASA",
+      "license": "Original project scene with credited NASA source material",
+      "sourceSha256": "35da8b19921b1628edf0972c6db971c9c2bdb57d2baba1be38f8816042cf1711",
+      "sourceUrl": "assets/source/saturn/README.md"
+    }
+  ],
+  "degreesPerFrame": 10,
+  "frames": [
+    {
+      "bytes": 37790,
+      "file": "jupiter/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "c38cba5d2c5aff385dbb677ff8cb0f22b92381541db0643bc6897d39a628b2f3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38228,
+      "file": "jupiter/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "b9ae3db86eb9e2b920ebaf4aa652caac39c9da6bb4abd434de16964878cb6dd2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37754,
+      "file": "jupiter/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "1a87dfc8173419465329d7249a9047e2856110aba629ec87199d6d924b321229",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37218,
+      "file": "jupiter/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "7a0e5c07230854c9a591f2fd09bd774f77e6aa27a63d9babd4292c36df43427e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38244,
+      "file": "jupiter/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "6d3bd3b891e960195a770b5932fccf14afddec528e296f0dd88c08ff3e011fc1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37332,
+      "file": "jupiter/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "18d47aa382afc11568f93dc10152eddd72ac9e15c598a72c41cc1d074bc4eead",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37354,
+      "file": "jupiter/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "aa98c773638c3233cc1f3b5fd896f433d28c1052c6f5b77b3791c413a6ca64b0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38304,
+      "file": "jupiter/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "91746c24b6f61bb46e4530536e3bbfa2b918aa8d14e8fb9c278f878e3ffa74b7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37638,
+      "file": "jupiter/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "32178becd942f7c45b5c2132d36a07b2c1607b91070472f0c1489a0143797b19",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38076,
+      "file": "jupiter/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "46569b8b18f1b1d44431bd585b875ac95800611717c6d9b543622bc7f6aec140",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37852,
+      "file": "jupiter/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "6416bec925edf06be7bf65c9af0ebe66d9b1c39b9ea795dfadd946dd4463b5a5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38600,
+      "file": "jupiter/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "581f15e770dcd80595db1565e2a3f60e26ddda3f528068aace440b117d850a43",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38894,
+      "file": "jupiter/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "3fa9484515fb5204274d9da1d5fa91db6dafaa19b1033af5513afd1b68e31b68",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38812,
+      "file": "jupiter/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "2f4b0ebae25294b15354bb14f1438fb7011662798a3ae3a87ff817b980d58c08",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37980,
+      "file": "jupiter/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "adb708d80dfc5b773c20fb16d996066399d4481aba36994591a520b71463ef1d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38964,
+      "file": "jupiter/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "c091015ebab63ab212aeddd21778786bfda0aa5c9a7c8c3d635363e929c46f18",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38408,
+      "file": "jupiter/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "430029fffcc32c2c8be9ee3f8c4245e8356f2cdf263545dec3f4fd37a08fe116",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38590,
+      "file": "jupiter/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "5836af4e531bac044b4bc197ef956cd95e93f0677178fa0fa56e235d1812b5b1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38934,
+      "file": "jupiter/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "2715056cf8575a0f85979534073af40139eb3edad6f4ee36f23845718aa19382",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38458,
+      "file": "jupiter/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "2b410862cbb09fa8c06f34a9ab966188294c5f6f540f0890ef4d6201f6d4fd1f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 39644,
+      "file": "jupiter/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "9100d35639fc47ca99bc2f1c01cf5c318630736d420eec8b22132d140e815feb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38654,
+      "file": "jupiter/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "0ef8445292a632b7ddee04c8bd30a8d6035485f5153d63fa22d77225dfa1ea03",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38808,
+      "file": "jupiter/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "162d2ee26bf4ae00d496fec349f3373abed2506c25337d5a9aeebcbbe63c3e9e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38710,
+      "file": "jupiter/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "77b25c0ab1c883e1191c6537e6160c644291d69502f4dfaf9ecfdf2e0943dacc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38842,
+      "file": "jupiter/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "bf8da6a4af6b49d3447a28b185a0d31296fb197d2708f945032d6fa90a35b330",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38626,
+      "file": "jupiter/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "9b2d7915518940b773036d41630e0698a771c6919399a3c19d48b0f22076d470",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 39440,
+      "file": "jupiter/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "f369e481c10bb4ff590df0ffe00ac62233a3cbf2245c52dcfb2e7b998ff82c7c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38734,
+      "file": "jupiter/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "d4d1edc8406feff01359a5bca04c9a160d5fc5fbc7a6b5ecda503907ad73a94f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38528,
+      "file": "jupiter/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "989cd635d669b380cbb244274b8ef8c69f160743d9d4d30325a36228830f7c53",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38428,
+      "file": "jupiter/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "18be3ad5dfc439738096127dae382f17bdd606a5bb0a913397b523f68d8ad5a1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38508,
+      "file": "jupiter/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "d809431df11b323a8e95f65c9f30e7c08592d96c4094901469aa6cb089ca7a4e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38386,
+      "file": "jupiter/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "469f48425b538fbbd7d7a5205fbb316d8f847ecda715b611064d830c441f5f18",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38040,
+      "file": "jupiter/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "1cd633bce390d96ae33acfc59b43b2c055f8f0026b2034b7e61551443d498be9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 38088,
+      "file": "jupiter/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "56f233861912827b74373e20a38fef192a6b47245a4f0fd7eff910bd2630dbbe",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37958,
+      "file": "jupiter/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "4506d53c1dd64ddc8490a4524591396ce30327c14a80392960576a55027cb8c1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 37594,
+      "file": "jupiter/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "08c11cb96491ef9ea9be90cbf6bbc93cf32fddc69c7f49f1692b3f05b648b1c7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 82520,
+      "file": "lua/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "5d0486e3f639c21c7b547ef089295325169f4a27b291fcddaccb121196d35438",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 81860,
+      "file": "lua/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "d4d112c9e1c332502dbbfc51b6d0b5ec313c1487c5bd6729dcf3a32938c82bbc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 81872,
+      "file": "lua/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "8f9b2417dd5aba50e10fe29ca27acdc8414ba59c44c636d947f00cefb8118663",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 82860,
+      "file": "lua/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "af72d7849d9c179e8f16f0b3c983fb63fd26f898942bc9b9b9b1cbaf37859d83",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 83424,
+      "file": "lua/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "122dc86f37c9af7e8877ca6c9d21790b4325cc22a90f3abba3aac0923a6e25b0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 85626,
+      "file": "lua/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "90cb8f715c3f41db33d3d3f683505dd6c0ada91a058d2f210e0b7074687eed55",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 86262,
+      "file": "lua/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "2316999af9b115491aaaa2e9f7e98010f4a852d4214888ff2a488759527c85e9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 86530,
+      "file": "lua/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "a26fe98535a1fbe188ebfd999fa011164f6c4b69a3e42a6730a8a5372511d3c4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88616,
+      "file": "lua/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "da9aae4ad2a567c35a37e09dfc21c101d3e5aa3784bd9e228d2fff01e04ea05a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88082,
+      "file": "lua/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "14143c173be02990a665cf13ca88b5e54cf26d9b7816313094d7c2c17f5fa9e4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 87188,
+      "file": "lua/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "49d7c1ad6dd969a640e7c1f5d7141e8c16c966840942958797663b54be581c0b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 87614,
+      "file": "lua/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "a7281b939b6f8874477e930212132b30abbcee9a64be884ef1e08a6a6195ba40",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88772,
+      "file": "lua/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "d855e5034335dca051caa08adbde79729be7149ee5eb1890560185dd9fc0ffc6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88244,
+      "file": "lua/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "3c222c934bf7cbc7e0ec02b01ac75983ae073c22f7513f2a7ee1ac1cec85c11d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88568,
+      "file": "lua/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "177d5b90347ca5a6909db2b02fe077edd4d2772bbba2bb8198dba4c555d5ad2b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 88824,
+      "file": "lua/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "11e6fe53fd29f104891b5dc1bd1891cfe4de949991daeac673fa3c7aa2d4e6bb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 87620,
+      "file": "lua/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "ca369f6eac481383ebaaa8a35e3bc22fcd76e89ea886ad7217bb5377a60b4c2b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 86314,
+      "file": "lua/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "ea86f877c1ba12ca7022ff75cd1a5b69fc81a3ed7d3a27ad0566dec3d87cfab4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 86412,
+      "file": "lua/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "6f5ebeb39628a08a5d5fda2060001e1763b4b16c37a09a2897229796ed40aef4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 86150,
+      "file": "lua/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "c216e43fa9c35ee19651bc8b48ba68ea703410a7747688979a653b197377b25b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 84018,
+      "file": "lua/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "d263d806e3dbd91736ffabb02b3414d049179be3e08b63c60e4c90ca79851a84",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 84396,
+      "file": "lua/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "a0c1c2250f5e61a80a19c9da168ffb395672e3d57716ce5e04a7fbd152a65979",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 81720,
+      "file": "lua/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "5ac6c43d669c4c7ffc077abe86d59f8d64c1c556355618f5ee5a92316952631c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 80850,
+      "file": "lua/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "3abb727d64444220a6b21d1f71a617d50c78e53582e3651be7315e6bee73560b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 79916,
+      "file": "lua/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "c2721dcd63735aa5a80978afd2e429216deb06cbebd078fff1d953ae86ffcef4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 78320,
+      "file": "lua/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "11f50709fda1d2793756428f90401c2e54661d998db2a18c83740b3e6c6962fd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 78826,
+      "file": "lua/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "7404b63250d6348f587a19e22cec86eb35c7ee839c9d9cb3070cf8bb449df5f3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 75784,
+      "file": "lua/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "5cbaa5533abe3a5f66e56c5268b08fe68933a2274aaa7588724653b74129f84f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 76770,
+      "file": "lua/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "84a382d7f4bdccbdda6f9a1fb13ffdd84e3c3ac97f0d842953eb7c29497b331d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 76702,
+      "file": "lua/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "2c42cec4997096c8597ad89dd8fc391a2d802d84ec1a48e6465269e48c312e78",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 76900,
+      "file": "lua/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "647d33b948a237d1092fc27920de4f04280f906552f9e85f09633bd0afc1b3fd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77012,
+      "file": "lua/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "ffd347fb486de4bda1099813b6dfcef74b7b9724d905409e86ed0d4b9a3dcbcb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77250,
+      "file": "lua/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "b0bce7c598c550fb6bd8264775b4ac00a950af2f220b71bb65b9733d57a74d02",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77636,
+      "file": "lua/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "1f9bb9604c769d42c1d559485845d46df7d030a50621752cb53b605274a9eedd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77844,
+      "file": "lua/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "599cb9ffa535c851e10bc445a6e41e6c6f7502afbf30e3dd2636c38f2e3f183d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 79834,
+      "file": "lua/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "49b5435e237ec042a35f4e89a236467cb78c5572dccb09795978af4af67de15e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55536,
+      "file": "marte/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "941a247c38247014754f88d2402ab97c0ead074df930ed31182e32952d9a0f0e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 54478,
+      "file": "marte/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "8d26349d8989a3c81fb9a5467ebc2e56a5830a85ff9ced99e9123fede1c76e2b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 53734,
+      "file": "marte/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "538a5534ddcad3f0cba74ccc0c3b9585a31a721e6053da8ce9afb2bc254d14f6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 52920,
+      "file": "marte/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "9e7fa6d672245e9ea49e3a00e1b3c948a6d4eaf5f565c958e2483b5e7137da25",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 51962,
+      "file": "marte/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "a6a2f6c81f3801d282c4f2c4e5ee927205ca899fbed13b0b0779c148f2c52a25",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 51184,
+      "file": "marte/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "cb3d5c4492e089248c031f9d10b14338c1d7249fda361218e6637845116df96b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50894,
+      "file": "marte/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "aeaa1e0bcab622a27ddd0b0be513ff2dcf5fa2b1fed6d2f3801b33bf7b9b958f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50676,
+      "file": "marte/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "763a8bfcb90d907532b7daf2ea4f5378100c99ba1db987ceb4d639552c8ac8c7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50650,
+      "file": "marte/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "05b5b2064e962dfaabc6c2af31da35d0dd8db127ba679be76b56d1c4d499472e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50392,
+      "file": "marte/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "49ef24ee6648661b63d6332edea2b4c3ea16c0e439206721d2683d516dd4c76b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50420,
+      "file": "marte/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "edcdf0ae0ae62f48bb7e85171ebad0a3b18dd585827b060fe4e387e0d6fc2e78",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 50040,
+      "file": "marte/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "5cac2a887ca6993e3bfa66164f2b3c2174574f26dc7a59e47d4c779c7a405119",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 51302,
+      "file": "marte/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "3f134bcd40db1296d05a3042bb35f74b0a0f880310473214f5b41ee19afa0f7c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 52288,
+      "file": "marte/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "a7fd7ad7f8c1a8c3f2ee3bc364716fde0e06dd3c5d8e8f13d53785982fc7658c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 53144,
+      "file": "marte/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "45ff1a87f2a7eb77050d46f8ac13c392395a7b582cc49d5efac55f3a4accf698",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 54046,
+      "file": "marte/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "059de0f19abd3fccb657ec7e163c131a5b92bae0a4398d9db8e66818926983db",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55090,
+      "file": "marte/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "b01a7cf5d405e58b4e38fea4f40114c98fbb193ae746167133505aef0a4ab936",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 56572,
+      "file": "marte/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "1749ca02b47677d571b82a7674212297a076083d44ddb873578ab5e732d58546",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 57812,
+      "file": "marte/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "b52e425b0a3799594efe8a4f81723ecc8bbe8d6b8dda8f63da4dcb6930087194",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 58684,
+      "file": "marte/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "4b1b77e5a652e697eb7c391c4808ff64f51f2677e57410d1e2260520ca393498",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 60394,
+      "file": "marte/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "999128f56307ff07d26a0ccaef6f909b7e47e5a65065506b69906db19cad6322",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 60544,
+      "file": "marte/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "655f4d73625e078b8fe04bbf3e5f47fb8e471f6de0009ad26ecd11a042977000",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 61890,
+      "file": "marte/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "fdbafa79224d0aa94bb68a8c9b736d4e8e65641cdcf1627a9f90129af2d6afb5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 62630,
+      "file": "marte/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "71a52faee7ebeee9a358f52cf85599b57d58d41b00a57a0c3b77f15b1871ef62",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64082,
+      "file": "marte/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "752a95896e297f22dd2c3b71e0aa1bab010a8b4e8f705dc6e96d365b44938698",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64068,
+      "file": "marte/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "cfcd75f967632332ab344cb3ca2af989f0089d4c2b8f8ae1f44c4abf82186e7f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64248,
+      "file": "marte/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "df6c645c2e8585c2532df1a035a8729152233e52fcad338d414b67b4be962d7a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64112,
+      "file": "marte/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "251eb41191a086f796e382ed31a2b04c38f8a127b63bae0045a3b31bf1a18d00",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 63616,
+      "file": "marte/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "39427907530af8a425396b8995536d0adf185c40d6a0ce1df33acb1f1f8679f4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 62778,
+      "file": "marte/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "78b1f4cc900f0d714a032c91b2e872e596f50f94a26f665c555729403be0c221",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 61606,
+      "file": "marte/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "4c70120221f56ada04ee58ae716348b5a2f91c1fb022c97fd2dcbd51759c678e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 60252,
+      "file": "marte/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "a17eb8d7ce7341a4198b59d377f77b7ea0ad01a6faa817ab5f0f9081632b3567",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 58678,
+      "file": "marte/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "c6610cf249bca620197bf64763efcb04a8739ea54377ac9a1a6b925e0d0d1bae",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 57956,
+      "file": "marte/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "f485653e1597154858688b6216862611634ee710f95289b186cdc0d1d115d343",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 56646,
+      "file": "marte/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "0b2481f72d15a48864f794399129b36bf0227422eeb88939e3e64222549a281f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55400,
+      "file": "marte/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "6a9160a5eea3aef5351677f770d48df922f569f976f9d6d6674f1e18a0a19def",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124360,
+      "file": "mercurio/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "0bf67cb1b15454a51159a89f2e772c0a03685bf611692171d28e18956c8cf65f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124218,
+      "file": "mercurio/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "b8962812db0677bf65a1926906b800964829c00ef2e7eb22329cb991dd924842",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124810,
+      "file": "mercurio/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "f79cb19c68c5cb944eded1198e6e63092cbe10a8bc05fa250eeb98c699f0176d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 125668,
+      "file": "mercurio/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "33b4a2af0a6d07d5597c9f0953a5be1201b6d09527e36ec291380578e062e6af",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 126670,
+      "file": "mercurio/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "e1c7ee9d7b0f239b293bcd632b49627123d14baf91a6f777c078fd63e41f38d0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 126656,
+      "file": "mercurio/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "b62a963766d87b023ac147f06aa1a94bb4030a7eb889bc1dd44ca3723c6196d5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 127006,
+      "file": "mercurio/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "322eb88a2454b2898bff48896358f33101c826443a42ca9e9e2c3bd3df103b15",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 125598,
+      "file": "mercurio/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "be3ebd70bd64c990bd533b7f1506eda5668f5a71081966e52f08e938eab3c631",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 125910,
+      "file": "mercurio/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "de708e1bd3030a833b4384f41cbfe9b983408c873a816436c3b5d7ff8ecbc420",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124740,
+      "file": "mercurio/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "9ced81b9dca3b8567a36aa9e7e52473477b1aeaf8ebbdcbb6b6252ff25448cd1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124084,
+      "file": "mercurio/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "d9faf8d3b01945330caebd08f6c90023f4ec47e16cc54455cc1c8d8bf22638f0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124256,
+      "file": "mercurio/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "6afe42df43bd534ab3bea39ff746fec70ed9abf3af28a3c5317924b7321bf5b0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123856,
+      "file": "mercurio/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "f61406a0ebff0e2153e16e0cf54f7d7ffb65199c46f1d68b3f2d6b7940f9196b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124876,
+      "file": "mercurio/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "e3e006c1798cbce11bb82cf206a387ecde4cfbbdf9596f4ff1487700ba16f3c8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 124366,
+      "file": "mercurio/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "52ebac751ae7b789ce2dbe4a09a591f9a1d946e4cdbd3610a9f75f907983a00b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 128822,
+      "file": "mercurio/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "9dfb742a8a09fd8d22293df6a6aef5b4f0916ccecb65b185c1eb7da12bb6fb62",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123074,
+      "file": "mercurio/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "08a9308dbb45f187bbd12eaa32a61f935274984facfcc635abe5c32f7721d4e3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 121508,
+      "file": "mercurio/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "8bfaac0fad555254380eadec47a0385570d8ef8464741ae575da2c07ff71a2ad",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 120554,
+      "file": "mercurio/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "c5c757bef474f414dcb70f824bd1fdbde56524e6d02106e0d4ef0d84d591cdf2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 119932,
+      "file": "mercurio/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "3c168e141f76f0f6dea8873cab040bcb36ad14817980ff5b27b5ee2549074934",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 119722,
+      "file": "mercurio/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "3d003e0d256cb83ba06814828a5d6cc57a608dc83aaf88e1c2f385cb8d90a3e4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 118916,
+      "file": "mercurio/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "4bcc4a90d9ef960e7fc6d37bfda18e21a583ec6192b6408f13b66d481c5f5088",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 119514,
+      "file": "mercurio/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "150f6cf9fe084242bcde72a160d7721220b861596a0057e5ee2845063b5ce5f7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 119318,
+      "file": "mercurio/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "2746f4a17295411099a738b05f124b84ad8f8d88ee9e7e870eb88353489cace5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 119048,
+      "file": "mercurio/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "7022e29af33a3a45efb992ddf60516c1ff277397af974e18d9b5e704313c9bd6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 118490,
+      "file": "mercurio/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "0faa57df75671c304ba359b34bf67254771a21ea06aef85a7c302c793a7fe903",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 118872,
+      "file": "mercurio/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "f1fab4f683f32fdcd07c30ab25a8931df3422313e8baadb038c3d62c7b19d1ce",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123906,
+      "file": "mercurio/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "39e02a24b6ae570c8d61380d47460df0112fc36d605d1ec94919e1ea6fee5ded",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123896,
+      "file": "mercurio/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "795a2273e13d8a36084d320b9dcdec657ff22c0b0ffbf80f9ac47a6814c37f0c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 120018,
+      "file": "mercurio/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "d05248d95791902c76c47451cabfa1fba4a1132c976c7a5b819441db6c14727f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 120178,
+      "file": "mercurio/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "9e9efa0f9c40a56eb7b8e0e4df2fb0475f41d5bbcd01ab325a65f11d9677304c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 120462,
+      "file": "mercurio/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "095c2562b40aafb226f19054c67111bc2d01f7f54233c55f28ea3e31f3936b7c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 120776,
+      "file": "mercurio/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "d5f630528d166afa421431aa78abebadb4d5494383fa4ff38e981d0f82ee8cf8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 121624,
+      "file": "mercurio/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "6b75adc398faf1427044c0c86113dcdd934225f9b20a17932210f09927aa45d3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123840,
+      "file": "mercurio/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "f85e93e3643c75d7825129c3bd3103b2c7598353a07c141363f758d1699d6d3d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 123858,
+      "file": "mercurio/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "c56f4566f7ceb055f42dda3b50588f935a984b97d6757827b7348e106b44a935",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35756,
+      "file": "netuno/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "c03e121d16c92edfe8789ea3d8a047dcd45a23cb9c35a6a2485d6373e2d9a631",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35736,
+      "file": "netuno/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "0a1b35934580ab7d52506a2b014aae30532a6d6311941d570f7b2f73e34d1e14",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36124,
+      "file": "netuno/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "69e439b9885e5cd2add4c397e401395547ad8d108e6182bc095e431b20f609ec",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36478,
+      "file": "netuno/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "0f484237c8fc69a1ef4d7a5e8569aebae0354a8a1b614de04e5ca616c389cf5f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36522,
+      "file": "netuno/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "3c5cccb3c8122e40d7ea4c536895d807ff7c2ad8de838f9cc6f2251386a3f4c7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36544,
+      "file": "netuno/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "816cf1d5f46488fcbf2f10f768f859c17ab091dc0cb227289b383dee7b790601",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36874,
+      "file": "netuno/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "4d46420e5feafa21267b9271d6482a66f7e9c29681df130e4a60e8dce63f2640",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36574,
+      "file": "netuno/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "9ccc70536ded85e5d034f5d1d0c67548f113a4d1cf01c7a17ef4dd63e2150d1c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36134,
+      "file": "netuno/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "cb69910bb6bad61124fb51b955970b2522c2141cc6f51029dd0d07d51a0a4e5f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36302,
+      "file": "netuno/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "e4139e5b59c83c3596f36891210d52c9bf14c889560bd228ff741d992db6be61",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36208,
+      "file": "netuno/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "ab82efe55bb67d2166fa277aa4046b7fe5b730768de0a6c57bf54b6893954a0a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35764,
+      "file": "netuno/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "2600a68d6ee6ea2483b37ee723a96128fc3d5a7875206e60d5211a0aac8212f5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35916,
+      "file": "netuno/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "9f402656b6d9ee9773bd07ec510df9da0b87bfcf8ef093c318f594b989321c16",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36038,
+      "file": "netuno/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "09676ab7c4cd94bb1aa6be010a2b4cc37c45d93c832156912bad987fcf9b00cf",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35746,
+      "file": "netuno/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "16d5debe82093659a8043df65313a9e7239dbbd141d6e73bf391b971ac39adcd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35284,
+      "file": "netuno/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "eb5efed998b5f42cb5a6b949a715df9b0cab6e84f732816acbad773409779816",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35322,
+      "file": "netuno/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "ed9f9b9571fe861614ac5bc5b987ef0f1ea20e1ba0c2b50ce1f31c853117eb04",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35240,
+      "file": "netuno/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "8e11d538fc9f5bf50f0a7503b4caa09b2f0f062032062b14309331016d5a6daa",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35368,
+      "file": "netuno/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "ef591a67ff324a8d67cacf25e1c99264477c05510b669ff298fb28d7f301e45a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35198,
+      "file": "netuno/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "c21eaf1eba8dff3e6f75edea8c4240c8964c6ca7d99025e409b8857cb7c5f55c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35318,
+      "file": "netuno/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "22d40a975ce0fe2db9b3359f84678abf47b9ab51117b494da80ba6b5fcb1f7f7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35592,
+      "file": "netuno/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "050a17fed48147692692fefdc84bfbdc38272cb4c42f165dc5f873d47696836d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35718,
+      "file": "netuno/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "837c3dfc748a3607b37e1ee863b77595dd2f39744d81e8699c1c6fa2d6c9bfd4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35580,
+      "file": "netuno/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "79a9ceb73ae51bd8e83e8efd7f4f46e0d56a6b3f2a02d8c40c96ff1978d77288",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35848,
+      "file": "netuno/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "e897f5d1ef7b233c5708dc39db5b6301817229911fdcceeeb852833ab41617e6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35728,
+      "file": "netuno/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "00eb04b5a6b201e48672565c71ffe22ba44641714f621cccb08e4cf384008bcd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35678,
+      "file": "netuno/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "346ea8dc1d5a7648465c153b6c000754923022c290cfc44f53bd2230e645b5ea",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35534,
+      "file": "netuno/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "c42f673f41400d01ffc78c49927524553b4097455979d7b22ef5e4ed09f0361c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 36090,
+      "file": "netuno/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "ae981d6c341ae72a648cc70f781ae4c254069370fe3d47a15bd620c614753cd8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35732,
+      "file": "netuno/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "694a8420ce27af758ae90ec21ece5bca69a28681f7eb9622b3a2476f79d84c59",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35904,
+      "file": "netuno/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "21f4e0bf2d86037e75fe0f082f84608357f7b241b9b5c9c013850c90e98e6e0a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35732,
+      "file": "netuno/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "d0a6d5563ec9795d53ff7ee08efea1f62f18de6621de9edd62a745029769c06e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35670,
+      "file": "netuno/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "8cb21e862fa3372e13d79cfca41e6fadb6aa464f24b2c92ac6f63cbce0eabcc2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35460,
+      "file": "netuno/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "d2d9efd41c8ec4f57c91cbdea331bc6610c6f1eeed16146c423eb95d05be1bb5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35748,
+      "file": "netuno/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "88e5c0d56b8c498146144027a62bd1ee8141485dc601b5601ddfe3277671bc4f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 35654,
+      "file": "netuno/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "eb630da27dd7c6be64ed4779509a95e3f4d4b25091bf07a507c779a7077cbf39",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 28820,
+      "file": "saturno-globo/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "9998dc3570f12964414ec8c0d0d384e2df666104f0016f709b88848e8ce20fb4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29066,
+      "file": "saturno-globo/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "2aa57f014494c961750e34343f5f13f55636951d6ca30808f8a9c5ed025126a3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29392,
+      "file": "saturno-globo/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "3c978267b289917ddd8370c3c494b02824876e484547663d6317f906956147cc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29086,
+      "file": "saturno-globo/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "bb9c8f2cb6f9f920000577a15fd95177eab223410966f5baf884e2bc007074f5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29196,
+      "file": "saturno-globo/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "13996d474494800c0083dd9df59e001974bd4d4eb8f15efe220455c022f6d56a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29314,
+      "file": "saturno-globo/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "add55492fe4d315e204c02422368b96333edcb1f81ff6a3ddd7d4368526dcdb7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29266,
+      "file": "saturno-globo/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "040d1726b751256d70315a9c231f58910c9bb795493975b3f1909bc88757ded6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29530,
+      "file": "saturno-globo/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "c30ddeedf8ad67109f7b3d3a7d7e52194a40b4ae67365740751ffa805e79cf8d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29564,
+      "file": "saturno-globo/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "a0389f39fcebccee41badb377665accc5ae85fa10742a9a11f674e3f2a7745d8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30132,
+      "file": "saturno-globo/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "8ff5790499b4b867c1f9ea6125d39f1caf1cfa6c0c9b9a68f89513f76dfe75e5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30144,
+      "file": "saturno-globo/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "f0ea408352439fc41252fbfd0029ed1b0874825696970d70485892f934263945",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29194,
+      "file": "saturno-globo/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "eb7d55186d49b9238c176af1b71989122efc53c8e2f8bc118cc671fcc606e7cc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29772,
+      "file": "saturno-globo/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "5effdb520c1b3ceb40fcf6bce4253a2913864d65d5320c1ab990446bd7a2b950",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29628,
+      "file": "saturno-globo/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "d751c3a015f299030b2a8fdbb3968c13581f24b1a2f9f76ae1b0a3fe952eb1cd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30606,
+      "file": "saturno-globo/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "7923734194c67fc6e8eb03569101b5abae5e9bb45acaca7fa7cbcafe6cc24c09",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30130,
+      "file": "saturno-globo/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "f438cb68d09cc9b40aaabb41c98496ca7d39f18e188ea9d010eda2e0a764d99a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30648,
+      "file": "saturno-globo/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "d9bfd55ca7523f80d188209a3914e0677a0b9a11e0e8101f7df78884c7e3e8ca",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30024,
+      "file": "saturno-globo/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "6f567877080f068d903dfd4a076793ee6f316cf2ba86e01fbe3eccb55cce3d7e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30006,
+      "file": "saturno-globo/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "d561faeef3e4b632b0ba5dcc0d71a940d4965070d081ac9c85b74452e85be590",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29800,
+      "file": "saturno-globo/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "48e658e47553f54cb49e301420a680b49d198da796262de44ebc6aee29ea8c43",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29906,
+      "file": "saturno-globo/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "e91333709608d649c33dcc7fdead5e4ef197ef3e7a3c5ae481452a47081b8f61",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29794,
+      "file": "saturno-globo/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "48b73f4d040ed3ccc76e3ded2d71687ea4f46793121308f36d6210f0442745fb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29976,
+      "file": "saturno-globo/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "82538c6bf0bf56807f9b04359036172c6418ee3c21f9a582b39e0f8aa945c275",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29698,
+      "file": "saturno-globo/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "8b4ffce1a4d2c0e9e0e008887b036bee94ff4e1adf40d01c383706718e0668f2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 30038,
+      "file": "saturno-globo/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "9db9d1f8f68f235ba61a0d5e6aa1f88c37b6032fdb00f722c2ce92975cb0f062",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29608,
+      "file": "saturno-globo/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "ac9e0bba6d04bcff8fadbcd456ce542287bd611caa14beb38cbf58236f308815",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29572,
+      "file": "saturno-globo/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "69619eb67127b43c6638ad03403ae92ce731681a6c0dd7a1560b2a3c09997910",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29520,
+      "file": "saturno-globo/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "662e45016fb4405b4cfce78af00cd78a14cd914408588a2acc2fdc3ca29a7d74",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29796,
+      "file": "saturno-globo/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "f6ea281e4f03acaabb923e7099e360f472a75fe39c4d5fae8f25de2183b8b546",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29374,
+      "file": "saturno-globo/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "c241652925afed581c91b4419a31a25c9817cf144e799ecd27cef5fda9612af3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29390,
+      "file": "saturno-globo/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "1fd2d20c8bd40d87ab1cd1c201a5f71144467c329277e27eea8c1eacc558d64c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29694,
+      "file": "saturno-globo/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "e1d525e2788f75b6275d97b3ba1d2bdb6fcc8a28507c6ac66cdac473dd24fce9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29880,
+      "file": "saturno-globo/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "cc4024d9d4454f6a39cdff4f8346aa7a0bba004e6fc7da422f599e4dc2092791",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29718,
+      "file": "saturno-globo/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "2d5b5a98898b13a4f340cd93734162b4b8c6ff8ee1b6ffeb30ae49cb4a507651",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29508,
+      "file": "saturno-globo/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "26a0c74233bd51cc06a59fd71a9184a206a2c5202a734737d584ab2d6c91437b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 29128,
+      "file": "saturno-globo/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "f989d186a5890a53ff4f0146e2b5e037148c1d27f70079db84029107080b5141",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67250,
+      "file": "saturno/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "63d76ec4ea16c6e7e1cf61c431a862898127eb9916333aadf38746506c69168f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67352,
+      "file": "saturno/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "77a7800419d1e4e138bb0c201c21acad41079e96e121d6181d999a5aa7096997",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67240,
+      "file": "saturno/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "0ced76e84542e103f0356ebae4aacbf244113a9b97e95c38668965fd46378c29",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67428,
+      "file": "saturno/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "5ab4da038a555edfba37866396312edf27a68641fb60ab5bd083e324e2fd59f8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67490,
+      "file": "saturno/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "636269e09736de99a3b52ae4caf014ba4ab42e0fd1b52d389fbf3b00d95790e1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67438,
+      "file": "saturno/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "f27ad22a6e8f9ddfd28aeb46b0a19504019f765349dabc78a613424471384315",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67484,
+      "file": "saturno/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "c81b589a8f0d093f2ac4f153f516c8604d0280a99cab35ad2e6854fdeae4a36b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67396,
+      "file": "saturno/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "3e6540f8bb37d5886ecb9ae970b8cfc2abc559075cb6c901a428973c74daf1d1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67566,
+      "file": "saturno/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "2c0633e323c0cb452649d401deef8c3df0fe4bde70396a321fc177b74b499ab1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67636,
+      "file": "saturno/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "421bd4c0357f3821cdc8e262089e82083a2311913240208bde97e2c07a3b7a98",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67550,
+      "file": "saturno/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "54bd59191431128df213dd6848542a831f71ef31179e905f568e5cf4168f5c7f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67568,
+      "file": "saturno/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "3dc24d4a8ab110c6e85d1aa1dc25a203f084e6d9cc9bb97ac74d6857b55a2081",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67580,
+      "file": "saturno/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "21b007c4f9806cbbfb8df8beddd2187c6ce452254322f11271f93d6f23b0b311",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67572,
+      "file": "saturno/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "c4978c1f0197b89cfbf9b1b470d2366b97577ce36e37f61c76f78bc1837855b9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67618,
+      "file": "saturno/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "6a7c92b17e0d6994fdae81a30677fb856521db7a0eaba8e49a1640d74e77ea01",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67664,
+      "file": "saturno/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "121b2c77bf21599faf5e3a9399fd65227c50f002821ed0cf46a11da9536eb15e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67622,
+      "file": "saturno/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "6ef2e6ce337075481967ecef0b9f722ce51bb4ec3c652b9008483b74ff76c4c1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67524,
+      "file": "saturno/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "4280dcdfe12100d80a2d321b98b4e8b47d51c2e25e304c1c6e00e2fc51aba49f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67738,
+      "file": "saturno/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "2a05c077a469c43d7f201011acf95a933231d7f61770d63ee5dcd97bfc730d55",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67626,
+      "file": "saturno/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "9244b95c2cf6fea9b34964511597fc4f535102c07c65c554363c47c9ebe98558",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67714,
+      "file": "saturno/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "21753fbb96b9ed1da58a4b2a12d0e8ab8234f94ec8995026f00b6a37f037c2d4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67634,
+      "file": "saturno/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "65ee2cf9d66a3ebe7154d3564139f7b2987c91be784f261b2c54b2da12a671de",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67716,
+      "file": "saturno/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "230eff77d98c0294c79bd73c5ca14db16d8cb6e073638ab0c6c15588d473ec2b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67552,
+      "file": "saturno/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "ec43823fb537cb62b897cd0fedd234b9f05825cb982445932bbe07932ef90a28",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67716,
+      "file": "saturno/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "32f7b8c4c6acac3887a0f8b3926cf78e50e49c592fca8c8728504eb9c9cf6757",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67586,
+      "file": "saturno/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "d9f484ae83e2939761be6a393c2b8b2adbb5649123e0389ba38e1c663004588d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67614,
+      "file": "saturno/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "bb2b290d5269abc7b54aad54dd341feb70d3c64e3cdd01169143056c270fd3d3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67534,
+      "file": "saturno/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "34b774e5e65561bd4c2385bc7dd1934a81b220367be0a6295a31d18e32a72949",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67602,
+      "file": "saturno/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "2dc3c4244fb1006f579e255fb9cee80e63c3641cb5db12981d1a0c647c8e97b3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67490,
+      "file": "saturno/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "3f34181fd1bb39c8db3a1d60b86d24434754b1d01cf42c3dbb0f83bba538c27d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67496,
+      "file": "saturno/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "dc9ff7f51e6677844fc53ab0b42c9abc8c9ad76a67b197716866bba0e8211a13",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67522,
+      "file": "saturno/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "62bd112304485b9d748503e8165171ab3c1a76654026ee730f0abff2e98293a5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67488,
+      "file": "saturno/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "0970b28294544eadb9561613ee734acd023b1d32cea6f2cf42d64eb88a8005c4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67372,
+      "file": "saturno/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "39088d5df8a665ae80dff5553d1fe04907703ed56a4c59ee6180217a2da231f0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67480,
+      "file": "saturno/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "089a82cbc1d03d38d3be91eb2324dd48fe0a994baa795c2fc77f34f9ada72617",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67316,
+      "file": "saturno/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "6cb0025c3365f8a179496c228ea900b2d9b54d84d79ca2e56851c439e4b018e6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 51736,
+      "file": "terra-ar/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "9d5318030d93a311504fa28b12043eabb0927d1fa62d3a1a40977ea75b4f7c81",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 49504,
+      "file": "terra-ar/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "cc5bc4cc65c6ff8479dd858406fbd41cef9f89677983f2c772c2b0d2654dc69a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 47458,
+      "file": "terra-ar/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "b1fbd448be63b5225ab82fb6c1f0f0af380f373101e2d40ca5f5978acc1c23cb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 45072,
+      "file": "terra-ar/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "abb68389f2d180175d61aa7d82701c8bfc4f638852830c01ceff60895aebd86a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 43100,
+      "file": "terra-ar/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "dccfed384c68b99f1732b73c9447fe5f949b51f94a85a3fc8f63ba3426aad2eb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 41346,
+      "file": "terra-ar/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "832e5920cefbae21ee02feacd237c1d7f51d1ec6efb6dd473d7eb21518b7f8f9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 40718,
+      "file": "terra-ar/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "3d28a05b844f94793654c1edcc65d8c66726410cc958f24206ca863a96a0c17d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 40960,
+      "file": "terra-ar/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "9ae80b34814ae518798c936f3b334b54245215618fc5f2711b685abc9e58bb73",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 42236,
+      "file": "terra-ar/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "cada271474515d3735b49edcd6834f4a13f046ececb04cf82dea389558aea052",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 43936,
+      "file": "terra-ar/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "75f31906dbb422314ec15013027b35c95db763bac8e5c582c77c93b9f63b80c9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 46920,
+      "file": "terra-ar/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "bfb8bb487826d8c3d7c7d39bbf79c5093eaa073bb812581091aca8badf9a55c5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 49984,
+      "file": "terra-ar/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "94d055ca31d6db0e3a4f24a04649ab9c8e2ded23980eec32641fdacf83fb07c1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 53104,
+      "file": "terra-ar/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "fdeae92c2e74dfedd97a2b93fa27e97b4a13385c1082802772a88dca95c3a42a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 56930,
+      "file": "terra-ar/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "cfe403409219c0e3e1cb8b8188b72bc437b9a7cea5549cbdc3d417e9bc2dbe5a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 60794,
+      "file": "terra-ar/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "a5926b8291cf55fa9a5c925b14c2bc3e24786f790be302e9f3b413902a4ddfe6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64946,
+      "file": "terra-ar/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "48ddf4bac230eaeb83096ac8e64fd05053b8724f7f2b26b682e07ad2324346da",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 68374,
+      "file": "terra-ar/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "81a8784575860eb8b26265a53f08a94d2d1131b17a2a52b6fabde1b9a16c6ced",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 72778,
+      "file": "terra-ar/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "63e1d7d7783b6bc4e7acc59e12a464b7d17d93643e5bfb296f90f2ed80a45ac2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 74900,
+      "file": "terra-ar/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "a7554cd2a4d7f0307010a25a7d07ccf205bdcc99ae53cac34cd82d07c0b9ae9b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 79244,
+      "file": "terra-ar/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "6977f732525da290ac1793c3e91fb77019f9f4d20198963d86c1b895071cdd15",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 79570,
+      "file": "terra-ar/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "243454fe02172ea9cba18e990aa25667d00a33e429843878d1a321805a9e8afc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 81544,
+      "file": "terra-ar/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "47cc5c88b62776ca1c0b12685752e4e83dbebf955dc957a968ac5d31b991e2bb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 78932,
+      "file": "terra-ar/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "3d91875adfb8044040a36ced29bd5e2c7285cb2da50ae6e93c5eda8a290e7b65",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 76346,
+      "file": "terra-ar/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "b1968a5b15571ce6eb1f2903d4d961b4ccae92682f90b68adebf537f35921d93",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 74462,
+      "file": "terra-ar/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "881185af32ae1a46f92aa1dc14d328afa920e849b35c70aa62a8628747aab983",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 71152,
+      "file": "terra-ar/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "4756029195699868c145eccaf17868d9d0df3fd2a96ceeeab50370121b14802d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 69094,
+      "file": "terra-ar/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "a014024e7f81ebafcf6cdcb5861026be6e08d08ac2da26a1ec8321a0e49dc309",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67178,
+      "file": "terra-ar/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "d07898b85dba1306e7ef3040eeece21269b1c942d452fb366e74c28b9e669dca",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 66622,
+      "file": "terra-ar/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "834b7962952dc6904f6b2d608a4b39bb603bad4d631d73685f8ad5135a93f438",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64530,
+      "file": "terra-ar/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "c075a8cb4dcb5e96a5824579a25c461eb0591c6710f95a4b1dc0b121c00751fb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 62248,
+      "file": "terra-ar/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "136bb9db347fde00e43a6bfad6a078a7ab3579e0d89a4762866981231ac30ba7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 60378,
+      "file": "terra-ar/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "a633ff1c2413aea9d3773c5efb47ad46bde18634b59463441708539f0dfc25a5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 58866,
+      "file": "terra-ar/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "d1f4c53a40b03aa54eb9b6d1eed3448e65e76dc724e0775bc6794151b32632b2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 57772,
+      "file": "terra-ar/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "b7f8e703f433d638026a1faa5df28a2628871a19ecbe552ceb746038ec324dab",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55452,
+      "file": "terra-ar/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "95dde6592edbc46b356133d6f43b3bf86e0932dc107b822e24579d5cc6f4f922",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 53354,
+      "file": "terra-ar/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "342104acd92034796aa116c20caabec1b4f8ca03b34ff4eb5def2b546aa6dd4d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136716,
+      "file": "terra-nuvens/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "f82e27aa50f38bc52c36748186e4dafa148beaf7b6fe58c5e896881b41dc644c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136586,
+      "file": "terra-nuvens/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "255b6bf11a29b9bb4360005b6b23ee399b04e26660dee6c8dad81e05ce2ee6ea",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136410,
+      "file": "terra-nuvens/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "7f6efca106a2b8e73dd55367867f5f94df29b7343eae870ed55a632df3f29640",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 135992,
+      "file": "terra-nuvens/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "071a0075234b00136a8a4acc3f125d70e0225d2e0e8758e7d827d525c8669e72",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136304,
+      "file": "terra-nuvens/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "68fdb3d73c6c30c454854ca2fb86e90058f2fe62f7c1294d03179638d7a6d1de",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 137018,
+      "file": "terra-nuvens/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "f9c74b0fcf3e854e876be7d24c7f2f91adc11d1cff280753a027fadf9224aa59",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136686,
+      "file": "terra-nuvens/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "ca37e4dbaa8a8bc3e6508f54a989684d697931c84f1909a31f635991bbe4eeea",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136138,
+      "file": "terra-nuvens/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "751b5272636f03df6755d8be2740bc718c45fe67fdc9d04cd63dfd809246685a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136524,
+      "file": "terra-nuvens/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "5be50d5e93d70b4f1373be890370ebed3e0172e1976f79b33335557d62f08d7f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136424,
+      "file": "terra-nuvens/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "87e2d1e4a8dd0d74c7cef9cda6194fa42ee4b4830f5c91e4958eccd8aefd5db9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 138052,
+      "file": "terra-nuvens/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "0b6531a9987b2e10dade21e9171f3d31b6246f5f3c5dcf134d64ffc08d0b7fca",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 137568,
+      "file": "terra-nuvens/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "f8bfe66859a2c6adf09af49e62a5a90536bec259f6b5be1c4577a3d0691028cc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139026,
+      "file": "terra-nuvens/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "e3333f8ff388ac131240dd7b12e7374d5b761a3bbdc075460555960d42b2fc60",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139946,
+      "file": "terra-nuvens/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "e8aaa5c5cf03d6d65fa9fffdd141f5152b0b89a06714b7aa078f946e0ea1a4ac",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 141136,
+      "file": "terra-nuvens/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "acc2cd4d4f8313fef5f052a3f61aab83e9904b501af6271740b5f4dc37ee80bf",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 142068,
+      "file": "terra-nuvens/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "e6a9f69903f526429e1804f3fef246d7231315edbd5ccb8896e0746f818715b0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 142432,
+      "file": "terra-nuvens/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "02adb91d333f1d8a445f8ab09c79b7e64b972b00c6036e74f5a32cb5a3f81495",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 143196,
+      "file": "terra-nuvens/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "c319ddbb78710a96639a6c336a533a0d4a3e21d1a96bea207a82c0871e14bbbd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 143212,
+      "file": "terra-nuvens/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "1a92d63b5b12c0c39cd4f9b99ecb10d815f5a32a50f541872cdf38da0effc33e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 142824,
+      "file": "terra-nuvens/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "7fa8fa0792334757f36ecf8987153d5243a882d363d26cf70792ea1e6245cb3b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 143584,
+      "file": "terra-nuvens/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "f85805a74488f6778cc5f1d56631728c0c05c63d4f76d22781b02a099e3c59db",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 142194,
+      "file": "terra-nuvens/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "bfbf1c66536897e9f07df37ca9c879ad147d558aa23189cc1d8fe68900b693ba",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 141472,
+      "file": "terra-nuvens/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "bbde8d31c48365d00a5d1075a32b93026f586d25e08a7e34d04e30739979f685",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 140670,
+      "file": "terra-nuvens/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "8bb1ae678b4a04e8353ddc6e130d883c2a7ee28b7ebe5e77ac6452c1e47314c5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 138898,
+      "file": "terra-nuvens/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "241081bc975d069f54820d0b8e588bfd803c4b0fb787b45aa842e38d2a351c41",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 137550,
+      "file": "terra-nuvens/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "7d0f7c27ff21d02c0dc8a8432527bff52e9fa18d7d596ab2267b254309930b85",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136568,
+      "file": "terra-nuvens/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "4692d6888e9b64e2f3949e5cfd8abeea3386cb99355af698ade2d8a897a69c65",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 135558,
+      "file": "terra-nuvens/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "3919bb94224399af31490402b90b1b07eb27bb2d74a2ff76be6a27aefb1af092",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134582,
+      "file": "terra-nuvens/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "e30add8a4a7b183d88e456c54b04f5a5d92ada63de86b2d2ff4707bd8ef4c5ae",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133746,
+      "file": "terra-nuvens/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "621ebf465c09ccd397af505bce112fc7baa815e7d9ad04d1c380d739a6e8f805",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134188,
+      "file": "terra-nuvens/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "fe9d5b22b4e913e7dd1ede9c168f3965ac198e3253aa6c02a632f210233256b3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134596,
+      "file": "terra-nuvens/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "508125a4a0871d7da67a92c367103b42525663f1d20d0dcee6e99ac8f9725a5c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134826,
+      "file": "terra-nuvens/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "82df8c3fc895bbf2722152730df6af0005dfa437d8b1fef25c47058357cafcfb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 135768,
+      "file": "terra-nuvens/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "a6e7def6caf4e27fb027592b5226579257576591b6d65a4facb66ffcf6c2cc23",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 135992,
+      "file": "terra-nuvens/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "74e0db4f7b8b952f2d9b47cc36029ebe3b354faec78d1a902dacc16eacddafd0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 136160,
+      "file": "terra-nuvens/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "71279f28c7f2391928072bfe86136f0c7e6393aebb9efd5cc6d670005a3c224f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 49702,
+      "file": "terra-solo/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "c008a045d274d7157a19fa6d46c3727d762632f1f0303db4f049157b7dd6766c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 47718,
+      "file": "terra-solo/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "b4560e1c83603badbfb7300096b90d6eb8b731bc5a20c429bc244749ec8060eb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 45624,
+      "file": "terra-solo/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "4a6324332da8830e3d2c9e911ed2d0fc11d1528164fbd106b64829cff721497e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 42956,
+      "file": "terra-solo/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "b7eb738823e65d40d642c2407cb01436642600eccb9fd5b026b3539d52c5b281",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 41818,
+      "file": "terra-solo/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "f5e3d4ee78480ac89a0072eb2361ab73428426ebc2efbf6a4eac9350c96cd253",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 40392,
+      "file": "terra-solo/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "d159fd295126f91f655010449ff3c17c3e67d73c3b7cd98b8c73fad929e047fb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 39986,
+      "file": "terra-solo/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "f13dc2dc988565dda4298937fd030b540011204c2279b4b91e07b21a562d3f4c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 40536,
+      "file": "terra-solo/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "9624f879bd5563a667f0ac43aad1f7aa8576ad4996e6b9174bfb1778420b8cf7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 41870,
+      "file": "terra-solo/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "2aae53007ad30613a314e818f5f3fadd11cea72e607d4a1969d746e81b029076",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 43658,
+      "file": "terra-solo/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "832f42770098161c723861314e0bf5f1c0d5d2361f8f0fc1a27955e8ab963d71",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 46644,
+      "file": "terra-solo/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "f091b28a79aec7df34d0840d73925ff288e3d49ac2dfd0462930b59dad8a0384",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 49294,
+      "file": "terra-solo/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "0248901c2f7e49d08d0d758f7c6637045fab55ba245ffdf9413c53f7c8f30f7e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 52186,
+      "file": "terra-solo/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "e41252a6a9fe331965f3d690ca0429384c05637d83223469afdc5f34b1e1debc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55504,
+      "file": "terra-solo/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "9a814dbefc4aa67ac835fb1a70966d6fe5527fb2bf1f0ab3e10817901604eab6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 59616,
+      "file": "terra-solo/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "371e2d422b5cceaf23b7de4b548100759af73e07f08eaef85d7a50369eaed037",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 62892,
+      "file": "terra-solo/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "74a38e361379d64e7ec54298f0bc8b92139794495c5cf1c664a08fd41d9273c8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 67896,
+      "file": "terra-solo/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "101ec72c72ab25da30c28c07043ec8f488d8325befafe3f03229617c22ceb4b4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 71406,
+      "file": "terra-solo/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "8becab71eddb6fd76c507043f45fe252f7f5131b26245ec7ec122a8d14d24fad",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 74618,
+      "file": "terra-solo/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "144835e44af4de510f6e4b9c38c6e55386452e81cc577d6c2e02dd5f78f68819",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77130,
+      "file": "terra-solo/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "34ce962b31621943506cdc72a6b80746380c5df75baa8aa41b15fd6f2bacebad",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 78198,
+      "file": "terra-solo/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "46dd52a181dc5f620d52c246fc422b3a39d62bb2629c1bbb86a87e7d1053301c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 78176,
+      "file": "terra-solo/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "9573f13007fa5966d1af9c5e28f8a95660a054456c24c9fe2ffb017142ba21b3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 77310,
+      "file": "terra-solo/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "fd6e669d760d359890ce71df8257e8ac39dae745c294d036c6be7ddcce9f4d92",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 75124,
+      "file": "terra-solo/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "8580ed3d2e8ebb813d7d80ec71ec910d85fbdee57c199aa79fd6eeccce3d496f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 73290,
+      "file": "terra-solo/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "9838870862ce7b7b567a6ba3a8affc2079f58368d2bc6fd714d68fce6f752875",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 70474,
+      "file": "terra-solo/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "f6728d9d6783371099a553a30e8c518cf1d5c1985e54b158745746b244ab9d48",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 68462,
+      "file": "terra-solo/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "d60b32d06a1da03ef1f3801eba292d165afce81d7cc817a3b74c3e43a6b4d47f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 66700,
+      "file": "terra-solo/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "cf8f1824fc8ed9b4d6349adb4646df02ad3cedf1fe1c14b2fc2dabfca2809dfb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 64068,
+      "file": "terra-solo/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "65870d4285b33fcd15f0d2d094ba34b572706ae91e125dd40a4e0279c8839db6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 62858,
+      "file": "terra-solo/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "a968bd04017748e9c36c36e093e2dd9789f07d058e2c7fb55d8676b3df3f1ebc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 61190,
+      "file": "terra-solo/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "ed28d985b088e038cb002a9a2f98072f6f69c8a9ad7bfef5ded5282c09576d94",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 59332,
+      "file": "terra-solo/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "bb39b207032aedfa658eaf73e1a14287a19626ffdfd9b469d4e231f13acb4583",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 57410,
+      "file": "terra-solo/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "df0cbbe6e6656008a269d1b518de0321363a87323e8c899f1329174e5e493e44",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 55326,
+      "file": "terra-solo/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "a2e51c0fda70478583c974dfb030ab3e7d0cb5dc5bae4adaf7a361f834829b75",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 53300,
+      "file": "terra-solo/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "1eb0b380e9e270a4e3b704a99d6d91e7b07858be592488422d928bc81b0db2bc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 51442,
+      "file": "terra-solo/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "8a302302c83847ba56676fb905e63e6ccc3dc24acef685ae9fabe91003cd2a39",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133600,
+      "file": "terra/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "8d961bda77e77cbed928c77bf59dd98624bd7ede07f9fd9a75781715ced6141c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133352,
+      "file": "terra/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "e3dfab58841ca10315cdedd771f6520753561c212dd0a5556dc1e24a5d95de91",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133138,
+      "file": "terra/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "df4093f26ab76c6a3df39dd1a98a8d7fb1ffa718d737a20eebd64b8793822c44",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 132794,
+      "file": "terra/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "a6c8ed1fa5e6ebcfad6072d24a82bee60cef5f9015111fe1cd113219199077a1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133678,
+      "file": "terra/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "ccc50b2bae3f3064b2ab26e6a160f589ee91d1a187fe9a0ddef1ad0c9de9ea90",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133974,
+      "file": "terra/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "daaa0e634da266a021f4e31e9ffb264a582a931e0fefabcca854e6f4d1360b26",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133486,
+      "file": "terra/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "5331bf392a247649cc8abc2c30f2aa686aa2a393c4d6c7fa3ee3fd764eb12be2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133562,
+      "file": "terra/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "dd8a4f0820b9e418a43c9a5a08372277ae167f9e7c2630c45a6c388ae55a94c9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133360,
+      "file": "terra/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "94ae5dc8e6f0db83697351e9abcec7dc38c40f7f75cee8d20961a5d963aea18c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 132894,
+      "file": "terra/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "e8b3dc23215e2313b0c7378e1b02caecefbd202878570828b64f6e2c4e759f34",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133828,
+      "file": "terra/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "19cdfaafbea9d92ee03a92d877ef778cddd29c78288b5f4d340daa7fb34aa443",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134448,
+      "file": "terra/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "9d6ac159fbbe30e41130d7e926bbe167a82fea5a13b907b90a99d63d662b1087",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 135540,
+      "file": "terra/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "c5971d5b8dc43fbbb8903e3d93d3cb4d16b9c84b38447622cfe960c3e89b6435",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 140790,
+      "file": "terra/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "c82c426de1564fe9e4042ce507abc430c58743aae0f7c1f597b5fdfdff05f4bf",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 141766,
+      "file": "terra/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "9c85b0d8a6dddda8fe7c3dd97a42f0c6b695c02947f74012573fd4ec3a6eba71",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 138778,
+      "file": "terra/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "399964770a7d82de8d256b49cfec5f4e1feb34f771288250bf43b6923916d251",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139532,
+      "file": "terra/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "c35b4120588b53d787dfb77a20f8f090614ef736b95a6a8b3649298f449e34f2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139400,
+      "file": "terra/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "1e254327e86247e098946fdd85af8a5a91c4ddf0198eb844aba44a6eb8b50654",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139820,
+      "file": "terra/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "43701454b5bf8182402752596ee00fa4997cc79f4d04a7c9aa4243714702e48c",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 140264,
+      "file": "terra/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "bcf872569d5cd509b9a113f1abc735c34f8f61a2259ccac3024d9aa7addef52a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 139512,
+      "file": "terra/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "83c6050764cd902f27df3cb26afe1cfd0d18cdb16126202a5045cb952239d839",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 143882,
+      "file": "terra/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "fc43b2ba84925bfcd0fec469f72b89a1db5152212639331ae418ec2cf31d8bfa",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 142458,
+      "file": "terra/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "0db88be0f1f5af4230f105fba43517caf37e90a4665905b7a8a75eeb1578eea2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 141706,
+      "file": "terra/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "1ce678900894a8d966236fb476def222000691507d7374608bf07194fbf3a706",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 140104,
+      "file": "terra/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "aa9942cd435f5a60fed62380374a7026427f1ebe7371f86effa968538c74b941",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 134692,
+      "file": "terra/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "c5b8fe85363c77f46589f60a661a02635f9c955300cd32f9a5b5b4ba047d6936",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133434,
+      "file": "terra/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "73ee0eee2da638c626d62cec1e9f0afd4f50cb1f0fff44eb879b339b4f44d973",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 132380,
+      "file": "terra/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "22991aaf51be45c77f5b7a45fc8930915aa27a66518f8b2ed691e149a51da227",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 131326,
+      "file": "terra/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "968760979e3248360be6f2c480fcd37d2a6c57318f7772f3bc66c447ec68a98a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 130904,
+      "file": "terra/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "988f36da6d594f150c12aa1e69e5d520d6e4fd7f93c9faf9b232b71d17009b68",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 131142,
+      "file": "terra/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "7562eaf439f159e401105366974d3f23a62cc9c7a91b14356333ce53d063aa75",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 131926,
+      "file": "terra/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "840ccf9bae70890003dc0f8a0613b3346b9060fcbc47f904d363e66a1fd3d968",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 131932,
+      "file": "terra/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "901dc24c4a2d563b8f41e5197cdd9e0325b5bca35e70da3ef1ff2c1237384503",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 132258,
+      "file": "terra/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "cd71d098668801bd999b6c4af6b342216a156b90ab4ff2b9116fe5825cf94820",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133234,
+      "file": "terra/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "7f67bc6d71eb0aa4ef0b8015a58b979d41f3b35a8de73ca71773c7647e7f48a4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 133596,
+      "file": "terra/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "15238f6369c8b9b18bab11f849891e81f73566df976db658d1cdbbea4d2e16f3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15354,
+      "file": "urano/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "780b0bf144544d3f4c106991958952c0585405462ddf5744cfe64344276a6aa2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15204,
+      "file": "urano/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "b549ce6240683ce7854b06c9112c024fa5ccea8445e25be866419459e5bb5db1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15232,
+      "file": "urano/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "061bf1481cc868af3e55bc62f53f746f1a136e1281e9ad2e9cd7b065479a9a7f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15374,
+      "file": "urano/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "d343885d67cb87fb151612f63e37203933b085b4c3959e94a214a2ecc1eaf822",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15288,
+      "file": "urano/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "7dcc2d63b8e5735984e1c585b424f40a25f5e3f19a99faca6da915e74bfdf69d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15426,
+      "file": "urano/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "6c4676d13785f8e4e46a3e7047c6e25914d5c73cba089f6fa5dacc09cb73d308",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15392,
+      "file": "urano/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "d43a101204b1d595cdecc15cf10338818ea91ba68b420c1eb30db3c9fb9949e3",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15290,
+      "file": "urano/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "20c721921925b14bfc6f68835cbea1594f44127137522d8821c78d70e4087ab9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15258,
+      "file": "urano/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "7dfea9b8047e46d800bc64f89a710667db6b4885446ffd8f48ea3a8ddc435141",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15272,
+      "file": "urano/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "0158e688972a596f23e31fedb7cdfb29eb4d3e213108a07bd90c962d91e058cf",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15220,
+      "file": "urano/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "c4b6ea7c1db70f45d72d6ed9e789d3330fc4501bb8ed9dbebb0303f093a26d3f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15258,
+      "file": "urano/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "2d7ce34c9bdbc298d81aeab4863bbe8f19e160875dd36fc8d59a661afc0001e5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15274,
+      "file": "urano/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "8b23ed6aa9b05351931037d6ddf209265bb7b395bfda255a1e529d84ed539542",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15310,
+      "file": "urano/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "729a69992b8b133f446d97017bf77c6a06b3c094e2adfc02bfe43e99a77eda18",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15248,
+      "file": "urano/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "4da63ed433558e3ebe42b35e5351e82a73d7cc4a200d0f0350f429fe7d52c537",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15344,
+      "file": "urano/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "401b6316b55ba1f32dd03c4f4a51863afd569dba33bb6ff75f167127adbcb926",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15224,
+      "file": "urano/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "3047b6de623c12c089bc8c3366ccf228ba0722d813bb831542a966b15a1cdae0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15218,
+      "file": "urano/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "e5252d73c21898066251f71881bc153d235aab20d344b72c1ec466aba9fea40f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15316,
+      "file": "urano/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "6cf044f32759041abbf0c076fd3f40dfcf1ccd6baf024e6005012159bb72a6cb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15242,
+      "file": "urano/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "7df3ac00b58f150a42a507ce770e413f7b2b5280a56bae08e5bde57066d5c843",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15278,
+      "file": "urano/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "22ceaea87156b237e6ce12ddc927e88d9a36953fdb896aa19d335f2f8b45c986",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15164,
+      "file": "urano/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "d05b33e603c0809aca25ab1f8de0a2645b7d3d814627af74f0552c04778f1404",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15326,
+      "file": "urano/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "23149148af631e0aef8e8f68205668000cf1b75a3c3dc775888bf1a659a048e5",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15280,
+      "file": "urano/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "369f09bfe6f7eaeaa4b85cf1c4c4214db07dd5d69bc1e93bb0e795d363a08ad6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15382,
+      "file": "urano/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "35e5dac2896d23402636c26893e93a1487a5735d6f5429a1be0d39e7faa8084a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15280,
+      "file": "urano/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "95ed93012e158a0b88a8ee3a3694d1d0172cbedddeb9feb2ca8443b2a352fc8f",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15318,
+      "file": "urano/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "779ec21c3f8b7ecde55b99e05ddc1d67a10108774533264448f510f007b12b86",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15318,
+      "file": "urano/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "6afee52dbabb3f8433310fc1323dfd85f648fb7827345daa31245aedbaba421a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15408,
+      "file": "urano/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "60bbabf2dfaa6b618cdbfc18fb5fea19d7d13a189e7cac309d3110bcaa5af7b7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15300,
+      "file": "urano/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "ac93bfb10e375cfdc2ce5fe8d165467c2242558d38bc2bb42d66c59f62c9cb7d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15332,
+      "file": "urano/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "39598d15d7317b2bf6449f75283753fabd72b84d339524da9d1f481f93027552",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15366,
+      "file": "urano/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "420c22bca0f448cd50f1c87ee249a88b78aeb8891db7ec3e354ad74dc8c817a8",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15252,
+      "file": "urano/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "a5b09bf391bbe08822482de6577a7036b7395638e558c0dbdfc6adc71a0f295e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15278,
+      "file": "urano/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "67462dc77bd354462eece65b9517a0210e6d76e84f3012320f0d01464ee73c90",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15356,
+      "file": "urano/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "82220a315ba962c3e9078891af00e8b39673fffc4c2af0465acb3161ea240c99",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15248,
+      "file": "urano/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "abce8e02ec1efe17424dd4a3b6e2358bb4ac7ad373c0c1e7679d7158e6461a4e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16040,
+      "file": "venus/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "32f5679bd72565b59e43a7a762b71e2e10417b6f8b98f60a157ace44358778f0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16066,
+      "file": "venus/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "25e390e108cb459936a13e80f66bf8ca5fa511b7018e70ca769b590cd504093b",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16152,
+      "file": "venus/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "2d75b589c4f2618b5889a86d855d282de3a6149a83aae9c78fb414b209c8d119",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15970,
+      "file": "venus/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "208ccb8fe07df0fef4802acc0470bcbdf65bd2709bd8d323ab72b313f241cde7",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15994,
+      "file": "venus/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "80fe1a7a250941685d93bad0be13ae5f63eecd1f0ad465ed2ecfed806def55b9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16130,
+      "file": "venus/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "babdb2d524244e31611a26067fd29fe2721bc8e0b47d0c6e0110a95cdca08055",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16096,
+      "file": "venus/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "7f93e3cd98509a16733ce40b1e6e2d178464b8084f5a9c29303687912d9928dd",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16052,
+      "file": "venus/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "507a24589b3232b9b94ee0fc9ba1f1f738474ed47e1809a00a76f01f7b98f049",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16010,
+      "file": "venus/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "da85d15b0020943836ade18cbec055e5ec5e20d22e4fe64730868875c8827829",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15972,
+      "file": "venus/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "78dda0de60f4901566b0865a8017ed3061d775c3060b295c30497acd7a7276fb",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16150,
+      "file": "venus/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "6a76ff3d307751e5c25514812033a171c73a6a2bfd2467c30139ecd78c0dc5a1",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15990,
+      "file": "venus/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "2e60f461bd569346fa1471c3f8d5c34d391455b7b033a6166b63ca647814d249",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16090,
+      "file": "venus/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "1de9195760ecbcb55f5c1b2973d87589d5a75df5bcb8e483889957144f492ec6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16108,
+      "file": "venus/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "0c6355bbb58d95b97d0dd6e5407cf152ba1cace2abb1c7af27e0f0a427decb6e",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16090,
+      "file": "venus/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "494cec896e1bc71e998c45e7fdf08e09e7a54ba51f73c8e649db7f4d43f7cc32",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16120,
+      "file": "venus/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "706fefa138422c65dfbd10c27255804ad4d957150123c51790cfcbf62ee8b904",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16110,
+      "file": "venus/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "5a30599cfe934d28a3e7a899a1852b57705d82ad361d7581afe758f28c590ee4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16206,
+      "file": "venus/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "9f1ad91846d79d2b0bf352d02ad674c0b43c3dddbbb6e598dd2cf79b60a05861",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16150,
+      "file": "venus/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "74584ff7016cd3f8d1c2743110101214bf35799a40d3404ae18cff35c19c8f2a",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16022,
+      "file": "venus/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "38e1a7ecf852a792a00c0c3078df180cf133ad9a08806f2b2b68bbff095e01d2",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16056,
+      "file": "venus/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "2626924aff96ca5598ae5b21cb898cd92779ffc85982501e411a4f7faddcff1d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16104,
+      "file": "venus/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "40f9e42c848865684783e4f2033a67494b0af2db4a068b6e3227e5a555f24cdc",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15984,
+      "file": "venus/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "26bfa49eb012411bf67c020c5a873b0627cc9d3a9b34727e0ba0ed51d8d4eeb4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16122,
+      "file": "venus/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "e56e8e7bd84fb9e1c7f2029d20a872925544fb4a95606f899dcd9bfb01607688",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16066,
+      "file": "venus/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "73a2e43d5544f574cb8401e9e1c90c5b59a736d35786618983919768a0cdd5b0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16030,
+      "file": "venus/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "02473c1a29da47696610bc09720339ebd230a47f4cb16da297fb30567c7e3113",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 15992,
+      "file": "venus/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "c0c7dc6f52386b8a4c4ccb9fa78d2d7481a555e7f900075d0a9031a09eb36895",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16016,
+      "file": "venus/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "4a851d86e80b4e02cf4c32e7f8f4bb965f67616e9be0fa0da27ddc43dd3b951d",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16044,
+      "file": "venus/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "fab1a2324cf9ded1d1c6df6b5670f367f2554ff2ca858f0d867bd57b89663214",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16030,
+      "file": "venus/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "d652e83354e6e2e87f907f865aed87c07370dc68263b34af7305334d19f8a6d4",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16072,
+      "file": "venus/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "ce4cd534f60f573380159300cbe762ce95f2fb02c32a3ee15cb61cda26dd4ec6",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16156,
+      "file": "venus/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "83270ee49098310c30b591125d75f5f52d1298cb952262b1ef6f61a5705fcd54",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16180,
+      "file": "venus/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "5da3f7758e16fea0000f8b50a7344141528d79e63a44609e8ba4d84e58e558e9",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16164,
+      "file": "venus/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "05fb4aef2298f38cc422db95245fbaf16e9d91701a657429b247eb0ad60e5596",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16132,
+      "file": "venus/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "d4a5826cbe6ab7cb0cb06690fc816e7d9deaf77a9bba85f963b8fcbc2f0626d0",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "bytes": 16046,
+      "file": "venus/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "11394472bb7adad0169c6c7d5e36f8128a4ed40b32345d1227f9119c38faba7b",
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ],
+  "materials": [
+    {
+      "credit": "NASA Earth Observatory / Blue Marble: Next Generation / MODIS",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "original": "assets/source/observed/earth-bmng-200407.jpg",
+      "source_url": "https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/base-map/",
+      "status": "Observed monthly composite, July2004, not current weather",
+      "world": "terra"
+    },
+    {
+      "credit": "NASA Scientific Visualization Studio / Ernie Wright (USRA), Noah Petro (NASA/GSFC); LRO/LOLA/LROC/ASU",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "original": "assets/source/observed/moon-lroc-color-2025.jpg",
+      "source_url": "https://svs.gsfc.nasa.gov/4720/",
+      "status": "Observed LROC mosaic, December2025 rendering-optimized colors; polar gaps filled by source authors",
+      "world": "lua"
+    },
+    {
+      "credit": "NASA Goddard Space Flight Center / Space Telescope Science Institute; Amy Simon, Michael Wong, Glenn Orton",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "original": "assets/source/observed/jupiter-hubble-opal-2015.tif",
+      "source_url": "https://svs.gsfc.nasa.gov/12021/",
+      "status": "Hubble WFC3 OPAL observed global color composite, 2015; unobserved polar strips filled visually, not data",
+      "world": "jupiter"
+    },
+    {
+      "credit": "NASA/Jet Propulsion Laboratory & Caltech; Viking/USGS",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "original": "assets/source/observed/mars-nasa.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/mars/",
+      "status": "Viking composite texture processed at USGS",
+      "world": "marte"
+    },
+    {
+      "credit": "JPL/Caltech planetary-map collection",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "Illustrative NASA map desaturated for cream atmospheric appearance; resize and recompression; geometry and illumination illustrative",
+      "original": "assets/source/observed/saturn-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/saturn/",
+      "status": "Fictional/illustrative map as classified by NASA",
+      "world": "saturno"
+    },
+    {
+      "credit": "Don Davis & JPL/Caltech",
+      "license": "NASA resource usage policy; retain listed credits, no endorsement implied",
+      "modification": "resize/recompression for the browser; geometry and illumination illustrative",
+      "original": "assets/source/observed/neptune-nasa-illustrative.jpg",
+      "source_url": "https://science.nasa.gov/3d-resources/neptune/",
+      "status": "Fictional/illustrative map as classified by NASA; not an observed globe map",
+      "world": "netuno"
+    },
+    {
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "source": "assets/source/prepare_solar_materials.py",
+      "status": "Original illustrative optical cloud layer, no radar surface",
+      "world": "venus"
+    },
+    {
+      "credit": "Cosmos do Zero original authoring",
+      "license": "CC0-1.0",
+      "source": "assets/source/prepare_solar_materials.py",
+      "status": "Original illustrative atmospheric colors, not observed global texture",
+      "world": "urano"
+    },
+    {
+      "credit": "NASA/Johns Hopkins University Applied Physics Laboratory/Carnegie Institution of Washington",
+      "license": "NASA resource usage policy; retain listed credit",
+      "modification": "Resize and recompression; colors enhanced by source authors, not recolored by Cosmos; normalized sphere and lighting illustrative",
+      "original": "assets/source/observed/mercury-messenger-enhanced.jpg",
+      "source_url": "https://science.nasa.gov/resource/enhanced-color-mercury-map/",
+      "status": "MESSENGER PIA17386 enhanced-color global map; not human-eye colors",
+      "world": "mercurio"
+    }
+  ],
+  "method": "Offline orthographic surface projection at latitude 17 degrees, fixed lighting. Geometry, colors and relief are educational. Earth combines the July 2004 MODIS mosaic with a separately observed cloud composite in terra and terra-nuvens. Neither is current weather.",
+  "otherAssets": [
+    {
+      "bytes": 1429807,
+      "file": "compact/media/scale-journey.mp4",
+      "sha256": "0ff1f9ee869ce4b1b1821ac8b11ccdc6f042e32af5555d067d5ad4e888f85241"
+    },
+    {
+      "bytes": 16436,
+      "file": "compact/terra-ar/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "543fb5ff2b89b9903a219d40119b8462551d65a13d74281b558432f99a526571",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15896,
+      "file": "compact/terra-ar/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "8155237be2d3015e88a16a05fcaca5f91e6ac58bca1e376c49bc3b0aa07a1574",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15432,
+      "file": "compact/terra-ar/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "341e191997c171b64ba742ff6c9c36e94f0e15d88e910aed7506cfe1e1facb81",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14972,
+      "file": "compact/terra-ar/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "28718f5c2380e5d9254eb88121fb679b8bcbc096afeb4fd4a7264b8ad64eeb7f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14560,
+      "file": "compact/terra-ar/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "b6ac86abd02990cf0b593b3baecc2217080c50a78498478344a05d6c0fa397c8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14214,
+      "file": "compact/terra-ar/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "b75aeb9f9f0bc39db70e0aa274e0c515a617f2a476e0a6b70aa39512a35e6cdd",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13966,
+      "file": "compact/terra-ar/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "15a9f9740bab1fd0e49105cc7388ecdd77db5b76b9883a17e23e7c9351855ceb",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13894,
+      "file": "compact/terra-ar/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "41084926487d4577709740ae734d496d0c8a6eab3c1f0edae87e1c068aa315dc",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14034,
+      "file": "compact/terra-ar/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "0a02024354178cd127ef6e859a99ea608e91a56f3d77f0d05949550ca9239f56",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14554,
+      "file": "compact/terra-ar/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "13822779934b8f2afb34a8708c9868aac73e93a871e3f5066940bfd0668dade7",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15068,
+      "file": "compact/terra-ar/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "cf1885425e8112145bee1e3645565567a91766eca3951ba83d2c8827aac3f4ce",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15464,
+      "file": "compact/terra-ar/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "d3937e7fbce3d2496532447f3af4785ffb546cce82a6fcbe6ad741a78fbe870c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16376,
+      "file": "compact/terra-ar/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "0187be03d858b0a6fb50a7ccca3fcc9cc41119bb00d9af639d59b00b0bfa0b3a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16772,
+      "file": "compact/terra-ar/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "40bd286ae47c603c88c742be372c01fe9998e70031641e58f5b195f7463eb359",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17376,
+      "file": "compact/terra-ar/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "c94c5f18619cb0bbbc9849a0e26536ed52af5a7e5deebff880527d4a9510cb24",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17990,
+      "file": "compact/terra-ar/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "a06fc2220cc164e7d2a0e91e1959a1f2d65db94b3c0f60052e19e14409742e02",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18728,
+      "file": "compact/terra-ar/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "d8fd160562166bcc93731c25984ba85466e79ee20c20ebb6377b861129182cea",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 19240,
+      "file": "compact/terra-ar/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "a49320c0a1d9b572b505ca2ba4af2a38a541460aaf7f4db2f0f45912403acebe",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 20158,
+      "file": "compact/terra-ar/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "6aaf5725154950f25393653d937028a6af741c672bbba9a5199ed170249754da",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 20776,
+      "file": "compact/terra-ar/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "985121d31f2503a66055614830b757889afa9b1866d761fb9df7c5369e22c8bc",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 21424,
+      "file": "compact/terra-ar/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "ed1ffef3e5a9d1bb236437165d2ed3e73e342af6f71c62c5f735954dcf28e708",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 21400,
+      "file": "compact/terra-ar/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "11e80eee9c9732120b298a01d71d633241e55f2a2e28da5ec65890b3b4c657b8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 21256,
+      "file": "compact/terra-ar/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "e9989667efe70ecb37271a8bb21b1b1f9bc835bc9c90010d5459249adb74db8c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 20814,
+      "file": "compact/terra-ar/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "91d2689230d6853bb4aee48db1d65390adc98f0092ec24370f1d3f738d53e914",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 20334,
+      "file": "compact/terra-ar/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "2f55d33a2d8012df0a1d7ee85e49f12be1c4b8223b4908b8f08f83b6ea373624",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 20042,
+      "file": "compact/terra-ar/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "217388735b6125e21686e86a5106a3f79c2f19a9ef81b0ae3ed3c494d5526226",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 19496,
+      "file": "compact/terra-ar/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "529c8380a923abf91013d041a2f8dcfda21a727181e202a3aa92a8fcf39308b5",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18970,
+      "file": "compact/terra-ar/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "7e3c6e287d27199b9cb06f0e4948f8e4682c993a3988f71ea6be85ca1f314dd3",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18900,
+      "file": "compact/terra-ar/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "2d626b8e81183a21ee02e038d879384dfc91f7e0dc243e6b2a3db4a47e0d5af2",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18524,
+      "file": "compact/terra-ar/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "70474788fc64dd37eaae1485f81e72a3a41e22dd61848f52a69616a6539bc14c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18324,
+      "file": "compact/terra-ar/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "7465d7c25cad9ab9f27b6a1f36a5dfdd2cbf8703d239aa7e67876d1d99289402",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17934,
+      "file": "compact/terra-ar/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "dd83509db26656863cf29340cf15f238283634ea67882b77e8097b5594250ee4",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17802,
+      "file": "compact/terra-ar/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "6a6e34d71fda03f5ede86eee5f7879c66f11b8f1d6faea682cd87f490b8c0369",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17368,
+      "file": "compact/terra-ar/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "7b35d03bfa82529cc89bd6a71f894f408a17b989607b242d233e4d3346cc7d33",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17172,
+      "file": "compact/terra-ar/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "5ae6c0dbb30b4c46358332863060d29d3db9c8e22b05bb6668effe5ea828e885",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16724,
+      "file": "compact/terra-ar/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "d969e91f2d783247d89a49960898721a57e6057545475d83c071121b86e2162b",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34274,
+      "file": "compact/terra-nuvens/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "881516ba69b63e7503d0e51a3738c0d6fbe6aecccc7f697edb9a047b58564fc4",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34172,
+      "file": "compact/terra-nuvens/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "3a1f8d54b1fe1686b606889e1ea0ba6cb8c3f3c3bc388e35fa308a7cfccd6823",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34650,
+      "file": "compact/terra-nuvens/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "79e48fea17de8f144903a23da31c6f14680d0687ae6c02763bcc3336bada3163",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34036,
+      "file": "compact/terra-nuvens/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "706122c801f47d7c07d18c7e1dec3f19b9888a08c0b728020f8fe2628add9d65",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34094,
+      "file": "compact/terra-nuvens/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "f42cdb910de2049acf05c361dc4e9d0540c470de046f71a61bd92f62baebadcd",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34824,
+      "file": "compact/terra-nuvens/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "2be455a68b6d3a9bf46508b2d59edc442f1a1098e2d022ecfc5a14d069f21a2b",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34900,
+      "file": "compact/terra-nuvens/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "88cccfa42b3fe9ccc3807aaaf703045f3edca651ad657e8ff09e7877b7dd6317",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35278,
+      "file": "compact/terra-nuvens/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "e9cfc82f5c01812df978e3ef0c6b960d3f00be06a8aadbb89088627760e6c767",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34954,
+      "file": "compact/terra-nuvens/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "b657ca766c52ce5fb69268698705cd4e1db05a27e18a78cd257868001a51c931",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35104,
+      "file": "compact/terra-nuvens/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "e256eff907e4c132d8cd08665ca46128082cd0aec3f7a9b25232016a7e60563d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34714,
+      "file": "compact/terra-nuvens/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "7d1c0c2e47898e40ad1920f88c8fb5fb1f4494a656a946beba4cb0cb449528ce",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34614,
+      "file": "compact/terra-nuvens/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "914255a3b3566ae59395987eb3cd7e022c7c3c77362ca778bc90beb99df0c2f5",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35288,
+      "file": "compact/terra-nuvens/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "d59f78b76321df9f80e510dd8edbb584046ad4570186cf32f62ffcf7a4b87506",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34948,
+      "file": "compact/terra-nuvens/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "0ee3c2e6010b3ef7ed39efd553b19a1afcb9192f6ebe1cf98f0665ff1edfa5d8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35270,
+      "file": "compact/terra-nuvens/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "a9b7dc1facf81dd71b471e26e15ac49d1cdd7f7ee095ce0e5ac9170a379328ae",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35274,
+      "file": "compact/terra-nuvens/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "5e63ad3723e2898558c536be4d7a46434774c3b802386044622d39df47727447",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35004,
+      "file": "compact/terra-nuvens/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "2dc3716ab4f68f0e1a490636bd8a60e2ce91fd0dd1597c3128d6fd789fe0d738",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35416,
+      "file": "compact/terra-nuvens/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "b905ea5597d89a877b95bdf3dddb6453355b62a7a8b855ac86b7dbc8b893e80a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35098,
+      "file": "compact/terra-nuvens/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "b1071423d6a8a3f84508a25538c8f470dfae6a8d706e89005f090cc01c2f29b0",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35028,
+      "file": "compact/terra-nuvens/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "9714f557004d45cee32caa39d09065e11e65aaa35b574ce0bd5e3aae22f55b61",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35200,
+      "file": "compact/terra-nuvens/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "ffae12cd1a350ee3ba5f8a6106220e10d9755db53d6f77bd5330531f320b207b",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34852,
+      "file": "compact/terra-nuvens/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "09c8985798fafcc3f81f54c32d92e65254bac9baa451a2fab1f01338a48a3872",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34792,
+      "file": "compact/terra-nuvens/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "28b915957b75b17c5fcb044384c45e800efd170932abdeea721f97be8de18652",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34308,
+      "file": "compact/terra-nuvens/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "c428be6d5868615c9791b18071f78969f81fef27a2db5df3e9244361c4a0da3f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 33850,
+      "file": "compact/terra-nuvens/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "cfa0cce81fe8c7f30231737837073f1ce415327a623a81a0955db38c71b4f3c1",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34136,
+      "file": "compact/terra-nuvens/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "a1ba29c64a2bf09e2e044956fc4458f8b3fcf62d7f46eba809653e703f947864",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34408,
+      "file": "compact/terra-nuvens/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "7dfb7bb29e9d4e134801cfa681dc6295d3c1986af262e9068ad1ca0c6485e904",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34376,
+      "file": "compact/terra-nuvens/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "c5460a3a3e1adc9d7c32a87cb52ffe4e24f09ce300954d8edd2366275f0eb8d6",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34440,
+      "file": "compact/terra-nuvens/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "0a7a0491d8fcd656e308746ba9a6ff6945f8b4d79b8f50b1f6b81af518ac3a27",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34168,
+      "file": "compact/terra-nuvens/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "fcd573e32af13a0b6cd3723ba7524ecfb35941d39698caf8b472c9ba2c76dd0c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34208,
+      "file": "compact/terra-nuvens/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "009250a72ce5e40ef518e2d4bee02f2fa019e0c5ae6e8612f6624e8bbad193bc",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34416,
+      "file": "compact/terra-nuvens/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "00bc50fdd388a66d22c626f38792f3fba77a5cae44706610af285058ae04938a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34598,
+      "file": "compact/terra-nuvens/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "0d21a3633cbf496c7fdf11e1dc49160af1e24f372d1787476cbcd5ccea5d974c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34558,
+      "file": "compact/terra-nuvens/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "ab6d25f87c87795857986eb10a1c38cf9cfbca59fa62cf5b62f87e3a73819b3e",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34392,
+      "file": "compact/terra-nuvens/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "0108d383a930b753feeec7b44b1973758f14773031ca5af08b19e620e1cbfbff",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34466,
+      "file": "compact/terra-nuvens/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "d6fa01e9a55bc8cf8322803fc6d190858e60d9367daab3ed36c9ea832f181599",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14170,
+      "file": "compact/terra-solo/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "d8a72436a96963d0d31ef37c9e8e17fffd223b65f33c0c65b00e734eda4a092f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13578,
+      "file": "compact/terra-solo/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "ac13e5cca94bfcb812cc9590af14a9ad76d94bebd09bc14310b2186c516883bb",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13060,
+      "file": "compact/terra-solo/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "2c626b89356b34c8a27aec420471433b61f73f33cd7b7a62835c9c6d53604069",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12454,
+      "file": "compact/terra-solo/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "0a4f320a36b577f9aeed237bc311eafa7fc3260137ad19dbca32893dee03eb67",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12348,
+      "file": "compact/terra-solo/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "e627b4dd6f184d3f81105baaf1076b832ceb4c773cf91859f5d3a5fe43135515",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12270,
+      "file": "compact/terra-solo/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "ba632549238fe74616db323ba3cdf5be5630ad21838f4dfd2fa4ea62d34124c4",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12032,
+      "file": "compact/terra-solo/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "7e860be42246738cbbfcf7eb0ae4bd6d7f81ca8cf85bdb36acd01512aa816878",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12040,
+      "file": "compact/terra-solo/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "72606e1c48916eacb7b4cb014c710fd04b1f4c83e639703498bbb1a62ae74683",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12250,
+      "file": "compact/terra-solo/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "3baf770ebdc9444be18404c0c1aee925e2c17a8f2a92c00342101accb53e575d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 12558,
+      "file": "compact/terra-solo/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "fc319dbbcc68e4cd51d6a3e605afa6c8a2de69af43170efec9ed5bf483a62d2a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13152,
+      "file": "compact/terra-solo/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "f2ad78b377551471b3e18558df158d0bae737fa13d435f9c206f4d658976d715",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 13596,
+      "file": "compact/terra-solo/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "3692b910766db381b2a0a03e57e98f2c43573d55fa25a2f8ed65590ecaa6592c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14268,
+      "file": "compact/terra-solo/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "091fda6491b6437e9b9742722f66edbdaed23fcd818a1081f1e43c740ae582a5",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14876,
+      "file": "compact/terra-solo/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "cbc3a77ccbae623ad565385f0beddf57c9f187d5f76a69ff7da4d28733ca542f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15612,
+      "file": "compact/terra-solo/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "eea47dda56d4f6522f879afbbc646f962fb4d11fc4c892bd2d5a7bf5fa70ba68",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16324,
+      "file": "compact/terra-solo/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "30168d5ce68122f41b02522ea295f466a720baa47f8d9d774e572219ab732b82",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17102,
+      "file": "compact/terra-solo/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "e817f61591cf2fac649ecc2347aa19e394665e4557c21094ce449b8256d8ccfb",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17608,
+      "file": "compact/terra-solo/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "e56e2fd575015d7f85f72f4306369f5ad3b7d5b99f0709858ac999ffedfd221a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18320,
+      "file": "compact/terra-solo/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "24043e438f64bcae6d4fac05741be6b79c8ad8aab877d4995cca292b5ffefce5",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18758,
+      "file": "compact/terra-solo/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "005f06fff5b85862e7b32aa45057af5f120239918595f7ccf5f44f7784e24412",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 19288,
+      "file": "compact/terra-solo/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "fde5149314a561f7232bdc4b47d855376aa4e00c4bd787bd6e7b07621cb0f7a1",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18928,
+      "file": "compact/terra-solo/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "f4a2753f87540960ee54affa4893b14f29c5d1fe77e8ab95fb8894c6442b7d7f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18854,
+      "file": "compact/terra-solo/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "f86db4607b2e1f5748f61ff2b5b86956263534435f06728820f863cda98dd7c8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18288,
+      "file": "compact/terra-solo/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "286c8ea59341f8f3cedfe21260105a1d423c390c24c49b0ea2d5eeecb94a746b",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18092,
+      "file": "compact/terra-solo/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "c4a14fe09834a7aa5add1b264c31ba4c0055ff61f58d9fc56828172659b591bd",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 18056,
+      "file": "compact/terra-solo/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "331f3b872ee268d035a81740a22e9ee8d766b782e08cbe68396a0306ee85241b",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17682,
+      "file": "compact/terra-solo/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "9ef732108253e48dbac96e5821931b175625cccd9ef61d8dbbabe94b5fe3284f",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17058,
+      "file": "compact/terra-solo/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "80bc2c6887c333ee19bda5938d5299eccccdfd55881df4768a6a42c64ceb4160",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 17132,
+      "file": "compact/terra-solo/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "cbb6b6e2088711363e0f311893b158270de651d7e10849832f4b080e2c0013f6",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16742,
+      "file": "compact/terra-solo/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "2acd51db7910b3eec1f762d926107be5278c853b69aed9fb4b237a686598989d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16312,
+      "file": "compact/terra-solo/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "400b1475bc5153134a5853eed4808286b3557a0c745287a5e88d5c893e55873d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 16016,
+      "file": "compact/terra-solo/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "65e5a46d0a8124bf96d26c48d33386ea989014648d94d07a2971782e1c882268",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15828,
+      "file": "compact/terra-solo/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "1526555032682618a8c0c5668da805eab66d372a25066357b0aea126ddbab326",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 15336,
+      "file": "compact/terra-solo/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "53887daf0418140743666bc3f46e707451800e66090372f532a60e27fdef590d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14752,
+      "file": "compact/terra-solo/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "e2b12976a5133b2f7a032646fb5abf60c24b92015fb380ec5089d4a166ce2a78",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 14306,
+      "file": "compact/terra-solo/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "655b36084df61cefe7f58b3d46024e4861cee3b30c11b39d8fad9e66a0770ff1",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35108,
+      "file": "compact/terra/00.webp",
+      "longitudeStepDegrees": 0,
+      "sha256": "ab54be107dd9c41548d1f5fd4f00edf8ff5bbeb0b2658130eb6665230d7dd22c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34666,
+      "file": "compact/terra/01.webp",
+      "longitudeStepDegrees": 10,
+      "sha256": "e06bc33becfc3ce90e548521d6fcd8c6398568797b8f1fca23c761c08d70a1b4",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35150,
+      "file": "compact/terra/02.webp",
+      "longitudeStepDegrees": 20,
+      "sha256": "9ed23bac16f46f22e045cc0709f4c03f8e5baa102080105fd53e99f738bb3f6a",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34684,
+      "file": "compact/terra/03.webp",
+      "longitudeStepDegrees": 30,
+      "sha256": "a5db9baf25409eb53dabf35e6cab781c4ccee63902760bf50a0cbe429c866a51",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35218,
+      "file": "compact/terra/04.webp",
+      "longitudeStepDegrees": 40,
+      "sha256": "f56adf15225296b5972bf69076546f1fd404e496ea71a9c247228003f1ee50a4",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35324,
+      "file": "compact/terra/05.webp",
+      "longitudeStepDegrees": 50,
+      "sha256": "865155aa3e322623e5862c53c73d823e99edff4b467396be574df382d5a1dd77",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35298,
+      "file": "compact/terra/06.webp",
+      "longitudeStepDegrees": 60,
+      "sha256": "0c51d7dd6bc9fc3cc70b6928b8464dd15b093171007181a87758618feeb5fb87",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35364,
+      "file": "compact/terra/07.webp",
+      "longitudeStepDegrees": 70,
+      "sha256": "de908606ff90152aa78d537e9757abce55848d8596fe37d7013b27853d7ebf8d",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35466,
+      "file": "compact/terra/08.webp",
+      "longitudeStepDegrees": 80,
+      "sha256": "6da92427a9057f9356b44be068c643f90a3490be165820b696bc1abfc1b59e8c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35186,
+      "file": "compact/terra/09.webp",
+      "longitudeStepDegrees": 90,
+      "sha256": "18e4d4a377985d0451ad9e83289a66cb836a6d020ce2a4a43b978bd7f512f2a6",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35216,
+      "file": "compact/terra/10.webp",
+      "longitudeStepDegrees": 100,
+      "sha256": "ccb4ffadba704be7736df6956d342c1e049e77118328fa2a32971ac2e9656991",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35172,
+      "file": "compact/terra/11.webp",
+      "longitudeStepDegrees": 110,
+      "sha256": "f6cb1d45b681ef4470e85aeb054cd22f208aa513e35bd27e6f958b45d068b020",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35526,
+      "file": "compact/terra/12.webp",
+      "longitudeStepDegrees": 120,
+      "sha256": "c2b65f9c9575fa7ddec626722311c11fe33439baffcba4bbb690b426e3aa1152",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35388,
+      "file": "compact/terra/13.webp",
+      "longitudeStepDegrees": 130,
+      "sha256": "5b9cb95b262742414f0efa54fdc41cb1f3b0ea547297248ef343d7acd9e121d8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35564,
+      "file": "compact/terra/14.webp",
+      "longitudeStepDegrees": 140,
+      "sha256": "4aec6262eeaff8ae670c70f98b958dc48bf66cf71ed42366b58fa4002c3a54d8",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35496,
+      "file": "compact/terra/15.webp",
+      "longitudeStepDegrees": 150,
+      "sha256": "f0b55ab23637639ff242557e6bb3845156d3cff023cf57cd918d932641fc6509",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35714,
+      "file": "compact/terra/16.webp",
+      "longitudeStepDegrees": 160,
+      "sha256": "fa6eaa61866bd0bfdaf3da7ccff68d9b90611a21b2f9fcf6c02b4d372827aa5c",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35218,
+      "file": "compact/terra/17.webp",
+      "longitudeStepDegrees": 170,
+      "sha256": "bf40de0ce00f842931d4bf86d8301c4daede863c31d0de81f7bb42f5bf808947",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35310,
+      "file": "compact/terra/18.webp",
+      "longitudeStepDegrees": 180,
+      "sha256": "3ab78f6c32e19ec3fbe487b7388f6024f671fb3ec2b80ccd819e623daaad2746",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35360,
+      "file": "compact/terra/19.webp",
+      "longitudeStepDegrees": 190,
+      "sha256": "2c8e0520a2b90d7416e0280930c1a43e14dd91312ad6b75491baf2c2c5f4367e",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35328,
+      "file": "compact/terra/20.webp",
+      "longitudeStepDegrees": 200,
+      "sha256": "b3436570e16e4360f183e2befcf03709d61be1f492b0d7c46b8b21c5502ff7d3",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35186,
+      "file": "compact/terra/21.webp",
+      "longitudeStepDegrees": 210,
+      "sha256": "4544a8f3fd1dd2969dd16a68c7357e55eef7f38b59988eca087ca46b30973d59",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34476,
+      "file": "compact/terra/22.webp",
+      "longitudeStepDegrees": 220,
+      "sha256": "f71e41df6bf1718e0d0b42ca6a8ec2d7071c9501da53ecfc140ab5da1cacdb45",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34710,
+      "file": "compact/terra/23.webp",
+      "longitudeStepDegrees": 230,
+      "sha256": "524366d0877a6ec08ffd689e07ed79d5f44f857aeac13e862103264eec141d30",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34760,
+      "file": "compact/terra/24.webp",
+      "longitudeStepDegrees": 240,
+      "sha256": "4f1d56757ae9a9c4a51ce994c41cd41506b9690f45fec8d43f568d2065fd7ccb",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34514,
+      "file": "compact/terra/25.webp",
+      "longitudeStepDegrees": 250,
+      "sha256": "300583239916ac39b188403df01076bc79a27ac4f2a70d6752687b759a5bebb5",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34404,
+      "file": "compact/terra/26.webp",
+      "longitudeStepDegrees": 260,
+      "sha256": "061d78e89cffa2369724e2a18cc22f7a41e62ecb78e0f542a52634cb0103c8b1",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34362,
+      "file": "compact/terra/27.webp",
+      "longitudeStepDegrees": 270,
+      "sha256": "ede87b2c5bcd50a91bd34ac269f4a6eac5bc7ca49314def0e40bc1d32bac3e3e",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34444,
+      "file": "compact/terra/28.webp",
+      "longitudeStepDegrees": 280,
+      "sha256": "e1dfefcdb777eb6826040e0eae14eae86f0404b2d527ed757e153a5a95987d99",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34532,
+      "file": "compact/terra/29.webp",
+      "longitudeStepDegrees": 290,
+      "sha256": "b5f3066ee20ae77885c26b92dae016bc697e06e7fda147fd3e21f6acf712faa6",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 33976,
+      "file": "compact/terra/30.webp",
+      "longitudeStepDegrees": 300,
+      "sha256": "30549463d2480b65e189250310535caebe12752837034ea469862318a481f006",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34568,
+      "file": "compact/terra/31.webp",
+      "longitudeStepDegrees": 310,
+      "sha256": "ec1d5c8c22bb6a790e3f8b17abb13e641816dc9f00f1f7ffbee506405473260e",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34810,
+      "file": "compact/terra/32.webp",
+      "longitudeStepDegrees": 320,
+      "sha256": "d35a53691a2cc072965926d2c817e1d763b36745d6d9900c40ed823857b11a08",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34710,
+      "file": "compact/terra/33.webp",
+      "longitudeStepDegrees": 330,
+      "sha256": "2bdd07e0a70cf73b46324e02313ad0aae3001cc7dfc4831d92923dc0d3d05f66",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 35062,
+      "file": "compact/terra/34.webp",
+      "longitudeStepDegrees": 340,
+      "sha256": "66cf1bda27a44b712f5edb6801c101081db8791208b7d065c236690fbddb0d43",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 34734,
+      "file": "compact/terra/35.webp",
+      "longitudeStepDegrees": 350,
+      "sha256": "ed46c71f896fb6fa69e8cab7fe66fcefd3727949d08bbc46e38f3e1730793db1",
+      "size": [
+        448,
+        448
+      ]
+    },
+    {
+      "bytes": 33172,
+      "file": "hubble-saturn-1440.webp",
+      "sha256": "248d584f48694be472e971f7a9eed302fe6e5a9984227a94f5e2ea507d4ac76d",
+      "size": [
+        1440,
+        915
+      ]
+    },
+    {
+      "bytes": 8924,
+      "file": "hubble-saturn-600.webp",
+      "sha256": "2bc76645e24f4034f8e7362d11510c6f2113a67079bf1e44ccc15078873b5378",
+      "size": [
+        600,
+        381
+      ]
+    },
+    {
+      "bytes": 4007954,
+      "file": "media/scale-journey.mp4",
+      "sha256": "cd9903752e0b4fc63313207eb6cd6c9c65d381aa3b386b5233d1b153132089e4"
+    },
+    {
+      "bytes": 11994,
+      "degree": 0,
+      "file": "saturn-tilt/00.webp",
+      "sha256": "5e666fff3ff1784446e2e39fd737673e48ebea362ba2dfb0f465c72a7a274e8d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 13554,
+      "degree": 1,
+      "file": "saturn-tilt/01.webp",
+      "sha256": "5926d9e0a7e33363a13be4ca78c63ddee840ed68d806c7b7dc427421301a385f",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 14398,
+      "degree": 2,
+      "file": "saturn-tilt/02.webp",
+      "sha256": "03623764d30d90c72f2deffee3a0af607c7a23bddb5e3f9ba7cffa5b70fb32d7",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 15256,
+      "degree": 3,
+      "file": "saturn-tilt/03.webp",
+      "sha256": "9b4a1db35e87b2c8f1479bbe8862500b6563e4ef6bc5254de7f4cbc9b7c4cd0e",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 15754,
+      "degree": 4,
+      "file": "saturn-tilt/04.webp",
+      "sha256": "94cbde6b89c93987fbaa89bd46253f11239d7f821f21e4953ccdaf7f1c830d80",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 16468,
+      "degree": 5,
+      "file": "saturn-tilt/05.webp",
+      "sha256": "9203643b76ce87ea010968c6e7d5a428f51a0ba8f775df1ebbb45175dcd2c189",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 16832,
+      "degree": 6,
+      "file": "saturn-tilt/06.webp",
+      "sha256": "205dda2f46eab238a79eed4b86b1726bf81a72dbbb54bdfd43e9b603ef453e1b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 17542,
+      "degree": 7,
+      "file": "saturn-tilt/07.webp",
+      "sha256": "42edee922a9ae15803474f7e6a12fbf7745f98c00b7f843f0f9410a59e6ee3d4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 17946,
+      "degree": 8,
+      "file": "saturn-tilt/08.webp",
+      "sha256": "608cdb9e6fe220e6df859e50411a5670861fecba5244f3eb62687ed9678d72f2",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 18302,
+      "degree": 9,
+      "file": "saturn-tilt/09.webp",
+      "sha256": "43cade2907cc42a06871603ef9c462076db9dd851fd339efa62a3d953f0f80d4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 18818,
+      "degree": 10,
+      "file": "saturn-tilt/10.webp",
+      "sha256": "865808569a9d22e19ca91fbcdae4f4203ff9d836cc256a4782eb6a19edcbe2f5",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 19400,
+      "degree": 11,
+      "file": "saturn-tilt/11.webp",
+      "sha256": "fe50a79462c4fe8c1b5af4d58bfee6d4a7ac90a06c946bfd12f66d9ce8205475",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 19870,
+      "degree": 12,
+      "file": "saturn-tilt/12.webp",
+      "sha256": "d93cc09675de74d7f8f6dfbb9c8b8d62f56d119eb7cdc1b2962adf50365c94a8",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 20292,
+      "degree": 13,
+      "file": "saturn-tilt/13.webp",
+      "sha256": "637e926bf814dbfb0ab7f5326dc4ee1590195719ef80fc90fbe5bde7ed03d4bf",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 20698,
+      "degree": 14,
+      "file": "saturn-tilt/14.webp",
+      "sha256": "0b704c4a944f0c271ad2153b0f3ff5bfd04f2a231ba301b07f9c978fe4165fed",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 21110,
+      "degree": 15,
+      "file": "saturn-tilt/15.webp",
+      "sha256": "b34720b0ef8490cc7e461468a21967af16632455df612a8664ff716196e1a389",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 21558,
+      "degree": 16,
+      "file": "saturn-tilt/16.webp",
+      "sha256": "a3a2ca2a08811b0b133598e1a219961e2a9a280e49d0eca72ba81e7733ad7af0",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 22248,
+      "degree": 17,
+      "file": "saturn-tilt/17.webp",
+      "sha256": "8c5c85cc66d80084bb58938ef3c5c274ae644740d9b85e7f2de1132e9911f4b1",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 22500,
+      "degree": 18,
+      "file": "saturn-tilt/18.webp",
+      "sha256": "81b1e07ecf377c5ddb29c90907f6cd2866f9ee733f9dcbb257f2d1d6221d7c1f",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 22796,
+      "degree": 19,
+      "file": "saturn-tilt/19.webp",
+      "sha256": "9b205052f0e935b8821b67f8ad5d3e9393604561f07d7ff4d1723cb043e60576",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 23532,
+      "degree": 20,
+      "file": "saturn-tilt/20.webp",
+      "sha256": "a7836d7e8fac5eee9b7a684d54b52f113edc1b722040e2497ffcfe661d0706e4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 23886,
+      "degree": 21,
+      "file": "saturn-tilt/21.webp",
+      "sha256": "5e9da42b386bfc31c9092f542b052b00799ee17b6f6d0c615e33b6ac0b21526d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 24428,
+      "degree": 22,
+      "file": "saturn-tilt/22.webp",
+      "sha256": "819daade1783c6aceb6e8c2c4079550100f956fec00f8ea66333f35c5a4b0654",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 25422,
+      "degree": 23,
+      "file": "saturn-tilt/23.webp",
+      "sha256": "775777d2a516975071c3710747890e177d1d1aeddbc7968b8dde4693f403eaf9",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 25884,
+      "degree": 24,
+      "file": "saturn-tilt/24.webp",
+      "sha256": "655579a53de2ae869e3cc601cade13c30af798c538fe9eb9ca6a37ae86961b4d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 26958,
+      "degree": 25,
+      "file": "saturn-tilt/25.webp",
+      "sha256": "7d20fa709bc5ae2551b175c206ff5a7d6123d2604a71ad7edfb6bfde6e2bee5a",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 27664,
+      "degree": 26,
+      "file": "saturn-tilt/26.webp",
+      "sha256": "e4217064a03f502f8ce1a9710dfa879ac354923cfea8cc6a88f5446f15d8a6c9",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 28284,
+      "degree": 27,
+      "file": "saturn-tilt/27.webp",
+      "sha256": "499a4435123bc7b4cbde3ac95d09f962bb8cac3ba6de9673ccb6f8b6b392a026",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 29422,
+      "degree": 28,
+      "file": "saturn-tilt/28.webp",
+      "sha256": "013035763402ba8060923912b4e3c5093920d932f3427f7c49b0881847f6b9b7",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 29844,
+      "degree": 29,
+      "file": "saturn-tilt/29.webp",
+      "sha256": "2c23d50c6d62394d95a393295d2f7bd1721e8ec4fcb356c35e9cf30615625cd7",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 29780,
+      "degree": 30,
+      "file": "saturn-tilt/30.webp",
+      "sha256": "ed0acfc7515d99e406f47705d5670f60b1844343285ebfda6e7954f0d9450a72",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 31178,
+      "degree": 31,
+      "file": "saturn-tilt/31.webp",
+      "sha256": "5f954516df8318025e06ec04a8d8022631236662b48b0f8cadbf09dd91befe65",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 31854,
+      "degree": 32,
+      "file": "saturn-tilt/32.webp",
+      "sha256": "3dbf7630797a6f2b97fb4c526f767af2b8585a2f6d1d5a4b48794e7c46aaa3c4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 32706,
+      "degree": 33,
+      "file": "saturn-tilt/33.webp",
+      "sha256": "be23a824e18df14aa1b5a03ca550ec321ee49c2a3182cd758638599e7686fe0c",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 33568,
+      "degree": 34,
+      "file": "saturn-tilt/34.webp",
+      "sha256": "0f67791115e3d74faa047cd0f9d8fda6ccc5aaa539d8e7c530a09c40b4ec7f97",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 34184,
+      "degree": 35,
+      "file": "saturn-tilt/35.webp",
+      "sha256": "3c8c21bb2c7a77283529aa0da8677d8f1a507e470072b5351026ae703e097c4b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 34804,
+      "degree": 36,
+      "file": "saturn-tilt/36.webp",
+      "sha256": "d7826658146391cfbf1b4f3b89709ff4ef0b4a92c00dd01d211605659920c24e",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 35184,
+      "degree": 37,
+      "file": "saturn-tilt/37.webp",
+      "sha256": "0365c51b5ff8347da170cb1809822d081987d3d0f4a650e91a9227b72f6a6f22",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 35980,
+      "degree": 38,
+      "file": "saturn-tilt/38.webp",
+      "sha256": "572e014033d922deaa840ac83581fcb9e647fd2ab7b428ae1eb0045a7dba252b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 36698,
+      "degree": 39,
+      "file": "saturn-tilt/39.webp",
+      "sha256": "02005fa436419a5223eb7cfebeedce71d469d13b9e6ec3504f348f2768563944",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 37706,
+      "degree": 40,
+      "file": "saturn-tilt/40.webp",
+      "sha256": "9c4793e62cd261fe0cd0f7e1924d70e02538c0a539a4ab314219810421cd6536",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 38302,
+      "degree": 41,
+      "file": "saturn-tilt/41.webp",
+      "sha256": "e22abfa735c32265d4cc516229096311e2a60b4c072dd5436a18542ffa5437b4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 39362,
+      "degree": 42,
+      "file": "saturn-tilt/42.webp",
+      "sha256": "4496d98ad79f69c6c73c6e0ebdecd649fe5648f32acd22a14e52539db1859e4f",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 38876,
+      "degree": 43,
+      "file": "saturn-tilt/43.webp",
+      "sha256": "3a870e1ce2750861e9165250772417fe2cd35af8f2f80faee9b666ac50c2acf0",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 40224,
+      "degree": 44,
+      "file": "saturn-tilt/44.webp",
+      "sha256": "28125ad4398777d06ae0dac7a1b7c3c590e799f222481e055a5309c9967ce1a2",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 40744,
+      "degree": 45,
+      "file": "saturn-tilt/45.webp",
+      "sha256": "1f94079141ac4e82cbf30e4e5849e03dedfd31157e897d9c84f6bdad27b14560",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 41694,
+      "degree": 46,
+      "file": "saturn-tilt/46.webp",
+      "sha256": "93f8a2817d46564ee8f09529f0c3cbfc43b0343ef91cd0ee3fb2f81c49c6c724",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 42460,
+      "degree": 47,
+      "file": "saturn-tilt/47.webp",
+      "sha256": "0e9aa99d9c031db8881212b2f696101193dfe31239a4c750e8065dd9bf56d218",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 42780,
+      "degree": 48,
+      "file": "saturn-tilt/48.webp",
+      "sha256": "d245cdd7e8d896d54b7576dde24ea6885637b877bc7631c3f9e783ec08b219d9",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 42786,
+      "degree": 49,
+      "file": "saturn-tilt/49.webp",
+      "sha256": "8f0d5cbefe090a9f089605f14997b9e50f76c3cb7c1c1676366d9e6b6d1b1038",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 43912,
+      "degree": 50,
+      "file": "saturn-tilt/50.webp",
+      "sha256": "27de4952cc7771fd1b28e833bc8c98c4b5be67ab442d64bf3750ddfe1664ca06",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 43408,
+      "degree": 51,
+      "file": "saturn-tilt/51.webp",
+      "sha256": "819ea639674a323cd41626cf5dcfe50f07c50211c0cad2c684365e064e8b8e9d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 43982,
+      "degree": 52,
+      "file": "saturn-tilt/52.webp",
+      "sha256": "31dd23019ad865c5abc1f1af2b658854b6feb3a40e80bb073c585b97ca44e2de",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 45010,
+      "degree": 53,
+      "file": "saturn-tilt/53.webp",
+      "sha256": "c4ad1ed62cb38f23f7d47e0289a15014ebd12e057f41c13ad4a0ac2cf7ddba67",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 45734,
+      "degree": 54,
+      "file": "saturn-tilt/54.webp",
+      "sha256": "fc7c43f62ab7b3a00280307d89919d160d666b03ce6f593a72ae490242d79fab",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 46594,
+      "degree": 55,
+      "file": "saturn-tilt/55.webp",
+      "sha256": "b8206b2d6e3a7b1723cc756ee9c5627082000cb407251f32a4aefa97f6ba4c38",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 46924,
+      "degree": 56,
+      "file": "saturn-tilt/56.webp",
+      "sha256": "2e93e37cdf176763f54d9ba47a775fd00d36a4916dba7faf9885da70a757ddf6",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 47746,
+      "degree": 57,
+      "file": "saturn-tilt/57.webp",
+      "sha256": "3072e99e317ca57c63ab181dc6db622f09d492e6412264e64b8cd4e5aaf3fd10",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 47480,
+      "degree": 58,
+      "file": "saturn-tilt/58.webp",
+      "sha256": "1c9619f14982f412f0c34758812c6bf3b453f1585e6dfde08f2e149dd2a7638d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 47928,
+      "degree": 59,
+      "file": "saturn-tilt/59.webp",
+      "sha256": "f74ab30ee2665861fe62931d9487a7f8dc93dd221ed79dfff2534951935c0592",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 48298,
+      "degree": 60,
+      "file": "saturn-tilt/60.webp",
+      "sha256": "6e612ed8f6a20f06cd27bbcd9b36b07d2f06f1d74720d2de021c12c47351c01d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 48142,
+      "degree": 61,
+      "file": "saturn-tilt/61.webp",
+      "sha256": "3e978f2a78c53192eb9c5936949c2f1e586d8ce98975949df83050dd5361d969",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 48974,
+      "degree": 62,
+      "file": "saturn-tilt/62.webp",
+      "sha256": "bb965fb4ba4805133cb25ceeed2cdc6b6402b05e391ea4c01f05fe66e29cce20",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 49064,
+      "degree": 63,
+      "file": "saturn-tilt/63.webp",
+      "sha256": "b8dea3ddbae6877a13276989a2b2c609b0af63be2ea4ecc42bac738a7379c7d5",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 49004,
+      "degree": 64,
+      "file": "saturn-tilt/64.webp",
+      "sha256": "a706d4364e508d067a54b40f9887f209fac12f6cbfff627979b6cb7b5b8a1aad",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 49614,
+      "degree": 65,
+      "file": "saturn-tilt/65.webp",
+      "sha256": "61e500555e983d5377ed1883463d1760c5295775f2c960a04eca5f3f82745b7b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 49784,
+      "degree": 66,
+      "file": "saturn-tilt/66.webp",
+      "sha256": "32873f93fcbba7f04f6588e804af6241ebc99f8bf680bec11b14272b3a1ccd5f",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50014,
+      "degree": 67,
+      "file": "saturn-tilt/67.webp",
+      "sha256": "c5331c984b26fe6858d7d4ae11fdc58ba58ec605b44df9821b537b2d8b70550b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50302,
+      "degree": 68,
+      "file": "saturn-tilt/68.webp",
+      "sha256": "dde9adc64070b6b16bd4b0c2085403f1a911f79d3a23da8667efc5aad3db99a1",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50202,
+      "degree": 69,
+      "file": "saturn-tilt/69.webp",
+      "sha256": "48d4d4eb4fbdc03e23852b778c125a591536aba18b247544cec11f2737978824",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50746,
+      "degree": 70,
+      "file": "saturn-tilt/70.webp",
+      "sha256": "01f3d44cd2fbfac8dbb68dc0b72a56f6ecd12eda1985c5e4f58b7ad63141dc7c",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50730,
+      "degree": 71,
+      "file": "saturn-tilt/71.webp",
+      "sha256": "321752738ac90e0780a2023b7396d8a3af1ca9f7bec31117403d68dadc2659a4",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50748,
+      "degree": 72,
+      "file": "saturn-tilt/72.webp",
+      "sha256": "3ee900695c92f402bbcc0c9924bf1a49b5c2189be8e36eab37bb857a4ae1b17b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50888,
+      "degree": 73,
+      "file": "saturn-tilt/73.webp",
+      "sha256": "aaf48b7220e6317a53cac62475deca9621e96975f44110212461a3cccc472332",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50656,
+      "degree": 74,
+      "file": "saturn-tilt/74.webp",
+      "sha256": "696a545f05b720414446cf842564986ea6fefc02e6713fcc2da0243e286e2738",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51188,
+      "degree": 75,
+      "file": "saturn-tilt/75.webp",
+      "sha256": "23ccdc6c2af58ca81d2ff9ad64f0a076296d090e9a31f5f050f1a207347e6201",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50994,
+      "degree": 76,
+      "file": "saturn-tilt/76.webp",
+      "sha256": "faa35aa6d6e8026b3c40ac90b828304c1827763339d5d5d0248f5da79cf2b052",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50764,
+      "degree": 77,
+      "file": "saturn-tilt/77.webp",
+      "sha256": "7d31e5245084b93891ee3feea985ac9559c541fdbecdb2ce9bfd410082b057a6",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 50978,
+      "degree": 78,
+      "file": "saturn-tilt/78.webp",
+      "sha256": "0a62e03d1fcd9dda4fc97326f6fd03321ca16647f7d66fcbae6cc5419e88aaa5",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51410,
+      "degree": 79,
+      "file": "saturn-tilt/79.webp",
+      "sha256": "f461af363c5736697d45f2baf0c2a8c49598355c4d0fe6d455b8b8b819a16b09",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51492,
+      "degree": 80,
+      "file": "saturn-tilt/80.webp",
+      "sha256": "a4616f17b3acce038180be96865efdc9ec1ad3532a17c990af83110ed33c540b",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51406,
+      "degree": 81,
+      "file": "saturn-tilt/81.webp",
+      "sha256": "df067ce8821e0598d5e2e8300ed7fbef7f4bc65c5760901fe8f948e9a3c4f42a",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51176,
+      "degree": 82,
+      "file": "saturn-tilt/82.webp",
+      "sha256": "dade18433f71014e59e801c4fbda33121c1ddc3b7c524a875f55d8809014171a",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51496,
+      "degree": 83,
+      "file": "saturn-tilt/83.webp",
+      "sha256": "0cf02a8849d68a163f461c2ce739f546daca87aae8d326d537f1dd070c0a9022",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51284,
+      "degree": 84,
+      "file": "saturn-tilt/84.webp",
+      "sha256": "e038c7646a09e14daa8d3ef18dfd69c296c6cc9a7bf1b9357659ca6388219bb9",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51390,
+      "degree": 85,
+      "file": "saturn-tilt/85.webp",
+      "sha256": "58b58f751d39bbded1d5153e12a7f722acc7d0c2d5ea9539b70ddd95f026f306",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51884,
+      "degree": 86,
+      "file": "saturn-tilt/86.webp",
+      "sha256": "44d92753be7c0ea3df32ec0281a807797ca1d44cf10998d42719d5504f12ec6d",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51762,
+      "degree": 87,
+      "file": "saturn-tilt/87.webp",
+      "sha256": "6a4785ba0c5aa639045e9cd0266a330a7bdceab17f9579e5ada5822e2fa08040",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51404,
+      "degree": 88,
+      "file": "saturn-tilt/88.webp",
+      "sha256": "46703e87d01294c395af649fb9750ff17cd59c7110141e08e0967466adb9eba7",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 51416,
+      "degree": 89,
+      "file": "saturn-tilt/89.webp",
+      "sha256": "6c5f22f2e75cdd6bbe52d0356140d4effbb75eefcdd9dd26491e7c2bc7d73338",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 48708,
+      "degree": 90,
+      "file": "saturn-tilt/90.webp",
+      "sha256": "9deb01a8c86a5874d8d3b10d2900763d0425004d88bc2615eda6592e35a06436",
+      "size": [
+        1408,
+        1024
+      ]
+    },
+    {
+      "bytes": 40882,
+      "file": "scales/cosmic-web-1200.webp",
+      "sha256": "26dd4499ceccbe03370223e3c300a8acdedb53a2e8258f6b7c803b4ec6513ad1",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 73746,
+      "file": "scales/cosmic-web-1800.webp",
+      "sha256": "34b94172815e2d929367fe91d9b042fdcb45d8a13baca0a5ce9cc7ac288921ab",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 15572,
+      "file": "scales/cosmic-web-600.webp",
+      "sha256": "087760a6eaea31b91d7600bb6b92e88b9b52dffde851499a36840076112bdd41",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 129808,
+      "file": "scales/earth-1200.webp",
+      "sha256": "a11712b55aa84cff2b3f98fdc2c27912650b05e390dd33d70df0a935cab9eba1",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 253712,
+      "file": "scales/earth-1800.webp",
+      "sha256": "c28570d9ccb9d735e5bfe9dd69ff5378b80c138bafde7c88c83bb1c33cccb15b",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 37510,
+      "file": "scales/earth-600.webp",
+      "sha256": "a1b070a4ee258b4353368be85ce197b6de61eb5040705293967fc93d7c5ee58a",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 186362,
+      "file": "scales/group-local-1200.webp",
+      "sha256": "752d586bf14648e19a2ca8fb68ac6f47c5df55337326a49cf23e978c741ccf41",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 341528,
+      "file": "scales/group-local-1800.webp",
+      "sha256": "bcc78bca35f8d36192ca9e68a37ccc6aac2dd1d9d407665384286453aca5fab0",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 49410,
+      "file": "scales/group-local-600.webp",
+      "sha256": "60824dc1f7aecdf262e6a7e78cc0de6a999e758afb01fef292bb32ddf87d9e1b",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 99484,
+      "file": "scales/scale-cell-1200.webp",
+      "sha256": "2155c6eda00fd16e32dac4396e34b6ae4e7d25cfa0ff43c6d7a496977cea1b25",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 227396,
+      "file": "scales/scale-cell-1800.webp",
+      "sha256": "e2448b0b9e4db6e30b22bd629dde621ad760addb03f94a3ddfc9099f64f2fb43",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 22824,
+      "file": "scales/scale-cell-600.webp",
+      "sha256": "3ffd8a61034eff7b2f1725b3b9e79387ddc5569fd7333b519205c3e57e8b58ad",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 312700,
+      "file": "scales/scale-horizon-1200.webp",
+      "sha256": "d50d36879ef283bc94b2c3fab5efcfb703d6f3a3263b2785cc01029d67033d4c",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 670698,
+      "file": "scales/scale-horizon-1800.webp",
+      "sha256": "1e283a34e092377e7311255c38b226869027a0960db86abc115b8ebc8f8898ea",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 79474,
+      "file": "scales/scale-horizon-600.webp",
+      "sha256": "0d6c8f8ff0225298ad1e9179fe2fb62dce771a746efb22b83770a14b63d2d7a0",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 7120,
+      "file": "scales/scale-hydrogen-1200.webp",
+      "sha256": "90a92728a9376b33b3c533da90b858585462a0194f292dcb9c08587c68b4f70d",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 12862,
+      "file": "scales/scale-hydrogen-1800.webp",
+      "sha256": "f29e9b83bd3398be483b40fb2c63dd9984a024a59a5b06989306d46bc94b8fb4",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 2720,
+      "file": "scales/scale-hydrogen-600.webp",
+      "sha256": "ca1f4dcb3563c02f6472fe1649ad9c9022f0c785bbf9fc478df26b95e51f7006",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 17182,
+      "file": "scales/scale-proton-1200.webp",
+      "sha256": "4af371219baac3c0020e6c177318b19298799a4f9d921c99b3a3dc25ad111d4c",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 27298,
+      "file": "scales/scale-proton-1800.webp",
+      "sha256": "30f4002d08cf12b2f48fe2947a79367ee393659112e524c8cf4e82e5ca895219",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 8110,
+      "file": "scales/scale-proton-600.webp",
+      "sha256": "cf4f27c138110bcc1bd0fe86b16ab721e340d648f30bb206ef27ce97f8ce90cf",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 60476,
+      "file": "scales/solar-system-1200.webp",
+      "sha256": "76a8c51f43d1848a93f97612e754b4bd971374f642602ee407effa25558b1c7c",
+      "size": [
+        1200,
+        800
+      ]
+    },
+    {
+      "bytes": 109800,
+      "file": "scales/solar-system-1800.webp",
+      "sha256": "47737238ca0e61e05b0b4246bb93f691e221ebefbbce2289daef9ee137cc58dd",
+      "size": [
+        1800,
+        1200
+      ]
+    },
+    {
+      "bytes": 21808,
+      "file": "scales/solar-system-600.webp",
+      "sha256": "e38d6a780b3f0db323f55c2e3f1281914f9db960b8e9101622d4a70433bdedd9",
+      "size": [
+        600,
+        400
+      ]
+    },
+    {
+      "bytes": 20808,
+      "file": "sun-sdo.webp",
+      "sha256": "0a115245c3e347360639208044cb47440ec55620e8703caddf981e9e979473f0",
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "bytes": 3032,
+      "file": "thumbs/jupiter.webp",
+      "sha256": "f6e0322e72292ae5bba5e7a99d5661a6ee6d924e5a98bdda0044d3361a604f99",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 2974,
+      "file": "thumbs/marte.webp",
+      "sha256": "cf35ca7022a8043877736fabad5fb0509f6507d70858bc84936c63fe873bf2a4",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 3808,
+      "file": "thumbs/mercurio.webp",
+      "sha256": "8cb79d46a6c64daaad8ca70102f5dca512288bb56b85a8a32db8de1213f413eb",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 3252,
+      "file": "thumbs/netuno.webp",
+      "sha256": "27489bc4087ee0ab659ff78f7777442de2b937301c53e02a81f464c2729a9e46",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 2730,
+      "file": "thumbs/saturno-globo.webp",
+      "sha256": "6562407ba7dfa17b3812a9e788cc437179b6d350960d907241a32023e1b95035",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 4458,
+      "file": "thumbs/terra.webp",
+      "sha256": "d9f6e8ac909aa99d9ac1a473b180a0039a248c02b50a1ab592c8d45edfa9ee1e",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 2240,
+      "file": "thumbs/urano.webp",
+      "sha256": "48adb64f552a36ef94827cab496b7bd86f951157997c40342feabd8b142d3450",
+      "size": [
+        112,
+        112
+      ]
+    },
+    {
+      "bytes": 2360,
+      "file": "thumbs/venus.webp",
+      "sha256": "31854775a767588413d9a363e0ea5b5a82ec3b2dc5077bf9617b4a0d7e058925",
+      "size": [
+        112,
+        112
+      ]
+    }
+  ],
+  "policyUrl": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+  "saturnRender": {
+    "degrees": [
+      0,
+      90
+    ],
+    "denoiser": "OpenImageDenoise CPU",
+    "engine": "Blender 5.3 Cycles CPU",
+    "incrementDegrees": 1,
+    "orthographicScale": 6.8,
+    "resolution": [
+      1408,
+      1024
+    ],
+    "samples": 2,
+    "samplesAt0_30_90": 8,
+    "scene": "assets/source/saturn/saturn.blend",
+    "threads": 4,
+    "webpQuality": 88
+  },
+  "size": [
+    1024,
+    1024
+  ],
+  "sourceSha256": {
+    "assets/source/observed/earth-bmng-200407.jpg": "f55226d46d27e05511f2118dc6aa24f5dbf9b6b2cddc87cc6e0e7dd067c00b11",
+    "assets/source/observed/jupiter-hubble-opal-2015.tif": "c3b915227ef88899a07a2b62584d9303d77d3491b9bb7de8824fb6df4a52f7b2",
+    "assets/source/observed/mars-nasa.jpg": "12ec6bf02ebd42a246edc778cb2ce8c595b4d9f0892badf0bfff8abb2303c780",
+    "assets/source/observed/mercury-messenger-enhanced.jpg": "95b5d222f842dc0a46ca9eb6928af7a2f4a3b43345be49ef798047279139a2df",
+    "assets/source/observed/moon-lroc-color-2025.jpg": "f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170",
+    "assets/source/observed/neptune-nasa-illustrative.jpg": "e9bb2b7bcfb98d3f1adc6f2e20e833a00c11e9677238d8a00ae7431214ca70aa",
+    "assets/source/saturn/saturn.blend": "35da8b19921b1628edf0972c6db971c9c2bdb57d2baba1be38f8816042cf1711",
+    "assets/source/solar-materials/saturno-rings.png": "d8091bd14524d4dfeb63bb211d9649597f65b09f64121e262ade7a049d2ca88c",
+    "assets/source/solar-materials/saturno.jpg": "1c00a57fd208ae28b994363854d1930e91a72ef28e96945f483d681d2d558aae",
+    "assets/source/solar-materials/urano.jpg": "2d1de43e2c69c2680ca806759ba69cddafad83ee0f77b96e58ff974793e242fd",
+    "assets/source/solar-materials/venus.jpg": "96616e8720921976ab07d2dde0f029e2d03d61e0fbb37609a5f75dddf9e01e40",
+    "assets/source/solar-turntable/ldem_4_uint.tif": "e6668bec27fc9b8fbb02d198c7ddfb08eedeeb790167b494f95e6b34201da05e",
+    "public/renders/milky-way.webp": "e8021e93881fe0ab6b35b3e3f98fc2f8a653a416587b7a2a4bbef972270e0de9",
+    "src/assets/photos/andromeda-wise.webp": "81d3ae310d018fe3c16e74ca2b5d05d47c164aca90a8c326cc63004ec606987b"
+  }
+}

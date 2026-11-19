@@ -1,0 +1,70 @@
+[
+  {
+    "file": "solar-photosphere.webp",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "bytes": 98064,
+    "source": "https://svs.gsfc.nasa.gov/11211/",
+    "credit": "NASA/SDO and the HMI science team",
+    "terms": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+    "adaptation": "Recorte do disco solar no contínuo HMI, redimensionado. Cor atribuída pelo produto de origem.",
+    "originalSha256": "48c8bed36d1865d24a8e57138d8ef4142734f71d41c150ab239fa721f8e85bad",
+    "sha256": "c33cc56abd148b503a5d55952bdfaa47070dbdaf4358f9d88c727a0fb1775a5f"
+  },
+  {
+    "file": "m51.webp",
+    "dimensions": [
+      1024,
+      931
+    ],
+    "bytes": 151288,
+    "source": "https://esahubble.org/images/heic0506a/",
+    "credit": "NASA, ESA, S. Beckwith (STScI), and The Hubble Heritage Team (STScI/AURA)",
+    "terms": "https://creativecommons.org/licenses/by/4.0/",
+    "adaptation": "Galáxia central recortada, com bordas suavizadas e proporção preservada no arquivo. Projeção e posições ilustrativas nas cenas.",
+    "originalSha256": "7b13a932bcf54653c591d369e8d1c4cbdbeb693ecc468242facb239fde52e4c2",
+    "sha256": "a4d27c795ff7a6e5ab095f21561700a1f8773ab06e3614798200870feaea05de"
+  },
+  {
+    "file": "ngc1300.webp",
+    "dimensions": [
+      1024,
+      584
+    ],
+    "bytes": 65670,
+    "source": "https://esahubble.org/images/opo0501a/",
+    "credit": "NASA, ESA, and The Hubble Heritage Team (STScI/AURA). Acknowledgment: P. Knezek (WIYN)",
+    "terms": "https://creativecommons.org/licenses/by/4.0/",
+    "adaptation": "Galáxia central recortada, com bordas suavizadas e proporção preservada no arquivo. Projeção e posições ilustrativas nas cenas.",
+    "originalSha256": "70a1aa9511e12137c5437109dd3304ee46f46591ad9497812cebc1d690610a53",
+    "sha256": "f0a5ec60f4acd58b37ea4849e90bd1020f7b961b3d38d9a1e574d005fde71a94"
+  },
+  {
+    "file": "ngc1132.webp",
+    "dimensions": [
+      1012,
+      998
+    ],
+    "bytes": 63776,
+    "source": "https://esahubble.org/images/heic0804a/",
+    "credit": "NASA, ESA and the Hubble Heritage (STScI/AURA)-ESA/Hubble Collaboration. Acknowledgment: M. West (ESO, Chile)",
+    "terms": "https://creativecommons.org/licenses/by/4.0/",
+    "adaptation": "Galáxia central recortada, com bordas suavizadas e proporção preservada no arquivo. Projeção e posições ilustrativas nas cenas.",
+    "originalSha256": "6f520639790aa3767101fedcaa81b38a6dd7a5650406c694a264f8c88286877a",
+    "sha256": "7b6fffc3301a6394b61a37ba7952e553b973571d2e85bdb46de35d885ffc6a2d"
+  },
+  {
+    "file": "early-light.webp",
+    "dimensions": [
+      636,
+      424
+    ],
+    "bytes": 52070,
+    "source": "/renders/ancient-light.webp",
+    "credit": "Cosmos do Zero · ilustração conceitual",
+    "adaptation": "Vinheta da ilustração do projeto identificada como ancient-light em docs/render-assets.json.",
+    "sha256": "bfdf703a7a1de9a961f5280f9560ee2ec749d581877e54a666dcbfdb43d3fb90"
+  }
+]

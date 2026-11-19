@@ -1,4 +1,4 @@
-import { baked, depthCanvas } from './lesson-depth';
+import { depthCanvas } from './lesson-depth';
 import { visibleMotion } from './visible-motion';
 import { motionPreference } from './motion-preference';
 
@@ -28,19 +28,19 @@ export function initBlackHoleDepth() {
             (1 - e * Math.cos(eccentric));
         const x = 265 + 178 * Math.cos(eccentric),
           y = 154 + 105 * Math.sin(eccentric);
-        const star = image(baked('star'));
+        const star = image('/renders/micro-hd/azul.webp');
         if (!star) return;
         ctx.drawImage(star, x - 10, y - 10, 20, 20);
         ctx.fillStyle = '#ffc16a';
         ctx.font = 'bold 16px sans-serif';
         ctx.fillText('S2', x - 12, y - 21);
       } else if (kind === 'acrecao') {
-        const disk = image(baked('disk'));
+        const disk = image('/renders/lessons-hd/disk-nasa.webp');
         if (!disk) return;
-        ctx.drawImage(disk, 100, -2, 334, 334);
+        ctx.drawImage(disk, 49, -54, 436, 436);
         const angle = (value / maximum) * Math.PI * 2;
         const x = 267 + 125 * Math.cos(angle),
-          y = 165 + 36 * Math.sin(angle);
+          y = 164 + 7 * Math.sin(angle);
         if (Math.sin(angle) > 0 || Math.abs(x - 267) > 43) {
           ctx.beginPath();
           ctx.arc(x, y, 4, 0, 2 * Math.PI);
@@ -48,7 +48,7 @@ export function initBlackHoleDepth() {
           ctx.fill();
         }
       } else {
-        const field = image(baked('stars-far'));
+        const field = image('/renders/lessons-hd/sgr-field.webp');
         if (!field) return;
         // Clip the background field outside the causal boundary.
         ctx.save();
@@ -56,8 +56,8 @@ export function initBlackHoleDepth() {
         ctx.rect(0, 0, 560, 310);
         ctx.arc(270, 163, 74, 0, 2 * Math.PI, true);
         ctx.clip('evenodd');
-        ctx.globalAlpha = 0.55;
-        ctx.drawImage(field, 0, 0, 560, 310);
+        ctx.globalAlpha = 0.32;
+        ctx.drawImage(field, 0, 0, field.width * .34, field.height * .34, 0, 0, 560, 310);
         ctx.restore();
         // Only the particles are animated here. The dashed circle defines the horizon in the diagram.
         const t = value / maximum;

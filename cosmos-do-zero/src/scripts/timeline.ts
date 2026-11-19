@@ -1,4 +1,3 @@
-import { depthCanvas, eraObjects } from './lesson-depth';
 import { motionPreference } from './motion-preference';
 import { $, $$, behavior, setText } from './dom';
 import { eras } from '../data/client';
@@ -21,19 +20,6 @@ export function initTimeline(): void {
   const next = $<HTMLButtonElement>('[data-era-next]', root)!;
   const range=$<HTMLInputElement>('[data-era-range]',root)!;
   let selected = 0, transition=0;
-  const paintDepth = depthCanvas(root.querySelector('[data-era-depth]'), (ctx, image, w, h) => {
-    // Keep the native poster until a complete depth frame can be drawn.
-    let ready=true;
-    const sprites=(path:string)=>{
-      const asset=image(path);
-      if(!asset)ready=false;
-      return asset;
-    };
-    ctx.fillStyle='#0b1320';ctx.fillRect(0,0,w,h);
-    eraObjects(ctx,sprites,eras[selected].id,w*.5,h*.5,h*.94,selected*.72);
-    visual.dataset.depthReady=String(ready);
-    if(!ready)ctx.clearRect(0,0,w,h);
-  });
   const detail=$<HTMLElement>('.timeline-detail',root)!;
   range.addEventListener('input',()=>render(Number(range.value)));
   const render = (index: number, o: { focus?: boolean; scroll?: boolean; url?: boolean } = {}) => {
@@ -42,14 +28,13 @@ export function initTimeline(): void {
     range.value=String(selected);range.setAttribute('aria-valuetext',`${selected+1} de ${eras.length}: ${era.title}, ${era.time}`);
     if(!motionPreference.matches){detail.classList.remove('is-changing');void detail.offsetWidth;detail.classList.add('is-changing');clearTimeout(transition);transition=window.setTimeout(()=>detail.classList.remove('is-changing'),400);}
     buttons.forEach((b, i) => { b.setAttribute('aria-pressed', String(i === selected)); b.classList.toggle('active', i === selected); });
-    visual.className = `timeline-visual ${era.visual}`;
     visual.dataset.era = String(selected);
-    paintDepth();
+    setText($('[data-era-credit]',root), buttons[selected].dataset.credit!);
     const image = $<HTMLImageElement>('[data-era-render]', root)!;
     const src = buttons[selected].dataset.renderSrc!;
     visual.dataset.loading='true';
     const loaded=()=>{visual.dataset.loading='false';};image.onload=loaded;image.onerror=loaded;
-    image.srcset = `${src.replace(/\.webp$/, '-small.webp')} 600w, ${src} 1200w`;
+    image.srcset = buttons[selected].dataset.renderSrcset!;
     image.src = src;
     if(image.complete)visual.dataset.loading='false';
     image.alt = buttons[selected].dataset.renderAlt!;
