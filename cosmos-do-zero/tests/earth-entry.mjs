@@ -55,9 +55,11 @@ try {
   assert.ok(await diagram.locator('[data-mx-opening] circle').first().isVisible());
   assert.ok(await pending.isVisible());
   assert.ok(await experiment.locator('[data-mx-opt="1"]').isDisabled());
+  assert.equal(await experiment.getAttribute('aria-busy'), 'true');
   gate.resolve();
   await experiment.locator('[data-mx-opt="1"]').click();
   assert.equal(await experiment.getAttribute('data-mx-load'), 'ready');
+  assert.equal(await experiment.getAttribute('aria-busy'), 'false');
   assert.equal(await experiment.locator('[data-mx-opt="1"]').getAttribute('aria-pressed'), 'true');
   assert.equal(await diagram.locator('[data-mx-opening]').count(), 0);
   assert.equal(await pending.isVisible(), false);
@@ -69,6 +71,7 @@ try {
   const fallback = offline.locator(scene);
   await fallback.locator('.mx-stage [data-mx-error]').waitFor();
   assert.ok(await fallback.locator('[data-mx-opening] circle').first().isVisible());
+  assert.equal(await fallback.getAttribute('aria-busy'), 'false');
   await offline.close();
 
   const noScript = await browser.newPage({ viewport, javaScriptEnabled: false });

@@ -60,7 +60,7 @@ export function initMicro(): void {
       setup(root, scenes[root.dataset.mx!]());
     } catch (err) {
       root.dataset.mxLoad = 'error';
-      root.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
+      root.setAttribute('aria-busy', 'false');
       console.error('[cosmos] cena', root.dataset.mx, err);
     }
   };
@@ -284,6 +284,6 @@ function setup(root: HTMLElement, scene: Scene): void {
   guided = false; root.dataset.guide = 'manual';
   // Os controles só aceitam ações depois do SVG e de todos os listeners estarem prontos.
   root.dataset.mxLoad = 'ready';
-  root.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
+  root.setAttribute('aria-busy', 'false');
   root.removeAttribute('disabled');
 }

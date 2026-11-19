@@ -11,7 +11,7 @@ const openingDiagram = openingDiagrams[id as keyof typeof openingDiagrams];
 const c = spec.control;
 const letters = 'ABCDE';
 ---
-<fieldset class="mx" disabled data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
+<fieldset class="mx" disabled aria-busy="true" data-mx-load="pending" data-mx={id} data-mx-chapter={chapter} data-mx-kind={c.kind} role="group" aria-labelledby={`${id}-mx-ask`}>
   <div class="mx-head">
     <span class="meta">Experimento ilustrativo</span>
     <h3 id={`${id}-mx-ask`}>{spec.ask}</h3>
@@ -33,7 +33,7 @@ const letters = 'ABCDE';
     </div>
     <button type="button" class="mx-diagram-toggle" data-mx-diagram hidden>Ver diagrama</button>
     </div>
-    <div class="mx-controls" aria-busy="true">
+    <div class="mx-controls">
       <p class="mx-action-label">{c.kind === 'range' ? 'Mova para comparar' : 'Escolha e compare'}</p>
       {c.kind === 'range' ? (
         <div class="mx-range">

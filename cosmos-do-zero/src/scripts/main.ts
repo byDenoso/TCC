@@ -70,7 +70,7 @@ async function boot(): Promise<void> {
       if (selector === '[data-mx]') {
         for (const scene of document.querySelectorAll<HTMLElement>('[data-mx-load="pending"]')) {
           scene.dataset.mxLoad = 'error';
-          scene.querySelector('.mx-controls')?.setAttribute('aria-busy', 'false');
+          scene.setAttribute('aria-busy', 'false');
         }
       }
       console.error('[cosmos] instrumento', selector, err);
