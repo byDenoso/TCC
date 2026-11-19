@@ -34,9 +34,18 @@ export default function Sources({ sources }: { sources: { name: string; url: str
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
         </p>
         <p>
-          O modelo ilustrativo de Saturno usa o mapa JPL/Caltech e NASA. As demais capas são
-          representações didáticas do acervo Cosmos.{' '}
+          O modelo ilustrativo de Saturno usa o mapa JPL/Caltech e NASA. As representações da Terra, do
+          Sistema Solar, da estrela e da teia cósmica são ilustrações do acervo Cosmos.{' '}
           <a href="/cosmos-hero/creditos.json">Crédito e composição de Saturno</a>.
+        </p>
+        <p>
+          A capa de Cosmologia mostra as anisotropias da radiação cósmica de fundo observadas pelo
+          satélite Planck. Crédito ESA e Planck Collaboration. As cores representam variações de
+          temperatura. O laboratório de CMB calcula o espectro do corpo negro.{' '}
+          <a href="https://www.esa.int/media/planck-s-view-of-the-cosmic-microwave-background-en-213137">
+            Mapa original do Planck
+          </a>
+          .
         </p>
         <h2>Pesquisa pública</h2>
         <p>

@@ -6,7 +6,17 @@ export function LevelCard({ i }: { i: number }) {
   return (
     <a className="level-card" href={'/niveis/' + (i + 1) + '/'}>
       <div className="card-art">
-        <img loading="lazy" src={'/imagens/' + l.image} alt="" />
+        <img
+          loading="lazy"
+          src={'/imagens/' + l.image}
+          alt={
+            i === 2
+              ? 'Fotografia de M51 e sua companheira, Hubble'
+              : i === 4
+                ? 'Mapa de temperatura do céu observado pelo Planck'
+                : ''
+          }
+        />
         <span className="level-index">Nível {String(i + 1).padStart(2, '0')}</span>
       </div>
       <div className="card-copy">
