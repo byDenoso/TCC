@@ -34,13 +34,14 @@ concurrency:
 permissions: {}
 
 env:
-  SITE_URL: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]')) && 'https://cosmos.denerpereira.com.br' || 'https://bydenoso.github.io' }}
-  SITE_BASE: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]')) && '/' || '/TCC/cosmos-do-zero' }}
+  SITE_URL: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]') || contains(github.event.head_commit.message, '[verify-cosmos-custom]')) && 'https://cosmos.denerpereira.com.br' || 'https://bydenoso.github.io' }}
+  SITE_BASE: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]') || contains(github.event.head_commit.message, '[verify-cosmos-custom]')) && '/' || '/TCC/cosmos-do-zero' }}
   SITE_PUBLIC: 'true'
 
 jobs:
   build:
     name: Analisar, testar e compilar
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[verify-cosmos-custom]')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -195,6 +196,11 @@ jobs:
   verify:
     name: Verificar site e capturar o publicado
     needs: deploy
+    # A verification-only push exercises the existing public site with updated browser tests.
+    if: >-
+      !cancelled() && (needs.deploy.result == 'success' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' &&
+      contains(github.event.head_commit.message, '[verify-cosmos-custom]')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
