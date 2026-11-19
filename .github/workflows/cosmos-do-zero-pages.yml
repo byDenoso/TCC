@@ -1,265 +1,96 @@
-name: Cosmos do Zero | GitHub Pages
+name: Cosmos | Escola de Ciências
 
 on:
   pull_request:
     branches: [cosmos-do-zero]
-    paths:
-      - 'cosmos-do-zero/**'
-      - '.github/workflows/cosmos-do-zero-pages.yml'
+    paths: ['cosmos-do-zero/escola/**', '.github/workflows/cosmos-do-zero-pages.yml']
   push:
     branches: [cosmos-do-zero]
-    paths:
-      - 'cosmos-do-zero/**'
-      - '.github/workflows/cosmos-do-zero-pages.yml'
+    paths: ['cosmos-do-zero/escola/**', '.github/workflows/cosmos-do-zero-pages.yml']
   workflow_dispatch:
-    inputs:
-      target:
-        description: Destino do build (o domÃ­nio requer DNS e Pages preparados)
-        type: choice
-        options: [github, custom]
-        default: github
-      publish:
-        description: Publicar apÃ³s todos os testes (substitui o site Pages de TCC)
-        type: boolean
-        default: false
-      domain_ready:
-        description: DNS e domÃ­nio do Pages conferidos para o destino selecionado
-        type: boolean
-        default: false
-
-concurrency:
-  group: cosmos-do-zero-pages-${{ github.event_name == 'pull_request' && github.ref || 'publish' }}
-  cancel-in-progress: true
 
 permissions: {}
-
-env:
-  SITE_URL: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]') || contains(github.event.head_commit.message, '[verify-cosmos-custom]')) && 'https://cosmos.denerpereira.com.br' || 'https://bydenoso.github.io' }}
-  SITE_BASE: ${{ (inputs.target == 'custom' || contains(github.event.head_commit.message, '[publish-cosmos-custom]') || contains(github.event.head_commit.message, '[verify-cosmos-custom]')) && '/' || '/TCC/cosmos-do-zero' }}
-  SITE_PUBLIC: 'true'
+concurrency:
+  group: cosmos-escola-pages-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
-    name: Analisar, testar e compilar
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[verify-cosmos-custom]')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       pages: read
     defaults:
       run:
-        working-directory: cosmos-do-zero
+        working-directory: cosmos-do-zero/escola
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: cosmos_test
+          POSTGRES_PASSWORD: ci_local_only
+          POSTGRES_DB: escola_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U cosmos_test -d escola_test"
+          --health-interval 5s --health-timeout 4s --health-retries 12
+    env:
+      COSMOS_TEST_DATABASE_URL: postgresql://cosmos_test:ci_local_only@127.0.0.1:5432/escola_test
+      NEXT_TELEMETRY_DISABLED: '1'
     steps:
-      - name: Exigir conferÃªncia antes de publicar
-        if: inputs.publish && !inputs.domain_ready
-        run: |
-          echo 'Confirme DNS e Settings > Pages antes da publicaÃ§Ã£o.'
-          exit 1
-      - name: Checkout da branch isolada
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Node 24 + cache npm
-        uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: cosmos-do-zero/package-lock.json
-      - name: Instalar exatamente o lockfile
-        run: npm ci
-      - name: Astro e TypeScript
-        run: npm run check
-      - name: Testes unitarios
-        run: npm test
-      - name: Testes HTTP
-        run: npm run test:http
-      - name: Compilar site publico
-        run: npm run build
-      - name: Validar links, recursos, canÃ´nicas, robots e sitemap
-        run: npm run test:pages
-      - name: Instalar navegadores de teste
-        run: npx playwright install --with-deps chromium firefox webkit
-      - name: Conferir azul do cÃ©u WebGL
+          cache-dependency-path: cosmos-do-zero/escola/package-lock.json
+      - run: npm ci --no-fund --no-audit
+      - run: npm run check && npm test && npm run test:database
+      - run: npm run build:pages
+      - run: npx playwright install --with-deps chromium
+      - name: Exercitar a escola exportada
         run: |
-          export BASE_URL="http://127.0.0.1:4322${SITE_BASE%/}"
-          set -euo pipefail
-          node scripts/astro-local.mjs preview --host 127.0.0.1 --port 4322 > /tmp/cosmos-hero-preview.log 2>&1 &
-          preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
-          ready=0
-          for i in {1..40}; do
-            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
-            sleep 1
-          done
-          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-hero-preview.log; exit 1; fi
-          npm run test:hero
-      - name: Conferir cinema e transporte no preview
-        run: |
-          export BASE_URL="http://127.0.0.1:4323${SITE_BASE%/}"
-          set -euo pipefail
-          node scripts/astro-local.mjs preview --host 127.0.0.1 --port 4323 > /tmp/cosmos-cinema-preview.log 2>&1 &
-          preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
-          ready=0
-          for i in {1..40}; do
-            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
-            sleep 1
-          done
-          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-cinema-preview.log; exit 1; fi
-          npm run test:cinema
-      - name: Guardar capturas do cinema em desktop e celular
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cosmos-cinema-continuidade
-          path: cosmos-do-zero/test-results/story-cinema/continuity-cinema-*.png
-          retention-days: 30
-      - name: E2E e renders no preview com caminho base
-        run: |
-          export BASE_URL="http://127.0.0.1:4321${SITE_BASE%/}"
-          set -euo pipefail
-          npm run preview -- --host 127.0.0.1 --port 4321 > /tmp/cosmos-preview.log 2>&1 &
-          preview_pid=$!
-          trap 'kill "$preview_pid" 2>/dev/null || true; wait "$preview_pid" 2>/dev/null || true' EXIT
-          ready=0
-          for i in {1..40}; do
-            if curl -fsS "$BASE_URL/" > /dev/null; then ready=1; break; fi
-            sleep 1
-          done
-          if [ "$ready" -ne 1 ]; then cat /tmp/cosmos-preview.log; exit 1; fi
-          # Collect every independent suite result; any failure still blocks publication.
-          failed=0
-          for suite in browsers budget assets depth hd e2e renders saturn scales; do
-            if ! npm run "test:$suite"; then failed=1; fi
-          done
-          test "$failed" -eq 0
-      - name: Guardar diagnÃ³sticos visuais das escalas e grÃ¡ficos
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: cosmos-diagnosticos-visuais
-          path: |
-            cosmos-do-zero/test-results/scale-visual/*.png
-            cosmos-do-zero/test-results/browser-smoke/*.png
-            cosmos-do-zero/test-results/browser-smoke/*.json
-            cosmos-do-zero/test-results/site-hd/audit.json
-            cosmos-do-zero/test-results/saturn/*.png
-            cosmos-do-zero/test-results/saturn/*.json
-          if-no-files-found: ignore
-          retention-days: 14
-      - name: Empacotar destino selecionado
-        run: node scripts/package-pages.mjs
-      - name: Guardar artefato para inspeÃ§Ã£o (sem publicar)
-        uses: actions/upload-artifact@v7
-        with:
-          name: cosmos-${{ inputs.target || 'github' }}-preview
-          path: cosmos-do-zero/pages-root
-          include-hidden-files: true
-      - name: Conferir domÃ­nio configurado no Pages antes do deploy
-        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory out > /tmp/cosmos-school-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" || true' EXIT
+          for i in {1..30}; do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 1; done
+          export BASE_URL=http://127.0.0.1:4173
+          npm run test:browser
+          node tests/explorer.mjs
+      - name: Conferir o domínio próprio
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/cosmos-do-zero'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          actual="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '.cname // ""')"
-          expected=""
-          if [ "$SITE_URL" = 'https://cosmos.denerpereira.com.br' ]; then
-            expected='cosmos.denerpereira.com.br'
-            node --input-type=module -e 'import {resolveCname} from "node:dns/promises"; import assert from "node:assert/strict"; const records=await resolveCname("cosmos.denerpereira.com.br"); assert.ok(records.some(x=>x.toLowerCase().replace(/\.$/, "") === "bydenoso.github.io"), "CNAME DNS inesperado");'
-          fi
-          test "$actual" = "$expected" || { echo 'DomÃ­nio de Settings > Pages difere do destino; deploy recusado.'; exit 1; }
-      - name: Configurar Pages previamente habilitado
-        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
-        uses: actions/configure-pages@v6
-      - name: Upload do artefato pÃºblico
-        if: (inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]')))
-        uses: actions/upload-pages-artifact@v5
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .cname)" = "cosmos.denerpereira.com.br"
+          touch out/.nojekyll
+          echo cosmos.denerpereira.com.br > out/CNAME
+      - uses: actions/configure-pages@v6
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/cosmos-do-zero'
+      - uses: actions/upload-pages-artifact@v5
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/cosmos-do-zero'
         with:
-          path: cosmos-do-zero/pages-root
+          path: cosmos-do-zero/escola/out
 
   deploy:
-    name: Publicar no GitHub Pages
     needs: build
-    if: github.ref == 'refs/heads/cosmos-do-zero' && ((github.event_name == 'workflow_dispatch' && inputs.publish && inputs.domain_ready) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-cosmos-github]') || contains(github.event.head_commit.message, '[publish-cosmos-custom]'))))
-    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/cosmos-do-zero'
+    runs-on: ubuntu-24.04
     permissions:
       pages: write
       id-token: write
     environment:
       name: cosmos-do-zero-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.release.outputs.page_url }}
     steps:
-      - name: Publicar artefato
-        id: deployment
+      - id: release
         uses: actions/deploy-pages@v5
-
-  verify:
-    name: Verificar site e capturar o publicado
-    needs: deploy
-    # A verification-only push exercises the existing public site with updated browser tests.
-    if: >-
-      !cancelled() && (needs.deploy.result == 'success' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/cosmos-do-zero' &&
-      contains(github.event.head_commit.message, '[verify-cosmos-custom]')))
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: cosmos-do-zero
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - name: Node 24
-        uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: cosmos-do-zero/package-lock.json
-      - name: Dependencias do site e do Playwright
+      - name: Ler a escola no domínio público
         run: |
-          npm ci
-          npx playwright install --with-deps chromium webkit
-      - name: Definir URL de verificaÃ§Ã£o
-        run: echo "BASE_URL=${SITE_URL}${SITE_BASE%/}" >> "$GITHUB_ENV"
-      - name: URL publica e recursos
-        run: |
-          set -euo pipefail
-          ready=0
           for i in {1..30}; do
-            if curl -fLsS "$BASE_URL/" -o /tmp/cosmos-live.html && grep -q '<html' /tmp/cosmos-live.html; then ready=1; break; fi
-            sleep 10
+            if curl -fsSL https://cosmos.denerpereira.com.br/ | grep -F 'Entenda suas leis.' > /dev/null; then exit 0; fi
+            sleep 5
           done
-          test "$ready" -eq 1
-          curl -fLsS "$BASE_URL/robots.txt" | grep -F "Allow: ${SITE_BASE%/}/"
-          curl -fLsS "$BASE_URL/sitemap.xml" | grep -F "$BASE_URL/"
-          curl -fLsS "$BASE_URL/renders/hero-eclipse.webp" -o /tmp/cosmos-hero.webp
-          test "$(wc -c < /tmp/cosmos-hero.webp)" -gt 1000
-      - name: CÃ©u e cinema publicados
-        run: |
-          npm run test:hero
-          npm run test:cinema
-      - name: Jornada, escalas, interacoes, progresso e renders publicados
-        run: |
-          npm run test:e2e
-          npm run test:assets
-          npm run test:hd
-          npm run test:renders
-          npm run test:saturn
-          npm run test:scales
-      - name: Capturas da URL real (desktop e mobile)
-        run: node scripts/capture-public.mjs
-      - name: Salvar capturas reais do Pages
-        uses: actions/upload-artifact@v7
-        with:
-          name: cosmos-do-zero-publicado
-          path: |
-            cosmos-do-zero/docs/screenshots/publicado-desktop.png
-            cosmos-do-zero/docs/screenshots/publicado-mobile.png
-            cosmos-do-zero/docs/screenshots/render-*.png
-            cosmos-do-zero/test-results/saturn/mobile-*.png
-            cosmos-do-zero/test-results/saturn/saturn-results.json
-            cosmos-do-zero/test-results/site-hd/audit.json
-          retention-days: 30
+          exit 1
