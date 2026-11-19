@@ -193,13 +193,16 @@ section('Planetas');
   const seen = new Set();
   for (const id of PLANETS) {
     await p.locator(`button[data-planet="${id}"]`).click();
-    await p.waitForTimeout(80);
     const name = await p.locator('[data-planet-name]').innerText();
     seen.add(name);
     ok(`planeta ${id} ativo`, (await p.locator(`button[data-planet="${id}"]`).getAttribute('aria-pressed')) === 'true');
     ok(`planeta ${id} URL`, p.url().includes(`planeta=${id}`) || id === 'terra');
-    const img = await p.locator('[data-planet-img]').first().evaluate((i) => i.complete && i.naturalWidth > 0);
-    ok(`planeta ${id} imagem carrega`, img);
+    const loaded = await p.waitForFunction(body => {
+      const image = document.querySelector('[data-planet-img]');
+      return image?.complete && image.naturalWidth > 0 &&
+        new URL(image.currentSrc, location.href).pathname.includes('/' + body + '/');
+    }, id, { timeout: 12000 }).then(() => true, () => false);
+    ok(`planeta ${id} imagem carrega`, loaded);
   }
   ok('8 nomes distintos', seen.size === 8, [...seen].join(','));
   await p.locator('[data-ruler="mercurio"]').click({ force: true });
