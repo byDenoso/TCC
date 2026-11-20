@@ -1,8 +1,9 @@
 import dynamic from 'next/dynamic';
 import LabChallenge from './LabChallenge';
-import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { hasTimeEvolution, labs, orbitGuide, orbitUnitsPerAU, simulate } from '../lib/model';
 import { compact } from '../lib/school';
+import { ExpansionDiagram } from './ExpansionDiagram';
 import { Plot } from './Plot';
 let verifiedWebGL = false;
 const Scene3D = dynamic(() => import('./Scene3D'), {
@@ -29,6 +30,10 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
   const initial = useMemo(() => lab.parameters.map((p) => p.initial), [lab]);
   const stage = useRef<HTMLDivElement>(null);
   const orbital = id === 'orbitas';
+  const expansion = id === 'expansao';
+  const timeEvolution = hasTimeEvolution(id);
+  const motionHint = useId();
+  const sweepDistance = useRef(initial[1]);
   const [values, setValues] = useState(initial),
     [base, setBase] = useState<number[] | null>(null),
     [view, setView] = useState(false),
@@ -37,7 +42,9 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
     [time, setTime] = useState(0),
     [turn, setTurn] = useState(0),
     [resetView, setResetView] = useState(0),
-    [visible, setVisible] = useState(true);
+    [visible, setVisible] = useState(true),
+    [reveal, setReveal] = useState(65),
+    [reducedMotion, setReducedMotion] = useState(false);
   useEffect(() => {
     if (!stage.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
@@ -50,7 +57,18 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
     setTime(0);
   }, []);
   useEffect(() => {
-    if (!playing || !visible) return;
+    if (!expansion) return;
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    function sync() {
+      setReducedMotion(preference.matches);
+      if (preference.matches) setPlay(false);
+    }
+    sync();
+    preference.addEventListener('change', sync);
+    return () => preference.removeEventListener('change', sync);
+  }, [expansion]);
+  useEffect(() => {
+    if (!playing || !visible || !timeEvolution) return;
     let raf = 0,
       last = performance.now();
     function step(now: number) {
@@ -63,7 +81,24 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
     }
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [playing, view, visible]);
+  }, [playing, timeEvolution, view, visible]);
+  useEffect(() => {
+    if (!expansion || !playing || !visible || reducedMotion) return;
+    const { max, step } = lab.parameters[1];
+    const from = sweepDistance.current;
+    const start = performance.now();
+    let frame = requestAnimationFrame(sweep);
+    function sweep(now: number) {
+      const next = Math.min(max, from + Math.floor((now - start) / 48) * step);
+      if (next !== sweepDistance.current) {
+        sweepDistance.current = next;
+        setValues(([h0]) => [h0, next]);
+      }
+      if (next < max) frame = requestAnimationFrame(sweep);
+      else setPlay(false);
+    }
+    return () => cancelAnimationFrame(frame);
+  }, [expansion, lab, playing, reducedMotion, visible]);
   const scene = useMemo(() => simulate(id, values, time), [id, values, time]);
   const baseline = useMemo(() => (base ? simulate(id, base, 0) : null), [base, id]);
   const referenceOrbit = useMemo(
@@ -105,6 +140,18 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
     setTurn(0);
     setResetView((n) => n + 1);
   }
+  function togglePlayback() {
+    if (playing) {
+      setPlay(false);
+      return;
+    }
+    if (expansion) {
+      const { min, max } = lab.parameters[1];
+      sweepDistance.current = values[1] === max ? min : values[1];
+      setValues([values[0], sweepDistance.current]);
+    }
+    setPlay(true);
+  }
   function proj(x: number, y: number, z: number) {
     if (orbital) {
       const u = x + center,
@@ -120,12 +167,31 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
   }
   const points = scene.dots,
     lines = scene.segments;
+  const plot = (
+    <Plot
+      points={scene.points}
+      reference={baseline?.points}
+      selection={
+        expansion
+          ? {
+              point: [values[1], scene.metric.value],
+              label: 'Galáxia selecionada · ' + compact(values[1]) + ' Mpc · ' + compact(scene.metric.value) + ' km/s',
+              referencePoint: base && baseline ? [base[1], baseline.metric.value] : undefined,
+            }
+          : undefined
+      }
+      yDomain={expansion ? [0, lab.parameters[0].max * lab.parameters[1].max] : undefined}
+      xLabel={lab.xLabel}
+      yLabel={lab.yLabel}
+    />
+  );
+  const caption = <p className="caption">{scene.caption}</p>;
   return (
-    <div className={'laboratory ' + (mini ? 'mini' : '')}>
+    <div className={'laboratory' + (mini ? ' mini' : '') + (expansion ? ' laboratory--expansion' : '')}>
       <div className="lab-body">
         <div className="lab-visual" ref={stage}>
           <div className="scene-toolbar">
-            <span>{view ? 'Cena 3D' : 'Projeção 2D'}</span>
+            <span>{view ? 'Cena 3D' : expansion ? 'Campo de recessão' : 'Projeção 2D'}</span>
             <button onClick={enable}>{view ? 'Usar 2D' : 'Abrir 3D'}</button>
           </div>
           {view ? (
@@ -141,6 +207,8 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
                 onFail={fail}
               />
             </SceneBoundary>
+          ) : expansion ? (
+            <ExpansionDiagram scene={scene} reference={baseline} reveal={reveal} project={proj} />
           ) : (
             <svg
               className="lab-svg"
@@ -232,14 +300,47 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
               <small>Diâmetros ilustrativos</small>
             </div>
           )}
+          {expansion && !view && (
+            <div className="expansion-legend">
+              <span className="expansion-observer">Observador comóvel</span>
+              <span className="expansion-galaxy">Galáxia selecionada</span>
+              <span className="expansion-arrow">Vetor de recessão</span>
+            </div>
+          )}
+          {expansion && !view && baseline && (
+            <label className="expansion-compare">
+              <span>Referência</span>
+              <input
+                type="range"
+                aria-label="Comparar referência e cenário atual"
+                aria-valuetext={reveal + '% de referência'}
+                min="0"
+                max="100"
+                value={reveal}
+                onChange={(event) => setReveal(event.currentTarget.valueAsNumber)}
+              />
+              <span>Atual</span>
+            </label>
+          )}
           <div className="scene-bottom">
-            {hasTimeEvolution(id) && (
-              <button onClick={() => setPlay(!playing)}>{playing ? 'Pausar' : 'Animar'}</button>
+            {(timeEvolution || expansion) && (
+              <button
+                onClick={togglePlayback}
+                disabled={expansion && reducedMotion}
+                aria-describedby={expansion ? motionHint : undefined}
+              >
+                {playing ? 'Pausar' : 'Animar'}
+              </button>
             )}
             <button onClick={() => setTurn(turn + 0.25)}>Girar vista</button>
-            {hasTimeEvolution(id) && (
+            {timeEvolution && (
               <span className="scene-clock">
                 {orbital ? compact(time * 30) + ' dias simulados' : compact(time) + ' s de animação'}
+              </span>
+            )}
+            {expansion && (
+              <span className="scene-clock expansion-motion-hint" id={motionHint}>
+                {reducedMotion ? 'Movimento reduzido. Ajuste a distância manualmente.' : 'Percorre distâncias com H₀ fixo.'}
               </span>
             )}
           </div>
@@ -265,16 +366,28 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
                 value={values[i]}
                 onChange={(e) => {
                   const value = e.currentTarget.valueAsNumber;
+                  if (expansion) setPlay(false);
                   setValues((old) => old.map((v, j) => (j === i ? value : v)));
                 }}
               />
             </label>
           ))}
-          <div className="metric">
+          {expansion && (
+            <p className="expansion-equation">
+              <span aria-hidden="true">v = H₀ × D</span>
+              <span className="screen-reader-only">Velocidade igual à constante de Hubble vezes a distância.</span>
+            </p>
+          )}
+          <div className="metric" aria-live={expansion ? (playing ? 'off' : 'polite') : undefined} aria-atomic={expansion || undefined}>
             <span>{scene.metric.label}</span>
             <strong>
               {compact(scene.metric.value)} <small>{scene.metric.unit}</small>
             </strong>
+            {scene.secondaryMetric && (
+              <span className="expansion-redshift">
+                {scene.secondaryMetric.label} <b>{compact(scene.secondaryMetric.value)}</b>
+              </span>
+            )}
           </div>
           {orbital && (
             <dl className="orbit-distances">
@@ -296,6 +409,7 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
               onChange={(e) => {
                 const i = +e.target.value;
                 if (i >= 0) setValues([...lab.presets[i].values]);
+                if (expansion) setPlay(false);
                 setTime(0);
               }}
             >
@@ -308,7 +422,12 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
             </select>
           </label>
           <div className="row-actions">
-            <button onClick={() => setBase(base ? null : [...values])}>
+            <button
+              onClick={() => {
+                setBase(base ? null : [...values]);
+                if (expansion) setReveal(65);
+              }}
+            >
               {base ? 'Remover referência' : 'Fixar referência'}
             </button>
             <button onClick={reset}>Reiniciar</button>
@@ -317,7 +436,7 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
       </div>
       {!mini && (
         <>
-          <p className="caption">{scene.caption}</p>
+          {expansion ? plot : caption}
           {baseline && (
             <p className="compare-key">
               Curva tracejada · referência fixa com{' '}
@@ -325,17 +444,18 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
               {baseline.metric.label} = {compact(baseline.metric.value)} {baseline.metric.unit}.
             </p>
           )}
-          <Plot
-            points={scene.points}
-            reference={baseline?.points}
-            xLabel={lab.xLabel}
-            yLabel={lab.yLabel}
-          />
+          {expansion ? caption : plot}
           <LabChallenge lab={lab} values={values} onMeasure={measure} />
           <aside className="method">
             <h3>Hipóteses e limites</h3>
             <p>{lab.assumptions}</p>
+            {expansion && (
+              <p>
+                Os valores da bancada vêm do modelo didático. Em 1929, Edwin Hubble estimou a relação a partir de medidas de distância e velocidade.
+              </p>
+            )}
             <a href={lab.reference.url}>{lab.reference.name} ↗</a>
+            {expansion && <a href="https://doi.org/10.1073/pnas.15.3.168">Edwin Hubble · Artigo de 1929 ↗</a>}
           </aside>
         </>
       )}

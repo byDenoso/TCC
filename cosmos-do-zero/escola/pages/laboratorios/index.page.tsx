@@ -13,7 +13,11 @@ export default function LabList() {
         tag="Experimentação"
         title="Laboratórios científicos"
         text="Escolha uma bancada, altere os parâmetros e fixe uma referência para comparar os resultados. Todas incluem uma representação 2D e uma cena tridimensional."
-      />
+      >
+        <a className="btn light" href="/laboratorios/expansao/">
+          Começar pela expansão cosmológica
+        </a>
+      </Lead>
       <div className="wrap block">
         {groups.map(([name, a, b]) => (
           <section key={name} className="lab-group">

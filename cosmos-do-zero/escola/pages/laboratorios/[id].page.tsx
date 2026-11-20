@@ -22,7 +22,7 @@ export default function Lab({ id, lessons }: { id: string; lessons: Card[] }) {
     <>
       <Meta title={l.title} />
       <Lead tag="Laboratório / Simulação didática" title={l.title} text={l.description} />
-      <section className="wrap block">
+      <section className={id === 'expansao' ? 'wrap block expansion-block' : 'wrap block'}>
         <LabView key={id} id={id} />
         {lessons.length > 0 && (
           <section className="block">

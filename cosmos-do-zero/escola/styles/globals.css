@@ -1410,3 +1410,180 @@ details summary {
     min-height: 220px;
   }
 }
+
+.lead:has(+ .expansion-block) {
+  padding-block: clamp(1.75rem, 3.4vw, 3.1rem);
+}
+.expansion-block {
+  padding-top: clamp(1rem, 2.9vw, 2.6rem);
+}
+.laboratory--expansion .controls input[type='range'],
+.laboratory--expansion .controls select,
+.laboratory--expansion .row-actions button,
+.laboratory--expansion .scene-bottom button,
+.laboratory--expansion .scene-toolbar button {
+  min-height: 44px;
+}
+.expansion-diagram {
+  background: radial-gradient(ellipse at center, #162c43, #0a1425 79%);
+  max-height: 290px;
+}
+.expansion-vectors {
+  fill: none;
+  stroke: #8eb6cd;
+  stroke-width: 1.45;
+}
+.expansion-field--reference .expansion-vectors {
+  stroke: #e6ab78;
+  stroke-dasharray: 3 2;
+}
+.expansion-observer {
+  --symbol: #f6d39f;
+}
+.expansion-galaxy {
+  --symbol: #8adbff;
+}
+.expansion-field--reference .expansion-galaxy {
+  --symbol: #ffbc83;
+}
+.expansion-diagram :is(.expansion-observer, .expansion-galaxy) {
+  fill: var(--symbol);
+  stroke: var(--symbol);
+  stroke-width: 1.5;
+}
+.expansion-divider {
+  stroke: #f0f7fb;
+  stroke-width: 2;
+}
+.expansion-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.95rem;
+  padding: 0.55rem 0.9rem;
+  color: #dce8f4;
+  font-size: 0.8rem;
+}
+.expansion-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.36rem;
+}
+.expansion-legend span::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--symbol);
+}
+.expansion-legend .expansion-arrow::before {
+  content: '→';
+  width: auto;
+  height: auto;
+  color: #a8c7da;
+  font-size: 1rem;
+}
+.expansion-compare {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding-inline: 0.9rem;
+  border-block: 1px solid #38506a;
+  background: #142438;
+  font-size: 0.8rem;
+}
+.expansion-compare input {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  accent-color: #8adbff;
+  cursor: ew-resize;
+}
+.expansion-compare span:first-child {
+  color: #f4c396;
+}
+.expansion-motion-hint {
+  line-height: 1.35;
+}
+.expansion-equation {
+  color: #205a7e;
+  font: 1.05rem var(--mono);
+  margin-bottom: 0.65rem;
+}
+.expansion-redshift {
+  color: #405a6c;
+  font-size: 0.84rem;
+}
+.expansion-redshift b {
+  font-family: var(--mono);
+}
+.laboratory--expansion .controls > label {
+  margin-block: 0.65rem;
+}
+.laboratory--expansion .controls output {
+  white-space: nowrap;
+}
+.plot-mobile-title {
+  display: none;
+}
+.plot[data-selection] .baseline {
+  stroke-width: 1.65;
+}
+.plot[data-selection] .cursorpoint {
+  fill: #216b94;
+  stroke: white;
+  stroke-width: 1.5;
+}
+.plot[data-selection] .reference-point {
+  fill: none;
+  stroke: #a55819;
+  stroke-width: 2;
+  stroke-dasharray: 3 2;
+}
+.plot[data-selection] figcaption {
+  color: #205a7e;
+  font-weight: 570;
+}
+.plot[data-selection] summary {
+  align-content: center;
+  min-height: 44px;
+}
+.laboratory--expansion .method a + a {
+  margin-left: 1rem;
+}
+@media (max-width: 680px) {
+  .expansion-diagram {
+    min-height: 150px;
+  }
+  .laboratory--expansion > .plot {
+    margin-inline: 0.55rem;
+  }
+  .plot[data-selection] svg text {
+    font-size: 22px;
+  }
+  .plot[data-selection] svg .plot-axis-title {
+    display: none;
+  }
+  .plot[data-selection] svg {
+    margin-block: -0.15rem -0.45rem;
+  }
+  .plot-mobile-title {
+    display: block;
+    font-size: 0.77rem;
+    color: #425969;
+  }
+  .plot-mobile-title--x {
+    text-align: right;
+  }
+  .expansion-motion-hint {
+    width: 100%;
+    margin-left: 0;
+  }
+  .laboratory--expansion .method a {
+    display: block;
+    min-height: 44px;
+  }
+  .laboratory--expansion .method a + a {
+    margin-left: 0;
+  }
+}

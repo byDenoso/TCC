@@ -47,8 +47,8 @@ export default function Home({ start, featured }: { start: string; featured: Car
                 </svg>
                 Começar a aprender
               </a>
-              <a className="btn ghost" href="/laboratorios/">
-                Ver laboratórios
+              <a className="btn ghost" href="/laboratorios/expansao/">
+                Testar a expansão
               </a>
             </div>
           </div>

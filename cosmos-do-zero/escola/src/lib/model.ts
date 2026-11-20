@@ -19,6 +19,7 @@ export type Simulation = {
   dots: Dot[];
   segments: Segment[];
   metric: { label: string; value: number; unit: string };
+  secondaryMetric?: { label: string; value: number; unit: string };
   caption: string;
 };
 const tau = 2 * Math.PI;
@@ -240,9 +241,9 @@ export const labs: Lab[] = [
   {
     id: 'expansao',
     title: 'Expansão cosmológica',
-    description: 'Leia a inclinação da relação velocidade–distância e examine o campo de recessão radial.',
+    description: 'Mude a distância de uma galáxia ou a taxa de expansão e acompanhe a velocidade de recessão.',
     assumptions:
-      'Instantâneo FLRW no presente com separações próprias e galáxias comóveis. Velocidades peculiares são omitidas. A identificação observacional v ≈ cz vale em baixo desvio para o vermelho.',
+      'O modelo FLRW usa distâncias próprias medidas hoje entre galáxias que acompanham a expansão. O cálculo omite velocidades peculiares. A estimativa z ≈ v/c vale no limite de baixo desvio para o vermelho, com c = 299.792,458 km/s. A animação percorre distâncias no mesmo instante cosmológico, com H₀ fixo.',
     reference: source(
       'D. W. Hogg · Distance measures in cosmology',
       'https://arxiv.org/abs/astro-ph/9905116'
@@ -837,15 +838,19 @@ function hubble([h0, distance]: number[]) {
     }
   }
   segments.push(...arrow(chosen, [chosen[0] * (1 + h0 / 250), 0, 0]));
-  return result(
-    samples(64, 0, 200, (r) => h0 * r),
-    dots,
-    segments,
-    'Recessão da galáxia escolhida',
-    h0 * distance,
-    'km/s',
-    'A posição representa distância e a seta representa velocidade. A galáxia escolhida fica no eixo horizontal positivo. O campo também seria radial em torno de outro observador comóvel.'
-  );
+  const velocity = h0 * distance;
+  return {
+    ...result(
+      samples(64, 0, 200, (r) => h0 * r),
+      dots,
+      segments,
+      'Velocidade de recessão',
+      velocity,
+      'km/s',
+      'A posição indica a distância ao observador e o comprimento das setas representa a velocidade. O campo também seria radial em torno de outro observador comóvel.'
+    ),
+    secondaryMetric: { label: 'Redshift aproximado (z)', value: velocity / (c / 1000), unit: dim },
+  };
 }
 
 function structures([amplitude, a]: number[]) {

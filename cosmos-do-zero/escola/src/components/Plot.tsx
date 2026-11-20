@@ -14,6 +14,8 @@ export const Plot = memo(function Plot({
   yLabel,
   caption,
   reference,
+  selection,
+  yDomain,
   inspect = true,
 }: {
   points: XY[];
@@ -21,6 +23,8 @@ export const Plot = memo(function Plot({
   yLabel: string;
   caption?: string;
   reference?: XY[];
+  selection?: { point: XY; label: string; referencePoint?: XY };
+  yDomain?: XY;
   inspect?: boolean;
 }) {
   const id = useId(),
@@ -34,19 +38,22 @@ export const Plot = memo(function Plot({
       .domain(extent(both.map((p) => p[0])))
       .range([79, 542]),
     Y = scaleLinear()
-      .domain(extent(both.map((p) => p[1])))
+      .domain(yDomain ?? extent(both.map((p) => p[1])))
       .nice(4)
       .range([190, 25]);
   const curve = line<XY>()
     .x((p) => X(p[0]))
     .y((p) => Y(p[1]));
   const index = Math.round(fraction * (valid.length - 1)),
-    current = valid[index];
+    current = selection?.point ?? valid[index];
+  const fixed = selection?.referencePoint;
+  const referenceCurve = other.length > 0 && <path d={curve(other) ?? ''} className="baseline" />;
   return (
-    <figure className="plot">
-      <svg viewBox="0 0 560 235" role="img" aria-labelledby={id}>
+    <figure className="plot" data-selection={selection ? 'true' : undefined}>
+      {selection && <span className="plot-mobile-title" aria-hidden="true">{yLabel}</span>}
+      <svg viewBox="0 0 560 235" role="img" aria-labelledby={id} aria-describedby={selection ? id + '-value' : undefined}>
         <title id={id}>{yLabel + ' em função de ' + xLabel + (caption ? '. ' + caption : '')}</title>
-        <text x="14" y="14">
+        <text x="14" y="14" className="plot-axis-title">
           {yLabel}
         </text>
         {Y.ticks(4).map((t) => (
@@ -65,19 +72,22 @@ export const Plot = memo(function Plot({
             </text>
           </g>
         ))}
-        <text x="540" y="230" textAnchor="end">
+        <text x="540" y="230" textAnchor="end" className="plot-axis-title">
           {xLabel}
         </text>
-        {other.length > 0 && <path d={curve(other) ?? ''} className="baseline" />}
+        {!selection && referenceCurve}
         <path d={curve(valid) ?? ''} className="plotline" />
-        {inspect && (
+        {selection && referenceCurve}
+        {fixed && <circle cx={X(fixed[0])} cy={Y(fixed[1])} r="8" className="reference-point" />}
+        {(inspect || selection) && (
           <>
             <path d={'M' + X(current[0]) + ' 25 V190'} className="cursorline" />
             <circle cx={X(current[0])} cy={Y(current[1])} r="5" className="cursorpoint" />
           </>
         )}
       </svg>
-      {inspect && (
+      {selection && <span className="plot-mobile-title plot-mobile-title--x" aria-hidden="true">{xLabel}</span>}
+      {inspect && !selection && (
         <label className="plot-reader">
           Ler ponto{' '}
           <input
@@ -93,7 +103,12 @@ export const Plot = memo(function Plot({
           </output>
         </label>
       )}
-      {caption && <figcaption>{caption}</figcaption>}
+      {(caption || selection) && (
+        <figcaption>
+          {selection && <span id={id + '-value'}>{selection.label}</span>}
+          {caption && <span>{caption}</span>}
+        </figcaption>
+      )}
       {inspect && (
         <details onToggle={(e) => setTableOpen(e.currentTarget.open)}>
           <summary>Valores em tabela</summary>

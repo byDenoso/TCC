@@ -166,6 +166,10 @@ test('Hubble: velocity is the selected slope times distance', () => {
   close(value('expansao', [70, 50]), 3500);
   close(value('expansao', [80, 100]), 8000);
 });
+test('Hubble: the low-redshift estimate follows the velocity of the selected galaxy', () => {
+  close(simulate('expansao', [70, 100]).secondaryMetric!.value, 0.0233494867, 1e-9);
+  close(simulate('expansao', [70, 50]).secondaryMetric!.value, 0.0116747433, 1e-9);
+});
 test('Zel’dovich: comoving mass conserved after applying the Jacobian', () => {
   const out = simulate('estruturas', [0.4, 0.5]);
   close(out.metric.value, 25);

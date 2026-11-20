@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { verifyHero } from './hero-checks.mjs';
+import { verifyExpansion } from './expansion-checks.mjs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -45,6 +46,8 @@ async function setRange(el, value) {
 }
 const checks = [];
 try {
+  await verifyExpansion(browser, base);
+  checks.push('Bancada de Hubble, leitura sincronizada, comparação e movimento reduzido');
   await page('/');
   assert.match(await p.title(), /Explore o Universo/);
   await p
@@ -216,6 +219,7 @@ try {
     '/trilhas/',
     '/aulas/' + slug + '/',
     '/laboratorios/orbitas/',
+    '/laboratorios/expansao/',
     '/painel/',
     '/explorador/',
   ]) {
@@ -233,7 +237,7 @@ try {
     audits.every((x) => x[1].length === 0),
     'Violações sérias de acessibilidade'
   );
-  checks.push('Navegação móvel, 6 páginas sem overflow e auditoria axe');
+  checks.push('Navegação móvel, 7 páginas sem overflow e auditoria axe');
   await p.addInitScript(() => {
     const get = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type, ...args) {
