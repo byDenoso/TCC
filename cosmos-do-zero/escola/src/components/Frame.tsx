@@ -132,6 +132,18 @@ export function Meta({
       <title>{title + ' · Cosmos'}</title>
       <meta name="description" content={desc} />
       <link rel="canonical" href={ORIGIN + path} />
+      <meta property="og:type" content="website" />
+      <meta property="og:locale" content="pt_BR" />
+      <meta property="og:site_name" content="Cosmos" />
+      <meta property="og:title" content={title + ' · Cosmos'} />
+      <meta property="og:description" content={desc} />
+      <meta property="og:url" content={ORIGIN + path} />
+      <meta property="og:image" content={ORIGIN + '/cosmos-social.jpg'} />
+      <meta property="og:image:type" content="image/jpeg" />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:image:alt" content="Ilustração de Saturno e seus anéis" />
+      <meta name="twitter:card" content="summary_large_image" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#090e1b" />
       <link rel="icon" href="/simbolo.svg" />
@@ -160,3 +172,4 @@ export function Lead({
     </div>
   );
 }
+
