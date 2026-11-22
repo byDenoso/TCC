@@ -1,0 +1,16 @@
+{
+  "name": "nexo-mcp",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.0.0",
+    "mcp-handler": "^2.0.0",
+    "zod": "^4.2.0"
+  }
+}
