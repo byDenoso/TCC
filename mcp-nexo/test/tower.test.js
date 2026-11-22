@@ -52,3 +52,32 @@ test('catalog Connect asks only existing readonly Drive and Sheets scopes', asyn
  assert.deepEqual(JSON.parse(calls[0].options.body).scopes,scopes);
  assert.equal(calls.length,1);
 });
+
+test('Connect singleflight and short-lived cache use expiry and correct scope', async()=>{
+  let requests=0;
+  const fetchImpl=async()=>{requests++;await new Promise(r=>setTimeout(r,10));return Response.json({token:'mock',expiresAt:Date.now()+120000});};
+  const args={oidcToken:'cache-test',connector:'google/example',subject:'owner',fetchImpl};
+  const scopes=['https://www.googleapis.com/auth/spreadsheets.readonly'];
+  const [a,b]=await Promise.all([getGoogleConnectToken({...args,scopes}),getGoogleConnectToken({...args,scopes})]);
+  assert.deepEqual(a,b);assert.equal(requests,1);
+  await getGoogleConnectToken({...args,scopes});assert.equal(requests,1);
+  await getGoogleConnectToken({...args,scopes:['https://www.googleapis.com/auth/drive.readonly']});
+  assert.equal(requests,2);
+});
+
+test('Connect HTTP 429 respects cooldown instead of retrying a limited upstream',async()=>{
+  let requests=0;
+  const fetchImpl=async()=>{requests++;return new Response('private body',{status:429,headers:{'retry-after':'20'}});};
+  const args={oidcToken:'rate-limited-test',connector:'google/example',subject:'owner',fetchImpl};
+  await assert.rejects(getGoogleConnectToken(args),{message:'CONNECT_UNAVAILABLE_HTTP_429'});
+  await assert.rejects(getGoogleConnectToken(args),{message:'CONNECT_UNAVAILABLE_HTTP_429'});
+  assert.equal(requests,1);
+});
+
+test('Connect refuses to cache token without a known expiry',async()=>{
+  let requests=0;
+  const fetchImpl=async()=>{requests++;return Response.json({token:'ephemeral'});};
+  const args={oidcToken:'unknown-expiry-test',connector:'google/example',subject:'owner',fetchImpl};
+  await getGoogleConnectToken(args);await getGoogleConnectToken(args);
+  assert.equal(requests,2);
+});
