@@ -9,6 +9,16 @@ import { status, propose, bindRecipe, boardPost } from '../lib/core.js';
 import { verifyAccessToken, isWriteRequest, SCOPES } from '../lib/oauth.js';
 
 const text = value => ({ content: [{ type: 'text', text: JSON.stringify(value) }] });
+const readText = async loader => {
+  try { return text(await loader()); }
+  catch (error) {
+    if (error?.message === 'CONNECT_UNAVAILABLE_HTTP_429') {
+      return text({ state: 'BLOCKED', reason: 'VERCEL_CONNECT_HTTP_429',
+        dataAvailable: false, authoritativeSource: 'Google Drive', retryable: true });
+    }
+    throw error;
+  }
+};
 const requireWrite = ctx => {
   if (!ctx.http?.authInfo?.scopes?.includes(SCOPES.WRITE)) throw new Error('Permissão de escrita necessária');
 };
@@ -29,18 +39,18 @@ const catalogRead = async (ctx, operation, args) => {
 const mcp = createMcpHandler(server => {
   server.registerTool('tower_results', { description: 'Lê as linhas recentes da aba privada RESULTADOS da Tower. Preserva método, limites e referências; não acessa o mural.',
     inputSchema: z.object({limit:z.number().int().min(1).max(20).default(10)}), annotations:{readOnlyHint:true,destructiveHint:false} },
-    async ({limit},ctx) => text(await readTowerResults({limit,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
-  server.registerTool('local_artifact_status', {description:'Read-only check of a LOCAL_ONLY Tower row against exact-name Drive copies and SHA-256.', inputSchema:z.object({row:z.number().int().min(2)}),annotations:{readOnlyHint:true,destructiveHint:false}}, async ({row},ctx)=>text(await inspectLocalArtifact({row,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
+    async ({limit},ctx) => readText(()=>readTowerResults({limit,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
+  server.registerTool('local_artifact_status', {description:'Read-only check of a LOCAL_ONLY Tower row against exact-name Drive copies and SHA-256.', inputSchema:z.object({row:z.number().int().min(2)}),annotations:{readOnlyHint:true,destructiveHint:false}}, async ({row},ctx)=>readText(()=>inspectLocalArtifact({row,oidcToken:ctx.http?.authInfo?.extra?.projectOidc,connector:process.env.GOOGLE_CONNECTOR,subject:process.env.GOOGLE_CONNECT_SUBJECT_ID||'owner',spreadsheetId:process.env.NEXO_TOWER_SPREADSHEET_ID})));
   server.registerTool('catalog_status', { description: 'Read configured private catalog sources and report freshness, hashes and blocked connections. Does not execute science.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true, destructiveHint: false } },
-    async (_,ctx) => text(await catalogRead(ctx,'status')));
+    async (_,ctx) => readText(()=>catalogRead(ctx,'status')));
   server.registerTool('catalog_search', { description: 'Search typed capabilities, solvers, adapters, datasets, recipes, skills, contracts and Tower/Writer references. Paginated metadata only; recorded readiness is not execution authorization.',
     inputSchema: z.object({ q: z.string().max(200).default(''), category: z.enum(CATEGORIES).optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.string().max(1024).optional() }),
     annotations: { readOnlyHint: true, destructiveHint: false } },
-    async (args,ctx) => text(await catalogRead(ctx,'search',args)));
+    async (args,ctx) => readText(()=>catalogRead(ctx,'search',args)));
   server.registerTool('catalog_get', { description: 'Read one discovered catalog record with provenance and readiness boundaries. Does not fetch arbitrary files, run solvers or write Tower.',
     inputSchema: z.object({ id: z.string().min(1).max(1024) }), annotations: { readOnlyHint: true, destructiveHint: false } },
-    async (args,ctx) => text(await catalogRead(ctx,'get',args)));
+    async (args,ctx) => readText(()=>catalogRead(ctx,'get',args)));
 
   server.registerTool('status', { description: 'Retorna a projeção pública atual do NEXO.',
     inputSchema: z.object({}), annotations: { readOnlyHint: true } },
