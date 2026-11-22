@@ -19,6 +19,7 @@ const hash = data => createHash('sha256').update(data).digest('hex');
 
 export async function status() {
   const response = await fetch(PROJECTION, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+  if (response.status === 404) return { state: 'DEGRADED', source: PROJECTION, reason: 'PUBLIC_PROJECTION_HTTP_404', tests_available: false };
   if (!response.ok) throw new Error('Projeção pública indisponível: HTTP ' + response.status);
   const data = await response.json();
   if (!data || typeof data !== 'object' || !Array.isArray(data.tests)) throw new Error('Projeção pública inválida');
