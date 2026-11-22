@@ -41,7 +41,7 @@ Na pasta mcp-nexo:
 
 A suíte OAuth usa chaves RSA temporárias. O teste HTTP usa servidor Node real, SDK MCP da dependência, JWT de teste e upstreams simulados em memória; nunca aciona GitHub real, e o único ramo aceito para BOARD_POST é nexo/mcp-smoke-disposable. Ela cobre initialize, tools/list, status, 401 sem bearer, 403 com escopo de leitura e readback de BOARD_POST. A integração externa com provedor OAuth, Vercel e ChatGPT ainda exige execução pós-deploy.
 
-A projeção pública usada por status permanece em https://bydenoso.github.io/Pantheon/tower-projection/projection.json; uma resposta inválida ou indisponível causa erro explícito. Nenhum workflow, solver, critério científico ou destino privado foi alterado.
+A projeção pública usada por status permanece em https://bydenoso.github.io/Pantheon/tower-projection/projection.json. HTTP 404 retorna `state: DEGRADED`, `tests_available: false` e a origem ausente, sem representar falsamente zero testes; os demais erros continuam explícitos. Nenhum workflow, solver, critério científico ou destino privado foi alterado.
 
 
 ## Descoberta privada integrada (sem novo serviço)
@@ -83,3 +83,9 @@ Esta versão não hidrata payloads científicos, não executa solvers, não disp
 ### Verificação local e homologação
 
 `npm ci && npm test` executa testes de parser, paginação, hash, limites, isolamento de origem, readback de versão, OAuth e HTTP MCP local com upstreams simulados. `package-lock.json` registra versões resolvidas. Isso não é homologação contra Google, Vercel ou provedor OAuth reais. Antes de conectar produção: configurar fontes/grants privados, executar readback autorizado do servidor e confirmar `initialize`, `tools/list`, busca/detalhe, 401/403 e ausência de escrita. Não fazer merge/deploy automaticamente.
+
+## Contenção do HTTP 429 (Vercel Connect)
+
+O loader compartilha uma única solicitação simultânea de token por identidade OIDC, conector, subject e conjunto de escopos; reutiliza em memória por no máximo 60 s, respeitando `expiresAt` com margem de 30 s. Uma resposta 429 bloqueia novas tentativas dessa chave por `Retry-After` (até 120 s) ou 30 s, sem ciclo automático de retry. As ferramentas de leitura anunciam `state: BLOCKED`, `dataAvailable: false`, `reason: VERCEL_CONNECT_HTTP_429`; isso não significa que a Tower está vazia. A persistência canônica permanece exclusivamente no Drive/Writer. A memória volátil desaparece com instâncias frias e não reverte quota mensal esgotada.
+
+Homologação pós-deploy: conferir a cota do Connect, realizar uma leitura única de `catalog_status` e `tower_results` e comparar ID/versão/contagens com o Drive. Em 429 persistente mesmo com deduplicação, resolver o limite do provedor antes de repetir; não trocar credenciais/escopos nem contornar recusas.
