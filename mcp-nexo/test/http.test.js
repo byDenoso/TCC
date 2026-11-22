@@ -140,3 +140,26 @@ test('HTTP catalog reads through Vercel Connect without a static Google token',a
    const body=await r.text();assert.equal(r.status,200,body);assert.match(body,/AVAILABLE/);
  } finally {process.env.GOOGLE_DRIVE_ACCESS_TOKEN=saved;}
 });
+
+test('HTTP Connect 429 reports blocked instead of an empty catalog',async()=>{
+  const previousToken=process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+  const previousFetch=globalThis.fetch;
+  delete process.env.GOOGLE_DRIVE_ACCESS_TOKEN;
+  globalThis.fetch=async (url,options)=>{
+    if(String(url).includes('api.vercel.com/v1/connect/token/'))
+      return new Response('private upstream body',{status:429,headers:{'retry-after':'30'}});
+    return previousFetch(url,options);
+  };
+  try {
+    const r=await rpc(message('tools/call',{name:'catalog_status',arguments:{}}),token('nexo:read'));
+    const body=await r.text();
+    assert.equal(r.status,200,body);
+    assert.match(body,/VERCEL_CONNECT_HTTP_429/);
+    assert.match(body,/BLOCKED/);
+    assert.match(body,/dataAvailable/);
+    assert.doesNotMatch(body,/"records"\s*:\s*\[\]/);
+  } finally {
+    globalThis.fetch=previousFetch;
+    if(previousToken!==undefined) process.env.GOOGLE_DRIVE_ACCESS_TOKEN=previousToken;
+  }
+});
