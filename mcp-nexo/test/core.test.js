@@ -53,3 +53,18 @@ test('bindRecipe stages valid public envelope', async () => {
   const value = await bindRecipe('TEST-PUBLIC', 'seed_bounds', { n: 200 });
   assert.equal(value.branch, 'nexo/mcp-smoke-disposable');
 });
+
+test('missing public projection reports a degraded state without fabricating tests', async()=>{
+  const previous=globalThis.fetch;
+  globalThis.fetch=async()=>new Response('missing',{status:404});
+  try{
+    const value=await status();
+    assert.deepEqual(value,{
+      state:'DEGRADED',
+      source:'https://bydenoso.github.io/Pantheon/tower-projection/projection.json',
+      reason:'PUBLIC_PROJECTION_HTTP_404',
+      tests_available:false
+    });
+    assert.equal(Object.hasOwn(value,'tests'),false);
+  } finally { globalThis.fetch=previous; }
+});
