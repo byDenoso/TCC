@@ -104,6 +104,11 @@
   align-items: start;
   gap: clamp(1.25rem, 3.5vw, 3.6rem);
 }
+#m31 .atlas-spread {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 1.25rem;
+}
+#m31 .atlas-dossier { max-inline-size: 54rem; }
 .atlas-figure { min-width: 0; }
 .atlas-photo, .atlas-portrait, .exp-map {
   position: relative;

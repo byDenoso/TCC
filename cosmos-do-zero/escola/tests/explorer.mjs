@@ -65,6 +65,14 @@ try {
   assert.equal(await orion.locator('.atlas-photo').getAttribute('data-zoom'), 'true');
   assert.match(await orion.locator('.atlas-reading').innerText(), /Trapézio/);
 
+  const panorama = await desktop.locator('#m31 .atlas-spread').evaluate((spread) => {
+    const photo = spread.querySelector('.atlas-photo').getBoundingClientRect();
+    const dossier = spread.querySelector('.atlas-dossier').getBoundingClientRect();
+    return { spread: spread.clientWidth, image: photo.width, imageBottom: photo.bottom, dossierTop: dossier.top };
+  });
+  assert(panorama.image >= panorama.spread * 0.99, 'Andrômeda ocupa a largura do capítulo');
+  assert(panorama.dossierTop >= panorama.imageBottom, 'A ficha fica abaixo do mosaico');
+
   const web = desktop.locator('#teia');
   await web.getByRole('button', { name: 'Fatias', exact: true }).click();
   await web.getByRole('slider', { name: 'Profundidade da fatia' }).press('End');
