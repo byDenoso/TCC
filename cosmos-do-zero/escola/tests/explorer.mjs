@@ -104,7 +104,11 @@ try {
   assert.equal(await mobile.locator('canvas').count(), 0);
   for (const width of [320, 360, 721, 768]) {
     await mobile.setViewportSize({ width, height: 740 });
-    assert(await mobile.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth));
+    const layout = await mobile.evaluate(() => ({
+      content: document.documentElement.scrollWidth,
+      viewport: document.documentElement.clientWidth,
+    }));
+    assert(layout.content <= layout.viewport, `Largura ${width} px: conteúdo ${layout.content} px, viewport ${layout.viewport} px`);
   }
   for (const id of ids) {
     await desktop.locator('#' + id).scrollIntoViewIfNeeded();

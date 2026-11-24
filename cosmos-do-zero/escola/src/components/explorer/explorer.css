@@ -248,6 +248,7 @@
 .atlas-source { display: inline-block; font-size: .9rem; font-weight: 600; }
 
 .exp-map {
+  width: 100%;
   aspect-ratio: 1.75;
   min-height: 12rem;
   isolation: isolate;
