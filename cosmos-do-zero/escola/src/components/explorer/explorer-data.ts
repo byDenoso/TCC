@@ -49,7 +49,7 @@ export const stations: Station[] = [
     frame: 'Sete órbitas em 0,062 au',
     text: 'Sete planetas passam diante de uma anã vermelha. Cada trânsito produz uma pequena queda no brilho da estrela. Variações no horário dos trânsitos ajudam a medir a interação gravitacional entre os planetas.',
     guide:
-      'O planeta h orbita a aproximadamente 0,062 au. Compare esse valor com os 0,39 au de Mercúrio. A órbita de Mercúrio caberia dentro deste sistema?',
+      'O planeta h orbita a aproximadamente 0,062 au. Compare esse valor com os 0,39 au de Mercúrio. Quantas vezes o semieixo de Mercúrio é maior que o do planeta h?',
     convention:
       'Semieixos e períodos são arredondados a partir do catálogo. As fases, cores e dimensões dos símbolos são ilustrativas. As órbitas circulares simplificam a geometria.',
     source: 'NASA Exoplanet Archive · TRAPPIST-1',
@@ -61,15 +61,15 @@ export const stations: Station[] = [
     short: 'Órion',
     family: 'Região de formação estelar',
     measure: 'Distância da Terra',
-    value: '≈ 1.500 anos-luz',
+    value: '≈ 1.300 anos-luz',
     frame: 'Campo de referência de 3,4 anos-luz',
     text: 'Estrelas jovens aquecem e ionizam o gás que as rodeia. Próximo do Trapézio, a radiação ultravioleta escava uma cavidade. A mesma nebulosa reúne gás luminoso, poeira que absorve luz e estrelas em formação.',
     guide:
-      'Gire a nuvem. Filamentos que se sobrepunham no plano do céu se separam na outra projeção. Uma fotografia registra apenas uma dessas direções.',
+      'Localize o Trapézio e alterne os dois canais do Webb. Onde o gás ganha mais destaque em relação às estrelas?',
     convention:
-      'Nuvem volumétrica sintética. A largura de referência corresponde a um campo do Hubble na região interna. A distribuição do gás e suas cores são ilustrativas.',
-    source: 'NASA/Hubble · campo interno de Órion',
-    url: 'https://science.nasa.gov/asset/hubble/orion-nebula-2/',
+      'As duas composições estão alinhadas. As cores representam filtros do infravermelho, que o olho humano não vê.',
+    source: 'ESA/Webb · mosaico e filtros de Órion',
+    url: 'https://www.esa.int/media/slider-orion-nebula-in-nircam-short-versus-long-wavelength-channel-aligned',
   },
   {
     id: 'm31',
@@ -79,11 +79,11 @@ export const stations: Station[] = [
     measure: 'Distância da Terra',
     value: '≈ 2,5 milhões de anos-luz',
     frame: 'Disco e bojo de uma espiral',
-    text: 'Em Andrômeda, a concentração de luz no centro traça o bojo. Braços no disco reúnem gás, poeira e estrelas jovens. Vemos o disco inclinado a partir da Terra. Mudar o ponto de vista revela o efeito dessa projeção.',
+    text: 'Em Andrômeda, a concentração de luz no centro traça o bojo. Braços no disco reúnem gás, poeira e estrelas jovens. Vemos o disco inclinado a partir da Terra. As faixas mais escuras acompanham a poeira no disco.',
     guide:
-      'Leve a inclinação até 85° e depois até 5°. O disco muda de aparência. A distribuição de pontos continua sendo a mesma.',
+      'Compare o bojo central com o disco externo. Onde aparecem mais regiões azuladas?',
     convention:
-      'Espiral gerada por procedimento geométrico. Braços, estrelas e luz central representam componentes da galáxia. A câmera pode assumir orientações diferentes da observada na Terra.',
+      'As bordas recortadas mostram os limites da cobertura observacional de cada parte do mosaico.',
     source: 'NASA/Hubble · Messier 31',
     url: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-31/',
   },
@@ -95,11 +95,11 @@ export const stations: Station[] = [
     measure: 'Distância da Terra até M87',
     value: '≈ 54 milhões de anos-luz',
     frame: 'Concentração de galáxias em torno de M87',
-    text: 'A galáxia elíptica M87 domina a região central do aglomerado de Virgem. Nesta escala, cada mancha luminosa representa uma galáxia inteira. O tamanho do símbolo destaca a concentração central.',
+    text: 'A galáxia elíptica M87 domina a região central do aglomerado de Virgem. M49 marca outro subgrupo ao sul. O campo óptico registra galáxias do aglomerado e objetos em primeiro e segundo plano.',
     guide:
-      'Compare a concentração central com as bordas enquanto gira a câmera. Uma separação pequena no mapa pode esconder uma grande separação na direção da visão.',
+      'Localize M87 e a Cadeia de Markarian. Depois procure M49 e compare a posição dos dois subgrupos no céu.',
     convention:
-      'Distribuição didática de galáxias em profundidade. M87 ancora o centro do esquema. As demais posições, tamanhos e cores são sintéticos.',
+      'Composição óptica do SDSS com norte para cima. As marcas indicam posições projetadas no céu.',
     source: 'NASA/Hubble · M87 e o aglomerado de Virgem',
     url: 'https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-87/',
   },
@@ -113,7 +113,7 @@ export const stations: Station[] = [
     frame: 'Volume ilustrativo com filamentos e vazios',
     text: 'A gravidade amplifica diferenças de densidade. A matéria se concentra em nós e filamentos que delimitam regiões extensas de baixa densidade. Uma coordenada comóvel retira a expansão média do Universo ao comparar épocas diferentes.',
     guide:
-      'Siga um filamento até a junção com outros. Um nó nesta escala pode abrigar aglomerados inteiros, como o da parada anterior.',
+      'Siga uma faixa de galáxias no mapa DESI. Depois alterne as fatias do modelo para ver como o padrão muda com a profundidade.',
     convention:
       'Rede sintética de nós e filamentos, com a mesma escala nos três eixos. O lado do cubo corresponde ao da caixa TNG100. A cena usa uma distribuição própria e identifica uma extensão espacial, sem uma distância observacional à Terra.',
     source: 'Nelson et al. · dimensões das caixas IllustrisTNG',

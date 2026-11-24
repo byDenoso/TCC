@@ -1,3 +1,5 @@
+import { atlasMedia } from '../src/components/explorer/atlas-media';
+import { stations } from '../src/components/explorer/explorer-data';
 import { Lead, Meta } from '../src/components/Frame';
 import { curriculum } from '../src/lib/content';
 import { labs } from '../src/lib/model';
@@ -47,6 +49,13 @@ export default function Sources({ sources }: { sources: { name: string; url: str
           </a>
           .
         </p>
+        <h2>Imagens do Explorador</h2>
+        <ul>
+          {stations.map((station) => {
+            const media = atlasMedia[station.id as keyof typeof atlasMedia];
+            return <li key={station.id}><strong>{station.short}</strong> · {media.kind}. <a href={media.source}>{media.credit}</a></li>;
+          })}
+        </ul>
         <h2>Pesquisa pública</h2>
         <p>
           O acervo do NEXO registra hipóteses, testes e resultados com escopo próprio. Os exercícios do

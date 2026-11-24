@@ -1,4 +1,6 @@
 import { Meta } from '../src/components/Frame';
+import { atlasMedia, type AtlasId } from '../src/components/explorer/atlas-media';
+import { stations } from '../src/components/explorer/explorer-data';
 import { LevelCard } from '../src/components/Catalog';
 import { CourseImage } from '../src/components/CourseImage';
 import HeroSky from '../src/components/hero/HeroSky';
@@ -71,6 +73,33 @@ export default function Home({ start, featured }: { start: string; featured: Car
           {[0, 1, 2, 3, 4, 5].map((i) => (
             <LevelCard i={i} key={i} />
           ))}
+        </div>
+      </section>
+      <section className="home-atlas">
+        <div className="wrap block">
+          <div className="section-title">
+            <div>
+              <p className="kicker">Atlas do Universo</p>
+              <h2>Da órbita à teia cósmica.</h2>
+              <p>Escolha uma imagem para explorar o que muda de uma escala para a seguinte.</p>
+            </div>
+            <a className="text-link" href="/explorador/">Abrir o Explorador</a>
+          </div>
+          <div className="home-atlas-grid">
+            {stations.map((station) => {
+              const id = station.id as AtlasId;
+              const media = atlasMedia[id];
+              return (
+                <a href={'/explorador/#' + id} key={id} className={'home-atlas-card home-atlas-' + id}>
+                  <img src={'/atlas/mini-' + id + '.webp'} alt="" width="620" height="380" loading="lazy" decoding="async" />
+                  <div>
+                    <h3>{station.short}</h3>
+                    <p>{media.invitation}</p>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
         </div>
       </section>
       <section className="home-lab">
