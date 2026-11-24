@@ -1,0 +1,218 @@
+/* Cosmos / interface premium. Camada de apresentação; não altera dados ou instrumentos. */
+:root {
+  --paper: #f5f7f9;
+  --ink: #132236;
+  --muted: #435568;
+  --line: #d7e0e8;
+  --navy: #080f1e;
+  --cosmos-accent: #a9d7ef;
+  --cosmos-surface: #fff;
+  --cosmos-radius: 18px;
+  --cosmos-ease: cubic-bezier(.22,.8,.22,1);
+  --cosmos-spring: cubic-bezier(.22,.85,.3,1.16);
+  --cosmos-shadow: 0 1px 2px #172b4210, 0 12px 32px -24px #172b4252;
+  --cosmos-lift: 0 4px 10px #142c4210, 0 20px 46px -22px #18344c52;
+}
+body { line-height: 1.65; }
+h1, h2 { letter-spacing: -.058em; font-weight: 570; }
+h3 { font-weight: 600; letter-spacing: -.032em; }
+.wrap { max-width: 1240px; }
+.block { padding-block: clamp(3.4rem, 6.4vw, 6.6rem); }
+.section-title { margin-bottom: clamp(1.6rem, 3.1vw, 2.5rem); }
+.section-title .kicker { letter-spacing: .11em; }
+.section-title h2 { max-width: 24ch; }
+.deck, .hero-deck { text-wrap: pretty; }
+:where(.metric strong, .controls output, .scene-clock, .progress-list) { font-variant-numeric: tabular-nums; }
+
+/* A barra mantém a altura original e os alvos de toque. */
+.site-header {
+  background: #080f1e;
+  background: linear-gradient(105deg,#101d30 0%,#080f1e 65%);
+}
+.bar { border-bottom-color: #a1bad52c; }
+.wordmark svg { color: #c8e4f7; }
+.desktop-nav a { position: relative; }
+.desktop-nav a[aria-current] { color: #c6e8fa; }
+.account-link { border-color: #7890a567; background: #a4c6e40a; }
+#mobile-menu { background: #101c2c; }
+:where(a, button, summary, input, select, textarea):focus-visible {
+  outline-offset: 4px;
+}
+
+/* Hero: os anéis e o campo estelar existentes continuam sendo a cena principal.
+   A máscara fica abaixo dos textos e não recebe eventos. */
+.hero { border-bottom: 1px solid #36495e; }
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg,#080f1ee0 0%,#080f1e9e 30%,#080f1e26 52%,transparent 70%),
+    radial-gradient(ellipse at 18% 34%,#294c6c2b,transparent 58%);
+}
+.hero h1 { font-weight: 545; letter-spacing: -.065em; }
+.hero h1 em { color: #b8dff2; }
+.hero-deck { color: #e1e9f1; }
+.hero .kicker { color: #c5e2f1; }
+.hero-caption { color: #d6e4ee; }
+.cosmos-sky__instrument { background: #0b1728e8; border-color: #9cb6d46b; }
+.btn.light { background: #edf6fc; box-shadow: 0 3px 18px #b5d9ef1c; }
+.btn.ghost { background: #13243bc4; border-color: #8aa5bd; }
+.btn.dark { background: #17344b; }
+.btn, .account-link, .text-link, .small-btn, .tabs button, .field,
+.scene-toolbar button, .scene-bottom button {
+  transition: background-color .2s, color .2s, border-color .2s, box-shadow .24s, transform .26s var(--cosmos-spring);
+}
+
+/* Catálogo: sequência didática preservada, com proporções assimétricas em telas amplas. */
+.level-grid, .feature-grid, .index-grid { gap: clamp(1rem, 2vw, 1.6rem); }
+.level-card, .feature, .index-card {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--cosmos-radius);
+  background: var(--cosmos-surface);
+  box-shadow: var(--cosmos-shadow);
+  transition: transform .34s var(--cosmos-spring), box-shadow .28s var(--cosmos-ease), border-color .25s;
+}
+.level-card { display: flex; flex-direction: column; }
+.card-art { aspect-ratio: auto; height: clamp(132px, 15vw, 202px); flex-shrink: 0; }
+.card-art img { transition: transform .55s var(--cosmos-ease); }
+.level-index {
+  top: .9rem;
+  left: .95rem;
+  background: #071524ee;
+  border-color: #d4e7f285;
+  padding: .34rem .7rem;
+  color: #f5faff;
+}
+.card-copy { flex: 1; padding: clamp(1.05rem, 2vw, 1.5rem); }
+.card-copy h3 { margin-block: .48rem .62rem; }
+.card-copy small, .feature small, .lesson-list small { color: #385b73; }
+.card-copy p { max-width: 42ch; line-height: 1.6; }
+.feature { display: flex; flex-direction: column; gap: .35rem; padding: .75rem .75rem 1.35rem; overflow: hidden; }
+.feature img { margin: 0 0 .55rem; width: 100%; aspect-ratio: 2; border-radius: 12px; }
+.feature small, .feature h3 { margin-inline: .55rem; }
+.feature h3 { margin-top: .35rem; }
+.index-card { padding: clamp(1.15rem,2.4vw,1.8rem); }
+.level-card::after, .feature::after, .index-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  opacity: 0;
+  transition: opacity .25s var(--cosmos-ease), border-color .25s;
+}
+@supports (mask-composite: exclude) {
+  .level-card::after, .feature::after, .index-card::after {
+    border: 0;
+    padding: 1.5px;
+    background: radial-gradient(230px circle at var(--cosmos-spot-x,50%) var(--cosmos-spot-y,0%),#4c9bc8 0%,#b8dcea 44%,transparent 100%);
+    mask: linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+  }
+}
+.level-card:focus-visible::after, .feature:focus-visible::after, .index-card:focus-visible::after { opacity: 1; border-color: #467da0; }
+@media (min-width: 1080px) {
+  .level-grid { grid-template-columns: repeat(12,minmax(0,1fr)); }
+  .level-grid > .level-card { grid-column: span 4; }
+  .level-grid > .level-card:nth-child(6n+1), .level-grid > .level-card:nth-child(6n+6) { grid-column: span 5; }
+  .level-grid > .level-card:nth-child(6n+3), .level-grid > .level-card:nth-child(6n+4) { grid-column: span 3; }
+}
+@media (min-width: 681px) and (max-width: 1079px) {
+  .level-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+/* Superfícies com contraste explícito; efeitos de vidro só em controles escuros. */
+.home-lab, .research-band, .lead {
+  background-color: #0d192b;
+  background-image:
+    radial-gradient(ellipse at 7% 14%,#29496585,transparent 52%),
+    radial-gradient(ellipse at 89% 72%,#1b3859b0,transparent 48%),
+    linear-gradient(135deg,#0c1526,#142338);
+}
+.home-lab .kicker, .research-band .kicker, .lead .kicker { color: #c2e4f3; }
+.home-lab .controls .kicker { color: #355a72; }
+.research-grid { padding-block: clamp(3rem,6vw,5.2rem); }
+.laboratory { border-radius: var(--cosmos-radius); box-shadow: 0 18px 55px -26px #07101fb0; }
+.controls { background: #f4f7f9; }
+.plot, .related, .exercise, .method, .account-box, .activity, .challenge {
+  border-radius: 14px;
+  box-shadow: var(--cosmos-shadow);
+}
+.metric { border-color: #cad7e2; }
+.field, .preset select, .small-btn, .tabs button { border-radius: 9px; }
+.field:focus { border-color: #286b91; box-shadow: 0 0 0 3px #347a9f20; }
+.lesson-aside { border-left: 1px solid var(--line); background: #fff9; border-radius: 0 12px 12px 0; }
+.lesson header .deck { max-width: 62ch; color: var(--muted); }
+.lesson-list li a { padding-inline: .7rem; border-radius: 8px 8px 0 0; transition: background-color .2s; }
+.progress-list progress { border-radius: 1rem; overflow: hidden; }
+@supports (backdrop-filter: blur(10px)) {
+  .cosmos-sky__instrument { background: #0a1729ce; backdrop-filter: blur(10px); }
+  .btn.ghost { backdrop-filter: blur(8px); }
+  .level-index { background: #071524dc; backdrop-filter: blur(7px); }
+}
+
+/* Skeleton vinculado ao carregamento real. Sem JS, a imagem nunca é ocultada. */
+.card-art img, .feature img { background-color: #172b42; }
+html[data-ready='true'] img[data-image-state='pending'] {
+  background-image: linear-gradient(105deg,#162c43 20%,#36536b 47%,#162c43 73%);
+  background-size: 220% 100%;
+}
+
+/* Movimento finito, por entrada na área visível, sem esconder o conteúdo antes de JS. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-text, .hero-actions { animation: none; }
+  .hero-text > .kicker { animation: cosmos-reveal .52s var(--cosmos-ease) both; }
+  .hero h1 { animation: cosmos-reveal .72s .055s var(--cosmos-ease) both; }
+  .hero-deck { animation: cosmos-reveal .65s .12s var(--cosmos-ease) both; }
+  .hero-actions { animation: cosmos-reveal .62s .19s var(--cosmos-ease) both; }
+  [data-cosmos-enter='shown'] {
+    animation: cosmos-reveal .58s var(--cosmos-stagger,0ms) var(--cosmos-ease) backwards;
+  }
+  html[data-ready='true'] img[data-image-state='pending'] { animation: cosmos-skeleton 1.45s ease-in-out 3; }
+  @keyframes cosmos-reveal {
+    from { opacity: .76; translate: 0 9px; }
+    to { opacity: 1; translate: 0 0; }
+  }
+  @keyframes cosmos-skeleton { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+  @media (hover:hover) and (pointer:fine) {
+    .level-card:hover, .feature:hover, .index-card:hover {
+      transform: translateY(-4px);
+      border-color: #a4bccc;
+      box-shadow: var(--cosmos-lift);
+    }
+    .level-card:hover::after, .feature:hover::after, .index-card:hover::after { opacity: 1; border-color: #a4bccc; }
+    .level-card:hover .card-art img { transform: scale(1.027); }
+    .btn:hover, .account-link:hover { transform: translateY(-2px); }
+    .btn:active, .account-link:active, .level-card:active { transform: translateY(0) scale(.99); }
+    .lesson-list li a:hover { background: #e9f0f5; }
+  }
+}
+@media (max-width: 680px) {
+  .hero::after {
+    background: linear-gradient(180deg,#080f1eb0 0%,#080f1e55 30%,transparent 60%);
+  }
+  .hero h1 { letter-spacing: -.052em; }
+  .block { padding-block: 3.25rem; }
+  .level-card, .feature, .index-card { border-radius: 14px; }
+  .card-art { height: auto; aspect-ratio: 2.4; }
+  .feature { padding: .65rem .65rem 1.15rem; }
+  .lesson-list li a { padding-inline: .2rem; }
+  .laboratory { border-radius: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-text, .hero-text > *, [data-cosmos-enter],
+  html[data-ready='true'] img[data-image-state='pending'] { animation: none !important; translate: none; }
+  .btn, .account-link, .level-card, .feature, .index-card, .card-art img { transform: none !important; transition: none !important; }
+}
+@media print {
+  .lead, .research-band, .home-lab { background: white; color: black; }
+  .level-card, .feature, .index-card, .plot, .related, .exercise, .method { box-shadow: none; }
+}

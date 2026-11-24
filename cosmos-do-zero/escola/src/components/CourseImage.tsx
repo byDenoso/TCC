@@ -1,8 +1,19 @@
-// Cards occupy one to three columns. The full-resolution source and its credit remain in /imagens.
+import { useEffect, useRef } from 'react';
+
+// Cards preserve their intrinsic dimensions and original source/credit.
 export function CourseImage({ file, alt = '', sizes }: { file: string; alt?: string; sizes: string }) {
   const base = '/imagens/mini/' + file.replace(/\.webp$/, '');
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const img = ref.current;
+    if (img) img.dataset.imageState = img.complete ? (img.naturalWidth ? 'ready' : 'error') : 'pending';
+  }, [file]);
   return (
     <img
+      ref={ref}
+      data-image-state="pending"
+      onLoad={(event) => { event.currentTarget.dataset.imageState = 'ready'; }}
+      onError={(event) => { event.currentTarget.dataset.imageState = 'error'; }}
       loading="lazy"
       decoding="async"
       src={base + '-440.webp'}

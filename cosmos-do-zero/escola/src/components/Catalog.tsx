@@ -9,7 +9,7 @@ export function LevelCard({ i }: { i: number }) {
       <div className="card-art">
         <CourseImage
           file={l.image}
-          sizes="(max-width: 680px) calc(100vw - 36px), (max-width: 900px) 45vw, (max-width: 1300px) 30vw, 390px"
+          sizes="(max-width: 680px) calc(100vw - 36px), (max-width: 1079px) 45vw, (max-width: 1300px) 40vw, 510px"
           alt={
             i === 2
               ? 'Fotografia de M51 e sua companheira, Hubble'

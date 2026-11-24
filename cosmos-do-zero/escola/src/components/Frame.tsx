@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { NEXO, ORIGIN } from '../lib/school';
+import { usePremiumMotion } from './premium-motion';
 export function OrbitMark() {
   return (
     <svg viewBox="0 0 48 42" fill="none" aria-hidden="true">
@@ -43,6 +44,7 @@ const nav = [
 export function Frame({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const disclosure = useRef<HTMLDetailsElement>(null);
+  usePremiumMotion(router.asPath);
   useEffect(() => {
     document.documentElement.dataset.ready = 'true';
     if (disclosure.current) disclosure.current.open = false;

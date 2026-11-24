@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { verifyHero } from './hero-checks.mjs';
 import { verifyExpansion } from './expansion-checks.mjs';
+import { verifyPremium } from './premium-checks.mjs';
 import { mkdir, readFile } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -253,6 +254,8 @@ try {
   await p.waitForTimeout(350);
   await p.getByRole('button', { name: 'Pausar' }).click();
   checks.push('Laboratório em navegador sem WebGL');
+  await verifyPremium(browser, base);
+  checks.push('Interface premium: bento, carregamento de imagens, movimento reduzido e quatro larguras');
   await verifyHero(browser, base);
   checks.push('Cena de Saturno, recursos sob demanda, teclado e navegação sem JavaScript');
   assert.deepEqual(errors, []);
