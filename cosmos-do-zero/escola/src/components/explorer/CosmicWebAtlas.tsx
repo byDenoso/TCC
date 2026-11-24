@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useId, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AtlasPhoto } from './AtlasPhoto';
 import { atlasMedia, webPoints } from './atlas-media';
@@ -29,6 +29,7 @@ class SceneGuard extends Component<{ children: ReactNode; onError: () => void },
 }
 
 function WebSlice() {
+  const controlId = useId();
   const [layer, setLayer] = useState(1);
   const path = useMemo(() => {
     const min = webBoxSide * (layer / 3 - 0.5);
@@ -47,9 +48,9 @@ function WebSlice() {
         </svg>
       </div>
       <div className="atlas-model-tools">
-        <label className="atlas-range">
+        <label className="atlas-range" htmlFor={controlId}>
           <span>Profundidade da fatia <output>{layer + 1} de 3</output></span>
-          <input type="range" min="0" max="2" value={layer} onChange={(event) => setLayer(Number(event.target.value))} />
+          <input id={controlId} aria-label="Profundidade da fatia" type="range" min="0" max="2" value={layer} onChange={(event) => setLayer(Number(event.target.value))} />
         </label>
       </div>
     </>
@@ -57,6 +58,7 @@ function WebSlice() {
 }
 
 export function CosmicWebAtlas({ station }: { station: Station }) {
+  const cameraId = useId();
   const [mode, setMode] = useState<View>('Mapa DESI');
   const [point, setPoint] = useState<number | null>(null);
   const [camera, setCamera] = useState(startView);
@@ -119,13 +121,13 @@ export function CosmicWebAtlas({ station }: { station: Station }) {
               </SceneGuard>
             </div>
             <div className="atlas-model-tools atlas-camera">
-              <label className="atlas-range">
+              <label className="atlas-range" htmlFor={cameraId + '-rotation'}>
                 <span>Giro <output>{formatN(camera.azimuth, 0)}°</output></span>
-                <input type="range" min="0" max="359" value={camera.azimuth} onChange={(event) => setCamera({ ...camera, azimuth: Number(event.target.value) })} />
+                <input id={cameraId + '-rotation'} aria-label="Giro do volume" type="range" min="0" max="359" value={camera.azimuth} onChange={(event) => setCamera({ ...camera, azimuth: Number(event.target.value) })} />
               </label>
-              <label className="atlas-range">
+              <label className="atlas-range" htmlFor={cameraId + '-tilt'}>
                 <span>Inclinação <output>{formatN(camera.tilt, 0)}°</output></span>
-                <input type="range" min="5" max="85" value={camera.tilt} onChange={(event) => setCamera({ ...camera, tilt: Number(event.target.value) })} />
+                <input id={cameraId + '-tilt'} aria-label="Inclinação do volume" type="range" min="5" max="85" value={camera.tilt} onChange={(event) => setCamera({ ...camera, tilt: Number(event.target.value) })} />
               </label>
             </div>
           </>

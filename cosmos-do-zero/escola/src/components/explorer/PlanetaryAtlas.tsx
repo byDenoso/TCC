@@ -73,9 +73,9 @@ function Transit({ planet }: { planet: number }) {
         </svg>
       </div>
       <div className="atlas-model-tools">
-        <label className="atlas-range">
+        <label className="atlas-range" htmlFor={id + '-time'}>
           <span>Tempo em relação ao meio do trânsito <output>{minute > 0 ? '+' : ''}{minute} min</output></span>
-          <input aria-label="Tempo do trânsito em minutos" type="range" min={-limit} max={limit} value={minute} onChange={(event) => setMinute(Number(event.target.value))} />
+          <input id={id + '-time'} aria-label="Tempo do trânsito em minutos" type="range" min={-limit} max={limit} value={minute} onChange={(event) => setMinute(Number(event.target.value))} />
         </label>
         <p>Queda máxima de {formatN(depth, 2)}% neste modelo de disco uniforme e passagem central.</p>
       </div>
@@ -94,6 +94,7 @@ export function Credits({ id }: { id: keyof typeof atlasMedia }) {
 }
 
 export function PlanetaryAtlas({ station, guided }: { station: Station; guided: boolean }) {
+  const clockId = useId();
   const isSolar = station.id === 'solar';
   const planets = isSolar ? solar : trappist;
   const modes: Mode[] = isSolar ? ['Sistema', 'Órbitas'] : ['Sistema', 'Órbitas', 'Trânsito'];
@@ -160,9 +161,9 @@ export function PlanetaryAtlas({ station, guided }: { station: Station; guided: 
             </div>
             {planetChoices}
             <div className="atlas-model-tools">
-              <label className="atlas-range">
+              <label className="atlas-range" htmlFor={clockId}>
                 <span>Tempo transcorrido <output>{formatN(day, isSolar ? 0 : 1)} dias</output></span>
-                <input aria-label="Tempo transcorrido em dias" type="range" min={0} max={isSolar ? 365 : 20} step={isSolar ? 1 : 0.1} value={day} onChange={(e) => setDay(Number(e.target.value))} />
+                <input id={clockId} aria-label="Tempo transcorrido em dias" type="range" min={0} max={isSolar ? 365 : 20} step={isSolar ? 1 : 0.1} value={day} onChange={(e) => setDay(Number(e.target.value))} />
               </label>
               <label className="exp-check">
                 <input type="checkbox" checked={linear} onChange={(e) => { setLinear(e.target.checked); setInner(false); }} />
