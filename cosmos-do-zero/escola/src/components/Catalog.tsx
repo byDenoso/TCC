@@ -21,7 +21,6 @@ export function LevelCard({ i }: { i: number }) {
         <span className="level-index">Nível {String(i + 1).padStart(2, '0')}</span>
       </div>
       <div className="card-copy">
-        <small>{l.subjects.length} disciplinas</small>
         <h3>{l.name}</h3>
         <p>{l.blurb}</p>
       </div>
