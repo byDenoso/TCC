@@ -1,0 +1,27 @@
+:root {
+  --paper: #f7f5ee;
+  --ink: #202b2d;
+  --muted: #536465;
+  --blue: #205c60;
+  --line: #ccd0c6;
+  --cosmos-radius: 2px;
+  --cosmos-shadow: none;
+  --cosmos-lift: none;
+}
+h1, h2 { font-family: Georgia, 'Times New Roman', serif; font-weight: 500; letter-spacing: -.035em; }
+.site-header { background: #142022; }
+.editorial-opening { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; padding-block: clamp(2.5rem, 7vw, 6.5rem); }
+.editorial-opening h1 { font-size: clamp(3.5rem, 8vw, 8rem); margin-block: .2em; }
+.editorial-opening .deck { max-width: 42ch; }
+.editorial-opening figure img { display: block; width: 100%; height: auto; }
+.editorial-opening figcaption { padding-block: 1rem; border-bottom: 1px solid var(--line); font-size: .875rem; }
+.editorial-opening figcaption strong { font: 500 1.5rem/1.2 Georgia, serif; }
+.editorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-block: 1.5rem; }
+.btn.editorial-primary { background: var(--blue); color: white; border-radius: 2px; }
+.hero h2 { font-size: clamp(2rem, 4vw, 4.5rem); color: white; }
+.level-card, .feature, .index-card, .laboratory, .plot, .related, .exercise, .method, .home-atlas-card { border-radius: 2px; box-shadow: none; }
+.level-card:hover, .feature:hover, .index-card:hover { transform: none; box-shadow: none; }
+.level-card::after, .feature::after, .index-card::after { display: none; }
+.feature img, .card-art img { border-radius: 0; }
+.home-atlas-card small { display: block; font-size: .8rem; line-height: 1.45; margin-top: .5rem; }
+@media (max-width: 760px) { .editorial-opening { grid-template-columns: minmax(0, 1fr); } }

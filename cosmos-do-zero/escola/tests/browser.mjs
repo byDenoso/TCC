@@ -50,13 +50,13 @@ try {
   await verifyExpansion(browser, base);
   checks.push('Bancada de Hubble, leitura sincronizada, comparação e movimento reduzido');
   await page('/');
-  assert.match(await p.title(), /Explore o Universo/);
+  assert.match(await p.title(), /Escola de física, astronomia e cosmologia/);
   await p
     .locator('main img')
     .first()
     .evaluate((i) => i.decode());
   await p.screenshot({ path: artifacts + '/inicio-desktop.png' });
-  await p.getByRole('link', { name: 'Começar a aprender', exact: true }).click();
+  await p.getByRole('link', { name: 'Começar pela primeira aula', exact: true }).click();
   await p.waitForURL('**/aulas/**');
   const slug = new URL(p.url()).pathname.split('/')[2];
   assert((await p.locator('.katex').count()) > 0);

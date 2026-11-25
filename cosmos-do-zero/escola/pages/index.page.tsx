@@ -24,23 +24,34 @@ export function getStaticProps() {
 export default function Home({ start, featured }: { start: string; featured: Card[] }) {
   return (
     <>
-      <Meta title="Explore o Universo. Entenda suas leis." />
+      <Meta title="Cosmos · Escola de física, astronomia e cosmologia" />
+      <section className="wrap editorial-opening">
+        <div>
+          <p className="kicker">Escola de ciências</p>
+          <h1>Cosmos</h1>
+          <p className="deck">Programa de física, astronomia e cosmologia em seis níveis. Estude as relações matemáticas, compare observações e teste modelos nos laboratórios.</p>
+          <div className="editorial-actions">
+            <a className="btn editorial-primary" href={'/aulas/' + start + '/'}>Começar pela primeira aula</a>
+            <a className="text-link" href="/trilhas/">Consultar o programa</a>
+          </div>
+          <p>Dener Pereira · Cosmos</p>
+        </div>
+        <figure>
+          <img src="/atlas/m31.webp" alt="Mosaico do disco de Andrômeda observado pelo Hubble." fetchPriority="high" />
+          <figcaption><strong>Galáxia de Andrômeda</strong><p>{atlasMedia.m31.kind} · {atlasMedia.m31.credit}. <a href={atlasMedia.m31.source}>Imagem e legenda originais</a>.</p></figcaption>
+        </figure>
+      </section>
       <section className="hero">
         <HeroSky />
         <div className="wrap hero-content">
           <div className="hero-text">
             <p className="kicker">
               <i />
-              Escola de ciências do Universo
+              Modelo ilustrativo
             </p>
-            <h1>
-              Explore o Universo.
-              <br />
-              <em>Entenda suas leis.</em>
-            </h1>
+            <h2>Saturno e seus anéis</h2>
             <p className="hero-deck">
-              Aprenda física, astronomia e cosmologia. Faça uma previsão, mude os parâmetros e veja o que
-              o Universo permite.
+              Varie a inclinação dos anéis para comparar a geometria projetada do planeta.
             </p>
             <div className="hero-actions">
               <a className="btn light" href={'/aulas/' + start + '/'}>
@@ -63,7 +74,7 @@ export default function Home({ start, featured }: { start: string; featured: Car
         <div className="section-title">
           <div>
             <p className="kicker">Percursos de estudo</p>
-            <h2>Escolha sua trilha.</h2>
+            <h2>Programa de estudos</h2>
           </div>
           <a className="text-link" href="/trilhas/">
             Ver todas as disciplinas
@@ -80,7 +91,7 @@ export default function Home({ start, featured }: { start: string; featured: Car
           <div className="section-title">
             <div>
               <p className="kicker">Atlas do Universo</p>
-              <h2>Da órbita à teia cósmica.</h2>
+              <h2>Atlas do Universo</h2>
               <p>Escolha uma imagem para explorar o que muda de uma escala para a seguinte.</p>
             </div>
             <a className="text-link" href="/explorador/">Abrir o Explorador</a>
@@ -102,6 +113,7 @@ export default function Home({ start, featured }: { start: string; featured: Car
                   <div>
                     <h3>{station.short}</h3>
                     <p>{media.invitation}</p>
+                    <small>{media.kind} · {media.credit}</small>
                   </div>
                 </a>
               );
@@ -128,7 +140,7 @@ export default function Home({ start, featured }: { start: string; featured: Car
         <div className="section-title">
           <div>
             <p className="kicker">Leituras selecionadas</p>
-            <h2>Aulas em destaque.</h2>
+            <h2>Aulas selecionadas</h2>
           </div>
         </div>
         <div className="feature-grid">
@@ -148,7 +160,7 @@ export default function Home({ start, featured }: { start: string; featured: Car
         <div className="wrap research-grid">
           <div>
             <p className="kicker">A escola e a pesquisa</p>
-            <h2>Da pergunta ao teste.</h2>
+            <h2>Método de investigação</h2>
             <p>
               Em cada aula, você constrói uma relação matemática, testa um exemplo e compara a previsão
               com o resultado. As aulas avançadas levam esse método ao acervo público do NEXO Research.

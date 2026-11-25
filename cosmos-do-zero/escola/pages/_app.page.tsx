@@ -6,6 +6,7 @@ import '../styles/globals.css';
 import '../src/components/hero/hero-sky.css';
 import '../src/components/explorer/explorer.css';
 import '../styles/premium.css';
+import '../styles/institutional.css';
 import { Frame } from '../src/components/Frame';
 export default function App({ Component, pageProps }: AppProps) {
   return (
