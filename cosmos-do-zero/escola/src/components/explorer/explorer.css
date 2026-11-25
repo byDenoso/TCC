@@ -374,12 +374,22 @@
   height: 100%;
   object-fit: cover;
 }
-.home-atlas-card img { transition: transform .3s ease; }
-.home-atlas-card:hover img { transform: scale(1.055); }
+.home-atlas-card img {
+  image-rendering: auto;
+  transform: scale(var(--atlas-crop, 1));
+  transition: transform .3s ease;
+}
+.home-atlas-card:hover img { transform: scale(calc(var(--atlas-crop, 1) * 1.035)); }
+.home-atlas-solar { background: #000; }
+.home-atlas-solar img { object-fit: contain; object-position: center 35%; }
+.home-atlas-trappist img { --atlas-crop: 1.9; object-position: 64% 53%; }
+.home-atlas-m31 img { --atlas-crop: 2.0; object-position: 43% 64%; }
+.home-atlas-virgo img { object-position: 45% 25%; }
+.home-atlas-teia img { object-position: 50% 72%; }
 .home-atlas-card::before {
   content: '';
   z-index: -1;
-  background: linear-gradient(0deg, #050f20f7 4%, #050f20d9 24%, #050f2000 75%);
+  background: linear-gradient(0deg, #050f20f7 3%, #050f20c9 22%, #050f2000 66%);
 }
 .home-atlas-card > div { padding: 1rem 1.2rem; }
 .home-atlas-card h3 { margin: 0; font-size: clamp(1.14rem, 2vw, 1.55rem); letter-spacing: -.035em; }
@@ -404,5 +414,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .atlas-photo-image, .home-atlas-card img { transition: none; }
-  .home-atlas-card:hover img { transform: none; }
+  .home-atlas-card:hover img { transform: scale(var(--atlas-crop, 1)); }
 }
