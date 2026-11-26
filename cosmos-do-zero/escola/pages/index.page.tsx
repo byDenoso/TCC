@@ -37,8 +37,8 @@ export default function Home({ start, featured }: { start: string; featured: Car
           <p>Dener Pereira · Cosmos</p>
         </div>
         <figure>
-          <img src="/atlas/m31.webp" alt="Mosaico do disco de Andrômeda observado pelo Hubble." fetchPriority="high" />
-          <figcaption><strong>Galáxia de Andrômeda</strong><p>{atlasMedia.m31.kind} · {atlasMedia.m31.credit}. <a href={atlasMedia.m31.source}>Imagem e legenda originais</a>.</p></figcaption>
+          <img src="https://cdn.esahubble.org/archives/images/screen/opo0501a.jpg" alt="Galáxia espiral barrada NGC 1300 observada pelo Hubble, com barra central e braços espirais." width={6637} height={3787} fetchPriority="high" />
+          <figcaption><strong>NGC 1300</strong><p>Imagem observacional · Hubble · NASA, ESA e The Hubble Heritage Team (STScI/AURA). <a href="https://esahubble.org/images/opo0501a/">Imagem e legenda originais</a>.</p></figcaption>
         </figure>
       </section>
       <section className="hero">
