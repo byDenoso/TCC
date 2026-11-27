@@ -6,6 +6,20 @@ import { compact } from '../lib/school';
 import { ExpansionDiagram } from './ExpansionDiagram';
 import { Plot } from './Plot';
 let verifiedWebGL = false;
+/** WebGL2 disponível e não desativado: a cena 3D vira a vista padrão. */
+export function temWebGL() {
+  if (verifiedWebGL) return true;
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2');
+    if (!gl) return false;
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    verifiedWebGL = true;
+    return true;
+  } catch {
+    return false;
+  }
+}
 const Scene3D = dynamic(() => import('./Scene3D'), {
   ssr: false,
   loading: () => <p className="pad">Carregando o motor 3D…</p>,
@@ -45,6 +59,10 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
     [visible, setVisible] = useState(true),
     [reveal, setReveal] = useState(65),
     [reducedMotion, setReducedMotion] = useState(false);
+  // a explicação visual vem primeiro: com WebGL, a bancada abre direto na cena 3D
+  useEffect(() => {
+    if (temWebGL()) setView(true);
+  }, []);
   useEffect(() => {
     if (!stage.current || typeof IntersectionObserver === 'undefined') return;
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));

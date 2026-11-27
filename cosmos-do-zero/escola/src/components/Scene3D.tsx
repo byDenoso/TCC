@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { orbitGuide } from '../lib/model';
 import { materialGalaxia } from './viagem/galaxia';
 import { atualizarBuracoNegro, criarBuracoNegro } from './viagem/buracoNegro';
+import { Caixas, CorposTexturizados, Espectro, Setas, Superficie, Tubos, VISUAL, separarSetas } from './cenaVisual';
 
 /*
  * Cena 3D das bancadas, no mesmo padrão da viagem da página inicial: fundo do palco (#0c1517),
@@ -28,6 +29,7 @@ type Geo = {
 };
 
 const FUNDO = '#0c1517';
+const SEM_VISUAL = {} as (typeof VISUAL)[string];
 const ESTRELA = new THREE.Color('#ffbb54');
 const CORPO = new THREE.Color('#64d8ff');
 const modelo = (nome: string) => `/viagem/${nome}-m.glb`;
@@ -130,11 +132,21 @@ function FundoTeia() {
   return <primitive object={pontos} scale={2.1 / 62} />;
 }
 
-function GalaxiasNosPontos({ dots }: { dots: number[][] }) {
+function GalaxiasNosPontos({
+  dots,
+  indices,
+  escala = 0.026,
+  ganho = 0.16,
+}: {
+  dots: number[][];
+  indices: number[];
+  escala?: number;
+  ganho?: number;
+}) {
   const gltf = useLoader(GLTFLoader, modelo('expansao'));
   const { grupo, material } = useMemo(() => {
     const src = gltf.scene.getObjectByName('galaxia') as THREE.Points;
-    const material = materialGalaxia(0.16, 0.24);
+    const material = materialGalaxia(ganho, 0.24);
     const grupo = new THREE.Group();
     let semente = 11;
     const rnd = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
@@ -142,22 +154,51 @@ function GalaxiasNosPontos({ dots }: { dots: number[][] }) {
       const p = new THREE.Points(src.geometry, material);
       p.frustumCulled = false;
       p.rotation.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
-      p.scale.setScalar(0.026);
+      p.scale.setScalar(escala);
       p.visible = false;
+      grupo.add(p);
+    }
+    return { grupo, material };
+  }, [gltf, escala, ganho]);
+  const lista = useMemo(() => [material], [material]);
+  useEscalaPontos(lista, escala, 0.9);
+  useLayoutEffect(() => {
+    grupo.children.forEach((g, k) => {
+      const d = dots[indices[k]];
+      g.visible = k < indices.length && Boolean(d);
+      if (d) g.position.set(d[0], d[1], d[2]);
+    });
+  }, [dots, grupo, indices]);
+  return <primitive object={grupo} />;
+}
+
+/**
+ * Galáxias presas a coordenadas comóveis dentro do cubo do fator de escala: o cubo cresce com a(t)
+ * e as leva junto, mas cada galáxia mantém o próprio tamanho (ligada pela gravidade, não se expande).
+ */
+function GalaxiasComoveis({ meioLado }: { meioLado: number }) {
+  const gltf = useLoader(GLTFLoader, modelo('expansao'));
+  const { grupo, material } = useMemo(() => {
+    const src = gltf.scene.getObjectByName('galaxia') as THREE.Points;
+    const material = materialGalaxia(0.3, 0.24);
+    const grupo = new THREE.Group();
+    let semente = 7;
+    const rnd = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 18; i++) {
+      const p = new THREE.Points(src.geometry, material);
+      p.frustumCulled = false;
+      p.userData.u = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).multiplyScalar(1.6);
+      p.rotation.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28);
+      p.scale.setScalar(0.022);
       grupo.add(p);
     }
     return { grupo, material };
   }, [gltf]);
   const lista = useMemo(() => [material], [material]);
-  useEscalaPontos(lista, 0.026, 0.9);
+  useEscalaPontos(lista, 0.022, 0.9);
   useLayoutEffect(() => {
-    grupo.children.forEach((g, i) => {
-      // o primeiro ponto é o observador; as galáxias ocupam os demais
-      const d = dots[i + 1];
-      g.visible = Boolean(d);
-      if (d) g.position.set(d[0], d[1], d[2]);
-    });
-  }, [dots, grupo]);
+    grupo.children.forEach((p) => p.position.copy(p.userData.u as THREE.Vector3).multiplyScalar(meioLado));
+  }, [grupo, meioLado]);
   return <primitive object={grupo} />;
 }
 
@@ -219,6 +260,20 @@ function Geometry({ lab, dots, segments, referenceOrbit, orbital, center, turn, 
   const slowFrames = useRef(0);
   const comSol = orbital;
   const galaxiasNosPontos = lab === 'expansao';
+  const visual = VISUAL[lab] ?? SEM_VISUAL;
+  // pontos que outro objeto já representa (corpo texturizado, galáxia) ou que a bancada esconde
+  const ocultos = useMemo(() => {
+    const o = new Set<number>();
+    visual.corpos?.forEach((c) => o.add(c.indice));
+    visual.galaxias?.forEach((g) => g.indices.forEach((i) => o.add(i)));
+    if (visual.semPontos) dots.forEach((_, i) => o.add(i));
+    return o;
+  }, [visual, dots]);
+  const desenho = useMemo(
+    () => (visual.setas ? separarSetas(segments) : { setas: [], resto: segments }),
+    [visual.setas, segments],
+  );
+  const indicesGalaxias = useMemo(() => dots.map((_, i) => i).slice(1), [dots]);
 
   useFrame((_, dt) => {
     if (dt < 0.14 && dt > 0.036) {
@@ -241,6 +296,21 @@ function Geometry({ lab, dots, segments, referenceOrbit, orbital, center, turn, 
       controls.dispose();
     };
   }, [camera, gl, invalidate, resetView]);
+  // em telas estreitas (celular), a câmera recua até a cena caber na largura, sem cortar as laterais
+  const distanciaBase = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    if (orbital || !cam.isPerspectiveCamera || !size.width || !size.height) return;
+    if (distanciaBase.current === null) distanciaBase.current = cam.position.length();
+    let raio = 0;
+    for (const s of segments) raio = Math.max(raio, Math.hypot(s[0], s[1], s[2]), Math.hypot(s[3], s[4], s[5]));
+    for (const d of dots) raio = Math.max(raio, Math.hypot(d[0], d[1], d[2]));
+    const meiaH = Math.tan((cam.fov * Math.PI) / 360) * (size.width / size.height);
+    const necessaria = (Math.min(raio, 2.2) * 1.2) / meiaH;
+    cam.position.setLength(Math.max(distanciaBase.current, necessaria));
+    invalidate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [camera, orbital, size.width, size.height, invalidate]);
   useLayoutEffect(() => {
     if (orbital && camera instanceof THREE.OrthographicCamera) {
       const px = Math.min(size.width / 6, size.height / 5.15);
@@ -262,8 +332,8 @@ function Geometry({ lab, dots, segments, referenceOrbit, orbital, center, turn, 
         ? 0.024
         : 0.065;
   };
-  const indicesEstrelas = useMemo(() => dots.map((_, i) => i).filter((i) => i % 3 === 0), [dots]);
-  const indicesCorpos = useMemo(() => dots.map((_, i) => i).filter((i) => i % 3 !== 0), [dots]);
+  const indicesEstrelas = useMemo(() => dots.map((_, i) => i).filter((i) => i % 3 === 0 && !ocultos.has(i)), [dots, ocultos]);
+  const indicesCorpos = useMemo(() => dots.map((_, i) => i).filter((i) => i % 3 !== 0 && !ocultos.has(i)), [dots, ocultos]);
 
   useLayoutEffect(() => {
     const count = segments.length * 2;
@@ -332,11 +402,25 @@ function Geometry({ lab, dots, segments, referenceOrbit, orbital, center, turn, 
         <group position={[center, 0, 0]}>
           <Suspense fallback={null}>
             {comSol && dots[0] && <SolNoCentro posicao={dots[0]} raio={raio(0)} />}
-            {galaxiasNosPontos && <GalaxiasNosPontos dots={dots} />}
+            {galaxiasNosPontos && <GalaxiasNosPontos dots={dots} indices={indicesGalaxias} />}
+            {visual.galaxias?.map((g, k) => (
+              <GalaxiasNosPontos key={k} dots={dots} indices={g.indices} escala={g.escala} ganho={g.ganho} />
+            ))}
+            {visual.galaxiasComoveis && dots[1] && <GalaxiasComoveis meioLado={Math.abs(dots[1][0])} />}
+            {visual.corpos && <CorposTexturizados corpos={visual.corpos} dots={dots} />}
           </Suspense>
-          <lineSegments geometry={lines} frustumCulled={false}>
-            <lineBasicMaterial color={orbital ? '#7fb7b0' : '#8fd0c6'} transparent opacity={0.85} />
-          </lineSegments>
+          {visual.superficie && <Superficie segmentos={segments} eixo={visual.superficie} />}
+          {visual.espectro && <Espectro segmentos={segments} />}
+          {visual.caixas && <Caixas segmentos={segments} bicolor={visual.caixas === 'bicolor'} />}
+          {visual.setas && desenho.setas.length > 0 && <Setas setas={desenho.setas} cor={visual.setas} />}
+          {visual.tubo && desenho.resto.length > 0 && (
+            <Tubos segmentos={desenho.resto} raio={visual.tubo.raio} cores={visual.tubo.cores} />
+          )}
+          {(visual.arame ?? 0.85) > 0 && (
+            <lineSegments geometry={lines} frustumCulled={false}>
+              <lineBasicMaterial color={orbital ? '#7fb7b0' : '#8fd0c6'} transparent opacity={visual.arame ?? 0.85} />
+            </lineSegments>
+          )}
           {orbital && (
             <lineSegments>
               <bufferGeometry>
@@ -376,6 +460,7 @@ function Geometry({ lab, dots, segments, referenceOrbit, orbital, center, turn, 
 }
 
 export default function Scene3D({ onFail, ...scene }: Geo & { onFail: () => void }) {
+  const zoom = VISUAL[scene.lab]?.zoom ?? 1;
   const frame = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const wrap = frame.current;
@@ -395,7 +480,7 @@ export default function Scene3D({ onFail, ...scene }: Geo & { onFail: () => void
         camera={
           scene.orbital
             ? { position: [0.7, -2.1, 4.6], near: 0.1, far: 60, manual: true }
-            : { position: [2.1, 1.7, 4.2], fov: 40 }
+            : { position: [2.1 * zoom, 1.7 * zoom, 4.2 * zoom], fov: 40 }
         }
         gl={{ antialias: true, alpha: false, toneMapping: THREE.AgXToneMapping }}
       >

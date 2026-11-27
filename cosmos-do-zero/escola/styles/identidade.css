@@ -303,3 +303,69 @@ footer small {
     max-height: none;
   }
 }
+
+/* aulas: a cena 3D da bancada abre a página, antes do texto e das contas */
+.lesson-scene {
+  margin: 1.6rem 0 2rem;
+  background: #0c1517;
+  border: 1px solid #24393a;
+  border-radius: 2px;
+  color: #cfe5e1;
+}
+.lesson-scene-palco {
+  position: relative;
+}
+.lesson-scene-palco .lab-webgl {
+  aspect-ratio: 16 / 9;
+  max-height: 520px;
+}
+.lesson-scene-espera {
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  font: 0.85rem 'IBM Plex Mono', ui-monospace, monospace;
+  color: #8fa9a5;
+  text-align: center;
+}
+.lesson-scene-girar {
+  position: absolute;
+  right: 0.7rem;
+  bottom: 0.7rem;
+  min-height: 40px;
+  padding: 0.35rem 0.8rem;
+  background: #142022;
+  color: #cfe5e1;
+  border: 1px solid #3d5b59;
+  border-radius: 2px;
+  font: 0.8rem 'IBM Plex Mono', ui-monospace, monospace;
+  cursor: pointer;
+}
+.lesson-scene-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem 1.4rem;
+  padding: 0.9rem 1rem 1rem;
+  border-top: 1px solid #24393a;
+}
+.lesson-scene-legenda p {
+  margin: 0;
+  max-width: 64ch;
+  min-width: 0;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #b9cfcb;
+}
+.lesson-scene-legenda strong {
+  color: #f1efe7;
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+@media (max-width: 680px) {
+  .lesson-scene-palco .lab-webgl,
+  .lesson-scene-espera {
+    aspect-ratio: 1 / 1;
+  }
+}

@@ -8,6 +8,8 @@ export async function verifyExpansion(browser, base) {
     await page.getByRole('link', { name: 'Laboratório de expansão', exact: true }).click();
     await page.waitForURL('**/laboratorios/expansao/');
     await page.waitForFunction(() => document.documentElement.dataset.ready === 'true');
+    // a bancada abre na cena 3D; o diagrama de recessão fica a um clique
+    await page.getByRole('button', { name: 'Usar 2D' }).click({ timeout: 8000 }).catch(() => {});
 
     const distance = page.getByRole('slider', { name: 'Distância da galáxia' });
     const hubble = page.getByRole('slider', { name: 'Constante de Hubble' });

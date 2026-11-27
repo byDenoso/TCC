@@ -4,6 +4,7 @@ import { Plot } from '../../src/components/Plot';
 import { curriculum, renderBody } from '../../src/lib/content';
 import { levels, type Lesson } from '../../src/lib/school';
 import { labs } from '../../src/lib/model';
+import { LessonScene } from '../../src/components/LessonScene';
 export function getStaticPaths() {
   return { paths: curriculum().map(({ meta }) => ({ params: { slug: meta.slug } })), fallback: false };
 }
@@ -45,6 +46,7 @@ export default function Article({
             <h1>{l.title}</h1>
             <p className="deck">{l.objective}</p>
           </header>
+          <LessonScene labId={l.lab} />
           <StudyTools slug={l.slug} />
           <section id="conceito" className="prose" dangerouslySetInnerHTML={{ __html: html }} />
           <section id="grafico">
@@ -100,6 +102,7 @@ export default function Article({
         <aside className="lesson-aside">
           <p className="kicker">Nesta aula</p>
           {[
+            ['visual', 'Cena 3D'],
             ['conceito', 'Conceito e cálculo'],
             ['grafico', 'Gráfico interativo'],
             ['exercicio', 'Exercício'],

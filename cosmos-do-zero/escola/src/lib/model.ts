@@ -1008,7 +1008,7 @@ function background([temperature, redshift]: number[]) {
     'Frequência do pico de Bν',
     peak,
     'GHz',
-    'A superfície de revolução mostra a forma do espectro calculado: posição axial indica frequência e raio indica radiância. A cena normaliza o pico; o gráfico mantém as unidades físicas.'
+    'O relevo mostra o espectro calculado: a frequência cresce ao longo da placa e a altura dá a radiância, com o ponto no pico. A cena normaliza o pico; o gráfico mantém as unidades físicas.'
   );
 }
 

@@ -122,7 +122,7 @@ try {
     await lab.locator('.challenge input').fill(String(target.metric));
     await lab.getByRole('button', { name: 'Registrar medida' }).click();
     await lab.getByText('Medida reproduzida. Experimento registrado.', { exact: true }).waitFor();
-    await lab.getByRole('button', { name: 'Abrir 3D' }).click();
+    // com WebGL, a bancada já abre na cena 3D
     await lab.locator('canvas').waitFor({ timeout: 15000 });
     await p.waitForTimeout(250);
     assert(await lab.locator('canvas').evaluate((c) => c.width > 0 && c.height > 0));
