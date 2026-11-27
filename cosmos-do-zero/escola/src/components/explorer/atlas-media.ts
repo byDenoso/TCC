@@ -37,7 +37,7 @@ export const atlasMedia = {
   virgo: {
     file: 'virgo.webp',
     kind: 'Mapa observacional · SDSS',
-    credit: 'Sloan Digital Sky Survey · composição SkyServer/DR18',
+    credit: 'Sloan Digital Sky Survey · composição SkyServer/DR18 · contraste realçado (arcsinh)',
     source: 'https://skyserver.sdss.org/dr18/SkyServerWS/ImgCutout/getjpeg?ra=187.25&dec=10.65&scale=25.2&width=1200&height=900',
     invitation: 'Localize galáxias no aglomerado.',
   },

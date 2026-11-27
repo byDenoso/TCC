@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AtlasPoint } from './atlas-media';
 
 type Photo = { file: string; width: number; height: number; alt: string };
@@ -14,6 +14,15 @@ export function AtlasPhoto({
 }) {
   const [zoom, setZoom] = useState(false);
   const point = selected === null ? undefined : points[selected];
+  // no celular, imagens largas ganham altura legível e se percorrem arrastando para os lados
+  const larga = photo.width / photo.height > 1.2;
+  const visor = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = visor.current;
+    if (!el || el.scrollWidth <= el.clientWidth + 1) return;
+    const alvo = point ? (point.x / 100) * el.scrollWidth : el.scrollWidth / 2;
+    el.scrollTo({ left: alvo - el.clientWidth / 2, behavior: point ? 'smooth' : 'instant' });
+  }, [point]);
   const select = (index: number) => {
     setZoom(false);
     onSelect(index);
@@ -21,7 +30,8 @@ export function AtlasPhoto({
 
   return (
     <>
-      <div className="atlas-photo" data-zoom={zoom}>
+      <div className="atlas-photo" data-zoom={zoom} data-larga={larga} ref={visor}>
+        <div className="atlas-photo-quadro" style={{ aspectRatio: photo.width + ' / ' + photo.height }}>
         <img
           className="atlas-photo-image"
           src={'/atlas/' + photo.file}
@@ -45,7 +55,9 @@ export function AtlasPhoto({
             <span aria-hidden="true">{planetary ? p.name.slice(-1) : i + 1}</span>
           </button>
         ))}
+        </div>
       </div>
+      {larga && <p className="atlas-dica">Arraste a imagem para os lados para percorrê-la.</p>}
       <div className="atlas-photo-controls">
         <div className="atlas-choices" role="group" aria-label="Pontos da imagem">
           {points.map((p, i) => (

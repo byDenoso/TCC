@@ -266,3 +266,40 @@ footer small {
   border-color: var(--c-teal);
   color: var(--c-teal);
 }
+
+/* visor de fotos do Explorador: no celular, imagens largas ficam com altura legível e rolam na horizontal */
+.atlas-photo-quadro {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+.atlas-photo-quadro .atlas-photo-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.atlas-dica {
+  display: none;
+}
+@media (max-width: 760px) {
+  .atlas-photo[data-larga='true'] {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+  .atlas-photo[data-larga='true'] .atlas-photo-quadro {
+    width: auto;
+    height: min(82vw, 360px);
+  }
+  .atlas-dica {
+    display: block;
+    margin: 0.45rem 0 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+  /* bancadas: cena 3D quadrada no celular, para o conteúdo não ficar minúsculo */
+  .lab-webgl {
+    aspect-ratio: 1 / 1;
+    max-height: none;
+  }
+}
