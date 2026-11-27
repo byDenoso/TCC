@@ -99,7 +99,7 @@ jobs:
       - name: Ler a escola no domínio público
         run: |
           for i in {1..30}; do
-            if curl -fsSL https://cosmos.denerpereira.com.br/ | grep -F 'Consultar o programa' > /dev/null; then exit 0; fi
+            if curl -fsSL https://cosmos.denerpereira.com.br/ | grep -F 'Começar a viagem' > /dev/null; then exit 0; fi
             sleep 5
           done
           exit 1
