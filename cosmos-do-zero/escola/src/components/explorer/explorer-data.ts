@@ -108,16 +108,16 @@ export const stations: Station[] = [
     name: 'Teia cósmica',
     short: 'Teia cósmica',
     family: 'Estrutura em grande escala',
-    measure: 'Lado de uma caixa de referência',
-    value: '110,7 Mpc comóveis',
-    frame: 'Volume ilustrativo com filamentos e vazios',
+    measure: 'Lado da caixa simulada',
+    value: '160 Mpc comóveis',
+    frame: 'Volume simulado com filamentos, paredes, nós e vazios',
     text: 'A gravidade amplifica diferenças de densidade. A matéria se concentra em nós e filamentos que delimitam regiões extensas de baixa densidade. Uma coordenada comóvel retira a expansão média do Universo ao comparar épocas diferentes.',
     guide:
       'Siga uma faixa de galáxias no mapa DESI. Depois alterne as fatias do modelo para ver como o padrão muda com a profundidade.',
     convention:
-      'Rede sintética de nós e filamentos, com a mesma escala nos três eixos. O lado do cubo corresponde ao da caixa TNG100. A cena usa uma distribuição própria e identifica uma extensão espacial, sem uma distância observacional à Terra.',
-    source: 'Nelson et al. · dimensões das caixas IllustrisTNG',
-    url: 'https://doi.org/10.1093/mnras/stx3040',
+      'Modelo gerado pela aproximação de Zel’dovich: um campo gaussiano com o espectro da matéria escura fria desloca 2 milhões de partículas numa caixa de 160 Mpc, e a cena mostra uma esfera de 124 Mpc de diâmetro. É o mesmo modelo da viagem da página inicial; mostra uma extensão espacial, não uma região observada do céu.',
+    source: 'Zel’dovich (1970) · aproximação para a formação de estruturas',
+    url: 'https://ui.adsabs.harvard.edu/abs/1970A%26A.....5...84Z/abstract',
   },
 ];
 

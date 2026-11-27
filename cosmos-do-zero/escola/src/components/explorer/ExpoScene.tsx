@@ -1,10 +1,69 @@
 'use client';
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { rad, orbitalSymbols, orbitPoint, orbitRadius } from './explorer-data';
 import type { CameraView, Orbit } from './explorer-data';
 import { ink, makeField } from './explorer-geometry';
+import { carregarTeia } from '../viagem/teiaDados';
+
+/** Teia cósmica de Zel'dovich (o mesmo modelo do Blender usado na viagem), em câmera ortográfica. */
+function TeiaZeldovich() {
+  const { invalidate, size, camera, viewport } = useThree();
+  const [pontos, setPontos] = useState<THREE.Points | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    carregarTeia().then((d) => {
+      if (!vivo) return;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(d.posicoes, 3));
+      geo.setAttribute('cor', new THREE.BufferAttribute(d.cores, 3));
+      geo.setAttribute('raio', new THREE.BufferAttribute(d.raios, 1));
+      const mat = new THREE.ShaderMaterial({
+        uniforms: { pixels: { value: 100 } },
+        vertexShader: `
+          attribute vec3 cor;
+          attribute float raio;
+          uniform float pixels;
+          varying vec3 vCor;
+          void main() {
+            vCor = cor;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = clamp(2.0 * raio * pixels, 1.2, 14.0);
+          }`,
+        fragmentShader: `
+          varying vec3 vCor;
+          void main() {
+            vec2 p = gl_PointCoord * 2.0 - 1.0;
+            float r2 = dot(p, p);
+            if (r2 > 1.0) discard;
+            gl_FragColor = vec4(vCor * 0.9, exp(-3.0 * r2));
+            #include <colorspace_fragment>
+          }`,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+      });
+      const p = new THREE.Points(geo, mat);
+      p.frustumCulled = false;
+      p.scale.setScalar(1.75 / d.raioMpc);
+      setPontos(p);
+      invalidate();
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [invalidate]);
+  useEffect(() => {
+    if (!pontos) return;
+    // pixels por Mpc: altura do canvas dividida pela altura visível da câmera ortográfica
+    const lens = camera as THREE.OrthographicCamera;
+    const porUnidade = (size.height * viewport.dpr) / Math.max(1e-3, lens.top - lens.bottom);
+    (pontos.material as THREE.ShaderMaterial).uniforms.pixels.value = porUnidade * (1.75 / 62) * 1.8;
+    invalidate();
+  }, [pontos, size, camera, viewport.dpr, invalidate]);
+  return pontos ? <primitive object={pontos} /> : null;
+}
 
 export interface SceneProps {
   station: string;
@@ -270,6 +329,10 @@ function Universe(props: SceneProps) {
     canvas.addEventListener('webglcontextlost', fail);
     return () => canvas.removeEventListener('webglcontextlost', fail);
   }, [gl, props.onFailure]);
+  // a cena só desenha sob demanda: cada mudança de giro, inclinação ou zoom pede um quadro novo
+  useEffect(() => {
+    invalidate();
+  }, [view.azimuth, view.tilt, view.zoom, invalidate]);
   const axis = useMemo(() => new THREE.Euler(0, 0, 0, 'XYZ'), []);
   const desired = useMemo(() => new THREE.Quaternion(), []);
   useFrame((_, dt) => {
@@ -285,7 +348,7 @@ function Universe(props: SceneProps) {
   });
   return (
     <group ref={group}>
-      {props.orbits.length ? <Solar {...props} /> : <DataCloud id={props.station} />}
+      {props.orbits.length ? <Solar {...props} /> : props.station === 'teia' ? <TeiaZeldovich /> : <DataCloud id={props.station} />}
     </group>
   );
 }

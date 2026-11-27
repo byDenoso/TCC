@@ -245,3 +245,24 @@ footer small {
 .exp-secondary:hover {
   background: #ece9df;
 }
+
+/* Explorador: as variáveis próprias passam a apontar para a identidade */
+.cosmos-explorer {
+  --ex-ink: #202b2d;
+  --ex-blue: #205c60;
+  --ex-mute: #536465;
+  --ex-line: #ccd0c6;
+  --ex-space: #0c1517;
+}
+.atlas-nav {
+  background: #f7f5eef5;
+  backdrop-filter: none;
+}
+.cosmos-explorer .atlas-nav a {
+  color: var(--ink);
+}
+.cosmos-explorer .atlas-nav a[aria-current],
+.cosmos-explorer .atlas-nav a:hover {
+  border-color: var(--c-teal);
+  color: var(--c-teal);
+}

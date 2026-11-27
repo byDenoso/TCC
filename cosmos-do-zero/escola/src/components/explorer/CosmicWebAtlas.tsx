@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useId, useMemo, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { AtlasPhoto } from './AtlasPhoto';
 import { atlasMedia, webPoints } from './atlas-media';
@@ -6,7 +6,7 @@ import { Credits } from './PlanetaryAtlas';
 import { Background } from './OrbitDiagram';
 import { formatN, initialCamera } from './explorer-data';
 import type { Station } from './explorer-data';
-import { makeField, webBoxSide } from './explorer-geometry';
+import { carregarTeia, type TeiaDados } from '../viagem/teiaDados';
 
 const Scene = lazy(() => import('./ExpoScene'));
 const emptyOrbits: [] = [];
@@ -31,20 +31,31 @@ class SceneGuard extends Component<{ children: ReactNode; onError: () => void },
 function WebSlice() {
   const controlId = useId();
   const [layer, setLayer] = useState(1);
+  const [dados, setDados] = useState<TeiaDados | null>(null);
+  useEffect(() => {
+    carregarTeia().then(setDados).catch(() => setDados(null));
+  }, []);
+  // três fatias de 16 Mpc ao longo da linha de visada (centradas em -36, 0 e +36 Mpc), da mesma
+  // teia de Zel'dovich da viagem: finas o bastante para os filamentos não se sobreporem
   const path = useMemo(() => {
-    const min = webBoxSide * (layer / 3 - 0.5);
-    return makeField('teia').grains
-      .filter(({ p }) => p[2] >= min && p[2] < min + webBoxSide / 3)
-      .map(({ p }) => 'M' + (350 + p[0] * 81).toFixed(1) + ' ' + (195 - p[1] * 81).toFixed(1) + 'h1')
-      .join('');
-  }, [layer]);
+    if (!dados) return '';
+    const centro = (layer - 1) * 36;
+    const partes: string[] = [];
+    const p = dados.posicoes;
+    for (let i = 0; i < p.length; i += 3) {
+      const z = p[i + 2];
+      if (Math.abs(z - centro) < 8) partes.push('M' + (350 + p[i] * 2.6).toFixed(1) + ' ' + (195 - p[i + 1] * 2.6).toFixed(1) + 'h1');
+    }
+    return partes.join('');
+  }, [dados, layer]);
   return (
     <>
       <div className="exp-map atlas-plot">
         <Background />
-        <svg viewBox="0 0 700 390" role="img" aria-label={'Distribuição de traçadores na fatia ' + (layer + 1) + ' da teia simulada'}>
-          <rect x="188" y="33" width="324" height="324" fill="#080e2066" stroke="#7798bd" strokeDasharray="3 4" />
-          <path d={path} fill="none" stroke="#a8ccff" strokeWidth="2.4" strokeLinecap="round" opacity=".86" />
+        <svg viewBox="0 0 700 390" role="img" aria-label={'Distribuição de galáxias na fatia ' + (layer + 1) + ' da teia simulada'}>
+          <circle cx="350" cy="195" r="162" fill="#0c151799" stroke="#4f7774" strokeDasharray="3 4" />
+          <path d={path} fill="none" stroke="#cfe5e1" strokeWidth="1.7" strokeLinecap="round" opacity=".85" />
+          {!dados && <text x="350" y="200" textAnchor="middle" fill="#b9c6c1" fontSize="14">Carregando a teia…</text>}
         </svg>
       </div>
       <div className="atlas-model-tools">
@@ -62,6 +73,7 @@ export function CosmicWebAtlas({ station }: { station: Station }) {
   const [mode, setMode] = useState<View>('Mapa DESI');
   const [point, setPoint] = useState<number | null>(null);
   const [camera, setCamera] = useState(startView);
+  const arrasto = useRef<{ x: number; y: number } | null>(null);
   const [reduced, setReduced] = useState(true);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -114,7 +126,28 @@ export function CosmicWebAtlas({ station }: { station: Station }) {
               <Background />
               <SceneGuard onError={fail}>
                 <Suspense fallback={<p className="atlas-loading">Carregando volume…</p>}>
-                  <div className="atlas-volume-canvas">
+                  <div
+                    className="atlas-volume-canvas"
+                    style={{ touchAction: 'pan-y' }}
+                    onPointerDown={(e) => {
+                      arrasto.current = { x: e.clientX, y: e.clientY };
+                    }}
+                    onPointerMove={(e) => {
+                      const a = arrasto.current;
+                      if (!a) return;
+                      const dx = e.clientX - a.x;
+                      const dy = e.clientY - a.y;
+                      arrasto.current = { x: e.clientX, y: e.clientY };
+                      setCamera((c) => ({
+                        ...c,
+                        azimuth: Math.round((((c.azimuth + dx * 0.5) % 360) + 360) % 360),
+                        tilt: e.pointerType === 'mouse' ? Math.round(Math.min(85, Math.max(5, c.tilt + dy * 0.4))) : c.tilt,
+                      }));
+                    }}
+                    onPointerUp={() => (arrasto.current = null)}
+                    onPointerCancel={() => (arrasto.current = null)}
+                    onPointerLeave={() => (arrasto.current = null)}
+                  >
                     <Scene station="teia" cameraView={camera} orbits={emptyOrbits} selected={-1} day={0} linear reduced={reduced} onSelect={noOp} onFailure={fail} onReady={noOp} />
                   </div>
                 </Suspense>
