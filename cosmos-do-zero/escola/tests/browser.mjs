@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { verifyHero } from './hero-checks.mjs';
+import { verifyViagem } from './viagem-checks.mjs';
 import { verifyExpansion } from './expansion-checks.mjs';
 import { verifyPremium } from './premium-checks.mjs';
 import { mkdir, readFile } from 'node:fs/promises';
@@ -56,7 +56,8 @@ try {
     .first()
     .evaluate((i) => i.decode());
   await p.screenshot({ path: artifacts + '/inicio-desktop.png' });
-  await p.getByRole('link', { name: 'Começar pela primeira aula', exact: true }).click();
+  // a primeira estação da viagem leva à primeira aula do programa
+  await p.getByRole('link', { name: 'Quantos quilômetros cabem em um minuto de luz?', exact: true }).click();
   await p.waitForURL('**/aulas/**');
   const slug = new URL(p.url()).pathname.split('/')[2];
   assert((await p.locator('.katex').count()) > 0);
@@ -256,8 +257,8 @@ try {
   checks.push('Laboratório em navegador sem WebGL');
   await verifyPremium(browser, base);
   checks.push('Interface premium: bento, carregamento de imagens, movimento reduzido e quatro larguras');
-  await verifyHero(browser, base);
-  checks.push('Cena de Saturno, recursos sob demanda, teclado e navegação sem JavaScript');
+  await verifyViagem(browser, base);
+  checks.push('Viagem guiada: nove estações, modelos sob demanda, pôster sem WebGL, navegação livre e sem JavaScript');
   assert.deepEqual(errors, []);
   console.log(checks.join('\n'));
 } finally {

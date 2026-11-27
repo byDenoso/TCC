@@ -1,0 +1,455 @@
+/* Viagem guiada: palco 3D fixo e estações que rolam por cima.
+   Mantém a identidade editorial (institutional.css): Georgia nos títulos, Plex Mono nos rótulos,
+   teal #205c60, cantos de 2px, nenhuma sombra. */
+.viagem {
+  --v-fundo: #0c1517;
+  --v-texto: #e9ece6;
+  --v-suave: #b9c6c1;
+  --v-rotulo: #8fbab4;
+  --v-linha: #ffffff21;
+  position: relative;
+  background: var(--v-fundo);
+  color: var(--v-texto);
+}
+.viagem-fixo {
+  position: sticky;
+  top: 0;
+  background: var(--v-fundo);
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  z-index: 0;
+}
+.viagem-palco {
+  position: absolute;
+  inset: 0;
+  /* no desktop a cena ocupa a área à direita do texto */
+  left: calc(min(31rem, 38vw) + clamp(1.2rem, 5vw, 6rem) + 1.5rem);
+  /* e deixa livre a faixa do trilho de estações */
+  right: clamp(9rem, 13vw, 13rem);
+}
+.viagem-palco canvas {
+  position: absolute !important;
+  inset: 0;
+}
+.viagem-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+.viagem-poster[data-visivel='sim'] {
+  opacity: 1;
+}
+.viagem-estacoes {
+  position: relative;
+  z-index: 1;
+  margin-top: -100vh;
+  margin-top: -100svh;
+  pointer-events: none;
+}
+.viagem-estacao {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  padding-block: 14svh;
+}
+.viagem-painel {
+  pointer-events: auto;
+  width: min(31rem, 38vw);
+  margin-left: clamp(1.2rem, 5vw, 6rem);
+  padding: 1.7rem 1.75rem 1.4rem;
+  background: #0c1517eb;
+  border-top: 1px solid #4f7774;
+}
+.viagem-painel .kicker {
+  color: var(--v-rotulo);
+}
+.viagem-painel h3 {
+  font: 500 clamp(1.7rem, 2.6vw, 2.45rem) / 1.12 Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.03em;
+  color: #fff;
+  margin: 0 0 1rem;
+  text-wrap: balance;
+}
+.viagem-painel > p:not(.kicker):not(.viagem-nota) {
+  color: var(--v-suave);
+  line-height: 1.62;
+  margin: 0 0 0.85rem;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+.viagem-controle {
+  margin-top: 1.4rem;
+}
+.viagem-controle label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.86rem;
+  color: var(--v-suave);
+}
+.viagem-controle output {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.viagem-controle input[type='range'] {
+  width: 100%;
+  margin-top: 0.55rem;
+  accent-color: #7fb7b0;
+}
+.viagem-leituras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0 1.2rem;
+  margin: 1.1rem 0 0;
+}
+.viagem-leituras div {
+  border-top: 1px solid var(--v-linha);
+  padding-block: 0.6rem;
+}
+.viagem-leituras dt {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8fa5a1;
+}
+.viagem-leituras dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.12rem;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.viagem-leituras dd span {
+  font-size: 0.85rem;
+  color: var(--v-suave);
+}
+.viagem-acoes {
+  margin-top: 1.3rem;
+}
+.viagem .btn.editorial-primary {
+  background: #205c60;
+  color: #fff;
+  border-radius: 2px;
+}
+.viagem .btn.editorial-primary:hover {
+  background: #2a7176;
+}
+.viagem-aprofundar {
+  margin-top: 1.35rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--v-linha);
+}
+.viagem-aprofundar .kicker {
+  margin-bottom: 0.5rem;
+}
+.viagem-aprofundar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.viagem-aprofundar a {
+  color: #d6ebe6;
+  text-underline-offset: 0.25rem;
+  font-size: 0.93rem;
+}
+.viagem-nota {
+  margin: 1rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #8a9d99;
+}
+
+/* trilho das estações */
+.viagem-trilho {
+  position: absolute;
+  right: clamp(1rem, 3vw, 3rem);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.viagem-trilho ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+.viagem-trilho > ol a {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.32rem 0;
+  color: #85a09c;
+  text-decoration: none;
+}
+.viagem-trilho > ol a span {
+  color: #5f7b77;
+}
+.viagem-trilho > ol a::after {
+  content: '';
+  width: 0.9rem;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.25s;
+}
+.viagem-trilho > ol a:hover,
+.viagem-trilho > ol a[aria-current] {
+  color: #f1efe6;
+}
+.viagem-trilho > ol a[aria-current]::after {
+  width: 2rem;
+}
+.viagem-trilho-curto {
+  display: none;
+}
+.viagem-indice {
+  margin-top: 1.1rem;
+  text-align: right;
+}
+.viagem-indice summary {
+  cursor: pointer;
+  color: #cfe3df;
+  text-decoration: underline;
+  text-underline-offset: 0.3rem;
+  list-style: none;
+}
+.viagem-indice summary::-webkit-details-marker {
+  display: none;
+}
+.viagem-indice > div {
+  position: absolute;
+  right: 0;
+  margin-top: 0.7rem;
+  width: min(24rem, 86vw);
+  max-height: 68svh;
+  overflow: auto;
+  text-align: left;
+  background: var(--v-fundo);
+  border: 1px solid #34504e;
+  padding: 1.1rem 1.2rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+}
+.viagem-indice .kicker {
+  color: var(--v-rotulo);
+  margin: 0.2rem 0 0.5rem;
+}
+.viagem-indice ol,
+.viagem-indice ul {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+.viagem-indice a {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  color: #e6ece8;
+  text-decoration: none;
+  line-height: 1.35;
+}
+.viagem-indice a:hover {
+  text-decoration: underline;
+}
+.viagem-indice a span {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: #7f9c97;
+  padding-top: 0.15rem;
+}
+
+.viagem-figura {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 1.2rem;
+}
+
+/* abertura: continuar de onde parou */
+.editorial-continue {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+@media (max-width: 899px) {
+  .viagem-fixo {
+    height: 56vh;
+    height: 56svh;
+    z-index: 2;
+    border-bottom: 1px solid #ffffff1a;
+  }
+  .viagem-palco {
+    left: 0;
+    right: 0;
+  }
+  .viagem-estacoes {
+    margin-top: 0;
+  }
+  .viagem-estacao {
+    min-height: 0;
+    padding-block: 1.6rem 3.2rem;
+    scroll-margin-top: 56svh;
+  }
+  .viagem-painel {
+    width: auto;
+    margin: 0;
+    padding: 1.2rem max(16px, env(safe-area-inset-right, 0px)) 1.4rem max(16px, env(safe-area-inset-left, 0px));
+    background: transparent;
+    border-top: 0;
+  }
+  .viagem-trilho {
+    top: auto;
+    transform: none;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem max(12px, env(safe-area-inset-right, 0px)) 0.35rem max(12px, env(safe-area-inset-left, 0px));
+    background: #0c1517d9;
+  }
+  .viagem-trilho > ol {
+    display: none;
+  }
+  .viagem-trilho-curto {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #e6ece8;
+  }
+  .viagem-trilho-curto button {
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    border: 1px solid #ffffff2a;
+    border-radius: 2px;
+    color: inherit;
+    font-size: 1rem;
+  }
+  .viagem-trilho-curto button:disabled {
+    opacity: 0.35;
+  }
+  .viagem-indice {
+    margin: 0;
+  }
+  .viagem-indice > div {
+    bottom: 3.6rem;
+    right: max(12px, env(safe-area-inset-right, 0px));
+    max-height: 50svh;
+  }
+}
+
+/* a escola e a pesquisa: DESI DR2 contra o ΛCDM */
+.metodo-figura {
+  margin: 0;
+  min-width: 0;
+}
+.metodo-figura svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.metodo-grade {
+  stroke: #ffffff14;
+}
+.metodo-eixo {
+  font: 400 11px var(--mono);
+  fill: #9fb4c4;
+}
+.metodo-curva {
+  fill: none;
+  stroke-width: 1.8;
+}
+.metodo-rotulo {
+  font: 400 11px var(--mono);
+  letter-spacing: 0.04em;
+}
+.metodo-controles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem 1.4rem;
+  margin-top: 0.8rem;
+}
+.metodo-controles label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem;
+  font-size: 0.86rem;
+  color: #c9d8e2;
+}
+.metodo-controles output {
+  font-family: var(--mono);
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.metodo-controles input[type='range'] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #8fd0c6;
+}
+.research-grid .metodo-qui2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #fff;
+}
+.metodo-qui2 strong {
+  font: 500 1.5rem/1 Georgia, serif;
+  font-variant-numeric: tabular-nums;
+}
+.metodo-qui2 span {
+  font-size: 0.82rem;
+  color: #9fb4c4;
+}
+.metodo-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.metodo-presets button {
+  min-height: 40px;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  color: #e6eef4;
+  border: 1px solid #ffffff38;
+  border-radius: 2px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.metodo-presets button:hover {
+  border-color: #8fd0c6;
+}
+.metodo-figura figcaption {
+  margin-top: 0.9rem;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: #93a8b8;
+}
+@media (max-width: 640px) {
+  .metodo-controles {
+    grid-template-columns: 1fr;
+  }
+}

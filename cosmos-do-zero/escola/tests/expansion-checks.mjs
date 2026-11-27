@@ -5,7 +5,7 @@ export async function verifyExpansion(browser, base) {
   try {
     const page = await context.newPage();
     await page.goto(base + '/');
-    await page.getByRole('link', { name: 'Testar a expansão', exact: true }).click();
+    await page.getByRole('link', { name: 'Laboratório de expansão', exact: true }).click();
     await page.waitForURL('**/laboratorios/expansao/');
     await page.waitForFunction(() => document.documentElement.dataset.ready === 'true');
 

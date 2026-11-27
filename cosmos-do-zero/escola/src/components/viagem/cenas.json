@@ -1,0 +1,169 @@
+{
+  "fundo": "#0c1517",
+  "estacoes": {
+    "luz": {
+      "camera": {
+        "pos": [
+          1.8,
+          1.6,
+          11.5
+        ],
+        "alvo": [
+          4,
+          0,
+          0
+        ],
+        "fov": 38
+      },
+      "sol": [
+        -0.3,
+        0.3,
+        0.9
+      ],
+      "lua": [
+        8,
+        0,
+        0
+      ],
+      "enquadramento": 5.0
+    },
+    "sistema-solar": {
+      "camera": {
+        "pos": [
+          0,
+          30,
+          40
+        ],
+        "alvo": [
+          0,
+          -2,
+          0
+        ],
+        "fov": 42
+      },
+      "enquadramento": 24
+    },
+    "saturno": {
+      "camera": {
+        "pos": [
+          0,
+          0.9,
+          7.2
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 40
+      },
+      "sol": [
+        -0.53,
+        0.32,
+        0.79
+      ],
+      "inclinacao": 27,
+      "enquadramento": 2.55
+    },
+    "estrelas": {
+      "camera": {
+        "pos": [
+          0,
+          0.35,
+          4.6
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 44
+      },
+      "temperatura": 5772,
+      "enquadramento": 2.5
+    },
+    "buraco-negro": {
+      "camera": {
+        "pos": [
+          0,
+          2.6,
+          22
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 40
+      },
+      "enquadramento": 10.5
+    },
+    "galaxias": {
+      "camera": {
+        "pos": [
+          0,
+          21,
+          25
+        ],
+        "alvo": [
+          0,
+          -1,
+          0
+        ],
+        "fov": 45
+      },
+      "raio": 8,
+      "enquadramento": 15.5
+    },
+    "teia-cosmica": {
+      "camera": {
+        "pos": [
+          0,
+          32,
+          138
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 45
+      },
+      "enquadramento": 64
+    },
+    "expansao": {
+      "camera": {
+        "pos": [
+          30,
+          55,
+          150
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 42
+      },
+      "passo": 22,
+      "lado": 5,
+      "enquadramento": 52
+    },
+    "luz-fossil": {
+      "camera": {
+        "pos": [
+          0,
+          7,
+          27
+        ],
+        "alvo": [
+          0,
+          0,
+          0
+        ],
+        "fov": 40
+      },
+      "enquadramento": 10.8
+    }
+  }
+}

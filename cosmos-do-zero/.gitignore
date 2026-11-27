@@ -35,3 +35,6 @@ assets/source/*.blend1
 tests/_journey/
 tests/_audit/
 tests/_px/
+
+# texturas intermediárias da viagem (regeneradas por build_viagem.py)
+assets/source/viagem/gerado/
