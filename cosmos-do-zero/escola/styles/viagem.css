@@ -234,6 +234,9 @@
 .viagem-indice summary::-webkit-details-marker {
   display: none;
 }
+.viagem-indice-curto {
+  display: none;
+}
 .viagem-indice > div {
   position: absolute;
   right: 0;
@@ -310,6 +313,7 @@
   .viagem-estacao {
     min-height: 0;
     padding-block: 1.6rem 3.2rem;
+    /* âncoras nativas (links da abertura) param logo abaixo do palco */
     scroll-margin-top: 56svh;
   }
   .viagem-painel {
@@ -339,6 +343,24 @@
     align-items: center;
     gap: 0.4rem;
     color: #e6ece8;
+    min-width: 0;
+  }
+  .viagem-trilho-curto span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .viagem-indice-longo {
+    display: none;
+  }
+  .viagem-indice-curto {
+    display: inline;
+  }
+  .viagem-indice summary {
+    white-space: nowrap;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
   .viagem-trilho-curto button {
     min-width: 44px;
@@ -358,7 +380,8 @@
   .viagem-indice > div {
     bottom: 3.6rem;
     right: max(12px, env(safe-area-inset-right, 0px));
-    max-height: 50svh;
+    /* cabe dentro do palco (56svh) acima da barra de estações */
+    max-height: calc(56svh - 4.4rem);
   }
 }
 

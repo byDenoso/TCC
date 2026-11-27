@@ -772,9 +772,28 @@ ESTACOES = {
 
 # ------------------------------------------------------- exportação e render
 
-def export(estacao):
+def export_movel(estacao, limite=2048):
+    """Versão para celular: texturas de até `limite` px no lado maior. As imagens voltam ao
+    tamanho original depois da exportação, para o pôster usar a resolução completa."""
+    guardadas = []
+    for img in bpy.data.images:
+        w, h = img.size
+        if max(w, h) > limite:
+            px = np.empty(w * h * 4, 'float32')
+            img.pixels.foreach_get(px)
+            guardadas.append((img, w, h, px))
+            f = limite / max(w, h)
+            img.scale(max(1, round(w * f)), max(1, round(h * f)))
+    path = export(estacao, '-m')
+    for img, w, h, px in guardadas:
+        img.scale(w, h)
+        img.pixels.foreach_set(px)
+    return path
+
+
+def export(estacao, sufixo=''):
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / f'{estacao}.glb'
+    path = OUT / f'{estacao}{sufixo}.glb'
     bpy.ops.export_scene.gltf(
         filepath=str(path), export_format='GLB', export_yup=True, export_apply=True,
         export_image_format='WEBP', export_image_quality=92, export_pointclouds=True,
@@ -849,8 +868,17 @@ def main():
         cfg = CENAS['estacoes'][est]
         rng = np.random.default_rng(20261126 + i)
         extras = ESTACOES[est](cfg, rng)
+        if '--so-moveis' in argv:
+            movel = export_movel(est, 1024 if est == 'sistema-solar' else 2048)
+            item = manifest['estacoes'].get(est, {})
+            item.update({'glb_movel': movel.name, 'bytes_movel': movel.stat().st_size})
+            manifest['estacoes'][est] = item
+            print('VIAGEM', est, item)
+            continue
         glb = export(est)
-        item = {'glb': glb.name, 'bytes': glb.stat().st_size, 'sha256': sha(glb)}
+        movel = export_movel(est, 1024 if est == 'sistema-solar' else 2048)
+        item = {'glb': glb.name, 'bytes': glb.stat().st_size, 'sha256': sha(glb),
+                'glb_movel': movel.name, 'bytes_movel': movel.stat().st_size}
         if poster:
             feito = extras()
             png = OUT / f'{est}.webp' if feito == 'pronto' else render(est, cfg)

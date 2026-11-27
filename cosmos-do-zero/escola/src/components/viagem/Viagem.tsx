@@ -16,6 +16,23 @@ function suportaWebGL() {
   }
 }
 
+/** Altura do palco fixo no celular (0 no desktop, onde o palco fica ao lado do texto). */
+function alturaPalco() {
+  if (window.matchMedia('(min-width: 900px)').matches) return 0;
+  return document.querySelector('.viagem-fixo')?.getBoundingClientRect().height ?? window.innerHeight * 0.56;
+}
+
+/**
+ * Leva o topo da estação para logo abaixo do palco. Calcula a posição e usa scrollTo: no celular,
+ * scrollIntoView chamado a partir de um botão dentro do palco fixo era ignorado em um toque sim,
+ * outro não.
+ */
+function rolarAte(sec: HTMLElement, suave: boolean) {
+  const topo = window.scrollY + sec.getBoundingClientRect().top - alturaPalco();
+  // 'instant' ignora o scroll-behavior: smooth do CSS global; 'auto' viraria animação longa
+  window.scrollTo({ top: Math.max(0, Math.round(topo)), behavior: suave ? 'smooth' : 'instant' });
+}
+
 /* O controle deslizante trabalha em 0–1000 e converte para a grandeza física. */
 const PASSOS = 1000;
 function paraFisico(e: Estacao, s: number) {
@@ -68,6 +85,7 @@ export default function Viagem() {
   const raiz = useRef<HTMLElement>(null);
   const indice = useRef<HTMLDetailsElement>(null);
   const mexeu = useRef(false);
+  const irRef = useRef<(i: number) => void>(() => {});
 
   useEffect(() => {
     setWebgl(suportaWebGL());
@@ -90,8 +108,7 @@ export default function Viagem() {
         const sec = secoes.current[alvo];
         if (!sec || mexeu.current) return;
         const topo = sec.getBoundingClientRect().top;
-        const esperado = window.matchMedia('(min-width: 900px)').matches ? 0 : window.innerHeight * 0.56;
-        if (Math.abs(topo - esperado) > 24) sec.scrollIntoView();
+        if (Math.abs(topo - alturaPalco()) > 24) rolarAte(sec, false);
       };
       timers.push(window.setTimeout(ir0, 30), window.setTimeout(ir0, 450), window.setTimeout(ir0, 1200));
     }
@@ -101,30 +118,47 @@ export default function Viagem() {
     // troca de âncora na mesma página (links do índice, botão voltar do navegador)
     const ancora = () => {
       const i = estacoes.findIndex((e) => '#' + e.id === window.location.hash);
-      if (i >= 0) secoes.current[i]?.scrollIntoView();
+      const sec = secoes.current[i];
+      if (sec) rolarAte(sec, false);
     };
     window.addEventListener('hashchange', ancora);
+    const clique = (ev: MouseEvent) => {
+      const a = (ev.target as HTMLElement | null)?.closest?.('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!a || a.closest('.viagem')) return;
+      const i = estacoes.findIndex((e) => '#' + e.id === a.getAttribute('href'));
+      if (i < 0) return;
+      ev.preventDefault();
+      history.replaceState(null, '', '#' + estacoes[i].id);
+      irRef.current(i);
+    };
+    document.addEventListener('click', clique);
     return () => {
       mq.removeEventListener('change', sync);
       mw.removeEventListener('change', sync);
       window.removeEventListener('hashchange', ancora);
+      document.removeEventListener('click', clique);
       eventos.forEach((ev) => window.removeEventListener(ev, marcar));
       timers.forEach((t) => clearTimeout(t));
     };
   }, []);
 
-  // a estação ativa é a que cruza a linha de leitura (meio da tela; no celular, logo abaixo do palco)
+  /** Estação que cruza a linha de leitura agora (meio da tela; no celular, 48 px abaixo do palco). */
+  const naLinha = useCallback(() => {
+    const linha = window.matchMedia('(min-width: 900px)').matches ? window.innerHeight * 0.5 : alturaPalco() + 48;
+    let escolhida = -1;
+    secoes.current.forEach((sec, i) => {
+      if (!sec) return;
+      const r = sec.getBoundingClientRect();
+      if (r.top <= linha && r.bottom > linha) escolhida = i;
+    });
+    return escolhida;
+  }, []);
+
   useEffect(() => {
     let quadro = 0;
     const medir = () => {
       quadro = 0;
-      const linha = window.innerHeight * (largo ? 0.5 : 0.62);
-      let escolhida = -1;
-      secoes.current.forEach((sec, i) => {
-        if (!sec) return;
-        const r = sec.getBoundingClientRect();
-        if (r.top <= linha && r.bottom > linha) escolhida = i;
-      });
+      const escolhida = naLinha();
       if (escolhida >= 0) setAtiva(escolhida);
       setLendo(escolhida >= 0);
       const caixa = raiz.current?.getBoundingClientRect();
@@ -141,7 +175,7 @@ export default function Viagem() {
       window.removeEventListener('resize', pedir);
       if (quadro) cancelAnimationFrame(quadro);
     };
-  }, [largo]);
+  }, [largo, naLinha]);
 
   useEffect(() => {
     // o endereço só muda quando uma estação está de fato na linha de leitura
@@ -157,12 +191,18 @@ export default function Viagem() {
 
   const ir = useCallback((i: number) => {
     mexeu.current = true;
-    const alvo = secoes.current[Math.max(0, Math.min(estacoes.length - 1, i))];
+    const k = Math.max(0, Math.min(estacoes.length - 1, i));
+    setAtiva(k);
+    const alvo = secoes.current[k];
     // saltos curtos rolam suavemente; saltos longos são imediatos (não ficam no meio do caminho)
     const longe = alvo ? Math.abs(alvo.getBoundingClientRect().top) > window.innerHeight * 1.6 : false;
-    alvo?.scrollIntoView({ behavior: movimento && !longe ? 'smooth' : 'auto', block: 'start' });
+    // no celular o salto é sempre direto: a rolagem suave atravessaria estações e seria interrompida pelo toque
+    const desktop = window.matchMedia('(min-width: 900px)').matches;
+    if (alvo) rolarAte(alvo, movimento && !longe && desktop);
     if (indice.current) indice.current.open = false;
   }, [movimento]);
+
+  irRef.current = ir;
 
   // setas do teclado avançam de estação quando o foco não está num controle
   useEffect(() => {
@@ -178,8 +218,15 @@ export default function Viagem() {
   }, [ativa, dentro, ir]);
 
   const atual = estacoes[ativa];
+  // o palco só troca de modelo quando a estação fica parada um instante: rolar rápido não baixa
+  // nem monta os modelos das estações intermediárias
+  const [idPalco, setIdPalco] = useState(estacoes[0].id);
+  useEffect(() => {
+    const t = setTimeout(() => setIdPalco(atual.id), 280);
+    return () => clearTimeout(t);
+  }, [atual.id]);
   const onPronto = useCallback((id: string) => setPronta(id), []);
-  const mostrarPoster = webgl === false || pronta !== atual.id;
+  const mostrarPoster = webgl === false || pronta !== atual.id || idPalco !== atual.id;
 
   return (
     <section className="viagem" ref={raiz} aria-labelledby="viagem-titulo">
@@ -205,7 +252,13 @@ export default function Viagem() {
             />
           ))}
           {webgl && dentro && (
-            <Palco id={atual.id} valor={valores[ativa]} movimento={movimento} deslocamento={0} onPronto={onPronto} />
+            <Palco
+              id={idPalco}
+              valor={valores[estacoes.findIndex((e) => e.id === idPalco)]}
+              movimento={movimento}
+              deslocamento={0}
+              onPronto={onPronto}
+            />
           )}
         </div>
         <nav className="viagem-trilho" aria-label="Estações da viagem">
@@ -220,18 +273,21 @@ export default function Viagem() {
             ))}
           </ol>
           <div className="viagem-trilho-curto">
-            <button type="button" onClick={() => ir(ativa - 1)} disabled={ativa === 0} aria-label="Estação anterior">
+            <button type="button" onClick={() => ir((naLinha() < 0 ? ativa : naLinha()) - 1)} disabled={ativa === 0} aria-label="Estação anterior">
               ←
             </button>
             <span>
               {n2(ativa)} / {n2(estacoes.length - 1)} · {atual.rotulo}
             </span>
-            <button type="button" onClick={() => ir(ativa + 1)} disabled={ativa === estacoes.length - 1} aria-label="Próxima estação">
+            <button type="button" onClick={() => ir((naLinha() < 0 ? ativa : naLinha()) + 1)} disabled={ativa === estacoes.length - 1} aria-label="Próxima estação">
               →
             </button>
           </div>
           <details className="viagem-indice" ref={indice}>
-            <summary>Escolher por onde seguir</summary>
+            <summary>
+              <span className="viagem-indice-longo">Escolher por onde seguir</span>
+              <span className="viagem-indice-curto">Estações</span>
+            </summary>
             <div>
               <p className="kicker">Estações</p>
               <ol>

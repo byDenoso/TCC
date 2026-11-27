@@ -64,6 +64,12 @@ export async function verifyViagem(browser, base) {
     });
     await page.getByRole('button', { name: 'Próxima estação' }).click();
     await page.waitForFunction(() => location.hash === '#estrelas');
+    // toques seguidos no celular: cada um avança ou volta exatamente uma estação
+    const contador = page.locator('.viagem-trilho-curto span');
+    for (let k = 0; k < 3; k++) await page.getByRole('button', { name: 'Próxima estação' }).click();
+    await contador.filter({ hasText: '07 / 09' }).waitFor();
+    for (let k = 0; k < 2; k++) await page.getByRole('button', { name: 'Estação anterior' }).click();
+    await contador.filter({ hasText: '05 / 09' }).waitFor();
   } finally {
     await semGL.close();
   }

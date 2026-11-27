@@ -5,63 +5,81 @@
       "bytes": 2588612,
       "sha256": "ffd9967693c933657a418f3fa2561178d21066546237f96b30d1da25648fb6f3",
       "poster": "luz.webp",
-      "poster_sha256": "08d5ccf180cfb1f331ba0dfa3120d422d26984ca7e708467c9610669838c5a4f"
+      "poster_sha256": "08d5ccf180cfb1f331ba0dfa3120d422d26984ca7e708467c9610669838c5a4f",
+      "glb_movel": "luz-m.glb",
+      "bytes_movel": 2088184
     },
     "sistema-solar": {
       "glb": "sistema-solar.glb",
       "bytes": 3307424,
       "sha256": "9f8e35b11d6cd260cfea80147d76580c96ca5a898a9008827478b8a62adef049",
       "poster": "sistema-solar.webp",
-      "poster_sha256": "434fdd22868b6f73f98e1cfd0661d4c4256aa9ee1e70dfca15fbfa8ef7308739"
+      "poster_sha256": "434fdd22868b6f73f98e1cfd0661d4c4256aa9ee1e70dfca15fbfa8ef7308739",
+      "glb_movel": "sistema-solar-m.glb",
+      "bytes_movel": 1978756
     },
     "saturno": {
       "glb": "saturno.glb",
       "bytes": 1077484,
       "sha256": "b49d655846d0714341601a66e52c3433202d37b0b0e4f79bdb58c9a2d7857c9e",
       "poster": "saturno.webp",
-      "poster_sha256": "90bd752d7a8c327447d463af2c6737c60aac91d73cdf9782a3adb033a20ee735"
+      "poster_sha256": "90bd752d7a8c327447d463af2c6737c60aac91d73cdf9782a3adb033a20ee735",
+      "glb_movel": "saturno-m.glb",
+      "bytes_movel": 946912
     },
     "estrelas": {
       "glb": "estrelas.glb",
       "bytes": 950148,
       "sha256": "cbe559d5c16a4f3777a225382ba2502d30cb6a99a77a1530f902103b16df6249",
       "poster": "estrelas.webp",
-      "poster_sha256": "314648021f728539efdd9d3cca57fc0c848a63727acae175ef022a6683c1511b"
+      "poster_sha256": "314648021f728539efdd9d3cca57fc0c848a63727acae175ef022a6683c1511b",
+      "glb_movel": "estrelas-m.glb",
+      "bytes_movel": 693796
     },
     "buraco-negro": {
       "glb": "buraco-negro.glb",
       "bytes": 941484,
       "sha256": "e65a8724c6d37ef21f4bee316b0e4d5d0bb408fec123564a1aa05e50dca67128",
       "poster": "buraco-negro.webp",
-      "poster_sha256": "b5042a8bde7c01084276df4496c08171b6e58c461640528188489cf91f265273"
+      "poster_sha256": "b5042a8bde7c01084276df4496c08171b6e58c461640528188489cf91f265273",
+      "glb_movel": "buraco-negro-m.glb",
+      "bytes_movel": 859628
     },
     "galaxias": {
       "glb": "galaxias.glb",
       "bytes": 1181696,
       "sha256": "ba2660aa69ec2ec196b84d1b12ed23f0e712bb154996044205d3855e369257ad",
       "poster": "galaxias.webp",
-      "poster_sha256": "5a9c70afde638186fd4ebd06a3c02be56ba34fb7bc95ca59cbc80af28d69a966"
+      "poster_sha256": "5a9c70afde638186fd4ebd06a3c02be56ba34fb7bc95ca59cbc80af28d69a966",
+      "glb_movel": "galaxias-m.glb",
+      "bytes_movel": 1181696
     },
     "teia-cosmica": {
       "glb": "teia-cosmica.glb",
       "bytes": 1940404,
       "sha256": "567877af95de723a1afd984d1cc0baba994334abdfafd7cb30ea92b0a2d3095a",
       "poster": "teia-cosmica.webp",
-      "poster_sha256": "65083e68d7f38ba39b77e3c4bf07ba12fb5fab6e89131d3545f23f9718e24811"
+      "poster_sha256": "65083e68d7f38ba39b77e3c4bf07ba12fb5fab6e89131d3545f23f9718e24811",
+      "glb_movel": "teia-cosmica-m.glb",
+      "bytes_movel": 1940404
     },
     "expansao": {
       "glb": "expansao.glb",
       "bytes": 70004,
       "sha256": "753d1ee383f07ef2cb00d6a741c14e8ee1488819fd2cc64c4a2a26bc861a888e",
       "poster": "expansao.webp",
-      "poster_sha256": "9ae2d221427890b102ea47e016aa2d2c584cdb0b1c239d91e0909a82acbaf90c"
+      "poster_sha256": "9ae2d221427890b102ea47e016aa2d2c584cdb0b1c239d91e0909a82acbaf90c",
+      "glb_movel": "expansao-m.glb",
+      "bytes_movel": 70004
     },
     "luz-fossil": {
       "glb": "luz-fossil.glb",
       "bytes": 3637732,
       "sha256": "55e15b2be6e930b6dbdfa94bcee0808aae2559974765565c425886077c6ae42c",
       "poster": "luz-fossil.webp",
-      "poster_sha256": "83476a926b78d20d38ef2243d648fbd461b12b71c7a729f889070285a86b2d9d"
+      "poster_sha256": "83476a926b78d20d38ef2243d648fbd461b12b71c7a729f889070285a86b2d9d",
+      "glb_movel": "luz-fossil-m.glb",
+      "bytes_movel": 2146016
     }
   },
   "blender": "5.3.0"

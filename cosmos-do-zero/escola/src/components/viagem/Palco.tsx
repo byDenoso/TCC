@@ -9,7 +9,12 @@ import { atualizarBuracoNegro, criarBuracoNegro } from './buracoNegro';
 
 type Cfg = { camera: { pos: number[]; alvo: number[]; fov: number }; sol?: number[]; [k: string]: unknown };
 const CFG = cenas.estacoes as Record<string, Cfg>;
-const url = (id: string) => `/viagem/${id}.glb`;
+/** Telas pequenas ou aparelhos com pouca memória usam a versão com texturas de até 2048 px. */
+const leve =
+  typeof window !== 'undefined' &&
+  (window.matchMedia('(max-width: 899px)').matches ||
+    ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) <= 4);
+const url = (id: string) => `/viagem/${id}${leve ? '-m' : ''}.glb`;
 
 export type PalcoProps = {
   id: string;
@@ -195,10 +200,13 @@ function useArrasto(grupo: React.RefObject<THREE.Object3D | null>) {
     el.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
+    // no toque, quando o navegador assume a rolagem vertical ele cancela o gesto
+    window.addEventListener('pointercancel', up);
     return () => {
       el.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
     };
   }, [gl]);
   useFrame(() => {
