@@ -197,6 +197,7 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
           {view ? (
             <SceneBoundary onFail={fail}>
               <Scene3D
+                lab={id}
                 dots={points}
                 segments={lines}
                 referenceOrbit={referenceOrbit}
@@ -232,14 +233,14 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
                   </>
                 )}
                 <pattern id={'grid-' + id} width="34" height="34" patternUnits="userSpaceOnUse">
-                  <path d="M34 0H0V34" fill="none" stroke="#29405a" strokeWidth=".6" />
+                  <path d="M34 0H0V34" fill="none" stroke="#24393a" strokeWidth=".6" />
                 </pattern>
               </defs>
               <rect width="540" height="290" fill={'url(#grid-' + id + ')'} />
               {orbital && (
                 <path
                   fill="none"
-                  stroke="#425c76"
+                  stroke="#3d5b59"
                   d={orbitGuide
                     .map(
                       ([x, y, z, a, b, c]) => 'M' + proj(x, y, z).join(' ') + 'L' + proj(a, b, c).join(' ')
@@ -261,7 +262,7 @@ export function LabView({ id, mini = false }: { id: string; mini?: boolean }) {
               )}
               <path
                 fill="none"
-                stroke="#9cd9f2"
+                stroke="#8fd0c6"
                 strokeWidth="1.2"
                 d={lines
                   .map(

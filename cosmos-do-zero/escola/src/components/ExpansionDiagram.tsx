@@ -47,7 +47,7 @@ export function ExpansionDiagram({ scene, reference, reveal, project }: Props) {
       <desc id={id + '-description'}>{scene.caption}</desc>
       <defs>
         <pattern id={id + '-grid'} width="24" height="24" patternUnits="userSpaceOnUse">
-          <path d="M24 0H0V24" fill="none" stroke="#38506a" strokeWidth="0.55" />
+          <path d="M24 0H0V24" fill="none" stroke="#2f4a49" strokeWidth="0.55" />
         </pattern>
         {reference && (
           <>

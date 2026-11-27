@@ -61,3 +61,16 @@ test('formatação brasileira', () => {
   assert.equal(formatar(0.5), '0,5');
   assert.match(formatar(9.0e10), /× 10¹⁰$/);
 });
+
+test('círculo de referência do horizonte cabe na região do disco', async () => {
+  const { referenciaHorizonte } = await import('../src/components/viagem/fisica.ts');
+  for (const lm of [0, 0.5, 1, 2, 3, 4, 5, 6, 6.63, 7, 8, 9, 9.81, 10]) {
+    const r = referenciaHorizonte(10 ** lm);
+    assert.ok(r.razao >= 1.2 && r.razao <= 12, `${lm}: ${r.rotulo} ${r.razao}`);
+  }
+  assert.equal(referenciaHorizonte(1).rotulo, 'estrela de nêutrons');
+  assert.equal(referenciaHorizonte(4.3e6).rotulo, 'órbita da Terra');
+  // mais massa, mesmo círculo de referência, círculo menor na tela
+  assert.equal(referenciaHorizonte(8e6).rotulo, referenciaHorizonte(5e6).rotulo);
+  assert.ok(referenciaHorizonte(8e6).razao < referenciaHorizonte(5e6).razao);
+});

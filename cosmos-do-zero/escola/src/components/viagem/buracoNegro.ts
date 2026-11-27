@@ -30,6 +30,7 @@ uniform sampler2D ceu;
 uniform float tempo;
 uniform float brilho;
 uniform vec3 fundo;
+uniform float escalaRs;
 varying vec2 vNdc;
 const float RIN = 3.0;
 const float ROUT = 12.0;
@@ -39,7 +40,7 @@ void main() {
   vec4 pv = invProj * vec4(vNdc, 1.0, 1.0);
   pv /= pv.w;
   vec3 dirMundo = normalize((camMundo * vec4(pv.xyz, 0.0)).xyz);
-  vec3 x = paraBH * camPos;
+  vec3 x = paraBH * camPos / escalaRs;
   vec3 v = paraBH * dirMundo;
   float Ly = cross(x, -v).y;
   vec3 hv = cross(x, v);
@@ -85,7 +86,7 @@ void main() {
   gl_FragColor = vec4(fundo + (1.0 - fundo) * srgb, 1.0);
 }`;
 
-export function criarBuracoNegro(disco: THREE.Texture, ceu: THREE.Texture) {
+export function criarBuracoNegro(disco: THREE.Texture, ceu: THREE.Texture, escalaRs = 1) {
   disco.wrapS = THREE.ClampToEdgeWrapping;
   disco.wrapT = THREE.RepeatWrapping;
   ceu.wrapS = THREE.RepeatWrapping;
@@ -103,6 +104,7 @@ export function criarBuracoNegro(disco: THREE.Texture, ceu: THREE.Texture) {
       tempo: { value: 0 },
       brilho: { value: 1.7 },
       fundo: { value: new THREE.Vector3(12 / 255, 21 / 255, 23 / 255) }, // #0c1517 em sRGB
+      escalaRs: { value: 1 }, // unidades da cena por raio do horizonte
     },
     vertexShader: vertex,
     fragmentShader: fragment,
@@ -110,6 +112,7 @@ export function criarBuracoNegro(disco: THREE.Texture, ceu: THREE.Texture) {
     depthWrite: false,
     toneMapped: false,
   });
+  material.uniforms.escalaRs.value = escalaRs;
   const malha = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
   malha.frustumCulled = false;
   malha.renderOrder = -10;

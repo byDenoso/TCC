@@ -68,8 +68,8 @@ export default function Home() {
               return (
                 <a href={'/explorador/#' + id} key={id} className={'home-atlas-card home-atlas-' + id}>
                   <img
-                    src={id === 'solar' ? '/cosmos-hero/saturno-24-small.webp' : '/atlas/' + media.file}
-                    srcSet={id === 'solar' ? '/cosmos-hero/saturno-24-small.webp 740w, /cosmos-hero/saturno-24.webp 1440w' : undefined}
+                    src={id === 'solar' ? '/viagem/sistema-solar-1200.webp' : '/atlas/' + media.file}
+                    srcSet={id === 'solar' ? '/viagem/sistema-solar-1200.webp 1200w, /viagem/sistema-solar.webp 2400w' : undefined}
                     sizes={id === 'solar' ? '(max-width: 470px) calc(100vw - 36px), (max-width: 800px) 46vw, 33vw' : undefined}
                     alt=""
                     loading="lazy"

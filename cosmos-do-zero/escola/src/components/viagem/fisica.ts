@@ -74,3 +74,33 @@ function sobrescrito(n: number) {
   const mapa: Record<string, string> = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' };
   return String(n).split('').map((c) => mapa[c]).join('');
 }
+
+const REFERENCIAS: [number, string][] = [
+  [12, 'estrela de nêutrons'],
+  [6371, 'raio da Terra'],
+  [384400, 'órbita da Lua'],
+  [696340, 'raio do Sol'],
+  [5.79e7, 'órbita de Mercúrio'],
+  [1.496e8, 'órbita da Terra'],
+  [7.785e8, 'órbita de Júpiter'],
+  [4.495e9, 'órbita de Netuno'],
+];
+
+/**
+ * Círculo de comparação para o horizonte de um buraco negro de massa M (em massas solares).
+ * Escolhe a maior referência conhecida que caiba entre 1,8 e 12 raios do horizonte (a região do
+ * disco); sem nenhuma, a maior potência de dez em km nesse intervalo. Assim, conforme a massa
+ * cresce, o círculo encolhe de forma contínua até dar lugar à referência seguinte.
+ * `razao` é o raio do círculo em raios do horizonte.
+ */
+export function referenciaHorizonte(massasSolares: number): { rotulo: string; raioKm: number; razao: number } {
+  const rs = raioSchwarzschildKm(massasSolares);
+  const cabem = REFERENCIAS.filter(([r]) => r / rs >= 1.8 && r / rs <= 12);
+  if (cabem.length) {
+    const [r, rotulo] = cabem[cabem.length - 1];
+    return { rotulo, raioKm: r, razao: r / rs };
+  }
+  const k = Math.floor(Math.log10(12 * rs));
+  const r = 10 ** k;
+  return { rotulo: `círculo de ${formatar(r)} km`, raioKm: r, razao: r / rs };
+}

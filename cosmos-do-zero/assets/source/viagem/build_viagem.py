@@ -168,8 +168,9 @@ def annulus(name, r0, r1, mat, count=256, radial=1):
     return link(bpy.data.objects.new(name, me))
 
 
-def points(name, pos, rgb, size):
-    """Nuvem de pontos com cor (COLOR_0) e raio (_RADIUS no glTF) por ponto; pos em coordenadas da página."""
+def points(name, pos, rgb, size, tipo=None):
+    """Nuvem de pontos com cor (COLOR_0), raio (_RADIUS no glTF) e, opcionalmente, tipo (_tipo) por
+    ponto; pos em coordenadas da página."""
     n = len(pos)
     pc = bpy.data.pointclouds.new(name)
     pc.resize(n)
@@ -181,6 +182,9 @@ def points(name, pos, rgb, size):
     col = pc.attributes.new('Col', 'FLOAT_COLOR', 'POINT')
     # COLOR_0 é linear no glTF e no Cycles; a página e o pôster leem os mesmos valores
     col.data.foreach_set('color', rgba.ravel())
+    if tipo is not None:
+        t = pc.attributes.new('_tipo', 'FLOAT', 'POINT')
+        t.data.foreach_set('value', np.asarray(tipo, dtype='float32'))
     return link(bpy.data.objects.new(name, pc))
 
 
@@ -380,7 +384,7 @@ def sistema_solar(cfg, rng):
     sol.visible_shadow = False  # a luz pontual fica dentro da esfera do Sol
     anel = aneis_alta('aneis-sistema', rng, 2048)
     mapas = {
-        'jupiter': lambda: image(OBS / 'jupiter-hubble-opal-2015.tif', 2048),
+        'jupiter': lambda: sem_polos_vazios(image(OBS / 'jupiter-hubble-opal-2015.tif', 2048)),
         'saturno': lambda: mapa_zonal('saturno-sistema', MAPS / 'saturno.jpg', 2048, 1024, rng),
         'urano': lambda: mapa_zonal('urano-sistema', MAPS / 'urano.jpg', 1024, 512, rng, 0.002, 0.03, 90),
         'netuno': lambda: mapa_zonal('netuno-sistema', MAPS / 'netuno.jpg', 1024, 512, rng, 0.004, 0.05, 90),
@@ -659,12 +663,14 @@ def galaxia_pts(rng, n_disk, n_bar, n_bulge, n_hii, raio, escala=1.0):
         np.tile([1.0, 0.36, 0.52], (n_hii, 1)) * 0.95,
     ])
     tam = np.concatenate([np.full(len(r), 0.032), np.full(len(xb), 0.036), np.full(n_bulge, 0.042), np.full(n_hii, 0.07)]) * escala
-    return pos, cor, tam
+    # tipo: 0 disco antigo, 1 disco jovem (traça os braços), 2 barra, 3 bojo, 4 região HII
+    tipo = np.concatenate([np.where(no_braco, 1.0, 0.0), np.full(len(xb), 2.0), np.full(n_bulge, 3.0), np.full(n_hii, 4.0)])
+    return pos, cor, tam, tipo
 
 
 def galaxias(cfg, rng):
-    pos, cor, tam = galaxia_pts(rng, 26000, 5500, 4500, 900, 15.0)
-    g = points('galaxia', pos, cor, tam)
+    pos, cor, tam, tipo = galaxia_pts(rng, 26000, 5500, 4500, 900, 15.0)
+    g = points('galaxia', pos, cor, tam, tipo)
     def extras():
         point_material([g], 2.0)
         bpy.ops.mesh.primitive_torus_add(major_radius=cfg['raio'], minor_radius=0.035, major_segments=256, minor_segments=6)
@@ -721,8 +727,8 @@ def teia(cfg, rng):
 
 
 def expansao(cfg, rng):
-    pos, cor, tam = galaxia_pts(rng, 1600, 260, 240, 60, 15.0, escala=0.24)
-    g = points('galaxia', pos, cor, tam * 2.2)
+    pos, cor, tam, tipo = galaxia_pts(rng, 1600, 260, 240, 60, 15.0, escala=0.24)
+    g = points('galaxia', pos, cor, tam * 2.2, tipo)
     def extras():
         point_material([g], 3.0)
         lado, passo = cfg['lado'], cfg['passo']
@@ -850,12 +856,88 @@ def render(estacao, cfg, largura=2400, altura=1500, amostras=56):
     return Path(sc.render.filepath)
 
 
+def sem_polos_vazios(img):
+    """O mosaico OPAL de Júpiter não tem dado perto dos polos (faixas pretas). Cada linha quase
+    vazia recebe a linha válida mais próxima, sem inventar estrutura nova."""
+    px = pixels(img)
+    lum = px[..., :3].mean(axis=2)
+    valida = (lum > 0.04).mean(axis=1) > 0.6
+    idx = np.nonzero(valida)[0]
+    if len(idx) == 0 or valida.all():
+        return img
+    for y in np.nonzero(~valida)[0]:
+        px[y] = px[idx[np.argmin(np.abs(idx - y))]]
+    novo = image_from_array(img.name + '-polos', px)
+    return novo
+
+
+def retratos(tamanho=1024, amostras=64):
+    """Retratos dos planetas para o Explorador (escola/public/atlas/<nome>.webp), com as mesmas
+    texturas da viagem, fundo transparente e luz do Sol vindo da esquerda."""
+    atlas = ESCOLA / 'public' / 'atlas'
+    rng = np.random.default_rng(1729)
+    fontes = {
+        'mercurio': lambda: image(MAPS / 'mercurio.jpg', 2048),
+        'venus': lambda: image(MAPS / 'venus.jpg', 1024),
+        'terra': lambda: image(OBS / 'earth-bmng-200407.jpg', 4096),
+        'marte': lambda: image(MAPS / 'marte.jpg', 1440),
+        'jupiter': lambda: sem_polos_vazios(image(OBS / 'jupiter-hubble-opal-2015.tif', 3600)),
+        'saturno': lambda: mapa_zonal('saturno-retrato', MAPS / 'saturno.jpg', 4096, 2048, rng, 0.003, 0.026),
+        'urano': lambda: mapa_zonal('urano-retrato', MAPS / 'urano.jpg', 2048, 1024, rng, 0.0015, 0.008, 90),
+        'netuno': lambda: mapa_zonal('netuno-retrato', MAPS / 'netuno.jpg', 2048, 1024, rng, 0.003, 0.016, 90),
+    }
+    for nome, fonte in fontes.items():
+        reset()
+        polar = 0.902 if nome == 'saturno' else (0.935 if nome == 'jupiter' else 1.0)
+        ob = sphere(nome, 1.0, material(nome, tex=fonte(), rough=0.9), seg=192, rings=96, polar=polar)
+        ob.rotation_euler = (math.radians(12), 0, math.radians(-25))
+        if nome == 'saturno':
+            anel = annulus('aneis', 1.11, 2.32, material('Anéis', tex=aneis_alta('aneis-retrato', rng, 4096), alpha_tex=True, rough=1.0), count=512)
+            anel.rotation_euler = (math.radians(14), 0, math.radians(-25))
+            # o planeta faz sombra nos anéis e os anéis no planeta, como nas fotos da Cassini
+        sc = bpy.context.scene
+        sc.render.engine = 'CYCLES'
+        sc.cycles.device = 'CPU'
+        sc.cycles.samples = amostras
+        sc.cycles.use_denoising = True
+        sc.render.threads_mode = 'FIXED'
+        sc.render.threads = 3
+        sc.render.film_transparent = True
+        sc.render.resolution_x = sc.render.resolution_y = tamanho
+        sc.render.image_settings.file_format = 'WEBP'
+        sc.render.image_settings.color_mode = 'RGBA'
+        sc.render.image_settings.quality = 90
+        sc.view_settings.view_transform = 'AgX'
+        world = bpy.data.worlds.new('fundo')
+        world.use_nodes = True
+        world.node_tree.nodes.get('Background').inputs['Strength'].default_value = 0.0
+        sc.world = world
+        lamp = bpy.data.lights.new('Sol', 'SUN')
+        lamp.energy = 4.2
+        lamp.angle = math.radians(0.6)
+        sol = link(bpy.data.objects.new('Sol', lamp))
+        sol.rotation_euler = b([-0.5, 0.3, 0.81]).to_track_quat('Z', 'Y').to_euler()
+        cam = bpy.data.cameras.new('camera')
+        cam.type = 'ORTHO'
+        cam.ortho_scale = 5.2 if nome == 'saturno' else 2.55
+        cob = link(bpy.data.objects.new('camera', cam))
+        cob.location = b((0, 0, 10))
+        cob.rotation_euler = (b((0, 0, 0)) - cob.location).to_track_quat('-Z', 'Y').to_euler()
+        sc.camera = cob
+        sc.render.filepath = str(atlas / f'{nome}.webp')
+        bpy.ops.render.render(write_still=True)
+        print('RETRATO', nome)
+
+
 def sha(p):
     return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
 
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
+    if '--retratos' in argv:
+        retratos()
+        return
     poster = '--sem-poster' not in argv
     alvo = [a for a in argv if not a.startswith('--')] or list(ESTACOES)
     manifest_path = OUT / 'manifest.json'

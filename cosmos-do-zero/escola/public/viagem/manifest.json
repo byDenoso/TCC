@@ -11,12 +11,12 @@
     },
     "sistema-solar": {
       "glb": "sistema-solar.glb",
-      "bytes": 3307424,
-      "sha256": "9f8e35b11d6cd260cfea80147d76580c96ca5a898a9008827478b8a62adef049",
-      "poster": "sistema-solar.webp",
-      "poster_sha256": "434fdd22868b6f73f98e1cfd0661d4c4256aa9ee1e70dfca15fbfa8ef7308739",
+      "bytes": 3310796,
+      "sha256": "0f5a56b336a000485198c61446dfd10a6d664292c07518edb7aadc8b272e6128",
       "glb_movel": "sistema-solar-m.glb",
-      "bytes_movel": 1978756
+      "bytes_movel": 1980588,
+      "poster": "sistema-solar.webp",
+      "poster_sha256": "0fa1e05ce87abb4ca6cb3ace087b7f7ac982abb2a5e193c28835dfa8e8c38dc7"
     },
     "saturno": {
       "glb": "saturno.glb",
@@ -47,12 +47,10 @@
     },
     "galaxias": {
       "glb": "galaxias.glb",
-      "bytes": 1181696,
-      "sha256": "ba2660aa69ec2ec196b84d1b12ed23f0e712bb154996044205d3855e369257ad",
-      "poster": "galaxias.webp",
-      "poster_sha256": "5a9c70afde638186fd4ebd06a3c02be56ba34fb7bc95ca59cbc80af28d69a966",
+      "bytes": 1329444,
+      "sha256": "078c9fb60062bcfdc7a09f7c46f99cf22427dc7f1ddd0337b2aa7d9547fa345e",
       "glb_movel": "galaxias-m.glb",
-      "bytes_movel": 1181696
+      "bytes_movel": 1329444
     },
     "teia-cosmica": {
       "glb": "teia-cosmica.glb",
@@ -65,12 +63,10 @@
     },
     "expansao": {
       "glb": "expansao.glb",
-      "bytes": 70004,
-      "sha256": "753d1ee383f07ef2cb00d6a741c14e8ee1488819fd2cc64c4a2a26bc861a888e",
-      "poster": "expansao.webp",
-      "poster_sha256": "9ae2d221427890b102ea47e016aa2d2c584cdb0b1c239d91e0909a82acbaf90c",
+      "bytes": 78784,
+      "sha256": "d1dca515c0aeb70e958eea463114f452fb753e5ae3cbc4a84210cacd2d8dd608",
       "glb_movel": "expansao-m.glb",
-      "bytes_movel": 70004
+      "bytes_movel": 78784
     },
     "luz-fossil": {
       "glb": "luz-fossil.glb",

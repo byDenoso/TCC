@@ -4,8 +4,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import cenas from './cenas.json';
 import { estacoes, PLANETAS } from './estacoes';
-import { corCorpoNegro, periodoAnos, raioOrbitaVisual, temperaturaCmb } from './fisica';
+import { corCorpoNegro, periodoAnos, raioOrbitaVisual, referenciaHorizonte, temperaturaCmb } from './fisica';
 import { atualizarBuracoNegro, criarBuracoNegro } from './buracoNegro';
+import { materialGalaxia, omegaGalaxia } from './galaxia';
 
 type Cfg = { camera: { pos: number[]; alvo: number[]; fov: number }; sol?: number[]; [k: string]: unknown };
 const CFG = cenas.estacoes as Record<string, Cfg>;
@@ -56,7 +57,7 @@ void main() {
 const GANHO: Record<string, [number, number]> = {
   // [brilho, multiplicador de tamanho]
   estrelas: [1.6, 2.2],
-  galaxias: [1.25, 2.4],
+  galaxias: [0.8, 2.2],
   'teia-cosmica': [0.62, 1.9],
   expansao: [1.5, 2.2],
 };
@@ -80,7 +81,9 @@ function preparar(original: THREE.Object3D, id: string) {
     const obj = o as THREE.Mesh | THREE.Points;
     if (!('material' in obj) || !obj.material) return;
     if ((obj as THREE.Points).isPoints) {
-      obj.material = materialPontos(id);
+      // galáxias (com o tipo de cada estrela) ganham rotação diferencial e braços de onda de densidade
+      const temTipo = Boolean((obj as THREE.Points).geometry.getAttribute('_tipo'));
+      obj.material = temTipo ? materialGalaxia((GANHO[id] ?? [1, 2])[0], id === 'expansao' ? 0.24 : 1) : materialPontos(id);
       obj.frustumCulled = false;
       return;
     }
@@ -365,6 +368,24 @@ function Modelo({ id, valor, movimento, onPronto, software }: Omit<PalcoProps, '
     return s;
   }, [id]);
 
+  const referencia = useMemo(() => {
+    if (id !== 'buraco-negro') return null;
+    const anel = linhaCirculo(1, '#cfe9e4', 0.9, 256);
+    const tracejado = new THREE.LineDashedMaterial({ color: '#cfe9e4', dashSize: 0.06, gapSize: 0.05, transparent: true, opacity: 0.85, depthTest: false });
+    anel.material = tracejado;
+    anel.computeLineDistances();
+    anel.renderOrder = 5;
+    return anel;
+  }, [id]);
+
+  const onda = useMemo(() => {
+    if (id !== 'luz-fossil') return null;
+    const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(400 * 3), 3));
+    const linha = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: '#8fd0c6', transparent: true, opacity: 0.95 }));
+    linha.frustumCulled = false;
+    return linha;
+  }, [id]);
+
   const regua = useMemo(() => {
     if (id !== 'teia-cosmica') return null;
     const geo = new THREE.BufferGeometry().setFromPoints([
@@ -478,15 +499,28 @@ function Modelo({ id, valor, movimento, onPronto, software }: Omit<PalcoProps, '
     }
     if (buraco && grupo.current) {
       // a frequência orbital cai com 1/M; a escala de tempo da cena é logarítmica na massa
-      atualizarBuracoNegro(buraco, camera as THREE.PerspectiveCamera, grupo.current, dt, 26 / (1 + 0.55 * v));
+      atualizarBuracoNegro(buraco, camera as THREE.PerspectiveCamera, grupo.current, dt, 60 * 10 ** (-0.15 * v));
+    }
+    if (referencia) {
+      // o círculo de comparação encolhe quando a massa (e o horizonte) cresce
+      const ref = referenciaHorizonte(10 ** v);
+      referencia.scale.setScalar(ref.razao);
+    }
+    if (id === 'galaxias' || id === 'expansao') {
+      // o mesmo relógio para as estrelas, o anel e o ponto marcado
+      cena.traverse((o) => {
+        const m = (o as THREE.Points).material as THREE.ShaderMaterial | undefined;
+        if (m?.uniforms?.raioMarcado) {
+          m.uniforms.tempo.value = t * 1.6;
+          m.uniforms.raioMarcado.value = id === 'galaxias' ? v : -1;
+        }
+      });
     }
     if (id === 'galaxias') {
-      const gal = cena.getObjectByName('galaxia');
-      if (gal) gal.rotation.y -= dt * 0.03;
       anelGalaxia!.children[0].scale.setScalar(v);
-      // curva de rotação plana: velocidade angular ∝ 1/r
+      // o ponto segue uma estrela no raio escolhido: ω = v/r da curva de rotação
       const ponto = anelGalaxia!.getObjectByName('ponto')!;
-      const a = -(t * 2.4) / v;
+      const a = -omegaGalaxia(v) * t * 1.6;
       ponto.position.set(v * Math.cos(a), 0, v * Math.sin(a));
     }
     if (id === 'teia-cosmica') {
@@ -511,8 +545,21 @@ function Modelo({ id, valor, movimento, onPronto, software }: Omit<PalcoProps, '
       // abaixo de ~800 K (ponto de Draper) a radiação não é visível: cores falsas do mapa
       const f = Math.min(1, Math.max(0, (T - 800) / 2200));
       const [r, g, b] = corCorpoNegro(Math.max(1000, T));
-      m.emissive.setRGB(1 + (r * 2.2 - 1) * f, 1 + (g * 2.2 - 1) * f, 1 + (b * 2.2 - 1) * f, THREE.SRGBColorSpace);
-      m.emissiveIntensity = 1 + 0.6 * f;
+      // cor de corpo negro multiplicada sobre o mapa: a 3 000 K o céu inteiro brilha alaranjado
+      m.emissive.setRGB(1 + (r * 1.25 - 1) * f, 1 + (g * 1.25 - 1) * f, 1 + (b * 1.25 - 1) * f, THREE.SRGBColorSpace);
+      m.emissiveIntensity = 1 + 0.25 * f;
+      if (onda) {
+        // a luz chega esticada: mais cristas no mesmo trecho quanto maior o z da emissão
+        const ciclos = 1.5 + (8 * Math.log10(1 + v)) / Math.log10(1101);
+        const pos = onda.geometry.getAttribute('position') as THREE.BufferAttribute;
+        for (let i = 0; i < pos.count; i++) {
+          const x = -9 + (18 * i) / (pos.count - 1);
+          pos.setXYZ(i, x, -12.6 + 0.7 * Math.sin((2 * Math.PI * ciclos * (x + 9)) / 18 - t * 2), 4);
+        }
+        pos.needsUpdate = true;
+        const [cr, cg, cb] = f > 0 ? corCorpoNegro(Math.max(1000, T)) : [0.56, 0.82, 0.78];
+        (onda.material as THREE.LineBasicMaterial).color.setRGB(cr, cg, cb, THREE.SRGBColorSpace);
+      }
     }
   });
 
@@ -530,10 +577,12 @@ function Modelo({ id, valor, movimento, onPronto, software }: Omit<PalcoProps, '
           {pulso && <primitive object={pulso} />}
           {grade && <primitive object={grade} />}
           {halo && <primitive object={halo} />}
+          {referencia && <primitive object={referencia} />}
         </group>
       </group>
       {regua && <primitive object={regua} />}
       {buraco && <primitive object={buraco} />}
+      {onda && <primitive object={onda} />}
     </>
   );
 }

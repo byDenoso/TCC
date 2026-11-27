@@ -36,9 +36,15 @@ export default function Sources({ sources }: { sources: { name: string; url: str
           <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
         </p>
         <p>
-          O modelo ilustrativo de Saturno usa o mapa JPL/Caltech e NASA. As representações da Terra, do
-          Sistema Solar, da estrela e da teia cósmica são ilustrações do acervo Cosmos.{' '}
-          <a href="/cosmos-hero/creditos.json">Crédito e composição de Saturno</a>.
+          Os modelos 3D e os pôsteres da viagem da página inicial e os retratos dos planetas do
+          Explorador são gerados no Blender por um script do próprio Cosmos, a partir de mapas da NASA:
+          Blue Marble Next Generation (Terra), LROC (Lua), Hubble OPAL (Júpiter), MESSENGER (Mercúrio) e
+          JPL/Caltech e USGS (demais planetas). Em Saturno, Urano e Netuno, as cores de cada latitude
+          vêm desses mapas e as estrias finas são geradas. A galáxia, a teia cósmica (aproximação de
+          Zel’dovich), o disco do buraco negro e o mapa da radiação de fundo (campo sintético) são
+          modelos gerados, não observações. O buraco negro é desenhado por traçado de raios na
+          geometria de Schwarzschild.{' '}
+          <a href="/viagem/manifest.json">Lista dos arquivos gerados</a>.
         </p>
         <p>
           A capa de Cosmologia mostra as anisotropias da radiação cósmica de fundo observadas pelo

@@ -1,0 +1,247 @@
+/* Identidade única do Cosmos (carregada por último).
+   As camadas antigas (globals, premium, explorer) usavam azul-marinho e cantos arredondados;
+   esta camada leva todas as superfícies para a mesma paleta da viagem e da identidade editorial:
+   papel #f7f5ee, tinta #202b2d, teal #205c60, superfícies escuras #0c1517 e #142022,
+   cantos de 2 px, sem sombras. */
+:root {
+  --c-teal: #205c60;
+  --c-teal-claro: #2a7176;
+  --c-rotulo: #2c6a68;
+  --c-escuro: #0c1517;
+  --c-escuro-2: #142022;
+  --c-texto-escuro: #e9ece6;
+  --c-suave-escuro: #b9c6c1;
+  --c-linha-escura: #ffffff24;
+  --c-rotulo-escuro: #8fbab4;
+}
+
+input[type='range'],
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: var(--c-teal);
+}
+.skip {
+  background: var(--c-escuro-2);
+  color: var(--c-texto-escuro);
+}
+.wordmark svg {
+  color: #cfe5e1;
+}
+.account-link {
+  border-color: var(--c-linha-escura);
+  background: transparent;
+}
+
+/* textos de apoio em fundo claro */
+.kicker,
+.exp-kicker {
+  color: var(--c-rotulo);
+}
+.text-link,
+summary,
+.atlas-guide-start,
+.atlas-source,
+.atlas-action {
+  color: var(--c-teal);
+}
+.subject,
+small,
+dt,
+.caption,
+.atlas-model-tools,
+.atlas-credit,
+.atlas-dossier,
+.atlas-measure,
+.atlas-reading,
+.atlas-values,
+.atlas-note {
+  color: var(--muted);
+}
+.atlas-values dd {
+  color: var(--c-teal);
+}
+.field,
+select,
+.small-btn,
+.metric,
+.atlas-nav,
+.atlas-dossier {
+  border-color: var(--line);
+}
+.cosmos-explorer,
+.cosmos-explorer h1,
+.cosmos-explorer h2,
+.cosmos-explorer h3 {
+  color: var(--ink);
+}
+
+/* botões */
+.btn,
+.small-btn,
+.scene-toolbar button,
+.scene-bottom button,
+.atlas-modes button,
+.atlas-choices button,
+.metodo-presets button {
+  border-radius: 2px;
+}
+.btn.dark {
+  background: var(--c-teal);
+  color: #fff;
+}
+.btn.dark:hover {
+  background: var(--c-teal-claro);
+}
+.btn.light {
+  background: var(--c-texto-escuro);
+  color: var(--c-escuro);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: #ffffff47;
+  color: var(--c-texto-escuro);
+}
+.atlas-modes button[aria-pressed='true'],
+.atlas-choices button[aria-pressed='true'] {
+  background: var(--c-teal);
+  border-color: var(--c-teal);
+  color: #fff;
+}
+
+/* faixas escuras */
+.home-atlas,
+.research-band,
+.lead,
+footer,
+.site-footer {
+  background: var(--c-escuro);
+  background-image: none;
+  color: var(--c-texto-escuro);
+}
+footer,
+.site-footer {
+  background: var(--c-escuro-2);
+}
+.home-atlas p,
+.research-band p:not(.kicker),
+.lead p:not(.kicker),
+.lead .deck,
+.research-grid label,
+.metodo-controles label {
+  color: var(--c-suave-escuro);
+}
+.home-atlas .kicker,
+.research-band .kicker,
+.lead .kicker {
+  color: var(--c-rotulo-escuro);
+}
+.home-atlas .text-link,
+.research-band a,
+.lead a {
+  color: #a9d6cf;
+}
+.home-atlas-card {
+  background: var(--c-escuro-2);
+  border-color: var(--c-linha-escura);
+  border-radius: 2px;
+}
+.research-band .metodo-figura figcaption {
+  color: #8a9d99;
+}
+.metodo-presets button {
+  border-color: #ffffff38;
+}
+.metodo-eixo {
+  fill: #9fb3ae;
+}
+
+/* cartões dos níveis */
+.card-art,
+.card-art img {
+  background: var(--c-escuro-2);
+}
+.level-index {
+  background: var(--c-escuro);
+  border-color: #ffffff40;
+}
+
+/* bancadas */
+.laboratory {
+  border-radius: 2px;
+  box-shadow: none;
+}
+.lab-visual,
+.orbit-key {
+  background: var(--c-escuro);
+  color: var(--c-texto-escuro);
+}
+.scene-toolbar > span,
+.scene-clock {
+  color: var(--c-suave-escuro);
+}
+.scene-toolbar button,
+.scene-bottom button {
+  background: var(--c-escuro-2);
+  border-color: #3d5b59;
+  color: var(--c-texto-escuro);
+}
+.scene-toolbar button:hover,
+.scene-bottom button:hover {
+  border-color: var(--c-rotulo-escuro);
+}
+
+/* Explorador */
+.atlas-portrait,
+.atlas-photo,
+.exp-map,
+.atlas-plot {
+  background: var(--c-escuro);
+  background-image: none;
+  border-color: var(--c-linha-escura);
+  border-radius: 2px;
+}
+.atlas-photo span {
+  background: var(--c-escuro);
+}
+.atlas-dossier,
+.atlas-figure,
+.atlas-spread > *,
+.cosmos-explorer figure,
+.cosmos-explorer img {
+  border-radius: 2px;
+}
+.atlas-nav [aria-current],
+.atlas-nav [aria-selected='true'] {
+  color: var(--c-teal);
+  border-color: var(--c-teal);
+}
+.home-atlas small,
+.research-band small,
+.lead small,
+.lab-visual small,
+footer small {
+  color: var(--c-suave-escuro);
+}
+
+/* gráficos */
+.plotline {
+  stroke: var(--c-teal);
+}
+.atlas-measure strong {
+  color: var(--ink);
+}
+
+/* painéis claros: tons de papel em vez de azul-acinzentado */
+.controls,
+.exercise,
+.method,
+.challenge,
+.lesson-next a,
+.atlas-status {
+  background: #f1efe7;
+}
+.lesson-list li a:hover,
+.atlas-modes button:hover:not([aria-pressed='true']),
+.exp-secondary:hover {
+  background: #ece9df;
+}

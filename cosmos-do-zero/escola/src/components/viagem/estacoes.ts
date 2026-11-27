@@ -13,6 +13,7 @@ import {
   raioSchwarzschildKm,
   razaoAneis,
   redshiftDeEscala,
+  referenciaHorizonte,
   temperaturaCmb,
 } from './fisica';
 
@@ -189,6 +190,7 @@ export const estacoes: Estacao[] = [
           : { rotulo: 'Raio do horizonte', valor: formatar(r), unidade: 'km' },
         { rotulo: 'Raio da sombra', ...(2.598 * r > 0.05 * KM_POR_UA ? { valor: formatar((2.598 * r) / KM_POR_UA), unidade: 'UA' } : { valor: formatar(2.598 * r), unidade: 'km' }) },
         { rotulo: 'Uma volta na última órbita estável', ...duracao((10 ** lm) / 2198) },
+        { rotulo: 'Círculo tracejado', valor: `${referenciaHorizonte(10 ** lm).rotulo} (${formatar(referenciaHorizonte(10 ** lm).razao)} × o horizonte)` },
         { rotulo: 'Referência', valor: lm > 9 ? 'M87*: 6,5 × 10⁹ M☉' : lm > 5 ? 'Sagitário A*: 4,3 × 10⁶ M☉' : 'buraco negro estelar' },
       ];
     },
@@ -206,6 +208,7 @@ export const estacoes: Estacao[] = [
     texto: [
       'Numa órbita circular, a gravidade da massa interna fornece a força centrípeta: M = v²r/G. Nas espirais, a velocidade de rotação fica quase constante longe do centro, perto de 220 km/s na Via Láctea, e a massa contida continua crescendo com o raio.',
       'A luz das estrelas não acompanha esse crescimento. A diferença, medida por Vera Rubin e Kent Ford a partir de 1970, é uma das evidências mais antigas de matéria escura nas galáxias.',
+      'Na cena, cada estrela gira com essa curva: as de dentro dão mais voltas que as de fora. Os braços não são feitos sempre das mesmas estrelas. São uma onda de densidade que gira mais devagar; as estrelas jovens acendem ao atravessá-la. Escolha um raio para seguir as estrelas daquela órbita.',
     ],
     controle: { rotulo: 'Raio da órbita', unidade: 'kpc', min: 1, max: 25, passo: 0.1, inicial: 8 },
     leituras: (r) => [
@@ -266,7 +269,7 @@ export const estacoes: Estacao[] = [
     titulo: 'A luz mais antiga chega de todas as direções',
     texto: [
       'Cerca de 380 mil anos depois do início da expansão, o Universo esfriou o bastante para os elétrons se ligarem aos núcleos, e a luz passou a viajar livre. A radiação estava então perto de 3 000 K. Esticada desde z ≈ 1100, ela chega hoje a 2,7255 K, nas micro-ondas.',
-      'As manchas variam a temperatura em poucas partes em cem mil. O tamanho típico delas, cerca de um grau no céu, guarda a geometria e a composição do Universo.',
+      'As manchas variam a temperatura em poucas partes em cem mil. O tamanho típico delas, cerca de um grau no céu, guarda a geometria e a composição do Universo. A onda embaixo da esfera mostra a luz esticando: volte no tempo e as cristas ficam mais próximas.',
     ],
     controle: {
       rotulo: 'Redshift',
